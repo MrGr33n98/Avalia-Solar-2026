@@ -1,0 +1,137 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+  schedule:
+    # Run weekly on Sundays at midnight
+    - cron: '0 0 * * 0'
+
+jobs:
+  brakeman:
+    name: Brakeman Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Install dependencies
+        run: |
+          cd AB0-1-back
+          bundle install --jobs 4 --retry 3
+
+      - name: Run Brakeman
+        run: |
+          cd AB0-1-back
+          bundle exec brakeman -A -w3 --no-pager
+        continue-on-error: false
+
+      - name: Upload Brakeman Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: brakeman-report
+          path: |
+            AB0-1-back/tmp/brakeman-report.html
+            AB0-1-back/tmp/brakeman-report.json
+
+  bundler-audit:
+    name: Bundler Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Install dependencies
+        run: |
+          cd AB0-1-back
+          bundle install --jobs 4 --retry 3
+
+      - name: Update Bundler Audit Database
+        run: |
+          cd AB0-1-back
+          bundle exec bundler-audit update
+
+      - name: Run Bundler Audit
+        run: |
+          cd AB0-1-back
+          bundle exec bundler-audit check
+        continue-on-error: false
+
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: ./AB0-1-front/package-lock.json
+
+      - name: Run NPM Audit
+        run: |
+          cd AB0-1-front
+          npm audit --audit-level=high
+        continue-on-error: true # NPM audit pode ter false positives
+
+      - name: Run NPM Audit Fix (dry-run)
+        run: |
+          cd AB0-1-front
+          npm audit fix --dry-run
+        continue-on-error: true
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [brakeman, bundler-audit, npm-audit]
+    if: always()
+    
+    steps:
+      - name: Check Security Status
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.brakeman.result }}" == "success" ]; then
+            echo "✅ Brakeman: No security issues found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Brakeman: Security issues detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.bundler-audit.result }}" == "success" ]; then
+            echo "✅ Bundler Audit: No vulnerable dependencies" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Bundler Audit: Vulnerable dependencies found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.npm-audit.result }}" == "success" ]; then
+            echo "✅ NPM Audit: No vulnerable packages" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ NPM Audit: Check results" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 Detailed reports available in job artifacts" >> $GITHUB_STEP_SUMMARY

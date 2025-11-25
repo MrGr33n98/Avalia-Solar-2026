@@ -1,0 +1,21 @@
+<h1>Blog Posts</h1>
+
+<% if @posts.any? %>
+  <div class="posts">
+    <% @posts.each do |post| %>
+      <div class="post">
+        <h2><%= post.title %></h2>
+        <p><%= truncate(post.body, length: 200) %></p>
+        <p>
+          <%= link_to 'Read more', post_path(post), class: 'btn btn-primary' %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p>No posts available yet.</p>
+<% end %>
+
+<% if user_signed_in? %>
+  <%= link_to 'New Post', new_post_path, class: 'btn btn-success' %>
+<% end %>

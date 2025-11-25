@@ -1,0 +1,78 @@
+# Sidekiq Scheduler - TASK-017
+# Cron-like scheduled jobs
+# https://github.com/sidekiq-scheduler/sidekiq-scheduler
+
+# Example scheduled jobs:
+
+# Daily cache cleanup at 3 AM
+cache_cleanup_job:
+  cron: '0 3 * * *'  # Every day at 3:00 AM
+  class: CacheCleanupJob
+  queue: low
+  description: 'Clean up expired cache entries'
+  enabled: true
+
+# Send daily digest emails at 9 AM
+daily_digest_job:
+  cron: '0 9 * * *'  # Every day at 9:00 AM
+  class: DailyDigestJob
+  queue: mailers
+  description: 'Send daily digest emails to users'
+  enabled: false  # Disabled by default
+
+# Update company ratings every hour
+update_ratings_job:
+  cron: '0 * * * *'  # Every hour
+  class: UpdateRatingsJob
+  queue: default
+  description: 'Recalculate company ratings'
+  enabled: true
+
+# Cleanup old sessions weekly
+session_cleanup_job:
+  cron: '0 2 * * 0'  # Sundays at 2:00 AM
+  class: SessionCleanupJob
+  queue: low
+  description: 'Remove expired sessions'
+  enabled: true
+
+# Database backup (if not using managed service)
+# database_backup_job:
+#   cron: '0 1 * * *'  # Every day at 1:00 AM
+#   class: DatabaseBackupJob
+#   queue: critical
+#   description: 'Backup database'
+#   enabled: false
+
+# Generate reports monthly
+# monthly_report_job:
+#   cron: '0 0 1 * *'  # First day of month at midnight
+#   class: MonthlyReportJob
+#   queue: default
+#   description: 'Generate monthly reports'
+#   enabled: false
+
+# Cron format:
+# * * * * *
+# | | | | |
+# | | | | +-- Day of week (0-7, 0 and 7 = Sunday)
+# | | | +---- Month (1-12)
+# | | +------ Day of month (1-31)
+# | +-------- Hour (0-23)
+# +---------- Minute (0-59)
+
+# Special strings:
+# @yearly    - Run once a year at midnight on Jan 1
+# @monthly   - Run once a month at midnight on first day
+# @weekly    - Run once a week at midnight on Sunday
+# @daily     - Run once a day at midnight
+# @hourly    - Run once an hour at beginning of hour
+# @reboot    - Run once at startup
+
+# TASK-018: Email jobs
+monthly_digest_email_job:
+  cron: '0 9 1 * *'  # First day of month at 9:00 AM
+  class: MonthlyDigestJob
+  queue: mailers
+  description: 'Send monthly digest emails to companies'
+  enabled: true

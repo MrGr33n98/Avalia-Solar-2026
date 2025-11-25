@@ -1,0 +1,25 @@
+<h2>Import Categories from CSV</h2>
+
+<div class="panel">
+  <div class="panel_contents">
+    <%= form_tag import_csv_admin_categories_path, multipart: true do %>
+      <div class="form-group">
+        <label for="csv_file">CSV File</label>
+        <%= file_field_tag :csv_file, accept: 'text/csv' %>
+      </div>
+      <div class="form-group">
+        <p class="help-text">
+          CSV should have the following headers:
+        </p>
+        <pre>name,seo_url,seo_title,short_description,description,parent_id,kind,status,featured</pre>
+        <p class="help-text">
+          Example:
+        </p>
+        <pre>Solar Panels,solar-panels,Solar Panels | Compare Solar,High efficiency panels,Detailed description,,product,active,true</pre>
+      </div>
+      <div class="form-group">
+        <%= submit_tag "Import CSV", class: "button" %>
+      </div>
+    <% end %>
+  </div>
+</div>

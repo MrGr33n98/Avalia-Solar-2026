@@ -1,0 +1,17 @@
+<h2>Confirme seu email</h2>
+
+<p>Olá <%= @user.name || @user.email %>,</p>
+
+<p>Por favor, confirme seu endereço de email clicando no botão abaixo:</p>
+
+<p style="text-align: center;">
+  <a href="<%= @confirmation_url %>" class="button">Confirmar email</a>
+</p>
+
+<p>Ou copie e cole este link no seu navegador:</p>
+<p style="word-break: break-all; font-size: 12px; color: #666;"><%= @confirmation_url %></p>
+
+<p>
+  Atenciosamente,<br>
+  <strong>Equipe AB0-1</strong>
+</p>

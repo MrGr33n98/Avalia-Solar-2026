@@ -1,0 +1,22 @@
+<div class="corporate-landing min-h-screen flex flex-col items-center justify-center bg-gray-100 relative">
+  <!-- Imagem de fundo -->
+  <div class="absolute inset-0">
+    <%= image_tag "default-banner.jpg", alt: "Painéis Solares", class: "w-full h-full object-cover" %>
+    <div class="absolute inset-0 bg-black/40"></div> <!-- overlay para legibilidade -->
+  </div>
+
+  <!-- Caixa de acesso -->
+  <div class="relative z-10 bg-white/95 text-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md text-center">
+    <h2 class="text-2xl font-bold mb-4">Portal Administrativo</h2>
+    <p class="mb-6 text-gray-600">Acesse o painel da Compare Solar e gerencie a plataforma.</p>
+    <a href="http://localhost:3001/admin/login" 
+       class="inline-block w-full bg-gradient-to-r from-amber-400 to-amber-600 text-white font-semibold px-6 py-3 rounded-full hover:shadow-lg transition">
+      <i class="bi bi-shield-lock mr-2"></i> Acessar Dashboard
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="relative z-10 mt-12 text-sm text-white/90">
+    &copy; <%= Date.today.year %> Compare Solar. Todos os direitos reservados.
+  </footer>
+</div>

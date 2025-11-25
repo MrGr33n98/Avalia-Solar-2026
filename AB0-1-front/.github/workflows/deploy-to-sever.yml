@@ -1,0 +1,74 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - master-frontend
+
+jobs:
+  deploy-to-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+            -t ab0-frontend:${{ github.sha }} .
+
+      - name: Save Docker image as tar
+        run: |
+          docker save ab0-frontend:${{ github.sha }} -o ab0-frontend.tar
+          chmod 644 ab0-frontend.tar
+
+      - name: Copy docker image to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: "ab0-frontend.tar"
+          target: "~/"
+
+      - name: Load and Run docker container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            # Create network if not exists
+            docker network create ab0-network || true
+
+            # Move image to images directory
+            mkdir -p ~/images
+            mv ~/ab0-frontend.tar ~/images/
+
+            # Load new image
+            docker load -i ~/images/ab0-frontend.tar
+
+            # Remove old container
+            docker rm -f ab0-frontend || true
+
+            # Run container with proper networking
+            docker run -d \
+              --name ab0-frontend \
+              --network ab0-network \
+              --restart unless-stopped \
+              -e NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+              -e NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+              -e NODE_ENV=production \
+              -p 3000:3000 \
+              ab0-frontend:${{ github.sha }}
+
+            # Wait for container to be ready
+            sleep 10
+
+            # Check container status
+            docker ps | grep ab0-frontend
+            docker logs ab0-frontend --tail=20

@@ -1,0 +1,158 @@
+name: Performance Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: "0 4 * * 1" # Segunda-feira às 4h
+  workflow_dispatch:
+
+jobs:
+  lighthouse-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Install dependencies
+        working-directory: ./AB0-1-front
+        run: npm ci
+        
+      - name: Build application
+        working-directory: ./AB0-1-front
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          
+      - name: Run Lighthouse CI
+        working-directory: ./AB0-1-front
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || echo "Lighthouse CI failed but continuing..."
+        continue-on-error: true
+
+  backend-performance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ab0_test
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports: [ "6379:6379" ]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.2
+          bundler-cache: true
+          
+      - name: Setup database
+        working-directory: ./AB0-1-back
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ab0_test
+          
+      - name: Run performance profiler
+        working-directory: ./AB0-1-back
+        run: |
+          # Adicionar gems de profiling se necessário
+          echo "gem 'rack-mini-profiler'" >> Gemfile.local || true
+          echo "gem 'memory_profiler'" >> Gemfile.local || true
+          bundle install
+          
+          # Rodar testes de performance se existirem
+          bundle exec rspec spec/performance --tag performance || echo "No performance tests found"
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ab0_test
+        continue-on-error: true
+
+  load-testing:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+          
+      - name: Create k6 test script
+        run: |
+          mkdir -p tests/performance
+          cat > tests/performance/load-test.js << 'EOF'
+          import http from 'k6/http';
+          import { sleep, check } from 'k6';
+          
+          export const options = {
+            vus: 10,
+            duration: '30s',
+            thresholds: {
+              http_req_duration: ['p(95)<500'], // 95% das requisições devem ser < 500ms
+              http_req_failed: ['rate<0.1'],    // Taxa de erro < 10%
+            },
+          };
+          
+          export default function () {
+            const res = http.get('http://localhost:3001/health');
+            check(res, {
+              'status is 200': (r) => r.status === 200,
+              'response time < 500ms': (r) => r.timings.duration < 500,
+            });
+            sleep(1);
+          }
+          EOF
+          
+      - name: Run load tests
+        run: k6 run tests/performance/load-test.js
+        continue-on-error: true
+
+  bundle-size-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Install dependencies
+        working-directory: ./AB0-1-front
+        run: npm ci
+        
+      - name: Analyze bundle size
+        working-directory: ./AB0-1-front
+        run: |
+          npm run build
+          
+          # Instalar bundle analyzer
+          npm install -g webpack-bundle-analyzer
+          
+          # Análise básica do tamanho
+          echo "📦 Bundle Size Analysis"
+          du -sh .next/ || true
+          
+          # Verificar se há arquivos muito grandes
+          find .next -type f -size +1M -exec ls -lh {} \; || echo "No large files found"
+        continue-on-error: true

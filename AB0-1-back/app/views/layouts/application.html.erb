@@ -1,0 +1,33 @@
+<div class="min-h-screen flex flex-col justify-between bg-gradient-to-r from-blue-700 via-blue-600 to-amber-500 text-white">
+  
+  <!-- Hero Section -->
+  <header class="text-center px-6 pt-16">
+    <h1 class="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
+      Compare Solar  
+      <span class="block text-amber-300">Portal Administrativo</span>
+    </h1>
+    <p class="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+      Gerencie empresas, produtos e conteúdos da plataforma em um só lugar.
+    </p>
+
+    <!-- Botão CTA -->
+    <div class="mt-8">
+      <a href="http://localhost:3001/admin/login" 
+         class="inline-block bg-gradient-to-r from-amber-400 to-amber-600 text-white font-bold px-12 py-4 rounded-full text-xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 ease-out">
+        <i class="bi bi-shield-lock mr-2"></i> Acessar Dashboard
+      </a>
+    </div>
+  </header>
+
+  <!-- Imagem Hero -->
+  <div class="relative z-10 mt-12 max-w-5xl w-full px-6 mx-auto">
+    <%= image_tag "default-banner.jpg", 
+          alt: "Painéis Solares", 
+          class: "rounded-xl shadow-2xl w-full max-h-[450px] object-cover mx-auto hover:scale-105 transition-transform duration-500" %>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 py-6 bg-black/30 backdrop-blur-sm text-center text-sm text-white/80">
+    <p>&copy; <%= Date.today.year %> Compare Solar. Todos os direitos reservados.</p>
+  </footer>
+</div>

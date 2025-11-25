@@ -1,0 +1,87 @@
+# TASK-007: Scout APM Configuration
+# Documentation: https://docs.scoutapm.com/ruby/
+
+common: &defaults
+  # Application name (as it will appear in Scout)
+  name: "AB0-1 Backend"
+  
+  # Your organization key from Scout (required in production)
+  key: <%= ENV['SCOUT_KEY'] %>
+  
+  # Monitor background jobs
+  monitor: true
+  
+  # Log level for Scout agent (debug, info, warn, error)
+  log_level: info
+  
+  # Log to Scout's own log file instead of Rails.logger
+  log_file_path: log/scout_apm.log
+  
+  # Enable Git integration for deployment tracking
+  revision_sha: <%= ENV['GIT_SHA'] || `git rev-parse --short HEAD 2>/dev/null`.strip %>
+  
+  # Hostname override (useful for containers)
+  hostname: <%= ENV['HOSTNAME'] || Socket.gethostname %>
+
+  # Performance thresholds (milliseconds)
+  slow_request_threshold: 500     # Alert when requests > 500ms
+  slow_job_threshold: 30000       # Alert when jobs > 30s
+  
+  # Collect detailed SQL info
+  detailed_middleware: true
+  
+  # Database timing collection
+  database_timing: true
+  
+  # Enable timeline trace
+  timeline_traces: true
+  
+  # Memory profiling
+  enable_background_jobs: true
+  
+  # Ignore specific endpoints (healthchecks, metrics, etc)
+  ignore:
+    - HealthController
+    - Sidekiq::Web
+    - ActiveAdmin
+  
+  # Collect more detailed data on slow requests
+  collect_remote_ip: true
+  uri_reporting: path_only  # Options: path_only, filtered_params, full_path
+  
+  # Enable Sidekiq monitoring
+  enable_background_jobs: true
+
+development:
+  <<: *defaults
+  # Disable in development to avoid noise
+  monitor: false
+
+test:
+  <<: *defaults
+  # Disable in test environment
+  monitor: false
+
+staging:
+  <<: *defaults
+  monitor: true
+  # Sample rate for staging (lower than production)
+  sample_rate: 0.5  # 50% of requests
+
+production:
+  <<: *defaults
+  monitor: true
+  # Sample rate for production
+  sample_rate: 1.0  # 100% of requests
+  
+  # Enable all features in production
+  detailed_middleware: true
+  database_timing: true
+  timeline_traces: true
+  
+  # Production-specific alerts
+  slow_request_threshold: 300   # Stricter in production (300ms)
+  
+  # Auto-instrument common libraries
+  auto_instruments:
+    enabled: true

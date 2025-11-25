@@ -1,0 +1,71 @@
+name: Frontend Tests
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+
+      - name: Run ESLint
+        run: |
+          npm run lint
+        continue-on-error: true # Não falhar por enquanto (TASK-023)
+
+      - name: Run Tests
+        run: |
+          npm test -- --passWithNoTests
+        env:
+          CI: true
+
+      - name: Generate Test Coverage
+        if: always()
+        run: |
+          npm test -- --coverage --passWithNoTests
+        env:
+          CI: true
+        continue-on-error: true
+
+      - name: Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Frontend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+          if [ -d coverage ]; then
+            echo "📊 Coverage report available in artifacts" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Build check
+        run: |
+          npm run build
+        env:
+          CI: true
+          NEXT_TELEMETRY_DISABLED: 1

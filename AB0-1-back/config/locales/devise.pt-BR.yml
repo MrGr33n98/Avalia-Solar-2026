@@ -1,0 +1,6 @@
+pt-BR:
+  devise:
+    sessions:
+      admin_user:
+        invalid: "E-mail ou senha inválidos"
+      invalid: "E-mail ou senha inválidos"

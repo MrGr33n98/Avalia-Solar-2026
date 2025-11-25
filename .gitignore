@@ -1,0 +1,65 @@
+? # Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+.next
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+*.pem
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Local env files
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+node_modules/.cache/
+.turbo
+
+# Frontend dependencies
+/AB0-1-front/node_modules
+/AB0-1-front/.env
+
+# System Files
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Documentation files
+*.md
+!README.md
+*.txt

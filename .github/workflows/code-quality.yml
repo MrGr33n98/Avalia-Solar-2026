@@ -1,0 +1,204 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=AB0-1
+            -Dsonar.organization=your-org
+            -Dsonar.sources=AB0-1-back,AB0-1-front
+            -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/coverage/**
+        continue-on-error: true
+
+  complexity-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.2
+          
+      - name: Backend complexity check
+        working-directory: ./AB0-1-back
+        run: |
+          gem install flog
+          gem install flay
+          
+          echo "🔍 Analisando complexidade do código Ruby..."
+          flog --all --methods-only app/ lib/ || true
+          echo ""
+          echo "🔍 Analisando duplicação de código Ruby..."
+          flay app/ lib/ || true
+        continue-on-error: true
+        
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Frontend complexity check
+        working-directory: ./AB0-1-front
+        run: |
+          npm ci
+          npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 50 || true
+          
+          echo "📊 Analyzing code complexity..."
+          npx complexity-report src/ || true
+        continue-on-error: true
+
+  code-coverage:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ab0_test
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.2
+          bundler-cache: true
+          
+      - name: Setup database
+        working-directory: ./AB0-1-back
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ab0_test
+          
+      - name: Run backend tests with coverage
+        working-directory: ./AB0-1-back
+        run: bundle exec rspec
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ab0_test
+          COVERAGE: true
+          
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./AB0-1-back/coverage/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+        continue-on-error: true
+        
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Install frontend dependencies
+        working-directory: ./AB0-1-front
+        run: npm ci
+        
+      - name: Run frontend tests with coverage
+        working-directory: ./AB0-1-front
+        run: npm run test:coverage || echo "No tests configured"
+        continue-on-error: true
+        
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./AB0-1-front/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  documentation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check README exists
+        run: |
+          echo "📚 Verificando documentação..."
+          
+          if [ ! -f README.md ]; then
+            echo "❌ README.md não encontrado!"
+            exit 1
+          fi
+          
+          if [ ! -f AB0-1-back/README.md ]; then
+            echo "⚠️ Backend README.md não encontrado"
+          fi
+          
+          if [ ! -f AB0-1-front/README.md ]; then
+            echo "⚠️ Frontend README.md não encontrado"
+          fi
+          
+      - name: Check for API documentation
+        working-directory: ./AB0-1-back
+        run: |
+          if [ -f "docs/api.md" ] || [ -f "swagger.yml" ] || [ -f "openapi.yml" ]; then
+            echo "✅ API documentation found"
+          else
+            echo "⚠️ Consider adding API documentation (Swagger/OpenAPI)"
+          fi
+        continue-on-error: true
+        
+      - name: Markdown lint
+        uses: articulate/actions-markdownlint@v1
+        with:
+          config: .markdownlint.json
+          files: '**/*.md'
+          ignore: node_modules
+        continue-on-error: true
+
+  pr-size-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Check PR size
+        run: |
+          echo "📏 Verificando tamanho do PR..."
+          
+          LINES_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }} | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+          
+          echo "Linhas modificadas: $LINES_CHANGED"
+          
+          if [ "$LINES_CHANGED" -gt 500 ]; then
+            echo "⚠️ Este PR é grande (>500 linhas). Considere dividir em PRs menores para facilitar a revisão."
+          else
+            echo "✅ Tamanho do PR está adequado"
+          fi
+        continue-on-error: true

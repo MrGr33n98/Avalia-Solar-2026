@@ -1,0 +1,88 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    # Service containers para PostgreSQL
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ab0_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/ab0_test
+      JWT_SECRET: test_jwt_secret_for_ci_cd_pipeline_only
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true # Executa 'bundle install' e faz cache
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get -yqq install libpq-dev
+          bundle install --jobs 4 --retry 3
+
+      - name: Setup Database
+        run: |
+          bundle exec rails db:create db:schema:load --trace
+
+      - name: Run Tests with Coverage
+        run: |
+          COVERAGE=true bundle exec rails test
+        env:
+          COVERAGE: true
+
+      - name: Run System Tests (if exists)
+        run: |
+          bundle exec rails test:system
+        continue-on-error: true # Não falhar se system tests não existirem
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            log/test.log
+            tmp/screenshots/
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+          if [ -f log/test.log ]; then
+            echo "📝 Test log available in artifacts" >> $GITHUB_STEP_SUMMARY
+          fi

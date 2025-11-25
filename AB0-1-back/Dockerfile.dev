@@ -1,0 +1,50 @@
+FROM ruby:3.2.2
+
+# Install system dependencies including curl for health checks
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      libpq-dev \
+      postgresql-client \
+      nodejs \
+      yarn \
+      curl \
+      vim \
+      less \
+      git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Install specific bundler version
+RUN gem install bundler:2.4.22
+
+# Copy Gemfile and install dependencies
+COPY Gemfile Gemfile.lock ./
+
+# Install gems with development dependencies
+RUN bundle install --jobs 4 --retry 3
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p tmp/pids tmp/storage tmp/cache tmp/sockets public/assets log
+
+# Set environment variables for development
+ENV RAILS_ENV=development \
+    PATH="/app/bin:${PATH}" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    RAILS_LOG_TO_STDOUT=true
+
+# Expose port
+EXPOSE 3001
+
+# Add entrypoint script
+COPY entrypoint.dev.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.dev.sh
+
+ENTRYPOINT ["/usr/bin/entrypoint.dev.sh"]
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]

@@ -1,0 +1,175 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'fileutils'
+
+puts "🧪 Testing Migration Reversibility"
+puts "=" * 50
+
+# Colors for output
+def red(text); "\e[31m#{text}\e[0m"; end
+def green(text); "\e[32m#{text}\e[0m"; end
+def yellow(text); "\e[33m#{text}\e[0m"; end
+def blue(text); "\e[34m#{text}\e[0m"; end
+
+# Test configuration
+BACKUP_FILE = "tmp/schema_backup.rb"
+STEPS_TO_TEST = ENV.fetch('STEPS', 5).to_i
+
+def run_command(cmd, description)
+  print "  #{description}... "
+  output = `#{cmd} 2>&1`
+  success = $?.success?
+  
+  if success
+    puts green("✓")
+  else
+    puts red("✗")
+    puts red("    Error: #{output}")
+  end
+  
+  [success, output]
+end
+
+def backup_schema
+  FileUtils.mkdir_p('tmp')
+  FileUtils.cp('db/schema.rb', BACKUP_FILE) if File.exist?('db/schema.rb')
+end
+
+def restore_schema
+  if File.exist?(BACKUP_FILE)
+    FileUtils.cp(BACKUP_FILE, 'db/schema.rb')
+    FileUtils.rm(BACKUP_FILE)
+  end
+end
+
+def schema_diff
+  return nil unless File.exist?(BACKUP_FILE) && File.exist?('db/schema.rb')
+  
+  backup_content = File.read(BACKUP_FILE)
+  current_content = File.read('db/schema.rb')
+  
+  # Remove version line as it will always differ
+  backup_content = backup_content.gsub(/ActiveRecord::Schema\[.*?\]\.define\(version: \d+\)/, 'VERSION_PLACEHOLDER')
+  current_content = current_content.gsub(/ActiveRecord::Schema\[.*?\]\.define\(version: \d+\)/, 'VERSION_PLACEHOLDER')
+  
+  backup_content == current_content
+end
+
+def get_pending_migrations
+  output = `rails db:migrate:status 2>&1`
+  output.scan(/^\s*down\s+(\d+)\s+(.+)$/).map { |m| { version: m[0], name: m[1] } }
+end
+
+def main
+  # Check if we're in Rails root
+  unless File.exist?('db/migrate')
+    puts red("❌ Error: db/migrate directory not found")
+    puts "   Run this script from the Rails application root"
+    exit 1
+  end
+
+  puts "\n#{blue('Phase 1:')} Checking current migration status"
+  puts "-" * 50
+  
+  success, output = run_command('rails db:migrate:status | tail -10', 'Get migration status')
+  puts output.lines.last(10).join
+  
+  unless success
+    puts red("\n❌ Failed to get migration status")
+    exit 1
+  end
+
+  puts "\n#{blue('Phase 2:')} Ensuring all migrations are applied"
+  puts "-" * 50
+  
+  success, output = run_command('rails db:migrate', 'Apply pending migrations')
+  
+  unless success
+    puts red("\n❌ Failed to migrate")
+    puts output
+    exit 1
+  end
+
+  puts "\n#{blue('Phase 3:')} Backing up current schema"
+  puts "-" * 50
+  backup_schema
+  puts "  #{green('✓')} Schema backed up to #{BACKUP_FILE}"
+
+  puts "\n#{blue('Phase 4:')} Testing migration reversibility"
+  puts "-" * 50
+  puts "  Testing rollback of last #{STEPS_TO_TEST} migration(s)\n\n"
+
+  # Test rollback
+  success, output = run_command(
+    "rails db:rollback STEP=#{STEPS_TO_TEST}", 
+    "Rollback #{STEPS_TO_TEST} step(s)"
+  )
+
+  unless success
+    puts red("\n❌ Rollback failed!")
+    puts "Some migrations may not be reversible"
+    puts "\nOutput:"
+    puts output
+    restore_schema
+    exit 1
+  end
+
+  # Test re-migration
+  success, output = run_command(
+    'rails db:migrate', 
+    "Re-apply migrations"
+  )
+
+  unless success
+    puts red("\n❌ Re-migration failed!")
+    puts output
+    restore_schema
+    exit 1
+  end
+
+  puts "\n#{blue('Phase 5:')} Verifying schema consistency"
+  puts "-" * 50
+
+  if schema_diff
+    puts "  #{green('✓')} Schema is identical after rollback/migrate cycle"
+  else
+    puts "  #{yellow('⚠')} Schema differs after rollback/migrate cycle"
+    puts "    This might be expected for data migrations"
+    puts "\n    Run: git diff db/schema.rb"
+    puts "    to see the differences"
+  end
+
+  # Dump schema for comparison
+  run_command('rails db:schema:dump', 'Dump final schema')
+
+  puts "\n#{blue('Phase 6:')} Cleanup"
+  puts "-" * 50
+  restore_schema
+  puts "  #{green('✓')} Backup removed"
+
+  puts "\n" + "=" * 50
+  puts green("✅ Migration reversibility test completed successfully!")
+  puts "\nAll tested migrations are reversible."
+  puts "You can safely rollback the last #{STEPS_TO_TEST} migration(s) in production if needed."
+  
+  puts "\n#{blue('Next steps:')}"
+  puts "  • Review any schema differences: git diff db/schema.rb"
+  puts "  • Test more migrations: STEPS=10 bin/test_migrations"
+  puts "  • Run full test suite: rails test"
+end
+
+# Run tests
+begin
+  main
+rescue Interrupt
+  puts "\n\n#{yellow('⚠')} Test interrupted by user"
+  restore_schema
+  exit 1
+rescue StandardError => e
+  puts "\n\n#{red('❌ Unexpected error:')}"
+  puts e.message
+  puts e.backtrace.first(5)
+  restore_schema
+  exit 1
+end

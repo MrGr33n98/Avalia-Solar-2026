@@ -1,0 +1,122 @@
+name: 🐛 Bug Report
+description: Reportar um bug ou comportamento inesperado
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees:
+  - mrgr33n98
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar um bug! Por favor, preencha as informações abaixo.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Descrição do Bug
+      description: Descreva claramente o bug encontrado
+      placeholder: O que aconteceu de errado?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔄 Passos para Reproduzir
+      description: Como podemos reproduzir este bug?
+      placeholder: |
+        1. Vá para '...'
+        2. Clique em '...'
+        3. Role até '...'
+        4. Veja o erro
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Comportamento Esperado
+      description: O que você esperava que acontecesse?
+      placeholder: Descreva o comportamento esperado
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Comportamento Atual
+      description: O que aconteceu na realidade?
+      placeholder: Descreva o comportamento atual
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 🎯 Componente Afetado
+      description: Qual parte do sistema foi afetada?
+      options:
+        - Backend (API/Rails)
+        - Frontend (Next.js)
+        - Banco de Dados
+        - Autenticação
+        - Docker/Deploy
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 🔥 Severidade
+      description: Qual o impacto deste bug?
+      options:
+        - 🔴 Crítico - Sistema não funciona
+        - 🟠 Alto - Funcionalidade importante quebrada
+        - 🟡 Médio - Funcionalidade menor quebrada
+        - 🟢 Baixo - Problema cosmético
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🖥️ Ambiente
+      description: Em qual ambiente o bug ocorreu?
+      placeholder: |
+        - SO: [ex: macOS, Windows, Linux]
+        - Browser: [ex: Chrome 120, Safari 17]
+        - Versão do Node: [ex: 18.17.0]
+        - Versão do Ruby: [ex: 3.2.2]
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Logs/Screenshots
+      description: Adicione logs de erro, screenshots ou qualquer informação adicional
+      placeholder: Cole aqui os logs ou arraste screenshots
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💡 Contexto Adicional
+      description: Qualquer outra informação relevante sobre o problema
+      placeholder: Adicione contexto adicional aqui
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ Checklist
+      description: Confirme que você verificou o seguinte
+      options:
+        - label: Procurei por issues similares antes de criar esta
+          required: true
+        - label: Consegui reproduzir o bug de forma consistente
+          required: false
+        - label: Li a documentação relacionada
+          required: false

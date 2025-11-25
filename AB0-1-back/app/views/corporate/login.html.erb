@@ -1,0 +1,89 @@
+<div class="corporate-landing">
+  <!-- Hero Section com Split Layout -->
+  <section class="login-section min-h-screen flex flex-col md:flex-row">
+    <!-- Banner Ilustrativo à Esquerda -->
+    <div class="banner-side w-full md:w-1/2 bg-gradient-to-br from-[#004aad] to-[#fbc02d] p-8 flex flex-col justify-center items-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="solar-icons">
+          <!-- Ícones de energia solar como elementos decorativos -->
+          <i class="bi bi-sun absolute top-1/4 left-1/4 text-5xl"></i>
+          <i class="bi bi-lightning-charge absolute bottom-1/3 right-1/3 text-4xl"></i>
+          <i class="bi bi-house absolute top-1/3 right-1/4 text-5xl"></i>
+          <i class="bi bi-battery-charging absolute bottom-1/4 left-1/3 text-4xl"></i>
+        </div>
+      </div>
+      <div class="z-10 text-center">
+        <div class="mb-8">
+          <%= image_tag "logo.svg", alt: "Compare Solar Logo", class: "h-20 w-auto mx-auto" %>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Compare Solar</h1>
+        <p class="text-xl text-white/90 max-w-md mx-auto">
+          Portal corporativo para gerenciamento de empresas, produtos e conteúdos da plataforma.
+        </p>
+      </div>
+    </div>
+
+    <!-- Caixa de Login à Direita -->
+    <div class="login-side w-full md:w-1/2 bg-white p-8 flex items-center justify-center">
+      <div class="login-container max-w-md w-full p-8 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold text-[#004aad] mb-6 text-center">Portal do Funcionário</h2>
+        <p class="text-gray-600 mb-8 text-center">
+          Acesse o painel administrativo para gerenciar todos os aspectos da plataforma Compare Solar.
+        </p>
+        
+        <div class="text-center">
+          <a href="http://localhost:3001/admin/login" class="btn-login bg-gradient-to-r from-[#004aad] to-[#0062da] text-white font-medium py-3 px-6 rounded-md w-full inline-block hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+            <i class="bi bi-shield-lock mr-2"></i>
+            Acessar Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  /* Estilos específicos para a página de login */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', 'Roboto', sans-serif;
+  }
+  
+  .corporate-landing {
+    --primary-color: #004aad;
+    --accent-color: #fbc02d;
+  }
+  
+  .login-section {
+    min-height: 100vh;
+  }
+  
+  .banner-side {
+    position: relative;
+  }
+  
+  .solar-icons i {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .btn-login:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .login-section {
+      flex-direction: column;
+    }
+    
+    .banner-side,
+    .login-side {
+      width: 100%;
+    }
+    
+    .banner-side {
+      padding: 3rem 1rem;
+    }
+  }
+</style>

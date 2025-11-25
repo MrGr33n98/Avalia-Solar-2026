@@ -1,0 +1,294 @@
+name: Deploy on VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - Build and Push Backend Docker Image
+      - Build and Push Frontend Docker Image
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Branch to deploy (default: main)"
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
+
+    env:
+      GHCR_USERNAME: mrgr33n98
+      VM_HOST: ${{ secrets.VM_HOST }}
+      DEPLOY_DIR: $HOME/ab0-app
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      TARGET_BRANCH: ${{ github.event.inputs.target_branch || 'main' }}
+
+    steps:
+      - name: Show deployment context
+        run: |
+          echo "🚀 Deploy triggered via: ${{ github.event_name }}"
+          echo "🌿 Target branch: $TARGET_BRANCH"
+          echo "👤 Runner: $(hostname)"
+
+      - name: Check dependencies and start Docker
+        run: |
+          set -e
+          echo "🔍 Verificando dependências..."
+
+          if ! command -v docker &> /dev/null; then
+            echo "ℹ️ Docker não encontrado. Instalando..."
+            sudo apt-get update
+            sudo apt-get install -y docker.io
+          fi
+
+          if ! docker info > /dev/null 2>&1; then
+            echo "ℹ️ Docker não está rodando. Tentando iniciar..."
+            sudo systemctl start docker
+            sleep 5
+            if ! docker info > /dev/null 2>&1; then
+              echo "❌ Erro: Falha ao iniciar o Docker."
+              exit 1
+            fi
+            echo "✅ Docker iniciado com sucesso."
+          else
+            echo "✅ Docker já está rodando."
+          fi
+
+          if ! docker compose version &> /dev/null; then
+            echo "📦 Instalando Docker Compose Plugin..."
+            sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+          fi
+
+          echo "✅ Dependências verificadas."
+
+      - name: Login to GitHub Container Registry
+        run: |
+          set -e
+          echo "🔐 Autenticando no GitHub Container Registry..."
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ env.GHCR_USERNAME }} --password-stdin
+
+      - name: Ensure shared docker network exists
+        run: |
+          set -e
+          NETWORK_NAME=ab0-network
+          if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+            echo "🌐 Criando rede Docker '$NETWORK_NAME'..."
+            docker network create "$NETWORK_NAME"
+          else
+            echo "✅ Rede Docker '$NETWORK_NAME' já existe."
+          fi
+
+      - name: Backup current deployment
+        run: |
+          set -e
+          echo "💾 Criando backup do deployment atual..."
+
+          if [ -d "$DEPLOY_DIR" ]; then
+            BACKUP_DIR="$HOME/ab0-app-backup-$(date +%Y%m%d-%H%M%S)"
+            cp -r "$DEPLOY_DIR" "$BACKUP_DIR"
+            echo "✅ Backup criado em: $BACKUP_DIR"
+
+            ls -dt $HOME/ab0-app-backup-* 2>/dev/null | tail -n +4 | xargs rm -rf || true
+          else
+            echo "ℹ️ Nenhum deployment anterior encontrado. Pulando backup."
+          fi
+
+      - name: Deploy Application
+        run: |
+          set -e
+          echo "🚀 Iniciando deploy na VPS..."
+
+          if [ -d "$DEPLOY_DIR" ]; then
+            cd "$DEPLOY_DIR"
+            echo "🛑 Parando containers antigos..."
+            docker compose down --remove-orphans || true
+            cd ~
+            rm -rf "$DEPLOY_DIR"
+          fi
+
+          mkdir -p "$DEPLOY_DIR"
+          cd "$DEPLOY_DIR"
+
+          echo "📝 Criando docker-compose.yml..."
+          cat > docker-compose.yml <<'EOF'
+          services:
+            db:
+              image: postgres:14
+              restart: always
+              environment:
+                POSTGRES_USER: ${POSTGRES_USER}
+                POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                POSTGRES_DB: ${POSTGRES_DB}
+              volumes:
+                - db_data:/var/lib/postgresql/data
+              ports:
+                - "5432:5432"
+              networks:
+                - ab0-network
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+                interval: 5s
+                timeout: 5s
+                retries: 10
+                start_period: 10s
+
+            backend:
+              image: ghcr.io/mrgr33n98/ab0-1-backend:latest
+              restart: always
+              depends_on:
+                db:
+                  condition: service_healthy
+              environment:
+                RAILS_ENV: production
+                POSTGRES_USER: ${POSTGRES_USER}
+                POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                POSTGRES_DB: ${POSTGRES_DB}
+                DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+                RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                JWT_SECRET: ${JWT_SECRET}
+                CORS_ORIGINS: https://avaliasolar.com.br,https://www.avaliasolar.com.br,https://api.avaliasolar.com.br
+              ports:
+                - "3001:3001"
+              networks:
+                - ab0-network
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 30s
+
+            frontend:
+              image: ghcr.io/mrgr33n98/ab0-1-frontend:latest
+              restart: always
+              depends_on:
+                backend:
+                  condition: service_healthy
+              environment:
+                NODE_ENV: production
+                NEXT_PUBLIC_API_URL: https://api.avaliasolar.com.br
+                NEXT_PUBLIC_SITE_URL: https://www.avaliasolar.com.br
+              ports:
+                - "3000:3000"
+              networks:
+                - ab0-network
+
+          volumes:
+            db_data: {}
+
+          networks:
+            ab0-network:
+              external: true
+          EOF
+
+          echo "🐳 Fazendo pull das imagens..."
+          timeout 300s docker compose pull
+
+          echo "🚀 Iniciando containers..."
+          timeout 120s docker compose up -d
+
+      - name: Run Database Migrations
+        run: |
+          set -e
+          cd "$DEPLOY_DIR"
+
+          echo "✨ Aguardando database estar pronto..."
+          sleep 10
+
+          echo "📊 Rodando migrações..."
+          docker compose run --rm -T backend bundle exec rails db:migrate
+          echo "✅ Migrações concluídas com sucesso!"
+
+      - name: Health Check Services
+        run: |
+          set -e
+          cd "$DEPLOY_DIR"
+
+          echo "⏳ Aguardando inicialização dos serviços..."
+
+          check_service_health() {
+            local service_name=$1
+            local url=$2
+            local max_attempts=30
+            local wait_time=10
+            local curl_timeout=5
+
+            echo "🔍 Verificando saúde do serviço '$service_name'..."
+            for ((i=1; i<=max_attempts; i++)); do
+              if curl -sf --max-time "$curl_timeout" "$url" > /dev/null 2>&1; then
+                echo "✅ Serviço '$service_name' está respondendo."
+                return 0
+              fi
+              echo "⏳ Tentativa $i/$max_attempts - Aguardando..."
+              sleep "$wait_time"
+            done
+
+            echo "❌ Serviço '$service_name' não respondeu após $max_attempts tentativas."
+            docker compose logs "$service_name"
+            return 1
+          }
+
+          check_service_health "backend" "http://${{ secrets.VM_HOST }}:3001/health"
+          check_service_health "frontend" "http://${{ secrets.VM_HOST }}:3000"
+
+      - name: Cleanup old Docker resources
+        if: success()
+        run: |
+          echo "🧹 Limpando recursos antigos do Docker..."
+          docker image prune -af --filter "until=72h" || true
+          docker volume prune -f || true
+          echo "✅ Limpeza concluída!"
+
+      - name: Deploy Summary
+        if: success()
+        run: |
+          echo "✅ Deploy finalizado com sucesso!"
+          echo ""
+          cd "$DEPLOY_DIR"
+          docker compose ps
+
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          echo "⚠️ Deploy falhou. Tentando rollback..."
+
+          LATEST_BACKUP=$(ls -dt $HOME/ab0-app-backup-* 2>/dev/null | head -n 1)
+
+          if [ -n "$LATEST_BACKUP" ] && [ -d "$LATEST_BACKUP" ]; then
+            echo "📦 Restaurando backup: $LATEST_BACKUP"
+
+            if [ -d "$DEPLOY_DIR" ]; then
+              cd "$DEPLOY_DIR"
+              docker compose down --remove-orphans || true
+              cd ~
+              rm -rf "$DEPLOY_DIR"
+            fi
+
+            mv "$LATEST_BACKUP" "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            docker compose up -d || {
+              echo "❌ Falha ao restaurar backup"
+              docker compose logs
+              exit 1
+            }
+
+            echo "✅ Rollback concluído com sucesso!"
+          else
+            echo "ℹ️ Nenhum backup disponível para rollback."
+          fi

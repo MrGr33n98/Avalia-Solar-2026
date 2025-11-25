@@ -1,0 +1,25 @@
+<div class="post-show">
+  <h1><%= @post&.title %></h1>
+  
+  <% if @post %>
+    <div class="post-metadata">
+      <p>Posted by: <%= @post.user&.email %></p>
+      <p>Posted on: <%= @post.created_at&.strftime("%B %d, %Y") %></p>
+    </div>
+
+    <div class="post-content">
+      <%= simple_format(@post.body) %>
+    </div>
+
+    <div class="post-actions">
+      <% if user_signed_in? && @post.user == current_user %>
+        <%= link_to 'Edit', edit_post_path(@post), class: 'btn btn-secondary' %>
+        <%= link_to 'Delete', post_path(@post), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' %>
+      <% end %>
+      <%= link_to 'Back to Blog', posts_path, class: 'btn btn-primary' %>
+    </div>
+  <% else %>
+    <p>Post not found.</p>
+    <%= link_to 'Back to Blog', posts_path, class: 'btn btn-primary' %>
+  <% end %>
+</div>

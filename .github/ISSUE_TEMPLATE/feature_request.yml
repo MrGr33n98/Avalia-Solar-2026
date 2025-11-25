@@ -1,0 +1,128 @@
+name: ✨ Feature Request
+description: Sugerir uma nova funcionalidade ou melhoria
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+assignees:
+  - mrgr33n98
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por sugerir uma nova feature! Por favor, preencha as informações abaixo.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🎯 Problema/Necessidade
+      description: Qual problema esta feature resolve?
+      placeholder: |
+        Esta feature é relacionada a um problema? Por favor, descreva.
+        Ex: Sempre fico frustrado quando [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Solução Proposta
+      description: Descreva a solução que você gostaria de ver
+      placeholder: |
+        Descreva claramente como você gostaria que a feature funcionasse.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternativas Consideradas
+      description: Você considerou alguma alternativa?
+      placeholder: |
+        Descreva alternativas que você já considerou.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 🎯 Componente
+      description: Onde esta feature seria implementada?
+      options:
+        - Backend (API/Rails)
+        - Frontend (Next.js)
+        - Banco de Dados
+        - Autenticação
+        - Docker/Deploy
+        - Documentação
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: ⚡ Prioridade
+      description: Qual a prioridade desta feature?
+      options:
+        - 🔴 Alta - Necessária para MVP
+        - 🟡 Média - Importante mas não urgente
+        - 🟢 Baixa - Nice to have
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: 🎨 Mockups/Exemplos
+      description: Adicione mockups, wireframes ou exemplos visuais
+      placeholder: |
+        Cole links ou arraste imagens aqui
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: 👤 User Stories
+      description: Como usuário, como você usaria esta feature?
+      placeholder: |
+        Como [tipo de usuário]
+        Eu quero [fazer algo]
+        Para que [objetivo/benefício]
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: ✅ Critérios de Aceitação
+      description: Como saberemos que esta feature está completa?
+      placeholder: |
+        - [ ] Critério 1
+        - [ ] Critério 2
+        - [ ] Critério 3
+
+  - type: textarea
+    id: technical
+    attributes:
+      label: 🔧 Considerações Técnicas
+      description: Detalhes técnicos relevantes (opcional)
+      placeholder: |
+        - APIs necessárias
+        - Dependências
+        - Impacto em performance
+        - Mudanças no schema
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💡 Contexto Adicional
+      description: Qualquer outra informação relevante
+      placeholder: Adicione contexto adicional aqui
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ Checklist
+      description: Confirme que você verificou o seguinte
+      options:
+        - label: Procurei por feature requests similares antes de criar este
+          required: true
+        - label: Esta feature está alinhada com os objetivos do projeto
+          required: false
+        - label: Estou disposto a contribuir com a implementação
+          required: false

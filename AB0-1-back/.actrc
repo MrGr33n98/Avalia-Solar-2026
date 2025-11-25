@@ -1,0 +1,4 @@
+--secret-file .env.secrets
+--env-file .env.production
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+--bind

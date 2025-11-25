@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  member_id: 1
+  product: one
+  category: one
+  plan: one
+  value: 9.99
+  status: MyString
+  purchased_at: 2025-09-11 03:19:25
+  start_at: 2025-09-11 03:19:25
+  end_at: 2025-09-11 03:19:25
+
+two:
+  member_id: 1
+  product: two
+  category: two
+  plan: two
+  value: 9.99
+  status: MyString
+  purchased_at: 2025-09-11 03:19:25
+  start_at: 2025-09-11 03:19:25
+  end_at: 2025-09-11 03:19:25

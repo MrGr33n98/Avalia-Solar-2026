@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ab0-backend
+  labels:
+    app: ab0-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ab0-backend
+  template:
+    metadata:
+      labels:
+        app: ab0-backend
+    spec:
+      containers:
+      - name: rails
+        image: ab0-backend:latest
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        
+        # Environment variables
+        env:
+        - name: RAILS_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ab0-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ab0-secrets
+              key: redis-url
+        
+        # Resource limits
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Liveness probe - verifica se o container está vivo
+        # Se falhar, o Kubernetes vai reiniciar o container
+        livenessProbe:
+          httpGet:
+            path: /health/liveness
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30  # Espera 30s após o container iniciar
+          periodSeconds: 10         # Verifica a cada 10s
+          timeoutSeconds: 5         # Timeout de 5s para resposta
+          successThreshold: 1       # 1 sucesso para considerar healthy
+          failureThreshold: 3       # 3 falhas consecutivas para reiniciar
+        
+        # Readiness probe - verifica se o container está pronto para receber tráfego
+        # Se falhar, o Kubernetes remove o pod do service (não reinicia)
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10   # Espera 10s após o container iniciar
+          periodSeconds: 5          # Verifica a cada 5s
+          timeoutSeconds: 3         # Timeout de 3s para resposta
+          successThreshold: 1       # 1 sucesso para considerar ready
+          failureThreshold: 3       # 3 falhas para remover do service
+        
+        # Startup probe - para aplicações que demoram para iniciar
+        # Durante o startup, liveness e readiness são desabilitados
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 30      # 30 * 5s = 150s para inicializar
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ab0-backend-service
+  labels:
+    app: ab0-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: ab0-backend
+
+---
+# HorizontalPodAutoscaler baseado em métricas
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ab0-backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ab0-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max

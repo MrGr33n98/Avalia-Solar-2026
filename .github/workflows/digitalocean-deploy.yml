@@ -1,0 +1,198 @@
+name: CI/CD DigitalOcean
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar segredos
+        run: |
+          test -n "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" || (echo "Faltando DIGITALOCEAN_ACCESS_TOKEN" && exit 1)
+          test -n "${{ secrets.APP_ENV_VARS }}" || (echo "Faltando APP_ENV_VARS" && exit 1)
+      - name: Instalar doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Notificar início no Slack
+        if: always()
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-type: application/json" --data '{"text":"Pipeline iniciado: '${GITHUB_SHA}'"}' "${{ secrets.SLACK_WEBHOOK_URL }}"
+          fi
+
+  build_test:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node (frontend)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Instalar dependências (frontend)
+        working-directory: AB0-1-front
+        run: npm ci
+      - name: Build (frontend)
+        working-directory: AB0-1-front
+        run: npm run build
+      - name: Testes (frontend)
+        working-directory: AB0-1-front
+        run: npm test --if-present -- --ci
+      - name: Auditoria de dependências (frontend)
+        working-directory: AB0-1-front
+        run: npm audit --audit-level=high || true
+
+      - name: Setup Ruby (backend)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Instalar dependências (backend)
+        working-directory: AB0-1-back
+        run: bundle install --jobs 4
+      - name: Precompilar assets (backend)
+        working-directory: AB0-1-back
+        run: bundle exec rake assets:precompile
+      - name: Testes (backend)
+        working-directory: AB0-1-back
+        run: |
+          if [ -f "bin/rspec" ] || grep -q rspec Gemfile; then bundle exec rspec; else bundle exec rails test; fi
+      - name: Auditoria de dependências (backend)
+        run: |
+          gem install bundler-audit
+          cd AB0-1-back
+          bundler-audit update
+          bundler-audit check
+
+      - name: Upload cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            AB0-1-front/coverage
+            AB0-1-back/coverage
+          if-no-files-found: ignore
+      - name: Notificar sucesso de build
+        if: success()
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-type: application/json" --data '{"text":"Build/Test OK: '${GITHUB_SHA}'"}' "${{ secrets.SLACK_WEBHOOK_URL }}"
+          fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      APP_ENV_VARS_JSON: ${{ secrets.APP_ENV_VARS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Instalar jq
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+      - name: Gerar spec da App Platform
+        run: |
+          echo "$APP_ENV_VARS_JSON" > app_env.json
+          cat > app-spec.yaml <<'EOF'
+          name: ab0-app
+          services:
+            - name: backend
+              source_repo: https://github.com/${{ github.repository }}
+              source_branch: main
+              github:
+                deploy_on_push: true
+              run_command: bundle exec puma -C config/puma.rb
+              build_command: bundle install && bundle exec rake assets:precompile
+              http_port: 3001
+              health_check:
+                http_path: /health
+                initial_delay_seconds: 30
+            - name: frontend
+              source_repo: https://github.com/${{ github.repository }}
+              source_branch: main
+              github:
+                deploy_on_push: true
+              run_command: npm run start
+              build_command: npm ci && npm run build
+              http_port: 3000
+              routes:
+                - path: /
+          EOF
+          jq -n --argjson env $(cat app_env.json) '$env | to_entries | map({key: .key, value: .value, scope: "RUN_AND_BUILD_TIME"})' > env-do.json
+          jq '.services[0].envs = input' env-do.json app-spec.yaml > app-spec1.yaml
+          jq '.services[1].envs = input' env-do.json app-spec1.yaml > app-spec-final.yaml
+      - name: Deploy App Platform
+        id: do_deploy
+        run: |
+          APP_ID="${{ secrets.DO_APP_ID }}"
+          if [ -n "$APP_ID" ]; then
+            doctl apps update --spec app-spec-final.yaml --app "$APP_ID"
+          else
+            doctl apps create --spec app-spec-final.yaml --format ID --no-header | tee app_id.txt
+            echo "APP_ID=$(cat app_id.txt)" >> $GITHUB_ENV
+          fi
+      - name: Aguardar implantação
+        run: |
+          doctl apps wait --app "${{ env.APP_ID || secrets.DO_APP_ID }}" --timeout 900
+
+  validate:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Smoke tests
+        run: |
+          set -e
+          FRONT_URL="${{ secrets.APP_DOMAIN }}"
+          BACK_URL="${{ secrets.API_DOMAIN }}"
+          curl -sSf -w ' %{http_code} %{time_total}\n' "https://$FRONT_URL/" -o /dev/null
+          curl -sSf -w ' %{http_code} %{time_total}\n' "https://$BACK_URL/health" -o /dev/null
+      - name: Notificar sucesso de deploy
+        if: success()
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-type: application/json" --data '{"text":"Deploy validado: '${GITHUB_SHA}'"}' "${{ secrets.SLACK_WEBHOOK_URL }}"
+          fi
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Executar rollback
+        run: |
+          APP_ID="${{ env.APP_ID || secrets.DO_APP_ID }}"
+          LAST_OK=$(doctl apps deployments list --app "$APP_ID" --format ID,Phase | grep ACTIVE | head -n1 | awk '{print $1}')
+          doctl apps rollback --app "$APP_ID" --deployment "$LAST_OK"
+      - name: Notificar falha no Slack
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-type: application/json" --data '{"text":"Deploy falhou. Rollback executado."}' "${{ secrets.SLACK_WEBHOOK_URL }}"
+          fi
+      - name: Notificar falha por email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ fromJson(secrets.SMTP_CREDENTIALS).host }}
+          server_port: ${{ fromJson(secrets.SMTP_CREDENTIALS).port }}
+          username: ${{ fromJson(secrets.SMTP_CREDENTIALS).user }}
+          password: ${{ fromJson(secrets.SMTP_CREDENTIALS).pass }}
+          subject: Falha no deploy e rollback executado
+          to: ${{ fromJson(secrets.SMTP_CREDENTIALS).to }}
+          from: ${{ fromJson(secrets.SMTP_CREDENTIALS).from }}
+          body: Falha no deploy da pipeline GitHub Actions; rollback executado.

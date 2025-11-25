@@ -1,0 +1,152 @@
+version: "2"
+
+# Configure checks and plugins
+checks:
+  argument-count:
+    enabled: true
+    config:
+      threshold: 4
+  complex-logic:
+    enabled: true
+    config:
+      threshold: 4
+  file-lines:
+    enabled: true
+    config:
+      threshold: 250
+  method-complexity:
+    enabled: true
+    config:
+      threshold: 5
+  method-count:
+    enabled: true
+    config:
+      threshold: 20
+  method-lines:
+    enabled: true
+    config:
+      threshold: 25
+  nested-control-flow:
+    enabled: true
+    config:
+      threshold: 4
+  return-statements:
+    enabled: true
+    config:
+      threshold: 4
+  similar-code:
+    enabled: true
+    config:
+      threshold: # language-specific defaults. An override will affect all languages.
+  identical-code:
+    enabled: true
+    config:
+      threshold: # language-specific defaults. An override will affect all languages.
+
+# Plugins for language-specific analysis
+plugins:
+  # Backend (Ruby/Rails)
+  rubocop:
+    enabled: true
+    channel: rubocop-1-64-1
+    config:
+      file: AB0-1-back/.rubocop.yml
+  
+  brakeman:
+    enabled: true
+  
+  bundler-audit:
+    enabled: true
+  
+  # Frontend (TypeScript/React)
+  eslint:
+    enabled: true
+    channel: eslint-9
+    config:
+      config: AB0-1-front/.eslintrc.json
+  
+  # Code duplication
+  duplication:
+    enabled: true
+    config:
+      languages:
+        ruby:
+          mass_threshold: 30
+          minimum_tokens: 100
+        typescript:
+          mass_threshold: 30
+          minimum_tokens: 100
+        javascript:
+          mass_threshold: 30
+          minimum_tokens: 100
+
+# Exclude patterns (paths are relative to repository root)
+exclude_patterns:
+  # General
+  - "**/node_modules/"
+  - "**/vendor/"
+  - "**/tmp/"
+  - "**/log/"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  
+  # Backend
+  - "AB0-1-back/db/schema.rb"
+  - "AB0-1-back/db/migrate/"
+  - "AB0-1-back/config/initializers/"
+  - "AB0-1-back/config/environments/"
+  - "AB0-1-back/config/locales/"
+  - "AB0-1-back/test/"
+  - "AB0-1-back/spec/"
+  - "AB0-1-back/coverage/"
+  - "AB0-1-back/public/assets/"
+  - "AB0-1-back/bin/"
+  - "AB0-1-back/storage/"
+  
+  # Frontend
+  - "AB0-1-front/.next/"
+  - "AB0-1-front/out/"
+  - "AB0-1-front/build/"
+  - "AB0-1-front/dist/"
+  - "AB0-1-front/coverage/"
+  - "AB0-1-front/public/"
+  - "AB0-1-front/__tests__/"
+  - "AB0-1-front/jest.config.js"
+  - "AB0-1-front/jest.setup.js"
+  - "AB0-1-front/next.config.js"
+  - "AB0-1-front/postcss.config.js"
+  - "AB0-1-front/tailwind.config.ts"
+  - "AB0-1-front/tsconfig.json"
+  - "AB0-1-front/next-env.d.ts"
+  
+  # Test files
+  - "**/*.test.js"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.js"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/__tests__/**"
+  - "**/__mocks__/**"
+  
+  # Documentation
+  - "**/*.md"
+  - "**/docs/**"
+  - "**/documentation/**"
+  
+  # CI/CD
+  - ".github/**"
+  - "**/.github/**"
+  
+  # Docker
+  - "**/Dockerfile*"
+  - "**/.dockerignore"
+  - "**/docker-compose*.yml"
+
+# Prepare commands (run before analysis)
+prepare:
+  fetch:
+    - url: "https://raw.githubusercontent.com/github/gitignore/main/Ruby.gitignore"
+      path: ".gitignore"
+    - url: "https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore"
+      path: ".gitignore"

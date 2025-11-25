@@ -1,0 +1,58 @@
+# Sidekiq configuration - TASK-017
+# https://github.com/sidekiq/sidekiq/wiki/Advanced-Options
+
+# Concurrency (number of threads)
+# Start with CPU cores * 2
+:concurrency: 5
+
+# Queues with priority (higher number = higher priority)
+:queues:
+  - [critical, 10]  # Critical jobs (e.g., payments, urgent notifications)
+  - [mailers, 5]    # Email jobs
+  - [default, 3]    # Default queue
+  - [low, 1]        # Low priority (cleanup, reports)
+
+# Timeout for jobs (25 seconds by default)
+:timeout: 25
+
+# Verbose logging (disable in production)
+:verbose: false
+
+# Log file
+:logfile: ./log/sidekiq.log
+
+# PID file
+:pidfile: ./tmp/pids/sidekiq.pid
+
+# Max retries (default is 25)
+:max_retries: 25
+
+# Dead job queue size (default is 10,000)
+:dead_max_jobs: 10000
+
+# How long to keep dead jobs (in seconds, default is 180 days)
+:dead_timeout_in_seconds: 15552000
+
+# Lifecycle events
+:lifecycle_events:
+  startup:
+    - ['bundle', 'exec', 'rake', 'sidekiq:startup']
+  quiet:
+    - ['bundle', 'exec', 'rake', 'sidekiq:quiet']
+  shutdown:
+    - ['bundle', 'exec', 'rake', 'sidekiq:shutdown']
+
+# Environment-specific settings
+production:
+  :concurrency: 10
+  :verbose: false
+  :timeout: 30
+
+development:
+  :concurrency: 2
+  :verbose: true
+  :timeout: 25
+
+test:
+  :concurrency: 1
+  :verbose: false

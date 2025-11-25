@@ -1,0 +1,239 @@
+name: Code Quality Analysis
+
+on:
+  push:
+    branches: [main, develop, staging]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  codeclimate:
+    name: CodeClimate Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better relevancy
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: AB0-1-back
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: AB0-1-front/package-lock.json
+      
+      - name: Install frontend dependencies
+        working-directory: AB0-1-front
+        run: npm ci
+      
+      - name: Run ESLint (Frontend)
+        working-directory: AB0-1-front
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Run RuboCop (Backend)
+        working-directory: AB0-1-back
+        run: bundle exec rubocop --format json --out rubocop-report.json
+        continue-on-error: true
+      
+      - name: Download CodeClimate Test Reporter
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+      
+      - name: CodeClimate - Before Build
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        run: |
+          ./cc-test-reporter before-build
+        continue-on-error: true
+      
+      - name: Run Backend Tests with Coverage
+        working-directory: AB0-1-back
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+        run: |
+          bundle exec rails db:create db:schema:load
+          bundle exec rails test
+        continue-on-error: true
+      
+      - name: Run Frontend Tests with Coverage
+        working-directory: AB0-1-front
+        env:
+          NODE_ENV: test
+        run: npm run test:coverage
+        continue-on-error: true
+      
+      - name: Format Backend Coverage
+        working-directory: AB0-1-back
+        run: |
+          if [ -f coverage/.resultset.json ]; then
+            ../cc-test-reporter format-coverage -t simplecov -o ../coverage/backend.json coverage/.resultset.json
+          fi
+        continue-on-error: true
+      
+      - name: Format Frontend Coverage
+        working-directory: AB0-1-front
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            ../cc-test-reporter format-coverage -t lcov -o ../coverage/frontend.json coverage/lcov.info
+          fi
+        continue-on-error: true
+      
+      - name: Upload Coverage to CodeClimate
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        run: |
+          mkdir -p coverage
+          if [ -f coverage/backend.json ] && [ -f coverage/frontend.json ]; then
+            ./cc-test-reporter sum-coverage coverage/*.json -p 2 -o coverage/total.json
+            ./cc-test-reporter upload-coverage -i coverage/total.json
+          elif [ -f coverage/backend.json ]; then
+            ./cc-test-reporter upload-coverage -i coverage/backend.json
+          elif [ -f coverage/frontend.json ]; then
+            ./cc-test-reporter upload-coverage -i coverage/frontend.json
+          fi
+        continue-on-error: true
+      
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            AB0-1-back/coverage/
+            AB0-1-front/coverage/
+            coverage/
+          retention-days: 30
+      
+      - name: Upload RuboCop Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rubocop-report
+          path: AB0-1-back/rubocop-report.json
+          retention-days: 30
+      
+      - name: Comment PR with Coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 📊 Code Quality Report\n\n';
+            
+            // Add RuboCop results if available
+            try {
+              const rubocop = JSON.parse(fs.readFileSync('AB0-1-back/rubocop-report.json', 'utf8'));
+              const offenseCount = rubocop.summary.offense_count;
+              const fileCount = rubocop.summary.inspected_file_count;
+              comment += `### Backend (RuboCop)\n`;
+              comment += `- Files inspected: ${fileCount}\n`;
+              comment += `- Offenses found: ${offenseCount}\n\n`;
+            } catch (e) {
+              comment += '### Backend (RuboCop)\n❌ Report not available\n\n';
+            }
+            
+            comment += '### Coverage Reports\n';
+            comment += 'Full coverage reports are available in the workflow artifacts.\n\n';
+            comment += '🔍 [View detailed report on CodeClimate](https://codeclimate.com/github/${{ github.repository }})\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        continue-on-error: true
+
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: AB0-1-back
+      
+      - name: Run Brakeman
+        working-directory: AB0-1-back
+        run: |
+          bundle exec brakeman --format json --output brakeman-report.json
+        continue-on-error: true
+      
+      - name: Run Bundler Audit
+        working-directory: AB0-1-back
+        run: |
+          bundle exec bundler-audit check --update
+        continue-on-error: true
+      
+      - name: Upload Brakeman Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: brakeman-report
+          path: AB0-1-back/brakeman-report.json
+          retention-days: 30
+      
+      - name: Comment PR with Security Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🔒 Security Scan Results\n\n';
+            
+            try {
+              const brakeman = JSON.parse(fs.readFileSync('AB0-1-back/brakeman-report.json', 'utf8'));
+              const warningCount = brakeman.warnings.length;
+              const confidence = brakeman.scan_info.security_warnings;
+              
+              comment += `### Brakeman Analysis\n`;
+              comment += `- Security warnings: ${warningCount}\n`;
+              comment += `- Confidence level: ${brakeman.scan_info.checks_performed || 'N/A'} checks performed\n\n`;
+              
+              if (warningCount > 0) {
+                comment += '⚠️ **Security issues found!** Please review the Brakeman report.\n';
+              } else {
+                comment += '✅ No security issues found.\n';
+              }
+            } catch (e) {
+              comment += '❌ Brakeman report not available\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        continue-on-error: true
+
+  code-quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [codeclimate, security-scan]
+    if: always()
+    
+    steps:
+      - name: Check Quality Gate
+        run: |
+          echo "Code quality analysis completed"
+          echo "Review the CodeClimate dashboard for detailed metrics"
+          echo "https://codeclimate.com/github/${{ github.repository }}"

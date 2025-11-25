@@ -1,0 +1,6 @@
+en:
+  devise:
+    sessions:
+      admin_user:
+        invalid: "Invalid email or password"
+      invalid: "Invalid email or password"

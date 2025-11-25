@@ -1,0 +1,118 @@
+# Brakeman configuration file - TASK-002
+# https://brakemanscanner.org/docs/options/
+
+---
+:app_path: "."
+
+# Skip specific checks
+# Format: Check name (e.g., SQL, CrossSiteScripting, etc.)
+:skip_checks: []
+# Exemplo:
+# :skip_checks:
+#   - Redirect # Se você precisa permitir redirects dinâmicos
+
+# Check arguments in methods
+:check_arguments: true
+
+# Exit with error code on warnings
+:exit_on_warn: true
+
+# Exit with error code on errors
+:exit_on_error: true
+
+# Arquivo para ignorar warnings específicos (após revisão manual)
+:ignore_file: config/brakeman.ignore
+
+# Formatos de output
+:report_formats:
+  - json
+  - html
+  - text
+
+# Arquivos de output
+:output_files:
+  - tmp/brakeman-report.json
+  - tmp/brakeman-report.html
+  - tmp/brakeman-report.txt
+
+# Minimum confidence level (1=High, 2=Medium, 3=Low)
+# 2 = Medium and High warnings only
+:min_confidence: 2
+
+# Enable additional checks
+:interprocedural: true
+
+# Assume all controller methods are actions
+:assume_all_routes: true
+
+# Report controller names with rails-style routes
+:rails_routes: true
+
+# Include user input in reports
+:highlight_user_input: true
+
+# Include rendered templates in output
+:include_rendered: true
+
+# Absolute paths in reports
+:absolute_paths: false
+
+# GitHub-flavored markdown for text output
+:github_repo: false
+
+# Additional paths to search for models
+:model_paths:
+  - app/models
+
+# Additional paths to search for controllers
+:controller_paths:
+  - app/controllers
+
+# Additional paths to search for templates
+:template_paths:
+  - app/views
+
+# Paths to skip
+:skip_files:
+  - "lib/tasks/*.rake"
+  - "config/initializers/devise.rb"
+  - "config/environments/*.rb"
+
+# Skip certain libs
+:skip_libs: true
+
+# Additional libs to load
+# :additional_libs_path: []
+
+# Report routes defined via 'match'
+:report_direct_methods: true
+
+# Checks to run (leave empty to run all)
+# :only_checks: []
+
+# Rails version (will be detected automatically if not set)
+# :rails_version: "7.0.6"
+
+# Check routes for potential security issues
+:check_routes: true
+
+# Collapse similar warnings
+:collapse_warnings: true
+
+# Combine location warnings
+:combine_locations: true
+
+# Show context around warning locations
+:context_warnings: 3
+
+# Message limit (warnings with same type)
+:message_limit: 100
+
+# Enable progress updates
+:quiet: false
+
+# Enable parallel checking (faster but uses more memory)
+:parallel_checks: true
+
+# Number of threads for parallel checking
+:parallel_processes: 4

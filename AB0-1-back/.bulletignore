@@ -1,0 +1,6 @@
+# Bullet ignore patterns
+# Add patterns for false positives or intentional N+1 queries
+
+# Example:
+# app/controllers/admin/**/*
+# app/models/legacy_model.rb
