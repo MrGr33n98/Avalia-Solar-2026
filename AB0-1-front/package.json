@@ -76,7 +76,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@eslint/config-array": "^0.21.0",
+    "@eslint/config-array": "^0.23.0",
     "@eslint/object-schema": "^2.1.6",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.8.0",
