@@ -65,6 +65,7 @@ import type { Lead } from '../types';
 
 // Utils
 import { cn, formatRelativeTime, formatPhone } from '../utils';
+import { fetchApi } from '@/lib/api';
 
 interface LeadsOpportunitiesProps {
   companyId: string;
@@ -82,6 +83,33 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchApi<any[]>(
+          '/leads',
+          { params: { company_id: companyId } }
+        );
+        const mapped: Lead[] = Array.isArray(data) ? data.map((l: any) => ({
+          id: String(l.id),
+          name: l.name,
+          email: l.email,
+          phone: l.phone,
+          message: l.message,
+          status: 'new',
+          created_at: l.created_at,
+          company: l.company,
+        })) : [];
+        setLeads(mapped);
+      } catch (e) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [companyId]);
 
   // Computed values
   const filteredLeads = useMemo(() => {
@@ -595,29 +623,3 @@ const mockLeads: Lead[] = [
     source: 'Facebook',
   },
 ];
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchApi<any[]>(
-          '/leads',
-          { params: { company_id: companyId } }
-        );
-        const mapped: Lead[] = Array.isArray(data) ? data.map((l: any) => ({
-          id: String(l.id),
-          name: l.name,
-          email: l.email,
-          phone: l.phone,
-          message: l.message,
-          status: 'new',
-          created_at: l.created_at,
-          company: l.company,
-        })) : [];
-        setLeads(mapped);
-      } catch (e) {
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [companyId]);

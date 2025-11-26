@@ -154,10 +154,10 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                   Taxa de Resposta
                 </p>
                 <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                  {stats.responseRate}%
+                  {s.responseRate}%
                 </p>
                 <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                  {Math.floor(stats.totalReviews * (stats.responseRate / 100))} reviews respondidos
+                  {Math.floor(s.totalReviews * (s.responseRate / 100))} reviews respondidos
                 </p>
               </div>
               <div className={`p-3 rounded-xl ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
@@ -166,7 +166,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             </div>
           </CardContent>
           <div className={`absolute bottom-0 left-0 right-0 h-1 ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-500/10'}`}>
-            <div className="h-full bg-emerald-500" style={{ width: `${stats.responseRate}%` }}></div>
+            <div className="h-full bg-emerald-500" style={{ width: `${s.responseRate}%` }}></div>
           </div>
         </Card>
 
@@ -180,14 +180,14 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    #{stats.industryRank}
+                    #{s.industryRank}
                   </p>
                   <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                    de {stats.totalCompetitors}
+                    de {s.totalCompetitors}
                   </span>
                 </div>
                 <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                  Top {Math.ceil((stats.industryRank / stats.totalCompetitors) * 100)}% da categoria
+                  Top {Math.ceil((s.industryRank / s.totalCompetitors) * 100)}% da categoria
                 </p>
               </div>
               <div className={`p-3 rounded-xl ${isDark ? 'bg-purple-900/20' : 'bg-purple-50'}`}>
@@ -196,7 +196,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             </div>
           </CardContent>
           <div className={`absolute bottom-0 left-0 right-0 h-1 ${isDark ? 'bg-purple-500/20' : 'bg-purple-500/10'}`}>
-            <div className="h-full bg-purple-500" style={{ width: `${((stats.totalCompetitors - stats.industryRank + 1) / stats.totalCompetitors) * 100}%` }}></div>
+            <div className="h-full bg-purple-500" style={{ width: `${((s.totalCompetitors - s.industryRank + 1) / s.totalCompetitors) * 100}%` }}></div>
           </div>
         </Card>
       </div>
@@ -214,7 +214,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {stats.ratingDistribution.map((item) => (
+            {s.ratingDistribution.map((item) => (
               <div key={item.rating} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       Sua Empresa
                     </p>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                      {stats.totalReviews} reviews
+                      {s.totalReviews} reviews
                     </p>
                   </div>
                 </div>
@@ -285,7 +285,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       <Star
                         key={i}
                         className={`h-4 w-4 ${
-                          i < Math.floor(stats.averageRating)
+                          i < Math.floor(s.averageRating)
                             ? 'text-yellow-500 fill-yellow-500'
                             : 'text-gray-300'
                         }`}
@@ -293,12 +293,12 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     ))}
                   </div>
                   <span className={`font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {stats.averageRating.toFixed(1)}
+                    {s.averageRating.toFixed(1)}
                   </span>
                 </div>
               </div>
               <Progress 
-                value={(stats.averageRating / 5) * 100} 
+                value={(s.averageRating / 5) * 100} 
                 className={`h-3 ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}
               />
             </div>
@@ -315,7 +315,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       Média da Categoria
                     </p>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                      {stats.totalCompetitors} empresas
+                      {s.totalCompetitors} empresas
                     </p>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       <Star
                         key={i}
                         className={`h-4 w-4 ${
-                          i < Math.floor(stats.categoryAverage)
+                          i < Math.floor(s.categoryAverage)
                             ? 'text-gray-400 fill-gray-400'
                             : 'text-gray-300'
                         }`}
@@ -333,12 +333,12 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     ))}
                   </div>
                   <span className={`font-bold ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
-                    {stats.categoryAverage.toFixed(1)}
+                    {s.categoryAverage.toFixed(1)}
                   </span>
                 </div>
               </div>
               <Progress 
-                value={(stats.categoryAverage / 5) * 100} 
+                value={(s.categoryAverage / 5) * 100} 
                 className={`h-3 ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}
               />
             </div>
@@ -346,16 +346,16 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             {/* Performance Badge */}
             <div className={`p-4 rounded-xl ${isDark ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-slate-800' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
               <div className="flex items-center gap-3">
-                <Award className={`h-6 w-6 ${stats.averageRating > stats.categoryAverage ? 'text-yellow-500' : isDark ? 'text-slate-400' : 'text-gray-400'}`} />
+                <Award className={`h-6 w-6 ${s.averageRating > s.categoryAverage ? 'text-yellow-500' : isDark ? 'text-slate-400' : 'text-gray-400'}`} />
                 <div>
                   <p className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {stats.averageRating > stats.categoryAverage 
-                      ? `${((stats.averageRating - stats.categoryAverage) / stats.categoryAverage * 100).toFixed(1)}% acima da média`
-                      : `${((stats.categoryAverage - stats.averageRating) / stats.categoryAverage * 100).toFixed(1)}% abaixo da média`
+                    {s.averageRating > s.categoryAverage 
+                      ? `${((s.averageRating - s.categoryAverage) / s.categoryAverage * 100).toFixed(1)}% acima da média`
+                      : `${((s.categoryAverage - s.averageRating) / s.categoryAverage * 100).toFixed(1)}% abaixo da média`
                     }
                   </p>
                   <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                    {stats.averageRating > stats.categoryAverage
+                    {s.averageRating > s.categoryAverage
                       ? 'Você está performando melhor que a maioria!'
                       : 'Há espaço para melhorias'
                     }
@@ -383,25 +383,25 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             {[
               {
                 title: 'Alta Satisfação',
-                description: `${stats.ratingDistribution[0].percentage}% dos seus clientes deram 5 estrelas`,
+                description: `${(s.ratingDistribution[0]?.percentage ?? 0)}% dos seus clientes deram 5 estrelas`,
                 type: 'success',
                 icon: ThumbsUp,
               },
               {
                 title: 'Resposta Exemplar',
-                description: `Taxa de resposta de ${stats.responseRate}% está excelente`,
+                description: `Taxa de resposta de ${s.responseRate}% está excelente`,
                 type: 'success',
                 icon: MessageSquare,
               },
               {
                 title: 'Destaque na Categoria',
-                description: `Você está entre os top ${Math.ceil((stats.industryRank / stats.totalCompetitors) * 100)}% da categoria`,
-                type: stats.industryRank <= 10 ? 'success' : 'info',
+                description: `Você está entre os top ${Math.ceil((s.industryRank / s.totalCompetitors) * 100)}% da categoria`,
+                type: s.industryRank <= 10 ? 'success' : 'info',
                 icon: Award,
               },
               {
                 title: 'Crescimento Consistente',
-                description: `+${stats.monthlyTrend}% de reviews vs mês anterior`,
+                description: `+${s.monthlyTrend}% de reviews vs mês anterior`,
                 type: 'success',
                 icon: TrendingUp,
               },

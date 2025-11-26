@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { categoriesApi } from '@/lib/api-client';
+import { categoriesApi } from '@/lib/api';
 
 export default function TestImagesPage() {
   const [companies, setCompanies] = useState<any[]>([]);

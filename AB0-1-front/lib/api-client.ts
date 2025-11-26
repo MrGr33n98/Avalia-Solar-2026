@@ -260,7 +260,7 @@ export const productsApiSafe = {
 
 // Leads
 export const leadsApiSafe = {
-  create: async (lead: { name: string; email: string; phone: string; company: string; message?: string }): Promise<any> => {
+  create: async (lead: any): Promise<any> => {
     try {
       return await fetchApiSafe<any>('leads', {
         method: 'POST',
