@@ -32,7 +32,7 @@ echo "🔄 Rodando migrations..."
 # Set DATABASE_URL only if not provided, and URL-encode the password to avoid invalid URI errors
 if [ -z "$DATABASE_URL" ]; then
   ENC_PW=$(ruby -e 'require "cgi"; puts CGI.escape(ARGV[0])' "$POSTGRES_PASSWORD")
-  export DATABASE_URL="postgresql://${POSTGRES_USER}:${ENC_PW}@${POSTGRES_HOST}:5432/${POSTGRES_DB}"
+  export DATABASE_URL="postgres://${POSTGRES_USER}:${ENC_PW}@${POSTGRES_HOST}:5432/${POSTGRES_DB}"
 else
   echo "Using existing DATABASE_URL"
 fi
