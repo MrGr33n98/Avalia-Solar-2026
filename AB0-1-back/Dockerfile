@@ -6,6 +6,7 @@ RUN apt-get update -qq && \
       build-essential \
       libpq-dev \
       postgresql-client \
+      curl \
       nodejs \
       yarn && \
     apt-get clean && \
