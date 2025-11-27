@@ -50,7 +50,7 @@ EXPOSE 3001
 
 # Start the server
 # Add entrypoint script
-COPY entrypoint.sh /usr/bin/
+COPY AB0-1-back/entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
