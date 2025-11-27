@@ -12,17 +12,17 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/AB0-1-back
 
 # Install specific bundler version
 RUN gem install bundler:2.4.22
 
 # Copy Gemfile and install dependencies
-COPY Gemfile Gemfile.lock ./
+COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3
 
 # Copy application code
-COPY . .
+COPY AB0-1-back .
 
 # Create necessary directories
 RUN mkdir -p tmp/pids tmp/storage public/assets log
