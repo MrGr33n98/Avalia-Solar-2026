@@ -17,9 +17,14 @@ on:
         required: false
         default: main
 
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: self-hosted
+    timeout-minutes: 30
     if: |
       github.event_name == 'push' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
@@ -36,6 +41,9 @@ jobs:
       SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       TARGET_BRANCH: ${{ github.event.inputs.target_branch || 'main' }}
+      FRONT_DOMAIN: ${{ secrets.FRONT_DOMAIN }}
+      API_DOMAIN: ${{ secrets.API_DOMAIN }}
+      LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
 
     steps:
       - name: Show deployment context
@@ -243,8 +251,13 @@ jobs:
             return 1
           }
 
-          check_service_health "backend" "http://${{ secrets.VM_HOST }}:3001/health"
-          check_service_health "frontend" "http://${{ secrets.VM_HOST }}:3000"
+          FRONT_URL=""
+          API_URL=""
+          if [ -n "$FRONT_DOMAIN" ]; then FRONT_URL="https://$FRONT_DOMAIN"; else FRONT_URL="http://$VM_HOST:3000"; fi
+          if [ -n "$API_DOMAIN" ]; then API_URL="https://$API_DOMAIN/health"; else API_URL="http://$VM_HOST:3001/health"; fi
+
+          check_service_health "backend" "$API_URL"
+          check_service_health "frontend" "$FRONT_URL"
 
       - name: Cleanup old Docker resources
         if: success()
@@ -261,6 +274,14 @@ jobs:
           echo ""
           cd "$DEPLOY_DIR"
           docker compose ps
+
+      - name: Notify Success (Slack)
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: '{"text": "Deploy concluído com sucesso em ${{ env.FRONT_DOMAIN || env.VM_HOST }} (frontend) e ${{ env.API_DOMAIN || env.VM_HOST }} (backend)."}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Rollback on Failure
         if: failure()
@@ -292,3 +313,16 @@ jobs:
           else
             echo "ℹ️ Nenhum backup disponível para rollback."
           fi
+
+      - name: Notify Failure (Email)
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ fromJson(secrets.SMTP_CREDENTIALS).host }}
+          server_port: ${{ fromJson(secrets.SMTP_CREDENTIALS).port }}
+          username: ${{ fromJson(secrets.SMTP_CREDENTIALS).user }}
+          password: ${{ fromJson(secrets.SMTP_CREDENTIALS).pass }}
+          subject: Falha no deploy na VPS
+          to: ${{ fromJson(secrets.SMTP_CREDENTIALS).to }}
+          from: ${{ fromJson(secrets.SMTP_CREDENTIALS).from }}
+          body: Deploy falhou na VPS para ${{ github.repository }}. Rollback executado quando possível.
