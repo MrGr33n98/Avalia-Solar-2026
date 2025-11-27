@@ -29,14 +29,11 @@ echo "✅ Postgres disponível!"
 
 # Cria ou migra o banco de dados
 echo "🔄 Rodando migrations..."
-# Set DATABASE_URL only if not provided, and URL-encode the password to avoid invalid URI errors
-if [ -z "$DATABASE_URL" ]; then
-  ENC_PW=$(ruby -e 'require "cgi"; puts CGI.escape(ARGV[0])' "$POSTGRES_PASSWORD")
-  export DATABASE_URL="postgres://${POSTGRES_USER}:${ENC_PW}@${POSTGRES_HOST}:5432/${POSTGRES_DB}"
-else
-  echo "Using existing DATABASE_URL"
-fi
-echo "Backend container sees DATABASE_URL: $DATABASE_URL"
+export PGHOST="$POSTGRES_HOST"
+export PGUSER="$POSTGRES_USER"
+export PGPASSWORD="$POSTGRES_PASSWORD"
+export PGDATABASE="$POSTGRES_DB"
+echo "Using database.yml with PG* env vars (no DATABASE_URL)"
 
 # Add this for debugging:
 echo "Rails environment: $RAILS_ENV"
