@@ -13,14 +13,14 @@ env:
 
 jobs:
   deploy:
-    # CORRIGIDO: Usa o Runner padrão do GitHub para executar o script SSH
+    # Usa o Runner padrão do GitHub
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      # ⚙️ 1. Configurar Variáveis de Ambiente no Droplet (Método printf)
+      # ⚙️ 1. Configurar Variáveis de Ambiente no Droplet
       - name: Injetar Segredos e Chaves no Arquivo .env
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -75,11 +75,13 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # AUMENTO DO TIMEOUT: Dando 40 minutos para o Docker Build/Instalação de Gems
+          timeout: 40m 
           script: |
             echo "--- 1. Puxando Código e Reconstruindo Imagens ---"
             cd ${{ env.PROJECT_PATH }}
 
-            # Puxa as últimas alterações do código (incluindo o entrypoint.sh corrigido)
+            # Puxa as últimas alterações do código (incluindo o Company.rb corrigido)
             git pull origin main
 
             # Reconstrução das imagens (backend e frontend)
@@ -98,7 +100,6 @@ jobs:
 
             # CRIA/MIGRA O BANCO DE DADOS E RODA SEEDS DE FORMA LIMPA:
             # Isso resolve o problema de estado inconsistente (DuplicateColumn)
-            # Rodamos db:create db:migrate db:seed juntos
             docker-compose run --rm backend bundle exec rake db:create db:migrate db:seed
 
             echo "--- 3. Subindo o Backend Final ---"
