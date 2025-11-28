@@ -13,11 +13,8 @@ env:
 
 jobs:
   deploy:
+    # CORRIGIDO: Usa o Runner padrão do GitHub para executar o script SSH
     runs-on: ubuntu-latest
-    
-    # Adiciona a condição para garantir que o deploy só ocorra se todos os Secrets estiverem configurados
-    environment:
-      name: production
     
     steps:
       - name: Checkout Código
@@ -27,9 +24,12 @@ jobs:
       - name: Injetar Segredos e Chaves no Arquivo .env
         uses: appleboy/ssh-action@v1.0.3
         with:
+          # Segredos de Conexão SSH
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+          # Script para criar o arquivo .env no servidor
           script: |
             echo "--- Configurando .env no servidor ---"
             cd ${{ env.PROJECT_PATH }}
@@ -43,17 +43,17 @@ jobs:
             printf "RAILS_LOG_TO_STDOUT=true\n" >> .env
             printf "RAILS_SERVE_STATIC_FILES=true\n" >> .env
             
-            # Variáveis de Segurança (Usando Secrets)
+            # Variáveis de Segurança
             printf "RAILS_MASTER_KEY=%s\n" "${{ secrets.RAILS_MASTER_KEY }}" >> .env
             printf "SECRET_KEY_BASE=%s\n" "${{ secrets.SECRET_KEY_BASE }}" >> .env
             printf "JWT_SECRET=%s\n" "${{ secrets.JWT_SECRET }}" >> .env
             
-            # Variáveis do Postgres (Usando Secrets)
+            # Variáveis do Postgres
             printf "POSTGRES_USER=%s\n" "${{ secrets.POSTGRES_USER }}" >> .env
             printf "POSTGRES_PASSWORD=%s\n" "${{ secrets.POSTGRES_PASSWORD }}" >> .env
             printf "POSTGRES_DB=%s\n" "${{ secrets.POSTGRES_DB }}" >> .env
             
-            # DATABASE_URL (montada com host 'db' para Docker Compose)
+            # DATABASE_URL
             printf "DATABASE_URL=postgresql://%s:%s@db:5432/%s\n" \
                 "${{ secrets.POSTGRES_USER }}" \
                 "${{ secrets.POSTGRES_PASSWORD }}" \
@@ -79,7 +79,7 @@ jobs:
             echo "--- 1. Puxando Código e Reconstruindo Imagens ---"
             cd ${{ env.PROJECT_PATH }}
 
-            # Puxa as últimas alterações do código (incluindo Company.rb corrigido)
+            # Puxa as últimas alterações do código (incluindo o entrypoint.sh corrigido)
             git pull origin main
 
             # Reconstrução das imagens (backend e frontend)
@@ -87,10 +87,10 @@ jobs:
 
             echo "--- 2. Setup do Banco de Dados (Criação e Migração) ---"
             
-            # (O docker-compose down --volumes já foi executado na primeira vez,
-            # agora focamos no setup limpo após o build)
-            
-            # Garante que os serviços de infra estejam rodando
+            # Derruba contêineres e volumes antigos para garantir um estado limpo
+            docker-compose down --volumes
+
+            # Sobe a infraestrutura (DB, Redis, Frontend)
             docker-compose up -d db redis frontend
 
             # Aguarda o DB iniciar (Healthcheck)
@@ -98,14 +98,12 @@ jobs:
 
             # CRIA/MIGRA O BANCO DE DADOS E RODA SEEDS DE FORMA LIMPA:
             # Isso resolve o problema de estado inconsistente (DuplicateColumn)
-            docker-compose run --rm backend bundle exec rake db:create db:migrate
-            
-            echo "--- 3. Rodando Seeds ---"
-            docker-compose run --rm backend bundle exec rake db:seed
+            # Rodamos db:create db:migrate db:seed juntos
+            docker-compose run --rm backend bundle exec rake db:create db:migrate db:seed
 
-            echo "--- 4. Subindo o Backend Final ---"
+            echo "--- 3. Subindo o Backend Final ---"
             # Inicia o contêiner principal do backend
             docker-compose up -d backend
             
-            echo "🎉 DEPLOY CONCLUÍDO COM SUCESSO!"
+            echo "✅ DEPLOY CONCLUÍDO COM SUCESSO!"
             docker-compose ps
