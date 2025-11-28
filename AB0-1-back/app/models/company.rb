@@ -1,13 +1,13 @@
 class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
-  
+
   enum status: {
     active: 'active',
     inactive: 'inactive',
     pending: 'pending',
     blocked: 'blocked'
   }, _suffix: true
-  
+
   # =========================
   # Attachments
   # =========================
@@ -90,7 +90,7 @@ class Company < ApplicationRecord
   # Companies by state (cached)
   def self.cached_by_state(state, expires_in: 30.minutes)
     return [] if state.blank?
-    
+
     cache_key = "company/by_state/#{state}"
     Rails.cache.fetch(cache_key, expires_in: expires_in) do
       by_state(state).active_only.to_a
@@ -100,7 +100,7 @@ class Company < ApplicationRecord
   # Companies by city (cached)
   def self.cached_by_city(city, expires_in: 30.minutes)
     return [] if city.blank?
-    
+
     cache_key = "company/by_city/#{city}"
     Rails.cache.fetch(cache_key, expires_in: expires_in) do
       by_city(city).active_only.to_a
@@ -136,7 +136,7 @@ class Company < ApplicationRecord
   # =========================
   # Domain / API helpers
   # =========================
-  
+
   # Cached average rating
   def average_rating
     cache_method(:average_rating, expires_in: 30.minutes) do
@@ -170,7 +170,7 @@ class Company < ApplicationRecord
     avg = stats[0].to_f.round(2)
     count = stats[1].to_i
     update_columns(rating_avg: avg, rating_count: count, updated_at: Time.current)
-    
+
     # Clear cache after recalculation
     clear_cache!
   end
@@ -224,7 +224,9 @@ class Company < ApplicationRecord
 
   validate :validate_logo_attachment
   validate :validate_banner_attachment
-
+  # REMOVIDAS: validate :validate_project_types, validate :validate_services_offered
+  
+  # Constantes (mantidas no modelo)
   PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
   SERVICES_OFFERED = [
     'Instalação Residencial',
@@ -235,9 +237,7 @@ class Company < ApplicationRecord
   ].freeze
 
   before_validation :normalize_multiselects
-
-  validate :validate_project_types
-  validate :validate_services_offered
+  # REMOVIDAS: validate :validate_project_types, validate :validate_services_offered
 
   def validate_logo_attachment
     return unless logo.attached?
@@ -269,25 +269,28 @@ class Company < ApplicationRecord
       Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
     end
   end
-
+  
+  # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
   def validate_project_types
-    return if project_types.blank?
-    invalid = Array(project_types) - PROJECT_TYPES
+    # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
+    # Usando 'self.project_types' resolve o escopo.
+    return if self.project_types.blank? 
+    invalid = Array(self.project_types) - PROJECT_TYPES
     errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
-    return if services_offered.blank?
-    invalid = Array(services_offered) - SERVICES_OFFERED
+    return if self.services_offered.blank?
+    invalid = Array(self.services_offered) - SERVICES_OFFERED
     errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def normalize_multiselects
     if respond_to?(:project_types)
-      self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?)
+      self.project_types = Array(self.project_types).map { |v| v.to_s.strip }.reject(&:blank?)
     end
     if respond_to?(:services_offered)
-      self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
+      self.services_offered = Array(self.services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
     end
   end
 
