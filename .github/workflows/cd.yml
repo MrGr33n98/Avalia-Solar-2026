@@ -84,6 +84,22 @@ jobs:
             # Puxa as últimas alterações do código (incluindo o Company.rb corrigido)
             git pull origin main
 
+            echo "--- 1.1 Validando variáveis do .env ---"
+            if [ -f .env ]; then
+              # Lê variáveis para validação sem expor valores
+              set -a; . ./.env; set +a
+              MK_LEN=${#RAILS_MASTER_KEY}
+              echo "RAILS_MASTER_KEY length: ${MK_LEN}"
+              if [ -z "${RAILS_MASTER_KEY}" ] || [ ${MK_LEN} -lt 16 ]; then
+                echo "❌ RAILS_MASTER_KEY inválido ou ausente. Atualize o segredo no GitHub e reexecute." && exit 1
+              fi
+              if [ -z "${SECRET_KEY_BASE}" ]; then
+                echo "❌ SECRET_KEY_BASE ausente. Configure no GitHub Secrets e reexecute." && exit 1
+              fi
+            else
+              echo "❌ Arquivo .env não encontrado em ${PWD}. Etapa anterior deve criá-lo." && exit 1
+            fi
+
             # Reconstrução das imagens (backend e frontend)
             docker-compose build --no-cache
 
@@ -97,6 +113,11 @@ jobs:
 
             # Aguarda o DB iniciar (Healthcheck)
             sleep 15 
+
+            echo "--- 2.1 Validando descriptografia de credentials ---"
+            if ! docker-compose run --rm backend bundle exec rails credentials:show >/dev/null 2>&1; then
+              echo "❌ Falha ao descriptografar credentials. Verifique RAILS_MASTER_KEY/SECRET_KEY_BASE." && exit 1
+            fi
 
             # CRIA/MIGRA O BANCO DE DADOS E RODA SEEDS DE FORMA LIMPA:
             # Isso resolve o problema de estado inconsistente (DuplicateColumn)
