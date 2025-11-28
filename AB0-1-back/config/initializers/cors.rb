@@ -11,7 +11,9 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       production_origins = [
         'https://www.avaliasolar.com.br',
         'https://avaliasolar.com.br',
-        'https://api.avaliasolar.com.br'
+        'https://api.avaliasolar.com.br',
+        'https://avaliasolar.com.br', # Frontend
+        'https://www.avaliasolar.com.br' # Frontend alternativo
       ]
       # Permitir origins adicionais via ENV (comma-separated)
       additional_origins = ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
