@@ -1,0 +1,92 @@
+name: Deploy (Staging/Production) via SSH
+
+# 1. Configura o gatilho para rodar sempre que houver um push para o branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+# Define as variáveis de ambiente que serão usadas no script SSH
+env:
+  PROJECT_PATH: /root/Avalia-Solar-2026
+  CONTAINER_NAME: ab0-backend # Nome do contêiner para comandos exec
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar e Injetar Chaves de Ambiente
+        run: |
+          # Cria o arquivo .env no Droplet (Isso deve ser seguro, pois todas as chaves estão no GitHub Secrets)
+          # NOTA: O VM_HOST e VM_USER são secrets definidos no GitHub.
+          
+          # Copia o Entrypoint.sh (assumindo que ele está corrigido e não roda db:migrate automaticamente)
+          sshpass -p ${{ secrets.VM_PASSWORD }} scp -o StrictHostKeyChecking=no ./AB0-1-back/entrypoint.sh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:${{ env.PROJECT_PATH }}/AB0-1-back/entrypoint.sh
+          
+          # Cria o arquivo .env no Droplet com todas as chaves de segurança
+          sshpass -p ${{ secrets.VM_PASSWORD }} ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "
+            cd ${{ env.PROJECT_PATH }}
+            
+            # Recria o arquivo .env com todos os secrets
+            cat > .env <<EOL
+RAILS_ENV=production
+PORT=3001
+RAILS_LOG_TO_STDOUT=true
+RAILS_SERVE_STATIC_FILES=true
+RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+POSTGRES_HOST=db
+DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
+REDIS_URL=redis://redis:6379/0
+NEXT_PUBLIC_API_URL=https://api.avaliasolar.com.br/api/v1
+CORS_ORIGINS=https://avaliasolar.com.br,https://www.avaliasolar.com.br
+EOL
+            chmod 600 .env
+            echo '.env criado com sucesso!'
+          "
+
+      - name: 🐋 Deploy e Inicialização (Build, Up, Setup)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "--- 1. Puxando Código e Reconstruindo Imagens ---"
+            cd ${{ env.PROJECT_PATH }}
+
+            # O Entrypoint.sh corrigido deve estar em cache
+            # Reconstrução das imagens (backend e frontend)
+            docker-compose build --no-cache
+
+            echo "--- 2. Parando, Subindo Infra e Migrando ---"
+            # Derruba os contêineres e volumes (para criar um DB limpo)
+            docker-compose down --volumes
+
+            # Sobe a infraestrutura (DB, Redis, Frontend)
+            docker-compose up -d db redis frontend
+
+            # Aguarda o DB iniciar (Healthcheck)
+            sleep 15 
+
+            echo "--- 3. Setup do Banco de Dados ---"
+            # Cria o banco e roda as migrações (Passo Único e Limpo)
+            # Como limpamos os volumes, o db:migrate deve rodar todas as migrações.
+            docker-compose run --rm backend bundle exec rake db:create db:migrate
+
+            echo "--- 4. Rodando Seeds ---"
+            docker-compose run --rm backend bundle exec rake db:seed
+
+            echo "--- 5. Subindo o Backend Final ---"
+            # Inicia o contêiner principal do backend
+            docker-compose up -d backend
+            
+            echo "✅ Deploy Finalizado. Verificando Status..."
+            docker-compose ps
