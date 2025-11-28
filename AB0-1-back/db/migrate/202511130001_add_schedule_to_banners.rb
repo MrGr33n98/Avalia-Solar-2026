@@ -12,15 +12,20 @@ class AddScheduleToBanners < ActiveRecord::Migration[7.0]
         t.string :link
         t.boolean :active, default: false
 
-        t.references :category, foreign_key: true, null: true
-        t.boolean :sponsored, default: false
-        t.string :banner_type
-        t.string :position
-
         t.datetime :start_date
         t.datetime :end_date
 
         t.timestamps
+      end
+
+      # Adições condicionais para colunas que podem vir de migrações anteriores
+      add_column :banners, :sponsored, :boolean, default: false unless column_exists?(:banners, :sponsored)
+      add_column :banners, :banner_type, :string unless column_exists?(:banners, :banner_type)
+      add_column :banners, :position, :string unless column_exists?(:banners, :position)
+
+      # Adiciona foreign key apenas se a tabela categories já existir
+      if table_exists?(:categories)
+        add_reference :banners, :category, foreign_key: true, null: true unless column_exists?(:banners, :category_id)
       end
 
       add_index :banners, :start_date unless index_exists?(:banners, :start_date)
