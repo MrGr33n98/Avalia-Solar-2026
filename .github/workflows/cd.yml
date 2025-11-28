@@ -111,8 +111,11 @@ jobs:
             # Sobe a infraestrutura (DB, Redis, Frontend)
             docker-compose up -d db redis frontend
 
-            # Aguarda o DB iniciar (Healthcheck)
-            sleep 15 
+            # Aguarda o DB ficar pronto (Healthcheck ativo)
+            echo "Aguardando PostgreSQL ficar pronto..."
+            until docker-compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; do
+              sleep 2
+            done
 
             echo "--- 2.1 Validando descriptografia de credentials ---"
             if ! docker-compose run --rm backend bundle exec rails credentials:show >/dev/null 2>&1; then
@@ -126,6 +129,16 @@ jobs:
             echo "--- 3. Subindo o Backend Final ---"
             # Inicia o contêiner principal do backend
             docker-compose up -d backend
+            
+            echo "--- 3.1 Precompilando assets do ActiveAdmin ---"
+            # Limpa assets antigos e compila novamente
+            docker exec ab0-backend rm -rf public/assets/* 2>/dev/null || true
+            docker exec ab0-backend bundle exec rails assets:precompile RAILS_ENV=production || { echo "❌ Falha na precompilação de assets"; exit 1; }
+            ASSET_COUNT=$(docker exec ab0-backend sh -lc 'ls -1 public/assets 2>/dev/null | wc -l')
+            echo "Assets compilados: ${ASSET_COUNT} arquivos"
+            if [ "${ASSET_COUNT}" = "0" ]; then
+              echo "❌ Nenhum asset encontrado em public/assets"; exit 1
+            fi
             
             echo "✅ DEPLOY CONCLUÍDO COM SUCESSO!"
             docker-compose ps
