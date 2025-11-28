@@ -224,7 +224,6 @@ class Company < ApplicationRecord
 
   validate :validate_logo_attachment
   validate :validate_banner_attachment
-  # REMOVIDAS: validate :validate_project_types, validate :validate_services_offered
   
   # Constantes (mantidas no modelo)
   PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
@@ -236,8 +235,11 @@ class Company < ApplicationRecord
     'Consultoria Energética'
   ].freeze
 
+  # Atributos virtuais para ActiveAdmin
+  attr_accessor :project_types, :services_offered
+
   before_validation :normalize_multiselects
-  # REMOVIDAS: validate :validate_project_types, validate :validate_services_offered
+  validate :validate_project_types, :validate_services_offered
 
   def validate_logo_attachment
     return unless logo.attached?
