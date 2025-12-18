@@ -122,4 +122,57 @@ banners.each do |banner_attrs|
   end
 end
 
+# ================================
+# Extra: +6 empresas para totalizar 10
+# ================================
+more_companies = [
+  { name: 'Energia Viva', description: 'Projetos solares residenciais e comerciais.', phone: '(12) 3456-7890', address: 'Taubaté, SP', state: 'SP', city: 'Taubaté', website: 'https://energiaviva.com.br', email_public: 'contato@energiaviva.com.br', whatsapp: '+5512987654321', status: 'active', verified: true },
+  { name: 'Lumen Solar', description: 'Especialistas em fotovoltaico industrial.', phone: '(31) 98765-4321', address: 'Contagem, MG', state: 'MG', city: 'Contagem', website: 'https://lumensolar.com.br', email_public: 'contato@lumensolar.com.br', whatsapp: '+5531981234567', status: 'active' },
+  { name: 'Sol & Tech', description: 'Consultoria e manutenção de sistemas solares.', phone: '(41) 3344-5566', address: 'Curitiba, PR', state: 'PR', city: 'Curitiba', website: 'https://soltech.com.br', email_public: 'contato@soltech.com.br', whatsapp: '+5541998877665', status: 'active' },
+  { name: 'Helio Power', description: 'Distribuição e instalação fotovoltaica completa.', phone: '(61) 4002-8922', address: 'Brasília, DF', state: 'DF', city: 'Brasília', website: 'https://heliopower.com.br', email_public: 'contato@heliopower.com.br', whatsapp: '+5561998877665', status: 'active' },
+  { name: 'Nord Solar', description: 'Soluções solares para regiões sul e sudeste.', phone: '(51) 3555-7788', address: 'Porto Alegre, RS', state: 'RS', city: 'Porto Alegre', website: 'https://nordsolar.com.br', email_public: 'contato@nordsolar.com.br', whatsapp: '+5551994455667', status: 'active' },
+  { name: 'Amazônia Solar', description: 'Projetos solares sustentáveis na região norte.', phone: '(92) 3123-4567', address: 'Manaus, AM', state: 'AM', city: 'Manaus', website: 'https://amazoniasolar.com.br', email_public: 'contato@amazoniasolar.com.br', whatsapp: '+5592987654321', status: 'active' }
+]
+
+more_companies.each do |attrs|
+  Company.find_or_create_by!(name: attrs[:name]) do |c|
+    c.assign_attributes(attrs)
+    puts "Criada empresa: #{c.name}"
+  end
+end
+
+# ================================
+# Extra: +5 categorias para totalizar 10
+# ================================
+extra_categories = [
+  { name: 'Estruturas e Suportes', seo_url: 'estruturas-suportes', seo_title: 'Estruturas e Suportes | Compare Solar', short_description: 'Estruturas de fixação e suportes para painéis.', description: 'Componentes estruturais para montagem segura de módulos, incluindo suportes inclinados, fixadores e trilhos.', kind: 'main', status: 'active', featured: true },
+  { name: 'Cabos e Conectores', seo_url: 'cabos-conectores', seo_title: 'Cabos e Conectores | Compare Solar', short_description: 'Cabos fotovoltaicos e conectores MC4.', description: 'Itens essenciais para conexão de sistemas fotovoltaicos com segurança e eficiência.', kind: 'main', status: 'active', featured: false },
+  { name: 'Microinversores', seo_url: 'microinversores', seo_title: 'Microinversores | Compare Solar', short_description: 'Conversão por módulo para maior confiabilidade.', description: 'Soluções com microinversores que simplificam a instalação e otimizam o desempenho.', kind: 'main', status: 'active', featured: true },
+  { name: 'Controladores de Carga', seo_url: 'controladores-carga', seo_title: 'Controladores de Carga | Compare Solar', short_description: 'MPPT e PWM para sistemas off-grid.', description: 'Controladores que gerenciam a carga de baterias, garantindo longevidade e segurança.', kind: 'main', status: 'active', featured: false },
+  { name: 'Monitoramento e IoT', seo_url: 'monitoramento-iot', seo_title: 'Monitoramento e IoT | Compare Solar', short_description: 'Plataformas e dispositivos de telemetria.', description: 'Ferramentas de monitoramento em tempo real e análise de desempenho para sistemas solares.', kind: 'main', status: 'active', featured: false }
+]
+
+extra_categories.each do |cat|
+  Category.find_or_create_by!(name: cat[:name]) do |c|
+    c.assign_attributes(cat)
+  end
+end
+
+# ================================
+# Usuários associados às empresas
+# ================================
+Company.find_each do |comp|
+  email = "company#{comp.id}@example.com"
+  User.find_or_create_by!(email: email) do |u|
+    u.name = "#{comp.name} Representante"
+    u.password = 'Password1!'
+    u.password_confirmation = 'Password1!'
+    u.role = 'company'
+    u.company = comp
+    u.terms_accepted = true
+    u.confirmed_at = Time.current
+    puts "Criado usuário da empresa: #{u.email} -> #{comp.name}"
+  end
+end
+
 puts "Seeds concluídos com sucesso para o mercado solar!"

@@ -87,6 +87,9 @@ module Api
           linkedin: @company.linkedin,
           working_hours: @company.working_hours,
           payment_methods: @company.payment_methods,
+          buttons: Rails.cache.fetch("company_buttons/#{@company.id}/#{@company.updated_at.to_i}", expires_in: 5.minutes) do
+            @company.company_buttons.active.ordered.select(:label, :url, :button_type).as_json(only: [:label, :url, :button_type])
+          end,
           ctas: [],
           cta_whatsapp_enabled: @company.respond_to?(:cta_whatsapp_enabled) ? @company.cta_whatsapp_enabled : nil,
           cta_whatsapp_url: @company.respond_to?(:cta_whatsapp_url) ? @company.cta_whatsapp_url : nil,
@@ -126,8 +129,11 @@ module Api
                 "Empresa #{@company.name} criada com status pendente em #{Time.current}"
               ).deliver_later
             end
+            
+            # Send confirmation email to company
+            CompanyMailer.registration_received(@company).deliver_later
           rescue => e
-            Rails.logger.warn "Falha ao notificar administradores: #{e.message}"
+            Rails.logger.warn "Falha ao notificar: #{e.message}"
           end
 
           company_json = {
@@ -238,6 +244,10 @@ module Api
           linkedin: company.linkedin,
           working_hours: company.working_hours,
           payment_methods: company.payment_methods,
+          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}", expires_in: 5.minutes) do
+            company.company_buttons.active.ordered.select(:label, :url, :button_type, :active, :position).as_json(only: [:label, :url, :button_type])
+          end,
+          ctas: [],
           cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
           cta_whatsapp_url: company.respond_to?(:cta_whatsapp_url) ? company.cta_whatsapp_url : nil,
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
@@ -264,17 +274,17 @@ module Api
 
       def analytics_historical
         days = params[:days]&.to_i || 30
+        cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
+
         begin
-          if @company
-            data = if @company.respond_to?(:historical_stats)
-                     @company.historical_stats(days)
-                   else
-                     generate_historical_data(@company, days)
-                   end
-            render json: { data: data }, status: :ok
-          else
-            render json: { data: generate_historical_data(nil, days) }, status: :ok
+          data = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+            if @company.respond_to?(:historical_stats)
+              @company.historical_stats(days)
+            else
+              generate_historical_data(@company, days)
+            end
           end
+          render json: { data: data }, status: :ok
         rescue => e
           Rails.logger.error("analytics_historical error: #{e.message}")
           render json: { data: generate_historical_data(nil, days) }, status: :ok
@@ -291,8 +301,12 @@ module Api
 
       def analytics_traffic
         days = params[:days]&.to_i || 30
+        cache_key = "company_#{@company.id}_traffic_#{days}_#{Date.today}"
+
         begin
-          sources = generate_traffic_sources(@company, days)
+          sources = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+            generate_traffic_sources(@company, days)
+          end
           render json: { sources: sources }, status: :ok
         rescue => e
           Rails.logger.error("analytics_traffic error: #{e.message}")
@@ -429,14 +443,18 @@ module Api
           }
         end.reverse
       end
-    end
-  end
-end
       def authorize_company_scope!
         return if current_user&.role == 'admin'
         if current_user&.role == 'company' && current_user.company_id == @company&.id
+          unless @company.active?
+            render json: { error: 'Company account is not active' }, status: :forbidden
+            return
+          end
           return
         end
         Rails.logger.warn("[AccessDenied] analytics user=#{current_user&.id} role=#{current_user&.role} company_id=#{current_user&.company_id} target_company=#{@company&.id} path=#{request.path}")
         render json: { error: 'Forbidden' }, status: :forbidden
       end
+    end
+  end
+end

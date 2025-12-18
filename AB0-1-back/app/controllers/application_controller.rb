@@ -1,6 +1,15 @@
 class ApplicationController < ActionController::Base
+  include Pundit::Authorization
   protect_from_forgery with: :exception, unless: -> { active_admin_request? }
   before_action :set_notifications, if: :user_signed_in?
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
+  protected
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :password, :role, :company_id])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:email, :password, :role, :company_id])
+  end
 
   private
 

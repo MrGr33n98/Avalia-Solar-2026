@@ -40,7 +40,8 @@ pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
 # preload_app!
 
 # Allow puma to be restarted by `bin/rails restart` command.
-plugin :tmp_restart
+plugin :tmp_restart unless Gem.win_platform?
+restart_command "ruby bin/rails" if Gem.win_platform?
 
 # Bind to all interfaces in production
 bind "tcp://0.0.0.0:#{ENV.fetch('PORT', 3001)}" if ENV['RAILS_ENV'] == 'production'

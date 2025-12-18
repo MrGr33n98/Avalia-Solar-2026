@@ -6,6 +6,12 @@ import axios from 'axios';
 // =======================
 // API Response Types
 // =======================
+export interface CompanyButton {
+  label: string;
+  url: string;
+  button_type: 'primary' | 'whatsapp' | 'secondary' | 'custom';
+}
+
 export interface Company {
   id: number;
   name: string;
@@ -21,6 +27,7 @@ export interface Company {
   updated_at: string;
   banner_url?: string | null;
   logo_url?: string | null;
+  buttons?: CompanyButton[];
   rating?: number;
   total_reviews?: number;
   reviews_count?: number;      // Alternative name for total_reviews
@@ -38,7 +45,7 @@ export interface Company {
   rating_avg?: number;
   average_rating?: number;     // Alternative name for rating_avg
   rating_count?: number;
-  certifications?: string;
+  certifications?: string | string[];
   awards?: string;
   partner_brands?: string;
   coverage_states?: string;
@@ -48,11 +55,13 @@ export interface Company {
   minimum_ticket?: number;
   maximum_ticket?: number;
   financing_options?: string;
+  services?: string[];
   response_time_sla?: string;
   languages?: string;
   email_public?: string;
   whatsapp?: string;
   phone_alt?: string;
+  email?: string | null;
   facebook_url?: string;
   instagram_url?: string;
   linkedin_url?: string;
@@ -94,6 +103,30 @@ export interface Company {
     priority: number;
     analytics_event?: string;
   }[];
+}
+
+export interface FinancingOption {
+  id: number;
+  company_id: number;
+  institution_name: string;
+  credit_line: string;
+  target_audience: 'PF' | 'PJ' | 'Rural';
+  max_term_months?: number;
+  grace_period_months?: number;
+  interest_rate_percent?: number;
+  interest_rate_details?: string;
+  active: boolean;
+  service_filters?: string[];
+  project_filters?: string[];
+  category_filters?: string[];
+  created_at: string;
+  updated_at: string;
+  // UI-friendly derived fields
+  name?: string;
+  institution?: string;
+  min_rate?: number;
+  max_months?: number;
+  grace_period_days?: number;
 }
 
 export interface Product {
@@ -771,6 +804,16 @@ export const searchApi = {
       return { companies: [], products: [], categories: [], articles: [] };
     }
   },
+};
+
+export const financingOptionsApi = {
+  getAll: (companyId: number, params?: { audience?: string; active?: boolean }) =>
+    fetchApi<FinancingOption[]>(`/companies/${companyId}/financing_options`, { params }),
+  compare: (companyId: number, ids: number[]) =>
+    fetchApi<{ options: FinancingOption[] }>(
+      `/companies/${companyId}/financing_options/compare`,
+      { params: { ids } }
+    ),
 };
 
 export const adminApi = {

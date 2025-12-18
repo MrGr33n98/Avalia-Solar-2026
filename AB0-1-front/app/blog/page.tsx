@@ -1,70 +1,129 @@
-'use client';
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import BlogCard from '@/components/BlogCard';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+export const metadata: Metadata = {
+  title: 'Blog Avalia Solar - Notícias e Guia sobre Energia Solar',
+  description: 'Fique por dentro das últimas novidades, dicas e guias sobre energia solar, painéis fotovoltaicos e sustentabilidade.',
+};
 
-export default function BlogPage() {
+async function getArticles(searchParams: any) {
+  try {
+    const params = new URLSearchParams();
+    if (searchParams?.category) params.append('category_id', searchParams.category);
+    if (searchParams?.page) params.append('page', searchParams.page);
+    
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/articles?${params.toString()}`, {
+      next: { revalidate: 300 } // Revalidate every 5 minutes
+    });
+    
+    if (!res.ok) return { data: [], meta: {} };
+    return res.json();
+  } catch (error) {
+    return { data: [], meta: {} };
+  }
+}
+
+async function getCategories() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/categories`, {
+      next: { revalidate: 3600 }
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export default async function BlogIndexPage({ searchParams }: { searchParams: any }) {
+  const { data: articles, meta } = await getArticles(searchParams);
+  const categories = await getCategories();
+
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">Blog Avalia Solar</h1>
-      
-      <div className="max-w-3xl mx-auto mb-12">
-        <p className="text-lg text-center mb-8">
-          Fique por dentro das últimas novidades do setor de energia solar,
-          dicas para consumidores e histórias de sucesso.
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Guia Completo de Energia Solar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-2">15 de Janeiro, 2024</p>
-            <p>Tudo o que você precisa saber antes de investir em energia solar para sua casa ou empresa.</p>
-            <a href="#" className="text-blue-600 hover:text-blue-800 mt-4 inline-block">Ler mais →</a>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Economia com Energia Solar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-2">10 de Janeiro, 2024</p>
-            <p>Descubra quanto você pode economizar ao migrar para energia solar fotovoltaica.</p>
-            <a href="#" className="text-blue-600 hover:text-blue-800 mt-4 inline-block">Ler mais →</a>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Manutenção de Painéis Solares</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-2">5 de Janeiro, 2024</p>
-            <p>Dicas essenciais para manter seu sistema solar funcionando com eficiência máxima.</p>
-            <a href="#" className="text-blue-600 hover:text-blue-800 mt-4 inline-block">Ler mais →</a>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-12 text-center">
-        <p className="text-lg">
-          Quer receber nossas atualizações? Inscreva-se em nossa newsletter:
-        </p>
-        <div className="max-w-md mx-auto mt-4">
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="Seu e-mail"
-              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Inscrever
-            </button>
+    <div className="min-h-screen bg-gray-50 pb-12">
+      {/* Hero Section */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+            Blog Avalia Solar
+          </h1>
+          <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+            Tudo o que você precisa saber sobre energia solar, economia e sustentabilidade.
+          </p>
+          
+          <div className="mt-8 max-w-md mx-auto">
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                 <Search className="h-5 w-5 text-gray-400" />
+               </div>
+               <Input 
+                 type="text" 
+                 placeholder="Buscar artigos..." 
+                 className="pl-10" 
+               />
+             </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        {/* Categories Filter */}
+        <div className="flex overflow-x-auto pb-4 gap-2 mb-8 no-scrollbar">
+          <Button variant={!searchParams.category ? "default" : "outline"} asChild>
+            <Link href="/blog">Todos</Link>
+          </Button>
+          {categories.map((cat: any) => (
+            <Button 
+              key={cat.id} 
+              variant={searchParams.category === String(cat.id) ? "default" : "outline"} 
+              asChild
+            >
+              <Link href={`/blog?category=${cat.id}`}>{cat.name}</Link>
+            </Button>
+          ))}
+        </div>
+
+        {/* Featured Post (First one if on page 1) */}
+        {!searchParams.page && articles.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Destaque</h2>
+            {/* We could use a special FeaturedBlogCard here, reusing BlogCard for now but larger */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+               {/* Placeholder for featured image/content layout */}
+               <BlogCard article={articles[0]} />
+            </div>
+          </div>
+        )}
+
+        {/* Articles Grid */}
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          {searchParams.category ? 'Artigos da Categoria' : 'Últimos Artigos'}
+        </h2>
+        
+        {articles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {articles.map((article: any) => (
+              <BlogCard key={article.id} article={article} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            Nenhum artigo encontrado.
+          </div>
+        )}
+
+        {/* Pagination (Simple Implementation) */}
+        {meta?.pagination && meta.pagination.total_pages > 1 && (
+          <div className="mt-12 flex justify-center space-x-2">
+            {/* Add pagination logic here */}
+            <Button variant="outline" disabled={meta.pagination.current_page === 1}>Anterior</Button>
+            <Button variant="outline" disabled={meta.pagination.current_page === meta.pagination.total_pages}>Próxima</Button>
+          </div>
+        )}
       </div>
     </div>
   );

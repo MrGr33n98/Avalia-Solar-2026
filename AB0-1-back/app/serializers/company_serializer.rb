@@ -38,7 +38,12 @@ class CompanySerializer < ActiveModel::Serializer
 
     begin
       # Use rails_blob_url for Active Storage attachments with full URL
-      Rails.application.routes.url_helpers.rails_blob_url(attachment, only_path: false)
+      # Force host to localhost:3001 if not set correctly in config
+      options = { only_path: false }
+      options[:host] = 'localhost' if Rails.env.development?
+      options[:port] = 3001 if Rails.env.development?
+      
+      Rails.application.routes.url_helpers.rails_blob_url(attachment, options)
     rescue StandardError => e
       Rails.logger.error("Error generating attachment URL for company #{object.id}: #{e.message}")
       nil

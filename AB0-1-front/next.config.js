@@ -98,6 +98,12 @@ const nextConfig = {
         port: '3001',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3001',
+        pathname: '/**',
+      },
     ],
     // Disable optimization for Active Storage images to avoid 404 errors
     unoptimized: true,
@@ -117,6 +123,10 @@ module.exports = withSentryConfig(
   {
     // Sentry Webpack Plugin Options
     silent: true, // Suppresses all logs
+    sourcemaps: {
+      deleteSourcemapsAfterUpload: true,
+      // To disable entirely, set disable: true
+    },
     
     // Upload source maps to Sentry
     // For all available options, see:
@@ -158,4 +168,3 @@ module.exports = withSentryConfig(
     transpileClientSDK: false,
   }
 );
-

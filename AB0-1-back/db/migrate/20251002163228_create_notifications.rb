@@ -12,7 +12,11 @@ class CreateNotifications < ActiveRecord::Migration[7.0]
       t.references :notifiable, polymorphic: true, index: true # Related object
       t.datetime :read_at
       t.datetime :sent_at
-      t.string :delivery_channels, array: true, default: ['in_app'] # ['in_app', 'email', 'push']
+      if ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
+        t.string :delivery_channels, array: true, default: ['in_app'] # ['in_app', 'email', 'push']
+      else
+        t.json :delivery_channels, default: ['in_app']
+      end
 
       t.timestamps
     end

@@ -1,38 +1,39 @@
 class AddTemporalAndStatusConstraints < ActiveRecord::Migration[7.0]
   def up
-    # 1. CampaignReviews: ensure end_at >= start_at (when both present)
-    unless constraint_exists?(:campaign_reviews, 'chk_campaign_reviews_period')
-      execute <<~SQL
-        ALTER TABLE campaign_reviews
-        ADD CONSTRAINT chk_campaign_reviews_period
-        CHECK (start_at IS NULL OR end_at IS NULL OR end_at >= start_at)
-      SQL
-    end
-
-    # 2. Add status columns/enums if missing (ForumQuestions & CampaignReviews)
-    # ForumQuestions already has status (string). We'll add an index & optional constraint list.
+    # 1. Add status columns/indexes (safe on SQLite/PostgreSQL)
     add_index :forum_questions, :status unless index_exists?(:forum_questions, :status)
 
-    # CampaignReviews: add status if not exists
     unless column_exists?(:campaign_reviews, :status)
       add_column :campaign_reviews, :status, :string, default: 'draft'
       add_index :campaign_reviews, :status
     end
 
-    # Optional: Validate allowed status values via CHECK constraints
-    add_status_constraint(:forum_questions, 'forum_questions_status_allowed', %w[draft published archived]) if column_exists?(:forum_questions, :status)
-    add_status_constraint(:campaign_reviews, 'campaign_reviews_status_allowed', %w[draft active finished canceled]) if column_exists?(:campaign_reviews, :status)
+    # 2. Constraints (PostgreSQL-only)
+    if postgresql?
+      unless constraint_exists?(:campaign_reviews, 'chk_campaign_reviews_period')
+        execute <<~SQL
+          ALTER TABLE campaign_reviews
+          ADD CONSTRAINT chk_campaign_reviews_period
+          CHECK (start_at IS NULL OR end_at IS NULL OR end_at >= start_at)
+        SQL
+      end
+
+      add_status_constraint(:forum_questions, 'forum_questions_status_allowed', %w[draft published archived]) if column_exists?(:forum_questions, :status)
+      add_status_constraint(:campaign_reviews, 'campaign_reviews_status_allowed', %w[draft active finished canceled]) if column_exists?(:campaign_reviews, :status)
+    end
   end
 
   def down
-    if constraint_exists?(:campaign_reviews, 'chk_campaign_reviews_period')
-      execute 'ALTER TABLE campaign_reviews DROP CONSTRAINT chk_campaign_reviews_period'
-    end
-    if constraint_exists?(:forum_questions, 'forum_questions_status_allowed')
-      execute 'ALTER TABLE forum_questions DROP CONSTRAINT forum_questions_status_allowed'
-    end
-    if constraint_exists?(:campaign_reviews, 'campaign_reviews_status_allowed')
-      execute 'ALTER TABLE campaign_reviews DROP CONSTRAINT campaign_reviews_status_allowed'
+    if postgresql?
+      if constraint_exists?(:campaign_reviews, 'chk_campaign_reviews_period')
+        execute 'ALTER TABLE campaign_reviews DROP CONSTRAINT chk_campaign_reviews_period'
+      end
+      if constraint_exists?(:forum_questions, 'forum_questions_status_allowed')
+        execute 'ALTER TABLE forum_questions DROP CONSTRAINT forum_questions_status_allowed'
+      end
+      if constraint_exists?(:campaign_reviews, 'campaign_reviews_status_allowed')
+        execute 'ALTER TABLE campaign_reviews DROP CONSTRAINT campaign_reviews_status_allowed'
+      end
     end
     if index_exists?(:forum_questions, :status)
       remove_index :forum_questions, :status
@@ -65,5 +66,9 @@ class AddTemporalAndStatusConstraints < ActiveRecord::Migration[7.0]
       ADD CONSTRAINT #{constraint_name}
       CHECK (status IS NULL OR status IN (#{values_sql}))
     SQL
+  end
+
+  def postgresql?
+    ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
   end
 end

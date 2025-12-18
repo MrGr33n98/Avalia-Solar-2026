@@ -85,7 +85,7 @@ test/                   # Test suite
 - **Article**: Artigos do blog
 - **Banner**: Banners promocionais
 - **Lead**: Leads capturados
-- **Notification**: Sistema de notificações
+- **FinancingConfiguration**: Configurações globais de financiamento
 
 ## 🔧 Pré-requisitos
 
@@ -632,6 +632,24 @@ O projeto inclui documentação completa sobre migrations:
 - **Status Geral**: 🟡 Bom (1 correção aplicada)
 
 Para mais detalhes, consulte `docs/MIGRATIONS_AUDIT.md`.
+
+## 💰 Configuração de Financiamento
+
+O sistema possui um módulo de configuração de financiamento acessível via Active Admin.
+
+### Recursos
+- **Abas Organizacionais**: Configurações separadas por contexto (Geral, Taxas, Limites).
+- **Validações**: Regras estritas para garantir consistência financeira.
+- **Histórico**: Versionamento de todas as alterações via PaperTrail.
+- **Ferramentas**:
+  - Reset para padrões
+  - Importação de JSON
+  - Simulação rápida na sidebar
+
+### Como Adicionar Novos Parâmetros
+1. Adicione o campo na migration e no model `FinancingConfiguration`.
+2. Atualize `app/admin/financing_configurations.rb` para incluir o campo no formulário e `permit_params`.
+3. As validações e histórico serão aplicados automaticamente.
 
 ## 📄 Licença
 

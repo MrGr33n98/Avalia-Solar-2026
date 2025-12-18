@@ -7,50 +7,17 @@ module Api
 
       # GET /api/v1/company_dashboard/stats
       def stats
-        profile_views = @company.respond_to?(:profile_views_count) ? (@company.profile_views_count || 0) : 0
-        cta_clicks    = @company.respond_to?(:cta_clicks_count) ? (@company.cta_clicks_count || 0) : 0
-        whatsapp_clicks = @company.respond_to?(:whatsapp_clicks_count) ? (@company.whatsapp_clicks_count || 0) : 0
-        reviews_count = @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : (@company.reviews.size)
-
-        pending_approvals = if @company.respond_to?(:pending_changes) && @company.pending_changes.respond_to?(:pending)
-                               @company.pending_changes.pending.count
-                             else
-                               0
-                             end
-
-        active_campaigns = if @company&.campaigns&.respond_to?(:active)
-                              @company.campaigns.active.count
-                            else
-                              @company&.campaigns&.count || 0
-                            end
-
+        stats_service = CompanyDashboard::StatsService.new(@company)
+        
         render json: {
-          stats: {
-            profile_views: profile_views,
-            cta_clicks: cta_clicks,
-            whatsapp_clicks: whatsapp_clicks,
-            leads_received: @company.leads.count,
-            reviews_count: reviews_count,
-            average_rating: @company.respond_to?(:rating_avg) ? (@company.rating_avg || 0) : 0,
-            pending_approvals: pending_approvals,
-            active_campaigns: active_campaigns,
-            conversion_rate: calculate_conversion_rate
-          }
+          stats: stats_service.call,
+          plan_features: @company.plan&.features_json || {}
         }, status: :ok
       rescue => e
         Rails.logger.error("Company dashboard stats error: #{e.message}")
         render json: {
-          stats: {
-            profile_views: 0,
-            cta_clicks: 0,
-            whatsapp_clicks: 0,
-            leads_received: 0,
-            reviews_count: 0,
-            average_rating: 0,
-            pending_approvals: 0,
-            active_campaigns: 0,
-            conversion_rate: 0
-          }
+          stats: CompanyDashboard::StatsService.new(nil).call,
+          plan_features: {}
         }, status: :ok
       end
 
@@ -300,11 +267,7 @@ module Api
       private
 
       def set_company
-        @company = if params[:company_id].present?
-                     Company.find_by(id: params[:company_id])
-                   else
-                     current_user&.company
-                   end
+        @company = current_user.company
         unless @company
           render json: { error: 'Company not found' }, status: :not_found and return
         end
@@ -314,7 +277,7 @@ module Api
         unless current_user&.company
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
-        unless current_user&.approved_by_admin
+        unless current_user&.active?
           return render json: { error: 'Access pending approval' }, status: :forbidden
         end
       end
@@ -341,11 +304,7 @@ module Api
       end
 
       def calculate_conversion_rate
-        total_views = @company.respond_to?(:profile_views_count) ? (@company.profile_views_count || 0) : 0
-        return 0 if total_views.zero?
-
-        conversions = @company.leads.count
-        ((conversions.to_f / total_views) * 100).round(2)
+        # Now handled by CompanyDashboard::StatsService
       end
     end
   end

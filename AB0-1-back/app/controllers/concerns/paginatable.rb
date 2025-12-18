@@ -45,10 +45,9 @@ module Paginatable
   end
 
   # Add pagination metadata to response headers
-  def set_pagination_headers
-    return unless @pagy || @collection&.respond_to?(:current_page)
-
-    collection = @pagy ? @pagy : @collection
+  def set_pagination_headers(collection = nil)
+    collection ||= @pagy || @collection
+    return unless collection&.respond_to?(:current_page)
 
     headers['X-Page'] = collection.current_page.to_s
     headers['X-Per-Page'] = collection.limit_value.to_s

@@ -33,6 +33,7 @@ O **AB0-1 Frontend** é a interface do usuário para o sistema de avaliação e 
 ### ✨ Principais Funcionalidades
 
 - 🏢 **Catálogo de Empresas**: Busca e filtro avançado de empresas solares
+- 📍 **Filtro de Localização**: Filtro dinâmico por Estado e Cidade
 - ⭐ **Sistema de Avaliações**: Visualização e criação de reviews
 - 📊 **Dashboard**: Painel administrativo completo
 - 🔐 **Autenticação**: Sistema seguro com JWT

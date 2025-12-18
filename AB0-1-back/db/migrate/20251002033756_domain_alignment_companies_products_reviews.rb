@@ -47,16 +47,28 @@ class DomainAlignmentCompaniesProductsReviews < ActiveRecord::Migration[7.0]
 
   # Helpers to check nullability
   def null_allowed?(table, column)
-    result = ActiveRecord::Base.connection.execute(<<~SQL)
-      SELECT is_nullable FROM information_schema.columns
-      WHERE table_name='#{table}' AND column_name='#{column}'
-    SQL
-    row = result.first
-    return true unless row
-    row['is_nullable'] == 'YES'
+    if postgresql?
+      result = ActiveRecord::Base.connection.execute(<<~SQL)
+        SELECT is_nullable FROM information_schema.columns
+        WHERE table_name='#{table}' AND column_name='#{column}'
+      SQL
+      row = result.first
+      return true unless row
+      row['is_nullable'] == 'YES'
+    else
+      # SQLite fallback
+      columns = ActiveRecord::Base.connection.columns(table)
+      col = columns.find { |c| c.name == column.to_s }
+      return true unless col
+      col.null
+    end
   end
 
   def change_null(table, column, allow_null)
     change_column_null table, column, allow_null
+  end
+
+  def postgresql?
+    ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
   end
 end

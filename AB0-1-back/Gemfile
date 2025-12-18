@@ -1,10 +1,11 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.2'
+ruby '~> 3.2'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem 'rails', '~> 7.0.6'
+gem 'rails', '~> 7.0.8'
+gem 'logger'
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem 'sprockets-rails'
@@ -65,6 +66,11 @@ group :development, :test do
   gem 'sqlite3', '~> 1.4'
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mingw x64_mingw]
+  
+  # TASK-022: API Documentation
+  gem 'rswag-api'
+  gem 'rswag-ui'
+  gem 'rswag-specs'
 end
 
 gem 'pg' # Make sure this line exists
@@ -84,7 +90,7 @@ group :development do
   
   # TASK-002: Security scanning tools
   gem 'brakeman', require: false
-  gem 'bundler-audit', require: false
+  # gem 'bundler-audit', require: false
   
   # TASK-020: N+1 query detection
   gem 'bullet'
@@ -99,9 +105,14 @@ group :test do
   # TASK-012: Test coverage reporting
   gem 'simplecov', require: false
   gem 'simplecov-console', require: false
+  
+  # TASK-023: Testing Factories
+  gem 'factory_bot_rails'
+  gem 'rspec-rails', '~> 6.0'
 end
 
 gem 'activeadmin', '~> 3.2.0'
+gem 'activeadmin_quill_editor'
 gem 'active_model_serializers', '~> 0.10.15'
 gem 'dotenv-rails', '~> 3.1'
 gem 'faker', '~> 3.5'
@@ -109,6 +120,9 @@ gem 'jwt', '~> 3.1'
 gem 'noticed', '= 2.2'
 gem 'pg_search', '~> 2.3'
 gem 'sassc'
+
+# Resolve dependency conflict between selenium-webdriver (< 3.0) and caxlsx (>= 2.4)
+gem 'rubyzip', '>= 2.4', '< 3.0'
 
 # Add this line to your Gemfile
 gem 'rack-cors', require: 'rack/cors'
@@ -131,3 +145,17 @@ gem 'sentry-sidekiq'
 gem 'scout_apm'
 gem 'rackup', '~> 1.0'
 gem 'rack-session', '~> 1.0'
+
+gem "paper_trail", "~> 16.0"
+
+# Slug management
+gem 'friendly_id', '~> 5.5'
+
+# Authorization
+gem 'pundit'
+
+# Excel Export
+gem 'caxlsx'
+# gem 'activeadmin_caxlsx'
+
+gem "cpf_cnpj", "~> 1.0"

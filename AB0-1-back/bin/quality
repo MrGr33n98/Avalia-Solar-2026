@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+def run_check(name, command)
+  puts "\nRunning #{name}..."
+  system(command)
+  if $?.success?
+    puts "✅ #{name} passed!"
+    true
+  else
+    puts "❌ #{name} failed!"
+    false
+  end
+end
+
+puts "🛡️  Starting Quality Checks..."
+success = true
+
+# 1. Security Analysis
+success &= run_check("Brakeman (Security)", "bundle exec brakeman -q -w2")
+
+# 2. Code Style
+# rubocop is typically optional in early stages, but good to have
+if Gem.loaded_specs.has_key?('rubocop')
+  success &= run_check("Rubocop (Style)", "bundle exec rubocop --format progress") 
+end
+
+# 3. Tests
+success &= run_check("RSpec (Tests)", "bundle exec rspec")
+
+if success
+  puts "\n🎉 All checks passed! You are ready to push."
+  exit 0
+else
+  puts "\n⚠️  Some checks failed. Please fix them before pushing."
+  exit 1
+end

@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   mount ActiveStorage::Engine => "/rails/active_storage"
   # ActiveAdmin routes
   ActiveAdmin.routes(self)
@@ -7,6 +9,7 @@ Rails.application.routes.draw do
       sessions: 'admin/sessions'
     }
   )
+  devise_for :users
 
   # Health check endpoints
   get '/health', to: 'health#show'
@@ -20,12 +23,23 @@ Rails.application.routes.draw do
   # API routes
   namespace :api do
     namespace :v1 do
+      # Global states endpoint for frontend compatibility
+      get 'states', to: 'companies#states'
+
+      # Articles routes
+      resources :articles do
+        member do
+          get :related
+        end
+      end
+      
       # Companies routes
       resources :companies do
         collection do
           get :states
           get :cities
           get :locations
+          get :featured
         end
         member do
           get 'analytics/historical', to: 'companies#analytics_historical'
@@ -34,6 +48,11 @@ Rails.application.routes.draw do
           get 'analytics/traffic', to: 'companies#analytics_traffic'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
+        end
+        resources :financing_options, only: [:index, :create, :update, :destroy] do
+          collection do
+            get :compare
+          end
         end
       end
 

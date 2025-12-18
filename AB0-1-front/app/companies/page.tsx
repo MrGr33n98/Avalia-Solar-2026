@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, MapPin, Grid, List } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
+import { LocationFilter } from '@/components/LocationFilter';
 import { companiesApiSafe, categoriesApiSafe, type Company, type Category } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,8 @@ export default function CompaniesPage() {
   }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('all');
+  const [stateFilter, setStateFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -53,27 +55,33 @@ export default function CompaniesPage() {
         (company.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (company.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
-      const matchesLocation =
-        locationFilter === 'all' ||
-        (company.address?.toLowerCase() || '').includes(locationFilter.toLowerCase());
+      const matchesState =
+        stateFilter === 'all' ||
+        ((company.state || '').toUpperCase() === stateFilter.toUpperCase());
 
-      return matchesSearch && matchesLocation;
+      const matchesCity =
+        !cityFilter ||
+        ((company.city || '').toLowerCase() === cityFilter.toLowerCase());
+
+      return matchesSearch && matchesState && matchesCity;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return (a.name || '').localeCompare(b.name || '');
         case 'location':
-          return (a.address || '').localeCompare(b.address || '');
+          return (a.state || '').localeCompare(b.state || '');
         default:
           return 0;
       }
     });
 
-  // Extract unique locations for filter
-  const locations = Array.from(
-    new Set(companies.map(c => c.address?.split(',')[0]).filter(Boolean))
-  );
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStateFilter('all');
+    setCityFilter('');
+    setSortBy('name');
+  };
 
   if (error) {
     return (
@@ -126,25 +134,21 @@ export default function CompaniesPage() {
       </section>
 
       {/* Filters and Controls */}
-      <section className="py-8 bg-card border-b border-border sticky top-16 z-40">
+      <section className="py-8 bg-card border-b border-border sticky top-16 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full sm:w-48 bg-background text-foreground border-input focus:ring-ring">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="Localização" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover text-popover-foreground border-border">
-                  <SelectItem value="all">Todas as localizações</SelectItem>
-                  {locations.map(location => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+              <LocationFilter
+                onStateChange={setStateFilter}
+                onCityChange={setCityFilter}
+                onClear={() => {
+                  setStateFilter('all');
+                  setCityFilter('');
+                }}
+                initialState={stateFilter}
+                initialCity={cityFilter}
+              />
 
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full sm:w-48 bg-background text-foreground border-input focus:ring-ring">
@@ -152,15 +156,15 @@ export default function CompaniesPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-popover text-popover-foreground border-border">
                   <SelectItem value="name">Nome A-Z</SelectItem>
-                  <SelectItem value="location">Localização</SelectItem>
+                  <SelectItem value="location">Estado</SelectItem>
                   <SelectItem value="rating">Melhor avaliada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Results count and view mode */}
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center space-x-4 self-end lg:self-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {filteredCompanies.length}{' '}
                 {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
               </span>
@@ -241,11 +245,7 @@ export default function CompaniesPage() {
                 empresas.
               </p>
               <Button
-                onClick={() => {
-                  setSearchTerm('');
-                  setLocationFilter('all');
-                  setSortBy('name');
-                }}
+                onClick={handleClearFilters}
                 variant="outline"
                 className="text-primary border-border hover:bg-muted"
               >

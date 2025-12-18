@@ -1,40 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Shield, Zap, Users, TrendingUp, LogIn, UserPlus } from 'lucide-react';
+import { Zap, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { useDashboard } from '@/hooks/useDashboard';
 import SearchBar from '@/components/SearchBar';
 
 export default function Hero() {
-  const { stats, loading } = useDashboard();
   const { isAuthenticated } = useAuth();
-
-  const statsData = [
-    {
-      icon: Users,
-      value: loading ? '...' : (stats?.companies_count ? `${stats.companies_count}+` : '500+'),
-      label: 'Empresas Parceiras',
-    },
-    {
-      icon: Star,
-      value: loading ? '...' : (stats?.average_rating ? `${stats.average_rating.toFixed(1)}/5` : '4.8/5'),
-      label: 'Avaliação Média',
-    },
-    {
-      icon: TrendingUp,
-      value: loading ? '...' : (stats?.projects_count ? `${stats.projects_count}k+` : '10k+'),
-      label: 'Projetos Realizados',
-    },
-    {
-      icon: Shield,
-      value: '100%',
-      label: 'Empresas Verificadas',
-    },
-  ];
 
   return (
     <section className="relative bg-white py-16 lg:py-24 overflow-hidden">
@@ -133,26 +107,6 @@ export default function Hero() {
                 </Link>
               </>
             )}
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-8"
-          >
-            {statsData.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="flex justify-center mb-2">
-                  <div className="p-3 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg">
-                    <stat.icon className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                </div>
-                <div className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
           </motion.div>
         </div>
       </div>

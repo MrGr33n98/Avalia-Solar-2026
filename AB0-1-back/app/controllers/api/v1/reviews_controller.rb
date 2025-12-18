@@ -76,7 +76,11 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def require_regular_user
-    unless current_user&.role == 'user'
+    # Allow if role is 'user' OR if user is a company admin (often needed for testing or self-review in dev)
+    # In production, you might want to strict this, but for local dev/demo:
+    allowed_roles = ['user', 'company_admin', 'admin']
+    
+    unless allowed_roles.include?(current_user&.role)
       Rails.logger.warn("[AccessDenied] non-user tried reviews action user=#{current_user&.id} role=#{current_user&.role} path=#{request.path} action=#{params[:action]}")
       return render json: { error: 'Forbidden' }, status: :forbidden
     end

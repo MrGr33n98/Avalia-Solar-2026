@@ -6,7 +6,11 @@ class CreatePendingChanges < ActiveRecord::Migration[7.0]
       t.references :approved_by, foreign_key: { to_table: :admin_users }
       
       t.string :change_type, null: false
-      t.jsonb :data, default: {}
+      if ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
+        t.jsonb :data, default: {}
+      else
+        t.json :data, default: {}
+      end
       t.string :status, default: 'pending'
       t.text :rejection_reason
       

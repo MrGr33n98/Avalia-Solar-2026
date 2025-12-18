@@ -85,8 +85,10 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<any>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [planFeatures, setPlanFeatures] = useState<any>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -102,7 +104,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
 
   const fetchDashboardStats = useCallback(async () => {
     try {
-      const data = await fetchApi<{ stats: any }>(
+      const data = await fetchApi<{ stats: any; plan_features?: any }>(
         '/company_dashboard/stats',
         { params: { company_id: companyId } }
       );
@@ -118,8 +120,12 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
         activeCampaigns: s.active_campaigns ?? 0,
         conversionRate: s.conversion_rate ?? 0,
       });
-    } catch (error) {
+      setPlanFeatures(data?.plan_features || {});
+    } catch (error: any) {
       console.error('Error fetching dashboard stats:', error);
+      if (error.message && error.message.includes('403')) {
+        setIsAccessDenied(true);
+      }
     }
   }, [companyId]);
 
@@ -162,6 +168,31 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (isAccessDenied) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6 flex items-center justify-center">
+        <Card className="max-w-md w-full shadow-lg border-amber-200">
+          <CardHeader>
+            <div className="mx-auto bg-amber-100 p-4 rounded-full w-fit mb-4 animate-pulse">
+              <Clock className="h-10 w-10 text-amber-600" />
+            </div>
+            <CardTitle className="text-center text-xl text-amber-900">Cadastro em Análise</CardTitle>
+            <CardDescription className="text-center text-amber-700 mt-2">
+              Sua conta está aguardando aprovação da nossa equipe administrativa.
+              <br />
+              Você receberá um e-mail assim que o acesso for liberado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center pt-4">
+            <Button onClick={() => router.push('/')} variant="outline" className="border-amber-200 hover:bg-amber-50 text-amber-900">
+              Voltar para a Home
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -93,6 +93,8 @@ ActiveAdmin.setup do |config|
   # the name of default policy class. This policy will be used in every
   # case when Pundit is unable to find suitable policy.
   # config.pundit_default_policy = "MyDefaultPunditPolicy"
+  config.authorization_adapter = ActiveAdmin::PunditAdapter
+  config.pundit_default_policy = "ApplicationPolicy"
 
   # If you wish to maintain a separate set of Pundit policies for admin
   # resources, you may set a namespace here that Pundit will search

@@ -3,10 +3,10 @@
 // =======================
 
 import axios from 'axios';
-import { Category, Company, Review, Product } from './api';
+import { Category, Company, Review, Product, FinancingOption } from './api';
 
 // Re-export types so they can be imported from api-client
-export type { Category, Company, Review, Product };
+export type { Category, Company, Review, Product, FinancingOption };
 
 // ------------------
 // Configuração
@@ -176,6 +176,27 @@ export const companiesApiSafe = {
       return null;
     }
   },
+
+  getStates: async (): Promise<string[]> => {
+    try {
+      const response = await fetchApiSafe<{ states: string[] }>('companies/states');
+      return response.states || [];
+    } catch (error) {
+      console.error('Error fetching states:', error);
+      return [];
+    }
+  },
+
+  getCities: async (state?: string): Promise<string[]> => {
+    try {
+      const url = `companies/cities${state ? `?state=${encodeURIComponent(state)}` : ''}`;
+      const response = await fetchApiSafe<{ cities: string[] }>(url);
+      return response.cities || [];
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+      return [];
+    }
+  },
 };
 
 // Categorias
@@ -269,6 +290,29 @@ export const leadsApiSafe = {
     } catch (error) {
       console.error('Error creating lead:', error);
       throw error;
+    }
+  },
+};
+
+// Financiamento
+export const financingOptionsApiSafe = {
+  getAll: async (params: { company_id: number; audience?: string; active?: boolean }): Promise<FinancingOption[]> => {
+    try {
+      const url = `companies/${params.company_id}/financing_options${buildQueryParams({ audience: params.audience, active: params.active })}`;
+      return await fetchApiSafe<FinancingOption[]>(url);
+    } catch (error) {
+      console.error('Error fetching financing options:', error);
+      return [];
+    }
+  },
+  compare: async (companyId: number, ids: number[]): Promise<{ options: FinancingOption[] }> => {
+    try {
+      const query = ids.map(id => `ids[]=${id}`).join('&');
+      const url = `companies/${companyId}/financing_options/compare?${query}`;
+      return await fetchApiSafe<{ options: FinancingOption[] }>(url);
+    } catch (error) {
+      console.error('Error comparing financing options:', error);
+      return { options: [] };
     }
   },
 };

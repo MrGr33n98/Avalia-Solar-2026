@@ -1,5 +1,3 @@
-'use client';
-
 export function getFullImageUrl(url?: string | null): string | null {
   if (!url || typeof url !== 'string') return null;
   const trimmed = url.trim();
@@ -9,4 +7,3 @@ export function getFullImageUrl(url?: string | null): string | null {
   const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${base}${path}`;
 }
-

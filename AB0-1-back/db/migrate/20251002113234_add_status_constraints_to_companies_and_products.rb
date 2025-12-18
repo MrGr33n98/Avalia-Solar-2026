@@ -1,8 +1,10 @@
 class AddStatusConstraintsToCompaniesAndProducts < ActiveRecord::Migration[7.0]
   def up
-    # Companies allowed statuses
-    add_company_status_constraint unless constraint_exists?(:companies, 'companies_status_allowed')
-    add_product_status_constraint unless constraint_exists?(:products, 'products_status_allowed')
+    # Companies/products allowed statuses (PostgreSQL-only constraints)
+    if postgresql?
+      add_company_status_constraint unless constraint_exists?(:companies, 'companies_status_allowed')
+      add_product_status_constraint unless constraint_exists?(:products, 'products_status_allowed')
+    end
 
     # Add indexes for status filtering if not present
     add_index :companies, :status unless index_exists?(:companies, :status)
@@ -10,11 +12,13 @@ class AddStatusConstraintsToCompaniesAndProducts < ActiveRecord::Migration[7.0]
   end
 
   def down
-    if constraint_exists?(:companies, 'companies_status_allowed')
-      execute "ALTER TABLE companies DROP CONSTRAINT companies_status_allowed"
-    end
-    if constraint_exists?(:products, 'products_status_allowed')
-      execute "ALTER TABLE products DROP CONSTRAINT products_status_allowed"
+    if postgresql?
+      if constraint_exists?(:companies, 'companies_status_allowed')
+        execute "ALTER TABLE companies DROP CONSTRAINT companies_status_allowed"
+      end
+      if constraint_exists?(:products, 'products_status_allowed')
+        execute "ALTER TABLE products DROP CONSTRAINT products_status_allowed"
+      end
     end
     remove_index :companies, :status if index_exists?(:companies, :status)
     remove_index :products, :status if index_exists?(:products, :status)
@@ -45,5 +49,9 @@ class AddStatusConstraintsToCompaniesAndProducts < ActiveRecord::Migration[7.0]
     SQL
     result = execute(query) rescue []
     result.any?
+  end
+
+  def postgresql?
+    ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
   end
 end

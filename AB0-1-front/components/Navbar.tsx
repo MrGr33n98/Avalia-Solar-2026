@@ -112,8 +112,8 @@ export default function Navbar() {
           <Link href="/products" className="text-gray-700 hover:text-primary">
             Produtos
           </Link>
-          <Link href="/plans" className="text-gray-700 hover:text-primary">
-            Planos
+          <Link href="/blog" className="text-gray-700 hover:text-primary">
+            Blog
           </Link>
           {!isAuthenticated && (
             <Button asChild variant="outline">
@@ -229,11 +229,11 @@ export default function Navbar() {
                 Produtos
               </Link>
               <Link
-                href="/plans"
+                href="/blog"
                 className="block py-2 text-gray-700 hover:text-primary"
                 onClick={toggleMobileMenu}
               >
-                Planos
+                Blog
               </Link>
               {!isAuthenticated && (
                 <Button asChild variant="outline" className="w-full">

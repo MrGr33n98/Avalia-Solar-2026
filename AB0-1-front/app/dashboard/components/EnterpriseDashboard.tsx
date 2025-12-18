@@ -216,7 +216,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     },
     {
       title: 'Rating Médio',
-      value: stats?.averageRating?.toFixed(1) || '0.0',
+      value: (Number(stats?.averageRating) || 0).toFixed(1),
       icon: Award,
       color: 'pink',
       change: '+0.3',

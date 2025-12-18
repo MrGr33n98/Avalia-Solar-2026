@@ -27,9 +27,11 @@ class SchemaQualityImprovements < ActiveRecord::Migration[7.0]
     change_column :subscription_plans, :value, :decimal, precision: 12, scale: 2 if column_exists?(:subscription_plans, :value)
 
     # 4. Enforce numeric integrity where appropriate
-    # Add check constraints if not present
-    unless constraint_exists?(:reviews, 'chk_reviews_rating_range')
-      execute "ALTER TABLE reviews ADD CONSTRAINT chk_reviews_rating_range CHECK (rating >= 0 AND rating <= 5)" rescue nil
+    # Add check constraints if not present (Postgres only)
+    if postgresql?
+      unless constraint_exists?(:reviews, 'chk_reviews_rating_range')
+        execute "ALTER TABLE reviews ADD CONSTRAINT chk_reviews_rating_range CHECK (rating >= 0 AND rating <= 5)" rescue nil
+      end
     end
 
     # 5. Clean up rating_cache (legacy) if not referenced anymore
@@ -44,15 +46,25 @@ class SchemaQualityImprovements < ActiveRecord::Migration[7.0]
     change_column_default :banners, :active, from: nil, to: false if column_exists?(:banners, :active)
 
     # 7. Add partial indexes for featured / verified (optional performance)
-    unless index_exists?(:companies, :featured, where: "featured = true")
-      add_index :companies, :featured, where: "featured = true", name: 'index_companies_on_featured_true'
-    end
-    unless index_exists?(:companies, :verified, where: "verified = true")
-      add_index :companies, :verified, where: "verified = true", name: 'index_companies_on_verified_true'
+    if postgresql?
+      unless index_exists?(:companies, :featured, where: "featured = true")
+        add_index :companies, :featured, where: "featured = true", name: 'index_companies_on_featured_true'
+      end
+      unless index_exists?(:companies, :verified, where: "verified = true")
+        add_index :companies, :verified, where: "verified = true", name: 'index_companies_on_verified_true'
+      end
+    else
+      # SQLite fallback: normal indexes
+      add_index :companies, :featured, name: 'index_companies_on_featured' unless index_exists?(:companies, :featured, name: 'index_companies_on_featured')
+      add_index :companies, :verified, name: 'index_companies_on_verified' unless index_exists?(:companies, :verified, name: 'index_companies_on_verified')
     end
   end
 
   private
+
+  def postgresql?
+    ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
+  end
 
   # Helper to detect existing constraints (Rails lacks a direct helper for arbitrary CHECK constraints)
   def constraint_exists?(table, constraint_name)

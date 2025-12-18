@@ -1,22 +1,45 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-  Building2, 
-  Package, 
-  Users, 
-  Star, 
-  TrendingUp, 
+import {
+  Building2,
+  Package,
+  Users,
+  Star,
+  TrendingUp,
   DollarSign,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 
-export default function DashboardStats() {
-  const { stats, loading, error } = useDashboard();
+export interface DashboardStatsProps {
+  companiesCount?: number;
+  productsCount?: number;
+  leadsCount?: number;
+  reviewsCount?: number;
+  activeCampaigns?: number;
+  monthlyRevenue?: number | string;
+  averageRating?: number;
+}
 
-  if (loading) {
+export default function DashboardStats(props: DashboardStatsProps = {}) {
+  const { stats, loading, error } = useDashboard();
+  const hasCustom = Object.values(props).some((v) => v !== undefined);
+
+  const safeStats = hasCustom
+    ? {
+        companies_count: props.companiesCount ?? 0,
+        products_count: props.productsCount ?? 0,
+        leads_count: props.leadsCount ?? 0,
+        reviews_count: props.reviewsCount ?? 0,
+        active_campaigns: props.activeCampaigns ?? 0,
+        monthly_revenue: props.monthlyRevenue ?? 0,
+        average_rating: props.averageRating ?? 0,
+      }
+    : stats;
+
+  if (!hasCustom && loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
@@ -30,7 +53,7 @@ export default function DashboardStats() {
     );
   }
 
-  if (error || !stats) {
+  if (!safeStats || (!hasCustom && error)) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
         <p className="text-red-600">Erro ao carregar estatísticas do dashboard</p>
@@ -41,7 +64,7 @@ export default function DashboardStats() {
   const statsConfig = [
     {
       title: 'Empresas',
-      value: stats.companies_count,
+      value: safeStats.companies_count,
       icon: Building2,
       color: 'bg-blue-500',
       bgColor: 'bg-blue-50',
@@ -51,7 +74,7 @@ export default function DashboardStats() {
     },
     {
       title: 'Produtos',
-      value: stats.products_count,
+      value: safeStats.products_count,
       icon: Package,
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
@@ -61,7 +84,7 @@ export default function DashboardStats() {
     },
     {
       title: 'Leads',
-      value: stats.leads_count,
+      value: safeStats.leads_count,
       icon: Users,
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',
@@ -71,7 +94,7 @@ export default function DashboardStats() {
     },
     {
       title: 'Reviews',
-      value: stats.reviews_count,
+      value: safeStats.reviews_count,
       icon: Star,
       color: 'bg-yellow-500',
       bgColor: 'bg-yellow-50',
@@ -81,7 +104,7 @@ export default function DashboardStats() {
     },
     {
       title: 'Campanhas Ativas',
-      value: stats.active_campaigns,
+      value: safeStats.active_campaigns,
       icon: TrendingUp,
       color: 'bg-indigo-500',
       bgColor: 'bg-indigo-50',
@@ -91,7 +114,10 @@ export default function DashboardStats() {
     },
     {
       title: 'Receita Mensal',
-      value: `R$ ${(stats.monthly_revenue ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      value:
+        typeof safeStats.monthly_revenue === 'string'
+          ? safeStats.monthly_revenue
+          : `R$ ${(safeStats.monthly_revenue ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
       color: 'bg-orange-500',
       bgColor: 'bg-orange-50',
@@ -119,7 +145,7 @@ export default function DashboardStats() {
                 </div>
                 <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
               </div>
-              
+
               <div className="mb-2">
                 <p className="text-2xl font-bold text-gray-900">
                   {typeof stat.value === 'number' ? stat.value.toLocaleString('pt-BR') : stat.value}
@@ -132,9 +158,11 @@ export default function DashboardStats() {
                 ) : (
                   <ArrowDownRight className="h-4 w-4 text-red-500" />
                 )}
-                <span className={`text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <span
+                  className={`text-sm font-medium ${
+                    stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   {stat.change}
                 </span>
                 <span className="text-sm text-gray-500">vs mês passado</span>

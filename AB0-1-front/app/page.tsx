@@ -10,6 +10,13 @@ import { ArrowRight, Star, MapPin, MessageCircle } from 'lucide-react'; // Adici
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 export default function Home() {
   const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
@@ -43,7 +50,7 @@ export default function Home() {
 
     const fetchCompanies = async () => {
       try {
-        const response = await companiesApiSafe.getAll();
+        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12 });
         setCompanies(response);
       } catch (error) {
         console.error('Error fetching companies:', error);
@@ -121,18 +128,32 @@ export default function Home() {
             </p>
 
             {loadingCompanies ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-72 w-full" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-60 w-full" />
                 ))}
               </div>
             ) : errorCompanies ? (
               <p className="text-center text-red-500">{errorCompanies}</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {companies.slice(0, 3).map((company) => (
-                  <CompanyCard key={company.id} company={company} />
-                ))}
+              <div className="px-4 md:px-12">
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-4">
+                    {companies.map((company) => (
+                      <CarouselItem key={company.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                        <CompanyCard company={company} compact={true} />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
               </div>
             )}
 

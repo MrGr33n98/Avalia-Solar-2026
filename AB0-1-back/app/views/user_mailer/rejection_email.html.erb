@@ -1,0 +1,7 @@
+<h1>Sua conta não foi aprovada</h1>
+<p>Olá <%= @user.name %>,</p>
+<p>Infelizmente, sua conta não foi aprovada neste momento.</p>
+<% if @user.rejection_reason.present? %>
+  <p><strong>Motivo:</strong> <%= @user.rejection_reason %></p>
+<% end %>
+<p>Se você acredita que isso é um erro, entre em contato com o suporte.</p>

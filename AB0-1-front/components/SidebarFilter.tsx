@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
   Sliders,
   Zap
 } from 'lucide-react';
+import { useLocationData } from '@/hooks/useLocationData';
 
 interface SidebarFilterProps {
   filters: {
@@ -214,22 +215,28 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
     return value && value !== '';
   }).length;
 
-  // Mock data for states and cities - replace with actual API data
-  const mockStatesData = {
-    'São Paulo': ['São Paulo', 'Campinas', 'Santos', 'Ribeirão Preto'],
-    'Rio de Janeiro': ['Rio de Janeiro', 'Niterói', 'Nova Iguaçu', 'Petrópolis'],
-    'Minas Gerais': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora'],
-    'Paraná': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa'],
-    'Rio Grande do Sul': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Santa Maria'],
-    'Bahia': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari'],
-    'Santa Catarina': ['Florianópolis', 'Joinville', 'Blumenau', 'São José'],
-    'Goiás': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'],
-    'Pernambuco': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru'],
-    'Ceará': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú']
-  };
+  const { states, cities, loadingStates, loadingCities, error, fetchCities, refreshStates } = useLocationData();
 
-  const availableStates = Object.keys(mockStatesData).sort();
-  const availableCities = filters.state ? mockStatesData[filters.state as keyof typeof mockStatesData] || [] : [];
+  useEffect(() => {
+    if (filters.state) {
+      fetchCities(filters.state);
+    }
+  }, [filters.state, fetchCities]);
+
+  const availableStates = useMemo(() => states.filter(s => s && s.trim() !== '').slice().sort(), [states]);
+  const availableCities = useMemo(() => (filters.state ? cities.filter(c => c && c.trim() !== '').slice().sort() : []), [filters.state, cities]);
+
+  const [stateSearch, setStateSearch] = useState('');
+  const filteredStates = useMemo(() => {
+    const term = stateSearch.toLowerCase();
+    return availableStates.filter(s => s.toLowerCase().includes(term));
+  }, [availableStates, stateSearch]);
+
+  const [citySearch, setCitySearch] = useState('');
+  const filteredCities = useMemo(() => {
+    const term = citySearch.toLowerCase();
+    return availableCities.filter(c => c.toLowerCase().includes(term));
+  }, [availableCities, citySearch]);
 
   return (
     <motion.div 
@@ -272,19 +279,44 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
           icon={<MapPin className="h-4 w-4" />}
           isOpen={openSections.has('states')} 
           onToggle={() => toggleSection('states')}
-          count={availableStates.length}
+          count={filteredStates.length}
         >
-          <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
-            {availableStates.map((state) => (
-              <FilterButton
-                key={state}
-                active={filters.state === state}
-                onClick={() => handleFilterClick('state', state)}
-                icon={<MapPin className="h-3 w-3" />}
-              >
-                {state}
-              </FilterButton>
-            ))}
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar estado..."
+                value={stateSearch}
+                onChange={(e) => setStateSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+              {loadingStates && (
+                <div className="text-xs text-gray-500 px-3 py-2">Carregando estados...</div>
+              )}
+              {!loadingStates && filteredStates.map((state) => (
+                <FilterButton
+                  key={state}
+                  active={filters.state === state}
+                  onClick={() => handleFilterClick('state', state)}
+                  icon={<MapPin className="h-3 w-3" />}
+                >
+                  {state}
+                </FilterButton>
+              ))}
+              {!loadingStates && filteredStates.length === 0 && (
+                <div className="text-xs text-muted-foreground px-3 py-2">Nenhum estado disponível</div>
+              )}
+              {error && (
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-xs text-red-600">Falha ao carregar estados</span>
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => refreshStates()}>
+                    Tentar novamente
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </FilterSection>
       )}
@@ -304,8 +336,21 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
             onToggle={() => toggleSection('cities')}
             count={availableCities.length}
           >
-            <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
-              {Array.from(availableCities).sort().map((city) => (
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Pesquisar cidade..."
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+              {loadingCities && (
+                <div className="text-xs text-gray-500 px-3 py-2">Carregando cidades...</div>
+              )}
+              {!loadingCities && filteredCities.map((city) => (
                 <FilterButton
                   key={city}
                   active={filters.city === city}
@@ -315,6 +360,7 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
                   {city}
                 </FilterButton>
               ))}
+              </div>
             </div>
           </FilterSection>
         </motion.div>

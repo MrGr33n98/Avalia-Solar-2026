@@ -27,4 +27,31 @@ class CompanyMailer < ApplicationMailer
       subject: "Resumo mensal - #{@total_reviews} novas avaliações"
     )
   end
+
+  def registration_received(company)
+    @company = company
+    mail(
+      to: company.email,
+      subject: 'Seu cadastro está em análise (status pendente)'
+    )
+  end
+
+  def registration_approved(company)
+    @company = company
+    @dashboard_url = "#{self.class.default_url_options[:protocol]}://#{self.class.default_url_options[:host]}/login"
+    mail(
+      to: company.email,
+      subject: 'Seu cadastro foi aprovado - Acesse seu painel'
+    )
+  end
+
+  def registration_rejected(company, reason)
+    @company = company
+    @reason = reason
+    mail(
+      to: company.email,
+      subject: "Seu cadastro não foi aprovado - Motivo: #{reason}"
+    )
+  end
 end
+

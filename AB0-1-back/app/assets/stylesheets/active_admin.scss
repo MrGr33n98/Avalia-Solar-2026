@@ -11,6 +11,13 @@
 @import "active_admin/mixins";
 @import "active_admin/base";
 
+// Import Quill Core and Theme (Required for correct rendering)
+@import 'activeadmin/quill_editor/quill.snow';
+@import 'activeadmin/quill_editor/quill.core';
+
+// Import Active Admin Input styles
+@import 'activeadmin/quill_editor_input';
+
 // Overriding any non-variable Sass must be done after the fact.
 // For example, to change the default status-tag color:
 //

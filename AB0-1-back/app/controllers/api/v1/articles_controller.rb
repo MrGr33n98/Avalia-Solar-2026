@@ -9,12 +9,15 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     cache_key = cache_key_for('articles', params.except(:page, :per_page))
     
     cached_json(cache_key, expires_in: 15.minutes) do
-      scope = Article.includes(:category, :company, :product).order(created_at: :desc)
-      scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
+      scope = Article.includes(:category, :companies, :author, :company).with_attached_banner.order(published_at: :desc)
+      scope = scope.where(status: 'published')
       scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
-      scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
-      scope = scope.where(sponsored: true) if boolean_param(:sponsored)
+      scope = scope.where(featured: true) if boolean_param(:featured)
       
+      if params[:company_id].present?
+        scope = scope.joins(:companies).where(companies: { id: params[:company_id] })
+      end
+
       paginated = paginate(scope)
       set_pagination_headers(paginated)
       
@@ -32,6 +35,9 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   def show
+    # Increment view count (async ideally, but simple here)
+    @article.increment!(:views_count)
+
     cache_key = "articles/show/#{@article.id}/#{@article.updated_at.to_i}"
     
     cached_json(cache_key, expires_in: 1.hour) do
@@ -39,6 +45,18 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     end
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Artigo não encontrado' }, status: :not_found
+  end
+
+  def related
+    @article = Article.friendly.find(params[:id]) rescue Article.find(params[:id])
+    
+    # Simple related logic: same category, excluding self
+    related_scope = Article.published
+                          .where(category_id: @article.category_id)
+                          .where.not(id: @article.id)
+                          .limit(3)
+    
+    render json: related_scope, each_serializer: ArticleSerializer
   end
 
   def create
@@ -75,11 +93,17 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   private
 
   def set_article
-    @article = Article.find(params[:id])
+    # Supports both numeric IDs and friendly slugs
+    @article = Article.with_attached_banner.includes(:category, :companies, :author, :company).friendly.find(params[:id])
   end
 
   def article_params
-    params.require(:article).permit(:title, :content, :category_id, :product_id, :company_id, :sponsored, :sponsored_label)
+    params.require(:article).permit(
+      :title, :slug, :content, :excerpt, :meta_title, :meta_description, :published_at,
+      :status, :featured, :category_id, :author_id, :banner,
+      :product_id, :company_id, :sponsored, :sponsored_label, :views_count,
+      company_ids: []
+    )
   end
 
   def boolean_param(name)

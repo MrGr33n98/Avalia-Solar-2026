@@ -1,5 +1,6 @@
 class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
+  has_paper_trail # Enable rollback capabilities
 
   enum status: {
     active: 'active',
@@ -24,29 +25,45 @@ class Company < ApplicationRecord
   has_many :products, dependent: :destroy
   has_many :leads, dependent: :destroy
   has_many :campaigns, dependent: :destroy
+  has_many :company_buttons, dependent: :destroy
+  accepts_nested_attributes_for :company_buttons, allow_destroy: true
+  has_many :financing_options, dependent: :destroy
+  accepts_nested_attributes_for :financing_options, allow_destroy: true
   belongs_to :plan, optional: true
 
   # =========================
   # Validations
   # =========================
-  validates :name, :description, presence: true
+  validates :name, presence: true, length: { minimum: 5 }
+  validates :description, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
+  
+  # Address Validations
+  validates :address, :city, :state, presence: true
+
+  # CNPJ Validation
+  validates :cnpj, presence: true
+  validate :validate_cnpj_format
+
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
             allow_blank: true
-  validates :phone,
-            format: { with: /\A\([0-9]{2}\)\s[0-9]{4,5}-[0-9]{4}\z/,
-                      message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' },
-            allow_blank: true
+  validates :phone, presence: true,
+            format: { with: /\A\(?[0-9]{2}\)?\s?[0-9]{4,5}-?[0-9]{4}\z/,
+                      message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' }
+  
   validates :whatsapp,
             format: { with: /\A\+?[0-9]{10,15}\z/,
                       message: 'must be a valid WhatsApp number' },
             allow_blank: true
-  validates :email_public,
+            
+  validates :email_public, presence: true,
             format: { with: URI::MailTo::EMAIL_REGEXP,
-                      message: 'must be a valid email' },
-            allow_blank: true
+                      message: 'must be a valid email' }
+                      
+  validate :validate_corporate_email
+
   validates :whatsapp_url,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'deve ser uma URL válida (ex: https://wa.me/)' },
@@ -285,6 +302,25 @@ class Company < ApplicationRecord
     return if self.services_offered.blank?
     invalid = Array(self.services_offered) - SERVICES_OFFERED
     errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+  end
+
+  def validate_cnpj_format
+    return if cnpj.blank?
+    unless CNPJ.valid?(cnpj)
+      errors.add(:cnpj, 'inválido')
+    end
+  end
+
+  def validate_corporate_email
+    return if email_public.blank?
+    
+    # List of common public email providers to block
+    public_domains = %w[gmail.com yahoo.com hotmail.com outlook.com uol.com.br bol.com.br terra.com.br live.com icloud.com]
+    domain = email_public.split('@').last.downcase
+    
+    if public_domains.include?(domain)
+      errors.add(:email_public, 'deve ser um e-mail corporativo')
+    end
   end
 
   def normalize_multiselects

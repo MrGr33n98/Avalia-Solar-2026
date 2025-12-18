@@ -15,11 +15,22 @@ class User < ApplicationRecord
 
   # Role validation
   ROLES = %w[user admin company].freeze
+  enum status: { pending: 0, active: 1, rejected: 2, blocked: 3 }, _default: :pending
+
   validates :role, inclusion: { in: ROLES }, allow_nil: true
   validates :name, presence: true, length: { minimum: 3, maximum: 100 }
   validate :password_complexity
   validate :adult_birthdate
   validates :terms_accepted, acceptance: { accept: true }
+  validate :corporate_email_domain, if: -> { company_user? && company.present? && company.website.present? }
+
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    active? ? super : (rejected? ? :rejected : :not_approved)
+  end
   
   # Set default role
   after_initialize :set_default_role, if: :new_record?
@@ -39,17 +50,35 @@ class User < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name email role] # Allow searching by name, email, and role
+    %w[name email role status company_id] # Allow searching by name, email, role, status and company_id
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    [] # We don't have any searchable associations in this case
+    %w[company]
   end
   
   private
   
   def set_default_role
     self.role ||= company_id.present? ? 'company' : 'user'
+  end
+
+  def corporate_email_domain
+    return unless email.present?
+
+    # Extract domain from website (e.g., "http://example.com" -> "example.com")
+    website_url = company.website.match?(/\Ahttp/) ? company.website : "http://#{company.website}"
+    website_domain = URI.parse(website_url).host&.sub(/^www\./, '')
+    
+    return unless website_domain
+
+    email_domain = email.split('@').last
+    
+    unless email_domain.casecmp(website_domain).zero?
+      errors.add(:email, "must be from company domain (#{website_domain})")
+    end
+  rescue URI::InvalidURIError
+    # Ignore if website is invalid
   end
 
   def password_complexity

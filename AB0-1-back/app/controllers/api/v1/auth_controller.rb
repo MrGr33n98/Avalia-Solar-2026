@@ -144,9 +144,6 @@ module Api
         end
         user.update(company: company) if company
       end
-    end
-  end
-end
       def confirm_email
         token = params[:token]
         return render json: { error: 'Token inválido' }, status: :unprocessable_entity if token.blank?
@@ -156,3 +153,6 @@ end
         end
         render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
       end
+    end
+  end
+end

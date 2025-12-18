@@ -11,9 +11,10 @@ interface TestImageProps {
   width?: number;
   height?: number;
   onError?: () => void;
+  priority?: boolean;
 }
 
-export default function TestImage({ src, alt, className = '', fill = true, width, height, onError }: TestImageProps) {
+export default function TestImage({ src, alt, className = '', fill = true, width, height, onError, priority = false }: TestImageProps) {
   const [imageError, setImageError] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
 
@@ -73,7 +74,7 @@ export default function TestImage({ src, alt, className = '', fill = true, width
           console.log('Next.js Image loaded successfully:', src);
         }}
         unoptimized
-        priority={false}
+        priority={priority}
       />
     );
   } else {
@@ -93,7 +94,7 @@ export default function TestImage({ src, alt, className = '', fill = true, width
           console.log('Next.js Image loaded successfully:', src);
         }}
         unoptimized
-        priority={false}
+        priority={priority}
       />
     );
   }

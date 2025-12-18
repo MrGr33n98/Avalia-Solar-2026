@@ -116,8 +116,7 @@ export const analyticsApi = {
       return response.data;
     } catch (error) {
       console.error('[analyticsApi.getHistoricalData] Error:', error);
-      // Return mock data for development
-      return generateMockHistoricalData(days);
+      throw error; // Propagate error to UI instead of returning mock data
     }
   },
 
@@ -169,13 +168,7 @@ export const analyticsApi = {
       return response.sources;
     } catch (error) {
       console.error('[analyticsApi.getTrafficSources] Error:', error);
-      // Return mock data for development
-      return [
-        { source: 'Busca Orgânica', visits: 450, percentage: 45, conversion_rate: 8.5 },
-        { source: 'Direto', visits: 250, percentage: 25, conversion_rate: 12.3 },
-        { source: 'Redes Sociais', visits: 180, percentage: 18, conversion_rate: 5.2 },
-        { source: 'Referências', visits: 120, percentage: 12, conversion_rate: 6.8 },
-      ];
+      throw error; // Propagate error to UI instead of returning mock data
     }
   },
 

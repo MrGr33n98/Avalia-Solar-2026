@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "title": "Melhores-Paineis-Solares",
+    "slug": "melhores-paineis-solares",
+    "category": "Paineis Solares",
+    "published_at": "2025-12-15 00:00:00 UTC",
+    "excerpt": "Veja os melhores Painneis soalres",
+    "frontend_url": "http://127.0.0.1:3000/blog/melhores-paineis-solares",
+    "api_url": "http://127.0.0.1:3001/api/v1/articles/melhores-paineis-solares",
+    "validation_status": "valid"
+  }
+]
