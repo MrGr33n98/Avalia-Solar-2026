@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('Registration Flow', () => {
   beforeEach(() => {
     cy.visit('/register-user');
