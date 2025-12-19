@@ -17,27 +17,21 @@ module Api
         cached_json(cache_key, expires_in: 1.hour) do
           query = Category.all
 
-          # Filtrar por status (só se a coluna existir)
           if Category.column_names.include?('status') && params[:status].present?
             query = query.where(status: params[:status])
           end
 
-          # Filtrar por featured (só se a coluna existir)
           if Category.column_names.include?('featured') && params[:featured].present?
             featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
             query = query.where(featured: featured)
           end
 
-          # Aplicar limite manual (apenas se não estiver usando paginação)
-          # Se page ou per_page estiverem presentes, usar paginação ao invés do limit
           if params[:limit].present? && params[:limit].to_i.positive? && !params[:page].present?
             query = query.limit(params[:limit].to_i)
           end
 
-          # Inclui companies apenas se associação existir
           query = query.includes(:companies) if Category.reflect_on_association(:companies)
 
-          # Apply pagination if page parameter is present
           if params[:page].present?
             paginated = paginate(query)
             set_pagination_headers(paginated)
@@ -46,8 +40,22 @@ module Api
               meta: { pagination: pagination_metadata(paginated) }
             }
           else
-            # Return all results without pagination metadata
-            query.map(&:as_json)
+            results = query.to_a
+
+            # Fallback: quando filtrado por featured e resultado vazio, retornar categorias ativas
+            if params[:featured].present? && ActiveModel::Type::Boolean.new.cast(params[:featured]) && results.empty?
+              fallback = Category.all
+              if Category.column_names.include?('status')
+                fallback = fallback.where(status: params[:status].presence || 'active')
+              end
+              if params[:limit].present? && params[:limit].to_i.positive?
+                fallback = fallback.limit(params[:limit].to_i)
+              end
+              fallback = fallback.includes(:companies) if Category.reflect_on_association(:companies)
+              results = fallback.to_a
+            end
+
+            results.map(&:as_json)
           end
         end
       rescue ActiveRecord::RecordNotFound => e

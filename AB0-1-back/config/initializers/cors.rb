@@ -10,7 +10,9 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     when 'production'
       production_origins = [
         'https://www.avaliasolar.com.br',
-        'https://avaliasolar.com.br'
+        'https://avaliasolar.com.br',
+        'http://www.avaliasolar.com.br',
+        'http://avaliasolar.com.br'
       ]
       # Permitir origins adicionais via ENV (comma-separated)
       additional_origins = ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
