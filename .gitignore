@@ -1,65 +1,56 @@
-? # Dependencies
-/node_modules
-/.pnp
+# Node/Next (monorepo)
+node_modules/
+.pnp/
 .pnp.js
-
-# Testing
-/coverage
-
-# Next.js
-/.next/
-/out/
-.next
-
-# Production
-/build
-/dist
-
-# Misc
-.DS_Store
-*.pem
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Debug
+coverage/
+.next/
+out/
+build/
+dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
-
-# Local env files
-.env
-.env*.local
-
-# Vercel
-.vercel
+.turbo/
+node_modules/.cache/
 
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
+# next-env.d.ts deve ser versionado: NÃO ignorar
 
-# IDE
-.idea
-.vscode
+# Ambiente
+.env
+.env*.local
+.vercel
+
+# IDE / SO
+.idea/
+.vscode/
 *.swp
 *.swo
-
-# Build artifacts
-node_modules/.cache/
-.turbo
-
-# Frontend dependencies
-/AB0-1-front/node_modules
-/AB0-1-front/.env
-
-# System Files
 .DS_Store
 Thumbs.db
 *.tmp
 
-# Documentation files
-*.md
-!README.md
-*.txt
+# Frontend específicos
+/AB0-1-front/node_modules
+/AB0-1-front/.env
+/AB0-1-front/cypress/videos
+/AB0-1-front/cypress/screenshots
+/AB0-1-front/.nyc_output
+
+# Rails (backend)
+/AB0-1-back/log/
+/AB0-1-back/tmp/
+/AB0-1-back/storage/
+/AB0-1-back/vendor/
+/AB0-1-back/.bundle
+/AB0-1-back/.byebug_history
+/AB0-1-back/config/master.key
+/AB0-1-back/.env
+/AB0-1-back/.env*
+/AB0-1-back/db/*.sqlite3
+/AB0-1-back/db/*.sqlite3-journal
+
+# Documentação (não ignorar por padrão)
+# Removidas regras que ignoravam *.md e *.txt

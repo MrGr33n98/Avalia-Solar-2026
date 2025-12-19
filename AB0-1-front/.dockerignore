@@ -4,3 +4,7 @@ Dockerfile
 .dockerignore
 .git
 .next/cache
+cypress
+cypress/**
+**/*.cy.ts
+**/*.cy.tsx
