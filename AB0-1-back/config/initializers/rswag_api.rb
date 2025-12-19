@@ -1,12 +1,18 @@
-Rswag::Api.configure do |c|
+if defined?(Rswag::Api)
+  Rswag::Api.configure do |c|
+    swagger_root = Rails.root.join('swagger').to_s
 
-  # Specify a root folder where Swagger JSON files are located
-  # This is used by the Rswag middleware to serve Swagger JSON files
-  # from specific URL paths
-  c.swagger_root = Rails.root.to_s + '/swagger'
+    # rswag-api 3.0 renames swagger_root= to openapi_root=
+    c.openapi_root = swagger_root if c.respond_to?(:openapi_root=)
+    c.swagger_root = swagger_root if c.respond_to?(:swagger_root=)
 
-  # Inject a lambda function to alter the returned Swagger JSON
-  # prior to being served. The function will be passed the rack env and swagger hash
-  # For example, you might want to update the server URL based on the current environment
-  c.swagger_filter = lambda { |swagger, env| swagger['servers'].each { |server| server['url'] = env['rack.url_scheme'] + '://' + env['HTTP_HOST'] } }
+    c.swagger_filter = lambda do |swagger, env|
+      servers = swagger['servers']
+      next unless servers.is_a?(Array)
+
+      servers.each do |server|
+        server['url'] = "#{env['rack.url_scheme']}://#{env['HTTP_HOST']}"
+      end
+    end
+  end
 end
