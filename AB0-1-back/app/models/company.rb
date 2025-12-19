@@ -38,29 +38,31 @@ class Company < ApplicationRecord
   validates :description, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   
-  # Address Validations
-  validates :address, :city, :state, presence: true
+
 
   # CNPJ Validation
-  validates :cnpj, presence: true
+
   validate :validate_cnpj_format
 
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
             allow_blank: true
-  validates :phone, presence: true,
+  validates :phone,
             format: { with: /\A\(?[0-9]{2}\)?\s?[0-9]{4,5}-?[0-9]{4}\z/,
-                      message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' }
+                      message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' },
+            allow_blank: true
   
   validates :whatsapp,
             format: { with: /\A\+?[0-9]{10,15}\z/,
                       message: 'must be a valid WhatsApp number' },
             allow_blank: true
             
-  validates :email_public, presence: true,
-            format: { with: URI::MailTo::EMAIL_REGEXP,
-                      message: 'must be a valid email' }
+  SIMPLE_EMAIL_REGEX = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
+  validates :email_public,
+            format: { with: SIMPLE_EMAIL_REGEX,
+                      message: 'must be a valid email' },
+            allow_blank: true
                       
   validate :validate_corporate_email
 
