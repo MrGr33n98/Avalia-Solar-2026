@@ -22,3 +22,32 @@
 // For example, to change the default status-tag color:
 //
 //   .status_tag { background: #6090DB; }
+
+// ----------------------
+// Location selector (Company form)
+// ----------------------
+.location-loader {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  border-top-color: transparent;
+  animation: location-spin 650ms linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes location-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.location-select--loading {
+  cursor: progress;
+}
+
+p.location-error.inline-errors {
+  margin-top: 6px;
+}

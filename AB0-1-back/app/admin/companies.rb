@@ -1,4 +1,35 @@
 require 'csv'
+
+brazil_states = [
+    ['Acre', 'AC'],
+    ['Alagoas', 'AL'],
+    ['Amapá', 'AP'],
+    ['Amazonas', 'AM'],
+    ['Bahia', 'BA'],
+    ['Ceará', 'CE'],
+    ['Distrito Federal', 'DF'],
+    ['Espírito Santo', 'ES'],
+    ['Goiás', 'GO'],
+    ['Maranhão', 'MA'],
+    ['Mato Grosso', 'MT'],
+    ['Mato Grosso do Sul', 'MS'],
+    ['Minas Gerais', 'MG'],
+    ['Pará', 'PA'],
+    ['Paraíba', 'PB'],
+    ['Paraná', 'PR'],
+    ['Pernambuco', 'PE'],
+    ['Piauí', 'PI'],
+    ['Rio de Janeiro', 'RJ'],
+    ['Rio Grande do Norte', 'RN'],
+    ['Rio Grande do Sul', 'RS'],
+    ['Rondônia', 'RO'],
+    ['Roraima', 'RR'],
+    ['Santa Catarina', 'SC'],
+    ['São Paulo', 'SP'],
+    ['Sergipe', 'SE'],
+    ['Tocantins', 'TO']
+  ].freeze
+
 ActiveAdmin.register Company do
   permit_params do
   permitted = [
@@ -46,8 +77,18 @@ end
       f.input :phone_alt
       f.input :whatsapp
       f.input :address
-      f.input :state, as: :select, collection: [], input_html: { 'data-selected': f.object.state, required: true }
-      f.input :city, as: :select, collection: [], input_html: { 'data-selected': f.object.city, required: true, disabled: true }
+      f.input :state,
+              label: 'Estado',
+              as: :select,
+              include_blank: 'Selecione um estado',
+              collection: brazil_states.map { |name, code| ["#{name} (#{code})", code] },
+              input_html: { 'data-selected': f.object.state, required: true, 'aria-label': 'Estado' }
+      f.input :city,
+              label: 'Cidade',
+              as: :select,
+              include_blank: 'Selecione um estado primeiro',
+              collection: [],
+              input_html: { 'data-selected': f.object.city, required: true, disabled: true, 'aria-label': 'Cidade' }
       f.input :latitude
       f.input :longitude
     end
