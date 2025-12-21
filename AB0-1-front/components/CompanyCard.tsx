@@ -14,6 +14,7 @@ import WhatsappButton from '@/components/WhatsappButton';
 import TestImage from '@/components/TestImage';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface Props {
   company: Company;
@@ -63,7 +64,6 @@ export default function CompanyCard({ company, className = '', compact = false }
   const category = company.category_name;
   const companyPath = buildCompanyPath(id, name);
   const companyReviewPath = buildCompanySubPath(id, name, 'review');
-  const companyQuotePath = buildCompanySubPath(id, name, 'quote');
   
   // Prepara as URLs das imagens
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
@@ -298,11 +298,11 @@ export default function CompanyCard({ company, className = '', compact = false }
                 size="sm"
                 className="w-full text-xs px-2 truncate"
                 onClick={() => {
-                  window.location.href = companyQuotePath;
+                  openQuoteWizard({ preferredCompanyId: company.id, source: 'company-card' });
                 }}
               >
                 <MessageCircle className={`mr-1.5 flex-shrink-0 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-                <span className="truncate">{compact ? "Orçamento" : "Solicite um orçamento"}</span>
+                <span className="truncate">{compact ? "Orcamento" : "Solicite um orcamento"}</span>
               </Button>
             </div>
           )}

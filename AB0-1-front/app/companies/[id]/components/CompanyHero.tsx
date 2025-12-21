@@ -9,7 +9,7 @@ import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { buildCompanySubPath } from '@/lib/slug';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface CompanyHeroProps {
   company: Company;
@@ -41,7 +41,6 @@ export default function CompanyHero({
 }: CompanyHeroProps) {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
-  const companyQuotePath = buildCompanySubPath(company.id, company.name, 'quote');
 
   const handleShare = async () => {
     setIsSharing(true);
@@ -236,10 +235,10 @@ export default function CompanyHero({
               <Button
                 size="lg"
                 className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 transition-all shadow-md hover:shadow-lg text-primary-foreground gap-2 font-semibold"
-                onClick={() => router.push(companyQuotePath)}
+                onClick={() => openQuoteWizard({ preferredCompanyId: company.id, source: 'company-hero' })}
               >
                 <MessageCircle className="h-5 w-5" />
-                Solicitar Orçamento
+                Solicitar Orcamento
               </Button>
               {ctaEnabled && ctaUrl && (
                 <div className="flex-1 sm:flex-none">

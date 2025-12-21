@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import SearchBar from '@/components/SearchBar';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 export default function Hero() {
   const { isAuthenticated } = useAuth();
@@ -72,9 +73,10 @@ export default function Hero() {
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => openQuoteWizard({ source: 'home-hero' })}
                 >
                   <Zap className="mr-2 h-5 w-5" />
-                  Solicitar Orçamento Grátis
+                  Fazer Orcamento Gratis
                 </Button>
                 <Button
                   variant="outline"
@@ -86,6 +88,14 @@ export default function Hero() {
               </>
             ) : (
               <>
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => openQuoteWizard({ source: 'home-hero' })}
+                >
+                  <Zap className="mr-2 h-5 w-5" />
+                  Fazer Orcamento Gratis
+                </Button>
                 <Link href="/register">
                   <Button
                     size="lg"
@@ -113,3 +123,4 @@ export default function Hero() {
     </section>
   );
 }
+
