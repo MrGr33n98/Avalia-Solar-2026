@@ -294,6 +294,30 @@ export const leadsApiSafe = {
   },
 };
 
+export const leadsWizardApi = {
+  create: async (payload: { lead: Record<string, any>; preferred_company_id?: number }): Promise<any> => {
+    return await fetchApiSafe<any>('leads/wizard_create', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  sendOtp: async (leadId: number): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/send_otp`, { method: 'POST' });
+  },
+  resendOtp: async (leadId: number): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/resend_otp`, { method: 'POST' });
+  },
+  verifyOtp: async (leadId: number, otpCode: string): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/verify_otp`, {
+      method: 'POST',
+      body: JSON.stringify({ otp_code: otpCode }),
+    });
+  },
+  result: async (leadId: number): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/wizard_result`);
+  },
+};
+
 // Financiamento
 export const financingOptionsApiSafe = {
   getAll: async (params: { company_id: number; audience?: string; active?: boolean }): Promise<FinancingOption[]> => {

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { buildCompanyPath } from '@/lib/slug';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -39,6 +40,10 @@ export default function ProductDetailPage() {
       </div>
     );
   }
+
+  const companyPath = product.company?.id
+    ? buildCompanyPath(product.company.id, product.company?.name)
+    : '/companies';
 
   return (
     <div className="container mx-auto p-4">
@@ -79,7 +84,7 @@ export default function ProductDetailPage() {
             {product.company?.description && (
               <p className="text-sm text-muted-foreground mt-2">{product.company.description}</p>
             )}
-            <Link href={`/companies/${product.company?.id}`}>
+            <Link href={companyPath}>
               <Button className="mt-4" variant="outline" size="sm">
                 View Seller Profile
               </Button>

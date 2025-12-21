@@ -1,8 +1,13 @@
 import { companiesApiSafe } from '@/lib/api-client';
 import QuoteForm from '@/components/QuoteForm';
+import { notFound } from 'next/navigation';
+import { parseIdFromSlug } from '@/lib/slug';
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const companyId = Number(params.id);
+  const companyId = parseIdFromSlug(params.id);
+  if (!companyId) {
+    notFound();
+  }
   const company = await companiesApiSafe.getById(companyId);
 
   return (

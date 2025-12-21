@@ -24,6 +24,7 @@ class Company < ApplicationRecord
   has_many :pending_changes, dependent: :destroy
   has_many :products, dependent: :destroy
   has_many :leads, dependent: :destroy
+  has_many :lead_distributions, dependent: :destroy
   has_many :campaigns, dependent: :destroy
   has_many :company_buttons, dependent: :destroy
   accepts_nested_attributes_for :company_buttons, allow_destroy: true

@@ -9,6 +9,7 @@ import { AlertCircle, Building2, Package, Filter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface CategoryClientProps {
   initialCategory: Category;
@@ -185,6 +186,13 @@ export default function CategoryClientComponent({ initialCategory, initialCompan
                   <p>{category.description}</p>
                 </div>
               )}
+
+              <Button
+                onClick={() => openQuoteWizard({ source: 'category-page' })}
+                className="mb-6"
+              >
+                Fazer Orcamento
+              </Button>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 rounded-lg p-4 text-center">

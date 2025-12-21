@@ -49,7 +49,7 @@ describe('CompanyCard', () => {
 
     // Main company link (usa regex porque o accessible name pode incluir mais conteúdo)
     const companyLink = screen.getByRole('link', { name: /Energia Solar LTDA/i });
-    expect(companyLink).toHaveAttribute('href', '/companies/1');
+    expect(companyLink).toHaveAttribute('href', '/companies/1-energia-solar-ltda');
 
     // Rating and reviews
     expect(screen.getByText(/4\.5/)).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('CompanyCard', () => {
 
     // Main company link
     const companyLink = screen.getByRole('link', { name: /Minimal Company/i });
-    expect(companyLink).toHaveAttribute('href', '/companies/2');
+    expect(companyLink).toHaveAttribute('href', '/companies/2-minimal-company');
 
     // Rating
     expect(screen.getByText(/0\.0/)).toBeInTheDocument();

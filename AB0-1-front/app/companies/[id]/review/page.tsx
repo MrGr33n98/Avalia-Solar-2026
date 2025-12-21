@@ -10,12 +10,14 @@ import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
 import { reviewsApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { buildCompanyPath, parseIdFromSlug } from '@/lib/slug';
 
 interface ReviewFormProps {
   companyId: number;
+  companyPath: string;
 }
 
-function ReviewForm({ companyId }: ReviewFormProps) {
+function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,7 +63,7 @@ function ReviewForm({ companyId }: ReviewFormProps) {
       
       // Redirecionar após 3 segundos
       setTimeout(() => {
-        router.push(`/companies/${companyId}`);
+        router.push(companyPath);
       }, 3000);
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -203,8 +205,33 @@ function ReviewForm({ companyId }: ReviewFormProps) {
 
 export default function CompanyReviewPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const companyId = parseInt(params.id);
+  const parsedId = parseIdFromSlug(params.id);
+  const companyId = parsedId || 0;
   const { company, loading, error } = useCompanySafe(companyId);
+  const companyPath = buildCompanyPath(companyId, company?.name);
+
+  if (parsedId === null) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Empresa nao encontrada</h3>
+              <p className="text-gray-600 mb-4">
+                Nao foi possivel identificar a empresa solicitada.
+              </p>
+              <Button onClick={() => router.back()}>
+                Voltar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -252,8 +279,10 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
           </p>
         </div>
         
-        <ReviewForm companyId={companyId} />
+        <ReviewForm companyId={companyId} companyPath={companyPath} />
       </div>
     </div>
   );
 }
+
+

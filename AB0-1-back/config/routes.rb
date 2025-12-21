@@ -109,7 +109,17 @@ Rails.application.routes.draw do
       resources :reviews, only: [:index, :show, :create, :update, :destroy]
 
       # Leads routes
-      resources :leads, only: [:create, :index, :show]
+      resources :leads, only: [:create, :index, :show] do
+        collection do
+          post :wizard_create
+        end
+        member do
+          post :send_otp
+          post :resend_otp
+          post :verify_otp
+          get :wizard_result
+        end
+      end
 
       # Users routes
       resources :users, only: [:show, :update]
