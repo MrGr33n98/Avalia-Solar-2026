@@ -1,20 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe 'Authentication Flow', type: :request do
-  let(:company) { 
-    Company.create!(
+  let(:category) do
+    Category.create!(name: 'Energia Solar', description: 'Categoria de testes')
+  end
+  let(:company) do
+    company = Company.new(
       name: 'Solar Tech',
       description: 'A solar company',
       website: 'http://solartech.com',
+      email: 'contato@solartech.com',
       email_public: 'contact@solartech.com',
       address: '123 Solar St',
-      city: 'Sun City',
+      city: 'Florianópolis',
       state: 'SC',
       phone: '(11) 99999-9999',
-      cnpj: '12.345.678/0001-90',
       status: 'active'
-    ) 
-  }
+    )
+    company.categories << category
+    company.save!
+    company
+  end
 
   describe 'User Registration' do
     it 'creates a pending user by default' do

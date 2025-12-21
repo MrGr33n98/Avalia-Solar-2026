@@ -37,28 +37,33 @@ class Company < ApplicationRecord
   validates :name, presence: true, length: { minimum: 5 }
   validates :description, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
-  
-
-
-  # CNPJ Validation
-
   validate :validate_cnpj_format
+  validate :validate_state_in_dataset
+  validate :validate_city_in_dataset
+  validate :validate_ticket_range
+  validate :validate_ready_for_activation, if: -> { status == 'active' }
+  validate :validate_featured_requires_active
+  validate :validate_verified_requires_cnpj
 
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
             allow_blank: true
   validates :phone,
-            format: { with: /\A\(?[0-9]{2}\)?\s?[0-9]{4,5}-?[0-9]{4}\z/,
-                      message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' },
+            format: { with: /\A\d{10,15}\z/,
+                      message: 'must contain only digits (DDD + número)' },
             allow_blank: true
   
   validates :whatsapp,
-            format: { with: /\A\+?[0-9]{10,15}\z/,
+            format: { with: /\A\d{10,15}\z/,
                       message: 'must be a valid WhatsApp number' },
             allow_blank: true
             
   SIMPLE_EMAIL_REGEX = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
+  validates :email,
+            format: { with: SIMPLE_EMAIL_REGEX,
+                      message: 'must be a valid email' },
+            allow_blank: true
   validates :email_public,
             format: { with: SIMPLE_EMAIL_REGEX,
                       message: 'must be a valid email' },
@@ -67,10 +72,18 @@ class Company < ApplicationRecord
   validate :validate_corporate_email
 
   validates :whatsapp_url,
+            presence: true,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'deve ser uma URL válida (ex: https://wa.me/)' },
             if: :whatsapp_enabled?,
-            allow_blank: true
+            allow_blank: false
+
+  validates :minimum_ticket,
+            numericality: { greater_than_or_equal_to: 0 },
+            allow_nil: true
+  validates :maximum_ticket,
+            numericality: { greater_than_or_equal_to: 0 },
+            allow_nil: true
 
   # =========================
   # Scopes
@@ -227,7 +240,23 @@ class Company < ApplicationRecord
   end
 
   def whatsapp_url
-    super.presence || (whatsapp.present? ? "https://wa.me/#{whatsapp.gsub(/[^0-9]/, '')}" : nil)
+    return super.presence if super.present?
+    return nil unless whatsapp.present?
+
+    digits = whatsapp.to_s.gsub(/\D/, '')
+    digits = digits.sub(/\A55/, '') if digits.length > 11
+    "https://wa.me/55#{digits}"
+  end
+
+  def ready_for_activation?
+    return false if name.blank?
+    return false if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+    return false unless Locations::BrLocations.valid_state?(state)
+    return false unless Locations::BrLocations.valid_city?(state, city)
+    return false unless categories.any?
+    return false unless phone.present? || whatsapp.present? || email_public.present?
+
+    true
   end
 
   def has_paid_plan?
@@ -257,6 +286,7 @@ class Company < ApplicationRecord
   # Atributos virtuais para ActiveAdmin
   attr_accessor :project_types, :services_offered
 
+  before_validation :normalize_company_fields
   before_validation :normalize_multiselects
   validate :validate_project_types, :validate_services_offered
 
@@ -313,6 +343,55 @@ class Company < ApplicationRecord
     end
   end
 
+  def validate_state_in_dataset
+    return if state.blank?
+    return if Locations::BrLocations.valid_state?(state)
+
+    errors.add(:state, 'inválido')
+  end
+
+  def validate_city_in_dataset
+    return if city.blank?
+
+    if state.blank?
+      errors.add(:city, 'requer um estado válido')
+      return
+    end
+
+    return if Locations::BrLocations.valid_city?(state, city)
+
+    errors.add(:city, 'inválida para o estado selecionado')
+  end
+
+  def validate_ticket_range
+    return if minimum_ticket.blank? || maximum_ticket.blank?
+    return if minimum_ticket <= maximum_ticket
+
+    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
+  end
+
+  def validate_ready_for_activation
+    return if ready_for_activation?
+
+    errors.add(:status, 'não pode ser active sem requisitos mínimos')
+  end
+
+  def validate_featured_requires_active
+    return unless featured
+    return if status == 'active'
+
+    errors.add(:featured, 'só pode ser verdadeiro quando o status é active')
+  end
+
+  def validate_verified_requires_cnpj
+    return unless verified
+
+    digits = cnpj.to_s.gsub(/\D/, '')
+    if digits.length < 14 || (defined?(CNPJ) && !CNPJ.valid?(cnpj))
+      errors.add(:verified, 'exige um CNPJ válido')
+    end
+  end
+
   def validate_corporate_email
     return if email_public.blank?
     
@@ -323,6 +402,27 @@ class Company < ApplicationRecord
     if public_domains.include?(domain)
       errors.add(:email_public, 'deve ser um e-mail corporativo')
     end
+  end
+
+  def normalize_company_fields
+    self.state = state.to_s.strip.upcase if state.present?
+    self.city = city.to_s.strip.gsub(/\s+/, ' ') if city.present?
+    self.email = email.to_s.strip.downcase if email.present?
+    self.email_public = email_public.to_s.strip.downcase if email_public.present?
+    self.phone = normalize_phone_value(phone)
+    self.phone_alt = normalize_phone_value(phone_alt)
+    self.whatsapp = normalize_phone_value(whatsapp)
+
+    if whatsapp.present? && whatsapp_url.blank?
+      digits = whatsapp.to_s
+      digits = digits.sub(/\A55/, '') if digits.length > 11
+      self.whatsapp_url = "https://wa.me/55#{digits}"
+    end
+  end
+
+  def normalize_phone_value(value)
+    digits = value.to_s.gsub(/\D/, '')
+    digits.presence
   end
 
   def normalize_multiselects

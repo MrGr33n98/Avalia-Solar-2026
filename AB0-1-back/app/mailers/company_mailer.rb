@@ -47,10 +47,10 @@ class CompanyMailer < ApplicationMailer
 
   def registration_rejected(company, reason)
     @company = company
-    @reason = reason
+    @reason = reason.presence || 'Informações inconsistentes'
     mail(
       to: company.email,
-      subject: "Seu cadastro não foi aprovado - Motivo: #{reason}"
+      subject: "Seu cadastro não foi aprovado - Motivo: #{@reason}"
     )
   end
 end

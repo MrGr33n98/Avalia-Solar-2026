@@ -7,8 +7,9 @@ FactoryBot.define do
 
   factory :company do
     name { Faker::Company.name }
-    document { Faker::Company.brazilian_company_number }
-    status { :active }
+    description { Faker::Company.catch_phrase }
+    email { Faker::Internet.email }
+    status { :pending }
     association :plan
     
     # Initialize JSON columns
@@ -16,6 +17,12 @@ FactoryBot.define do
     cta_clicks_count { 0 }
     whatsapp_clicks_count { 0 }
     rating_avg { 0.0 }
+  end
+
+  factory :category do
+    sequence(:name) { |n| "Categoria #{n}" }
+    description { Faker::Lorem.sentence }
+    status { 'active' }
   end
 
   factory :user do

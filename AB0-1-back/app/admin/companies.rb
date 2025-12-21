@@ -1,34 +1,8 @@
 require 'csv'
 
-brazil_states = [
-    ['Acre', 'AC'],
-    ['Alagoas', 'AL'],
-    ['Amapá', 'AP'],
-    ['Amazonas', 'AM'],
-    ['Bahia', 'BA'],
-    ['Ceará', 'CE'],
-    ['Distrito Federal', 'DF'],
-    ['Espírito Santo', 'ES'],
-    ['Goiás', 'GO'],
-    ['Maranhão', 'MA'],
-    ['Mato Grosso', 'MT'],
-    ['Mato Grosso do Sul', 'MS'],
-    ['Minas Gerais', 'MG'],
-    ['Pará', 'PA'],
-    ['Paraíba', 'PB'],
-    ['Paraná', 'PR'],
-    ['Pernambuco', 'PE'],
-    ['Piauí', 'PI'],
-    ['Rio de Janeiro', 'RJ'],
-    ['Rio Grande do Norte', 'RN'],
-    ['Rio Grande do Sul', 'RS'],
-    ['Rondônia', 'RO'],
-    ['Roraima', 'RR'],
-    ['Santa Catarina', 'SC'],
-    ['São Paulo', 'SP'],
-    ['Sergipe', 'SE'],
-    ['Tocantins', 'TO']
-  ].freeze
+brazil_states = Locations::BrLocations.states.map do |state|
+  [state['name'], state['acronym']]
+end.freeze
 
 ActiveAdmin.register Company do
   permit_params do
@@ -272,6 +246,8 @@ end
     resource.update!(status: 'active')
     CompanyMailer.registration_approved(resource).deliver_later
     redirect_to resource_path(resource), notice: "Empresa aprovada com sucesso! E-mail enviado."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to resource_path(resource), alert: "Não foi possível aprovar: #{e.record.errors.full_messages.join(', ')}"
   end
 
   member_action :reject, method: :put do
@@ -288,10 +264,12 @@ end
     # Better approach: Redirect to a form or use input.
     # Let's try to grab a reason if passed, otherwise default.
     
-    reason = params[:reason] || "Informações inconsistentes"
+    reason = params[:reason].presence || "Informações inconsistentes"
     resource.update!(status: 'blocked') # or inactive
     CompanyMailer.registration_rejected(resource, reason).deliver_later
     redirect_to resource_path(resource), notice: "Empresa reprovada. E-mail enviado."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to resource_path(resource), alert: "Não foi possível reprovar: #{e.record.errors.full_messages.join(', ')}"
   end
 
   action_item :approve, only: :show do
@@ -304,7 +282,15 @@ end
     if resource.status == 'pending'
       # Using a simple prompt for reason via javascript would be ideal but hard in pure ruby
       # We will just link to the action
-      link_to 'Reprovar Cadastro', reject_admin_company_path(resource), method: :put, class: 'member_link', data: { confirm: 'Tem certeza? O cadastro será bloqueado.' }
+      link_to 'Reprovar Cadastro',
+              reject_admin_company_path(resource),
+              method: :put,
+              class: 'member_link js-reject-company',
+              data: {
+                behavior: 'reject-company',
+                url: reject_admin_company_path(resource),
+                prompt: 'Motivo da reprovação:'
+              }
     end
   end
 
@@ -325,21 +311,50 @@ end
   end
 
   batch_action :ativar, confirm: 'Ativar empresas selecionadas?' do |ids|
-    batch_action_collection.where(id: ids).update_all(status: 'active')
-    redirect_to collection_path, notice: 'Empresas ativadas.'
+    activated = 0
+    errors = []
+
+    batch_action_collection.where(id: ids).find_each do |company|
+      begin
+        company.update!(status: 'active')
+        activated += 1
+      rescue ActiveRecord::RecordInvalid => e
+        errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
+      end
+    end
+
+    notice = "Empresas ativadas: #{activated}"
+    if errors.any?
+      redirect_to collection_path, notice: notice, alert: errors.take(10).join(' | ')
+    else
+      redirect_to collection_path, notice: notice
+    end
   end
 
   batch_action :reject_with_reason, form: {
     reason: :text
   }, confirm: "Rejeitar empresas selecionadas?" do |ids, inputs|
     companies = batch_action_collection.where(id: ids)
-    companies.update_all(status: 'blocked')
-    
-    companies.each do |company|
-      CompanyMailer.registration_rejected(company, inputs[:reason]).deliver_later
+    rejected = 0
+    errors = []
+    reason = inputs[:reason].presence || 'Informações inconsistentes'
+
+    companies.find_each do |company|
+      begin
+        company.update!(status: 'blocked')
+        CompanyMailer.registration_rejected(company, reason).deliver_later
+        rejected += 1
+      rescue ActiveRecord::RecordInvalid => e
+        errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
+      end
     end
-    
-    redirect_to collection_path, notice: "#{companies.count} empresas reprovadas."
+
+    notice = "#{rejected} empresas reprovadas."
+    if errors.any?
+      redirect_to collection_path, notice: notice, alert: errors.take(10).join(' | ')
+    else
+      redirect_to collection_path, notice: notice
+    end
   end
 
   action_item :import_csv, only: :index do
@@ -372,21 +387,71 @@ end
 
     created = 0
     updated = 0
+    invalid = 0
     errors = []
 
-    CSV.foreach(file.path, headers: true) do |row|
+    CSV.foreach(file.path, headers: true).with_index(2) do |row, line_number|
+      raw_name = row['name'] || row['nome']
+      name = raw_name.to_s.strip
+      if name.blank?
+        errors << "linha #{line_number}: nome ausente"
+        invalid += 1
+        next
+      end
+
+      raw_state = row['state'] || row['uf'] || row['sigla_uf']
+      raw_city = row['city'] || row['cidade'] || row['municipio']
+      state = raw_state.to_s.strip.upcase
+      city = raw_city.to_s.strip.gsub(/\s+/, ' ')
+
+      if state.present? && !Locations::BrLocations.valid_state?(state)
+        errors << "linha #{line_number}: estado inválido"
+        invalid += 1
+        next
+      end
+
+      if city.present? && !Locations::BrLocations.valid_city?(state, city)
+        errors << "linha #{line_number}: cidade inválida para o estado #{state}"
+        invalid += 1
+        next
+      end
+
+      cnpj_raw = row['cnpj'].to_s.strip
+      cnpj_digits = cnpj_raw.gsub(/\D/, '')
+      email_raw = row['email'].to_s.strip
+      email = email_raw.downcase
+      force_pending = cnpj_digits.blank? && email.blank? && !(name.present? && state.present? && city.present?)
+
+      company =
+        if cnpj_digits.present?
+          Company.find_by(cnpj: cnpj_digits) || Company.find_by(cnpj: cnpj_raw) || Company.new(cnpj: cnpj_raw.presence || cnpj_digits)
+        elsif email.present?
+          Company.find_by(email: email) || Company.new(email: email)
+        elsif name.present? && state.present? && city.present?
+          Company.find_by(name: name, state: state, city: city) || Company.new
+        else
+          Company.new
+        end
+
+      was_new = company.new_record?
+
+      raw_status = row['status'].to_s.strip.downcase
+      status = Company.statuses.key?(raw_status) ? raw_status : 'pending'
+      errors << "linha #{line_number}: status inválido, definido como pending" if raw_status.present? && status == 'pending'
+      status = 'pending' if force_pending
+
       attrs = {
-        name: row['name'] || row['nome'],
+        name: name,
         description: row['description'] || 'Empresa importada',
         website: row['website'],
         phone: row['phone'],
         address: row['address'],
-        state: row['state'],
-        city: row['city'],
-        cnpj: row['cnpj'],
-        email: row['email'],
+        state: state.presence,
+        city: city.presence,
+        cnpj: cnpj_raw.presence || cnpj_digits.presence,
+        email: email.presence,
         whatsapp: row['whatsapp'],
-        status: (row['status'] || 'active'),
+        status: status,
         featured: %w[true 1 yes sim].include?((row['featured'] || '').to_s.downcase),
         verified: %w[true 1 yes sim].include?((row['verified'] || '').to_s.downcase),
         whatsapp_enabled: %w[true 1 yes sim].include?((row['whatsapp_enabled'] || '').to_s.downcase),
@@ -394,28 +459,29 @@ end
       }
 
       cats = (row['categories'] || '').to_s.split(',').map { |c| c.strip }.reject(&:blank?)
-
-      if attrs[:name].blank?
-        errors << 'Linha sem nome'
-        next
+      existing_categories = cats.any? ? Category.where(name: cats) : Category.none
+      missing_categories = cats - existing_categories.pluck(:name)
+      if missing_categories.any?
+        errors << "linha #{line_number}: categorias ausentes: #{missing_categories.join(', ')}"
       end
 
-      company = Company.find_or_initialize_by(name: attrs[:name])
-      was_new = company.new_record?
       company.assign_attributes(attrs)
+      company.categories = existing_categories if cats.any?
 
-      if cats.any?
-        company.categories = Category.where(name: cats)
+      if attrs[:status] == 'active' && !company.ready_for_activation?
+        company.status = 'pending'
+        errors << "linha #{line_number}: status active inválido, definido como pending"
       end
 
       if company.save
         was_new ? created += 1 : updated += 1
       else
-        errors << "#{attrs[:name]}: #{company.errors.full_messages.join(', ')}"
+        errors << "linha #{line_number}: #{company.errors.full_messages.join(', ')}"
+        invalid += 1
       end
     end
 
-    notice_msg = "Importação concluída: #{created} criadas, #{updated} atualizadas"
+    notice_msg = "Importação concluída: #{created} criadas, #{updated} atualizadas, #{invalid} inválidas"
     if errors.any?
       redirect_to admin_companies_path, notice: notice_msg, alert: errors.take(10).join(' | ')
     else

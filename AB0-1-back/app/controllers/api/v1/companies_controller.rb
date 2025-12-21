@@ -185,17 +185,14 @@ module Api
 
       # GET /api/v1/companies/states
       def states
-        states = Company.distinct.pluck(:state).compact.sort
+        states = Locations::BrLocations.states.map { |state| state['acronym'] }
         render json: { states: states }
       end
 
       # GET /api/v1/companies/cities
       def cities
-        cities = if params[:state].present?
-                   Company.where(state: params[:state]).distinct.pluck(:city).compact.sort
-                 else
-                   Company.distinct.pluck(:city).compact.sort
-                 end
+        state = params[:state].to_s.strip.upcase
+        cities = state.present? ? Locations::BrLocations.cities_for(state) : []
         render json: { cities: cities }
       end
 

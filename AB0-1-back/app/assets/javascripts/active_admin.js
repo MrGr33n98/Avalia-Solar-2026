@@ -2,6 +2,7 @@
 //= require activeadmin/quill_editor/quill
 //= require activeadmin/quill_editor_input
 //= require admin/location_selector
+//= require admin/company_reject_prompt
 
 function initAvaliaAdminLocationSelector() {
   if (

@@ -1,24 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe 'Authentication System', type: :model do
-  let(:company) { 
-    Company.create!(
+  let(:category) do
+    Category.create!(name: 'Energia Solar', description: 'Categoria de testes')
+  end
+  let(:company) do
+    company = Company.new(
       name: 'Solar Tech',
       description: 'A solar company',
-      website: 'solartech.com',
+      website: 'http://solartech.com',
+      email: 'contato@solartech.com',
       email_public: 'contact@solartech.com',
       address: '123 Solar St',
-      city: 'Sun City',
+      city: 'Florianópolis',
       state: 'SC',
       phone: '(11) 99999-9999',
-      cnpj: '12.345.678/0001-90', # Valid CNPJ format usually required, using a dummy valid-looking one or skipping validation if possible. 
-      # Assuming standard validation. If strict CNPJ validation is on, this might fail.
-      # Let's try to make it valid enough or mock if needed.
-      # Using a valid generator algorithm logic or just a known valid test CNPJ.
-      # 00.000.000/0001-91 is valid.
       status: 'active'
-    ) 
-  }
+    )
+    company.categories << category
+    company.save!
+    company
+  end
 
   before do
     # Bypass CNPJ validation for test simplicity if needed, or provide valid one.
