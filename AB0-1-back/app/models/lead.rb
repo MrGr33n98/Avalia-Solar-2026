@@ -1,5 +1,6 @@
 require 'bcrypt'
 
+require 'bcrypt'
 class Lead < ApplicationRecord
   # Make company association optional since the database might not have company_id column
   belongs_to :company, optional: true
