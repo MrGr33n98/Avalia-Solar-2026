@@ -7,7 +7,13 @@ ActiveAdmin.register AdminUser do
     column :email
     column :avatar do |admin|
       if admin.avatar_photo.attached?
-        image_tag admin.avatar_photo.variant(resize_to_fill: [50, 50]), style: 'border-radius:50%;'
+        begin
+          image_tag url_for(admin.avatar_photo), style: 'border-radius:50%;max-height:50px;max-width:50px;'
+        rescue
+          status_tag 'sem avatar', :warning
+        end
+      else
+        status_tag 'sem avatar', :warning
       end
     end
     column :current_sign_in_at
@@ -24,7 +30,7 @@ ActiveAdmin.register AdminUser do
   form do |f|
     f.inputs do
       f.input :email
-      f.input :avatar_photo, as: :file, input_html: { accept: 'image/jpeg,image/png,image/webp' }, hint: (f.object.avatar_photo.attached? ? image_tag(f.object.avatar_photo.variant(resize_to_fill: [75, 75]), style: 'border-radius:50%;') : 'Upload JPG/PNG/WebP até 2MB')
+      f.input :avatar_photo, as: :file, input_html: { accept: 'image/jpeg,image/png,image/webp' }, hint: (f.object.avatar_photo.attached? ? image_tag(url_for(f.object.avatar_photo), style: 'border-radius:50%;max-height:75px;max-width:75px;') : 'Upload JPG/PNG/WebP até 2MB')
       f.input :password
       f.input :password_confirmation
     end
