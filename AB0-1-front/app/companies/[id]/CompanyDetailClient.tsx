@@ -271,7 +271,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="reviews" className="mt-0">
-                    <CompanyReviews reviews={reviews} loading={reviewsLoading} companyId={currentCompany.id} />
+                    <CompanyReviews reviews={reviews} loading={reviewsLoading} companyId={currentCompany.id} companyName={currentCompany.name} />
                   </TabsContent>
 
                   <TabsContent value="financing" className="mt-0">

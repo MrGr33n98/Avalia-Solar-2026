@@ -1,8 +1,9 @@
 // app/companies/[id]/page.tsx
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
 import { companiesApiSafe } from '@/lib/api-client';
+import { buildCompanyPath, parseIdFromSlug } from '@/lib/slug';
 
 interface Props {
   params: { id: string }; // ✅ Corrigido: objeto direto
@@ -12,10 +13,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     // Log the ID being requested
     console.log('Fetching company with ID:', params.id);
-    const companyId = parseInt(params.id);
+    const companyId = parseIdFromSlug(params.id);
     
     // Check if the ID is valid
-    if (isNaN(companyId)) {
+    if (!companyId) {
       console.error('Invalid company ID:', params.id);
       return {
         title: 'Empresa não encontrada | Compare Solar',
@@ -31,13 +32,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const canonicalPath = buildCompanyPath(company.id, company.name);
+    const canonicalUrl = `${siteUrl}${canonicalPath}`;
+
     return {
       title: `${company.name} | Compare Solar`,
       description: `${company.description || ''} - Localizada em ${company.address || 'Endereço não informado'}. Telefone: ${company.phone || 'N/A'}`,
       openGraph: {
         title: `${company.name} - Empresa de Energia Solar`,
         description: `${company.description || ''} - Localizada em ${company.address || 'Endereço não informado'}. Telefone: ${company.phone || 'N/A'}`,
-        url: `https://www.comparesolar.com/companies/${company.id}`,
+        url: canonicalUrl,
         images: company.banner_url ? [{ url: company.banner_url }] : [],
       },
       twitter: {
@@ -46,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description: company.description || '',
       },
       alternates: {
-        canonical: `https://www.comparesolar.com/companies/${company.id}`,
+        canonical: canonicalUrl,
       },
     };
   } catch (error) {
@@ -65,10 +70,10 @@ export default async function CompanyDetailPage({ params }: Props) {
   try {
     // Log the ID being requested
     console.log('[CompanyDetailPage] Loading company with ID:', params.id);
-    const companyId = parseInt(params.id);
+    const companyId = parseIdFromSlug(params.id);
     
     // Check if the ID is valid
-    if (isNaN(companyId)) {
+    if (!companyId) {
       console.error('[CompanyDetailPage] Invalid company ID:', params.id);
       notFound();
     }
@@ -79,6 +84,12 @@ export default async function CompanyDetailPage({ params }: Props) {
     if (!company) {
       console.log('[CompanyDetailPage] Company not found for ID:', companyId);
       notFound();
+    }
+
+    const canonicalPath = buildCompanyPath(company.id, company.name);
+    const canonicalSegment = canonicalPath.split('/').pop();
+    if (canonicalSegment && params.id !== canonicalSegment) {
+      permanentRedirect(canonicalPath);
     }
 
     console.log('[CompanyDetailPage] Company data loaded:', {
