@@ -84,7 +84,7 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
-      API_URL_INTERNAL: "http://backend:3001/api/v1"
+      API_URL_INTERNAL: "https://api.avaliasolar.com.br/api/v1"
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
