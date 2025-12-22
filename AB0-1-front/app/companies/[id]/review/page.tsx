@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Star, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,13 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
   
   const router = useRouter();
   const { user } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = (() => {
+    const query = searchParams?.toString();
+    const fullPath = query ? `${pathname}?${query}` : pathname;
+    return encodeURIComponent(fullPath || '/');
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +61,7 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
       await reviewsApi.create({
         rating,
         comment: comment.trim(),
-        user_id: user.id,
-        product_id: companyId  // Backend expects product_id for company reviews
+        company_id: companyId
       });
       
       setSubmitSuccess(true);
@@ -84,12 +91,18 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
           Você precisa estar logado para deixar uma avaliação.
         </p>
         <div className="flex gap-3 justify-center">
-          <Button onClick={() => router.push('/login')}>
+          <Button onClick={() => router.push(`/login?return_to=${returnTo}`)}>
             Fazer Login
           </Button>
-          <Button variant="outline" onClick={() => router.push('/register')}>
+          <Button variant="outline" onClick={() => router.push(`/signup?return_to=${returnTo}`)}>
             Criar Conta
           </Button>
+        </div>
+        <div className="mt-3 text-sm text-gray-600">
+          Voce e uma empresa?{' '}
+          <Link href="/register" className="text-blue-600 hover:underline">
+            Cadastre sua empresa
+          </Link>
         </div>
       </div>
     );

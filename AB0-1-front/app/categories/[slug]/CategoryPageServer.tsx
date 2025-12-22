@@ -18,9 +18,9 @@ export const revalidate = 60;
 
 async function CategoryPageServer({ params }: CategorySlugPageProps) {
   console.time(`[CategoryPage] Total load time for ${params.slug}`);
-  const specialSlugs = new Set(['register-user', 'register', 'cadastro-usuario']);
+  const specialSlugs = new Set(['register-user', 'register', 'cadastro-usuario', 'signup']);
   if (specialSlugs.has(params.slug)) {
-    redirect('/register-user');
+    redirect('/signup');
   }
   try {
     // Fetch category first to get the ID

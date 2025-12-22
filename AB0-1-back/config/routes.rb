@@ -132,6 +132,7 @@ Rails.application.routes.draw do
       # Authentication routes
       namespace :auth do
         post :login
+        post :signup
         post :register
         post :logout
         get :me

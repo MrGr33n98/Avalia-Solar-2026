@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import CategoryDropdownItem from './CategoryDropdownItem';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { categories, loading, error } = useCategories();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   // Since we're already filtering for featured categories in the API call,
   // let's not filter again here unless absolutely necessary
@@ -29,6 +31,11 @@ export default function Navbar() {
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
   };
 
   // Close mobile menu and dropdown on route change (if using next/router)
@@ -116,24 +123,29 @@ export default function Navbar() {
             Blog
           </Link>
           {!isAuthenticated && (
-            <Button asChild variant="outline">
-              <Link href="/login">Login</Link>
-            </Button>
+            <>
+              <Button asChild variant="outline">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">Cadastre sua empresa</Link>
+              </Button>
+            </>
           )}
-          {isAuthenticated && user?.role === 'user' && (
-            <Button asChild variant="ghost">
-              <Link href="/reviews/my">Minhas avaliações</Link>
-            </Button>
-          )}
-          {(!isAuthenticated || user?.role !== 'user') && (
-            <Button asChild>
-              <Link href="/register">Cadastre sua empresa</Link>
-            </Button>
-          )}
-          {isAuthenticated && user?.role === 'company' && (
-            <Button asChild variant="outline">
-              <Link href="/dashboard/company">Dashboard da empresa</Link>
-            </Button>
+          {isAuthenticated && (
+            <>
+              <Button asChild variant="ghost">
+                <Link href="/profile">Minha conta</Link>
+              </Button>
+              {user?.role === 'company' && (
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/company">Dashboard da empresa</Link>
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleLogout}>
+                Sair
+              </Button>
+            </>
           )}
         </div>
 
@@ -236,24 +248,33 @@ export default function Navbar() {
                 Blog
               </Link>
               {!isAuthenticated && (
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/login" onClick={toggleMobileMenu}>Login</Link>
-                </Button>
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/login" onClick={toggleMobileMenu}>Login</Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link href="/register" onClick={toggleMobileMenu}>Cadastre sua empresa</Link>
+                  </Button>
+                </>
               )}
-              {isAuthenticated && user?.role === 'user' && (
-                <Button asChild className="w-full">
-                  <Link href="/reviews/my" onClick={toggleMobileMenu}>Minhas avaliações</Link>
-                </Button>
-              )}
-              {(!isAuthenticated || user?.role !== 'user') && (
-                <Button asChild className="w-full">
-                  <Link href="/register" onClick={toggleMobileMenu}>Cadastre sua empresa</Link>
-                </Button>
-              )}
-              {isAuthenticated && user?.role === 'company' && (
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/dashboard/company" onClick={toggleMobileMenu}>Dashboard da empresa</Link>
-                </Button>
+              {isAuthenticated && (
+                <>
+                  <Button asChild className="w-full">
+                    <Link href="/profile" onClick={toggleMobileMenu}>Minha conta</Link>
+                  </Button>
+                  {user?.role === 'company' && (
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/dashboard/company" onClick={toggleMobileMenu}>Dashboard da empresa</Link>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { handleLogout(); toggleMobileMenu(); }}
+                  >
+                    Sair
+                  </Button>
+                </>
               )}
             </div>
           </motion.div>
@@ -262,3 +283,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

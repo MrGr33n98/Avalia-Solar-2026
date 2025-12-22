@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,12 @@ export function LoginPageContent() {
   const [error, setError] = useState<string | null>(null);
   
   const { login } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const rawReturnTo = searchParams.get('return_to') || searchParams.get('redirect');
+  const safeReturnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
+    ? rawReturnTo
+    : null;
+  const returnToQuery = safeReturnTo ? `?return_to=${encodeURIComponent(safeReturnTo)}` : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +32,7 @@ export function LoginPageContent() {
       await login(email, password);
       
       // Get redirect URL from query params or default to dashboard
-      const redirect = searchParams.get('redirect') || '/dashboard';
+      const redirect = safeReturnTo || '/dashboard';
       
       // Small delay to ensure state is updated
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -100,6 +104,12 @@ export function LoginPageContent() {
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-gray-600">
             Não tem uma conta?{' '}
+            <Link href={`/signup${returnToQuery}`} className="text-blue-600 hover:underline">
+              Crie sua conta
+            </Link>
+          </div>
+          <div className="text-sm text-gray-600">
+            Voce e uma empresa?{' '}
             <Link href="/register" className="text-blue-600 hover:underline">
               Cadastre sua empresa
             </Link>

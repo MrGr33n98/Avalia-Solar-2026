@@ -728,6 +728,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  signup: (userData: { name: string; email: string; password: string; password_confirmation?: string; date_of_birth?: string; terms_accepted?: boolean }) =>
+    fetchApi('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ user: userData, terms_accepted: userData.terms_accepted ?? true }),
+    }),
   register: (userData: { name: string; email: string; password: string; password_confirmation?: string; date_of_birth?: string; terms_accepted?: boolean }) =>
     fetchApi('/auth/register', {
       method: 'POST',

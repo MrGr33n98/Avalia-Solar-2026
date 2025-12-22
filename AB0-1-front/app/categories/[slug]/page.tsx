@@ -9,9 +9,9 @@ interface CategorySlugPageProps {
 }
 
 export default function CategorySlugPage({ params }: CategorySlugPageProps) {
-  const specials = new Set(['register-user', 'register', 'cadastro-usuario']);
+  const specials = new Set(['register-user', 'register', 'cadastro-usuario', 'signup']);
   if (specials.has(params.slug)) {
-    redirect('/register-user');
+    redirect('/signup');
   }
   return (
     <Suspense fallback={

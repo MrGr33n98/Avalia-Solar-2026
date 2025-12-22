@@ -59,6 +59,10 @@ module Api
         development_fallback('register', e)
       end
 
+      def signup
+        register
+      end
+
       def logout
         head :no_content
       end
@@ -156,3 +160,4 @@ module Api
     end
   end
 end
+

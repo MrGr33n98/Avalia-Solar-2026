@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,12 @@ export default function RegisterUserPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawReturnTo = searchParams.get('return_to');
+  const safeReturnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
+    ? rawReturnTo
+    : null;
+  const returnToQuery = safeReturnTo ? `?return_to=${encodeURIComponent(safeReturnTo)}` : '';
 
   const isAdult = useMemo(() => {
     if (!dateOfBirth) return false;
@@ -78,7 +84,7 @@ export default function RegisterUserPage() {
     setError(null);
 
     try {
-      const resp: any = await authApi.register({
+      const resp: any = await authApi.signup({
         name,
         email,
         password,
@@ -90,6 +96,12 @@ export default function RegisterUserPage() {
         localStorage.setItem('auth', JSON.stringify({ token: resp.token, user: resp.user }));
       }
       setSubmitted(true);
+      if (safeReturnTo) {
+        setTimeout(() => {
+          window.location.href = safeReturnTo;
+        }, 800);
+        return;
+      }
     } catch (err: any) {
       setError(err?.message || 'Falha no cadastro');
     } finally {
@@ -118,7 +130,7 @@ export default function RegisterUserPage() {
               <div className="p-4 bg-green-50 text-green-700 rounded-md text-sm">
                 Cadastro enviado com sucesso. Verifique seu e-mail para confirmar sua conta.
               </div>
-              <Button className="w-full" onClick={() => router.push('/login')}>Ir para Login</Button>
+              <Button className="w-full" onClick={() => router.push(`/login${returnToQuery}`)}>Ir para Login</Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -162,10 +174,11 @@ export default function RegisterUserPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <p className="text-sm text-center">
-            Já possui conta? <Link href="/login" className="underline">Acesse aqui</Link>
+            Já possui conta? <Link href={`/login${returnToQuery}`} className="underline">Acesse aqui</Link>
           </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
+

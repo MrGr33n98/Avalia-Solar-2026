@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+  useSearchParams: jest.fn(),
 }));
 
 // Mock useAuth hook
@@ -72,11 +73,15 @@ jest.mock('next/link', () => ({
 describe('LoginPage', () => {
   const mockPush = jest.fn();
   const mockLogin = jest.fn();
+  const mockSearchParams = { get: jest.fn() };
 
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
     });
+    const { useSearchParams } = jest.requireMock('next/navigation');
+    useSearchParams.mockReturnValue(mockSearchParams);
+    mockSearchParams.get.mockReturnValue(null);
 
     (useAuth as jest.Mock).mockReturnValue({
       login: mockLogin,
@@ -84,6 +89,10 @@ describe('LoginPage', () => {
 
     mockPush.mockClear();
     mockLogin.mockClear();
+    Object.defineProperty(window, 'location', {
+      value: { href: 'http://localhost/' },
+      writable: true,
+    });
   });
 
   it('renders the login form with email and password inputs', () => {
@@ -135,10 +144,7 @@ describe('LoginPage', () => {
     });
     
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123'
-      });
+      expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123');
     });
   });
 
@@ -159,7 +165,7 @@ describe('LoginPage', () => {
     });
     
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      expect(window.location.href).toBe('/dashboard');
     });
   });
 
@@ -214,7 +220,8 @@ describe('LoginPage', () => {
   it('has links to register and forgot password pages', () => {
     render(<LoginPage />);
     
-    expect(screen.getByRole('link', { name: 'Registre-se' })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: 'Crie sua conta' })).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'Cadastre sua empresa' })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'Esqueceu sua senha?' })).toHaveAttribute('href', '/forgot-password');
   });
 });

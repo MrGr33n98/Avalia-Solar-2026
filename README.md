@@ -191,3 +191,23 @@ Please adhere to this project's `code of conduct`.
 - Configurações específicas DigitalOcean:
   - App Platform constrói a partir do repositório em `main`; spec é gerada no job e injeta `APP_ENV_VARS` como envs.
   - Ajuste `run_command` e `build_command` dos serviços conforme necessidade.
+
+## Dev Auth Flow (Docker)
+
+From repo root (Avalia-Solar-2026):
+
+```bash
+docker compose up -d backend frontend
+docker compose exec backend bundle exec rails db:migrate
+```
+
+Manual checks:
+- User signup: http://localhost:3000/signup
+- User login: http://localhost:3000/login
+- Company signup: http://localhost:3000/register
+- Review gate: open /companies/:id/review and confirm it sends return_to to login/signup
+
+API checks:
+- POST /api/v1/auth/signup
+- POST /api/v1/auth/login
+- GET /api/v1/auth/me
