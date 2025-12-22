@@ -1,10 +1,12 @@
 # ================================
 # Admin User
 # ================================
-AdminUser.find_or_create_by!(email: 'felipe@admin.com') do |admin|
-  admin.password = 'ZAbgbZeVAK+!5!'
-  admin.password_confirmation = 'ZAbgbZeVAK+!5!'
-  puts "Admin user created: #{admin.email}"
+if ENV['SEED_ADMIN_EMAIL'] && ENV['SEED_ADMIN_PASSWORD']
+  AdminUser.find_or_create_by!(email: ENV['SEED_ADMIN_EMAIL']) do |admin|
+    admin.password = ENV['SEED_ADMIN_PASSWORD']
+    admin.password_confirmation = ENV['SEED_ADMIN_PASSWORD']
+    puts "Admin user created: #{admin.email}"
+  end
 end
 
 # ================================

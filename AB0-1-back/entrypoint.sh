@@ -24,9 +24,10 @@ echo "✅ Postgres disponível!"
 
 # === INÍCIO DA APLICAÇÃO ===
 
-# O comando de migração/seed será executado separadamente pelo docker-compose run.
-# Aqui, apenas iniciamos o servidor Rails.
+bundle exec rails db:migrate
+if [ -n "$SEED_ADMIN_EMAIL" ] && [ -n "$SEED_ADMIN_PASSWORD" ]; then
+  bundle exec rails db:seed
+fi
 
 echo "Starting Rails server..."
-# Executa o comando principal do contêiner (bundle exec rails server -b 0.0.0.0 -p 3001)
 exec "$@"

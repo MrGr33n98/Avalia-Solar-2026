@@ -60,6 +60,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       CORS_ORIGINS: "https://avaliasolar.com.br,https://www.avaliasolar.com.br"
       ADDITIONAL_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+      SEED_ADMIN_EMAIL: "felipe@avaliasolar.com.br"
+      SEED_ADMIN_PASSWORD: "ZAbgbZeVAK+!5!"
     volumes:
       - ./AB0-1-back:/app
     ports:
