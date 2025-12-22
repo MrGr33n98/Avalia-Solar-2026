@@ -2,12 +2,16 @@ Rails.application.routes.draw do
   if defined?(Rswag::Ui::Engine)
     mount Rswag::Ui::Engine => '/api-docs'
   end
+
   if defined?(Rswag::Api::Engine)
     mount Rswag::Api::Engine => '/api-docs'
   end
+
   mount ActiveStorage::Engine => "/rails/active_storage"
+
   # ActiveAdmin routes
   ActiveAdmin.routes(self)
+
   devise_for :admin_users, ActiveAdmin::Devise.config.merge(
     controllers: {
       sessions: 'admin/sessions'
@@ -36,7 +40,7 @@ Rails.application.routes.draw do
           get :related
         end
       end
-      
+
       # Companies routes
       resources :companies do
         collection do
@@ -45,6 +49,7 @@ Rails.application.routes.draw do
           get :locations
           get :featured
         end
+
         member do
           get 'analytics/historical', to: 'companies#analytics_historical'
           get 'analytics/reviews', to: 'companies#analytics_reviews'
@@ -53,6 +58,7 @@ Rails.application.routes.draw do
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
         end
+
         resources :financing_options, only: [:index, :create, :update, :destroy] do
           collection do
             get :compare
@@ -62,7 +68,7 @@ Rails.application.routes.draw do
 
       # Analytics routes
       post 'analytics/track', to: 'analytics#track'
-      
+
       # Dashboard routes
       get 'dashboard/stats', to: 'dashboard#stats'
 
@@ -78,14 +84,16 @@ Rails.application.routes.draw do
         post 'update_ctas', to: 'company_dashboard#update_ctas'
         post 'upload_media', to: 'company_dashboard#upload_media'
       end
-      
+
       # Categories routes
+      # Refatorado: sem 'only' para permitir create/update/destroy
       resources :categories do
         member do
           get :companies
           get :products
           get :banners
         end
+
         collection do
           get :featured
           get 'by_slug/:slug', to: 'categories#show_by_slug'
@@ -113,6 +121,7 @@ Rails.application.routes.draw do
         collection do
           post :wizard_create
         end
+
         member do
           post :send_otp
           post :resend_otp

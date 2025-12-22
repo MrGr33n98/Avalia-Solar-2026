@@ -1,13 +1,18 @@
 # app/controllers/api/v1/categories_controller.rb
 module Api
   module V1
-  class CategoriesController < Api::V1::BaseController
-      include Cacheable # TASK-015: Enable caching
+    class CategoriesController < Api::V1::BaseController
+      include Cacheable   # TASK-015: Enable caching
       include Paginatable # TASK-017: Enable pagination
-      
-      before_action :set_category, only: %i[show update destroy companies products]
+
+      CATEGORY_JSON_FIELDS = %i[
+        id name seo_url seo_title short_description description status featured
+      ].freeze
+
       before_action :authenticate_api_user, only: %i[create update destroy]
       before_action :require_admin, only: %i[create update destroy]
+      before_action :set_category, only: %i[show update destroy companies products banners]
+
       after_action :expire_categories_cache, only: %i[create update destroy]
 
       # Global Error Handling
@@ -19,22 +24,11 @@ module Api
       # =========================
       def index
         cache_key = cache_key_for('categories', params.except(:page, :per_page))
-        
+
         cached_json(cache_key, expires_in: 1.hour) do
           query = Category.all
-
-          if Category.column_names.include?('status') && params[:status].present?
-            query = query.where(status: params[:status])
-          end
-
-          if Category.column_names.include?('featured') && params[:featured].present?
-            featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            query = query.where(featured: featured)
-          end
-
-          if params[:limit].present? && params[:limit].to_i.positive? && !params[:page].present?
-            query = query.limit(params[:limit].to_i)
-          end
+          query = apply_category_filters(query)
+          query = apply_limit(query)
 
           query = query.includes(:companies) if Category.reflect_on_association(:companies)
 
@@ -47,20 +41,7 @@ module Api
             }
           else
             results = query.to_a
-
-            # Fallback: quando filtrado por featured e resultado vazio, retornar categorias ativas
-            if params[:featured].present? && ActiveModel::Type::Boolean.new.cast(params[:featured]) && results.empty?
-              fallback = Category.all
-              if Category.column_names.include?('status')
-                fallback = fallback.where(status: params[:status].presence || 'active')
-              end
-              if params[:limit].present? && params[:limit].to_i.positive?
-                fallback = fallback.limit(params[:limit].to_i)
-              end
-              fallback = fallback.includes(:companies) if Category.reflect_on_association(:companies)
-              results = fallback.to_a
-            end
-
+            results = featured_fallback(results) if featured_true? && results.empty?
             results.map(&:as_json)
           end
         end
@@ -71,7 +52,7 @@ module Api
       # =========================
       def show
         cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
-        
+
         cached_json(cache_key, expires_in: 1.hour) do
           @category.as_json
         end
@@ -87,9 +68,7 @@ module Api
           companies_scope = companies_scope.where(status: params[:status])
         end
 
-        if params[:limit].present?
-          companies_scope = companies_scope.limit(params[:limit].to_i)
-        end
+        companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
 
         render json: companies_scope.map { |c| CompanySerializer.new(c).as_json }, status: :ok
       end
@@ -99,20 +78,20 @@ module Api
       # =========================
       def banners
         cache_key = "categories/#{@category.id}/banners/#{@category.updated_at.to_i}"
-        
+
         cached_json(cache_key, expires_in: 30.minutes) do
           banners_scope = @category.banners.where(active: true)
+
           if Banner.column_names.include?('start_date')
             banners_scope = banners_scope.where('start_date IS NULL OR start_date <= ?', Time.current)
           end
+
           if Banner.column_names.include?('end_date')
             banners_scope = banners_scope.where('end_date IS NULL OR end_date >= ?', Time.current)
           end
-          
-          if params[:limit].present?
-            banners_scope = banners_scope.limit(params[:limit].to_i)
-          end
-          
+
+          banners_scope = banners_scope.limit(params[:limit].to_i) if limit_present?
+
           banners_scope.as_json(
             only: %i[id title link banner_type position],
             methods: :image_url
@@ -125,12 +104,11 @@ module Api
       # =========================
       def products
         products_scope = @category.products
+        products_scope = products_scope.limit(params[:limit].to_i) if limit_present?
 
-        if params[:limit].present?
-          products_scope = products_scope.limit(params[:limit].to_i)
-        end
-
-        render json: products_scope.as_json(only: %i[id name description price company_id image_url]), status: :ok
+        render json: products_scope.as_json(
+          only: %i[id name description price company_id image_url]
+        ), status: :ok
       end
 
       # =========================
@@ -140,9 +118,7 @@ module Api
         @category = Category.new(category_params)
 
         if @category.save
-          render json: @category.as_json(
-            only: %i[id name seo_url seo_title short_description description status featured]
-          ), status: :created
+          render json: category_json(@category), status: :created
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
@@ -153,9 +129,7 @@ module Api
       # =========================
       def update
         if @category.update(category_params)
-          render json: @category.as_json(
-            only: %i[id name seo_url seo_title short_description description status featured]
-          )
+          render json: category_json(@category), status: :ok
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
@@ -170,14 +144,15 @@ module Api
       end
 
       # =========================
-      # GET /categories/slug/:slug
+      # GET /categories/by_slug/:slug
+      # (melhoria: rota dedicada a slug, sem “params[:id]”)
       # =========================
       def show_by_slug
-        slug = params[:slug] || params[:id] # Support both slug param and id param
+        slug = params.require(:slug)
         @category = Category.find_by!(seo_url: slug)
-        
+
         cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
-        
+
         cached_json(cache_key, expires_in: 1.hour) do
           @category.as_json
         end
@@ -185,6 +160,9 @@ module Api
 
       private
 
+      # -------------------------
+      # Errors
+      # -------------------------
       def record_not_found(e)
         Rails.logger.error("Category not found: #{e.message}")
         render json: { error: 'Categoria não encontrada' }, status: :not_found
@@ -195,6 +173,9 @@ module Api
         render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
       end
 
+      # -------------------------
+      # Finders / Params
+      # -------------------------
       def set_category
         @category = Category.find(params[:id])
       end
@@ -204,6 +185,53 @@ module Api
           :name, :seo_url, :seo_title, :short_description,
           :description, :parent_id, :kind, :status, :featured
         )
+      end
+
+      # -------------------------
+      # Helpers
+      # -------------------------
+      def category_json(category)
+        category.as_json(only: CATEGORY_JSON_FIELDS)
+      end
+
+      def apply_category_filters(query)
+        if Category.column_names.include?('status') && params[:status].present?
+          query = query.where(status: params[:status])
+        end
+
+        if Category.column_names.include?('featured') && params[:featured].present?
+          query = query.where(featured: featured_true?)
+        end
+
+        query
+      end
+
+      def apply_limit(query)
+        return query unless limit_present?
+        return query if params[:page].present? # mantém sua lógica: limit só quando não há paginação
+
+        query.limit(params[:limit].to_i)
+      end
+
+      def limit_present?
+        params[:limit].present? && params[:limit].to_i.positive?
+      end
+
+      def featured_true?
+        params[:featured].present? && ActiveModel::Type::Boolean.new.cast(params[:featured])
+      end
+
+      def featured_fallback(_results)
+        fallback = Category.all
+
+        if Category.column_names.include?('status')
+          fallback = fallback.where(status: params[:status].presence || 'active')
+        end
+
+        fallback = fallback.limit(params[:limit].to_i) if limit_present?
+        fallback = fallback.includes(:companies) if Category.reflect_on_association(:companies)
+
+        fallback.to_a
       end
 
       # Expire all category caches when data changes

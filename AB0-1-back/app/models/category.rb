@@ -138,6 +138,46 @@ class Category < ApplicationRecord
   
   private
 
+  # Extend QueryCacheable invalidation to also expire API caches
+  # so changes from ActiveAdmin/seed/import are reflected immediately.
+  def clear_related_caches
+    begin
+      super
+    rescue StandardError => e
+      Rails.logger.error("Category cache invalidation (query) failed: #{e.message}")
+    end
+
+    begin
+      clear_category_api_caches
+    rescue StandardError => e
+      Rails.logger.error("Category cache invalidation (api) failed: #{e.message}")
+    end
+  end
+
+  def clear_category_api_caches
+    # Collection caches (index with params)
+    expire_cache_pattern('categories_controller/index/categories')
+
+    # Show caches (by id and banners)
+    expire_cache_pattern("categories/show/#{id}")
+    expire_cache_pattern("categories/#{id}/banners")
+
+    # Slug-based caches
+    slug_values = [seo_url, previous_changes['seo_url']&.first]
+    slug_values.compact.uniq.each do |slug|
+      expire_cache_pattern("categories/slug/#{slug}")
+    end
+  end
+
+  def expire_cache_pattern(pattern)
+    if defined?(REDIS) && REDIS
+      keys = REDIS.keys("cache:#{pattern}*")
+      keys.each { |key| Rails.cache.delete(key.sub('cache:', '')) }
+    else
+      Rails.cache.delete_matched("#{pattern}*")
+    end
+  end
+
   def should_clear_cache?
     # Clear cache on all changes
     true
