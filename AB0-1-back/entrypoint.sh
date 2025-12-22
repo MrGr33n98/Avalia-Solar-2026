@@ -25,9 +25,6 @@ echo "✅ Postgres disponível!"
 # === INÍCIO DA APLICAÇÃO ===
 
 bundle exec rails db:migrate
-if [ -n "$SEED_ADMIN_EMAIL" ] && [ -n "$SEED_ADMIN_PASSWORD" ]; then
-  bundle exec rails db:seed
-fi
 
 echo "Starting Rails server..."
 exec "$@"
