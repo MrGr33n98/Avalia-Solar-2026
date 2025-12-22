@@ -17,26 +17,39 @@ interface CategorySlugPageProps {
 export const revalidate = 60;
 
 async function CategoryPageServer({ params }: CategorySlugPageProps) {
-  console.time(`[CategoryPage] Total load time for ${params.slug}`);
+  const logTiming = process.env.NODE_ENV === 'development';
+  const totalLabel = `[CategoryPage] Total load time for ${params.slug}`;
+  const fetchLabel = `[CategoryPage] Fetch category ${params.slug}`;
+  const parallelLabel = '[CategoryPage] Fetch parallel data';
+  if (logTiming) {
+    console.time(totalLabel);
+  }
   const specialSlugs = new Set(['register-user', 'register', 'cadastro-usuario', 'signup']);
   if (specialSlugs.has(params.slug)) {
     redirect('/signup');
   }
   try {
     // Fetch category first to get the ID
-    console.time(`[CategoryPage] Fetch category ${params.slug}`);
+    if (logTiming) {
+      console.time(fetchLabel);
+    }
     const category = await fetchCategoryBySlug(params.slug);
-    console.timeEnd(`[CategoryPage] Fetch category ${params.slug}`);
+    if (logTiming) {
+      console.timeEnd(fetchLabel);
+    }
     
     // Fetch companies and banners in parallel to reduce total wait time
-    console.time(`[CategoryPage] Fetch parallel data`);
+    if (logTiming) {
+      console.time(parallelLabel);
+    }
     const [companies, banners] = await Promise.all([
       categoriesApi.getCompanies(category.id, { status: 'active' }),
       categoriesApi.getBanners(category.id, { limit: 5 }).catch(() => [])
     ]);
-    console.timeEnd(`[CategoryPage] Fetch parallel data`);
-    
-    console.timeEnd(`[CategoryPage] Total load time for ${params.slug}`);
+    if (logTiming) {
+      console.timeEnd(parallelLabel);
+      console.timeEnd(totalLabel);
+    }
 
     // Pass the initial data to the client component
     return <CategoryClientComponent initialCategory={category} initialCompanies={companies || []} initialBanners={banners || []} />;

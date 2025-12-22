@@ -92,9 +92,8 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
 
   const fetchCompanyData = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${companyId}`);
-      const data = await response.json();
-      setCompany(data.company);
+      const data = await fetchApi<{ company: any }>(`/companies/${companyId}`);
+      setCompany(data?.company || null);
     } catch (error) {
       console.error('Error fetching company:', error);
     } finally {

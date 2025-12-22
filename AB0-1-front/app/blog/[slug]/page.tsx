@@ -8,12 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ArticleBanner from '@/components/ArticleBanner';
 import ArticleConversionSection from '@/components/ArticleConversionSection';
+import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { getFullImageUrl } from '@/utils/image';
 import AuthorAvatarFloating from '@/components/AuthorAvatarFloating';
 
 async function getArticle(slug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/articles/${slug}`, {
+    const res = await fetch(buildApiUrl(`articles/${slug}`), {
+      headers: getApiRequestHeaders(),
       next: { revalidate: 1800 } // refresh every 30m
     });
     if (!res.ok) return null;
@@ -26,7 +28,8 @@ async function getArticle(slug: string) {
 
 async function getRelatedArticles(slug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/articles/${slug}/related`, {
+    const res = await fetch(buildApiUrl(`articles/${slug}/related`), {
+      headers: getApiRequestHeaders(),
       next: { revalidate: 1800 }
     });
     if (!res.ok) return [];

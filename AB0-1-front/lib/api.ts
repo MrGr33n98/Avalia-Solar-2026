@@ -1,7 +1,7 @@
 // =======================
 // Imports
 // =======================
-import axios from 'axios';
+import { getApiBaseUrl, getApiRequestHeaders } from './api-config';
 
 // =======================
 // API Response Types
@@ -299,34 +299,6 @@ export interface City {
 // =======================
 // Axios Config
 // =======================
-// Use internal Docker network URL for server-side requests, browser URL for client-side
-const getApiBaseUrl = () => {
-  const isDev = process.env.NODE_ENV === 'development';
-  if (typeof window === 'undefined') {
-    if (isDev) {
-      const devUrl = 'http://localhost:3001/api/v1';
-      console.log('[API] Server-side: Using dev URL:', devUrl);
-      return devUrl;
-    }
-    const internalUrl = process.env.API_URL_INTERNAL;
-    if (internalUrl) {
-      console.log('[API] Using internal URL:', internalUrl);
-      return internalUrl;
-    }
-    const publicUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    console.log('[API] Server-side: Using public URL:', publicUrl);
-    return `${publicUrl}/api/v1`;
-  }
-  if (isDev) {
-    const devClientUrl = 'http://localhost:3001/api/v1';
-    console.log('[API] Client-side: Using dev URL:', devClientUrl);
-    return devClientUrl;
-  }
-  const clientUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
-  console.log('[API] Client-side: Using URL:', clientUrl);
-  return clientUrl;
-};
-
 const API_BASE_URL = getApiBaseUrl();
 
 // Update the api configuration
@@ -374,11 +346,13 @@ export const api = {
       }
       
       const isFormData = config.data instanceof FormData;
+      const baseHeaders = getApiRequestHeaders(
+        isFormData ? {} : { 'Content-Type': 'application/json' }
+      );
       const response = await fetch(url, {
         method: config.method,
         headers: {
-          ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-          'Accept': 'application/json',
+          ...baseHeaders,
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
           ...config.headers,
         },
@@ -387,6 +361,8 @@ export const api = {
             ? config.data
             : JSON.stringify(config.data)
           : undefined,
+        ...(config.next ? { next: config.next } : {}),
+        ...(config.cache ? { cache: config.cache } : {}),
       });
 
       if (!response.ok) {
@@ -395,6 +371,9 @@ export const api = {
           details = await response.json();
         } catch {}
         const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`[${response.status}] Unauthorized`);
+        }
         throw new Error(`[${response.status}] ${message}`);
       }
 
@@ -429,6 +408,8 @@ export async function fetchApi<T = any>(
         : undefined,
       headers: { ...options.headers },
       params: options.params,
+      next: options.next,
+      cache: options.cache,
     });
     return response.data;
   } catch (error: any) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { reviewsApi } from '@/lib/api';
+import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,12 +29,17 @@ export default function MyReviewsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetch(`/api/v1/reviews?mine=true&limit=50`, {
+      const rawToken = typeof window !== 'undefined' ? localStorage.getItem('auth') : null;
+      let token: string | null = null;
+      if (rawToken) {
+        try {
+          token = JSON.parse(rawToken).token;
+        } catch {}
+      }
+      const data = await fetch(buildApiUrl('reviews?mine=true&limit=50'), {
         headers: {
-          'Accept': 'application/json',
-          ...(typeof window !== 'undefined' && localStorage.getItem('auth')
-            ? { 'Authorization': `Bearer ${JSON.parse(localStorage.getItem('auth') as string).token}` }
-            : {}),
+          ...getApiRequestHeaders(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       if (!data.ok) {

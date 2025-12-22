@@ -42,15 +42,10 @@ export function useCompany(companyId: string): UseCompanyReturn {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${companyId}`
-      );
-      
-      if (!response.ok) {
+      const data = await fetchApi<{ company: Company }>(`/companies/${companyId}`);
+      if (!data?.company) {
         throw new Error('Failed to fetch company data');
       }
-      
-      const data = await response.json();
       setCompany(data.company);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred';

@@ -31,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCompany } from '../hooks';
+import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 
 interface CompanyInfoProps {
   companyId: string;
@@ -80,9 +81,23 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [pendingApproval, setPendingApproval] = useState(false);
   const { updateCompany } = useCompany(companyId);
 
+  const getAuthToken = () => {
+    try {
+      const raw = localStorage.getItem('auth');
+      return raw ? JSON.parse(raw).token : null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchCompanyData = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${companyId}`);
+      const response = await fetch(buildApiUrl(`companies/${companyId}`), {
+        headers: getApiRequestHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch company data (${response.status})`);
+      }
       const data = await response.json();
       if (!data?.company) {
         setLoadError('Empresa não encontrada ou não associada à sua conta.');
@@ -142,12 +157,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/company_dashboard/update_logo`, {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      const res = await fetch(buildApiUrl('company_dashboard/update_logo'), {
         method: 'POST',
         headers: {
-          Authorization: (() => {
-            try { const a = localStorage.getItem('auth'); return a ? `Bearer ${JSON.parse(a).token}` : ''; } catch { return ''; }
-          })()
+          ...getApiRequestHeaders(),
+          Authorization: `Bearer ${token}`,
         },
         body: fd
       });
@@ -177,12 +195,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/company_dashboard/update_banner`, {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      const res = await fetch(buildApiUrl('company_dashboard/update_banner'), {
         method: 'POST',
         headers: {
-          Authorization: (() => {
-            try { const a = localStorage.getItem('auth'); return a ? `Bearer ${JSON.parse(a).token}` : ''; } catch { return ''; }
-          })()
+          ...getApiRequestHeaders(),
+          Authorization: `Bearer ${token}`,
         },
         body: fd
       });

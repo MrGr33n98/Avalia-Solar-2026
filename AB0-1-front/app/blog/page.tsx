@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import BlogCard from '@/components/BlogCard';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 
 export const metadata: Metadata = {
   title: 'Blog Avalia Solar - Notícias e Guia sobre Energia Solar',
@@ -16,7 +17,8 @@ async function getArticles(searchParams: any) {
     if (searchParams?.category) params.append('category_id', searchParams.category);
     if (searchParams?.page) params.append('page', searchParams.page);
     
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/articles?${params.toString()}`, {
+    const res = await fetch(buildApiUrl(`articles?${params.toString()}`), {
+      headers: getApiRequestHeaders(),
       next: { revalidate: 300 } // Revalidate every 5 minutes
     });
     
@@ -29,7 +31,8 @@ async function getArticles(searchParams: any) {
 
 async function getCategories() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/categories`, {
+    const res = await fetch(buildApiUrl('categories'), {
+      headers: getApiRequestHeaders(),
       next: { revalidate: 3600 }
     });
     if (!res.ok) return [];
