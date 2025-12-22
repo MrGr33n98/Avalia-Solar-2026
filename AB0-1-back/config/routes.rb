@@ -80,7 +80,7 @@ Rails.application.routes.draw do
       end
       
       # Categories routes
-      resources :categories, only: [:index, :show] do
+      resources :categories do
         member do
           get :companies
           get :products

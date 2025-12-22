@@ -6,7 +6,13 @@ module Api
       include Paginatable # TASK-017: Enable pagination
       
       before_action :set_category, only: %i[show update destroy companies products]
+      before_action :authenticate_api_user, only: %i[create update destroy]
+      before_action :require_admin, only: %i[create update destroy]
       after_action :expire_categories_cache, only: %i[create update destroy]
+
+      # Global Error Handling
+      rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+      rescue_from StandardError, with: :handle_standard_error
 
       # =========================
       # GET /categories
@@ -58,12 +64,6 @@ module Api
             results.map(&:as_json)
           end
         end
-      rescue ActiveRecord::RecordNotFound => e
-        Rails.logger.error("Categories not found: #{e.message}")
-        render json: { error: 'Categorias não encontradas' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
-        render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
       end
 
       # =========================
@@ -75,11 +75,6 @@ module Api
         cached_json(cache_key, expires_in: 1.hour) do
           @category.as_json
         end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#show error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -97,11 +92,6 @@ module Api
         end
 
         render json: companies_scope.map { |c| CompanySerializer.new(c).as_json }, status: :ok
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#companies error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -128,11 +118,6 @@ module Api
             methods: :image_url
           )
         end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#banners error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -146,11 +131,6 @@ module Api
         end
 
         render json: products_scope.as_json(only: %i[id name description price company_id image_url]), status: :ok
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#products error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -166,9 +146,6 @@ module Api
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
-      rescue StandardError => e
-        Rails.logger.error("Categories#create error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -182,11 +159,6 @@ module Api
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#update error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -195,11 +167,6 @@ module Api
       def destroy
         @category.destroy
         render json: { message: 'Categoria excluída' }, status: :ok
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#destroy error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # =========================
@@ -214,14 +181,19 @@ module Api
         cached_json(cache_key, expires_in: 1.hour) do
           @category.as_json
         end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Categoria não encontrada' }, status: :not_found
-      rescue StandardError => e
-        Rails.logger.error("Categories#show_by_slug error: #{e.message}")
-        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       private
+
+      def record_not_found(e)
+        Rails.logger.error("Category not found: #{e.message}")
+        render json: { error: 'Categoria não encontrada' }, status: :not_found
+      end
+
+      def handle_standard_error(e)
+        Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
+        render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
+      end
 
       def set_category
         @category = Category.find(params[:id])
