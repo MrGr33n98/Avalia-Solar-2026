@@ -148,6 +148,13 @@ class Category < ApplicationRecord
     end
 
     begin
+      # Ensure QueryCacheable class-level caches are cleared for Category.
+      self.class.clear_model_cache if self.class.respond_to?(:clear_model_cache)
+    rescue StandardError => e
+      Rails.logger.error("Category cache invalidation (model) failed: #{e.message}")
+    end
+
+    begin
       clear_category_api_caches
     rescue StandardError => e
       Rails.logger.error("Category cache invalidation (api) failed: #{e.message}")
