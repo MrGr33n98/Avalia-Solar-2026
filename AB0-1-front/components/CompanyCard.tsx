@@ -176,7 +176,7 @@ export default function CompanyCard({ company, className = '', compact = false }
                 <div className="min-w-0">
                   <h3 className={`${compact ? 'text-base' : 'text-lg'} font-semibold truncate pr-2`} suppressHydrationWarning>{name}</h3>
                   {setupComplete && company.verified && (
-                     <span className="text-[10px] text-green-600 bg-green-50 px-1 rounded border border-green-100">Verificada</span>
+                     <span className="hidden md:inline-block text-[10px] text-green-600 bg-green-50 px-1 rounded border border-green-100">Verificada</span>
                   )}
                 </div>
               </div>
@@ -198,26 +198,26 @@ export default function CompanyCard({ company, className = '', compact = false }
 
             {/* Descrição - Hide or limit more in compact mode */}
             {!compact && (
-              <p className="text-gray-600 text-sm mt-2 line-clamp-2">{description || 'No description'}</p>
+              <p className="hidden md:block text-gray-600 text-sm mt-2 line-clamp-2">{description || 'No description'}</p>
             )}
             {compact && description && (
-               <p className="text-gray-600 text-xs mt-1 line-clamp-1">{description}</p>
+               <p className="hidden md:block text-gray-600 text-xs mt-1 line-clamp-1">{description}</p>
             )}
 
             {/* Info extra */}
             {!compact && (
-              <>
+              <div className="hidden md:block">
                 {workingHours && <Info icon={Clock} text={workingHours} />}
                 {payments && <Info icon={CreditCard} text={payments} />}
                 {totalReviews > 0 && <Info icon={MessageCircle} text={`${totalReviews} ${totalReviews === 1 ? 'avaliação' : 'avaliações'}`} />}
-              </>
+              </div>
             )}
           </div>
         </CardContent>
       </a>
 
       {/* Social links outside main anchor */}
-      <div className={`${compact ? 'px-3 pb-2' : 'px-4 pb-2'}`}>
+      <div className={`${compact ? 'px-3 pb-2' : 'px-4 pb-2'} hidden md:block`}>
         {social_links && (
           <div className="flex items-center gap-2 mt-2 text-blue-500">
             {website && <SocialLink href={website} icon={Globe} label="Globe" />} {/* Changed label to "Globe" */}
@@ -229,10 +229,10 @@ export default function CompanyCard({ company, className = '', compact = false }
       </div>
 
       {/* Categoria */}
-      {category && <Badge variant="outline" className={`${compact ? 'px-3 pb-3' : 'px-4 pb-4'} text-xs`}>{category}</Badge>}
+      {category && <Badge variant="outline" className={`${compact ? 'px-3 pb-3' : 'px-4 pb-4'} text-xs hidden md:inline-flex`}>{category}</Badge>}
 
 
-      <div className={`${compact ? 'px-3 pb-3' : 'px-4 pb-4'} space-y-2`}>
+      <div className={`${compact ? 'px-3 pb-3' : 'px-4 pb-4'} space-y-2 hidden md:block`}>
         <Button variant="outline" size={compact ? 'sm' : 'sm'} className="w-full" asChild>
           <Link href={companyReviewPath}>
             <MessageCircle className={`mr-2 ${compact ? 'h-3 w-3' : 'h-4 w-4'}`} />
