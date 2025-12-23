@@ -20,12 +20,12 @@ jobs:
           script: |
             set -e
             cd ~/Avalia-Solar-2026
-            git fetch --depth=1 origin main
+            git fetch --depth=2 origin main
             git checkout -f main
             git reset --hard origin/main
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
-            CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
+            CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD || true)
             FRONT_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
             BACK_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
             if [ -n "$FRONT_CHANGED" ] && [ -n "$BACK_CHANGED" ]; then
