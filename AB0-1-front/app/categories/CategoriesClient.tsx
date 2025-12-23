@@ -248,8 +248,8 @@ export default function CategoriesClient() {
   const loading = companiesLoading || categoriesLoading;
   const mobileStates = useMemo(() => Object.keys(locationsData).sort().slice(0, 8), [locationsData]);
   const mobileCities = useMemo(() => {
-    if (!filters.state || !locationsData[filters.state]) return [];
-    const entries = Array.from(locationsData[filters.state] || []);
+    if (!filters.state || !locationsData[filters.state]) return [] as string[];
+    const entries = Array.from((locationsData[filters.state] as Set<string>) || []);
     return entries.sort().slice(0, 8);
   }, [filters.state, locationsData]);
   const mobileBanner = allBanners.find((banner) => banner?.image_url)?.image_url;
