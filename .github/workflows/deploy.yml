@@ -40,29 +40,43 @@ jobs:
               [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
               [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend backend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps frontend backend
               else
-                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend backend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps frontend backend
               fi
             elif [ -n "$FRONT_CHANGED" ]; then
               [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps frontend
               else
-                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps frontend
               fi
             elif [ -n "$BACK_CHANGED" ]; then
               [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build backend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps backend
               else
-                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build backend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build --no-deps backend
               fi
             else
               echo "Nenhuma mudanca relevante para build detectada."
             fi
             if docker compose version >/dev/null 2>&1; then
-              docker compose -p "$COMPOSE_PROJECT_NAME" up -d
+              docker compose -p "$COMPOSE_PROJECT_NAME" up -d --no-deps frontend backend
             else
-              docker-compose -p "$COMPOSE_PROJECT_NAME" up -d
+              docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --no-deps frontend backend
+            fi
+            if ! docker ps --format '{{.Names}}' | grep -q '^ab0-redis$'; then
+              if docker compose version >/dev/null 2>&1; then
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d redis
+              else
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d redis
+              fi
+            fi
+            if ! docker ps --format '{{.Names}}' | grep -q '^ab0-postgres$'; then
+              if docker compose version >/dev/null 2>&1; then
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d postgres
+              else
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d postgres
+              fi
             fi
