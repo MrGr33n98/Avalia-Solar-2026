@@ -70,17 +70,7 @@ jobs:
             else
               docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --no-deps frontend backend
             fi
-            if ! docker ps --format '{{.Names}}' | grep -q '^ab0-redis$'; then
-              if docker compose version >/dev/null 2>&1; then
-                docker compose -p "$COMPOSE_PROJECT_NAME" up -d redis
-              else
-                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d redis
-              fi
-            fi
-            if ! docker ps --format '{{.Names}}' | grep -q '^ab0-postgres$'; then
-              if docker compose version >/dev/null 2>&1; then
-                docker compose -p "$COMPOSE_PROJECT_NAME" up -d postgres
-              else
-                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d postgres
-              fi
-            fi
+            REDIS_ID=$(docker ps -aq --filter "name=^ab0-redis$")
+            POSTGRES_ID=$(docker ps -aq --filter "name=^ab0-postgres$")
+            [ -n "$REDIS_ID" ] && docker start $REDIS_ID || true
+            [ -n "$POSTGRES_ID" ] && docker start $POSTGRES_ID || true
