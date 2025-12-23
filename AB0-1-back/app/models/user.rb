@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+         :recoverable, :rememberable, :validatable, :confirmable,
+         :omniauthable, omniauth_providers: [:google_oauth2]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   # By implementing this feature, users will be able to conveniently
@@ -55,6 +56,30 @@ class User < ApplicationRecord
 
   def self.ransackable_associations(_auth_object = nil)
     %w[company]
+  end
+
+  def self.from_omniauth(auth)
+    provider = auth.provider
+    uid = auth.uid
+    info = auth.info || {}
+    email = (info.respond_to?(:email) ? info.email : info['email']).to_s.downcase
+    name_value = info.respond_to?(:name) ? info.name : info['name']
+    candidate_name = name_value.presence || email.split('@').first.to_s.tr('_', ' ').strip
+    name = candidate_name.length >= 3 ? candidate_name : 'Usuario Google'
+
+    user = find_or_initialize_by(provider: provider, uid: uid)
+    user.email = email if user.email.blank?
+    user.name = name if user.name.blank?
+
+    if user.new_record?
+      user.password = "Aa1#{SecureRandom.base64(18)}"
+      user.terms_accepted = true
+      user.terms_accepted_at ||= Time.current
+      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+    end
+
+    user.save
+    user
   end
   
   private

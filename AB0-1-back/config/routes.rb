@@ -17,7 +17,9 @@ Rails.application.routes.draw do
       sessions: 'admin/sessions'
     }
   )
-  devise_for :users
+  devise_for :users, controllers: {
+    omniauth_callbacks: 'users/omniauth_callbacks'
+  }
 
   # Health check endpoints
   get '/health', to: 'health#show'

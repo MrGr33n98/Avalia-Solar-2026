@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { getApiOrigin } from '@/lib/api-config';
 
 export function LoginPageContent() {
   const [email, setEmail] = useState('');
@@ -22,6 +23,8 @@ export function LoginPageContent() {
     ? rawReturnTo
     : null;
   const returnToQuery = safeReturnTo ? `?return_to=${encodeURIComponent(safeReturnTo)}` : '';
+  const apiOrigin = getApiOrigin();
+  const googleAuthUrl = apiOrigin ? `${apiOrigin}/users/auth/google_oauth2` : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +102,11 @@ export function LoginPageContent() {
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
+            {googleAuthUrl ? (
+              <Button type="button" variant="outline" className="w-full" asChild>
+                <Link href={googleAuthUrl}>Continuar com Google</Link>
+              </Button>
+            ) : null}
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
