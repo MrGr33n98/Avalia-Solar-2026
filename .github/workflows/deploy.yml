@@ -61,6 +61,10 @@ jobs:
             else
               echo "Nenhuma mudanca relevante para build detectada."
             fi
+            REMOVE_FRONT=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '/ab0-frontend/ {print $1}')
+            REMOVE_BACK=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '/ab0-backend/ {print $1}')
+            [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
+            [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
             if docker compose version >/dev/null 2>&1; then
               docker compose -p "$COMPOSE_PROJECT_NAME" up -d --no-deps frontend backend
             else
