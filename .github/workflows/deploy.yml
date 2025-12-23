@@ -33,22 +33,25 @@ jobs:
               FRONT_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
               BACK_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
             fi
+            REMOVE_FRONT=$(docker ps -aq --filter "name=ab0-frontend" --filter "name=_ab0-frontend")
+            REMOVE_BACK=$(docker ps -aq --filter "name=ab0-backend" --filter "name=_ab0-backend")
             if [ -n "$FRONT_CHANGED" ] && [ -n "$BACK_CHANGED" ]; then
-              docker rm -f ab0-frontend ab0-backend 2>/dev/null || true
+              [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
+              [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
                 docker compose up -d --build frontend backend
               else
                 docker-compose up -d --build frontend backend
               fi
             elif [ -n "$FRONT_CHANGED" ]; then
-              docker rm -f ab0-frontend 2>/dev/null || true
+              [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
               if docker compose version >/dev/null 2>&1; then
                 docker compose up -d --build frontend
               else
                 docker-compose up -d --build frontend
               fi
             elif [ -n "$BACK_CHANGED" ]; then
-              docker rm -f ab0-backend 2>/dev/null || true
+              [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
                 docker compose up -d --build backend
               else
