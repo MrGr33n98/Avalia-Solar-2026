@@ -26,15 +26,39 @@ jobs:
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
             CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD || true)
-            FRONT_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
-            BACK_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
+            if command -v rg >/dev/null 2>&1; then
+              FRONT_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
+              BACK_CHANGED=$(echo "$CHANGED_FILES" | rg -n "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
+            else
+              FRONT_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
+              BACK_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
+            fi
             if [ -n "$FRONT_CHANGED" ] && [ -n "$BACK_CHANGED" ]; then
-              docker-compose up -d --build frontend backend
+              docker rm -f ab0-frontend ab0-backend 2>/dev/null || true
+              if docker compose version >/dev/null 2>&1; then
+                docker compose up -d --build frontend backend
+              else
+                docker-compose up -d --build frontend backend
+              fi
             elif [ -n "$FRONT_CHANGED" ]; then
-              docker-compose up -d --build frontend
+              docker rm -f ab0-frontend 2>/dev/null || true
+              if docker compose version >/dev/null 2>&1; then
+                docker compose up -d --build frontend
+              else
+                docker-compose up -d --build frontend
+              fi
             elif [ -n "$BACK_CHANGED" ]; then
-              docker-compose up -d --build backend
+              docker rm -f ab0-backend 2>/dev/null || true
+              if docker compose version >/dev/null 2>&1; then
+                docker compose up -d --build backend
+              else
+                docker-compose up -d --build backend
+              fi
             else
               echo "Nenhuma mudanca relevante para build detectada."
             fi
-            docker-compose up -d
+            if docker compose version >/dev/null 2>&1; then
+              docker compose up -d
+            else
+              docker-compose up -d
+            fi
