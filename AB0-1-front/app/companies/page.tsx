@@ -165,11 +165,11 @@ export default function CompaniesPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="md:hidden">
-        <div className="sticky top-16 z-40 bg-[#FFE600] shadow-sm">
+        <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
           <div className="px-4 pt-3 pb-2">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9 border border-white/70 bg-white">
-                <AvatarFallback className="bg-white text-[11px] font-semibold text-yellow-700">AS</AvatarFallback>
+                <AvatarFallback className="bg-white text-[11px] font-semibold text-primary">AS</AvatarFallback>
               </Avatar>
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -179,12 +179,12 @@ export default function CompaniesPage() {
                   aria-label="Buscar empresas"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-black/30"
+                  className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
                 />
               </div>
               <button
                 type="button"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/70 text-gray-700"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary"
                 aria-label="Notificacoes (2 novas)"
               >
                 <Bell className="h-5 w-5" />
@@ -193,16 +193,16 @@ export default function CompaniesPage() {
                 </span>
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-1 text-xs font-medium text-gray-700">
+            <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary-foreground/90">
               <MapPin className="h-3.5 w-3.5" />
               <span className="truncate">Enviar para {locationLabel}</span>
             </div>
           </div>
-          <div className="border-t border-black/10 px-4 pb-2">
+          <div className="border-t border-white/20 px-4 pb-2">
             <div className="flex items-center gap-2 overflow-x-auto py-2">
               <Link
                 href="/categories"
-                className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm"
+                className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary shadow-sm"
               >
                 Tudo
               </Link>
@@ -210,7 +210,7 @@ export default function CompaniesPage() {
                 <Link
                   key={chip.label}
                   href={chip.href}
-                  className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm"
+                  className="whitespace-nowrap rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-primary shadow-sm"
                 >
                   {chip.label}
                 </Link>

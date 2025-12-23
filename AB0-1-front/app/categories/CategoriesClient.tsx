@@ -6,7 +6,20 @@ import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
 import { useCategories } from '@/hooks/useCategories';
 import CompanyCard from '@/components/CompanyCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X } from 'lucide-react';
+import {
+  Bell,
+  Filter,
+  Folder,
+  Grid,
+  Heart,
+  Home,
+  MapPin,
+  Search,
+  Star,
+  User,
+  X,
+  Zap
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SidebarFilter from '@/components/SidebarFilter';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,6 +30,9 @@ import TestImage from '@/components/TestImage';
 import { getFullImageUrl } from '@/utils/image';
 import { ClientOnly } from '@/components/ClientOnly';
 import { useBannerGlobal } from '@/hooks/useBannerGlobal';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 type Filters = {
   searchTerm: string;
@@ -230,6 +246,19 @@ export default function CategoriesClient() {
   }, [companies, categories, filters]);
 
   const loading = companiesLoading || categoriesLoading;
+  const mobileStates = useMemo(() => Object.keys(locationsData).sort().slice(0, 8), [locationsData]);
+  const mobileCities = useMemo(() => {
+    if (!filters.state || !locationsData[filters.state]) return [];
+    const entries = Array.from(locationsData[filters.state] || []);
+    return entries.sort().slice(0, 8);
+  }, [filters.state, locationsData]);
+  const mobileBanner = allBanners.find((banner) => banner?.image_url)?.image_url;
+
+  const locationLabel = filters.city
+    ? `${filters.city}${filters.state ? `, ${filters.state}` : ''}`
+    : filters.state
+      ? filters.state
+      : 'Brasil';
 
   const getFilterLabel = (key: string, value: any): string => {
     switch (key) {
@@ -249,9 +278,298 @@ export default function CategoriesClient() {
     }
   };
 
+  const categoryChips = categories.length > 0
+    ? categories.slice(0, 8).map((category) => ({
+        label: category.name || 'Categoria',
+        href: category.seo_url ? `/categories/${category.seo_url}` : `/categories/${category.id}`,
+        id: category.id
+      }))
+    : [
+        { label: 'Instalacao', href: '/categories', id: 1 },
+        { label: 'Equipamentos', href: '/categories', id: 2 },
+        { label: 'Projetos', href: '/categories', id: 3 },
+        { label: 'Manutencao', href: '/categories', id: 4 },
+        { label: 'Financiamento', href: '/categories', id: 5 }
+      ];
+
+  const quickActions = [
+    { label: 'Empresas', href: '/companies', icon: Home, styles: 'bg-yellow-100 text-yellow-700' },
+    { label: 'Produtos', href: '/products', icon: Grid, styles: 'bg-green-100 text-green-700' },
+    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-orange-100 text-orange-700' },
+    { label: 'Favoritos', href: '/profile?tab=favorites', icon: Heart, styles: 'bg-blue-100 text-blue-700' },
+    { label: 'Blog', href: '/blog', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
+  ];
+
   return (
     <>
       <div className="bg-gray-100 min-h-screen">
+        <div className="md:hidden">
+          <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
+            <div className="px-4 pt-3 pb-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-9 w-9 border border-white/70 bg-white">
+                  <AvatarFallback className="bg-white text-[11px] font-semibold text-primary">AS</AvatarFallback>
+                </Avatar>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <Input
+                    type="search"
+                    placeholder="Buscar categorias..."
+                    aria-label="Buscar categorias"
+                    value={filters.searchTerm}
+                    onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                    className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary"
+                  aria-label="Notificacoes (2 novas)"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                    2
+                  </span>
+                </button>
+              </div>
+              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary-foreground/90">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="truncate">Enviar para {locationLabel}</span>
+              </div>
+            </div>
+            <div className="border-t border-white/20 px-4 pb-2">
+              <div className="flex items-center gap-2 overflow-x-auto py-2">
+                <button
+                  type="button"
+                  onClick={() => handleFilterChange('category', null)}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm ${
+                    !filters.category
+                      ? 'bg-white text-primary'
+                      : 'bg-white/90 text-primary'
+                  }`}
+                  aria-pressed={!filters.category}
+                >
+                  Tudo
+                </button>
+                {categoryChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => handleFilterChange('category', chip.id)}
+                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium shadow-sm ${
+                      filters.category === chip.id
+                        ? 'bg-white text-primary'
+                        : 'bg-white/90 text-primary'
+                    }`}
+                    aria-pressed={filters.category === chip.id}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#f7f7f7] px-4 pb-24 pt-4 space-y-4">
+            <section className="grid grid-cols-5 gap-3">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className="flex flex-col items-center gap-1 text-center"
+                    aria-label={action.label}
+                  >
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] font-medium text-gray-700">{action.label}</span>
+                  </Link>
+                );
+              })}
+            </section>
+
+            <section className="relative h-36 overflow-hidden rounded-2xl bg-white shadow-sm">
+              {mobileBanner ? (
+                <TestImage src={mobileBanner} alt="Banner promocional" className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20" />
+              )}
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+              <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800">
+                Destaque da semana
+              </div>
+              <div className="absolute bottom-2 right-2 flex gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</p>
+                <div className="mt-2 flex gap-2 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleFilterChange('state', null)}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                      !filters.state
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-700'
+                    }`}
+                    aria-pressed={!filters.state}
+                  >
+                    Todos
+                  </button>
+                  {mobileStates.map((state) => (
+                    <button
+                      key={state}
+                      type="button"
+                      onClick={() => handleFilterChange('state', state)}
+                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                        filters.state === state
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-700'
+                      }`}
+                      aria-pressed={filters.state === state}
+                    >
+                      {state}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filters.state && mobileCities.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Cidades</p>
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleFilterChange('city', null)}
+                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                        !filters.city
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-700'
+                    }`}
+                      aria-pressed={!filters.city}
+                    >
+                      Todas
+                    </button>
+                    {mobileCities.map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onClick={() => handleFilterChange('city', city)}
+                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                          filters.city === city
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 bg-white text-gray-700'
+                        }`}
+                        aria-pressed={filters.city === city}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Avaliacoes</p>
+                <div className="mt-2 flex gap-2 overflow-x-auto">
+                  {[5, 4, 3].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => handleFilterChange('rating', filters.rating === rating ? null : rating)}
+                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                        filters.rating === rating
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-700'
+                      }`}
+                      aria-pressed={filters.rating === rating}
+                    >
+                      {rating}+ estrelas
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleFilterChange('verified', !filters.verified)}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                      filters.verified
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-700'
+                    }`}
+                    aria-pressed={filters.verified}
+                  >
+                    Verificadas
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-gray-900">Empresas</h2>
+                <span className="text-xs text-gray-600">
+                  {loading ? '...' : filteredCompanies.length} empresas
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-40 rounded-xl bg-white" />
+                  ))}
+                </div>
+              ) : filteredCompanies.length === 0 ? (
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
+                    <Filter className="h-5 w-5 text-yellow-700" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900">Nenhuma empresa encontrada</h3>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Ajuste os filtros ou termos de busca.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredCompanies.map((company) => (
+                    <CompanyCard key={company.id} company={company} compact />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+
+          <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
+            <div className="mx-auto flex max-w-md items-center justify-around py-2">
+              <Link href="/" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
+                <Home className="h-5 w-5" />
+                Inicio
+              </Link>
+              <Link href="/categories" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
+                <Folder className="h-5 w-5" />
+                Categorias
+              </Link>
+              <Link
+                href="/profile?tab=favorites"
+                className="flex flex-col items-center gap-1 text-[10px] text-gray-600"
+              >
+                <Heart className="h-5 w-5" />
+                Favoritos
+              </Link>
+              <Link href="/profile" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
+                <User className="h-5 w-5" />
+                Perfil
+              </Link>
+            </div>
+          </nav>
+        </div>
+
+        <div className="hidden md:block">
         {bannersLoading || bannerGlobalLoading ? (
           // Altura do Skeleton ajustada para h-56 para corresponder ao BannerContainer
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -374,6 +692,7 @@ export default function CategoriesClient() {
               </ClientOnly>
             )}
           </div>
+        </div>
         </div>
       </div>
     </>
