@@ -23,6 +23,7 @@ jobs:
             git fetch --depth=2 origin main
             git checkout -f main
             git reset --hard origin/main
+            export COMPOSE_PROJECT_NAME=ab0
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
             CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD || true)
@@ -33,35 +34,35 @@ jobs:
               FRONT_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-front/|package.json|package-lock.json|yarn.lock|AB0-1-front/package\.json|AB0-1-front/package-lock\.json|AB0-1-front/yarn\.lock|AB0-1-front/next\.config\.js|AB0-1-front/tsconfig\.json)" || true)
               BACK_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-back/|Gemfile|Gemfile\.lock|config\.ru|Rakefile)" || true)
             fi
-            REMOVE_FRONT=$(docker ps -aq --filter "name=ab0-frontend" --filter "name=_ab0-frontend")
-            REMOVE_BACK=$(docker ps -aq --filter "name=ab0-backend" --filter "name=_ab0-backend")
+            REMOVE_FRONT=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '/ab0-frontend/ {print $1}')
+            REMOVE_BACK=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '/ab0-backend/ {print $1}')
             if [ -n "$FRONT_CHANGED" ] && [ -n "$BACK_CHANGED" ]; then
               [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
               [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose up -d --build frontend backend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend backend
               else
-                docker-compose up -d --build frontend backend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend backend
               fi
             elif [ -n "$FRONT_CHANGED" ]; then
               [ -n "$REMOVE_FRONT" ] && docker rm -f $REMOVE_FRONT || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose up -d --build frontend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend
               else
-                docker-compose up -d --build frontend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build frontend
               fi
             elif [ -n "$BACK_CHANGED" ]; then
               [ -n "$REMOVE_BACK" ] && docker rm -f $REMOVE_BACK || true
               if docker compose version >/dev/null 2>&1; then
-                docker compose up -d --build backend
+                docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build backend
               else
-                docker-compose up -d --build backend
+                docker-compose -p "$COMPOSE_PROJECT_NAME" up -d --build backend
               fi
             else
               echo "Nenhuma mudanca relevante para build detectada."
             fi
             if docker compose version >/dev/null 2>&1; then
-              docker compose up -d
+              docker compose -p "$COMPOSE_PROJECT_NAME" up -d
             else
-              docker-compose up -d
+              docker-compose -p "$COMPOSE_PROJECT_NAME" up -d
             fi
