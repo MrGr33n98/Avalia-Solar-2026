@@ -1,4 +1,4 @@
-name: Deploy to VM
+﻿name: Deploy to VM
 
 on:
   push:
@@ -25,19 +25,19 @@ jobs:
             echo "--- 1. Navegando para a pasta do projeto ---"
             cd ~/Avalia-Solar-2026
 
-            echo "--- 2. Atualizando código fonte (Git) ---"
+            echo "--- 2. Atualizando codigo fonte (Git) ---"
             git config --global --add safe.directory ~/Avalia-Solar-2026
             git fetch origin main
             git reset --hard origin/main
 
-            echo "--- 3. Carregando Chaves de Segurança ---"
-            # 👇 COMANDO NOVO: Força o carregamento das variáveis do .env para o Shell
+            echo "--- 3. Carregando Chaves de Seguranca ---"
+            # COMANDO NOVO: Forca o carregamento das variaveis do .env para o Shell
             # Isso garante que a RAILS_MASTER_KEY seja passada para o Docker
             if [ -f .env ]; then
               export $(grep -v '^#' .env | xargs)
-              echo "Variáveis de ambiente carregadas do arquivo .env"
+              echo "Variaveis de ambiente carregadas do arquivo .env"
             else
-              echo "ERRO CRÍTICO: Arquivo .env não encontrado!"
+              echo "ERRO CRITICO: Arquivo .env nao encontrado!"
               exit 1
             fi
 
@@ -49,10 +49,10 @@ jobs:
             docker-compose down --remove-orphans || true
 
             echo "--- 4.2 Subindo novos containers ---"
-            # Agora a variável ${RAILS_MASTER_KEY} estará preenchida
+            # Agora a variavel ${RAILS_MASTER_KEY} estara preenchida
             docker-compose up -d --build
 
             echo "--- 5. Limpeza de imagens ---"
             docker image prune -f
 
-            echo "✅ Deploy finalizado com sucesso!"
+            echo "Deploy finalizado com sucesso!"
