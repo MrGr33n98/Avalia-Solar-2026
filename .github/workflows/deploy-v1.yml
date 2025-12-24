@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Transforma o nome do repo em minúsculo para evitar erro no Docker Registry
       - name: Lowercase Repository Name
         id: repo_name
         run: |
@@ -30,9 +31,10 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          # O contexto '.' na raiz permite encontrar o entrypoint.sh e o Dockerfile.backend
-          context: .
-          file: ./Dockerfile.backend
+          # Alterado para a subpasta onde o código Rails reside para encontrar 'config/application.rb'
+          context: ./AB0-1-back
+          # Caminho do arquivo Dockerfile relativo à raiz do repositório
+          file: ./AB0-1-back/Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           build-args: |
@@ -42,10 +44,10 @@ jobs:
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          # Alterado para a subpasta onde o código Next.js reside
+          # Contexto na subpasta onde o código Next.js reside
           context: ./AB0-1-front
-          # Caminho do Dockerfile dentro da subpasta ou na raiz (ajustado conforme sua estrutura)
-          file: ./Dockerfile.frontend
+          # Caminho do Dockerfile relativo à raiz do repositório
+          file: ./AB0-1-front/Dockerfile.frontend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
 
@@ -64,11 +66,19 @@ jobs:
             set -e
             cd ~/Avalia-Solar-2026
             
+            # Login automático no Registro do GitHub
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # 1. Baixa as imagens novas
             docker-compose pull
+
+            # 2. Garante a remoção de containers antigos para evitar conflitos
             docker-compose down || true
+
+            # 3. Sobe o sistema forçando a atualização total e removendo órfãos
             docker-compose up -d --force-recreate --remove-orphans
+
+            # 4. Limpeza de imagens antigas para economizar espaço em disco
             docker image prune -f
             
             echo "✅ Deploy da Avalia Solar finalizado com sucesso!"
