@@ -29,9 +29,8 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: .
-          # Mantemos o backend na raiz ou ajuste para a pasta dele se necessário
-          file: ./Dockerfile.backend
+          context: ./AB0-1-back
+          file: ./AB0-1-back/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           build-args: |
@@ -40,7 +39,6 @@ jobs:
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          # 👇 AJUSTE DE PASTA DO FRONTEND
           context: ./AB0-1-front
           file: ./AB0-1-front/Dockerfile.frontend
           push: true
@@ -65,4 +63,6 @@ jobs:
             docker-compose down || true
             docker-compose up -d --force-recreate --remove-orphans
             docker image prune -f
-            echo "✅ Deploy da Avalia Solar finalizado com sucesso!"
+            echo "Deploy da Avalia Solar finalizado com sucesso!"
+
+
