@@ -30,8 +30,9 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          # Contexto é a raiz para o Docker enxergar o entrypoint.sh e a pasta AB0-1-back
-          context: .
+          # 👇 O Docker entra na pasta do Rails para compilar
+          context: ./AB0-1-back
+          # 👇 Ele usa o Dockerfile que está na raiz (ou dentro da pasta se você moveu)
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
@@ -42,8 +43,7 @@ jobs:
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          # Contexto é a raiz para o Docker enxergar a pasta AB0-1-front
-          context: .
+          context: ./AB0-1-front
           file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
@@ -62,15 +62,9 @@ jobs:
           script: |
             set -e
             cd ~/Avalia-Solar-2026
-            
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # Atualiza as imagens e reinicia o ambiente
             docker-compose pull
             docker-compose down || true
             docker-compose up -d --force-recreate --remove-orphans
-            
-            # Limpa imagens antigas para poupar espaço
             docker image prune -f
-            
-            echo "✅ Deploy da Avalia Solar finalizado com sucesso!"
+            echo "✅ Deploy finalizado com sucesso!"
