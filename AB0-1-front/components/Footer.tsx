@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Brand & Contact Info */}
           <div className="flex flex-col items-start space-y-4">
             <Link href="/" className="font-bold text-2xl mb-2 hover:text-orange-400 transition-colors">
-              Compare Solar
+              Avalia Solar
             </Link>
             <p className="text-gray-300 text-sm leading-relaxed max-w-xs">
               O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
@@ -45,7 +45,7 @@ export default function Footer() {
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2 text-gray-300">
                 <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">contato@comparesolar.com.br</span>
+                <span className="text-sm">contato@avaliasolar.com.br</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-300">
                 <Phone className="h-4 w-4 text-gray-400" />
@@ -114,7 +114,7 @@ export default function Footer() {
         <div className="mt-16 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
             <div className="text-gray-400 text-sm">
-              © 2025 Compare Solar. Todos os direitos reservados.
+              © 2025 Avalia Solar. Todos os direitos reservados.
             </div>
             <div className="flex space-x-5">
               {socialLinks.map((social) => (

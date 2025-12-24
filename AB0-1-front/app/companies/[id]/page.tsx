@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!companyId) {
       console.error('Invalid company ID:', params.id);
       return {
-        title: 'Empresa não encontrada | Compare Solar',
+        title: 'Empresa não encontrada | Avalia Solar',
       };
     }
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!company) {
       console.log('Company not found for ID:', companyId);
       return {
-        title: 'Empresa não encontrada | Compare Solar',
+        title: 'Empresa não encontrada | Avalia Solar',
       };
     }
 
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
     return {
-      title: `${company.name} | Compare Solar`,
+      title: `${company.name} | Avalia Solar`,
       description: `${company.description || ''} - Localizada em ${company.address || 'Endereço não informado'}. Telefone: ${company.phone || 'N/A'}`,
       openGraph: {
         title: `${company.name} - Empresa de Energia Solar`,
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${company.name} | Compare Solar`,
+        title: `${company.name} | Avalia Solar`,
         description: company.description || '',
       },
       alternates: {
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   } catch (error) {
     console.error('Erro no generateMetadata:', error);
     return {
-      title: 'Empresa não encontrada | Compare Solar',
+      title: 'Empresa não encontrada | Avalia Solar',
     };
   }
 }

@@ -173,7 +173,7 @@ export function getMockData(type: string) {
         id: 1,
         name: "Painéis Solares",
         seo_url: "paineis-solares",
-        seo_title: "Painéis Solares | Compare Solar",
+        seo_title: "Painéis Solares | Avalia Solar",
         short_description: "Painéis solares de alta eficiência",
         description: "Encontre os melhores painéis solares para sua instalação",
         parent_id: null,
@@ -187,7 +187,7 @@ export function getMockData(type: string) {
         id: 2,
         name: "Inversores",
         seo_url: "inversores",
-        seo_title: "Inversores | Compare Solar",
+        seo_title: "Inversores | Avalia Solar",
         short_description: "Inversores para sistemas fotovoltaicos",
         description: "Compare os melhores inversores do mercado",
         parent_id: null,
@@ -208,3 +208,4 @@ export function runApiCheck() {
   console.log('Running API endpoint check...');
   findWorkingApiConfig();
 }
+

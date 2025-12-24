@@ -13,13 +13,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Compare Solar - Marketplace de Energia Solar',
+  title: 'Avalia Solar - Marketplace de Energia Solar',
   description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.',
   keywords: 'energia solar, painéis solares, instalação solar, empresas solares, comparação, marketplace, energia renovável, sustentabilidade, economia de energia',
-  authors: [{ name: 'Compare Solar' }],
-  creator: 'Compare Solar',
-  publisher: 'Compare Solar',
-  metadataBase: new URL('https://www.comparesolar.com.br'),
+  authors: [{ name: 'Avalia Solar' }],
+  creator: 'Avalia Solar',
+  publisher: 'Avalia Solar',
+  metadataBase: new URL('https://www.avaliasolar.com.br'),
   alternates: {
     canonical: '/',
     languages: {
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_BR',
     url: 'https://www.avaliasolar.com.br',
-    siteName: 'Compare Solar',
-    title: 'Compare Solar - Marketplace de Energia Solar',
+    siteName: 'Avalia Solar',
+    title: 'Avalia Solar - Marketplace de Energia Solar',
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
     images: [
       {
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     title: 'Avalia - Marketplace de Energia Solar',
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
     images: ['/images/category-placeholder.jpg'], // ✅ mesma imagem no Twitter
-    creator: '@comparesolar',
+    creator: '@avaliasolar',
   },
   robots: {
     index: true,
@@ -78,3 +78,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -13,13 +13,13 @@ describe('Footer', () => {
   it('renders the company name', () => {
     render(<Footer />);
     
-    expect(screen.getByText('Compare Solar')).toBeInTheDocument();
+    expect(screen.getByText('Avalia Solar')).toBeInTheDocument();
   });
 
   it('renders company contact information', () => {
     render(<Footer />);
     
-    expect(screen.getByText('contato@comparesolar.com.br')).toBeInTheDocument();
+    expect(screen.getByText('contato@avaliasolar.com.br')).toBeInTheDocument();
     expect(screen.getByText('(65) 99242-3309')).toBeInTheDocument();
     expect(screen.getByText('Florianópolis, SC')).toBeInTheDocument();
   });
@@ -63,12 +63,12 @@ describe('Footer', () => {
   it('renders copyright information', () => {
     render(<Footer />);
     
-    expect(screen.getByText(/© 2025 Compare Solar. Todos os direitos reservados./)).toBeInTheDocument();
+    expect(screen.getByText(/© 2025 Avalia Solar. Todos os direitos reservados./)).toBeInTheDocument();
   });
 
   it('renders the home link', () => {
     render(<Footer />);
     
-    expect(screen.getByRole('link', { name: 'Compare Solar' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Avalia Solar' })).toHaveAttribute('href', '/');
   });
 });

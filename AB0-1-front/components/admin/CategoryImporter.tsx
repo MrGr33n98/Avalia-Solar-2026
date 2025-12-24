@@ -97,9 +97,10 @@ export default function CategoryImporter() {
         <h4 className="text-sm font-medium mb-2">CSV Format:</h4>
         <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto">
           name,seo_url,seo_title,short_description,description,parent_id,kind,status,featured{'\n'}
-          Solar Panels,solar-panels,Solar Panels | Compare Solar,High efficiency panels,Detailed description,,product,active,true
+          Solar Panels,solar-panels,Solar Panels | Avalia Solar,High efficiency panels,Detailed description,,product,active,true
         </pre>
       </div>
     </div>
   );
 }
+
