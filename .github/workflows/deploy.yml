@@ -1,4 +1,4 @@
-﻿name: Deploy to VM
+name: Deploy to VM
 
 on:
   push:
@@ -25,34 +25,41 @@ jobs:
             echo "--- 1. Navegando para a pasta do projeto ---"
             cd ~/Avalia-Solar-2026
 
-            echo "--- 2. Atualizando codigo fonte (Git) ---"
+            echo "--- 2. Atualizando código fonte (Git) ---"
             git config --global --add safe.directory ~/Avalia-Solar-2026
             git fetch origin main
             git reset --hard origin/main
 
-            echo "--- 3. Carregando Chaves de Seguranca ---"
-            # COMANDO NOVO: Forca o carregamento das variaveis do .env para o Shell
-            # Isso garante que a RAILS_MASTER_KEY seja passada para o Docker
+            echo "--- 3. Carregando Variáveis ---"
             if [ -f .env ]; then
               export $(grep -v '^#' .env | xargs)
-              echo "Variaveis de ambiente carregadas do arquivo .env"
             else
-              echo "ERRO CRITICO: Arquivo .env nao encontrado!"
+              echo "ERRO: .env não encontrado"
               exit 1
             fi
 
-            echo "--- 4. Deploy com Docker ---"
+            echo "--- 4. Preparando Docker ---"
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
             
-            echo "--- 4.1 Derrubando containers antigos ---"
+            # Derruba containers antigos para liberar RAM imediatamente
+            echo "--- 4.1 Parando serviços antigos ---"
             docker-compose down --remove-orphans || true
+            
+            # Limpeza preventiva
+            docker system prune -a -f --volumes || true
 
-            echo "--- 4.2 Subindo novos containers ---"
-            # Agora a variavel ${RAILS_MASTER_KEY} estara preenchida
-            docker-compose up -d --build
+            # ESTRATÉGIA DE SOBREVIVÊNCIA DE RAM:
+            # Constrói um de cada vez para não explodir a memória do servidor
+            
+            echo "--- 4.2 Construindo Backend (Rails) ---"
+            # Passamos a chave explicitamente para garantir
+            docker-compose build --no-cache --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY} backend
+            
+            echo "--- 4.3 Construindo Frontend (Next.js) ---"
+            docker-compose build --no-cache frontend
 
-            echo "--- 5. Limpeza de imagens ---"
-            docker image prune -f
+            echo "--- 4.4 Iniciando Serviços ---"
+            docker-compose up -d
 
-            echo "Deploy finalizado com sucesso!"
+            echo "✅ Deploy finalizado com sucesso!"

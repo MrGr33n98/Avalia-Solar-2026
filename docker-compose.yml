@@ -11,7 +11,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-    # Não expõe para a internet, apenas local
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -29,7 +28,6 @@ services:
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
-    # Não expõe para a internet
     ports:
       - "127.0.0.1:6379:6379"
     networks:
@@ -44,8 +42,6 @@ services:
     build:
       context: ./AB0-1-back
       dockerfile: Dockerfile
-      # 👇 AQUI ESTÁ A CORREÇÃO MÁGICA
-      # Passamos a chave como argumento para o Build
       args:
         RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     container_name: ab0-backend
@@ -58,24 +54,19 @@ services:
     environment:
       RAILS_ENV: production
       REDIS_URL: redis://redis:6379/0
-
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-
       POSTGRES_HOST: db
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-
       CORS_ORIGINS: "https://avaliasolar.com.br,https://www.avaliasolar.com.br"
       ADDITIONAL_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
-
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
-
     ports:
       - "3001:3001"
     networks:
@@ -83,9 +74,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+      timeout: 20s        # Aumentei de 10s para 20s
+      retries: 10         # Aumentei de 5 para 10
+      start_period: 120s  # Aumentei de 40s para 120s (2 min para iniciar)
 
   frontend:
     build:
@@ -110,9 +101,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000 || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+      timeout: 20s        # Aumentei de 10s para 20s
+      retries: 10         # Aumentei de 5 para 10
+      start_period: 180s  # Aumentei de 40s para 180s (3 min para iniciar)
 
 volumes:
   db_data:
