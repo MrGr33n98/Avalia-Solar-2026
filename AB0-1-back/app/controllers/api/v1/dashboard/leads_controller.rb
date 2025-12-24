@@ -1,7 +1,7 @@
 module Api
   module V1
     module Dashboard
-    class LeadsController < BaseController
+      class LeadsController < BaseController
       def index
         leads = current_company.leads.order(created_at: :desc)
         paginated = paginate(leads)
@@ -27,6 +27,7 @@ module Api
           location: lead.location,
           created_at: lead.created_at
         }
+      end
       end
     end
   end

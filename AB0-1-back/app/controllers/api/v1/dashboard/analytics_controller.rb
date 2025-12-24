@@ -1,7 +1,7 @@
 module Api
   module V1
     module Dashboard
-    class AnalyticsController < BaseController
+      class AnalyticsController < BaseController
       def index
         return unless authorize_feature!('analytics')
 
@@ -27,6 +27,7 @@ module Api
             }
           end
         }
+      end
       end
     end
   end

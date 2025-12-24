@@ -154,14 +154,14 @@ Rails.application.routes.draw do
 
       # Content Feed
       get 'content_feed', to: 'content_feed#index'
-    end
 
-    namespace :dashboard do
-      get 'me', to: 'me#show'
-      get 'analytics', to: 'analytics#index'
-      resources :leads, only: [:index]
-      resources :products, only: [:index]
-      resource :company, only: [:update]
+      namespace :dashboard do
+        get 'me', to: 'me#show'
+        get 'analytics', to: 'analytics#index'
+        resources :leads, only: [:index]
+        resources :products, only: [:index]
+        resource :company, only: [:update]
+      end
     end
   end
 

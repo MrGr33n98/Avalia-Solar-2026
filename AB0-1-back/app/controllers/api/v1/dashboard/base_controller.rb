@@ -1,7 +1,7 @@
 module Api
   module V1
     module Dashboard
-    class BaseController < ActionController::API
+      class BaseController < ActionController::API
       include Paginatable
 
       before_action :authenticate_user!
@@ -50,6 +50,7 @@ module Api
 
         render json: { error: 'plan_upgrade_required', feature: feature_name }, status: :forbidden
         false
+      end
       end
     end
   end

@@ -1,7 +1,7 @@
 module Api
   module V1
     module Dashboard
-    class ProductsController < BaseController
+      class ProductsController < BaseController
       def index
         products = current_company.products.order(created_at: :desc)
         paginated = paginate(products)
@@ -29,6 +29,7 @@ module Api
           category_ids: product.category_ids,
           created_at: product.created_at
         }
+      end
       end
     end
   end

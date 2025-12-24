@@ -1,7 +1,7 @@
 module Api
   module V1
     module Dashboard
-    class MeController < BaseController
+      class MeController < BaseController
       def show
         render json: {
           user: user_payload,
@@ -19,6 +19,7 @@ module Api
         current_user.as_json(
           only: %i[id email name role company_id status approved_by_admin created_at]
         )
+      end
       end
     end
   end
