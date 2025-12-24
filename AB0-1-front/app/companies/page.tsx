@@ -424,158 +424,225 @@ export default function CompaniesPage() {
       </div>
 
       <div className="hidden md:block">
-        {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary to-accent py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-primary-foreground text-center"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Encontre a Melhor Empresa Solar
-            </h1>
-            <p className="text-xl mb-8 max-w-3xl mx-auto">
-              Compare empresas verificadas, veja avaliações reais e solicite
-              orçamentos gratuitos
-            </p>
-            <div className="max-w-2xl mx-auto">
-              <Input
-                type="search"
-                placeholder="Buscar empresas por nome ou descrição..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="h-12 text-base bg-card text-foreground border-input placeholder:text-muted-foreground focus-visible:ring-ring"
-              />
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Filters and Controls */}
-      <section className="py-8 bg-card border-b border-border sticky top-16 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
-              <LocationFilter
-                onStateChange={setStateFilter}
-                onCityChange={setCityFilter}
-                onClear={() => {
-                  setStateFilter('all');
-                  setCityFilter('');
-                }}
-                initialState={stateFilter}
-                initialCity={cityFilter}
-              />
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-48 bg-background text-foreground border-input focus:ring-ring">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover text-popover-foreground border-border">
-                  <SelectItem value="name">Nome A-Z</SelectItem>
-                  <SelectItem value="location">Estado</SelectItem>
-                  <SelectItem value="rating">Melhor avaliada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Results count and view mode */}
-            <div className="flex items-center space-x-4 self-end lg:self-auto">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {filteredCompanies.length}{' '}
-                {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
-              </span>
-
-              <div className="flex bg-muted rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-background shadow-sm text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-background shadow-sm text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
+        <header className="sticky top-16 z-40 bg-[#ffe600] shadow-sm">
+          <div className="mx-auto max-w-7xl px-6 pt-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-10 w-10 border border-white/80 bg-white">
+                <AvatarFallback className="bg-white text-xs font-semibold text-primary">AS</AvatarFallback>
+              </Avatar>
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="Buscar empresas no Avalia Solar..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="h-11 rounded-full border-none bg-white pl-11 pr-4 text-sm text-gray-900 shadow-sm focus-visible:ring-2 focus-visible:ring-black/20"
+                />
               </div>
+              <button
+                type="button"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/85 text-primary"
+                aria-label="Notificacoes (2 novas)"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                  2
+                </span>
+              </button>
+            </div>
+            <div className="mt-3 flex items-center gap-2 pb-3 text-xs font-semibold text-gray-800">
+              <MapPin className="h-4 w-4" />
+              <span className="truncate">Enviar para {locationLabel}</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Companies Grid */}
-      <section className="py-12 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {loading ? (
-            <div
-              className={`grid gap-6 ${
-                viewMode === 'grid'
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                  : 'grid-cols-1'
-              }`}
-            >
-              {[...Array(9)].map((_, i) => (
-                <Skeleton key={i} className="h-80 rounded-xl bg-muted" />
-              ))}
-            </div>
-          ) : filteredCompanies.length > 0 ? (
-            <motion.div
-              className={`grid gap-6 ${
-                viewMode === 'grid'
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                  : 'grid-cols-1 max-w-4xl mx-auto'
-              }`}
-              layout
-            >
-              {filteredCompanies.map((company, index) => (
-                <motion.div
-                  key={company.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  layout
-                >
-                  <CompanyCard company={company} />
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <div className="text-center py-16 bg-card rounded-xl p-8 border border-border">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Filter className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Nenhuma empresa encontrada
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Tente ajustar os filtros ou termos de busca para encontrar
-                empresas.
-              </p>
-              <Button
-                onClick={handleClearFilters}
-                variant="outline"
-                className="text-primary border-border hover:bg-muted"
+          <div className="border-t border-black/10">
+            <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-6 py-3">
+              <Link
+                href="/categories"
+                className="whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-900 shadow-sm"
               >
-                Limpar Filtros
-              </Button>
+                Tudo
+              </Link>
+              {categoryChips.map((chip) => (
+                <Link
+                  key={chip.label}
+                  href={chip.href}
+                  className="whitespace-nowrap rounded-full bg-white/90 px-4 py-1.5 text-xs font-medium text-gray-900 shadow-sm"
+                >
+                  {chip.label}
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
-      </div>
+          </div>
+        </header>
+
+        <main className="bg-[#f5f6f8] pb-16">
+          <div className="mx-auto max-w-7xl px-6 py-6">
+            <section className="mb-6 grid grid-cols-6 gap-4">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5"
+                  >
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700">{action.label}</span>
+                  </Link>
+                );
+              })}
+              <div className="col-span-2 row-span-2 overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div className="relative h-full">
+                  <TestImage src="/images/banner1.png" alt="Banner promocional" className="object-cover" />
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+                  <div className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-gray-800">
+                    Destaque da semana
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="grid grid-cols-[260px_1fr] gap-6">
+              <aside className="space-y-4">
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Localizacao</p>
+                  <div className="mt-3 space-y-3">
+                    <LocationFilter
+                      onStateChange={setStateFilter}
+                      onCityChange={setCityFilter}
+                      onClear={() => {
+                        setStateFilter('all');
+                        setCityFilter('');
+                      }}
+                      initialState={stateFilter}
+                      initialCity={cityFilter}
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Ordenar</p>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="mt-3 w-full border-gray-200 bg-white text-sm">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="name">Nome A-Z</SelectItem>
+                      <SelectItem value="location">Estado</SelectItem>
+                      <SelectItem value="rating">Melhor avaliada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Destaques</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {ratingChips.map((chip) => (
+                      <button
+                        key={chip.value}
+                        type="button"
+                        onClick={() => setSortBy(chip.value)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                          sortBy === chip.value
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 bg-white text-gray-700'
+                        }`}
+                        aria-pressed={sortBy === chip.value}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </aside>
+
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Empresas recomendadas</h2>
+                    <p className="text-xs text-gray-600">
+                      {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full bg-white p-1 shadow-sm">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`rounded-full p-2 ${viewMode === 'grid' ? 'bg-gray-900 text-white' : 'text-gray-500'}`}
+                      aria-label="Visualizacao em grade"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`rounded-full p-2 ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-500'}`}
+                      aria-label="Visualizacao em lista"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div
+                    className={`grid gap-4 ${
+                      viewMode === 'grid'
+                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                        : 'grid-cols-1'
+                    }`}
+                  >
+                    {[...Array(9)].map((_, i) => (
+                      <Skeleton key={i} className="h-72 rounded-2xl bg-white" />
+                    ))}
+                  </div>
+                ) : filteredCompanies.length > 0 ? (
+                  <motion.div
+                    className={`grid gap-4 ${
+                      viewMode === 'grid'
+                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                        : 'grid-cols-1'
+                    }`}
+                    layout
+                  >
+                    {filteredCompanies.map((company, index) => (
+                      <motion.div
+                        key={company.id}
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.04 }}
+                        layout
+                      >
+                        <CompanyCard company={company} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
+                      <Filter className="h-6 w-6 text-yellow-700" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900">Nenhuma empresa encontrada</h3>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Ajuste os filtros ou termos de busca.
+                    </p>
+                    <Button
+                      onClick={handleClearFilters}
+                      variant="outline"
+                      className="mt-4 border-gray-200 text-gray-700"
+                    >
+                      Limpar filtros
+                    </Button>
+                  </div>
+                )}
+              </section>
+            </section>
+          </div>
+        </main>
+      </div>      </div>
     </div>
   );
 }
+
