@@ -1,13 +1,47 @@
-name: Deploy to VM
+name: Enterprise Deploy - Avalia Solar
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend (Rails)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.backend
+          push: true
+          # Note: Substitua 'seu-usuario' pelo seu login do GitHub ou use a variável automática
+          tags: ghcr.io/${{ github.repository_owner }}/avalia-backend:latest
+          build-args: |
+            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+
+      - name: Build and Push Frontend (Next.js)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/avalia-frontend:latest
+
   deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Deploy over SSH
@@ -17,49 +51,19 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          timeout: 60m
-          command_timeout: 60m
           script: |
             set -e
-
-            echo "--- 1. Navegando para a pasta do projeto ---"
             cd ~/Avalia-Solar-2026
-
-            echo "--- 2. Atualizando código fonte (Git) ---"
-            git config --global --add safe.directory ~/Avalia-Solar-2026
-            git fetch origin main
-            git reset --hard origin/main
-
-            echo "--- 3. Carregando Variáveis ---"
-            if [ -f .env ]; then
-              export $(grep -v '^#' .env | xargs)
-            else
-              echo "ERRO: .env não encontrado"
-              exit 1
-            fi
-
-            echo "--- 4. Preparando Docker ---"
-            export DOCKER_BUILDKIT=1
-            export COMPOSE_DOCKER_CLI_BUILD=1
             
-            # Derruba containers antigos para liberar RAM imediatamente
-            echo "--- 4.1 Parando serviços antigos ---"
-            docker-compose down --remove-orphans || true
-            
-            # Limpeza preventiva
-            docker system prune -a -f --volumes || true
+            # Login para baixar as imagens privadas
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # ESTRATÉGIA DE SOBREVIVÊNCIA DE RAM:
-            # Constrói um de cada vez para não explodir a memória do servidor
-            
-            echo "--- 4.2 Construindo Backend (Rails) ---"
-            # Passamos a chave explicitamente para garantir
-            docker-compose build --no-cache --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY} backend
-            
-            echo "--- 4.3 Construindo Frontend (Next.js) ---"
-            docker-compose build --no-cache frontend
+            echo "--- Atualizando Imagens ---"
+            docker-compose pull
 
-            echo "--- 4.4 Iniciando Serviços ---"
-            docker-compose up -d
+            echo "--- Reiniciando Containers (Zero Downtime) ---"
+            docker-compose up -d --remove-orphans
 
+            echo "--- Limpeza de Cache ---"
+            docker image prune -f
             echo "✅ Deploy finalizado com sucesso!"
