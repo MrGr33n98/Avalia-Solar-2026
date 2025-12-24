@@ -2,69 +2,40 @@ require "active_support/core_ext/integer/time"
 require "ipaddr"
 
 Rails.application.configure do
-  # Settings specified here will take precedence over those in config/application.rb.
-
-  # Code is not reloaded between requests.
+  # Configurações básicas de performance
   config.cache_classes = true
-
-  # Eager load code on boot. This eager loads most of Rails and
-  # your application in memory, allowing both threaded web servers
-  # and those relying on copy on write to perform better.
-  # Rake tasks automatically ignore this option for performance.
   config.eager_load = true
-
-  # Full error reports are disabled and caching is turned on.
-  config.consider_all_requests_local       = false
+  config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
 
-  # Ensures that a master key has been made available in either ENV["RAILS_MASTER_KEY"]
-  # or in config/master.key. This key is used to decrypt credentials (and other encrypted files).
-  # config.require_master_key = true
-
-  # Disable serving static files from the `/public` folder by default since
-  # Apache or NGINX already handles this.
+  # --- CORREÇÃO DE ASSETS (CSS/JS) ---
+  # Garante que o Rails sirva arquivos da pasta public/assets
   config.public_file_server.enabled = true
-  config.assets.compile = false
+  # Habilita compilação dinâmica caso a pré-compilação do Docker falhe
+  config.assets.compile = true 
   config.assets.digest = true
-  config.serve_static_files = true
 
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  # config.asset_host = "http://assets.example.com"
-
-  # Specifies the header that your server uses for sending files.
-  # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for Apache
-  # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
-
-  # Store uploaded files on the local file system (see config/storage.yml for options).
+  # Armazenamento e Host de API
   config.active_storage.service = :local
+  
+  # --- CONFIGURAÇÃO UNIFICADA DE URL ---
+  # Remove as definições duplicadas e conflitantes do final do arquivo original
+  app_host = ENV.fetch('APP_HOST', 'api.avaliasolar.com.br')
+  
+  Rails.application.routes.default_url_options = { host: app_host, protocol: 'https' }
+  config.active_storage.default_url_options = { host: app_host, protocol: 'https' }
+  config.action_mailer.default_url_options = { host: app_host, protocol: 'https' }
 
-  # Configure Active Storage URL generation for production
-  host = ENV.fetch('APP_HOST', 'api.avaliasolar.com.br')
-  Rails.application.routes.default_url_options = {
-    host: host,
-    protocol: 'https'
-  }
-  config.active_storage.default_url_options = {
-    host: host,
-    protocol: 'https'
-  }
-
-  # Mount Action Cable outside main process or domain.
-  # config.action_cable.mount_path = nil
-  # config.action_cable.url = "wss://example.com/cable"
-  # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
-
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+  # --- SEGURANÇA E SSL ---
+  # Como o Nginx Proxy Manager cuida do SSL, informamos ao Rails para assumir HTTPS
   config.assume_ssl = true
   config.force_ssl = true
 
-  # Include generic and useful information about system operation, but avoid logging too much
-  # information to avoid inadvertent exposure of personally identifiable information (PII).
+  # Logs e Monitoramento
   config.log_level = :info
-
-  # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
 
+  # Permite que o Nginx repasse o tráfego para o Docker com segurança
   config.action_dispatch.trusted_proxies = [
     IPAddr.new("127.0.0.1"),
     IPAddr.new("10.0.0.0/8"),
@@ -73,93 +44,35 @@ Rails.application.configure do
   ]
   config.action_dispatch.ip_spoofing_check = false
 
-  # Use a different cache store in production.
-  # TASK-014: Use Redis for caching in production
-  # Note: 'namespace' option removed for Sidekiq 7+ compatibility
-  # Use key_prefix instead if you need separation
-  
-  # Use Redis if available, fallback to memory store
+  # --- CONFIGURAÇÃO DE CACHE (REDIS) ---
   if ENV.fetch('REDIS_ENABLED', 'true') == 'true'
     config.cache_store = :redis_cache_store, {
-      url: ENV.fetch('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+      url: ENV.fetch('REDIS_URL', 'redis://avalia_redis_prod:6379/0'),
       expires_in: 1.hour,
-      reconnect_attempts: 5,
-      connect_timeout: 5,
-      read_timeout: 2,
-      write_timeout: 2,
-      error_handler: ->(method:, returning:, exception:) {
-        Rails.logger.error("Redis cache error: #{exception.class} #{exception.message}") if defined?(Rails.logger)
-      }
+      reconnect_attempts: 5
     }
   else
-    # Note: Using memory cache store because Redis is disabled
     config.cache_store = :memory_store
   end
 
-  # Use a real queuing backend for Active Job (and separate queues per environment).
-  redis_enabled = ENV.fetch('REDIS_ENABLED', 'true') == 'true'
-  if redis_enabled
-    config.active_job.queue_adapter = :sidekiq
-    config.active_job.queue_name_prefix = "rails_blog_demo_production"
-  else
-    config.active_job.queue_adapter = :async
-  end
+  # Fila de processamento (Sidekiq)
+  config.active_job.queue_adapter = ENV.fetch('REDIS_ENABLED', 'true') == 'true' ? :sidekiq : :async
 
-  config.action_mailer.perform_caching = false
-
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
-  # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
-  # the I18n.default_locale when a translation cannot be found).
+  # Localização e Fallbacks
   config.i18n.fallbacks = true
-
-  # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Use default logging formatter so that PID and timestamp are not suppressed.
-  config.log_formatter = ::Logger::Formatter.new
-
-  # Use a different logger for distributed setups.
-  # require "syslog/logger"
-  # config.logger = ActiveSupport::TaggedLogging.new(Syslog::Logger.new "app-name")
-
+  # Log para STDOUT para o Docker capturar corretamente
   if ENV["RAILS_LOG_TO_STDOUT"].present?
     logger           = ActiveSupport::Logger.new(STDOUT)
-    logger.formatter = config.log_formatter
+    logger.formatter = ::Logger::Formatter.new
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
   end
 
-  # Do not dump schema after migrations.
+  # Não faz dump do schema após migrations em produção
   config.active_record.dump_schema_after_migration = false
-  
-  # Configure host for URL generation (needed for Active Storage URLs)
-  Rails.application.routes.default_url_options = {
-    host: ENV['APP_HOST'] || 'api.avaliasolar.com.br',
-    protocol: 'https',
-    port: nil
-  }
 
-  # Configure Active Storage URL generation
-  config.active_storage.default_url_options = {
-    host: ENV['APP_HOST'] || 'api.avaliasolar.com.br',
-    protocol: 'https',
-    port: nil
-  }
-
-  # Allow all hosts in production for ActiveAdmin
-  config.hosts.clear
-
-  config.action_mailer.default_url_options = {
-    host: ENV['APP_HOST'] || 'api.avaliasolar.com.br',
-    protocol: 'https'
-  }
-  
-  # Configure Action Mailer host
-  config.action_mailer.default_url_options = {
-    host: ENV['APP_HOST'] || '64.225.59.107',
-    port: 3001,
-    protocol: 'http'
-  }
+  # --- LIBERAÇÃO DE HOSTS ---
+  # Impede o erro de "Blocked Host" ao acessar via api.avaliasolar.com.br
+  config.hosts.clear 
 end
