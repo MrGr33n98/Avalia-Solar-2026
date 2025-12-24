@@ -19,35 +19,36 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           timeout: 60m
           command_timeout: 60m
-          keepalive_interval: 30s
+          # REMOVIDO: keepalive_interval (causava erro)
           script: |
             set -e
 
             echo "--- 1. Navegando para a pasta do projeto ---"
             cd ~/Avalia-Solar-2026
 
-            echo "--- 2. Atualizando código fonte ---"
-            # Baixa as novidades
+            echo "--- 2. Atualizando código fonte (Git) ---"
+            # Garante permissões seguras no git
+            git config --global --add safe.directory ~/Avalia-Solar-2026
+            
+            # Atualiza o repositório
             git fetch origin main
-            # Força o servidor a ficar IDÊNTICO ao GitHub
             git reset --hard origin/main
 
-            echo "--- 3. Deploy Inteligente com Docker ---"
+            echo "--- 3. Deploy com Docker ---"
+            # Otimizações para o build
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
             
-            # Carrega variáveis do .env (Garante que a Master Key seja lida)
-            if [ -f .env ]; then
-              export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
-            fi
+            # O docker-compose vai ler automaticamente o arquivo .env da pasta
+            # para preencher as variáveis como RAILS_MASTER_KEY
+            
+            echo "--- 3.1 Derrubando containers antigos (safety check) ---"
+            docker-compose down --remove-orphans || true
 
-            # O comando mágico:
-            # --build: Reconstrói se houver mudanças (agora com a KEY correta!)
-            # -d: Roda em background
-            # --remove-orphans: Limpa containers velhos
-            docker-compose up -d --build --remove-orphans
+            echo "--- 3.2 Subindo novos containers ---"
+            docker-compose up -d --build
 
-            echo "--- 4. Limpeza ---"
+            echo "--- 4. Limpeza de imagens ---"
             docker image prune -f
 
             echo "✅ Deploy finalizado com sucesso!"
