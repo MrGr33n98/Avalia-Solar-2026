@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Transforma o nome do repo em minúsculo para evitar erro no Docker Registry
       - name: Lowercase Repository Name
         id: repo_name
         run: |
@@ -26,21 +27,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # --- BUILD DO BACKEND ---
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./AB0-1-back
-          file: ./AB0-1-back/Dockerfile
+          # Alterado para a raiz, pois o arquivo e o entrypoint estão lá
+          context: .
+          file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           build-args: |
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
 
+      # --- BUILD DO FRONTEND ---
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./AB0-1-front
-          file: ./AB0-1-front/Dockerfile.frontend
+          # Mantido context na subpasta se o código estiver lá, 
+          # mas apontando para o arquivo na raiz conforme sua imagem do Trae
+          context: .
+          file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
 
@@ -58,11 +64,20 @@ jobs:
           script: |
             set -e
             cd ~/Avalia-Solar-2026
+            
+            # Login automático no Registro do GitHub
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 1. Baixa as imagens novas
             docker-compose pull
+
+            # 2. Garante limpeza de containers antigos
             docker-compose down || true
+
+            # 3. Sobe o sistema forçando a atualização total
             docker-compose up -d --force-recreate --remove-orphans
+
+            # 4. Limpeza de disco
             docker image prune -f
-            echo "Deploy da Avalia Solar finalizado com sucesso!"
-
-
+            
+            echo "✅ Deploy da Avalia Solar finalizado com sucesso!"
