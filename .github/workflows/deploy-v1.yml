@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.backend
+          file: ./Dockerfile
           push: true
           # 👇 AGORA USAMOS A VARIÁVEL TRATADA
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
