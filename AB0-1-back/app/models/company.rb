@@ -271,6 +271,41 @@ class Company < ApplicationRecord
     limit.is_a?(Integer) ? limit : nil
   end
 
+  def plan_features
+    raw = plan&.features_json
+    return {} unless raw.is_a?(Hash)
+
+    raw.deep_stringify_keys
+  end
+
+  def plan_permissions
+    plan_features
+  end
+
+  def feature_enabled?(name)
+    return false if name.blank?
+
+    features = plan_features
+    return false if features.blank?
+
+    key = name.to_s
+    candidates = [key, "has_#{key}", "#{key}_enabled", "allow_#{key}"]
+    value = candidates.map { |candidate| features[candidate] }.find { |candidate| !candidate.nil? }
+
+    case value
+    when TrueClass
+      true
+    when FalseClass, NilClass
+      false
+    when Numeric
+      value.positive?
+    when String
+      %w[true 1 yes].include?(value.strip.downcase)
+    else
+      !!value
+    end
+  end
+
   validate :validate_logo_attachment
   validate :validate_banner_attachment
   

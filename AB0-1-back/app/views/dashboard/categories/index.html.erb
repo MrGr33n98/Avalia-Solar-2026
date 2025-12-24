@@ -1,0 +1,48 @@
+<div class="mb-8">
+  <h1 class="text-2xl font-semibold">Minhas Categorias</h1>
+  <p class="text-slate-600">Categorias vinculadas a sua empresa.</p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Categorias Atuais</h2>
+    <div class="mt-4 space-y-2">
+      <% if @categories.any? %>
+        <% @categories.each do |category| %>
+          <div class="rounded-lg border border-slate-100 px-4 py-2">
+            <%= category.name %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-slate-500">Nenhuma categoria vinculada.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Solicitar Nova Categoria</h2>
+    <p class="text-sm text-slate-500">Sua solicitacao sera analisada pelo time.</p>
+    <%= form_with url: request_category_dashboard_categories_path, method: :post, class: "mt-4 space-y-4" do |form| %>
+      <div>
+        <%= form.label :category_name, "Nome da categoria", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :category_name, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+      </div>
+      <%= form.submit "Enviar solicitacao", class: "rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800" %>
+    <% end %>
+
+    <div class="mt-8">
+      <h3 class="text-sm font-semibold text-slate-700">Solicitacoes pendentes</h3>
+      <div class="mt-2 space-y-2">
+        <% if @pending_requests.any? %>
+          <% @pending_requests.each do |request| %>
+            <div class="rounded-lg border border-slate-100 px-4 py-2 text-sm text-slate-600">
+              <%= request.data["name"] %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-slate-500">Sem solicitacoes pendentes.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

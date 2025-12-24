@@ -17,12 +17,12 @@ ActiveAdmin.register User do
   remove_filter :posts
 
   scope :all
-  scope('Pendentes', default: true) { |scope| scope.pending }
-  scope('Ativos') { |scope| scope.active }
+  scope('Pendentes', default: true) { |scope| scope.where(approved_by_admin: [false, nil]) }
+  scope('Ativos') { |scope| scope.where(approved_by_admin: true, status: User.statuses[:active]) }
   scope('Rejeitados') { |scope| scope.rejected }
 
   member_action :approve, method: :put do
-    resource.update(status: :active)
+    resource.update(status: :active, approved_by_admin: true)
     UserMailer.approval_email(resource).deliver_now
     redirect_to resource_path, notice: "Usuário aprovado com sucesso!"
   end
@@ -38,7 +38,7 @@ ActiveAdmin.register User do
   end
 
   action_item :approve, only: :show do
-    if resource.pending? || resource.rejected?
+    if !resource.approved_by_admin?
       link_to 'Aprovar Usuário', approve_admin_user_path(resource), method: :put
     end
   end
@@ -52,7 +52,7 @@ ActiveAdmin.register User do
     end
   end
 
-  sidebar "Ações de Aprovação", only: :show, if: proc { resource.pending? } do
+  sidebar "Ações de Aprovação", only: :show, if: proc { !resource.approved_by_admin? } do
     div do
       button_to "Aprovar Usuário", approve_admin_user_path(resource), method: :put, class: "button"
     end
@@ -78,7 +78,7 @@ ActiveAdmin.register User do
     end
     column :created_at
     actions defaults: true do |user|
-      item 'Aprovar', approve_admin_user_path(user), method: :put, class: "member_link" if user.pending?
+      item 'Aprovar', approve_admin_user_path(user), method: :put, class: "member_link" unless user.approved_by_admin?
     end
   end
 
@@ -109,7 +109,7 @@ ActiveAdmin.register User do
 
   batch_action :aprovar, confirm: 'Aprovar usuários selecionados?' do |ids|
     users = batch_action_collection.where(id: ids)
-    users.update_all(status: User.statuses[:active])
+    users.update_all(status: User.statuses[:active], approved_by_admin: true)
     
     # Send approval emails
     users.each do |user|
@@ -119,3 +119,4 @@ ActiveAdmin.register User do
     redirect_to collection_path, notice: 'Usuários aprovados com sucesso.'
   end
 end
+

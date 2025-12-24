@@ -1,0 +1,31 @@
+<div class="mb-8">
+  <h1 class="text-2xl font-semibold">Editar Empresa</h1>
+  <p class="text-slate-600">Atualize as informacoes principais da sua empresa.</p>
+</div>
+
+<%= form_with model: @company, url: dashboard_company_path, method: :patch, class: "space-y-6" do |form| %>
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :name, "Nome", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :name, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+    </div>
+    <div>
+      <%= form.label :whatsapp, "WhatsApp", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :whatsapp, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :description, "Descricao", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.text_area :description, rows: 6, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+  </div>
+
+  <div>
+    <%= form.label :social_media, "Social media (JSON)", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.text_area :social_media, value: @company.social_media.to_json, rows: 5, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm" %>
+  </div>
+
+  <div>
+    <%= form.submit "Salvar", class: "rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800" %>
+  </div>
+<% end %>

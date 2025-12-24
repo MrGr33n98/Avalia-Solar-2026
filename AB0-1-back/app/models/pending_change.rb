@@ -21,6 +21,7 @@ class PendingChange < ApplicationRecord
     media
     cta_config
     access_request
+    profile_update
   ].freeze
 
   validates :change_type, inclusion: { in: CHANGE_TYPES }

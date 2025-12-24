@@ -32,6 +32,10 @@ class User < ApplicationRecord
   def inactive_message
     active? ? super : (rejected? ? :rejected : :not_approved)
   end
+
+  def approved_for_dashboard?
+    approved_by_admin?
+  end
   
   # Set default role
   after_initialize :set_default_role, if: :new_record?

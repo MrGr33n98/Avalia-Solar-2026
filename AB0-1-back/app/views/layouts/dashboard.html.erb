@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <header class="bg-white shadow-sm">
+      <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="font-semibold text-lg">Company Dashboard</div>
+        <nav class="flex gap-4 text-sm">
+          <%= link_to "Inicio", dashboard_root_path, class: "text-slate-600 hover:text-slate-900" %>
+          <%= link_to "Analytics", dashboard_analytics_path, class: "text-slate-600 hover:text-slate-900" %>
+          <%= link_to "Empresa", edit_dashboard_company_path, class: "text-slate-600 hover:text-slate-900" %>
+          <%= link_to "Categorias", dashboard_categories_path, class: "text-slate-600 hover:text-slate-900" %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+      <% if notice.present? %>
+        <div class="mb-6 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
+          <%= notice %>
+        </div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="mb-6 rounded border border-rose-200 bg-rose-50 px-4 py-3 text-rose-900">
+          <%= alert %>
+        </div>
+      <% end %>
+      <%= yield %>
+    </main>
+  </body>
+</html>

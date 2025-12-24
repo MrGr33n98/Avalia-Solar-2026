@@ -1,0 +1,46 @@
+<div class="mb-8">
+  <h1 class="text-2xl font-semibold">Marketing Analytics</h1>
+  <p class="text-slate-600">Dados filtrados pela sua empresa.</p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Leads</h2>
+    <p class="text-sm text-slate-500">Total: <%= @leads_total %></p>
+    <div class="mt-4">
+      <h3 class="text-sm font-semibold text-slate-700">Por Orcamento Estimado</h3>
+      <%= bar_chart @leads_by_budget, height: "220px" %>
+    </div>
+    <div class="mt-6">
+      <h3 class="text-sm font-semibold text-slate-700">Por Tipo de Projeto</h3>
+      <%= bar_chart @leads_by_project_type, height: "220px" %>
+    </div>
+  </div>
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Conteudo</h2>
+    <p class="text-sm text-slate-500">Top 5 artigos por visualizacoes</p>
+    <div class="mt-4 space-y-3">
+      <% @top_articles.each do |article| %>
+        <div class="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+          <span class="font-medium"><%= article.title %></span>
+          <span class="text-sm text-slate-500"><%= article.views_count.to_i %> views</span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Engajamento</h2>
+    <p class="text-sm text-slate-500">Total de shares nas campanhas</p>
+    <div class="mt-4 text-3xl font-semibold"><%= @shares_total %></div>
+  </div>
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold">Conversao</h2>
+    <p class="text-sm text-slate-500">Meta vs Atingido</p>
+    <div class="mt-4">
+      <%= bar_chart @campaign_goal_vs_achieved, height: "260px" %>
+    </div>
+  </div>
+</div>
