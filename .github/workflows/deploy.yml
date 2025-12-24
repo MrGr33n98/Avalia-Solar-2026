@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Permite disparar o deploy manualmente para testes
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,45 +15,39 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          # Alterado para usar KEY em vez de PASSWORD conforme sua lista de secrets
-          key: ${{ secrets.SSH_PRIVATE_KEY }} 
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          # Aumenta o timeout da conexão e do comando para evitar o erro anterior
           timeout: 60m
           command_timeout: 60m
-          # Mantém a conexão ativa enquanto o Next.js processa a build em silêncio
-          keepalive_interval: 30s 
+          keepalive_interval: 30s
           script: |
             set -e
-            # Certifique-se de que o caminho da pasta está correto no seu servidor
+
+            echo "--- 1. Navegando para a pasta do projeto ---"
             cd ~/Avalia-Solar-2026
-            
-            echo "--- Atualizando código fonte ---"
-            git fetch --depth=1 origin main
-            git checkout -f main
+
+            echo "--- 2. Atualizando código fonte ---"
+            # Baixa as novidades
+            git fetch origin main
+            # Força o servidor a ficar IDÊNTICO ao GitHub
             git reset --hard origin/main
-            
-            echo "--- Verificando mudanças e iniciando build ---"
+
+            echo "--- 3. Deploy Inteligente com Docker ---"
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
             
-            # Detecta o que mudou para otimizar o tempo de build no servidor
-            CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
-            FRONT_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-front/|package.json|package-lock.json)" || true)
-            BACK_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(AB0-1-back/|Gemfile|Gemfile\.lock)" || true)
-            
-            if [ -n "$FRONT_CHANGED" ] && [ -n "$BACK_CHANGED" ]; then
-              docker-compose up -d --build frontend backend
-            elif [ -n "$FRONT_CHANGED" ]; then
-              docker-compose up -d --build frontend
-            elif [ -n "$BACK_CHANGED" ]; then
-              docker-compose up -d --build backend
-            else
-              echo "Nenhuma mudança de código detectada. Apenas reiniciando serviços."
-              docker-compose up -d
+            # Carrega variáveis do .env (Garante que a Master Key seja lida)
+            if [ -f .env ]; then
+              export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
             fi
-            
-            echo "--- Limpeza de imagens antigas para liberar espaço ---"
+
+            # O comando mágico:
+            # --build: Reconstrói se houver mudanças (agora com a KEY correta!)
+            # -d: Roda em background
+            # --remove-orphans: Limpa containers velhos
+            docker-compose up -d --build --remove-orphans
+
+            echo "--- 4. Limpeza ---"
             docker image prune -f
-            
+
             echo "✅ Deploy finalizado com sucesso!"

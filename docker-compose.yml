@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-    # Não expõe para a internet
+    # Não expõe para a internet, apenas local
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -44,6 +44,10 @@ services:
     build:
       context: ./AB0-1-back
       dockerfile: Dockerfile
+      # 👇 AQUI ESTÁ A CORREÇÃO MÁGICA
+      # Passamos a chave como argumento para o Build
+      args:
+        RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     container_name: ab0-backend
     restart: unless-stopped
     depends_on:
@@ -69,13 +73,8 @@ services:
       CORS_ORIGINS: "https://avaliasolar.com.br,https://www.avaliasolar.com.br"
       ADDITIONAL_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
 
-      # não deixe senha hardcoded no compose; coloque no .env
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
-
-    # Removido bind mount em produção (evita sobrescrever build)
-    # volumes:
-    #   - ./AB0-1-back:/app
 
     ports:
       - "3001:3001"
