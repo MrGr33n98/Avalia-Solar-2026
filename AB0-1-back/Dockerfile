@@ -33,19 +33,15 @@ ENV RAILS_ENV=production \
     PATH="/app/bin:${PATH}" \
     SECRET_KEY_BASE=placeholder_for_asset_compilation
 
+# 👇👇👇 AQUI ESTÁ A CORREÇÃO CRUCIAL 👇👇👇
+# 1. ARG: Aceita o argumento que vem do docker-compose
+ARG RAILS_MASTER_KEY
+# 2. ENV: Torna-o disponível para o comando 'rake assets:precompile' abaixo
+ENV RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+# 👆👆👆 FIM DA CORREÇÃO 👆👆👆
+
 # Precompile assets (including ActiveAdmin assets)
 RUN bundle exec rake assets:precompile RAILS_ENV=production
-
-# Remove this block to rely solely on DATABASE_URL from entrypoint.sh
-# RUN echo "production:\n\
-#   adapter: postgresql\n\
-#   encoding: unicode\n\
-#   pool: 5\n\
-#   host: db\n\
-#   port: 5432\n\
-#   database: <%= ENV['POSTGRES_DB'] %>\n\
-#   username: <%= ENV['POSTGRES_USER'] %>\n\
-#   password: <%= ENV['POSTGRES_PASSWORD'] %>" > config/database.yml
 
 EXPOSE 3001
 
