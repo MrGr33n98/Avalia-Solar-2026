@@ -22,7 +22,7 @@ export function useBannerGlobal() {
         const data = await fetchApi<BannerGlobal[]>('/banner_globals');
         setBannerGlobal(data.length > 0 ? data[0] : null);
       } catch (err: any) {
-        setError(err.message);
+        setError(err?.message || 'Erro ao carregar banner global');
       } finally {
         setLoading(false);
       }

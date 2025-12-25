@@ -25,7 +25,7 @@ export function useBanners() {
         const data = await fetchApi<Banner[]>('/banners');
         setBanners(data);
       } catch (err: any) {
-        setError(err.message);
+        setError(err?.message || 'Erro ao carregar banners');
       } finally {
         setLoading(false);
       }
