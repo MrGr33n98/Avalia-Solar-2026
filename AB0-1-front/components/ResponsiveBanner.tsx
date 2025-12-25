@@ -17,6 +17,7 @@ interface ResponsiveBannerProps {
  * - Mobile: aspect-[16/9] (mais quadrado)
  * - Desktop: aspect-[3/1] (mais largo)
  * - Sempre mantém proporção correta sem distorção
+ * - Blindado contra erros: retorna null silenciosamente se falhar
  */
 export default function ResponsiveBanner({
   src,
@@ -27,6 +28,15 @@ export default function ResponsiveBanner({
 }: ResponsiveBannerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  // Validação de props
+  if (!src) {
+    console.warn('[ResponsiveBanner] src is required but was not provided');
+    return null;
+  }
+
+  // Wrapper de try/catch para prevenir crashes
+  try {
 
   const content = (
     <div 
@@ -86,18 +96,23 @@ export default function ResponsiveBanner({
     </div>
   );
 
-  // Se tiver link, envolve em um <a>
-  if (link) {
-    return (
-      <a 
-        href={link} 
-        className="block cursor-pointer transition-transform hover:scale-[1.02]"
-        aria-label={alt}
-      >
-        {content}
-      </a>
-    );
-  }
+    // Se tiver link, envolve em um <a>
+    if (link) {
+      return (
+        <a 
+          href={link} 
+          className="block cursor-pointer transition-transform hover:scale-[1.02]"
+          aria-label={alt}
+        >
+          {content}
+        </a>
+      );
+    }
 
-  return content;
+    return content;
+  } catch (error) {
+    // Silenciosamente retorna null em vez de quebrar a página
+    console.error('[ResponsiveBanner] Error rendering banner:', error);
+    return null;
+  }
 }

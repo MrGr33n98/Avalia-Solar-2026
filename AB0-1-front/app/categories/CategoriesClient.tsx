@@ -65,38 +65,41 @@ export default function CategoriesClient() {
   };
 
   const allBanners = useMemo(() => {
-    const combinedBanners: any[] = [];
+    try {
+      const combinedBanners: any[] = [];
 
-    // Adiciona banners globais primeiro
-    if (bannerGlobal && bannerGlobal.image_url) {
-      combinedBanners.push({
-        id: bannerGlobal.id,
-        type: 'rectangular_large', // Manter tipo consistente
-        position: 'navbar', // Manter posição consistente
-        title: bannerGlobal.title || '',
-        link: bannerGlobal.link || undefined,
-        sponsored: false,
-        image_url: getFullImageUrl(bannerGlobal.image_url) || '',
-      });
+      // Adiciona banners globais primeiro (com validação)
+      if (bannerGlobal?.image_url) {
+        combinedBanners.push({
+          id: bannerGlobal.id,
+          type: 'rectangular_large',
+          position: 'navbar',
+          title: bannerGlobal.title || '',
+          link: bannerGlobal.link || undefined,
+          sponsored: false,
+          image_url: getFullImageUrl(bannerGlobal.image_url) || '',
+        });
+      }
+
+      // Adiciona os banners comuns (com validação)
+      if (Array.isArray(banners)) {
+        const globalBannerIds = new Set(bannerGlobal ? [bannerGlobal.id] : []);
+        const filteredBanners = banners.filter((banner) =>
+          banner && !globalBannerIds.has(banner.id)
+        );
+        const formatted = filteredBanners.map((banner) => ({
+          ...banner,
+          type: banner.banner_type,
+          image_url: getFullImageUrl(banner.image_url) || '',
+        }));
+        combinedBanners.push(...formatted);
+      }
+
+      return combinedBanners;
+    } catch (error) {
+      console.error('[CategoriesClient] Error processing banners:', error);
+      return [];
     }
-
-    // Adiciona os banners comuns (sem duplicar os globais)
-    if (banners) {
-      const globalBannerIds = new Set(bannerGlobal ? [bannerGlobal.id] : []);
-      const filteredBanners = banners.filter((banner) =>
-        !globalBannerIds.has(banner.id)
-      );
-      const formatted = filteredBanners.map((banner) => ({
-        ...banner,
-        type: banner.banner_type,
-        image_url: getFullImageUrl(banner.image_url) || '',
-      }));
-      combinedBanners.push(...formatted);
-    }
-
-    console.log('[CategoriesClient] All Banners:', combinedBanners);
-    console.log('[CategoriesClient] allBanners (memoized):', combinedBanners);
-    return combinedBanners;
   }, [banners, bannerGlobal, bannersLoading, bannerGlobalLoading]);
 
   const [filters, setFilters] = useState<Filters>({
@@ -123,15 +126,21 @@ export default function CategoriesClient() {
   }, [filters.category, categories]);
 
   const companiesByCategory = useMemo(() => {
-    if (!companies || !categories) return {};
-    return companies.reduce((acc: any, company: any) => {
-      const category = categories.find((cat) => cat.id === company.category_id);
-      if (category) {
-        if (!acc[category.name]) acc[category.name] = [];
-        acc[category.name].push(company);
-      }
-      return acc;
-    }, {});
+    try {
+      if (!companies || !categories) return {};
+      return companies.reduce((acc: any, company: any) => {
+        if (!company) return acc;
+        const category = categories.find((cat) => cat?.id === company.category_id);
+        if (category?.name) {
+          if (!acc[category.name]) acc[category.name] = [];
+          acc[category.name].push(company);
+        }
+        return acc;
+      }, {});
+    } catch (error) {
+      console.error('[CategoriesClient] Error grouping companies:', error);
+      return {};
+    }
   }, [companies, categories]);
 
   useEffect(() => {

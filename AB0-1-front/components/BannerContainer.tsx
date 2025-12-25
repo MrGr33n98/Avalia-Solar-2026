@@ -28,7 +28,14 @@ interface BannerContainerProps {
 }
 
 export function BannerContainer({ banners }: BannerContainerProps) {
-  const navbarBanners = banners.filter(banner => banner.position === 'navbar');
+  // Validação de props e blindagem contra null/undefined
+  if (!banners || !Array.isArray(banners)) {
+    console.warn('[BannerContainer] banners prop is invalid:', banners);
+    return null;
+  }
+
+  try {
+    const navbarBanners = banners.filter(banner => banner?.position === 'navbar');
 
   // Se houver apenas 1 banner, exiba-o estaticamente
   if (navbarBanners.length === 1) {
@@ -101,6 +108,11 @@ export function BannerContainer({ banners }: BannerContainerProps) {
     );
   }
 
-  // Se não houver banners para a navbar, não renderize nada
-  return null;
+    // Se não houver banners para a navbar, não renderize nada
+    return null;
+  } catch (error) {
+    // Silenciosamente retorna null em vez de quebrar a página
+    console.error('[BannerContainer] Error rendering banners:', error);
+    return null;
+  }
 }
