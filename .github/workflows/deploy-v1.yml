@@ -56,29 +56,37 @@ jobs:
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          envs: GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             set -e
             cd ~/Avalia-Solar-2026
             
             echo "🔐 Login no registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            echo "🗑️ Limpando cache Docker..."
-            docker system prune -f
-            
-            echo "📥 Pulling novas imagens..."
-            docker-compose pull
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             
             echo "🛑 Parando containers..."
             docker-compose down
             
+            echo "🗑️ Removendo imagens antigas..."
+            docker rmi ghcr.io/traes/avalia-solar-2026-backend:latest || true
+            docker rmi ghcr.io/traes/avalia-solar-2026-frontend:latest || true
+            
+            echo "🗑️ Limpando cache Docker..."
+            docker system prune -af --volumes
+            
+            echo "📥 Pulling novas imagens (forçando download)..."
+            docker-compose pull --ignore-pull-failures
+            
             echo "🚀 Iniciando containers com force-recreate..."
-            docker-compose up -d --force-recreate --remove-orphans
+            docker-compose up -d --force-recreate --remove-orphans --pull always
             
             echo "🗑️ Limpando imagens antigas..."
             docker image prune -af

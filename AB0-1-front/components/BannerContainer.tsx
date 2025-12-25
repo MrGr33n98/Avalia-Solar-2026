@@ -36,14 +36,14 @@ export function BannerContainer({ banners }: BannerContainerProps) {
     return (
       <div className="p-1">
         <Card className="overflow-hidden">
-          <CardContent className="relative flex items-center justify-center p-0 h-56">
+          <CardContent className="relative flex items-center justify-center p-0 aspect-[3/1]">
             <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
               <Image
                 src={banner.image_url}
                 alt={banner.title}
                 fill
                 priority
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
                 className="object-cover"
               />
               {banner.sponsored && (
@@ -73,7 +73,7 @@ export function BannerContainer({ banners }: BannerContainerProps) {
             <CarouselItem key={banner.id}>
               <div className="p-1">
                 <Card className="overflow-hidden">
-                  <CardContent className="relative flex items-center justify-center p-0 h-56">
+                  <CardContent className="relative flex items-center justify-center p-0 aspect-[3/1]">
                     <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                       <Image
                         src={banner.image_url}

@@ -30,6 +30,7 @@ import TestImage from '@/components/TestImage';
 import { getFullImageUrl } from '@/utils/image';
 import { ClientOnly } from '@/components/ClientOnly';
 import { useBannerGlobal } from '@/hooks/useBannerGlobal';
+import ResponsiveBanner from '@/components/ResponsiveBanner';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -390,21 +391,20 @@ export default function CategoriesClient() {
               })}
             </section>
 
-            <section className="relative h-36 overflow-hidden rounded-2xl bg-white shadow-sm">
+            <section>
               {mobileBanner ? (
-                <TestImage src={mobileBanner} alt="Banner promocional" className="object-cover" />
+                <ResponsiveBanner
+                  src={mobileBanner}
+                  alt="Banner promocional"
+                  priority
+                />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20" />
+                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 shadow-sm">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="text-sm text-gray-600">Nenhum banner disponível</p>
+                  </div>
+                </div>
               )}
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5" />
-              <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800">
-                Destaque da semana
-              </div>
-              <div className="absolute bottom-2 right-2 flex gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-              </div>
             </section>
 
             <section className="space-y-3">
