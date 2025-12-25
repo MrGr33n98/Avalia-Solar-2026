@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import CategoriesIndex from '@/components/CategoriesIndex';
+import CategoriesIndexWithSidebar from '@/components/CategoriesIndexWithSidebar';
 
 // Configuração de SEO Dinâmico
 export const metadata: Metadata = {
@@ -40,7 +40,7 @@ export default function CategoriesPage() {
       
       {/* Componente Visual Principal */}
       <Suspense fallback={<div className="p-10 text-center">Carregando categorias...</div>}>
-        <CategoriesIndex />
+        <CategoriesIndexWithSidebar />
       </Suspense>
     </>
   );
