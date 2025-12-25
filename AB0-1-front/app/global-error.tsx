@@ -97,7 +97,7 @@ export default function GlobalError({
               ou entre em contato com o suporte se o problema persistir.
             </p>
 
-            {process.env.NODE_ENV === 'development' && error && (
+            {process.env.NODE_ENV === 'development' && (
               <div style={{
                 backgroundColor: 'white',
                 padding: '1rem',
@@ -113,7 +113,7 @@ export default function GlobalError({
                 }}>
                   {error?.message || 'Unknown error'}
                 </p>
-                {error.digest && (
+                {error?.digest && (
                   <p style={{
                     fontSize: '0.75rem',
                     color: '#6b7280',

@@ -51,17 +51,17 @@ export default function Error({
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && error && (
+            {process.env.NODE_ENV === 'development' && (
               <div className="mt-4 p-4 bg-muted rounded-lg text-left">
                 <p className="text-sm font-mono text-destructive break-words">
                   {error?.message || 'Unknown error'}
                 </p>
-                {error.digest && (
+                {error?.digest && (
                   <p className="text-xs text-muted-foreground mt-2">
                     Error ID: {error.digest}
                   </p>
                 )}
-                {error.stack && (
+                {error?.stack && (
                   <details className="mt-2">
                     <summary className="text-sm cursor-pointer text-muted-foreground hover:text-foreground">
                       Ver stack trace
