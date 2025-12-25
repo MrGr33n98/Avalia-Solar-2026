@@ -17,12 +17,17 @@ export interface ErrorContext {
  * Log error to console and Sentry
  */
 export function logError(
-  error: Error,
+  error: Error | null | undefined,
   context?: ErrorContext
 ): void {
+  if (!error) {
+    console.error('[Error]', 'Error is null or undefined', { context })
+    return
+  }
+
   console.error('[Error]', {
-    message: error.message,
-    stack: error.stack,
+    message: error?.message || 'Unknown error',
+    stack: error?.stack,
     context,
   })
 
@@ -63,7 +68,7 @@ export function handleApiError(
     }
   } else {
     // Error in request setup
-    errorMessage = error.message
+    errorMessage = error?.message || 'Erro desconhecido'
   }
 
   const handledError = new Error(errorMessage)
@@ -150,7 +155,11 @@ export async function retryAsync<T>(
 /**
  * User-friendly error messages
  */
-export function getUserFriendlyMessage(error: Error): string {
+export function getUserFriendlyMessage(error: Error | null | undefined): string {
+  if (!error || !error.message) {
+    return 'Ocorreu um erro. Tente novamente.'
+  }
+
   const errorMap: Record<string, string> = {
     'Network Error': 'Problema de conexão. Verifique sua internet.',
     'timeout': 'A operação demorou muito. Tente novamente.',
@@ -173,7 +182,11 @@ export function getUserFriendlyMessage(error: Error): string {
 /**
  * Check if error is recoverable
  */
-export function isRecoverableError(error: Error): boolean {
+export function isRecoverableError(error: Error | null | undefined): boolean {
+  if (!error || !error.message) {
+    return false
+  }
+
   const recoverableErrors = [
     'Network Error',
     'timeout',
@@ -196,12 +209,12 @@ export interface FormattedError {
   technical?: string
 }
 
-export function formatError(error: Error): FormattedError {
+export function formatError(error: Error | null | undefined): FormattedError {
   return {
     title: 'Erro',
     message: getUserFriendlyMessage(error),
     canRetry: isRecoverableError(error),
-    technical: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    technical: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined,
   }
 }
 

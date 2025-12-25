@@ -59,7 +59,7 @@ function SearchPage() {
       });
     } catch (err: any) {
       console.error('Search error:', err);
-      setError(err.message || 'Erro ao realizar a busca');
+      setError(err?.message || 'Erro ao realizar a busca');
     } finally {
       setLoading(false);
     }

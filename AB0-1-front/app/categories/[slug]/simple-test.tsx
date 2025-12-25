@@ -17,7 +17,7 @@ export default function SimpleTest({ params }: { params: { slug: string } }) {
         setCategory(categoryData);
       } catch (err: any) {
         console.error('Error loading category:', err);
-        setError(err.message || 'Erro ao carregar categoria');
+        setError(err?.message || 'Erro ao carregar categoria');
       } finally {
         setLoading(false);
       }

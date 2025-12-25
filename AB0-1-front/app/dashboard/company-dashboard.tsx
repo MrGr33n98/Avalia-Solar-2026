@@ -122,7 +122,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
       setPlanFeatures(data?.plan_features || {});
     } catch (error: any) {
       console.error('Error fetching dashboard stats:', error);
-      if (error.message && error.message.includes('403')) {
+      if (error?.message && error.message.includes('403')) {
         setIsAccessDenied(true);
       }
     }
