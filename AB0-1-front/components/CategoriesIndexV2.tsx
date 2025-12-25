@@ -51,6 +51,7 @@ export default function CategoriesIndex() {
   // Filtro client-side memoizado
   const filteredCategories = useMemo(() => {
     if (!searchTerm.trim()) return allCategories;
+    if (!Array.isArray(allCategories)) return [];
     
     const term = searchTerm.toLowerCase();
     return allCategories.filter(cat =>
