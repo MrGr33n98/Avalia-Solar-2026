@@ -4,7 +4,7 @@ class Banner < ApplicationRecord
 
   validates :title, :banner_type, :position, presence: true
   validates :banner_type, inclusion: { in: %w[rectangular_large rectangular_small] }
-  validates :position, inclusion: { in: %w[navbar sidebar] }
+  validates :position, inclusion: { in: %w[navbar sidebar categories_top] }
   validates :image, presence: true
 
   def self.ransackable_attributes(_auth_object = nil)

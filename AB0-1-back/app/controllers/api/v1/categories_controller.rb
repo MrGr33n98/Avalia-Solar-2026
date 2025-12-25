@@ -21,8 +21,20 @@ module Api
 
       # =========================
       # GET /categories
+      # Params:
+      #   - view: string (optional) - 'cards' for optimized card view
+      #   - featured: boolean (optional) - Filter by featured
+      #   - status: string (optional) - Filter by status
+      #   - limit: integer (optional) - Limit results
+      #   - page: integer (optional) - Page number for pagination
       # =========================
       def index
+        # MODO NOVO: Visualização otimizada para Cards
+        if params[:view] == 'cards'
+          return render_cards_view
+        end
+
+        # MODO LEGADO: Mantém compatibilidade com código existente
         cache_key = cache_key_for('categories', params.except(:page, :per_page))
 
         cached_json(cache_key, expires_in: 1.hour) do
@@ -238,6 +250,77 @@ module Api
       def expire_categories_cache
         expire_cache('categories')
         Rails.logger.info("🗑️  Expired all category caches")
+      end
+
+      # -------------------------
+      # Cards View Mode
+      # -------------------------
+      def render_cards_view
+        @categories = Category.where(status: 'active')
+
+        # Filtros opcionais
+        @categories = @categories.where(featured: true) if params[:featured] == 'true'
+        
+        # Ordenação (Destaques primeiro ou A-Z)
+        @categories = @categories.order(featured: :desc, name: :asc)
+
+        # Eager loading para evitar N+1
+        @categories = @categories.includes(:banners, :companies, :products)
+
+        # Paginação (se parâmetros fornecidos)
+        if params[:page].present? || params[:per_page].present?
+          page = params[:page]&.to_i || 1
+          per_page = params[:per_page]&.to_i || 12
+          per_page = [per_page, 50].min # Máximo 50 por página
+
+          total = @categories.count
+          @categories = @categories.offset((page - 1) * per_page).limit(per_page)
+
+          # Mapeamento manual incluindo contadores
+          data = @categories.map do |category|
+            {
+              id: category.id,
+              name: category.name,
+              seo_url: category.seo_url,
+              seo_title: category.seo_title,
+              short_description: category.short_description,
+              featured: category.featured,
+              banner_url: category.banners.find { |b| b.active }&.image_url,
+              companies_count: category.companies.size,
+              products_count: category.products.size
+            }
+          end
+
+          # Retorna com metadata de paginação
+          render json: {
+            data: data,
+            meta: {
+              current_page: page,
+              per_page: per_page,
+              total_items: total,
+              total_pages: (total.to_f / per_page).ceil
+            }
+          }
+        else
+          # Sem paginação - aplicar limite se fornecido
+          @categories = @categories.limit(params[:limit]) if params[:limit].present?
+
+          data = @categories.map do |category|
+            {
+              id: category.id,
+              name: category.name,
+              seo_url: category.seo_url,
+              seo_title: category.seo_title,
+              short_description: category.short_description,
+              featured: category.featured,
+              banner_url: category.banners.find { |b| b.active }&.image_url,
+              companies_count: category.companies.size,
+              products_count: category.products.size
+            }
+          end
+
+          render json: data
+        end
       end
     end
   end
