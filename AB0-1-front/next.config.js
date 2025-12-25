@@ -9,6 +9,8 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
+      // Avoid false-positives behind reverse proxies / multi-zones
+      allowedOrigins: ['avaliasolar.com.br', 'www.avaliasolar.com.br'],
     },
   },
 
