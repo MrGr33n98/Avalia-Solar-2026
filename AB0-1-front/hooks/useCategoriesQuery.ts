@@ -70,7 +70,6 @@ export function useCategoriesQuery(options: UseCategoriesQueryOptions = {}) {
       // Adaptar dados da API para formato Category completo
       return response.data.map(adaptCategoryData);
     },
-    },
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutos - dados são considerados "frescos"
     gcTime: 10 * 60 * 1000, // 10 minutos - tempo em cache
