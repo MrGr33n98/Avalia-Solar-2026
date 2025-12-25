@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
+  // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
+  swcMinify: false,
+  
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
