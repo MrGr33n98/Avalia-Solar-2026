@@ -1,6 +1,3 @@
-// TASK-006: Import Sentry for source maps and error tracking
-const { withSentryConfig } = require("@sentry/nextjs");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -8,7 +5,6 @@ const nextConfig = {
 
   experimental: {
     serverActions: {
-      allowedOrigins: ['https://www.avaliasolar.com.br'],
       bodySizeLimit: '2mb',
     },
   },
@@ -118,6 +114,8 @@ const nextConfig = {
 
 // TASK-006: Sentry configuration for Next.js
 // Export the config with Sentry wrapper for source maps
+const { withSentryConfig } = require("@sentry/nextjs");
+
 module.exports = withSentryConfig(
   nextConfig,
   {
