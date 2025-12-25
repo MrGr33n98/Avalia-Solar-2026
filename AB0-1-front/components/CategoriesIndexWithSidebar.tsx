@@ -5,10 +5,17 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import CategoryCardMinimal from '@/components/CategoryCardMinimal';
 import { Input } from '@/components/ui/input';
-import { Search, AlertCircle, Grid3x3, List } from 'lucide-react';
+import { Search, AlertCircle, Grid3x3, List, Menu } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from '@/components/ui/sheet';
 
 // React Query hooks
 import { useCategoriesBannersQuery } from '@/hooks/useBannersQuery';
@@ -26,6 +33,7 @@ import { useFeaturedCategoriesQuery, useAllCategoriesQuery } from '@/hooks/useCa
 export default function CategoriesIndexWithSidebar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
   // React Query hooks
@@ -145,51 +153,53 @@ export default function CategoriesIndexWithSidebar() {
       <div className="container mx-auto px-4 pb-12">
         <div className="flex flex-col lg:flex-row gap-6">
           
-          {/* SIDEBAR - Navegação de Categorias */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-4">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <List className="h-5 w-5" />
-                Categorias
-              </h2>
-              
-              {/* Botão "Todas" */}
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors mb-1
-                  ${selectedCategory === null 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                Todas as Categorias
-              </button>
-
-              {/* Lista de categorias */}
-              <nav className="space-y-1 max-h-[500px] overflow-y-auto">
-                {allCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors
-                      ${selectedCategory === category.id 
-                        ? 'bg-blue-600 text-white border-l-4 border-blue-700' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
-              </nav>
-            </div>
+          {/* SIDEBAR - Desktop (hidden on mobile/tablet) */}
+          <aside className="hidden lg:block lg:w-64 flex-shrink-0">
+            <SidebarContent 
+              allCategories={allCategories}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
           </aside>
 
-          {/* CONTENT - Grid de Cards */}
+          {/* CONTENT */}
           <main className="flex-1">
             
-            {/* Barra de Busca */}
-            <div className="mb-6 flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+            {/* Barra de Busca e Botão Mobile Menu */}
+            <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Botão Menu Mobile (visible only < lg) */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span>Categorias</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] sm:w-[340px]">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <List className="h-5 w-5" />
+                      Categorias
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <SidebarContent 
+                      allCategories={allCategories}
+                      selectedCategory={selectedCategory}
+                      setSelectedCategory={(id) => {
+                        setSelectedCategory(id);
+                        setMobileMenuOpen(false);
+                      }}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+              
+              {/* Barra de Busca */}
+              <div className="relative flex-1">
                 <Search 
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" 
                   aria-hidden="true"
@@ -204,7 +214,8 @@ export default function CategoriesIndexWithSidebar() {
                 />
               </div>
               
-              <div className="text-sm text-gray-600 flex items-center gap-2">
+              {/* Contador de Resultados */}
+              <div className="text-sm text-gray-600 flex items-center justify-center sm:justify-start gap-2">
                 <Grid3x3 className="h-4 w-4" />
                 <span className="font-medium">{filteredCategories.length}</span> 
                 {filteredCategories.length === 1 ? 'categoria' : 'categorias'}
@@ -260,6 +271,50 @@ export default function CategoriesIndexWithSidebar() {
 }
 
 /**
+ * Componente reutilizável para o conteúdo da Sidebar
+ */
+interface SidebarContentProps {
+  allCategories: any[];
+  selectedCategory: number | null;
+  setSelectedCategory: (id: number | null) => void;
+}
+
+function SidebarContent({ allCategories, selectedCategory, setSelectedCategory }: SidebarContentProps) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:sticky lg:top-4">
+      {/* Botão "Todas" */}
+      <button
+        onClick={() => setSelectedCategory(null)}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors mb-1
+          ${selectedCategory === null 
+            ? 'bg-blue-600 text-white' 
+            : 'text-gray-700 hover:bg-gray-100'
+          }`}
+      >
+        Todas as Categorias
+      </button>
+
+      {/* Lista de categorias */}
+      <nav className="space-y-1 max-h-[500px] overflow-y-auto">
+        {allCategories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => setSelectedCategory(category.id)}
+            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors
+              ${selectedCategory === category.id 
+                ? 'bg-blue-600 text-white border-l-4 border-blue-700' 
+                : 'text-gray-700 hover:bg-gray-100'
+              }`}
+          >
+            {category.name}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+/**
  * Skeleton de carregamento
  */
 function LoadingSkeleton() {
@@ -270,14 +325,14 @@ function LoadingSkeleton() {
       </div>
       
       <div className="container mx-auto px-4 pb-12">
-        <div className="flex gap-6">
-          <aside className="w-64 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <aside className="hidden lg:block lg:w-64 flex-shrink-0">
             <Skeleton className="w-full h-[400px] rounded-lg" />
           </aside>
           
           <main className="flex-1">
-            <Skeleton className="w-full max-w-md h-10 mb-6" />
-            <div className="grid grid-cols-4 gap-4">
+            <Skeleton className="w-full h-10 mb-6" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {[...Array(12)].map((_, i) => (
                 <Skeleton key={i} className="h-[240px] rounded-lg" />
               ))}

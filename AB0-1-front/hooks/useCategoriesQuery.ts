@@ -10,8 +10,10 @@ export interface CategoryCardData {
   short_description: string;
   featured: boolean;
   banner_url: string | null;
+  icon_url?: string | null;
   companies_count: number;
   products_count: number;
+  reviews_count?: number;
 }
 
 // Adapter: converte CategoryCardData para Category completo

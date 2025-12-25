@@ -286,8 +286,10 @@ module Api
               short_description: category.short_description,
               featured: category.featured,
               banner_url: category.banners.find { |b| b.active }&.image_url,
+              icon_url: category.icon.attached? ? Rails.application.routes.url_helpers.rails_blob_url(category.icon, only_path: false) : nil,
               companies_count: category.companies.size,
-              products_count: category.products.size
+              products_count: category.products.size,
+              reviews_count: category.companies.joins(:reviews).count
             }
           end
 
@@ -314,8 +316,10 @@ module Api
               short_description: category.short_description,
               featured: category.featured,
               banner_url: category.banners.find { |b| b.active }&.image_url,
+              icon_url: category.icon.attached? ? Rails.application.routes.url_helpers.rails_blob_url(category.icon, only_path: false) : nil,
               companies_count: category.companies.size,
-              products_count: category.products.size
+              products_count: category.products.size,
+              reviews_count: category.companies.joins(:reviews).count
             }
           end
 

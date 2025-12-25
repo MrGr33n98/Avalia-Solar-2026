@@ -8,6 +8,7 @@ class Category < ApplicationRecord
   has_and_belongs_to_many :products,  join_table: :categories_products
   has_many :articles
   has_one_attached :banner
+  has_one_attached :icon
   has_many :banners
 
   # =========================
@@ -113,15 +114,28 @@ class Category < ApplicationRecord
       json[:banner_url] = nil
     end
 
+    # Add icon URL if attached
+    if icon.attached?
+      begin
+        json[:icon_url] = Rails.application.routes.url_helpers.rails_blob_url(icon, only_path: false)
+      rescue StandardError => e
+        Rails.logger.error("Error generating category icon URL: #{e.message}")
+        json[:icon_url] = nil
+      end
+    else
+      json[:icon_url] = nil
+    end
+
     # Add cached counts
     json[:products_count] = cached_products_count
     json[:companies_count] = companies.count
+    json[:reviews_count] = total_reviews_count
 
     json
   end
 
   # =========================
-  # URL helpers for banner attachment
+  # URL helpers for attachments
   # =========================
   def banner_url
     return nil unless banner.attached?
@@ -130,6 +144,20 @@ class Category < ApplicationRecord
   rescue StandardError => e
     Rails.logger.error("Error generating category banner URL: #{e.message}")
     nil
+  end
+
+  def icon_url
+    return nil unless icon.attached?
+
+    Rails.application.routes.url_helpers.rails_blob_url(icon, only_path: false)
+  rescue StandardError => e
+    Rails.logger.error("Error generating category icon URL: #{e.message}")
+    nil
+  end
+
+  # Total de reviews das empresas dessa categoria
+  def total_reviews_count
+    companies.joins(:reviews).count
   end
 
   # =========================

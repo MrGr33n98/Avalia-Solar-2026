@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Building2, Package, Layers } from 'lucide-react';
+import { Building2, Package, Layers, Star } from 'lucide-react';
 import Image from 'next/image';
 
 interface CategoryCardMinimalProps {
@@ -13,9 +13,11 @@ interface CategoryCardMinimalProps {
     short_description?: string;
     logo?: { url: string } | null;
     banner_url?: string | null;
+    icon_url?: string | null;
     seo_url?: string;
     companies_count?: number;
     products_count?: number;
+    reviews_count?: number;
   };
   className?: string;
 }
@@ -23,10 +25,11 @@ interface CategoryCardMinimalProps {
 export default function CategoryCardMinimal({ category, className = "" }: CategoryCardMinimalProps) {
   const [imageError, setImageError] = useState(false);
 
-  // Prioridade: logo > banner_url > placeholder
+  // Prioridade: icon_url > logo > banner_url > placeholder
+  const iconUrl = category?.icon_url;
   const logoUrl = category?.logo?.url;
-  const imageUrl = !imageError && (logoUrl || category?.banner_url)
-    ? (logoUrl || category.banner_url)
+  const imageUrl = !imageError && (iconUrl || logoUrl || category?.banner_url)
+    ? (iconUrl || logoUrl || category.banner_url)
     : null;
 
   const displayData = {
@@ -34,6 +37,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
     description: category?.short_description || '',
     companies_count: category?.companies_count ?? 0,
     products_count: category?.products_count ?? 0,
+    reviews_count: category?.reviews_count ?? 0,
     seo_url: category?.seo_url ? `categories/${category.seo_url}` : `categories/${category.id}`,
   };
 
@@ -66,10 +70,16 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
               <span className="font-medium">{displayData.products_count}</span>
             </div>
           )}
+          {displayData.reviews_count > 0 && (
+            <div className="flex items-center gap-1 text-xs text-amber-600">
+              <Star className="h-3.5 w-3.5 fill-amber-500" />
+              <span className="font-medium">{displayData.reviews_count}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Logo/Imagem Centralizada */}
+      {/* Logo/Ícone Centralizado */}
       <div className="flex items-center justify-center mb-4 h-32">
         {imageUrl ? (
           <div className="relative w-full h-full">
@@ -77,7 +87,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
               src={imageUrl}
               alt={displayData.name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-contain"
               onError={() => setImageError(true)}
             />

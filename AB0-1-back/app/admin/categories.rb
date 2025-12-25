@@ -2,7 +2,7 @@ require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, company_ids: [], product_ids: []
+                :banner, :icon, company_ids: [], product_ids: []
 
   # Add CSV import action
   action_item :import_csv, only: :index do
@@ -105,6 +105,30 @@ ActiveAdmin.register Category, namespace: :admin do
       end
     end
 
+    f.inputs 'Category Icon' do
+      if f.object.icon.attached?
+        div class: 'current-icon-preview' do
+          h4 'Current Icon:'
+          image_tag url_for(f.object.icon), style: 'width: 100px; height: 100px; object-fit: contain; border-radius: 8px; margin: 10px 0; border: 1px solid #e0e0e0;'
+          div style: 'margin-top: 10px;' do
+            span 'Icon URL: ', style: 'font-weight: bold;'
+            span f.object.icon_url, style: 'font-family: monospace; background: #f5f5f5; padding: 2px 6px; border-radius: 4px;'
+          end
+        end
+      end
+      
+      f.input :icon, as: :file,
+              hint: 'Recommended size: 200x200px (1:1 square). Formats: PNG (transparent background recommended), SVG. Max size: 2MB',
+              input_html: { accept: 'image/*' }
+      
+      if f.object.icon.attached?
+        div style: 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;' do
+          strong 'Note: '
+          span 'Uploading a new icon will replace the current one.'
+        end
+      end
+    end
+
     f.inputs 'Associations' do
       f.input :companies, as: :check_boxes, 
               collection: Company.order(:name).map { |c| [c.name, c.id] }
@@ -144,6 +168,34 @@ ActiveAdmin.register Category, namespace: :admin do
       end
       row :created_at
       row :updated_at
+    end
+
+    panel 'Category Icon' do
+      if category.icon.attached?
+        div class: 'icon-display', style: 'text-align: center;' do
+          image_tag url_for(category.icon), 
+                    style: 'width: 150px; height: 150px; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;'
+          div style: 'margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;' do
+            h4 'Icon Details:'
+            table_for [category.icon] do
+              column('File Name') { |i| i.filename }
+              column('Size') { |i| number_to_human_size(i.byte_size) }
+              column('Content Type') { |i| i.content_type }
+              column('URL') { |i| link_to 'View Full Size', url_for(i), target: '_blank' }
+            end
+          end
+        end
+      else
+        div class: 'no-icon-message', style: 'text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;' do
+          h3 style: 'color: #6c757d; margin-bottom: 10px;' do
+            'No Icon Uploaded'
+          end
+          p style: 'color: #868e96; margin-bottom: 20px;' do
+            'Upload an icon to display in category cards'
+          end
+          link_to 'Edit Category', edit_admin_category_path(category), class: 'button'
+        end
+      end
     end
 
     panel 'Banner Image' do
@@ -209,6 +261,14 @@ ActiveAdmin.register Category, namespace: :admin do
   index do
     selectable_column
     id_column
+    
+    column 'Icon' do |category|
+      if category.icon.attached?
+        image_tag url_for(category.icon), style: 'width: 40px; height: 40px; object-fit: contain; border-radius: 4px;'
+      else
+        span 'No icon', style: 'color: #999; font-style: italic;'
+      end
+    end
     
     column 'Banner' do |category|
       if category.banner.attached?
