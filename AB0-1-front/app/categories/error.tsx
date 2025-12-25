@@ -19,14 +19,16 @@ export default function CategoriesError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Categories Error:', error)
+    if (error) {
+      console.error('Categories Error:', error)
 
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'categories',
-        route: '/categories',
-      },
-    })
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: 'categories',
+          route: '/categories',
+        },
+      })
+    }
   }, [error])
 
   return (

@@ -26,14 +26,16 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Critical Global Error:', error)
-    
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'global-critical',
-      },
-      level: 'fatal',
-    })
+    if (error) {
+      console.error('Critical Global Error:', error)
+      
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: 'global-critical',
+        },
+        level: 'fatal',
+      })
+    }
   }, [error])
 
   return (

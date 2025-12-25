@@ -19,14 +19,16 @@ export default function ProductsError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Products Error:', error)
+    if (error) {
+      console.error('Products Error:', error)
 
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'products',
-        route: '/products',
-      },
-    })
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: 'products',
+          route: '/products',
+        },
+      })
+    }
   }, [error])
 
   return (

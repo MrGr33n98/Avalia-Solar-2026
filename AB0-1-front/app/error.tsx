@@ -22,14 +22,16 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log error to console
-    console.error('Global Error:', error)
+    if (error) {
+      console.error('Global Error:', error)
 
-    // Report to Sentry
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'global',
-      },
-    })
+      // Report to Sentry
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: 'global',
+        },
+      })
+    }
   }, [error])
 
   return (

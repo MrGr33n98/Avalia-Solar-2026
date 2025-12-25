@@ -20,14 +20,16 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Dashboard Error:', error)
+    if (error) {
+      console.error('Dashboard Error:', error)
 
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'dashboard',
-        route: '/dashboard',
-      },
-    })
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: 'dashboard',
+          route: '/dashboard',
+        },
+      })
+    }
   }, [error])
 
   return (

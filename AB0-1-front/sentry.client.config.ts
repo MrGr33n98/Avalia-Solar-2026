@@ -58,7 +58,7 @@ Sentry.init({
     if (event.exception) {
       const error = hint.originalException;
       if (error && typeof error === "object" && "message" in error) {
-        const message = String(error.message);
+        const message = String(error.message || "");
         if (
           message.includes("chrome-extension://") ||
           message.includes("moz-extension://")
