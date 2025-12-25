@@ -1,44 +1,14 @@
-# 🎯 RESUMO: Por que o Deploy não Funcionou
+# 🔥 FIX CRÍTICO APLICADO: Downgrade Next.js
 
-## ❌ PROBLEMA IDENTIFICADO
+## ✅ MUDANÇAS APLICADAS
 
-O workflow de deploy **funcionou**, mas as mudanças não apareceram no servidor porque:
+### 1. Downgrade Next.js 14.2.5 → 14.1.4
+**Motivo:** Next.js 14.2.5 tem um bug conhecido no Linux/Docker que causa erro de digest
 
-### 1. **Docker Build usava CACHE**
-O workflow **NÃO** tinha `no-cache: true`, então o Docker usou cache das layers antigas e não copiou os arquivos novos!
-
-```yaml
-# ❌ ANTES (linha 43-49)
-- name: Build and Push Frontend
-  uses: docker/build-push-action@v5
-  with:
-    context: ./AB0-1-front
-    file: ./Dockerfile.frontend
-    push: true
-    tags: ghcr.io/.../frontend:latest
-    # ← Faltava: no-cache: true
-```
-
-### 2. **Servidor fazia pull da imagem ANTIGA com cache**
-Como a imagem foi buildada com cache, ela tinha o código antigo!
-
----
-
-## ✅ CORREÇÃO APLICADA
-
-Atualizei o workflow `.github/workflows/deploy-v1.yml`:
-
-### Mudança 1: Adicionado `no-cache: true`
-```yaml
-# ✅ DEPOIS
-- name: Build and Push Frontend
-  uses: docker/build-push-action@v5
-  with:
-    context: ./AB0-1-front
-    file: ./Dockerfile.frontend
-    push: true
-    tags: ghcr.io/.../frontend:latest
-    no-cache: true  # ← ADICIONADO
+```json
+// package.json
+"next": "14.1.4",  // ← Era 14.2.5
+"@next/swc-wasm-nodejs": "14.1.4",  // ← Era 14.2.5
 ```
 
 ### Mudança 2: Melhorado script de deploy
