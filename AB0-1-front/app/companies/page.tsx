@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import TestImage from '@/components/TestImage';
+import ResponsiveBanner from '@/components/ResponsiveBanner';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -238,17 +238,8 @@ export default function CompaniesPage() {
             })}
           </section>
 
-          <section className="relative h-36 overflow-hidden rounded-2xl bg-white shadow-sm">
-            <TestImage src="/images/banner1.png" alt="Banner promocional" className="object-cover" />
-            <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5" />
-            <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800">
-              Destaque da semana
-            </div>
-            <div className="absolute bottom-2 right-2 flex gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-            </div>
+          <section>
+            <ResponsiveBanner location="companies_top" />
           </section>
 
           <section className="space-y-3">
@@ -494,14 +485,8 @@ export default function CompaniesPage() {
                   </Link>
                 );
               })}
-              <div className="col-span-2 row-span-2 overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm">
-                <div className="relative h-full">
-                  <TestImage src="/images/banner1.png" alt="Banner promocional" className="object-cover" />
-                  <div className="absolute inset-0 rounded-xl ring-1 ring-black/5" />
-                  <div className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm">
-                    Destaque da semana
-                  </div>
-                </div>
+              <div className="col-span-2 row-span-2">
+                <ResponsiveBanner location="companies_desktop_featured" />
               </div>
             </section>
 
