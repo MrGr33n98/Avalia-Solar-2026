@@ -48,7 +48,7 @@ export function useCompany(companyId: string): UseCompanyReturn {
       }
       setCompany(data.company);
     } catch (err) {
-      const message = (err as any)?.message || 'An error occurred';
+      const message = err?.message || 'An error occurred';
       setError(message);
       console.error('Error fetching company:', err);
     } finally {
@@ -74,7 +74,7 @@ export function useCompany(companyId: string): UseCompanyReturn {
 
         return { success: false, error: 'Update failed' };
       } catch (err) {
-        const message = (err as any)?.message || 'An error occurred';
+        const message = err?.message || 'An error occurred';
         return { success: false, error: message };
       }
     },
@@ -129,7 +129,7 @@ export function useDashboardStats(companyId: string) {
 
       setStats(data?.stats || null);
     } catch (err) {
-      const message = (err as any)?.message || 'An error occurred';
+      const message = err?.message || 'An error occurred';
       setError(message);
       console.error('Error fetching stats:', err);
     } finally {
@@ -165,7 +165,7 @@ export function useNotifications(companyId: string) {
 
       setNotifications(data?.notifications || []);
     } catch (err) {
-      const message = (err as any)?.message || 'An error occurred';
+      const message = err?.message || 'An error occurred';
       setError(message);
       console.error('Error fetching notifications:', err);
     } finally {
@@ -362,7 +362,7 @@ export function useAsync<T>(
         setState({ data, loading: false, error: null, status: 'success' });
         return data;
       } catch (error) {
-        const err = error as Error;
+        const err = error instanceof Error ? error : new Error(error?.message || 'An error occurred');
         setState({ data: null, loading: false, error: err, status: 'error' });
         return null;
       }
