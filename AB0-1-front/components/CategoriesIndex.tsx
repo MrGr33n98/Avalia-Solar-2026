@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { api } from '@/lib/api';
+import { api, Category } from '@/lib/api';
 import CategoryCard from '@/components/CategoryCard';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -17,7 +17,8 @@ interface Banner {
   sponsored: boolean;
 }
 
-interface Category {
+// Response da API (modo cards)
+interface CategoryCardData {
   id: number;
   name: string;
   seo_url: string;
@@ -27,6 +28,20 @@ interface Category {
   banner_url: string | null;
   companies_count: number;
   products_count: number;
+}
+
+// Adapter: converte CategoryCardData para Category completo
+function adaptCategoryData(data: CategoryCardData): Category {
+  return {
+    ...data,
+    description: data.short_description,
+    kind: 'standard',
+    status: 'active',
+    parent_id: null,
+    logo: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 }
 
 export default function CategoriesIndex() {
@@ -60,14 +75,15 @@ export default function CategoriesIndex() {
       // Buscar banners em paralelo usando api.request
       const [bannersRes, featuredRes, allRes] = await Promise.all([
         api.request<Banner[]>({ url: '/banners?position=categories_top', method: 'GET' }).catch(() => ({ data: [] })),
-        api.request<Category[]>({ url: '/categories?view=cards&featured=true&limit=8', method: 'GET' }).catch(() => ({ data: [] })),
-        api.request<Category[]>({ url: '/categories?view=cards', method: 'GET' }).catch(() => ({ data: [] }))
+        api.request<CategoryCardData[]>({ url: '/categories?view=cards&featured=true&limit=8', method: 'GET' }).catch(() => ({ data: [] })),
+        api.request<CategoryCardData[]>({ url: '/categories?view=cards', method: 'GET' }).catch(() => ({ data: [] }))
       ]);
 
       setBanners(bannersRes.data);
-      setFeaturedCategories(featuredRes.data);
-      setAllCategories(allRes.data);
-      setFilteredCategories(allRes.data);
+      // Adaptar dados da API para formato Category completo
+      setFeaturedCategories(featuredRes.data.map(adaptCategoryData));
+      setAllCategories(allRes.data.map(adaptCategoryData));
+      setFilteredCategories(allRes.data.map(adaptCategoryData));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       setError('Erro ao carregar categorias. Tente novamente.');
