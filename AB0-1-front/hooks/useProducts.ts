@@ -18,7 +18,7 @@ export function useProducts() {
         setError(null);
       } catch (err) {
         console.error('Error fetching products:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError((err as any)?.message || 'An unknown error occurred');
       } finally {
         setLoading(false);
       }

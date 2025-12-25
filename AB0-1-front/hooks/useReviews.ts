@@ -15,7 +15,7 @@ export function useReviews(companyId?: number) {
       const data = await reviewsApi.getAll(companyId ? { company_id: companyId } : undefined);
       setReviews(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch reviews');
+      setError((err as any)?.message || 'Failed to fetch reviews');
     } finally {
       setLoading(false);
     }
@@ -27,7 +27,7 @@ export function useReviews(companyId?: number) {
       setReviews(prev => [newReview, ...prev]);
       return newReview;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create review');
+      setError((err as any)?.message || 'Failed to create review');
       throw err;
     }
   };
@@ -38,7 +38,7 @@ export function useReviews(companyId?: number) {
       setReviews(prev => prev.map(review => review.id === id ? updatedReview : review));
       return updatedReview;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update review');
+      setError((err as any)?.message || 'Failed to update review');
       throw err;
     }
   };
@@ -48,7 +48,7 @@ export function useReviews(companyId?: number) {
       await reviewsApi.delete(id);
       setReviews(prev => prev.filter(review => review.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete review');
+      setError((err as any)?.message || 'Failed to delete review');
       throw err;
     }
   };
@@ -86,7 +86,7 @@ export function useReview(id: number) {
       const data = await reviewsApi.getById(reviewId);
       setReview(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch review');
+      setError((err as any)?.message || 'Failed to fetch review');
     } finally {
       setLoading(false);
     }

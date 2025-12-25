@@ -51,7 +51,7 @@ export default function CompaniesPage() {
         setCategories(categoriesData || []);
       } catch (err) {
         console.error('[CompaniesPage] Error loading data:', err);
-        setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+        setError((err as any)?.message || 'Erro ao carregar dados');
       } finally {
         setLoading(false);
       }

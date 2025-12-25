@@ -40,7 +40,7 @@ export function useCompaniesSafe(params?: UseCompaniesSafeParams) {
       setCompanies(data);
     } catch (err) {
       console.error('Erro ao buscar empresas:', err);
-      setError(err instanceof Error ? err.message : 'Falha ao carregar empresas');
+      setError((err as any)?.message || 'Falha ao carregar empresas');
       setCompanies([]);
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export function usePartnerLogos() {
         setPartners(partnerLogos);
       } catch (err) {
         console.error('Erro ao buscar logos dos parceiros:', err);
-        setError(err instanceof Error ? err.message : 'Falha ao carregar logos dos parceiros');
+        setError((err as any)?.message || 'Falha ao carregar logos dos parceiros');
         setPartners([]);
       } finally {
         setLoading(false);
@@ -111,7 +111,7 @@ export function useCompanySafe(id: number) {
       // 🔑 Normaliza o retorno
       setCompany(data || null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar empresa');
+      setError((err as any)?.message || 'Falha ao carregar empresa');
       setCompany(null);
     } finally {
       setLoading(false);

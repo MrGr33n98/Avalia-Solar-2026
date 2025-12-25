@@ -39,7 +39,7 @@ export function useSearch() {
         categories: response.categories || [],
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setError((err as any)?.message || 'Search failed');
     } finally {
       setLoading(false);
     }

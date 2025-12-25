@@ -19,7 +19,7 @@ export function useCompanies() {
       const data = await companiesApi.getAll();
       setCompanies(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch companies');
+      setError((err as any)?.message || 'Failed to fetch companies');
     } finally {
       setLoading(false);
     }
@@ -31,7 +31,7 @@ export function useCompanies() {
       setCompanies((prev: Company[]) => [...prev, newCompany as Company]);
       return newCompany;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create company');
+      setError((err as any)?.message || 'Failed to create company');
       throw err;
     }
   };
@@ -42,7 +42,7 @@ export function useCompanies() {
       setCompanies((prev: Company[]) => prev.map((c: Company) => c.id === id ? (updatedCompany as Company) : c));
       return updatedCompany;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update company');
+      setError((err as any)?.message || 'Failed to update company');
       throw err;
     }
   };
@@ -52,7 +52,7 @@ export function useCompanies() {
       await companiesApi.delete(id);
       setCompanies((prev: Company[]) => prev.filter((c: Company) => c.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete company');
+      setError((err as any)?.message || 'Failed to delete company');
       throw err;
     }
   };
@@ -86,7 +86,7 @@ export function useCompany(id: number) {
       const data = await companiesApi.getById(companyId);
       setCompany(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch company');
+      setError((err as any)?.message || 'Failed to fetch company');
     } finally {
       setLoading(false);
     }

@@ -43,7 +43,7 @@ export function useDashboard() {
       
       setStats(extendedData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch dashboard stats');
+      setError((err as any)?.message || 'Failed to fetch dashboard stats');
     } finally {
       setLoading(false);
     }

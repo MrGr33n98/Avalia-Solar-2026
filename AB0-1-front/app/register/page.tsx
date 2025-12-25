@@ -75,7 +75,7 @@ export default function RegisterPage() {
       setSubmitted(true);
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to register');
+      setError((err as any)?.message || 'Failed to register');
     } finally {
       setIsLoading(false);
     }

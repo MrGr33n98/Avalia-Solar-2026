@@ -48,7 +48,7 @@ export default function MyReviewsPage() {
       const json = await data.json();
       setReviews(Array.isArray(json) ? json : []);
     } catch (e: any) {
-      setError(e.message || 'Falha ao carregar avaliações');
+      setError(e?.message || 'Falha ao carregar avaliações');
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function MyReviewsPage() {
       await load();
       cancelEdit();
     } catch (e: any) {
-      setError(e.message || 'Falha ao salvar');
+      setError(e?.message || 'Falha ao salvar');
     }
   };
 
@@ -89,7 +89,7 @@ export default function MyReviewsPage() {
       await reviewsApi.delete(id);
       await load();
     } catch (e: any) {
-      setError(e.message || 'Falha ao excluir');
+      setError(e?.message || 'Falha ao excluir');
     }
   };
 

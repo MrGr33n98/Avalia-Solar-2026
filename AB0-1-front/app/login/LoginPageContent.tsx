@@ -44,7 +44,7 @@ export function LoginPageContent() {
       window.location.href = redirect;
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Falha ao fazer login. Verifique suas credenciais.');
+      setError((err as any)?.message || 'Falha ao fazer login. Verifique suas credenciais.');
       setIsLoading(false);
     }
   };
