@@ -1,7 +1,8 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, Category } from '@/lib/api';
 
-export interface Category {
+// Response da API (modo cards) - subset de campos
+export interface CategoryCardData {
   id: number;
   name: string;
   seo_url: string;
@@ -11,6 +12,20 @@ export interface Category {
   banner_url: string | null;
   companies_count: number;
   products_count: number;
+}
+
+// Adapter: converte CategoryCardData para Category completo
+function adaptCategoryData(data: CategoryCardData): Category {
+  return {
+    ...data,
+    description: data.short_description,
+    kind: 'standard',
+    status: 'active',
+    parent_id: null,
+    logo: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 }
 
 interface UseCategoriesQueryOptions {
@@ -46,8 +61,15 @@ export function useCategoriesQuery(options: UseCategoriesQueryOptions = {}) {
       if (featured !== undefined) params.append('featured', String(featured));
       if (limit) params.append('limit', String(limit));
 
-      const response = await api.get(`/categories?${params.toString()}`);
-      return response.data;
+      // Usar api.request ao invés de api.get
+      const response = await api.request<CategoryCardData[]>({
+        url: `/categories?${params.toString()}`,
+        method: 'GET'
+      });
+      
+      // Adaptar dados da API para formato Category completo
+      return response.data.map(adaptCategoryData);
+    },
     },
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutos - dados são considerados "frescos"

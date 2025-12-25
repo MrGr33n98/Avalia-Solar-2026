@@ -42,7 +42,11 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (position) params.append('position', position);
       if (limit) params.append('limit', String(limit));
 
-      const response = await api.get(`/banners?${params.toString()}`);
+      // Usar api.request ao invés de api.get
+      const response = await api.request<Banner[]>({
+        url: `/banners?${params.toString()}`,
+        method: 'GET'
+      });
       return response.data;
     },
     enabled,
