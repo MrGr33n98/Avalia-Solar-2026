@@ -86,7 +86,9 @@ jobs:
             docker-compose pull --ignore-pull-failures
             
             echo "🚀 Iniciando containers com force-recreate..."
-            docker-compose up -d --force-recreate --remove-orphans --pull always
+            # Tenta docker compose v2, se falhar usa docker-compose v1
+            docker compose up -d --force-recreate --remove-orphans 2>/dev/null || \
+            docker-compose up -d --force-recreate --remove-orphans
             
             echo "🗑️ Limpando imagens antigas..."
             docker image prune -af
@@ -95,6 +97,6 @@ jobs:
             sleep 10
             
             echo "📋 Verificando logs do frontend..."
-            docker logs --tail 30 avalia_frontend_prod
+            docker logs --tail 30 avalia_frontend_prod || true
             
             echo "✅ Deploy finalizado com sucesso!"
