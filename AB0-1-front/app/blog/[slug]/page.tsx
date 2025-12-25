@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Calendar, User, Eye, Share2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,26 +76,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const ogImage = article.image_url ? getFullImageUrl(article.image_url) : null;
   const categorySlug = article.category?.slug || article.category?.seo_url || article.category?.id;
   const sponsoredLabel = article.sponsored_label ? `Patrocinado · ${article.sponsored_label}` : 'Patrocinado';
-
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.title,
-    description: article.meta_description || article.excerpt,
-    image: ogImage ? [ogImage] : undefined,
-    datePublished: article.published_at,
-    dateModified: article.updated_at,
-    author: {
-      '@type': 'Person',
-      name: article.author_name || article.author?.name || 'Avalia Solar',
-      email: article.author_email || undefined
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Avalia Solar'
-    },
-    mainEntityOfPage: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/blog/${article.slug}`
-  };
 
   const authorAvatarUrl = (article.author as any)?.avatar_photo_url
     ? getFullImageUrl((article.author as any).avatar_photo_url)
@@ -248,13 +227,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
         <ArticleConversionSection article={article} />
       </main>
-
-      <Script
-        id="article-schema"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
 
       <AuthorAvatarFloating
         name={article.author_name || article.author?.name || 'Avalia Solar'}

@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import CategoriesIndexWithSidebar from '@/components/CategoriesIndexWithSidebar';
-import Script from 'next/script';
 
 // Configuração de SEO Dinâmico
 export const metadata: Metadata = {
@@ -21,24 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function CategoriesPage() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Categorias de Energia Solar',
-    description: 'Diretório completo de categorias do setor solar.',
-    url: 'https://avaliasolar.com.br/categories',
-  };
-
-  return (
-    <>
-      <Script
-        id="categories-jsonld"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      
-      <CategoriesIndexWithSidebar />
-    </>
-  );
+  return <CategoriesIndexWithSidebar />;
 }
