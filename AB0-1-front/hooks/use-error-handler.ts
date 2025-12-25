@@ -36,8 +36,8 @@ export function useErrorHandler(defaultContext?: ErrorContext) {
     setError(formatted)
 
     // Show toast notification
-    toast.error(formatted.message, {
-      description: formatted.technical,
+    toast.error(formatted?.message || 'Ocorreu um erro', {
+      description: formatted?.technical || undefined,
       action: formatted.canRetry ? {
         label: 'Tentar Novamente',
         onClick: () => {

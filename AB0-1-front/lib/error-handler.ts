@@ -156,7 +156,7 @@ export async function retryAsync<T>(
  * User-friendly error messages
  */
 export function getUserFriendlyMessage(error: Error | null | undefined): string {
-  if (!error || !error.message) {
+  if (!error?.message) {
     return 'Ocorreu um erro. Tente novamente.'
   }
 
@@ -171,7 +171,7 @@ export function getUserFriendlyMessage(error: Error | null | undefined): string 
   }
 
   for (const [key, message] of Object.entries(errorMap)) {
-    if (error.message.includes(key)) {
+    if (error?.message && error.message.includes(key)) {
       return message
     }
   }
@@ -183,7 +183,7 @@ export function getUserFriendlyMessage(error: Error | null | undefined): string 
  * Check if error is recoverable
  */
 export function isRecoverableError(error: Error | null | undefined): boolean {
-  if (!error || !error.message) {
+  if (!error?.message) {
     return false
   }
 
@@ -195,7 +195,7 @@ export function isRecoverableError(error: Error | null | undefined): boolean {
   ]
 
   return recoverableErrors.some(msg => 
-    error.message.includes(msg)
+    error.message?.includes(msg) || false
   )
 }
 

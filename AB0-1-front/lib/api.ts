@@ -414,13 +414,13 @@ export async function fetchApi<T = any>(
     return response.data;
   } catch (error: any) {
     console.error('API error:', error);
-    if (error.response) {
+    if (error?.response) {
       throw new Error(
         error.response.data?.error ||
           `API error (${error.response.status})`
       );
     }
-    throw new Error(error.message || 'Unknown API error');
+    throw new Error(error?.message || error?.toString?.() || 'Unknown API error');
   }
 }
 

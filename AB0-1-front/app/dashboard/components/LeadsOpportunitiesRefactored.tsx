@@ -118,9 +118,9 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
     // Search filter
     if (searchQuery) {
       result = result.filter(lead =>
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.message.toLowerCase().includes(searchQuery.toLowerCase())
+        lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.message?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
