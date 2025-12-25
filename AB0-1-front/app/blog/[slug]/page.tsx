@@ -252,6 +252,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       <Script
         id="article-schema"
         type="application/ld+json"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
 

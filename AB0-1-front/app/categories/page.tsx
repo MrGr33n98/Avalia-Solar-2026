@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { Suspense } from 'react';
 import CategoriesIndexWithSidebar from '@/components/CategoriesIndexWithSidebar';
+import Script from 'next/script';
 
 // Configuração de SEO Dinâmico
 export const metadata: Metadata = {
@@ -21,7 +21,6 @@ export const metadata: Metadata = {
 };
 
 export default function CategoriesPage() {
-  // JSON-LD para Schema.org (Lista de Itens)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -32,16 +31,14 @@ export default function CategoriesPage() {
 
   return (
     <>
-      {/* Injeção do Schema.org para o Google entender a lista */}
-      <script
+      <Script
+        id="categories-jsonld"
         type="application/ld+json"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
-      {/* Componente Visual Principal */}
-      <Suspense fallback={<div className="p-10 text-center">Carregando categorias...</div>}>
-        <CategoriesIndexWithSidebar />
-      </Suspense>
+      <CategoriesIndexWithSidebar />
     </>
   );
 }
