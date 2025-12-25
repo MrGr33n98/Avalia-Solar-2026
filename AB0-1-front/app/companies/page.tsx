@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import ResponsiveBanner from '@/components/ResponsiveBanner';
+import BannerByLocation from '@/components/BannerByLocation';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -239,7 +239,7 @@ export default function CompaniesPage() {
           </section>
 
           <section>
-            <ResponsiveBanner location="companies_top" />
+            <BannerByLocation location="navbar" />
           </section>
 
           <section className="space-y-3">
@@ -486,7 +486,7 @@ export default function CompaniesPage() {
                 );
               })}
               <div className="col-span-2 row-span-2">
-                <ResponsiveBanner location="companies_desktop_featured" />
+                <BannerByLocation location="navbar" />
               </div>
             </section>
 
