@@ -47,10 +47,10 @@ export default function CategoriesError({
           </p>
         </div>
 
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === 'development' && error && (
           <div className="mt-4 p-4 bg-muted rounded-lg text-left">
             <p className="text-sm font-mono text-destructive break-words">
-              {error.message}
+              {error?.message || 'Unknown error'}
             </p>
             {error.digest && (
               <p className="text-xs text-muted-foreground mt-2">
