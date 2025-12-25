@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Filter,
   MapPin,
@@ -424,25 +423,25 @@ export default function CompaniesPage() {
       </div>
 
       <div className="hidden md:block">
-        <header className="sticky top-16 z-40 bg-[#ffe600] shadow-sm">
+        <header className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
           <div className="mx-auto max-w-7xl px-6 pt-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10 border border-white/80 bg-white">
-                <AvatarFallback className="bg-white text-xs font-semibold text-primary">AS</AvatarFallback>
+              <Avatar className="h-10 w-10 border border-gray-200 bg-white">
+                <AvatarFallback className="bg-white text-xs font-semibold text-blue-600">AS</AvatarFallback>
               </Avatar>
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   type="search"
                   placeholder="Buscar empresas no Avalia Solar..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="h-11 rounded-full border-none bg-white pl-11 pr-4 text-sm text-gray-900 shadow-sm focus-visible:ring-2 focus-visible:ring-black/20"
+                  className="h-11 rounded-full border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500/20"
                 />
               </div>
               <button
                 type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/85 text-primary"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"
                 aria-label="Notificacoes (2 novas)"
               >
                 <Bell className="h-5 w-5" />
@@ -451,16 +450,16 @@ export default function CompaniesPage() {
                 </span>
               </button>
             </div>
-            <div className="mt-3 flex items-center gap-2 pb-3 text-xs font-semibold text-gray-800">
+            <div className="mt-3 flex items-center gap-2 pb-3 text-xs font-medium text-gray-600">
               <MapPin className="h-4 w-4" />
               <span className="truncate">Enviar para {locationLabel}</span>
             </div>
           </div>
-          <div className="border-t border-black/10">
+          <div className="border-t border-gray-100">
             <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-6 py-3">
               <Link
                 href="/categories"
-                className="whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-900 shadow-sm"
+                className="whitespace-nowrap rounded-full bg-blue-600 text-white px-4 py-1.5 text-xs font-semibold shadow-sm hover:bg-blue-700"
               >
                 Tudo
               </Link>
@@ -468,7 +467,7 @@ export default function CompaniesPage() {
                 <Link
                   key={chip.label}
                   href={chip.href}
-                  className="whitespace-nowrap rounded-full bg-white/90 px-4 py-1.5 text-xs font-medium text-gray-900 shadow-sm"
+                  className="whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                 >
                   {chip.label}
                 </Link>
@@ -477,7 +476,7 @@ export default function CompaniesPage() {
           </div>
         </header>
 
-        <main className="bg-[#f5f6f8] pb-16">
+        <main className="bg-gray-50 pb-16">
           <div className="mx-auto max-w-7xl px-6 py-6">
             <section className="mb-6 grid grid-cols-6 gap-4">
               {quickActions.map((action) => {
@@ -486,7 +485,7 @@ export default function CompaniesPage() {
                   <Link
                     key={action.label}
                     href={action.href}
-                    className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5"
+                    className="flex flex-col items-center gap-2 rounded-xl bg-white p-4 text-center border border-gray-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
                   >
                     <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
                       <Icon className="h-5 w-5" />
@@ -495,11 +494,11 @@ export default function CompaniesPage() {
                   </Link>
                 );
               })}
-              <div className="col-span-2 row-span-2 overflow-hidden rounded-2xl bg-white shadow-sm">
+              <div className="col-span-2 row-span-2 overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm">
                 <div className="relative h-full">
                   <TestImage src="/images/banner1.png" alt="Banner promocional" className="object-cover" />
-                  <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5" />
-                  <div className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-gray-800">
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-black/5" />
+                  <div className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm">
                     Destaque da semana
                   </div>
                 </div>
@@ -508,7 +507,7 @@ export default function CompaniesPage() {
 
             <section className="grid grid-cols-[260px_1fr] gap-6">
               <aside className="space-y-4">
-                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Localizacao</p>
                   <div className="mt-3 space-y-3">
                     <LocationFilter
@@ -524,7 +523,7 @@ export default function CompaniesPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Ordenar</p>
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="mt-3 w-full border-gray-200 bg-white text-sm">
@@ -538,18 +537,18 @@ export default function CompaniesPage() {
                   </Select>
                 </div>
 
-                <div className="rounded-2xl bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Destaques</p>
+                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {ratingChips.map((chip) => (
                       <button
                         key={chip.value}
                         type="button"
                         onClick={() => setSortBy(chip.value)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                           sortBy === chip.value
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 bg-white text-gray-700'
+                            ? 'border-blue-600 bg-blue-600 text-white'
+                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                         }`}
                         aria-pressed={sortBy === chip.value}
                       >
@@ -599,26 +598,19 @@ export default function CompaniesPage() {
                     ))}
                   </div>
                 ) : filteredCompanies.length > 0 ? (
-                  <motion.div
+                  <div
                     className={`grid gap-4 ${
                       viewMode === 'grid'
                         ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
                         : 'grid-cols-1'
                     }`}
-                    layout
                   >
-                    {filteredCompanies.map((company, index) => (
-                      <motion.div
-                        key={company.id}
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.04 }}
-                        layout
-                      >
+                    {filteredCompanies.map((company) => (
+                      <div key={company.id}>
                         <CompanyCard company={company} />
-                      </motion.div>
+                      </div>
                     ))}
-                  </motion.div>
+                  </div>
                 ) : (
                   <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">

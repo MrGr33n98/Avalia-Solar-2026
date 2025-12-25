@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { Building2, Package, Layers, Star } from 'lucide-react';
 import Image from 'next/image';
 
@@ -42,13 +41,9 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
   };
 
   return (
-    <motion.div
+    <div
       className={`group relative bg-white border border-gray-200 rounded-lg p-4 
                   hover:shadow-lg hover:border-gray-300 transition-all duration-200 ${className}`}
-      whileHover={{ y: -2 }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
     >
       {/* Header: Nome e Contadores */}
       <div className="flex items-start justify-between mb-4">
@@ -113,6 +108,6 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
         className="absolute inset-0 z-10"
         aria-label={`Ver categoria ${displayData.name}`}
       />
-    </motion.div>
+    </div>
   );
 }
