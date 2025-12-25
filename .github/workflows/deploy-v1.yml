@@ -38,6 +38,7 @@ jobs:
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           build-args: |
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          no-cache: true
 
       # --- BUILD DO FRONTEND ---
       - name: Build and Push Frontend
@@ -47,6 +48,7 @@ jobs:
           file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
+          no-cache: true
 
   deploy:
     needs: build-and-push
@@ -62,9 +64,29 @@ jobs:
           script: |
             set -e
             cd ~/Avalia-Solar-2026
+            
+            echo "🔐 Login no registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "🗑️ Limpando cache Docker..."
+            docker system prune -f
+            
+            echo "📥 Pulling novas imagens..."
             docker-compose pull
-            docker-compose down || true
+            
+            echo "🛑 Parando containers..."
+            docker-compose down
+            
+            echo "🚀 Iniciando containers com force-recreate..."
             docker-compose up -d --force-recreate --remove-orphans
-            docker image prune -f
+            
+            echo "🗑️ Limpando imagens antigas..."
+            docker image prune -af
+            
+            echo "⏳ Aguardando 10 segundos..."
+            sleep 10
+            
+            echo "📋 Verificando logs do frontend..."
+            docker logs --tail 30 avalia_frontend_prod
+            
             echo "✅ Deploy finalizado com sucesso!"
