@@ -67,45 +67,38 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function CompanyDetailPage({ params }: Props) {
-  try {
-    // Log the ID being requested
-    console.log('[CompanyDetailPage] Loading company with ID:', params.id);
-    const companyId = parseIdFromSlug(params.id);
-    
-    // Check if the ID is valid
-    if (!companyId) {
-      console.error('[CompanyDetailPage] Invalid company ID:', params.id);
-      notFound();
-    }
-
-    console.log('[CompanyDetailPage] Fetching company from API...');
-    const company = await companiesApiSafe.getById(companyId);
-
-    if (!company) {
-      console.log('[CompanyDetailPage] Company not found for ID:', companyId);
-      notFound();
-    }
-
-    const canonicalPath = buildCompanyPath(company.id, company.name);
-    const canonicalSegment = canonicalPath.split('/').pop();
-    if (canonicalSegment && params.id !== canonicalSegment) {
-      permanentRedirect(canonicalPath);
-    }
-
-    console.log('[CompanyDetailPage] Company data loaded:', {
-      id: company.id,
-      name: company.name,
-      banner_url: company.banner_url,
-      logo_url: company.logo_url
-    });
-
-    return <CompanyDetailClient company={company} />;
-  } catch (error) {
-    console.error('[CompanyDetailPage] Erro ao carregar company:', error);
-    // Check if it's a NEXT_NOT_FOUND error, if so re-throw it
-    if (error instanceof Error && error.message.includes('NEXT_NOT_FOUND')) {
-      throw error;
-    }
+  // Log the ID being requested
+  console.log('[CompanyDetailPage] Loading company with ID:', params.id);
+  const companyId = parseIdFromSlug(params.id);
+  
+  // Check if the ID is valid
+  if (!companyId) {
+    console.error('[CompanyDetailPage] Invalid company ID:', params.id);
     notFound();
   }
+
+  console.log('[CompanyDetailPage] Fetching company from API...');
+  
+  // ✅ NÃO usar try/catch com notFound() ou redirect()
+  const company = await companiesApiSafe.getById(companyId);
+
+  if (!company) {
+    console.log('[CompanyDetailPage] Company not found for ID:', companyId);
+    notFound();
+  }
+
+  const canonicalPath = buildCompanyPath(company.id, company.name);
+  const canonicalSegment = canonicalPath.split('/').pop();
+  if (canonicalSegment && params.id !== canonicalSegment) {
+    permanentRedirect(canonicalPath);
+  }
+
+  console.log('[CompanyDetailPage] Company data loaded:', {
+    id: company.id,
+    name: company.name,
+    banner_url: company.banner_url,
+    logo_url: company.logo_url
+  });
+
+  return <CompanyDetailClient company={company} />;
 }
