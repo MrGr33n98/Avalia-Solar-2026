@@ -76,7 +76,7 @@ async function CategoryPageServer({ params }: CategorySlugPageProps) {
                 <a href="/">Ir para Home</a>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-red-600">Erro: {(error as Error).message}</p>
+            <p className="mt-4 text-sm text-red-600">Erro: {(error as Error)?.message || 'Erro ao carregar categoria'}</p>
           </div>
         </div>
       </div>
