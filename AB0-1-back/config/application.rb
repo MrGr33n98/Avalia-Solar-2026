@@ -25,6 +25,8 @@ module RailsBlogDemo
 
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
+    # Idempotency for critical endpoints
+    config.middleware.use IdempotencyMiddleware
     # TASK-022: Autoload query optimization helpers
     config.autoload_paths << Rails.root.join('lib')
   end

@@ -4,34 +4,24 @@ class Api::V1::BannersController < ApplicationController
   #   - position: string (optional) - Filter by position (e.g., 'categories_top')
   #   - limit: integer (optional) - Limit number of results
   def index
-    # 1. Filtrar banners ativos e válidos por data
-    @banners = Banner.where(active: true)
-    
-    # Validar datas se as colunas existirem
-    if Banner.column_names.include?('start_date') && Banner.column_names.include?('end_date')
-      @banners = @banners.where("start_date <= ? AND end_date >= ?", Time.current, Time.current)
-    end
+    @banners = Banner.currently_active
 
-    # 2. Filtro por posição (ex: categories_top)
-    if params[:position].present?
-      @banners = @banners.where(position: params[:position])
-    end
+    @banners = @banners.where(position: params[:position]) if params[:position].present?
 
-    # 3. Ordenação: Patrocinados primeiro, depois por data
+    # Sponsored first, then newest
     if Banner.column_names.include?('sponsored')
       @banners = @banners.order(sponsored: :desc, created_at: :desc)
     else
       @banners = @banners.order(created_at: :desc)
     end
 
-    # 4. Aplicar limite se fornecido
     if params[:limit].present? && params[:limit].to_i.positive?
       @banners = @banners.limit(params[:limit].to_i)
     end
 
     render json: @banners.as_json(
-      only: %i[id title link_url active position sponsored created_at],
-      methods: :image_url
+      only: %i[id title link active position sponsored banner_type category_id company_id start_date end_date created_at],
+      methods: %i[image_url link_url]
     )
   end
 end

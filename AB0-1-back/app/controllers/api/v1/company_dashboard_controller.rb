@@ -11,7 +11,7 @@ module Api
         
         render json: {
           stats: stats_service.call,
-          plan_features: @company.plan&.features_json || {}
+          plan_features: @company.effective_plan_features || {}
         }, status: :ok
       rescue => e
         Rails.logger.error("Company dashboard stats error: #{e.message}")
@@ -19,6 +19,38 @@ module Api
           stats: CompanyDashboard::StatsService.new(nil).call,
           plan_features: {}
         }, status: :ok
+      end
+
+      # GET /api/v1/company_dashboard/banner_subscriptions
+      def banner_subscriptions
+        subs = @company.banner_subscriptions.includes(:banner_offer).order(created_at: :desc)
+        render json: {
+          subscriptions: subs.as_json(include: { banner_offer: { only: %i[id name price_cents currency duration_days rules_json active] } })
+        }
+      end
+
+      # POST /api/v1/company_dashboard/banner_checkout
+      def banner_checkout
+        offer = BannerOffer.find(params[:offer_id])
+
+        checkout_session_id = SecureRandom.uuid
+        sub = @company.banner_subscriptions.create!(
+          banner_offer: offer,
+          status: 'pending_payment',
+          provider: 'mock',
+          checkout_session_id: checkout_session_id
+        )
+
+        render json: {
+          subscription: sub.as_json(only: %i[id status provider checkout_session_id created_at]),
+          message: 'Checkout criado. Confirme o pagamento via webhook (ambiente mock).',
+          webhook_example: {
+            url: '/api/v1/payments/webhooks/mock',
+            payload: { checkout_session_id: checkout_session_id, status: 'paid' }
+          }
+        }, status: :created
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'offer_not_found' }, status: :not_found
       end
 
       # POST /api/v1/company_dashboard/update_info

@@ -30,6 +30,8 @@ class Company < ApplicationRecord
   accepts_nested_attributes_for :company_buttons, allow_destroy: true
   has_many :financing_options, dependent: :destroy
   accepts_nested_attributes_for :financing_options, allow_destroy: true
+  has_many :banners, dependent: :nullify
+  has_many :banner_subscriptions, dependent: :destroy
   belongs_to :plan, optional: true
 
   # =========================
@@ -278,14 +280,26 @@ class Company < ApplicationRecord
     raw.deep_stringify_keys
   end
 
+  def effective_plan_features
+    features = plan_features.dup
+
+    # Add-on: if company purchased banner subscriptions
+    if banner_subscriptions.active.exists?
+      features['banners'] = true
+      features['has_banners'] = true
+    end
+
+    features
+  end
+
   def plan_permissions
-    plan_features
+    effective_plan_features
   end
 
   def feature_enabled?(name)
     return false if name.blank?
 
-    features = plan_features
+    features = effective_plan_features
     return false if features.blank?
 
     key = name.to_s

@@ -495,7 +495,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
             </TabsContent>
 
             <TabsContent value="banners">
-              <BannersSponsorship companyId={companyId} />
+              <BannersSponsorship companyId={companyId} planFeatures={planFeatures} />
             </TabsContent>
 
             <TabsContent value="products">

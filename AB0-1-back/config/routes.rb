@@ -71,12 +71,20 @@ Rails.application.routes.draw do
       # Analytics routes
       post 'analytics/track', to: 'analytics#track'
 
+      # Banner offers (catalog)
+      resources :banner_offers, only: [:index]
+
+      # Payments webhooks
+      post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
+
       # Dashboard routes
       get 'dashboard/stats', to: 'dashboard#stats'
 
       # Company Dashboard routes
       scope :company_dashboard do
         get 'stats', to: 'company_dashboard#stats'
+        get 'banner_subscriptions', to: 'company_dashboard#banner_subscriptions'
+        post 'banner_checkout', to: 'company_dashboard#banner_checkout'
         get 'notifications', to: 'company_dashboard#notifications'
         get 'pending_changes', to: 'company_dashboard#pending_changes'
         get 'media', to: 'company_dashboard#media'
@@ -85,6 +93,12 @@ Rails.application.routes.draw do
         post 'remove_category', to: 'company_dashboard#remove_category'
         post 'update_ctas', to: 'company_dashboard#update_ctas'
         post 'upload_media', to: 'company_dashboard#upload_media'
+
+        resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
+          member do
+            patch :submit
+          end
+        end
       end
 
       # Categories routes
