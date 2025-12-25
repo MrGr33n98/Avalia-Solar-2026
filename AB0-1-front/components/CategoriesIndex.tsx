@@ -57,11 +57,11 @@ export default function CategoriesIndex() {
       setLoading(true);
       setError(null);
 
-      // Buscar banners em paralelo
+      // Buscar banners em paralelo usando api.request
       const [bannersRes, featuredRes, allRes] = await Promise.all([
-        api.get('/banners?position=categories_top').catch(() => ({ data: [] })),
-        api.get('/categories?view=cards&featured=true&limit=8').catch(() => ({ data: [] })),
-        api.get('/categories?view=cards').catch(() => ({ data: [] }))
+        api.request<Banner[]>({ url: '/banners?position=categories_top', method: 'GET' }).catch(() => ({ data: [] })),
+        api.request<Category[]>({ url: '/categories?view=cards&featured=true&limit=8', method: 'GET' }).catch(() => ({ data: [] })),
+        api.request<Category[]>({ url: '/categories?view=cards', method: 'GET' }).catch(() => ({ data: [] }))
       ]);
 
       setBanners(bannersRes.data);
