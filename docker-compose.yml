@@ -38,8 +38,8 @@ services:
 
   backend:
     build:
-      context: ./AB0-1-back
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.backend
       args:
         RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     container_name: ab0-backend
@@ -78,8 +78,8 @@ services:
 
   frontend:
     build:
-      context: ./AB0-1-front
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: ab0-frontend
     restart: unless-stopped
     depends_on:
