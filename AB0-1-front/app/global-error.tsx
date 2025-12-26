@@ -5,18 +5,12 @@ import { useEffect } from 'react'
 
 /**
  * Global Error Handler
- * 
+ *
  * This catches errors in the root layout (including errors in error.tsx).
  * It must define its own <html> and <body> tags.
- * 
+ *
  * @see https://nextjs.org/docs/app/building-your-application/routing/error-handling#handling-errors-in-root-layouts
  */
-import { Inter } from 'next/font/google'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-})
 
 export default function GlobalError({
   error,
@@ -39,7 +33,7 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <html lang="pt-BR" className={`${inter.className} light`}>
+    <html lang="pt-BR" className="light">
       <body>
         <div style={{
           minHeight: '100vh',

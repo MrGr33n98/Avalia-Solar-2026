@@ -1,16 +1,11 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 
 import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap', // This helps with font loading
-});
 
 export const metadata: Metadata = {
   title: 'Avalia Solar - Marketplace de Energia Solar',
@@ -67,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${inter.className} light`} suppressHydrationWarning>
+    <html lang="pt-BR" className="light" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ClientBody>
           <Navbar />
