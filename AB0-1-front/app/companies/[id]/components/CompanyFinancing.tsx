@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +30,8 @@ export default function CompanyFinancing({ companyId }: Props) {
     setLoading(true);
     try {
       const data = await financingOptionsApi.getAll(companyId, { audience });
-      const mapped = (data || []).map((opt: any) => ({
+      const financingList = Array.isArray(data) ? data : (data as any)?.options || [];
+      const mapped = financingList.map((opt: any) => ({
         ...opt,
         name: opt.credit_line || opt.institution_name || 'Financiamento',
         institution: opt.institution_name,

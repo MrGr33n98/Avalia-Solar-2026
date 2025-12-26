@@ -62,28 +62,39 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
+            set -euo pipefail
             cd ~/Avalia-Solar-2026
-            
+
+            on_error() {
+              code=$?
+              echo "\n❌ Deploy falhou (exit=${code}). Dumping estado do Docker..." >&2
+              docker compose ps || true
+              docker compose logs --tail 200 backend frontend || true
+              docker logs --tail 200 ab0-backend || true
+              docker logs --tail 200 ab0-frontend || true
+              exit ${code}
+            }
+            trap on_error ERR
+
             echo " Atualizando repositório local na VM..."
             git pull origin main
-            
+
             echo " Login no registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             echo " Pulling novas imagens..."
             docker compose pull
-            
+
             echo " Reiniciando serviços..."
             docker compose up -d --force-recreate --remove-orphans
-            
+
             echo " Rodando migrações de banco..."
             docker exec ab0-backend bundle exec rails db:migrate
-            
+
+            echo " Verificando logs rápidos..."
+            docker compose logs --tail 50 backend frontend
+
             echo " Limpando imagens antigas..."
             docker image prune -af
-            
-            echo " Verificando logs rápidos..."
-            docker compose logs --tail 20 backend frontend
-            
+
             echo " Deploy finalizado com sucesso!"

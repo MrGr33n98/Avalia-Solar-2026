@@ -794,8 +794,17 @@ export const searchApi = {
 };
 
 export const financingOptionsApi = {
-  getAll: (companyId: number, params?: { audience?: string; active?: boolean }) =>
-    fetchApi<FinancingOption[]>(`/companies/${companyId}/financing_options`, { params }),
+  getAll: async (companyId: number, params?: { audience?: string; active?: boolean }): Promise<FinancingOption[]> => {
+    try {
+      const response = await fetchApi<any>(`/companies/${companyId}/financing_options`, { params });
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.options)) return response.options;
+      return [];
+    } catch (error) {
+      console.error('Error fetching financing options:', error);
+      return [];
+    }
+  },
   compare: (companyId: number, ids: number[]) =>
     fetchApi<{ options: FinancingOption[] }>(
       `/companies/${companyId}/financing_options/compare`,
