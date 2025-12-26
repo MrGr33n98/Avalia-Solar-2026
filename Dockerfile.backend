@@ -1,6 +1,6 @@
 FROM ruby:3.2.2
 
-# Install system dependencies
+# 1. Instalação de dependências do sistema
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -12,38 +12,40 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory (O código do Rails vive em AB0-1-back no repositório)
+# 2. Configuração do diretório de trabalho
+# O Rails será montado em /app/AB0-1-back dentro do container
 WORKDIR /app/AB0-1-back
 
-# Install specific bundler version
+# 3. Instalação do Bundler
 RUN gem install bundler:2.4.22
 
-# Copy Gemfile and install dependencies
-# O contexto do build deve ser a raiz do projeto (.)
+# 4. Instalação de Gems (Dependências do Ruby)
+# Nota: O contexto do build deve ser a raiz do repositório (.)
 COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3
 
-# Copy application code
+# 5. Cópia do código fonte da aplicação
 COPY AB0-1-back/ ./
 
-# Create necessary directories
+# 6. Criação de pastas necessárias
 RUN mkdir -p tmp/pids tmp/storage public/assets log
 
-# Set environment variables
+# 7. Configuração de Variáveis de Ambiente
 ENV RAILS_ENV=production \
     PATH="/app/AB0-1-back/bin:${PATH}"
 
-# --- CORREÇÃO PARA O BUILD NO GITHUB ACTIONS ---
-# Usamos SECRET_KEY_BASE_DUMMY para compilar assets sem precisar da Master Key real.
-# Isso evita o erro de "uninitialized constant" ou falta de chave durante o build.
+# 8. Compilação de Assets (Correção para GitHub Actions)
+# Usamos SECRET_KEY_BASE_DUMMY para permitir o build sem a Master Key real.
 RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rake assets:precompile RAILS_ENV=production
 
+# 9. Exposição da porta da API
 EXPOSE 3001
 
-# Add entrypoint script
-# O arquivo deve estar em AB0-1-back/entrypoint.sh
+# 10. Configuração do Script de Entrada (Entrypoint)
 COPY AB0-1-back/entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+
+# 11. Comando para iniciar o servidor Puma
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]
