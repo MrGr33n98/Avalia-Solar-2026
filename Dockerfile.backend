@@ -12,17 +12,18 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory (Rails app lives in AB0-1-back)
+# Set working directory (O código do Rails vive em AB0-1-back no repositório)
 WORKDIR /app/AB0-1-back
 
 # Install specific bundler version
 RUN gem install bundler:2.4.22
 
 # Copy Gemfile and install dependencies
+# O contexto do build deve ser a raiz do projeto (.)
 COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3
 
-# Copy application code (copy contents, not the folder)
+# Copy application code
 COPY AB0-1-back/ ./
 
 # Create necessary directories
@@ -30,23 +31,17 @@ RUN mkdir -p tmp/pids tmp/storage public/assets log
 
 # Set environment variables
 ENV RAILS_ENV=production \
-    PATH="/app/AB0-1-back/bin:${PATH}" \
-    SECRET_KEY_BASE=placeholder_for_asset_compilation
+    PATH="/app/AB0-1-back/bin:${PATH}"
 
-# 👇👇👇 AQUI ESTÁ A CORREÇÃO CRUCIAL 👇👇👇
-# 1. ARG: Aceita o argumento que vem do docker-compose
-ARG RAILS_MASTER_KEY
-# 2. ENV: Torna-o disponível para o comando 'rake assets:precompile' abaixo
-ENV RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
-# 👆👆👆 FIM DA CORREÇÃO 👆👆👆
-
-# Precompile assets (including ActiveAdmin assets)
-RUN bundle exec rake assets:precompile
+# --- CORREÇÃO PARA O BUILD NO GITHUB ACTIONS ---
+# Usamos SECRET_KEY_BASE_DUMMY para compilar assets sem precisar da Master Key real.
+# Isso evita o erro de "uninitialized constant" ou falta de chave durante o build.
+RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rake assets:precompile RAILS_ENV=production
 
 EXPOSE 3001
 
-# Start the server
 # Add entrypoint script
+# O arquivo deve estar em AB0-1-back/entrypoint.sh
 COPY AB0-1-back/entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
 
