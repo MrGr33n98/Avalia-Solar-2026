@@ -1,5 +1,10 @@
 /// <reference types="next" />
 /// <reference types="next/image-types/global" />
 
-// NOTE: This file should not be edited
-// see https://nextjs.org/docs/basic-features/typescript for more information.
+// NOTE: Next gera/usa este arquivo como ponto de entrada de tipos.
+// Mantemos aqui o typing de CSS Modules para evitar TS2307 no `next build`.
+
+declare module '*.module.css' {
+  const classes: Record<string, string>;
+  export default classes;
+}
