@@ -41,8 +41,8 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
 
   return (
     <motion.div
-      className={`group relative flex flex-col h-full overflow-hidden rounded-xl bg-white
-                  border border-gray-200 shadow-sm hover:shadow-md
+      className={`group relative flex flex-col h-full overflow-hidden rounded-lg bg-card text-card-foreground
+                  border border-border shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)]
                   transition-all duration-300 ease-out ${className}`}
       whileHover={{ y: -4 }}
       onHoverStart={() => setIsHovered(true)}
@@ -66,8 +66,8 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
         <span className={`
           px-2 py-1 rounded-full text-xs font-medium
           ${displayData.status === 'active' 
-            ? 'bg-green-100 text-green-700' 
-            : 'bg-gray-100 text-gray-600'
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' 
+            : 'bg-muted text-muted-foreground'
           }
         `}>
           {displayData.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -75,44 +75,67 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
       </div>
 
       {/* Banner Section */}
-      <div className="relative h-24 w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden aspect-[16/9]">
         {displayData.banner_url && !imageError ? (
-          <Image
-            src={displayData.banner_url}
-            alt={`Banner da categoria ${displayData.name}`}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={() => setImageError(true)}
-          />
+          <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-90">
+            <Image
+              src={displayData.banner_url}
+              alt={`Banner da categoria ${displayData.name}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImageError(true)}
+            />
+          </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
             {displayData.name.charAt(0)}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+
+        {/* Logo (circular, 1:1, contorno 2px semitransparente) */}
+        <div className="absolute left-4 bottom-4 z-20">
+          <div className="relative w-12 h-12 sm:w-14 sm:h-14 aspect-square rounded-full overflow-hidden bg-background/95
+                          ring-2 ring-black/10 dark:ring-white/15 shadow-sm">
+            {category?.logo?.url ? (
+              <Image
+                src={category.logo.url}
+                alt={`Logo da categoria ${displayData.name}`}
+                fill
+                sizes="56px"
+                className="object-contain p-1"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-foreground/80">
+                {displayData.name.charAt(0)}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+        <h3 className="text-lg font-semibold text-foreground mb-1">
           {displayData.name}
         </h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
           {displayData.description}
         </p>
 
         {/* Stats */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-1.5 text-sm text-gray-700">
-            <Building2 className="h-4 w-4 text-gray-500" />
+          <div className="flex items-center gap-1.5 text-sm text-foreground/90">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{displayData.companies_count}</span>
-            <span className="text-gray-500">empresas</span>
+            <span className="text-muted-foreground">empresas</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-700">
-            <Package className="h-4 w-4 text-gray-500" />
+          <div className="flex items-center gap-1.5 text-sm text-foreground/90">
+            <Package className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{displayData.products_count}</span>
-            <span className="text-gray-500">produtos</span>
+            <span className="text-muted-foreground">produtos</span>
           </div>
         </div>
 
