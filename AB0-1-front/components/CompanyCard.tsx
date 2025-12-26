@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import WhatsappButton from '@/components/WhatsappButton';
 import { getFullImageUrl } from '@/utils/image';
+import styles from './CompanyCard.module.css';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
@@ -153,16 +154,19 @@ export default function CompanyCard({ company, className = '', compact = false }
                 />
 
                 {logoUrl && !logoError && (
-                  <div className="absolute bottom-3 left-3 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/95 border border-gray-200 shadow-sm p-1 flex items-center justify-center"> // Container responsivo
-                    <Image
-                      src={logoUrl}
-                      alt={`Logo ${name}`}
-                      fill
-                      sizes="(max-width: 768px) 40px, 56px" // Responsivo para mobile
-                      className="object-contain aspect-square" // Manter proporções quadradas
-                      onError={() => setLogoError(true)}
-                      priority={false}
-                    />
+                  <div className={styles.logoOverlay}>
+                    {/* Logo em container circular (border-radius: 50%) e centralizado */}
+                    <div className={styles.logoContainer}>
+                      <Image
+                        src={logoUrl}
+                        alt={`Logo ${name}`}
+                        fill
+                        sizes="(max-width: 768px) 56px, 64px"
+                        className={styles.logoImage}
+                        onError={() => setLogoError(true)}
+                        priority={false}
+                      />
+                    </div>
                   </div>
                 )}
               </>

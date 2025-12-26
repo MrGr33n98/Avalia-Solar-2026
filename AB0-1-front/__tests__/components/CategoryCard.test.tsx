@@ -47,38 +47,28 @@ describe('CategoryCard', () => {
     updated_at: '2023-01-01T00:00:00Z',
   };
 
-  it('renders category name and description', () => {
+  it('renders only the banner image', () => {
     render(<CategoryCard category={mockCategory} />);
-    
-    expect(screen.getByText('Painéis Solares')).toBeInTheDocument();
-    // The description in the component is actually the short_description, not the full description
-    expect(screen.getByText('Painéis solares de alta eficiência para residências e empresas')).toBeInTheDocument();
+
+    const image = screen.getByTestId('mock-image');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute('src', '/images/category-placeholder.svg');
+    expect(image).toHaveAttribute('alt', 'Banner da categoria Painéis Solares');
+
+    // UI simplificada: não deve renderizar textos/CTA
+    expect(screen.queryByText('Painéis Solares')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Explorar/i)).not.toBeInTheDocument();
   });
 
   it('renders category link with correct SEO URL', () => {
     render(<CategoryCard category={mockCategory} />);
-    
+
     const link = screen.getByRole('link');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/categories/painel-solar');
   });
 
-  it('renders category banner image', () => {
-    render(<CategoryCard category={mockCategory} />);
-    
-    const image = screen.getByTestId('mock-image');
-    expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute('src', '/images/category-placeholder.svg');
-    expect(image).toHaveAttribute('alt', 'Banner da categoria Painéis Solares');
-  });
-
-  it('renders the "Ver detalhes" button', () => {
-    render(<CategoryCard category={mockCategory} />);
-    
-    expect(screen.getByRole('button', { name: /Ver detalhes/ })).toBeInTheDocument();
-  });
-
-  it('handles category without optional data gracefully', () => {
+  it('handles category without optional data gracefully (banner fallback)', () => {
     const minimalCategory: Category = {
       id: 2,
       name: 'Minimal Category',
@@ -94,19 +84,15 @@ describe('CategoryCard', () => {
       created_at: '2023-01-01T00:00:00Z',
       updated_at: '2023-01-01T00:00:00Z',
     };
-    
+
     render(<CategoryCard category={minimalCategory} />);
-    
-    expect(screen.getByText('Minimal Category')).toBeInTheDocument();
-    expect(screen.getByText('A category with minimal data')).toBeInTheDocument();
-    
-    // Should show placeholder images when URLs are not provided
+
     const image = screen.getByTestId('mock-image');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', '/images/category-placeholder.svg');
   });
 
-  it('uses fallback name and description when not provided', () => {
+  it('does not crash when name/description are missing', () => {
     const emptyCategory: any = {
       id: 3,
       seo_url: 'empty-category',
@@ -119,10 +105,12 @@ describe('CategoryCard', () => {
       created_at: '2023-01-01T00:00:00Z',
       updated_at: '2023-01-01T00:00:00Z',
     };
-    
+
     render(<CategoryCard category={emptyCategory} />);
-    
-    expect(screen.getByText('Nome da Categoria')).toBeInTheDocument();
-    expect(screen.getByText('Categoria de energia solar.')).toBeInTheDocument();
+
+    // Deve renderizar banner (placeholder) e link, sem depender de textos.
+    const image = screen.getByTestId('mock-image');
+    expect(image).toBeInTheDocument();
+    expect(screen.getByRole('link')).toBeInTheDocument();
   });
 });

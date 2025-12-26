@@ -11,13 +11,20 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # --- ESTRATÉGIA DE PARALELISMO ---
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    
     steps:
       - uses: actions/checkout@v4
 
       - name: Lowercase Repository Name
         id: repo_name
-        run: |
-          echo "repository=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+        run: echo "repository=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -26,29 +33,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- BUILD DO BACKEND ---
-      - name: Build and Push Backend
+      - name: Build and Push ${{ matrix.component }}
         uses: docker/build-push-action@v5
         with:
-          # Alterado para a raiz para que o Dockerfile encontre as pastas AB0-1-back/...
           context: .
-          file: ./Dockerfile.backend
+          file: ./Dockerfile.${{ matrix.component }}
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-${{ matrix.component }}:latest
           build-args: |
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
-          no-cache: true
-
-      # --- BUILD DO FRONTEND ---
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          # Alterado para a raiz
-          context: .
-          file: ./Dockerfile.frontend
-          push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
-          no-cache: true
+          # --- ATIVAÇÃO DE CACHE INTELIGENTE ---
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
 
   deploy:
     needs: build-and-push
@@ -61,40 +57,36 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          command_timeout: 20m
           script: |
             set -euo pipefail
             cd ~/Avalia-Solar-2026
 
             on_error() {
               code=$?
-              echo "\n❌ Deploy falhou (exit=${code}). Dumping estado do Docker..." >&2
+              echo -e "\n❌ Deploy falhou (exit=${code}). Dumping estado do Docker..." >&2
               docker compose ps || true
               docker compose logs --tail 200 backend frontend || true
-              docker logs --tail 200 ab0-backend || true
-              docker logs --tail 200 ab0-frontend || true
               exit ${code}
             }
             trap on_error ERR
 
-            echo " Atualizando repositório local na VM..."
+            echo "📥 Atualizando código local..."
             git pull origin main
 
-            echo " Login no registry..."
+            echo "🔑 Login no Registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo " Pulling novas imagens..."
-            docker compose pull
+            echo "🚚 Pulling novas imagens..."
+            docker compose pull backend frontend
 
-            echo " Reiniciando serviços..."
-            docker compose up -d --force-recreate --remove-orphans
+            echo "🔄 Reiniciando apenas o que mudou..."
+            # --no-deps evita reiniciar o Postgres e Redis sem necessidade
+            docker compose up -d --no-deps backend frontend
 
-            echo " Rodando migrações de banco..."
+            echo "🗄️ Migrações de banco..."
             docker exec ab0-backend bundle exec rails db:migrate
 
-            echo " Verificando logs rápidos..."
-            docker compose logs --tail 50 backend frontend
-
-            echo " Limpando imagens antigas..."
-            docker image prune -af
-
-            echo " Deploy finalizado com sucesso!"
+            echo "🧹 Limpeza e Finalização..."
+            docker image prune -f
+            echo "✅ Deploy finalizado com sucesso!"
