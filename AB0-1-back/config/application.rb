@@ -9,6 +9,9 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Ensure custom middleware is loaded before referencing it in config.middleware.use
+require_relative "../lib/idempotency_middleware"
+
 module RailsBlogDemo
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -23,11 +26,13 @@ module RailsBlogDemo
     # config.eager_load_paths << Rails.root.join("extras")
     config.assets.initialize_on_precompile = false
 
+    # TASK-022: Autoload/eager_load lib for Zeitwerk (needed for custom middleware)
+    config.autoload_paths << Rails.root.join('lib')
+    config.eager_load_paths << Rails.root.join('lib')
+
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
     # Idempotency for critical endpoints
     config.middleware.use IdempotencyMiddleware
-    # TASK-022: Autoload query optimization helpers
-    config.autoload_paths << Rails.root.join('lib')
   end
 end
