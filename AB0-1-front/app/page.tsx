@@ -147,7 +147,7 @@ export default function Home() {
                   <CarouselContent className="-ml-4">
                     {companies.map((company) => (
                       <CarouselItem key={company.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                        <CompanyCard company={company} compact={true} className="md:compact-false" // Ajustar props para não compact em desktop, melhorando visibilidade de logos
+                        <CompanyCard company={company} compact={true} />
                       </CarouselItem>
                     ))}
                   </CarouselContent>
