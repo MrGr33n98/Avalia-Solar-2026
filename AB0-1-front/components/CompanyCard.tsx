@@ -59,11 +59,11 @@ export default function CompanyCard({ company, className = '', compact = false }
   };
 
   return (
-    <div className={`h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group ${className}`}>
+    <div className={`h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group touch-manipulation ${className}`}>
       
       {/* 1. Área do Banner e Logo */}
       <div className="relative">
-        <Link href={companyPath} className="block relative h-32 w-full overflow-hidden rounded-t-xl bg-gray-50" aria-label={`Ver detalhes de ${name}`}>
+        <Link href={companyPath} className="block relative h-28 md:h-32 w-full overflow-hidden rounded-t-xl bg-gray-50" aria-label={`Ver detalhes de ${name}`}>
           {bannerUrl && !bannerError ? (
             <Image
               src={bannerUrl}
@@ -88,38 +88,38 @@ export default function CompanyCard({ company, className = '', compact = false }
           )}
         </Link>
 
-        {/* Logo Circular Sobreposto - Ajuste de posição e borda para destaque */}
-        <div className="absolute -bottom-10 left-4 z-10">
-          <div className="relative w-20 h-20 rounded-full bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+        {/* Logo Circular Sobreposto - Responsivo (menor em mobile) */}
+        <div className="absolute -bottom-8 md:-bottom-10 left-4 z-10">
+          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center transition-all duration-300">
              {logoUrl && !logoError ? (
                <Image
                  src={logoUrl}
                  alt={`Logo ${name}`}
                  fill
-                 sizes="80px"
-                 className="object-contain p-1" // p-1 evita que logos quadrados toquem a borda circular
+                 sizes="(max-width: 768px) 64px, 80px"
+                 className="object-contain p-1"
                  onError={() => setLogoError(true)}
                />
              ) : (
-               <Building2 className="text-gray-300 w-8 h-8" />
+               <Building2 className="text-gray-300 w-6 h-6 md:w-8 md:h-8" />
              )}
           </div>
         </div>
       </div>
 
       {/* 2. Conteúdo Principal */}
-      <div className="pt-12 px-5 pb-4 flex-1 flex flex-col">
+      <div className="pt-10 md:pt-12 px-4 md:px-5 pb-4 flex-1 flex flex-col">
         {/* Cabeçalho: Nome e Avaliação */}
-        <div className="flex justify-between items-start mb-2">
-           <div className="flex-1 min-w-0 pr-2">
+        <div className="flex justify-between items-start mb-2 gap-2">
+           <div className="flex-1 min-w-0">
              <Link href={companyPath} className="group-hover:text-blue-600 transition-colors">
-               <h3 className="font-bold text-lg text-gray-900 truncate" title={name}>
+               <h3 className="font-bold text-base md:text-lg text-gray-900 truncate leading-tight" title={name}>
                  {name}
                </h3>
              </Link>
              {(city || state) && (
-               <div className="flex items-center text-sm text-gray-500 mt-1">
-                 <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+               <div className="flex items-center text-xs md:text-sm text-gray-500 mt-1">
+                 <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 flex-shrink-0" />
                  <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
                </div>
              )}
@@ -127,12 +127,12 @@ export default function CompanyCard({ company, className = '', compact = false }
            
            {/* Rating Badge */}
            {parseFloat(rating) > 0 && (
-             <div className="flex flex-col items-end flex-shrink-0 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+             <div className="flex flex-col items-end flex-shrink-0 bg-amber-50 px-1.5 py-0.5 md:px-2 md:py-1 rounded-lg border border-amber-100">
                <div className="flex items-center gap-1">
-                 <span className="font-bold text-amber-700">{rating}</span>
-                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                 <span className="font-bold text-sm md:text-base text-amber-700">{rating}</span>
+                 <Star className="w-3 h-3 md:w-3.5 md:h-3.5 fill-amber-500 text-amber-500" />
                </div>
-               <span className="text-[10px] text-amber-600/80 font-medium">{totalReviews} avaliações</span>
+               <span className="text-[9px] md:text-[10px] text-amber-600/80 font-medium whitespace-nowrap">{totalReviews} avaliações</span>
              </div>
            )}
         </div>
@@ -140,15 +140,15 @@ export default function CompanyCard({ company, className = '', compact = false }
         {/* Tags / Categoria */}
         <div className="mb-3">
           {category_name && (
-            <Badge variant="secondary" className="font-normal bg-gray-100 text-gray-600 hover:bg-gray-200">
+            <Badge variant="secondary" className="font-normal text-[10px] md:text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">
               {category_name}
             </Badge>
           )}
         </div>
 
-        {/* Descrição Curta */}
+        {/* Descrição Curta - Escondida em mobile muito pequeno se necessário, ou clampada */}
         {description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1">
+          <p className="text-xs md:text-sm text-gray-600 line-clamp-2 mb-4 flex-1">
             {description}
           </p>
         )}
@@ -162,30 +162,30 @@ export default function CompanyCard({ company, className = '', compact = false }
              <WhatsappButton
                enabled
                href={whatsappLinkRaw}
-               label="Conversar no WhatsApp"
-               className="w-full shadow-sm hover:shadow-md transition-shadow"
+               label="WhatsApp"
+               className="w-full shadow-sm hover:shadow-md transition-shadow h-9 md:h-9" // Altura otimizada
                size="sm"
              />
            ) : (
              <Button 
-               className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+               className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm h-9 md:h-9"
                size="sm"
                onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
              >
                <MessageCircle className="w-4 h-4 mr-2" />
-               Solicitar Orçamento
+               <span className="truncate">Solicitar Orçamento</span>
              </Button>
            )}
 
            <Button 
              variant="outline" 
              size="sm" 
-             className="w-full border-gray-200 hover:bg-gray-50 text-gray-600"
+             className="w-full border-gray-200 hover:bg-gray-50 text-gray-600 h-9 md:h-9"
              asChild
            >
              <Link href={companyReviewPath}>
                <Star className="w-4 h-4 mr-2 text-gray-400 group-hover:text-amber-400 transition-colors" />
-               Avaliar Empresa
+               Avaliar
              </Link>
            </Button>
         </div>
