@@ -17,6 +17,8 @@ Rails.application.configure do
 
   # Armazenamento e Host de API
   config.active_storage.service = :local
+  # Evita 404 por URL expirada do DiskService em páginas cacheadas
+  config.active_storage.service_urls_expire_in = 7.days
   
   # --- CONFIGURAÇÃO UNIFICADA DE URL ---
   # Remove as definições duplicadas e conflitantes do final do arquivo original

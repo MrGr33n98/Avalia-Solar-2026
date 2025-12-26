@@ -140,16 +140,32 @@ export default function CompanyCard({ company, className = '', compact = false }
           {/* Banner/Logo Section - Redesigned com object-contain */}
           <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center">
             {bannerUrl && !bannerError ? (
-              <Image
-                src={bannerUrl}
-                alt={`Banner ${company.name}`}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-contain p-4"
-                onError={() => setBannerError(true)}
-                data-testid="company-banner"
-                priority={false}
-              />
+              <>
+                <Image
+                  src={bannerUrl}
+                  alt={`Banner ${company.name}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-contain p-4"
+                  onError={() => setBannerError(true)}
+                  data-testid="company-banner"
+                  priority={false}
+                />
+
+                {logoUrl && !logoError && (
+                  <div className="absolute bottom-3 left-3 h-14 w-14 rounded-full bg-white/95 border border-gray-200 shadow-sm p-1">
+                    <Image
+                      src={logoUrl}
+                      alt={`Logo ${name}`}
+                      fill
+                      sizes="56px"
+                      className="object-contain"
+                      onError={() => setLogoError(true)}
+                      priority={false}
+                    />
+                  </div>
+                )}
+              </>
             ) : logoUrl && !logoError ? (
               <Image
                 src={logoUrl}
