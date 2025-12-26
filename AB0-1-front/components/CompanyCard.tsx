@@ -67,7 +67,7 @@ export default function CompanyCard({ company, className = '', compact = false }
   
   // Prepara as URLs das imagens
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
-  const logoUrl = getFullImageUrl(company.logo_url || undefined);
+  const logoUrl = getFullImageUrl(company.logo_url || undefined) || '/fallback-logo.png'; // Fallback para logo padrão se não disponível
   
   // Debug logs to track image loading (Requested by user)
   useEffect(() => {
@@ -153,13 +153,13 @@ export default function CompanyCard({ company, className = '', compact = false }
                 />
 
                 {logoUrl && !logoError && (
-                  <div className="absolute bottom-3 left-3 h-14 w-14 rounded-full bg-white/95 border border-gray-200 shadow-sm p-1">
+                  <div className="absolute bottom-3 left-3 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/95 border border-gray-200 shadow-sm p-1 flex items-center justify-center"> // Container responsivo
                     <Image
                       src={logoUrl}
                       alt={`Logo ${name}`}
                       fill
-                      sizes="56px"
-                      className="object-contain"
+                      sizes="(max-width: 768px) 40px, 56px" // Responsivo para mobile
+                      className="object-contain aspect-square" // Manter proporções quadradas
                       onError={() => setLogoError(true)}
                       priority={false}
                     />

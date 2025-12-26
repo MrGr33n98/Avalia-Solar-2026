@@ -50,7 +50,7 @@ export default function Home() {
 
     const fetchCompanies = async () => {
       try {
-        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12 });
+        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12, include: 'logo_url' }); // Garantir que logo_url seja incluído nos dados
         setCompanies(response);
       } catch (error) {
         console.error('Error fetching companies:', error);
@@ -147,7 +147,7 @@ export default function Home() {
                   <CarouselContent className="-ml-4">
                     {companies.map((company) => (
                       <CarouselItem key={company.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                        <CompanyCard company={company} compact={true} />
+                        <CompanyCard company={company} compact={true} className="md:compact-false" // Ajustar props para não compact em desktop, melhorando visibilidade de logos
                       </CarouselItem>
                     ))}
                   </CarouselContent>

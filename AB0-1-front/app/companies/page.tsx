@@ -40,7 +40,7 @@ export default function CompaniesPage() {
       try {
         console.log('[CompaniesPage] Fetching companies and categories...');
         const [companiesData, categoriesData] = await Promise.all([
-          companiesApiSafe.getAll(),
+          companiesApiSafe.getAll({ include: 'logo_url' }), // Incluir logo_url para fallback
           categoriesApiSafe.getAll()
         ]);
 
@@ -364,7 +364,7 @@ export default function CompaniesPage() {
             ) : filteredCompanies.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {filteredCompanies.map((company) => (
-                  <CompanyCard key={company.id} company={company} compact />
+                  <CompanyCard key={company.id} company={company} compact className="md:compact-false" // Ajustar para melhor display de logos em desktop
                 ))}
               </div>
             ) : (
@@ -622,4 +622,3 @@ export default function CompaniesPage() {
     </div>
   );
 }
-
