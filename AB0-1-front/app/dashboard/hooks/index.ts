@@ -47,8 +47,8 @@ export function useCompany(companyId: string): UseCompanyReturn {
         throw new Error('Failed to fetch company data');
       }
       setCompany(data.company);
-    } catch (err) {
-      const message = err?.message || 'An error occurred';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
       setError(message);
       console.error('Error fetching company:', err);
     } finally {
@@ -73,8 +73,8 @@ export function useCompany(companyId: string): UseCompanyReturn {
         }
 
         return { success: false, error: 'Update failed' };
-      } catch (err) {
-        const message = err?.message || 'An error occurred';
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'An error occurred';
         return { success: false, error: message };
       }
     },
@@ -128,8 +128,8 @@ export function useDashboardStats(companyId: string) {
       );
 
       setStats(data?.stats || null);
-    } catch (err) {
-      const message = err?.message || 'An error occurred';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
       setError(message);
       console.error('Error fetching stats:', err);
     } finally {
