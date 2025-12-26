@@ -1,24 +1,109 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:14-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    image: postgres:14
+    container_name: ab0-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: avalia_solar_development
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+    networks:
+      - ab0-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    container_name: ab0-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - ab0-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
+    container_name: ab0-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # CORREÇÃO CRÍTICA: Anula o script interativo que trava o boot com erro de 'gets'
+      - /dev/null:/app/lib/scripts/setup_whatsapp.rb
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://ab0-redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      CORS_ORIGINS: "https://avaliasolar.com.br,https://www.avaliasolar.com.br"
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+    ports:
+      - "3001:3001"
+    networks:
+      - ab0-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fS http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+      start_period: 300s # Tempo para carregar ScoutAPM e Sentry em 1 vCPU
+
+  frontend:
+    image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
+    container_name: ab0-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
+      NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
+      # URL interna para comunicação entre containers (Docker Network)
+      API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+    ports:
+      - "3000:3000"
+    command: ["node", "server.js"]
+    networks:
+      - ab0-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fS http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+      start_period: 180s
 
 volumes:
-  postgres_data:
+  db_data:
   redis_data:
+
+networks:
+  ab0-network:
+    driver: bridge
