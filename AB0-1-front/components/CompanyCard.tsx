@@ -130,7 +130,7 @@ export default function CompanyCard({ company, className = '', compact = false }
     <Card 
       className={`group overflow-hidden h-full bg-white border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-200 print:shadow-none print:border-gray-300 ${className}`} 
       data-testid="company-card"
-    > > 
+    >
       <Link 
         href={companyPath}
         data-testid="company-detail-link"
