@@ -13,7 +13,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import WhatsappButton from '@/components/WhatsappButton';
 import { getFullImageUrl } from '@/utils/image';
-import styles from './CompanyCard.module.css';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
@@ -135,198 +134,150 @@ export default function CompanyCard({ company, className = '', compact = false }
       <Link 
         href={companyPath}
         data-testid="company-detail-link"
-        className="block"
+        className="block flex-1 relative"
       >
-        <CardContent className="p-0">
-          {/* Banner/Logo Section - Redesigned com object-contain */}
-          <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center">
+        {/* Banner Section */}
+        <div className="relative h-32 w-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             {bannerUrl && !bannerError ? (
-              <>
-                <Image
-                  src={bannerUrl}
-                  alt={`Banner ${company.name}`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-contain p-4"
-                  onError={() => setBannerError(true)}
-                  data-testid="company-banner"
-                  priority={false}
-                />
-
-                {logoUrl && !logoError && (
-                  <div className={styles.logoOverlay}>
-                    {/* Logo em container circular (border-radius: 50%) e centralizado */}
-                    <div className={styles.logoContainer}>
-                      <Image
-                        src={logoUrl}
-                        alt={`Logo ${name}`}
-                        fill
-                        sizes="(max-width: 768px) 56px, 64px"
-                        className={styles.logoImage}
-                        onError={() => setLogoError(true)}
-                        priority={false}
-                      />
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : logoUrl && !logoError ? (
               <Image
-                src={logoUrl}
-                alt={`Logo ${name}`}
+                src={bannerUrl}
+                alt={`Banner ${company.name}`}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-contain p-6"
-                onError={() => setLogoError(true)}
-                data-testid="company-logo"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                className="object-cover"
+                onError={() => setBannerError(true)}
+                data-testid="company-banner"
                 priority={false}
               />
             ) : (
-              <div className="flex items-center justify-center w-full h-full" data-testid="logo-placeholder">
-                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center border border-gray-200 shadow-sm">
-                  <Building2 className="h-10 w-10 text-gray-400" />
-                </div>
-              </div>
-            )}
-            
-            {/* Rating Badge - Top Right */}
-            {rating && parseFloat(rating) > 0 && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm border border-gray-100">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-semibold text-gray-900">{rating}</span>
+              <div className="w-full h-full flex items-center justify-center opacity-10">
+                 <Building2 className="h-16 w-16 text-gray-400" />
               </div>
             )}
             
             {/* Verified Badge - Top Left */}
             {setupComplete && company.verified && (
-              <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-semibold px-2 py-1 rounded-full">
-                ✓ Verificada
+              <div className="absolute top-3 left-3 bg-emerald-500/90 backdrop-blur-[2px] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm z-10 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                VERIFICADA
               </div>
             )}
-          </div>
+        </div>
 
-          {/* Content Section */}
-          <div className="p-4">
-            {/* Company Name */}
-            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
-              {name}
-            </h3>
+        {/* Logo Section - Circular & Overlapping */}
+        <div className="absolute top-20 left-4 z-20">
+            <div className="w-20 h-20 rounded-full bg-white border-[3px] border-white shadow-md overflow-hidden flex items-center justify-center relative">
+                {logoUrl && !logoError ? (
+                  <Image
+                    src={logoUrl}
+                    alt={`Logo ${name}`}
+                    fill
+                    sizes="80px"
+                    className="object-contain p-1"
+                    onError={() => setLogoError(true)}
+                    priority={false}
+                  />
+                ) : (
+                  <Building2 className="h-8 w-8 text-gray-300" />
+                )}
+            </div>
+        </div>
 
-            {/* Location */}
-            {(city || state) && (
-              <div className="flex items-center text-sm text-gray-500 mb-2">
-                <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                <span className="truncate">{city && state ? `${city} - ${state}` : city || state}</span>
-              </div>
-            )}
+        {/* Rating Badge - Absolute Positioned (Right side, aligned with logo center vertically roughly) */}
+        {rating && parseFloat(rating) > 0 && (
+             <div className="absolute top-36 right-4 z-10">
+                <div className="flex items-center gap-1.5 bg-white border border-gray-100 px-2.5 py-1 rounded-full shadow-sm">
+                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                   <span className="text-sm font-bold text-gray-900">{rating}</span>
+                   <span className="text-[10px] text-gray-400 font-medium">({totalReviews})</span>
+                </div>
+             </div>
+        )}
+
+        {/* Content Section */}
+        <div className="pt-12 px-5 pb-5">
+            {/* Company Name & Location */}
+            <div className="mb-3">
+              <h3 className="text-lg font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-1 mb-1" title={name}>
+                {name}
+              </h3>
+              
+              {(city || state) && (
+                <div className="flex items-center text-sm text-gray-500 font-medium">
+                  <MapPin className="h-3.5 w-3.5 mr-1.5 text-gray-400 flex-shrink-0" />
+                  <span className="truncate">{city && state ? `${city}, ${state}` : city || state}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Tags / Categories */}
+            <div className="flex flex-wrap gap-2 mb-3">
+               {category && (
+                  <Badge variant="secondary" className="text-[10px] font-medium px-2 py-0.5 h-5 bg-gray-100 text-gray-600 hover:bg-gray-200 border-transparent">
+                    {category}
+                  </Badge>
+               )}
+               {totalReviews > 0 && (
+                  <Badge variant="secondary" className="text-[10px] font-medium px-2 py-0.5 h-5 bg-blue-50 text-blue-700 hover:bg-blue-100 border-transparent">
+                    {totalReviews} avaliações
+                  </Badge>
+               )}
+            </div>
 
             {/* Description */}
             {description && (
-              <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">{description}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-1">
+                {description}
+              </p>
             )}
-
-            {/* Info Row */}
-            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-              {totalReviews > 0 && (
-                <div className="flex items-center gap-1">
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  <span>{totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'}</span>
-                </div>
-              )}
-              {category && (
-                <Badge variant="outline" className="text-xs border-gray-200">
-                  {category}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardContent>
+        </div>
       </Link>
 
       {/* Action Buttons */}
-      <div className="px-4 pb-4 space-y-2">
-        <Button variant="outline" size="sm" className="w-full border-gray-200 hover:bg-gray-50" asChild>
-          <Link href={companyReviewPath}>
-            <MessageCircle className="mr-2 h-4 w-4" />
-            Deixar Avaliação
-          </Link>
-        </Button>
-
-        <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-          {company.buttons && company.buttons.length > 0 ? (
-            <div className="grid gap-2 grid-cols-1 xl:grid-cols-2">
-              {company.buttons.slice(0, 2).map((btn, idx) => {
-                if (btn.button_type === 'whatsapp') {
-                  return (
-                    <WhatsappButton
-                      key={idx}
-                      enabled
-                      href={btn.url}
-                      styles={{ variant: 'solid' }}
-                      size="sm"
-                      preset="brandSolid"
-                      className="w-full text-xs"
-                      label={btn.label}
-                    />
-                  );
-                }
-                const isPrimary = btn.button_type === 'primary';
-                return (
-                  <Button
-                    key={idx}
-                    variant={isPrimary ? 'default' : 'outline'}
-                    size="sm"
-                    className="w-full text-xs"
-                    onClick={() => {
-                      if (btn.url.startsWith('/')) {
-                        window.location.href = btn.url;
-                      } else {
-                        window.open(btn.url, '_blank');
-                      }
-                    }}
-                  >
-                    {isPrimary ? <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> : null}
-                    <span className="truncate">{btn.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="grid gap-2 grid-cols-1 xl:grid-cols-2">
-              {hasWhatsapp && whatsappEnabled && (
+      <div className="px-5 pb-5 pt-0 mt-auto">
+        <div className="flex flex-col gap-2">
+          {/* Main Action - WhatsApp or Quote */}
+          {hasWhatsapp && whatsappEnabled ? (
+             <div className="w-full">
                 <WhatsappButton
                   enabled
                   href={company.whatsapp || whatsappLink}
                   styles={{ variant: 'solid' }}
                   size="sm"
                   preset="brandSolid"
-                  className="w-full text-xs"
-                  label="WhatsApp"
+                  className="w-full font-medium shadow-sm"
+                  label="Conversar no WhatsApp"
                 />
-              )}
-
-              <Button
-                variant="outline"
+             </div>
+          ) : (
+            <Button
+                variant="default"
                 size="sm"
-                className="w-full text-xs border-gray-200 hover:bg-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
                 onClick={() => {
                   openQuoteWizard({ preferredCompanyId: company.id, source: 'company-card' });
                 }}
               >
-                <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                <span className="truncate">Orçamento</span>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Solicitar Orçamento
               </Button>
-            </div>
           )}
+
+          {/* Secondary Action - Reviews */}
+          <Button variant="outline" size="sm" className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900" asChild>
+            <Link href={companyReviewPath}>
+              <Star className="mr-2 h-4 w-4 text-gray-400 group-hover:text-amber-400 transition-colors" />
+              Avaliar Empresa
+            </Link>
+          </Button>
         </div>
 
-        {/* Social Links */}
+        {/* Social Links - Minimalist */}
         {social_links && (website || social_links.facebook || social_links.instagram || social_links.twitter) && (
-          <div className="flex items-center justify-center gap-3 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-gray-100">
             {website && <SocialLink href={website} icon={Globe} label="Website" />}
-            {social_links.facebook && <SocialLink href={social_links.facebook} icon={Facebook} label="Facebook" />}
             {social_links.instagram && <SocialLink href={social_links.instagram} icon={Instagram} label="Instagram" />}
-            {social_links.twitter && <SocialLink href={social_links.twitter} icon={Twitter} label="Twitter" />}
+            {social_links.facebook && <SocialLink href={social_links.facebook} icon={Facebook} label="Facebook" />}
           </div>
         )}
       </div>
