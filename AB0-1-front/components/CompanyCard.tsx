@@ -128,9 +128,9 @@ export default function CompanyCard({ company, className = '', compact = false }
 
   return (
     <Card 
-      className={`group overflow-hidden h-full bg-white border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-200 ${className}`} 
+      className={`group overflow-hidden h-full bg-white border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-200 print:shadow-none print:border-gray-300 ${className}`} 
       data-testid="company-card"
-    >
+    > > 
       <Link 
         href={companyPath}
         data-testid="company-detail-link"
@@ -234,7 +234,7 @@ export default function CompanyCard({ company, className = '', compact = false }
       </Link>
 
       {/* Action Buttons */}
-      <div className="px-5 pb-5 pt-0 mt-auto">
+      <div className="px-5 pb-5 pt-0 mt-auto print:hidden">
         <div className="flex flex-col gap-2">
           {/* Main Action - WhatsApp or Quote */}
           {hasWhatsapp && whatsappEnabled ? (
@@ -280,6 +280,78 @@ export default function CompanyCard({ company, className = '', compact = false }
             {social_links.facebook && <SocialLink href={social_links.facebook} icon={Facebook} label="Facebook" />}
           </div>
         )}
+      </div>
+
+      {/* Print Only Contact Info */}
+      <div className="hidden print:block px-5 pb-5 pt-2">
+         <div className="text-xs text-gray-600 space-y-1">
+            {company.whatsapp && (
+                <div className="flex items-center gap-2">
+                    <Phone className="h-3 w-3" />
+                    <span>{formatBrazilPhone(extractDigits(company.whatsapp))}</span>
+                </div>
+            )}
+            {website && (
+                <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    <span>{website.replace(/^https?:\/\//, '')}</span>
+                </div>
+            )}
+         </div>
+      </div>
+
+      {/* Print Only Contact Info */}
+      <div className="hidden print:block px-5 pb-5 pt-2">
+         <div className="text-xs text-gray-600 space-y-1">
+            {company.whatsapp && (
+                <div className="flex items-center gap-2">
+                    <Phone className="h-3 w-3" />
+                    <span>{formatBrazilPhone(extractDigits(company.whatsapp))}</span>
+                </div>
+            )}
+            {website && (
+                <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    <span>{website.replace(/^https?:\/\//, '')}</span>
+                </div>
+            )}
+         </div>
+      </div>
+
+      {/* Print Only Contact Info */}
+      <div className="hidden print:block px-5 pb-5 pt-2">
+         <div className="text-xs text-gray-600 space-y-1">
+            {company.whatsapp && (
+                <div className="flex items-center gap-2">
+                    <Phone className="h-3 w-3" />
+                    <span>{formatBrazilPhone(extractDigits(company.whatsapp))}</span>
+                </div>
+            )}
+            {website && (
+                <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    <span>{website.replace(/^https?:\/\//, '')}</span>
+                </div>
+            )}
+         </div>
+      </div>
+
+      {/* Print Only Contact Info */}
+      <div className="hidden print:block px-5 pb-5 pt-2">
+         <div className="text-xs text-gray-600 space-y-1">
+            {company.whatsapp && (
+                <div className="flex items-center gap-2">
+                    <Phone className="h-3 w-3" />
+                    <span>{formatBrazilPhone(company.whatsapp)}</span>
+                </div>
+            )}
+            {website && (
+                <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    <span>{website.replace(/^https?:\/\//, '')}</span>
+                </div>
+            )}
+         </div>
       </div>
     </Card>
   );

@@ -6,52 +6,50 @@ WORKDIR /app
 # Add package files (monorepo: frontend lives in AB0-1-front)
 COPY AB0-1-front/package.json ./
 
-# Install dependencies with retry mechanism
+# Install dependencies with cache mount for speed
 RUN --mount=type=cache,target=/root/.npm \
     npm config set registry https://registry.npmjs.org/ && \
-    npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retry-mintimeout 10000 && \
-    npm config set fetch-retries 5 && \
     npm install -g npm@10.2.4 && \
-    npm install --legacy-peer-deps --no-audit --network-timeout=600000
+    npm install --legacy-peer-deps --no-audit
 
-# Add app files (only frontend)
+# Add app files
 COPY AB0-1-front/ .
 
-# Build app
+# GARANTIA: Limpa builds anteriores para evitar código fantasma
+RUN rm -rf .next
+
+# Build configurations
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_DISABLE_WEBPACK_CACHE=1
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=1536"
 
-# Fail fast with a clear error if build script is missing
-# Also, dump the last build lines on failure to make GitHub Actions logs actionable.
+# Build app com logs em tempo real para debug no GitHub Actions
 RUN set -euo pipefail; \
-  node -e "const p=require('./package.json'); if(!p.scripts||!p.scripts.build){console.error('ERROR: Missing scripts.build in AB0-1-front/package.json'); process.exit(1)}"; \
+  node -e "const p=require('./package.json'); if(!p.scripts||!p.scripts.build){console.error('ERROR: Missing scripts.build'); process.exit(1)}"; \
   (npm run build 2>&1 | tee /tmp/next-build.log) || ( \
-    echo "ERROR: npm run build failed. Showing last 200 log lines:" >&2; \
-    tail -n 200 /tmp/next-build.log >&2 || true; \
+    echo "❌ ERROR: npm run build falhou. Mostrando logs finais:" >&2; \
+    tail -n 100 /tmp/next-build.log >&2; \
     exit 1; \
-  ); \
-  rm -rf .next/cache
+  )
 
 # Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built assets
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
-COPY --from=builder /app/node_modules ./node_modules
-
-# Set production environment
+# Variáveis de ambiente de runtime
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
 
-# Start the app with standalone configuration
-COPY --from=builder /app/.next/standalone ./
+# Copiar apenas o necessário do estágio builder
+# O standalone já inclui os node_modules necessários
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+
+# O standalone do Next.js coloca o servidor em server.js na raiz do output
+# Garantimos que ele rode corretamente
+EXPOSE 3000
+
 CMD ["node", "server.js"]
