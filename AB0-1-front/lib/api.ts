@@ -447,7 +447,7 @@ export const dashboardApi = {
 };
 
 export const companiesApi = {
-  getAll: async (params?: any): Promise<Company[]> => {
+  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; } = {}): Promise<Company[]> => {
     try {
       const response = await fetchApi<any>('/companies', { params });
       if (Array.isArray(response)) {
@@ -556,7 +556,7 @@ export const productsApi = {
 };
 
 export const categoriesApi = {
-  getAll: () => fetchApi<Category[]>('/categories'),
+  getAll: (params: { include?: string; } = {}) => fetchApi<Category[]>('/categories', { params }),
   getById: (id: number) => fetchApi<Category>(`/categories/${id}`),
   getBySlug: (slug: string) => fetchApi<Category>(`/categories/by_slug/${encodeURIComponent(slug)}`),
   getCompanies: async (id: number, params?: any): Promise<Company[]> => {
