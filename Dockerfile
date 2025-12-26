@@ -21,19 +21,19 @@ RUN gem install bundler:2.4.22
 COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3
 
-# Copy application code
-COPY AB0-1-back .
+# Copy application code (copy contents, not the folder)
+COPY AB0-1-back/ ./
 
 # Create necessary directories
 RUN mkdir -p tmp/pids tmp/storage public/assets log
 
 # Set environment variables
 ENV RAILS_ENV=production \
-    PATH="/app/bin:${PATH}" \
+    PATH="/app/AB0-1-back/bin:${PATH}" \
     SECRET_KEY_BASE=placeholder_for_asset_compilation
 
 # Precompile assets (including ActiveAdmin assets)
-RUN bundle exec rake assets:precompile RAILS_ENV=production
+RUN bundle exec rake assets:precompile
 
 # Remove this block to rely solely on DATABASE_URL from entrypoint.sh
 # RUN echo "production:\n\

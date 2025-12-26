@@ -12,25 +12,25 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+# Set working directory (Rails app lives in AB0-1-back)
+WORKDIR /app/AB0-1-back
 
 # Install specific bundler version
 RUN gem install bundler:2.4.22
 
 # Copy Gemfile and install dependencies
-COPY Gemfile Gemfile.lock ./
+COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3
 
-# Copy application code
-COPY . .
+# Copy application code (copy contents, not the folder)
+COPY AB0-1-back/ ./
 
 # Create necessary directories
 RUN mkdir -p tmp/pids tmp/storage public/assets log
 
 # Set environment variables
 ENV RAILS_ENV=production \
-    PATH="/app/bin:${PATH}" \
+    PATH="/app/AB0-1-back/bin:${PATH}" \
     SECRET_KEY_BASE=placeholder_for_asset_compilation
 
 # 👇👇👇 AQUI ESTÁ A CORREÇÃO CRUCIAL 👇👇👇
@@ -41,7 +41,7 @@ ENV RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
 # 👆👆👆 FIM DA CORREÇÃO 👆👆👆
 
 # Precompile assets (including ActiveAdmin assets)
-RUN bundle exec rake assets:precompile RAILS_ENV=production
+RUN bundle exec rake assets:precompile
 
 EXPOSE 3001
 
