@@ -18,6 +18,16 @@ import type {
   LoadingState,
 } from '../types';
 
+function getErrorMessage(error: unknown, fallback = 'An error occurred'): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object' && error && 'message' in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === 'string') return msg;
+  }
+  return fallback;
+}
+
 // ============================================================================
 // useCompany Hook
 // ============================================================================
@@ -164,8 +174,8 @@ export function useNotifications(companyId: string) {
       );
 
       setNotifications(data?.notifications || []);
-    } catch (err) {
-      const message = err?.message || 'An error occurred';
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'An error occurred');
       setError(message);
       console.error('Error fetching notifications:', err);
     } finally {
@@ -361,8 +371,8 @@ export function useAsync<T>(
         const data = await asyncFunction(...args);
         setState({ data, loading: false, error: null, status: 'success' });
         return data;
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(error?.message || 'An error occurred');
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(getErrorMessage(error, 'An error occurred'));
         setState({ data: null, loading: false, error: err, status: 'error' });
         return null;
       }

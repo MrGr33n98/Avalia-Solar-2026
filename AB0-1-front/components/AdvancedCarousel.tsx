@@ -86,7 +86,11 @@ export default function AdvancedCarousel({
           const img = new window.Image();
           img.src = url;
           img.onload = () => {
-            setPreloadedImages((prev) => new Set([...prev, url]));
+            setPreloadedImages((prev) => {
+              const next = new Set(prev);
+              next.add(url);
+              return next;
+            });
           };
         }
       });

@@ -6,6 +6,16 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+function getErrorMessage(error: unknown, fallback = 'An error occurred'): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object' && error && 'message' in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === 'string') return msg;
+  }
+  return fallback;
+}
+
 // ============================================================================
 // Class Name Utilities
 // ============================================================================
@@ -368,8 +378,8 @@ export const retry = async <T>(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(error?.message || 'Retry failed');
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error(getErrorMessage(error, 'Retry failed'));
       
       if (attempt < maxAttempts) {
         await sleep(delay * attempt);

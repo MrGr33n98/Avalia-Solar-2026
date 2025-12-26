@@ -42,9 +42,19 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
     }
 
     // Renderiza os banners usando o BannerContainer
+    const normalizedBanners = locationBanners.map((banner) => ({
+      id: banner.id,
+      type: banner.banner_type,
+      position: banner.position,
+      image_url: banner.image_url,
+      title: banner.title || '',
+      link: banner.link,
+      sponsored: banner.sponsored,
+    }));
+
     return (
       <div className={className}>
-        <BannerContainer banners={locationBanners} />
+        <BannerContainer banners={normalizedBanners} />
       </div>
     );
   } catch (err) {
