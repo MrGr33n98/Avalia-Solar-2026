@@ -3,6 +3,16 @@
 # Redis configuration - TASK-014
 # https://github.com/redis/redis-rb
 
+class NullRedis
+  def method_missing(*_args, &_block)
+    nil
+  end
+
+  def respond_to_missing?(_method, _include_private = false)
+    true
+  end
+end unless defined?(NullRedis)
+
 # Check if Redis should be enabled FIRST
 redis_enabled = ENV.fetch('REDIS_ENABLED', 'true') == 'true'
 
@@ -10,8 +20,8 @@ unless redis_enabled
   Rails.logger.warn "⚠️  Redis disabled via REDIS_ENABLED=false"
   Rails.logger.warn "⚠️  Using memory store for cache and sessions"
   
-  # Use the NullRedis from 00_redis_disable.rb
-  REDIS = NullRedis.new
+  # Use NullRedis as fallback
+  REDIS ||= NullRedis.new
   return
 end
 
@@ -30,7 +40,7 @@ end
 # Configure Redis with connection pooling
 # Note: Do NOT use :namespace option - not compatible with Sidekiq 7+
 begin
-  REDIS = Redis.new(
+  REDIS ||= Redis.new(
     url: redis_url,
     reconnect_attempts: 5,
     timeout: 5,
@@ -63,34 +73,12 @@ rescue Redis::CannotConnectError, Redis::TimeoutError => e
   Rails.logger.error "❌ Redis connection failed: #{e.message}"
   Rails.logger.warn "⚠️  Set REDIS_ENABLED=false in .env to disable Redis"
   
-  # Use NullRedis as fallback
-  class NullRedis
-    def method_missing(method, *args, &block)
-      Rails.logger.debug "NullRedis: #{method} called (Redis unavailable)"
-      nil
-    end
-    
-    def respond_to_missing?(method, include_private = false)
-      true
-    end
-  end
-  
-  REDIS = NullRedis.new
+  REDIS ||= NullRedis.new
 rescue ArgumentError => e
   Rails.logger.error "❌ Redis configuration error: #{e.message}"
   Rails.logger.warn '⚠️  Using NullRedis due to configuration error'
   
-  class NullRedis
-    def method_missing(method, *args, &block)
-      nil
-    end
-    
-    def respond_to_missing?(method, include_private = false)
-      true
-    end
-  end
-  
-  REDIS = NullRedis.new
+  REDIS ||= NullRedis.new
 end
 
 # Configure different Redis namespaces for different purposes
