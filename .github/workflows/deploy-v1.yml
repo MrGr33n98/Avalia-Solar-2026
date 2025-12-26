@@ -30,9 +30,8 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          # 👇 O Docker entra na pasta do Rails para compilar
-          context: ./AB0-1-back
-          # 👇 Ele usa o Dockerfile que está na raiz (ou dentro da pasta se você moveu)
+          # Alterado para a raiz para que o Dockerfile encontre as pastas AB0-1-back/...
+          context: .
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
@@ -44,7 +43,8 @@ jobs:
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./AB0-1-front
+          # Alterado para a raiz
+          context: .
           file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
@@ -65,28 +65,25 @@ jobs:
             set -e
             cd ~/Avalia-Solar-2026
             
+            echo " Atualizando repositório local na VM..."
+            git pull origin main
+            
             echo " Login no registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            echo " Limpando cache Docker..."
-            docker system prune -f
-            
             echo " Pulling novas imagens..."
-            docker-compose pull
+            docker compose pull
             
-            echo " Parando containers..."
-            docker-compose down
+            echo " Reiniciando serviços..."
+            docker compose up -d --force-recreate --remove-orphans
             
-            echo " Iniciando containers com force-recreate..."
-            docker-compose up -d --force-recreate --remove-orphans
+            echo " Rodando migrações de banco..."
+            docker exec ab0-backend bundle exec rails db:migrate
             
             echo " Limpando imagens antigas..."
             docker image prune -af
             
-            echo " Aguardando 10 segundos..."
-            sleep 10
-            
-            echo " Verificando logs do frontend..."
-            docker logs --tail 30 avalia_frontend_prod
+            echo " Verificando logs rápidos..."
+            docker compose logs --tail 20 backend frontend
             
             echo " Deploy finalizado com sucesso!"
