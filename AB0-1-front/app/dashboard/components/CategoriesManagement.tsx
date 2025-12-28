@@ -38,11 +38,6 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchAvailableCategories();
-  }, [companyId, fetchCategories, fetchAvailableCategories]);
-
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -76,6 +71,11 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       setAvailableCategories([]);
     }
   }, [categories]);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchAvailableCategories();
+  }, [companyId, fetchCategories, fetchAvailableCategories]);
 
   const handleAddCategories = async () => {
     if (selectedCategories.length === 0) {

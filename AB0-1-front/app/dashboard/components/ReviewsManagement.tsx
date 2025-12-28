@@ -43,10 +43,6 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
 
-  useEffect(() => {
-    fetchReviews();
-  }, [companyId, fetchReviews]);
-
   const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
@@ -70,6 +66,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       setLoading(false);
     }
   }, [companyId]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [companyId, fetchReviews]);
 
   const handleToggleFeatured = async (reviewId: string) => {
     setReviews(reviews.map(review => 
