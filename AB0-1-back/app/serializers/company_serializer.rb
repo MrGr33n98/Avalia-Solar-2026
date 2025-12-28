@@ -9,9 +9,9 @@ class CompanySerializer < ActiveModel::Serializer
              :created_at, :updated_at,
              :founded_year, :employees_count,
              :instagram, :facebook, :linkedin,
-              :cta_whatsapp_enabled, :cta_whatsapp_url,
-              :whatsapp_enabled, :whatsapp_url
-             , :effect
+             :cta_whatsapp_enabled, :cta_whatsapp_url,
+             :whatsapp_enabled, :whatsapp_url,
+             :effect
 
 
 
