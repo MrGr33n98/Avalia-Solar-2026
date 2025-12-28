@@ -22,22 +22,25 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
-# Preferir Docker Compose v2 (docker compose). O docker-compose v1 pode falhar com KeyError: 'ContainerConfig'
+# Preferir Docker Compose v2 (docker compose). O docker-compose v1 falha em hosts novos com: KeyError: 'ContainerConfig'
 if ! docker compose version >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠ Docker Compose v2 (docker compose) não encontrado. Tentando instalar docker-compose-plugin...${NC}"
+    echo -e "${YELLOW}⚠ Docker Compose v2 (docker compose) não encontrado. Instalando docker-compose-plugin...${NC}"
     if command -v apt-get >/dev/null 2>&1; then
-        apt-get update -y && apt-get install -y docker-compose-plugin || true
+        apt-get update -y && apt-get install -y docker-compose-plugin
     fi
 fi
 
-if docker compose version >/dev/null 2>&1; then
-    dc() { docker compose "$@"; }
-elif command -v docker-compose >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠ Usando docker-compose (v1). Recomendado atualizar para Docker Compose v2 para evitar erros.${NC}"
-    dc() { docker-compose "$@"; }
-else
-    echo -e "${RED}✗ Erro: Docker Compose não encontrado (docker compose / docker-compose).${NC}"
+if ! docker compose version >/dev/null 2>&1; then
+    echo -e "${RED}✗ Erro: Docker Compose v2 não disponível. Remova docker-compose v1 e instale docker-compose-plugin.${NC}"
+    echo "  Ex: apt-get remove -y docker-compose && apt-get install -y docker-compose-plugin" 
     exit 1
+fi
+
+dc() { docker compose "$@"; }
+
+# Se docker-compose v1 existir, avisa (para evitar execução manual por engano)
+if command -v docker-compose >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠ Atenção: docker-compose (v1) está instalado neste host. NÃO use docker-compose; use 'docker compose'.${NC}"
 fi
 
 echo -e "${BLUE}Passo 1: Parando containers...${NC}"
@@ -52,7 +55,10 @@ echo -e "${GREEN}✓ Logs salvos em logs_backup/${NC}"
 echo ""
 
 echo -e "${BLUE}Passo 3: Removendo containers antigos...${NC}"
-docker rm -f ab0-frontend ab0-backend 2>/dev/null || true
+# Remove containers legados criados por docker-compose v1 (podem quebrar o reconcile de volumes)
+docker rm -f ab0-frontend ab0-backend ab0-postgres ab0-redis 2>/dev/null || true
+# Também remove nomes antigos com prefixo de projeto (caso existam)
+docker ps -aq --filter "name=_ab0-" | xargs -r docker rm -f 2>/dev/null || true
 echo ""
 
 echo -e "${BLUE}Passo 4: Rebuild do frontend (com novas variáveis)...${NC}"
