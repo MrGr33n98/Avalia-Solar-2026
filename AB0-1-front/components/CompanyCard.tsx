@@ -28,7 +28,6 @@ export default function CompanyCard({ company, className = '', compact = false, 
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
-  if (!company) return null;
 
   const { id, name, city, state, description, rating_count, average_rating, category_name, website } = company;
 
@@ -70,7 +69,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
       aggregateRating,
       sameAs,
     };
-  }, [schemaEnabled, name, city, state, rating, totalReviews, logoUrl, website]);
+  }, [schemaEnabled, name, city, state, rating, totalReviews, logoUrl, website, companyPath]);
 
   const emit = useCallback(
     (type: string, meta?: Record<string, any>) => {
