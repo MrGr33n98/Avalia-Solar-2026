@@ -114,7 +114,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }}
-        aria-hidden="true"
       />
     </article>
   );
