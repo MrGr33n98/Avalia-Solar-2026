@@ -9,6 +9,8 @@ import { Category } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
+const MotionDiv = motion.div;
+
 type Variant = 'minimal' | 'rich' | 'interactive';
 
 interface CategoryCardProps {
@@ -77,7 +79,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
   }, [schemaEnabled, displayData.seo_url, displayData.name, displayData.description]);
 
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -148,16 +150,14 @@ export default function CategoryCard({ category, className = "", variant = 'rich
                   </div>
                 )}
               </div>
-                )}
-                {/* Se quiser mostrar produtos também
-                {displayData.products_count > 0 && (
-                  <div className="flex items-center text-xs font-medium text-gray-600">
-                    <Package className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                    {displayData.products_count}
-                  </div>
-                )}
-                */}
-              </div>
+              {/* Se quiser mostrar produtos também
+              {displayData.products_count > 0 && (
+                <div className="flex items-center text-xs font-medium text-gray-600">
+                  <Package className="w-3.5 h-3.5 mr-1 text-gray-400" />
+                  {displayData.products_count}
+                </div>
+              )}
+              */}
 
               {/* Call to Action Visual */}
               <div className={`flex items-center text-sm font-semibold text-blue-600 transform transition-all duration-300 ${variant === 'interactive' ? (isHovered ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0') : ''}`}>
@@ -193,6 +193,6 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           </div>
         </Card>
       </Link>
-    </motion.div>
+    </MotionDiv>
   );
 }

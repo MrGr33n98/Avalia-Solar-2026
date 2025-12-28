@@ -135,8 +135,8 @@ export default function CompanyCard({ company, className = '', compact = false, 
         </div>
       )}
       {!isLoading && (
-      {/* 1) Banner + Avatar */}
-      <div className="relative">
+        <div className="relative">
+          {/* 1) Banner + Avatar */}
         <Link
           href={companyPath}
           aria-label={`Ver detalhes de ${name}`}
