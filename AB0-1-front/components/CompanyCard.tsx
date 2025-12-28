@@ -105,6 +105,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
         'transition-all duration-200',
         'hover:shadow-lg hover:-translate-y-0.5 hover:ring-1 hover:ring-gray-200',
         'group touch-manipulation',
+        (company as any)?.effect ? 'company-card effect-active' : 'company-card',
         className,
       ].join(' ')}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 type Props = {
   initialUrl?: string | null;
@@ -80,7 +81,7 @@ export default function TopLeftAvatar({ initialUrl, onUpload }: Props) {
           background: '#fff',
         }}
       >
-        <img
+        <Image
           src={previewUrl || fallbackSvg}
           alt="Avatar"
           width={64}

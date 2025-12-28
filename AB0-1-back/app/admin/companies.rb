@@ -21,6 +21,7 @@ ActiveAdmin.register Company do
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy]
   ]
+  permitted << :effect if Company.column_names.include?('effect')
   permitted << :plan_id if Company.column_names.include?('plan_id')
   permitted << :plan_status if Company.column_names.include?('plan_status')
   permitted << :whatsapp_enabled
@@ -42,6 +43,26 @@ end
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
       f.input :verified
+    if Company.column_names.include?('effect')
+      f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: { 
+        'data-controller': 'effect', 
+        'data-effect-target': 'checkbox', 
+        'data-action': 'change->effect#toggleFromCheckbox' 
+      }
+    end
+
+    if Company.column_names.include?('effect')
+      f.inputs 'Visual Effects Preview' do
+        f.template.concat(
+          f.template.content_tag(
+            :div,
+            '',
+            class: 'company-card admin-preview',
+            data: { controller: 'effect', 'effect-active-value': f.object.effect }
+          )
+        )
+      end
+    end
     end
 
     f.inputs 'Contact & Location' do
@@ -176,6 +197,12 @@ end
   end
 
   show do
+    if Company.column_names.include?('effect')
+      panel 'Visual Effect Preview' do
+        div class: 'company-card admin-preview', 'data-controller': 'effect', 'data-effect-active-value': resource.effect do
+        end
+      end
+    end
     attributes_table do
       row :name
       row :cnpj
@@ -233,6 +260,7 @@ end
     column :city
     column :featured
     column :verified
+    column(:effect) { |company| status_tag(company.effect ? 'On' : 'Off', class: company.effect ? 'ok' : 'warning') } if Company.column_names.include?('effect')
     column :status
     column :plan_status if Company.column_names.include?('plan_status')
     column :plan if Company.reflect_on_association(:plan)

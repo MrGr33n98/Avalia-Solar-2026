@@ -112,7 +112,7 @@ export default function AdvancedCarousel({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, currentIndex, items.length, interval]);
+  }, [isPlaying, currentIndex, items.length, interval, handleNext]);
 
   // Notify parent component of slide change
   useEffect(() => {

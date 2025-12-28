@@ -101,7 +101,7 @@ export default function CategoriesClient() {
       console.error('[CategoriesClient] Error processing banners:', error);
       return [];
     }
-  }, [banners, bannerGlobal, bannersLoading, bannerGlobalLoading]);
+  }, [banners, bannerGlobal]);
 
   const [filters, setFilters] = useState<Filters>({
     searchTerm: searchParams.get('search') || '',

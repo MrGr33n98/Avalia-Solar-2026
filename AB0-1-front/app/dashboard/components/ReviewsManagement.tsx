@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Star, ThumbsUp, Flag, Pin, Eye, Trash2, MessageSquare, User } from 'lucide-react';
 
@@ -45,9 +45,9 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
 
   useEffect(() => {
     fetchReviews();
-  }, [companyId]);
+  }, [companyId, fetchReviews]);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
       const data: any[] = await reviewsApi.getAll({ company_id: Number(companyId), limit: 20 });
@@ -69,7 +69,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
   const handleToggleFeatured = async (reviewId: string) => {
     setReviews(reviews.map(review => 

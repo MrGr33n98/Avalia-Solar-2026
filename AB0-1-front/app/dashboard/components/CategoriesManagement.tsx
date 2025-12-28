@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Plus, CheckCircle2, XCircle, Clock, Star, Trash2 } from 'lucide-react';
 
@@ -41,9 +41,9 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
   useEffect(() => {
     fetchCategories();
     fetchAvailableCategories();
-  }, [companyId]);
+  }, [companyId, fetchCategories, fetchAvailableCategories]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       const resp = await fetchApi<{ categories: Category[] }>(`/companies/${companyId}/categories`);
@@ -59,9 +59,9 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const fetchAvailableCategories = async () => {
+  const fetchAvailableCategories = useCallback(async () => {
     try {
       const all = await categoriesApi.getAll();
       const currentIds = new Set(categories.map(c => c.id));
@@ -75,7 +75,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
     } catch (e) {
       setAvailableCategories([]);
     }
-  };
+  }, [categories]);
 
   const handleAddCategories = async () => {
     if (selectedCategories.length === 0) {

@@ -1,0 +1,71 @@
+.company-card {
+  position: relative;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.company-card.admin-preview {
+  min-height: 120px;
+  margin: 8px 0;
+}
+
+.company-card.effect-active::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(135deg, #00f2fe 0%, #ffffff 50%, #00f2fe 100%);
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+  animation: electricPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes electricPulse {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 1px rgba(0,242,254,0.6)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(0,242,254,0.9)); }
+}
+
+.company-card.effect-active {
+  will-change: transform, filter;
+  animation: gentleShake 0.5s ease-in-out 0s 3 both;
+  animation-delay: 5s;
+}
+
+@keyframes gentleShake {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(2px, -2px); }
+  40%  { transform: translate(-3px, 1px); }
+  60%  { transform: translate(3px, 0px); }
+  80%  { transform: translate(-2px, 3px); }
+  100% { transform: translate(0, 0); }
+}
+
+// Hover e click devem continuar funcionais
+.company-card {
+  z-index: 1;
+}
+
+// Acessibilidade
+@media (prefers-reduced-motion: reduce) {
+  .company-card.effect-active,
+  .company-card.effect-active::after {
+    animation: none !important;
+  }
+}
+
+// Fallback IE11: borda sólida sem animação
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .company-card.effect-active::after {
+    background: transparent;
+    border: 2px solid #9de7f3; // azul claro estático
+  }
+}

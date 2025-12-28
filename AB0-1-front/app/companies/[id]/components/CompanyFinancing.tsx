@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -24,9 +24,9 @@ export default function CompanyFinancing({ companyId }: Props) {
 
   useEffect(() => {
     loadFinancingOptions();
-  }, [audience]);
+  }, [audience, loadFinancingOptions]);
 
-  const loadFinancingOptions = async () => {
+  const loadFinancingOptions = useCallback(async () => {
     setLoading(true);
     try {
       const data = await financingOptionsApi.getAll(companyId, { audience });
@@ -46,7 +46,7 @@ export default function CompanyFinancing({ companyId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, audience]);
 
   const handleCompareToggle = (id: number) => {
     setCompareIds(prev => {

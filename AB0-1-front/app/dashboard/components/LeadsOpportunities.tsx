@@ -44,7 +44,7 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
       }
     };
     load();
-  }, [companyId]);
+  }, [companyId, companyName]);
 
   return (
     <div className="space-y-6">

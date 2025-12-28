@@ -13,6 +13,7 @@ import { openQuoteWizard } from '@/lib/quote-wizard';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
 
 interface CategoryClientProps {
@@ -227,7 +228,7 @@ export default function CategoryClientComponent({ initialCategory, initialCompan
 
           <section className="relative h-36 overflow-hidden rounded-2xl bg-white shadow-sm">
             {bannerUrl ? (
-              <img src={bannerUrl} alt={`Banner ${category.name}`} className="h-full w-full object-cover" />
+              <Image src={bannerUrl} alt={`Banner ${category.name}`} fill sizes="100vw" className="object-cover" />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20" />
             )}
@@ -467,7 +468,7 @@ export default function CategoryClientComponent({ initialCategory, initialCompan
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {banners.map((banner) => (
                     <a key={banner.id} href={banner.link || '#'} target={banner.link ? '_blank' : undefined} rel={banner.link ? 'noopener noreferrer' : undefined} className="block">
-                      <img src={banner.image_url || ''} alt={banner.title} className="w-full h-40 object-cover rounded-lg" />
+                      <Image src={banner.image_url || ''} alt={banner.title || 'Patrocínio'} width={800} height={160} className="w-full h-40 object-cover rounded-lg" />
                     </a>
                   ))}
                 </div>

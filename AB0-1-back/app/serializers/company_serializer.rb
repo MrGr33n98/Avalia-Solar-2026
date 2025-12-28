@@ -9,8 +9,9 @@ class CompanySerializer < ActiveModel::Serializer
              :created_at, :updated_at,
              :founded_year, :employees_count,
              :instagram, :facebook, :linkedin,
-             :cta_whatsapp_enabled, :cta_whatsapp_url,
-             :whatsapp_enabled, :whatsapp_url
+              :cta_whatsapp_enabled, :cta_whatsapp_url,
+              :whatsapp_enabled, :whatsapp_url
+             , :effect
 
 
 
@@ -29,6 +30,10 @@ class CompanySerializer < ActiveModel::Serializer
 
   def cta_whatsapp_url
     object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
+  end
+
+  def effect
+    object.respond_to?(:effect) ? !!object.effect : false
   end
 
   private
