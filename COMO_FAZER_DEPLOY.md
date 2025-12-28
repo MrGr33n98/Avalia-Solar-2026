@@ -26,9 +26,9 @@ Veja a linha 43-49 do `.github/workflows/deploy-v1.yml`:
 Linha 66 do workflow:
 
 ```yaml
-docker-compose pull  # ← Puxa imagem do registry
-docker-compose down || true
-docker-compose up -d --force-recreate --remove-orphans
+docker compose pull  # ← Puxa imagem do registry
+docker compose down || true
+docker compose up -d --force-recreate --remove-orphans
 ```
 
 **Problema:** Se a imagem no GitHub Container Registry (ghcr.io) foi buildada com cache antigo, o `pull` vai baixar a versão antiga!
@@ -72,10 +72,10 @@ cd ~/Avalia-Solar-2026
 git pull origin main
 
 # Rebuild local SEM cache
-docker-compose build --no-cache frontend
+docker compose build --no-cache frontend
 
 # Restart
-docker-compose up -d --force-recreate frontend
+docker compose up -d --force-recreate frontend
 
 # Verificar
 docker logs -f avalia_frontend_prod
@@ -128,14 +128,19 @@ script: |
   # Limpar cache local
   docker system prune -f
   
+  # Docker Compose v1 (docker-compose) pode quebrar em hosts novos com: KeyError: 'ContainerConfig'
+  if ! docker compose version >/dev/null 2>&1; then
+    apt-get update -y && apt-get install -y docker-compose-plugin
+  fi
+
   # Pull novas imagens
-  docker-compose pull
+  docker compose pull
   
   # Down com volumes (se necessário)
-  docker-compose down
+  docker compose down
   
   # Up com force recreate
-  docker-compose up -d --force-recreate --remove-orphans
+  docker compose up -d --force-recreate --remove-orphans
   
   # Limpar imagens antigas
   docker image prune -af
@@ -298,14 +303,19 @@ jobs:
             echo "🗑️ Limpando cache local..."
             docker system prune -f
             
+            # Docker Compose v1 (docker-compose) pode quebrar em hosts novos com: KeyError: 'ContainerConfig'
+            if ! docker compose version >/dev/null 2>&1; then
+              apt-get update -y && apt-get install -y docker-compose-plugin
+            fi
+
             echo "📥 Pulling novas imagens..."
-            docker-compose pull
+            docker compose pull
             
             echo "🛑 Stopping containers..."
-            docker-compose down
+            docker compose down
             
             echo "🚀 Starting containers..."
-            docker-compose up -d --force-recreate --remove-orphans
+            docker compose up -d --force-recreate --remove-orphans
             
             echo "🗑️ Limpando imagens antigas..."
             docker image prune -af
@@ -337,8 +347,8 @@ git pull origin main
 grep "use client" AB0-1-front/app/categories/layout.tsx && echo "❌ AINDA TEM" || echo "✅ OK"
 
 # 3. Se OK, rebuild local
-docker-compose build --no-cache frontend
-docker-compose up -d --force-recreate frontend
+docker compose build --no-cache frontend
+docker compose up -d --force-recreate frontend
 
 # 4. Verificar
 docker logs -f avalia_frontend_prod

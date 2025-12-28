@@ -22,8 +22,26 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
+# Preferir Docker Compose v2 (docker compose). O docker-compose v1 pode falhar com KeyError: 'ContainerConfig'
+if ! docker compose version >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠ Docker Compose v2 (docker compose) não encontrado. Tentando instalar docker-compose-plugin...${NC}"
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update -y && apt-get install -y docker-compose-plugin || true
+    fi
+fi
+
+if docker compose version >/dev/null 2>&1; then
+    dc() { docker compose "$@"; }
+elif command -v docker-compose >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠ Usando docker-compose (v1). Recomendado atualizar para Docker Compose v2 para evitar erros.${NC}"
+    dc() { docker-compose "$@"; }
+else
+    echo -e "${RED}✗ Erro: Docker Compose não encontrado (docker compose / docker-compose).${NC}"
+    exit 1
+fi
+
 echo -e "${BLUE}Passo 1: Parando containers...${NC}"
-docker-compose down
+dc down
 echo ""
 
 echo -e "${BLUE}Passo 2: Fazendo backup dos logs atuais...${NC}"
@@ -39,7 +57,7 @@ echo ""
 
 echo -e "${BLUE}Passo 4: Rebuild do frontend (com novas variáveis)...${NC}"
 echo "⚠️  Isto pode levar alguns minutos..."
-docker-compose build --no-cache frontend
+dc build --no-cache frontend
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Frontend rebuilt com sucesso${NC}"
 else
@@ -49,7 +67,7 @@ fi
 echo ""
 
 echo -e "${BLUE}Passo 5: Rebuild do backend (com novas variáveis CORS)...${NC}"
-docker-compose build --no-cache backend
+dc build --no-cache backend
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Backend rebuilt com sucesso${NC}"
 else
@@ -59,7 +77,7 @@ fi
 echo ""
 
 echo -e "${BLUE}Passo 6: Iniciando containers...${NC}"
-docker-compose up -d
+dc up -d
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Containers iniciados${NC}"
 else
@@ -105,7 +123,7 @@ echo -e "${GREEN}✓ $ASSET_COUNT assets compilados${NC}"
 echo ""
 
 echo -e "${BLUE}Passo 13: Reiniciando backend para aplicar assets...${NC}"
-docker-compose restart backend
+dc restart backend
 echo "Aguardando 10 segundos..."
 sleep 10
 echo ""
@@ -117,7 +135,7 @@ echo "📋 Comandos úteis:"
 echo "  Ver logs frontend:  docker logs -f ab0-frontend"
 echo "  Ver logs backend:   docker logs -f ab0-backend"
 echo "  Status containers:  docker ps"
-echo "  Reiniciar:          docker-compose restart"
+echo "  Reiniciar:          docker compose restart"
 echo ""
 echo "🧪 Execute o script de validação:"
 echo "  ./validate-config.sh"

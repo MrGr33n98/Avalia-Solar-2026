@@ -66,7 +66,7 @@ jobs:
               code=$?
               echo -e "\n❌ Deploy falhou (exit=${code}). Dumping estado do Docker..." >&2
               docker compose ps || true
-              docker compose logs --tail 200 backend frontend || true
+              docker compose logs --tail 200 db redis backend frontend || true
               exit ${code}
             }
             trap on_error ERR
@@ -80,12 +80,47 @@ jobs:
             echo "🚚 Pulling novas imagens..."
             docker compose pull backend frontend
 
+            echo "🧱 Garantindo dependências (db/redis) ativas..."
+            docker compose up -d db redis
+
+            echo "⏳ Aguardando db/redis ficarem healthy..."
+            for i in $(seq 1 60); do
+              db_status=$(docker inspect -f '{{.State.Health.Status}}' ab0-postgres 2>/dev/null || echo starting)
+              redis_status=$(docker inspect -f '{{.State.Health.Status}}' ab0-redis 2>/dev/null || echo starting)
+              if [ "$db_status" = "healthy" ] && [ "$redis_status" = "healthy" ]; then
+                echo "✅ db/redis healthy"
+                break
+              fi
+              echo "db=$db_status redis=$redis_status (tentativa $i/60)"; sleep 2
+            done
+            if [ "${db_status:-starting}" != "healthy" ] || [ "${redis_status:-starting}" != "healthy" ]; then
+              echo "❌ db/redis não ficaram healthy a tempo" >&2
+              docker logs --tail 200 ab0-postgres || true
+              docker logs --tail 200 ab0-redis || true
+              exit 1
+            fi
+
             echo "🔄 Reiniciando apenas o que mudou..."
             # --no-deps evita reiniciar o Postgres e Redis sem necessidade
             docker compose up -d --no-deps backend frontend
 
+            echo "⏳ Aguardando backend ficar healthy..."
+            for i in $(seq 1 60); do
+              be_status=$(docker inspect -f '{{.State.Health.Status}}' ab0-backend 2>/dev/null || echo starting)
+              if [ "$be_status" = "healthy" ]; then
+                echo "✅ backend healthy"
+                break
+              fi
+              echo "backend=$be_status (tentativa $i/60)"; sleep 2
+            done
+            if [ "${be_status:-starting}" != "healthy" ]; then
+              echo "❌ backend não ficou healthy a tempo" >&2
+              docker logs --tail 200 ab0-backend || true
+              exit 1
+            fi
+
             echo "🗄️ Migrações de banco..."
-            docker exec ab0-backend bundle exec rails db:migrate
+            docker compose exec -T backend bundle exec rails db:migrate
 
             echo "🧹 Limpeza e Finalização..."
             docker image prune -f
