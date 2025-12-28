@@ -71,6 +71,33 @@ export default function AdvancedCarousel({
   const carouselRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const handleNext = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => {
+      if (loop) {
+        return (prev + 1) % items.length;
+      }
+      return prev < items.length - 1 ? prev + 1 : prev;
+    });
+    setTimeout(() => setIsTransitioning(false), transitionDuration);
+  }, [isTransitioning, loop, items.length, transitionDuration]);
+
+  const handlePrev = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => {
+      if (loop) {
+        return prev === 0 ? items.length - 1 : prev - 1;
+      }
+      return prev > 0 ? prev - 1 : prev;
+    });
+    setTimeout(() => setIsTransitioning(false), transitionDuration);
+  }, [isTransitioning, loop, items.length, transitionDuration]);
+
+
+
+
   // Preload images for better performance
   useEffect(() => {
     const preloadImages = () => {
@@ -99,19 +126,7 @@ export default function AdvancedCarousel({
     preloadImages();
   }, [currentIndex, items, preloadCount, preloadedImages]);
 
-  const handleNext = useCallback(() => {
-    if (isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => {
-      if (loop) {
-        return (prev + 1) % items.length;
-      }
-      return prev < items.length - 1 ? prev + 1 : prev;
-    });
-    
-    setTimeout(() => setIsTransitioning(false), transitionDuration);
-  }, [isTransitioning, loop, items.length, transitionDuration]);
+
 
   // Autoplay functionality
   useEffect(() => {
@@ -135,19 +150,7 @@ export default function AdvancedCarousel({
     }
   }, [currentIndex, onSlideChange]);
 
-  const handlePrev = useCallback(() => {
-    if (isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => {
-      if (loop) {
-        return prev === 0 ? items.length - 1 : prev - 1;
-      }
-      return prev > 0 ? prev - 1 : prev;
-    });
-    
-    setTimeout(() => setIsTransitioning(false), transitionDuration);
-  }, [isTransitioning, loop, items.length, transitionDuration]);
+
 
   const handleDotClick = useCallback((index: number) => {
     if (isTransitioning || index === currentIndex) return;
