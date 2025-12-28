@@ -11,6 +11,7 @@ import { Search, X } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildCategoryPath } from '@/lib/slug';
 
 function SearchPage() {
   const searchParams = useSearchParams();
@@ -209,7 +210,7 @@ function SearchPage() {
                       </p>
                       <Button
                         variant="outline"
-                        onClick={() => router.push(`/categories/${category.id}`)}
+                        onClick={() => router.push(buildCategoryPath(category.seo_url, category.id))}
                       >
                         Ver categoria
                       </Button>

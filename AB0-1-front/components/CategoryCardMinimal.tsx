@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Building2, Package, Layers, Star } from 'lucide-react';
 import Image from 'next/image';
+import { buildCategoryPath } from '@/lib/slug';
 
 interface CategoryCardMinimalProps {
   category: {
@@ -37,7 +38,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
     companies_count: category?.companies_count ?? 0,
     products_count: category?.products_count ?? 0,
     reviews_count: category?.reviews_count ?? 0,
-    seo_url: category?.seo_url ? `categories/${category.seo_url}` : `categories/${category.id}`,
+    seo_url: buildCategoryPath(category?.seo_url, category?.id),
   };
 
   return (
@@ -104,7 +105,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
 
       {/* Overlay clicável */}
       <Link
-        href={`/${displayData.seo_url}`}
+        href={displayData.seo_url}
         className="absolute inset-0 z-10"
         aria-label={`Ver categoria ${displayData.name}`}
       />

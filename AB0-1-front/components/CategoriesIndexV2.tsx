@@ -139,7 +139,7 @@ export default function CategoriesIndex() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {featuredCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} />
+              <CategoryCard key={category.id} category={category} layout="top" />
             ))}
           </div>
         </section>
@@ -182,7 +182,7 @@ export default function CategoriesIndex() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} />
+              <CategoryCard key={category.id} category={category} layout="top" />
             ))}
           </div>
         )}

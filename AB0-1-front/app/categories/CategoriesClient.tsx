@@ -34,6 +34,7 @@ import ResponsiveBanner from '@/components/ResponsiveBanner';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { buildCategoryPath } from '@/lib/slug';
 
 type Filters = {
   searchTerm: string;
@@ -291,7 +292,7 @@ export default function CategoriesClient() {
   const categoryChips = categories.length > 0
     ? categories.slice(0, 8).map((category) => ({
         label: category.name || 'Categoria',
-        href: category.seo_url ? `/categories/${category.seo_url}` : `/categories/${category.id}`,
+        href: buildCategoryPath(category.seo_url, category.id),
         id: category.id
       }))
     : [

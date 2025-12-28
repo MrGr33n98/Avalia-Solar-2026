@@ -8,6 +8,7 @@ import { ArrowRight, Building2, Package, Info } from 'lucide-react';
 import { Category } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { buildCategoryPath } from '@/lib/slug';
 
 const MotionDiv = motion.div;
 
@@ -39,9 +40,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
     banner_url: !imageError && category?.banner_url
       ? category.banner_url
       : "/images/category-placeholder.svg", // Certifique-se de ter um placeholder ou use um gradiente fallback
-    seo_url: category?.seo_url
-      ? `/categories/${String(category.seo_url).replace(/^\/+/, '')}`
-      : `/categories/${category?.id}`,
+    seo_url: buildCategoryPath(category?.seo_url, category?.id),
     companies_count: category?.companies_count ?? category?.companies?.length ?? 0,
     products_count: (category as any)?.products_count ?? category?.products?.length ?? 0
   };
@@ -104,7 +103,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           {/* 1. Área da Imagem (Header) */}
           <div className={[
             'relative overflow-hidden bg-gray-100',
-            layout === 'top' ? 'w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]' : 'w-full md:w-2/5 aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'
+            layout === 'top' ? 'w-full aspect-[3/1]' : 'w-full md:w-2/5 aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'
           ].join(' ')}>
             {displayData.banner_url && !imageError ? (
               <Image

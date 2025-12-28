@@ -29,3 +29,8 @@ export const parseIdFromSlug = (value: string): number | null => {
   const parsed = parseInt(idPart, 10);
   return Number.isNaN(parsed) ? null : parsed;
 };
+
+export const buildCategoryPath = (seo?: string | null, id?: number | string): string => {
+  const slug = seo ? String(seo).replace(/^\/+/, '') : String(id ?? '');
+  return `/categories/${slug}`;
+};

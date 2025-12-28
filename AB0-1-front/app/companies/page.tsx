@@ -21,6 +21,7 @@ import Link from 'next/link';
 import CompanyCard from '@/components/CompanyCard';
 import { LocationFilter } from '@/components/LocationFilter';
 import { companiesApiSafe, categoriesApiSafe, type Company, type Category } from '@/lib/api-client';
+import { buildCategoryPath } from '@/lib/slug';
 import { useLocationData } from '@/hooks/useLocationData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,7 +119,7 @@ export default function CompaniesPage() {
   const categoryChips = categories.length > 0
     ? categories.slice(0, 8).map((category) => ({
         label: category.name || 'Categoria',
-        href: category.seo_url ? `/categories/${category.seo_url}` : `/categories/${category.id}`
+        href: buildCategoryPath(category.seo_url, category.id)
       }))
     : [
         { label: 'Instalacao', href: '/categories' },

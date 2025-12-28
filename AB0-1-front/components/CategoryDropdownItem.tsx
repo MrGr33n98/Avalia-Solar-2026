@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Category } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildCategoryPath } from '@/lib/slug';
 import { ChevronRight } from 'lucide-react';
 
 interface CategoryDropdownItemProps {
@@ -24,7 +25,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
       onMouseLeave={() => isSubMenuOpen && setIsSubMenuOpen(false)}
     >
       <Link
-        href={`/categories/${category.seo_url}`}
+        href={buildCategoryPath(category.seo_url, category.id)}
         className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         onClick={onSelect}
       >
@@ -47,7 +48,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
               {category.subcategories?.map((sub: Category) => (
                 <Link
                   key={sub.id}
-                  href={`/categories/${sub.seo_url}`}
+                  href={buildCategoryPath(sub.seo_url, sub.id)}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={onSelect}
                 >
