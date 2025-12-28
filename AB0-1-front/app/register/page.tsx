@@ -100,7 +100,7 @@ export default function RegisterPage() {
           {submitted ? (
             <div className="space-y-4">
               <div className="p-4 bg-green-50 text-green-700 rounded-md text-sm">
-                Cadastro enviado com sucesso. Sua empresa está com status "pendente" e será analisada pelo Active Admin. Você receberá uma notificação quando for aprovada.
+                Cadastro enviado com sucesso. Sua empresa está com status &quot;pendente&quot; e será analisada pelo Active Admin. Você receberá uma notificação quando for aprovada.
               </div>
               <Button className="w-full" onClick={() => router.push('/companies')}>Ir para Empresas</Button>
             </div>

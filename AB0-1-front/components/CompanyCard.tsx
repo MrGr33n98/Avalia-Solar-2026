@@ -135,9 +135,10 @@ export default function CompanyCard({ company, className = '', compact = false, 
         </div>
       )}
       {!isLoading && (
-        <div className="relative">
-          {/* 1) Banner + Avatar */}
-        <Link
+        <>
+          <div className="relative">
+            {/* 1) Banner + Avatar */}
+            <Link
           href={companyPath}
           aria-label={`Ver detalhes de ${name}`}
           className={[
@@ -347,6 +348,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
           </div>
         </div>
       </div>
+        </>
       )}
     </div>
   );

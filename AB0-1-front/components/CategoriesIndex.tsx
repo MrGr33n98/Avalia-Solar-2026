@@ -202,7 +202,7 @@ export default function CategoriesIndex() {
         {filteredCategories.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
-              Nenhuma categoria encontrada com o termo "{searchTerm}"
+              Nenhuma categoria encontrada com o termo &quot;{searchTerm}&quot;
             </p>
           </div>
         ) : (

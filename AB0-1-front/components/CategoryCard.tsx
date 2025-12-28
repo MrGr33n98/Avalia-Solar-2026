@@ -150,15 +150,6 @@ export default function CategoryCard({ category, className = "", variant = 'rich
                   </div>
                 )}
               </div>
-              {/* Se quiser mostrar produtos também
-              {displayData.products_count > 0 && (
-                <div className="flex items-center text-xs font-medium text-gray-600">
-                  <Package className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                  {displayData.products_count}
-                </div>
-              )}
-              */}
-
               {/* Call to Action Visual */}
               <div className={`flex items-center text-sm font-semibold text-blue-600 transform transition-all duration-300 ${variant === 'interactive' ? (isHovered ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0') : ''}`}>
                 {i18n.explore} <ArrowRight className="ml-1 w-4 h-4" />

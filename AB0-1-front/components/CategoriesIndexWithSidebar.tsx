@@ -359,7 +359,7 @@ function EmptyState({ searchTerm }: { searchTerm: string }) {
       <p className="text-gray-500">
         {searchTerm ? (
           <>
-            Não encontramos resultados para <strong>"{searchTerm}"</strong>
+            Não encontramos resultados para <strong>&quot;{searchTerm}&quot;</strong>
           </>
         ) : (
           'Nenhuma categoria disponível no momento.'
