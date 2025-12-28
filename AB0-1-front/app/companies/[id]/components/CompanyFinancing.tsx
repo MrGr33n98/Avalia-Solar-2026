@@ -22,10 +22,6 @@ export default function CompanyFinancing({ companyId }: Props) {
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [loanAmount, setLoanAmount] = useState([50000]);
 
-  useEffect(() => {
-    loadFinancingOptions();
-  }, [audience, loadFinancingOptions]);
-
   const loadFinancingOptions = useCallback(async () => {
     setLoading(true);
     try {
@@ -47,6 +43,10 @@ export default function CompanyFinancing({ companyId }: Props) {
       setLoading(false);
     }
   }, [companyId, audience]);
+
+  useEffect(() => {
+    loadFinancingOptions();
+  }, [audience, loadFinancingOptions]);
 
   const handleCompareToggle = (id: number) => {
     setCompareIds(prev => {
