@@ -99,6 +99,20 @@ export default function AdvancedCarousel({
     preloadImages();
   }, [currentIndex, items, preloadCount, preloadedImages]);
 
+  const handleNext = useCallback(() => {
+    if (isTransitioning) return;
+    
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => {
+      if (loop) {
+        return (prev + 1) % items.length;
+      }
+      return prev < items.length - 1 ? prev + 1 : prev;
+    });
+    
+    setTimeout(() => setIsTransitioning(false), transitionDuration);
+  }, [isTransitioning, loop, items.length, transitionDuration]);
+
   // Autoplay functionality
   useEffect(() => {
     if (isPlaying && items.length > 1) {
@@ -120,20 +134,6 @@ export default function AdvancedCarousel({
       onSlideChange(currentIndex);
     }
   }, [currentIndex, onSlideChange]);
-
-  const handleNext = useCallback(() => {
-    if (isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => {
-      if (loop) {
-        return (prev + 1) % items.length;
-      }
-      return prev < items.length - 1 ? prev + 1 : prev;
-    });
-    
-    setTimeout(() => setIsTransitioning(false), transitionDuration);
-  }, [isTransitioning, loop, items.length, transitionDuration]);
 
   const handlePrev = useCallback(() => {
     if (isTransitioning) return;
