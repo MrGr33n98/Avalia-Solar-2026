@@ -287,39 +287,41 @@ export default function CompanyCard({ company, className = '', compact = false, 
 
         <div className="border-t border-gray-100 my-2 sm:my-3 print:hidden" />
 
-        {/* 3) Ações (botões menores no mobile) */}
-        <div className="mt-auto space-y-2 print:hidden">
-          {hasWhatsapp && whatsappEnabled ? (
-            <WhatsappButton
-              enabled
-              href={whatsappLinkRaw}
-              label={i18n.whatsapp}
-              className="w-full shadow-sm hover:shadow-md transition-shadow h-9 sm:h-10 md:h-9"
-              size="sm"
-              onClick={() => emit('cta_whatsapp_click')}
-            />
-          ) : (
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm h-9 sm:h-10 md:h-9"
-              size="sm"
-              onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
-            >
-              <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
-              <span className="truncate">{i18n.budget}</span>
-            </Button>
-          )}
+        {/* 3) Ações (compactadas em grid no mobile) */}
+        <div className="mt-auto print:hidden">
+          <div className="grid grid-cols-2 gap-2">
+            {hasWhatsapp && whatsappEnabled ? (
+              <WhatsappButton
+                enabled
+                href={whatsappLinkRaw}
+                label={i18n.whatsapp}
+                className="w-full shadow-sm hover:shadow-md transition-shadow h-9 sm:h-10 md:h-9"
+                size="sm"
+                onClick={() => emit('cta_whatsapp_click')}
+              />
+            ) : (
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm h-9 sm:h-10 md:h-9"
+                size="sm"
+                onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
+              >
+                <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
+                <span className="truncate">{i18n.budget}</span>
+              </Button>
+            )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 h-9 sm:h-10 md:h-9"
-            asChild
-          >
-            <Link href={companyReviewPath} aria-label={i18n.review} onClick={() => emit('cta_review_click')}>
-              <Star className="w-4 h-4 mr-2 shrink-0 text-gray-400 group-hover:text-amber-400 transition-colors" />
-              {i18n.review}
-            </Link>
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 h-9 sm:h-10 md:h-9"
+              asChild
+            >
+              <Link href={companyReviewPath} aria-label={i18n.review} onClick={() => emit('cta_review_click')}>
+                <Star className="w-4 h-4 mr-2 shrink-0 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                {i18n.review}
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* 4) Impressão */}

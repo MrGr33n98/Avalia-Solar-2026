@@ -90,12 +90,12 @@ export default function CategoryCard({ category, className = "", variant = 'rich
       )}
       <Link href={displayData.seo_url} prefetch className="block h-full group outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl" aria-label={displayData.name}>
         <Card 
-          className="h-full flex flex-col overflow-hidden bg-white border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 relative"
+          className="h-full flex flex-col md:flex-row overflow-hidden bg-white border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 relative"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* 1. Área da Imagem (Header) */}
-          <div className={`relative w-full overflow-hidden bg-gray-100 ${variant === 'minimal' ? 'h-40' : variant === 'interactive' ? 'h-56' : 'h-48'}`}>
+          <div className={`relative overflow-hidden bg-gray-100 w-full md:w-2/5 ${variant === 'minimal' ? 'aspect-[16/9]' : 'aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'}`}>
             {displayData.banner_url && !imageError ? (
               <Image
                 src={displayData.banner_url}
@@ -119,13 +119,13 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           </div>
 
           {/* 2. Corpo do Conteúdo */}
-          <div className={`flex flex-col flex-1 ${variant === 'minimal' ? 'p-4' : 'p-5'}`}>
+          <div className={`flex flex-col flex-1 md:w-3/5 ${variant === 'minimal' ? 'p-4' : 'p-5'}`}>
             {/* Cabeçalho do Card */}
             <div className="mb-3">
               <h3 className={`font-bold text-gray-900 leading-tight transition-colors mb-2 ${variant === 'minimal' ? 'text-base' : 'text-lg'} ${variant !== 'minimal' ? 'group-hover:text-blue-600' : ''}`}>
                 {displayData.name}
               </h3>
-              
+
               {displayData.description && variant !== 'minimal' && (
                 <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
                   {displayData.description}

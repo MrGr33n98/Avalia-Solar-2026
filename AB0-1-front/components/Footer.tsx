@@ -39,7 +39,7 @@ export default function Footer() {
             <Link href="/" className="font-bold text-2xl mb-2 hover:text-orange-400 transition-colors">
               Avalia Solar
             </Link>
-            <p className="text-gray-300 text-sm leading-relaxed max-w-xs">
+            <p className="text-gray-200 text-sm leading-snug max-w-xs">
               O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
             </p>
             <div className="space-y-3 pt-2">
@@ -66,7 +66,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
+                  className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>
@@ -83,7 +83,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
+                  className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>
@@ -100,7 +100,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
+                  className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>

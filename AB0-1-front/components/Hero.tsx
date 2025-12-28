@@ -26,16 +26,14 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="text-foreground">Compare e Encontre a</span>{' '}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Melhor Empresa Solar
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Conecte-se com as melhores empresas de energia solar do Brasil.
-              Compare preços, avaliações e encontre a solução perfeita para sua
-              casa ou empresa.
+            <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed line-clamp-2">
+              Conecte-se com as melhores empresas de energia solar do Brasil. Compare preços, avaliações e encontre a solução perfeita para sua casa ou empresa.
             </p>
           </motion.div>
 
@@ -48,15 +46,17 @@ export default function Hero() {
           >
             <div className="relative">
               <SearchBar placeholder="Busque empresas, produtos ou serviços..." />
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors"
-                  >
-                    {tag}
-                  </span>
-                ))}
+              <div className="mt-4 overflow-x-auto no-scrollbar">
+                <div className="inline-flex items-center gap-2 px-2 whitespace-nowrap snap-x snap-mandatory">
+                  {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors snap-start"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
