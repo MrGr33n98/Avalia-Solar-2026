@@ -44,7 +44,7 @@ const AuthorAvatarFloating: React.FC<AuthorAvatarFloatingProps> = ({ name, avata
           position: relative;
           border-radius: 50%;
           overflow: hidden;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 0 0 2px #e5e7eb, 0 0 0 4px #ffffff, 0 8px 12px rgba(16,24,40,0.10);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .author-floating__image:hover {

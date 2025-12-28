@@ -12,11 +12,13 @@ import { Card } from '@/components/ui/card';
 const MotionDiv = motion.div;
 
 type Variant = 'minimal' | 'rich' | 'interactive';
+type Layout = 'top' | 'side';
 
 interface CategoryCardProps {
   category: Category;
   className?: string;
   variant?: Variant;
+  layout?: Layout;
   lang?: 'pt-BR' | 'en-US' | 'es-ES';
   highlights?: string[];
   testimonials?: { quote: string; author?: string }[];
@@ -25,7 +27,7 @@ interface CategoryCardProps {
   schemaEnabled?: boolean;
 }
 
-export default function CategoryCard({ category, className = "", variant = 'rich', lang = 'pt-BR', highlights = [], testimonials = [], certifications = [], kpis = [], schemaEnabled = true }: CategoryCardProps) {
+export default function CategoryCard({ category, className = "", variant = 'rich', layout = 'side', lang = 'pt-BR', highlights = [], testimonials = [], certifications = [], kpis = [], schemaEnabled = true }: CategoryCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -37,7 +39,9 @@ export default function CategoryCard({ category, className = "", variant = 'rich
     banner_url: !imageError && category?.banner_url
       ? category.banner_url
       : "/images/category-placeholder.svg", // Certifique-se de ter um placeholder ou use um gradiente fallback
-    seo_url: category?.seo_url ? `/${category.seo_url}` : `/categories/${category.id}`,
+    seo_url: category?.seo_url
+      ? `/categories/${String(category.seo_url).replace(/^\/+/, '')}`
+      : `/categories/${category?.id}`,
     companies_count: category?.companies_count ?? category?.companies?.length ?? 0,
     products_count: (category as any)?.products_count ?? category?.products?.length ?? 0
   };
@@ -90,12 +94,18 @@ export default function CategoryCard({ category, className = "", variant = 'rich
       )}
       <Link href={displayData.seo_url} prefetch className="block h-full group outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl" aria-label={displayData.name}>
         <Card 
-          className="h-full flex flex-col md:flex-row overflow-hidden bg-white border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 relative"
+          className={[
+            'h-full overflow-hidden bg-white border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 relative',
+            layout === 'top' ? 'flex flex-col max-h-[360px]' : 'flex flex-col md:flex-row',
+          ].join(' ')}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* 1. Área da Imagem (Header) */}
-          <div className={`relative overflow-hidden bg-gray-100 w-full md:w-2/5 ${variant === 'minimal' ? 'aspect-[16/9]' : 'aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'}`}>
+          <div className={[
+            'relative overflow-hidden bg-gray-100',
+            layout === 'top' ? 'w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]' : 'w-full md:w-2/5 aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'
+          ].join(' ')}>
             {displayData.banner_url && !imageError ? (
               <Image
                 src={displayData.banner_url}
@@ -119,15 +129,19 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           </div>
 
           {/* 2. Corpo do Conteúdo */}
-          <div className={`flex flex-col flex-1 md:w-3/5 ${variant === 'minimal' ? 'p-4' : 'p-5'}`}>
+          <div className={[
+            'flex flex-col flex-1',
+            layout === 'top' ? 'w-full' : 'md:w-3/5',
+            variant === 'minimal' ? 'p-4' : 'p-5',
+          ].join(' ')}>
             {/* Cabeçalho do Card */}
             <div className="mb-3">
-              <h3 className={`font-bold text-gray-900 leading-tight transition-colors mb-2 ${variant === 'minimal' ? 'text-base' : 'text-lg'} ${variant !== 'minimal' ? 'group-hover:text-blue-600' : ''}`}>
+              <h3 className={`font-bold text-gray-900 leading-tight transition-colors mb-2 ${layout === 'top' ? 'text-xl md:text-2xl' : (variant === 'minimal' ? 'text-base' : 'text-lg')} ${variant !== 'minimal' ? 'group-hover:text-blue-600' : ''}`}>
                 {displayData.name}
               </h3>
 
               {displayData.description && variant !== 'minimal' && (
-                <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
+                <p className="text-sm md:text-base text-gray-500 line-clamp-2 leading-relaxed">
                   {displayData.description}
                 </p>
               )}

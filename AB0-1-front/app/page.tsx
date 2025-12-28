@@ -168,6 +168,12 @@ export default function Home() {
       <Hero />
       <TrustRow />
 
+      {featuredCategories.length > 0 && (
+        <div className="container mx-auto px-4 md:px-6 max-w-[1000px]">
+          <CategoryCard category={featuredCategories[0]} layout="top" />
+        </div>
+      )}
+
       <SectionShell zebra>
         <SectionHeader
           title="Explore Nossas Categorias"

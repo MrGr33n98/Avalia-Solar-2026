@@ -173,24 +173,19 @@ export default function CompanyCard({ company, className = '', compact = false, 
             </div>
           )}
 
-          {company.verified && (
-            <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 shadow-sm flex items-center gap-1 border border-emerald-100">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {i18n.verified}
-            </div>
-          )}
+          {company.verified && null}
         </Link>
 
         {/* Avatar circular (menor no mobile) */}
         <div className="absolute -bottom-7 sm:-bottom-8 md:-bottom-9 left-3 sm:left-4 z-10">
           <div
             className={[
-              'relative rounded-full overflow-hidden bg-white border-2 shadow-md',
+              'relative rounded-full overflow-hidden bg-white shadow-md',
               'transition-transform duration-200 group-hover:scale-[1.02]',
               // ✅ menor no mobile
               'w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20',
             ].join(' ')}
-            style={{ borderColor: avatarRingColor }}
+            style={{ boxShadow: `0 0 0 2px ${avatarRingColor}, 0 0 0 4px #ffffff, 0 8px 12px rgba(16,24,40,0.08)` }}
           >
             {logoUrl && !logoError ? (
               <Image
@@ -229,6 +224,13 @@ export default function CompanyCard({ company, className = '', compact = false, 
                 {name}
               </h3>
             </Link>
+            {company.verified && (
+              <div className="mt-1">
+                <Badge className="text-[10px] bg-white border border-emerald-200 text-emerald-600 px-2 py-0.5">
+                  {i18n.verified}
+                </Badge>
+              </div>
+            )}
 
             {(city || state) && (
               <div className="flex items-center text-[11px] sm:text-xs md:text-sm text-gray-600 mt-1">

@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import BannerByLocation from '@/components/BannerByLocation';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -38,19 +39,21 @@ export default function CompaniesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('[CompaniesPage] Fetching companies and categories...');
+        if (process.env.NODE_ENV !== 'production') console.log('[CompaniesPage] Fetching companies and categories...');
         const [companiesData, categoriesData] = await Promise.all([
           companiesApiSafe.getAll({ include: 'logo_url' }), // Incluir logo_url para fallback
           categoriesApiSafe.getAll()
         ]);
 
-        console.log('[CompaniesPage] Received companies:', companiesData);
-        console.log('[CompaniesPage] Received categories:', categoriesData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[CompaniesPage] Received companies:', companiesData);
+          console.log('[CompaniesPage] Received categories:', categoriesData);
+        }
 
         setCompanies(companiesData || []);
         setCategories(categoriesData || []);
       } catch (err) {
-        console.error('[CompaniesPage] Error loading data:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('[CompaniesPage] Error loading data:', err);
         setError((err as any)?.message || 'Erro ao carregar dados');
       } finally {
         setLoading(false);
@@ -165,9 +168,9 @@ export default function CompaniesPage() {
     <div className="min-h-screen bg-background">
       <div className="md:hidden">
         <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
-          <div className="px-4 pt-3 pb-2">
+          <div className="px-4 pt-2 pb-1">
             <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 border border-white/70 bg-white">
+              <Avatar className="h-8 w-8 border border-white/70 bg-white">
                 <AvatarFallback className="bg-white text-[11px] font-semibold text-primary">AS</AvatarFallback>
               </Avatar>
               <div className="relative flex-1">
@@ -183,7 +186,7 @@ export default function CompaniesPage() {
               </div>
               <button
                 type="button"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-primary"
                 aria-label="Notificacoes (2 novas)"
               >
                 <Bell className="h-5 w-5" />
@@ -192,13 +195,13 @@ export default function CompaniesPage() {
                 </span>
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary-foreground/90">
+            <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-primary-foreground/90">
               <MapPin className="h-3.5 w-3.5" />
               <span className="truncate">Enviar para {locationLabel}</span>
             </div>
           </div>
-          <div className="border-t border-white/20 px-4 pb-2">
-            <div className="flex items-center gap-2 overflow-x-auto py-2">
+          <div className="border-t border-white/20 px-4 pb-1">
+            <div className="flex items-center gap-2 overflow-x-auto py-2 whitespace-nowrap snap-x snap-mandatory">
               <Link
                 href="/categories"
                 className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary shadow-sm"
@@ -209,7 +212,7 @@ export default function CompaniesPage() {
                 <Link
                   key={chip.label}
                   href={chip.href}
-                  className="whitespace-nowrap rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-primary shadow-sm"
+                  className="whitespace-nowrap rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-primary shadow-sm snap-start"
                 >
                   {chip.label}
                 </Link>
@@ -243,53 +246,57 @@ export default function CompaniesPage() {
           </section>
 
           <section className="space-y-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</p>
-              <div className="mt-2 flex gap-2 overflow-x-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStateFilter('all');
-                    setCityFilter('');
-                  }}
-                  className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                    stateFilter === 'all'
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 bg-white text-gray-700'
-                  }`}
-                  aria-pressed={stateFilter === 'all'}
-                >
-                  Todos
-                </button>
-                {loadingStates ? (
-                  <span className="text-xs text-gray-500">Carregando...</span>
-                ) : (
-                  visibleStates.map((state) => (
-                    <button
-                      key={state}
-                      type="button"
-                      onClick={() => {
-                        setStateFilter(state);
-                        setCityFilter('');
-                      }}
-                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        stateFilter === state
-                          ? 'border-gray-900 bg-gray-900 text-white'
-                          : 'border-gray-200 bg-white text-gray-700'
-                      }`}
-                      aria-pressed={stateFilter === state}
-                    >
-                      {state}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
+            <Accordion type="multiple" className="w-full" defaultValue={[]}>
+              <AccordionItem value="states">
+                <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</AccordionTrigger>
+                <AccordionContent>
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStateFilter('all');
+                      setCityFilter('');
+                    }}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                      stateFilter === 'all'
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-700'
+                    }`}
+                    aria-pressed={stateFilter === 'all'}
+                  >
+                    Todos
+                  </button>
+                  {loadingStates ? (
+                    <span className="text-xs text-gray-500">Carregando...</span>
+                  ) : (
+                    visibleStates.map((state) => (
+                      <button
+                        key={state}
+                        type="button"
+                        onClick={() => {
+                          setStateFilter(state);
+                          setCityFilter('');
+                        }}
+                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
+                          stateFilter === state
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 bg-white text-gray-700'
+                        }`}
+                        aria-pressed={stateFilter === state}
+                      >
+                        {state}
+                      </button>
+                    ))
+                  )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
 
             {stateFilter !== 'all' && (loadingCities || visibleCities.length > 0) && (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Cidades</p>
-                <div className="mt-2 flex gap-2 overflow-x-auto">
+              <AccordionItem value="cities">
+                <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Cidades</AccordionTrigger>
+                <AccordionContent>
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
                   <button
                     type="button"
                     onClick={() => setCityFilter('')}
@@ -321,13 +328,15 @@ export default function CompaniesPage() {
                       </button>
                     ))
                   )}
-                </div>
-              </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
 
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Avaliacoes</p>
-              <div className="mt-2 flex gap-2 overflow-x-auto">
+            <AccordionItem value="ratings">
+              <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Avaliacoes</AccordionTrigger>
+              <AccordionContent>
+                <div className="mt-2 flex gap-2 overflow-x-auto">
                 {ratingChips.map((chip) => (
                   <button
                     key={chip.value}
@@ -343,8 +352,10 @@ export default function CompaniesPage() {
                     {chip.label}
                   </button>
                 ))}
-              </div>
-            </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            </Accordion>
           </section>
 
           <section className="space-y-3">
