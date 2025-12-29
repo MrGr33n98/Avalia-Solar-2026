@@ -2,10 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
-import { useCategories } from '@/hooks/useCategories';
-import CompanyCard from '@/components/CompanyCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   Bell,
   Filter,
@@ -20,21 +18,27 @@ import {
   X,
   Zap
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import SidebarFilter from '@/components/SidebarFilter';
-import { useRouter, useSearchParams } from 'next/navigation';
+
+// Hooks & Utils
+import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
+import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useBanners } from '@/hooks/useBanners';
-import { BannerContainer } from '@/components/BannerContainer';
-import TestImage from '@/components/TestImage';
-import { getFullImageUrl } from '@/utils/image';
-import { ClientOnly } from '@/components/ClientOnly';
 import { useBannerGlobal } from '@/hooks/useBannerGlobal';
+import { getFullImageUrl } from '@/utils/image';
+import { buildCategoryPath } from '@/lib/slug';
+
+// UI Components
+import CompanyCard from '@/components/CompanyCard'; // O card novo que criamos
+import SidebarFilter from '@/components/SidebarFilter';
+import { BannerContainer } from '@/components/BannerContainer';
 import ResponsiveBanner from '@/components/ResponsiveBanner';
+import TestImage from '@/components/TestImage';
+import { ClientOnly } from '@/components/ClientOnly';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import Link from 'next/link';
-import { buildCategoryPath } from '@/lib/slug';
 
 type Filters = {
   searchTerm: string;
@@ -69,7 +73,6 @@ export default function CategoriesClient() {
     try {
       const combinedBanners: any[] = [];
 
-      // Adiciona banners globais primeiro (com validação)
       if (bannerGlobal?.image_url) {
         combinedBanners.push({
           id: bannerGlobal.id,
@@ -82,7 +85,6 @@ export default function CategoriesClient() {
         });
       }
 
-      // Adiciona os banners comuns (com validação)
       if (Array.isArray(banners)) {
         const globalBannerIds = new Set(bannerGlobal ? [bannerGlobal.id] : []);
         const filteredBanners = banners.filter((banner) =>
@@ -126,24 +128,7 @@ export default function CategoriesClient() {
     return categories.find((cat) => cat.id === filters.category);
   }, [filters.category, categories]);
 
-  const companiesByCategory = useMemo(() => {
-    try {
-      if (!companies || !categories) return {};
-      return companies.reduce((acc: any, company: any) => {
-        if (!company) return acc;
-        const category = categories.find((cat) => cat?.id === company.category_id);
-        if (category?.name) {
-          if (!acc[category.name]) acc[category.name] = [];
-          acc[category.name].push(company);
-        }
-        return acc;
-      }, {});
-    } catch (error) {
-      console.error('[CategoriesClient] Error grouping companies:', error);
-      return {};
-    }
-  }, [companies, categories]);
-
+  // Atualiza URL com Filtros
   useEffect(() => {
     const newParams = new URLSearchParams();
     Object.entries(debouncedFilters).forEach(([key, value]) => {
@@ -162,6 +147,7 @@ export default function CategoriesClient() {
     }
   }, [debouncedFilters, router, searchParams]);
 
+  // Extrai Locais
   const locationsData = useMemo(() => {
     if (!companies?.length) return {};
     return companies.reduce((acc: any, company: any) => {
@@ -210,44 +196,34 @@ export default function CategoriesClient() {
 
   const filteredCompanies = useMemo(() => {
     if (!companies?.length || !categories?.length) return [];
-
     const searchTermLower = filters.searchTerm.toLowerCase();
 
     try {
       return companies.filter((company) => {
-        if (filters.category) {
-          if (company.category_id !== filters.category) return false;
-        }
+        // Filtros Lógicos
+        if (filters.category && company.category_id !== filters.category) return false;
+        
         if (filters.searchTerm) {
           const name = (company.name || '').toLowerCase();
           const description = (company.description || '').toLowerCase();
-          if (
-            !name.includes(searchTermLower) &&
-            !description.includes(searchTermLower)
-          )
-            return false;
+          if (!name.includes(searchTermLower) && !description.includes(searchTermLower)) return false;
         }
-        if (
-          typeof company.address === 'string' &&
-          company.address.trim() &&
-          (filters.state || filters.city)
-        ) {
+        
+        if (typeof company.address === 'string' && company.address.trim() && (filters.state || filters.city)) {
           try {
-            const { state: companyState, city: companyCity } =
-              parseAddress(company.address);
+            const { state: companyState, city: companyCity } = parseAddress(company.address);
             if (filters.state && companyState !== filters.state) return false;
             if (filters.city && companyCity !== filters.city) return false;
-          } catch {
-            return false;
-          }
+          } catch { return false; }
         }
+        
         if (filters.rating !== null) {
           const rating = Number(company.rating) || 0;
           if (isNaN(rating) || rating < filters.rating) return false;
         }
-        if (filters.verified && !company.verified) {
-          return false;
-        }
+        
+        if (filters.verified && !company.verified) return false;
+        
         return true;
       });
     } catch (error) {
@@ -263,29 +239,20 @@ export default function CategoriesClient() {
     const entries = Array.from((locationsData[filters.state] as Set<string>) || []);
     return entries.sort().slice(0, 8);
   }, [filters.state, locationsData]);
+  
   const mobileBanner = allBanners.find((banner) => banner?.image_url)?.image_url;
-
-  const locationLabel = filters.city
-    ? `${filters.city}${filters.state ? `, ${filters.state}` : ''}`
-    : filters.state
-      ? filters.state
-      : 'Brasil';
+  const locationLabel = filters.city ? `${filters.city}${filters.state ? `, ${filters.state}` : ''}` : filters.state ? filters.state : 'Brasil';
 
   const getFilterLabel = (key: string, value: any): string => {
     switch (key) {
-      case 'searchTerm':
-        return `Busca: ${value}`;
+      case 'searchTerm': return `Busca: ${value}`;
       case 'category':
         const categoryName = categories?.find((cat) => cat.id === value)?.name;
         return `Categoria: ${categoryName || 'Desconhecida'}`;
-      case 'state':
-        return `Estado: ${value}`;
-      case 'city':
-        return `Cidade: ${value}`;
-      case 'rating':
-        return `${value} estrelas ou mais`;
-      default:
-        return `${key}: ${value}`;
+      case 'state': return `Estado: ${value}`;
+      case 'city': return `Cidade: ${value}`;
+      case 'rating': return `${value} estrelas ou mais`;
+      default: return `${key}: ${value}`;
     }
   };
 
@@ -314,7 +281,9 @@ export default function CategoriesClient() {
   return (
     <>
       <div className="bg-gray-100 min-h-screen">
+        {/* --- MOBILE VIEW --- */}
         <div className="md:hidden">
+          {/* Header Mobile */}
           <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center gap-3">
@@ -326,21 +295,14 @@ export default function CategoriesClient() {
                   <Input
                     type="search"
                     placeholder="Buscar categorias..."
-                    aria-label="Buscar categorias"
                     value={filters.searchTerm}
                     onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
                     className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
                   />
                 </div>
-                <button
-                  type="button"
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary"
-                  aria-label="Notificacoes (2 novas)"
-                >
+                <button type="button" className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary">
                   <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-                    2
-                  </span>
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">2</span>
                 </button>
               </div>
               <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary-foreground/90">
@@ -348,17 +310,13 @@ export default function CategoriesClient() {
                 <span className="truncate">Enviar para {locationLabel}</span>
               </div>
             </div>
+            {/* Chips de Categoria Mobile */}
             <div className="border-t border-white/20 px-4 pb-2">
-              <div className="flex items-center gap-2 overflow-x-auto py-2">
+              <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar">
                 <button
                   type="button"
                   onClick={() => handleFilterChange('category', null)}
-                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm ${
-                    !filters.category
-                      ? 'bg-white text-primary'
-                      : 'bg-white/90 text-primary'
-                  }`}
-                  aria-pressed={!filters.category}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm ${!filters.category ? 'bg-white text-primary' : 'bg-white/90 text-primary'}`}
                 >
                   Tudo
                 </button>
@@ -367,12 +325,7 @@ export default function CategoriesClient() {
                     key={chip.id}
                     type="button"
                     onClick={() => handleFilterChange('category', chip.id)}
-                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium shadow-sm ${
-                      filters.category === chip.id
-                        ? 'bg-white text-primary'
-                        : 'bg-white/90 text-primary'
-                    }`}
-                    aria-pressed={filters.category === chip.id}
+                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium shadow-sm ${filters.category === chip.id ? 'bg-white text-primary' : 'bg-white/90 text-primary'}`}
                   >
                     {chip.label}
                   </button>
@@ -386,12 +339,7 @@ export default function CategoriesClient() {
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="flex flex-col items-center gap-1 text-center"
-                    aria-label={action.label}
-                  >
+                  <Link key={action.label} href={action.href} className="flex flex-col items-center gap-1 text-center">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
                       <Icon className="h-5 w-5" />
                     </div>
@@ -403,11 +351,7 @@ export default function CategoriesClient() {
 
             <section>
               {mobileBanner ? (
-                <ResponsiveBanner
-                  src={mobileBanner}
-                  alt="Banner promocional"
-                  priority
-                />
+                <ResponsiveBanner src={mobileBanner} alt="Banner promocional" priority />
               ) : (
                 <div className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 shadow-sm">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -417,19 +361,15 @@ export default function CategoriesClient() {
               )}
             </section>
 
+            {/* Filtros Mobile (Estados/Cidades/Rating) */}
             <section className="space-y-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</p>
-                <div className="mt-2 flex gap-2 overflow-x-auto">
+                <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
                   <button
                     type="button"
                     onClick={() => handleFilterChange('state', null)}
-                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      !filters.state
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                    aria-pressed={!filters.state}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${!filters.state ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'}`}
                   >
                     Todos
                   </button>
@@ -438,101 +378,42 @@ export default function CategoriesClient() {
                       key={state}
                       type="button"
                       onClick={() => handleFilterChange('state', state)}
-                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        filters.state === state
-                          ? 'border-gray-900 bg-gray-900 text-white'
-                          : 'border-gray-200 bg-white text-gray-700'
-                      }`}
-                      aria-pressed={filters.state === state}
+                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${filters.state === state ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'}`}
                     >
                       {state}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {filters.state && mobileCities.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Cidades</p>
-                  <div className="mt-2 flex gap-2 overflow-x-auto">
-                    <button
-                      type="button"
-                      onClick={() => handleFilterChange('city', null)}
-                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        !filters.city
-                          ? 'border-gray-900 bg-gray-900 text-white'
-                          : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                      aria-pressed={!filters.city}
-                    >
-                      Todas
-                    </button>
-                    {mobileCities.map((city) => (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => handleFilterChange('city', city)}
-                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                          filters.city === city
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 bg-white text-gray-700'
-                        }`}
-                        aria-pressed={filters.city === city}
-                      >
-                        {city}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              
+              {/* Filtro Avaliações Mobile */}
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Avaliacoes</p>
-                <div className="mt-2 flex gap-2 overflow-x-auto">
+                <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
                   {[5, 4, 3].map((rating) => (
                     <button
                       key={rating}
                       type="button"
                       onClick={() => handleFilterChange('rating', filters.rating === rating ? null : rating)}
-                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                        filters.rating === rating
-                          ? 'border-gray-900 bg-gray-900 text-white'
-                          : 'border-gray-200 bg-white text-gray-700'
-                      }`}
-                      aria-pressed={filters.rating === rating}
+                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${filters.rating === rating ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'}`}
                     >
                       {rating}+ estrelas
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => handleFilterChange('verified', !filters.verified)}
-                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      filters.verified
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                    aria-pressed={filters.verified}
-                  >
-                    Verificadas
-                  </button>
                 </div>
               </div>
             </section>
 
+            {/* Lista de Empresas MOBILE (Grid Compacto) */}
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-gray-900">Empresas</h2>
-                <span className="text-xs text-gray-600">
-                  {loading ? '...' : filteredCompanies.length} empresas
-                </span>
+                <span className="text-xs text-gray-600">{loading ? '...' : filteredCompanies.length} empresas</span>
               </div>
 
               {loading ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-40 rounded-xl bg-white" />
-                  ))}
+                  {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 rounded-xl bg-white" />)}
                 </div>
               ) : filteredCompanies.length === 0 ? (
                 <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
@@ -540,14 +421,16 @@ export default function CategoriesClient() {
                     <Filter className="h-5 w-5 text-yellow-700" />
                   </div>
                   <h3 className="text-sm font-semibold text-gray-900">Nenhuma empresa encontrada</h3>
-                  <p className="mt-1 text-xs text-gray-600">
-                    Ajuste os filtros ou termos de busca.
-                  </p>
                 </div>
               ) : (
+                /* AQUI ESTÁ A MÁGICA: grid-cols-2 + compact */
                 <div className="grid grid-cols-2 gap-3">
                   {filteredCompanies.map((company) => (
-                    <CompanyCard key={company.id} company={company} compact />
+                    <CompanyCard 
+                      key={company.id} 
+                      company={company} 
+                      compact={true} /* Ativa o modo reduzido (scale: 0.5) */
+                    />
                   ))}
                 </div>
               )}
@@ -557,152 +440,125 @@ export default function CategoriesClient() {
           <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
             <div className="mx-auto flex max-w-md items-center justify-around py-2">
               <Link href="/" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-                <Home className="h-5 w-5" />
-                Inicio
+                <Home className="h-5 w-5" /> Inicio
               </Link>
               <Link href="/categories" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-                <Folder className="h-5 w-5" />
-                Categorias
-              </Link>
-              <Link
-                href="/profile?tab=favorites"
-                className="flex flex-col items-center gap-1 text-[10px] text-gray-600"
-              >
-                <Heart className="h-5 w-5" />
-                Favoritos
+                <Folder className="h-5 w-5" /> Categorias
               </Link>
               <Link href="/profile" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-                <User className="h-5 w-5" />
-                Perfil
+                <User className="h-5 w-5" /> Perfil
               </Link>
             </div>
           </nav>
         </div>
 
+        {/* --- DESKTOP VIEW --- */}
         <div className="hidden md:block">
-        {bannersLoading || bannerGlobalLoading ? (
-          // Altura do Skeleton ajustada para h-56 para corresponder ao BannerContainer
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center h-56 w-full rounded-lg shadow-sm mb-6">
-              <Skeleton className="w-full h-full" />
+          {bannersLoading || bannerGlobalLoading ? (
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-center items-center h-56 w-full rounded-lg shadow-sm mb-6">
+                <Skeleton className="w-full h-full" />
+              </div>
             </div>
-          </div>
-        ) : (
-          // O BannerContainer será responsável por exibir o carrossel de banners
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <BannerContainer banners={allBanners} />
-          </div>
-        )}
+          ) : (
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <BannerContainer banners={allBanners} />
+            </div>
+          )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          <SidebarFilter
-            onFilterChange={handleFilterChange}
-            filters={{
-              state: filters.state || '',
-              city: filters.city || '',
-              rating: filters.rating || 0,
-              verified: filters.verified
-            }}
-            locationsData={locationsData}
-            categories={categories}
-            categoriesLoading={categoriesLoading}
-          />
-          <div className="flex-1">
-            {selectedCategory && selectedCategory.banner_url && (
-              <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8">
-                <TestImage
-                  src={buildUrl(selectedCategory.banner_url)}
-                  alt={`Banner da categoria ${selectedCategory.name}`}
-                  className="brightness-75 object-cover"
-                  fill
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h1 className="text-white text-4xl font-bold text-center drop-shadow-lg">
-                    {selectedCategory.name}
-                  </h1>
+          <div className="flex flex-col lg:flex-row gap-6 px-4 lg:px-8 pb-10">
+            <SidebarFilter
+              onFilterChange={handleFilterChange}
+              filters={{
+                state: filters.state || '',
+                city: filters.city || '',
+                rating: filters.rating || 0,
+                verified: filters.verified
+              }}
+              locationsData={locationsData}
+              categories={categories}
+              categoriesLoading={categoriesLoading}
+            />
+            <div className="flex-1">
+              {selectedCategory && selectedCategory.banner_url && (
+                <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8">
+                  <TestImage
+                    src={buildUrl(selectedCategory.banner_url)}
+                    alt={`Banner ${selectedCategory.name}`}
+                    className="brightness-75 object-cover"
+                    fill
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h1 className="text-white text-4xl font-bold text-center drop-shadow-lg">{selectedCategory.name}</h1>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                {selectedCategory
-                  ? selectedCategory.name
-                  : 'Todas as Categorias'}
-              </h1>
-              <p className="text-gray-600 mt-2 md:mt-0">
-                <span className="font-semibold text-orange-600">
-                  {loading ? '...' : filteredCompanies.length}
-                </span>{' '}
-                Empresas encontradas
-              </p>
-            </div>
-            <ClientOnly>
-              <AnimatePresence>
-                {Object.entries(filters).some(([_, value]) => Boolean(value)) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex flex-wrap gap-2 mb-6 items-center"
-                  >
-                    {Object.entries(filters).map(([key, value]) => {
-                      if (!value) return null;
-                      return (
-                        <Badge
-                          key={key}
-                          variant="default"
-                          className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer"
-                          onClick={() => handleFilterChange(key, null)}
-                        >
-                          {getFilterLabel(key, value)}{' '}
-                          <X className="ml-2 h-3 w-3" />
-                        </Badge>
-                      );
-                    })}
-                    <button
-                      onClick={() => handleFilterChange('clearAll', null)}
-                      className="text-sm text-gray-600 underline ml-2"
-                    >
-                      Limpar todos
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </ClientOnly>
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-80 rounded-2xl" />
-                ))}
-              </div>
-            ) : filteredCompanies.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-xl text-gray-500">
-                  Nenhuma empresa encontrada com os filtros selecionados.
+              )}
+              
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+                  {selectedCategory ? selectedCategory.name : 'Todas as Categorias'}
+                </h1>
+                <p className="text-gray-600 mt-2 md:mt-0">
+                  <span className="font-semibold text-orange-600">{loading ? '...' : filteredCompanies.length}</span> Empresas encontradas
                 </p>
               </div>
-            ) : (
+
+              {/* Filtros Ativos Desktop */}
               <ClientOnly>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                >
-                  {filteredCompanies.map((company) => (
+                <AnimatePresence>
+                  {Object.entries(filters).some(([_, value]) => Boolean(value)) && (
                     <motion.div
-                      key={company.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex flex-wrap gap-2 mb-6 items-center"
                     >
-                      <CompanyCard company={company} />
+                      {Object.entries(filters).map(([key, value]) => {
+                        if (!value) return null;
+                        return (
+                          <Badge key={key} variant="default" className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer" onClick={() => handleFilterChange(key, null)}>
+                            {getFilterLabel(key, value)} <X className="ml-2 h-3 w-3" />
+                          </Badge>
+                        );
+                      })}
+                      <button onClick={() => handleFilterChange('clearAll', null)} className="text-sm text-gray-600 underline ml-2">Limpar todos</button>
                     </motion.div>
-                  ))}
-                </motion.div>
+                  )}
+                </AnimatePresence>
               </ClientOnly>
-            )}
+
+              {/* Lista de Empresas DESKTOP */}
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-80 rounded-2xl" />)}
+                </div>
+              ) : filteredCompanies.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-xl text-gray-500">Nenhuma empresa encontrada com os filtros selecionados.</p>
+                </div>
+              ) : (
+                <ClientOnly>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                  >
+                    {filteredCompanies.map((company) => (
+                      <motion.div
+                        key={company.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {/* Desktop usa o card em tamanho normal (padrão) */}
+                        <CompanyCard company={company} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </ClientOnly>
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </>
