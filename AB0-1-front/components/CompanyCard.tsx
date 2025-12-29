@@ -208,7 +208,7 @@ export default function CompanyCard({
                   alt={`Logo ${name}`}
                   fill
                   sizes="80px"
-                  className="object-contain p-1"
+                  className="rounded-full object-contain p-1"
                   onError={() => setLogoError(true)}
                 />
               ) : (
