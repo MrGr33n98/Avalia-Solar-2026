@@ -1,36 +1,149 @@
-/* CompanyCard logo overlay: force perfect circle + centered logo */
+/* Escala global aplicada ao card (50% por padrão via inline style) */
+:root {}
 
-.logoOverlay {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 5;
+.root {
+  --scale: 0.5;
 }
 
-.logoContainer {
-  position: relative; /* required for next/image with fill */
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  overflow: hidden;
+.card {
+  border-radius: calc(1rem * var(--scale));
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
 
+.cardHover {
+  box-shadow: 0 6px 16px rgba(16,24,40,0.12);
+  transform: translateY(-0.5px);
+}
+
+.banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-top-left-radius: calc(1rem * var(--scale));
+  border-top-right-radius: calc(1rem * var(--scale));
+}
+
+.bannerCompact {
+  height: calc(8rem * var(--scale));
+}
+
+.bannerDefault {
+  height: calc(10rem * var(--scale));
+}
+
+.avatarWrap {
+  position: absolute;
+  left: calc(0.75rem * var(--scale));
+  bottom: calc(-3.5rem * var(--scale));
+  z-index: 10;
+}
+
+.avatar {
+  width: calc(5rem * var(--scale));
+  height: calc(5rem * var(--scale));
+  border-radius: 9999px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.content {
+  padding-top: calc(5rem * var(--scale));
+  padding-left: calc(0.75rem * var(--scale));
+  padding-right: calc(0.75rem * var(--scale));
+  padding-bottom: calc(0.75rem * var(--scale));
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-weight: 700;
+  font-size: calc(1rem * var(--scale));
+  line-height: 1.2;
+  color: #111827;
+}
+
+.subtitle {
+  font-size: calc(0.75rem * var(--scale));
+  color: #4b5563;
+}
+
+.badgeRow {
+  margin-top: calc(0.25rem * var(--scale));
+}
+
+.description {
+  font-size: calc(0.75rem * var(--scale));
+  color: #4b5563;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: calc(0.75rem * var(--scale));
+  min-height: calc(2.2rem * var(--scale));
+}
+
+.actions {
+  margin-top: auto;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(0.5rem * var(--scale));
+}
+
+.buttonPrimary {
+  height: calc(2.25rem * var(--scale));
+  font-size: calc(0.75rem * var(--scale));
+}
+
+.buttonSecondary {
+  height: calc(2.25rem * var(--scale));
+  font-size: calc(0.75rem * var(--scale));
+}
+
+.divider {
+  border-top: 1px solid #f3f4f6;
+  margin: calc(0.5rem * var(--scale)) 0;
+}
+
+.locationRow {
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  gap: calc(0.25rem * var(--scale));
+  font-size: calc(0.7rem * var(--scale));
+  color: #4b5563;
 }
 
-.logoImage {
-  object-fit: contain;
-  padding: 4px;
+.ratingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: calc(0.75rem * var(--scale));
+  padding: calc(0.25rem * var(--scale)) calc(0.5rem * var(--scale));
 }
 
-@media (min-width: 768px) {
-  .logoContainer {
-    width: 64px;
-    height: 64px;
+.verifiedBadge {
+  font-size: calc(0.6rem * var(--scale));
+  padding: 0.1rem 0.3rem;
+  border-radius: calc(0.5rem * var(--scale));
+}
+
+.printSection {
+  display: none;
+}
+
+@media print {
+  .printSection {
+    display: block;
+    margin-top: calc(1rem * var(--scale));
+    padding-top: calc(1rem * var(--scale));
+    border-top: 1px solid #e5e7eb;
   }
 }

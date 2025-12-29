@@ -12,7 +12,20 @@ import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import WhatsappButton from '@/components/WhatsappButton';
+import styles from './CompanyCard.module.css';
+import PropTypes from 'prop-types';
 
+/**
+ * Props do CompanyCard
+ * @property company Empresa a ser exibida
+ * @property className Classe adicional para customização
+ * @property compact Modo compacto (reduz dimensões)
+ * @property lang Idioma para rótulos
+ * @property isLoading Exibe skeleton
+ * @property avatarRingColor Cor do aro do avatar
+ * @property schemaEnabled Habilita schema.org JSON-LD
+ * @property onAnalyticsEvent Callback de eventos de analytics
+ */
 interface Props {
   company: Company;
   className?: string;
@@ -108,6 +121,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
         (company as any)?.effect ? 'company-card effect-active' : 'company-card',
         className,
       ].join(' ')}
+      style={{ ['--scale' as any]: 0.5 }}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
     >
       {jsonLd && (
@@ -208,7 +222,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
       </div>
 
       {/* 2) Conteúdo (padding menor no mobile) */}
-      <div className="pt-10 sm:pt-12 md:pt-14 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 flex-1 flex flex-col">
+      <div className={styles.content}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
           <div className="flex-1 min-w-0">
@@ -218,12 +232,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
               className="transition-colors group-hover:text-blue-600"
               onClick={() => emit('title_click')}
             >
-              <h3
-                className="font-bold text-sm sm:text-base md:text-lg text-gray-900 truncate leading-snug tracking-tight"
-                title={name}
-              >
-                {name}
-              </h3>
+              <h3 className={[styles.title, 'truncate'].join(' ')} title={name}>{name}</h3>
             </Link>
             {company.verified && (
               <div className="mt-1">
@@ -234,7 +243,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
             )}
 
             {(city || state) && (
-              <div className="flex items-center text-[11px] sm:text-xs md:text-sm text-gray-600 mt-1">
+              <div className={[styles.locationRow, 'mt-1'].join(' ')}>
                 <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 shrink-0" />
                 <span className="truncate">
                   {city}
@@ -247,7 +256,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
 
           {/* Rating */}
           {parseFloat(rating) > 0 ? (
-            <div className="flex flex-col items-end self-start bg-amber-50 px-2 py-1 rounded-xl border border-amber-100">
+            <div className={styles.ratingBox}>
               <div className="flex items-center gap-1">
                 <span className="font-bold text-sm md:text-base text-amber-700">{rating}</span>
                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
@@ -281,30 +290,28 @@ export default function CompanyCard({ company, className = '', compact = false, 
 
         {/* Descrição (menos linhas no mobile) */}
         {description ? (
-          <p className="text-[11px] sm:text-xs md:text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-2 md:line-clamp-2 mb-3 sm:mb-4 flex-1 min-h-[2.2rem]">
-            {description}
-          </p>
+          <p className={styles.description}>{description}</p>
         ) : (
           <div className="min-h-[2.2rem] mb-3 sm:mb-4" />
         )}
 
-        <div className="border-t border-gray-100 my-2 sm:my-3 print:hidden" />
+        <div className={[styles.divider, 'print:hidden'].join(' ')} />
 
         {/* 3) Ações (compactadas em grid no mobile) */}
-        <div className="mt-auto print:hidden">
-          <div className="grid grid-cols-2 gap-2">
+        <div className={[styles.actions, 'print:hidden'].join(' ')}>
+          <div className={styles.actionsGrid}>
             {hasWhatsapp && whatsappEnabled ? (
               <WhatsappButton
                 enabled
                 href={whatsappLinkRaw}
                 label={i18n.whatsapp}
-                className="w-full shadow-sm hover:shadow-md transition-shadow h-9 sm:h-10 md:h-9"
+                className={[styles.buttonPrimary, 'w-full shadow-sm hover:shadow-md transition-shadow'].join(' ')}
                 size="sm"
                 onClick={() => emit('cta_whatsapp_click')}
               />
             ) : (
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm h-9 sm:h-10 md:h-9"
+                className={[styles.buttonPrimary, 'w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm'].join(' ')}
                 size="sm"
                 onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
               >
@@ -316,7 +323,7 @@ export default function CompanyCard({ company, className = '', compact = false, 
             <Button
               variant="outline"
               size="sm"
-              className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 h-9 sm:h-10 md:h-9"
+              className={[styles.buttonSecondary, 'w-full border-gray-200 hover:bg-gray-50 text-gray-700'].join(' ')}
               asChild
             >
               <Link href={companyReviewPath} aria-label={i18n.review} onClick={() => emit('cta_review_click')}>
@@ -357,3 +364,14 @@ export default function CompanyCard({ company, className = '', compact = false, 
     </div>
   );
 }
+
+CompanyCard.propTypes = {
+  company: PropTypes.object.isRequired,
+  className: PropTypes.string,
+  compact: PropTypes.bool,
+  lang: PropTypes.oneOf(['pt-BR', 'en-US', 'es-ES']),
+  isLoading: PropTypes.bool,
+  avatarRingColor: PropTypes.string,
+  schemaEnabled: PropTypes.bool,
+  onAnalyticsEvent: PropTypes.func,
+};
