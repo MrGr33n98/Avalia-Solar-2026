@@ -1,9 +1,4 @@
 /* Escala global aplicada ao card (50% por padrão via inline style) */
-:root {}
-
-.root {
-  --scale: 0.5;
-}
 
 .card {
   border-radius: calc(1rem * var(--scale));
