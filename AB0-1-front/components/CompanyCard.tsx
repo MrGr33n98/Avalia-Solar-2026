@@ -3,29 +3,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, MapPin, MessageCircle, Phone, Globe, Building2 } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Building2 } from 'lucide-react';
+
+// UI Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Libs & Utils
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import WhatsappButton from '@/components/WhatsappButton';
-import styles from './CompanyCard.module.css';
-import PropTypes from 'prop-types';
 
-/**
- * Props do CompanyCard
- * @property company Empresa a ser exibida
- * @property className Classe adicional para customização
- * @property compact Modo compacto (reduz dimensões)
- * @property lang Idioma para rótulos
- * @property isLoading Exibe skeleton
- * @property avatarRingColor Cor do aro do avatar
- * @property schemaEnabled Habilita schema.org JSON-LD
- * @property onAnalyticsEvent Callback de eventos de analytics
- */
+// Tipagem Estendida
+interface ExtendedCompany extends Company {
+  cta_whatsapp_url?: string;
+  whatsapp_url?: string;
+  whatsapp_enabled?: boolean;
+  effect?: boolean;
+}
+
 interface Props {
   company: Company;
   className?: string;
@@ -37,41 +36,56 @@ interface Props {
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
 }
 
-export default function CompanyCard({ company, className = '', compact = false, lang = 'pt-BR', isLoading = false, avatarRingColor = '#ffffff', schemaEnabled = true, onAnalyticsEvent }: Props) {
+// Dicionário de Textos
+const DICTIONARY = {
+  'pt-BR': { whatsapp: 'WhatsApp', budget: 'Orçamento', review: 'Avaliar', verified: 'Verificada', reviews: 'avaliações' },
+  'en-US': { whatsapp: 'WhatsApp', budget: 'Get Quote', review: 'Review', verified: 'Verified', reviews: 'reviews' },
+  'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones' },
+} as const;
+
+// Helper de Classes
+const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');
+
+export default function CompanyCard({
+  company: rawCompany,
+  className = '',
+  compact = false,
+  lang = 'pt-BR',
+  isLoading = false,
+  avatarRingColor = '#ffffff',
+  schemaEnabled = true,
+  onAnalyticsEvent,
+}: Props) {
+  const company = rawCompany as ExtendedCompany;
+  const { id, name, city, state, description, rating_count, average_rating, category_name, website } = company;
+
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
-
-  const { id, name, city, state, description, rating_count, average_rating, category_name, website } = company;
-
+  // Dados Calculados
   const rating = average_rating?.toFixed(1) ?? '0.0';
   const totalReviews = rating_count || 0;
-
   const companyPath = buildCompanyPath(id, name);
   const companyReviewPath = buildCompanySubPath(id, name, 'review');
-
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
-  const whatsappLinkRaw =
-    (company as any).cta_whatsapp_url || (company as any).whatsapp_url || company.whatsapp;
+  // Lógica WhatsApp
+  const whatsappLinkRaw = company.cta_whatsapp_url || company.whatsapp_url || company.whatsapp;
   const hasWhatsapp = Boolean(whatsappLinkRaw);
-  const whatsappEnabled = (company as any).whatsapp_enabled !== false;
+  const whatsappEnabled = company.whatsapp_enabled !== false;
 
-  const i18n = useMemo(() => {
-    const dict = {
-      'pt-BR': { whatsapp: 'WhatsApp', budget: 'Solicitar Orçamento', review: 'Avaliar', verified: 'VERIFICADA' },
-      'en-US': { whatsapp: 'WhatsApp', budget: 'Request Quote', review: 'Review', verified: 'VERIFIED' },
-      'es-ES': { whatsapp: 'WhatsApp', budget: 'Solicitar Presupuesto', review: 'Evaluar', verified: 'VERIFICADA' },
-    } as const;
-    return dict[lang] || dict['pt-BR'];
-  }, [lang]);
+  const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
 
+  // SEO
   const jsonLd = useMemo(() => {
-    if (!schemaEnabled) return null;
-    const url = typeof window === 'undefined' ? undefined : window.location.origin + companyPath;
+    if (!schemaEnabled || typeof window === 'undefined') return null;
+    const url = window.location.origin + companyPath;
     const sameAs = website ? [website] : undefined;
-    const aggregateRating = totalReviews > 0 ? { '@type': 'AggregateRating', ratingValue: parseFloat(rating), reviewCount: totalReviews } : undefined;
+    const aggregateRating = totalReviews > 0 
+      ? { '@type': 'AggregateRating', ratingValue: parseFloat(rating), reviewCount: totalReviews } 
+      : undefined;
+
     return {
       '@context': 'https://schema.org',
       '@type': 'Organization',
@@ -84,294 +98,242 @@ export default function CompanyCard({ company, className = '', compact = false, 
     };
   }, [schemaEnabled, name, city, state, rating, totalReviews, logoUrl, website, companyPath]);
 
-  const emit = useCallback(
-    (type: string, meta?: Record<string, any>) => {
+  // Analytics
+  const emit = useCallback((type: string, meta?: Record<string, any>) => {
       if (onAnalyticsEvent) onAnalyticsEvent({ type, companyId: id, meta });
-    },
-    [onAnalyticsEvent, id]
-  );
+  }, [onAnalyticsEvent, id]);
 
-  useEffect(() => {
-    emit('view');
-  }, [emit]);
+  useEffect(() => { emit('view'); }, [emit]);
 
+  // Formatadores
   const formatPhone = (phone?: string) => {
     if (!phone) return '';
     const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) return phone;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return digits.length < 10 ? phone : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   };
 
-  // 🔧 Ajuste mobile: card mais “compacto” em telas pequenas sem mudar a lógica
-  // - banner mais baixo no mobile
-  // - avatar menor no mobile
-  // - padding/typography menores no mobile
-  // - descrição clamp menor no mobile
-  // - botões mais baixos no mobile
-  const isMobileTight = true;
+  // --- SKELETON LOADING ---
+  if (isLoading) {
+    return (
+      <div className={cn('h-full flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden', className)}>
+        <Skeleton className="w-full h-32 sm:h-36" />
+        <div className="px-5 pb-5 flex flex-col flex-1">
+          <div className="relative -mt-10 mb-3">
+            <Skeleton className="rounded-full w-20 h-20 border-4 border-white shadow-sm" />
+          </div>
+          <Skeleton className="h-6 w-3/4 mb-3" />
+          <div className="flex gap-2 mb-4">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-2/3 mb-6" />
+          <div className="mt-auto grid grid-cols-1 gap-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      className={[
-        'h-full flex flex-col bg-white',
+      className={cn(
+        // Base
+        'relative flex flex-col bg-white h-full',
         'rounded-2xl border border-gray-200 shadow-sm',
-        'transition-all duration-200',
-        'hover:shadow-lg hover:-translate-y-0.5 hover:ring-1 hover:ring-gray-200',
-        'group touch-manipulation',
-        (company as any)?.effect ? 'company-card effect-active' : 'company-card',
-        className,
-      ].join(' ')}
-      style={{ ['--scale' as any]: 0.5 }}
+        // Hover Desktop
+        'md:transition-all md:duration-300 md:ease-out',
+        'md:hover:shadow-xl md:hover:-translate-y-1 md:hover:border-blue-100',
+        // Mobile Touch Optimization
+        'active:scale-[0.99] transition-transform duration-100', // Feedback tátil ao tocar no mobile
+        company.effect ? 'ring-2 ring-blue-400 ring-offset-2' : '',
+        className
+      )}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
     >
-      {jsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      )}
-      {isLoading && (
-        <div className="p-3 sm:p-4 md:p-5">
-          <div className="relative w-full overflow-hidden rounded-t-2xl bg-gray-100 h-24 sm:h-28 md:h-32">
-            <Skeleton className="w-full h-full" />
-          </div>
-          <div className="relative mt-4">
-            <div className="absolute -top-7 left-3 sm:left-4">
-              <Skeleton className="rounded-full w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20" />
-            </div>
-          </div>
-          <div className="pt-10 sm:pt-12 md:pt-14">
-            <Skeleton className="h-4 w-40 mb-2" />
-            <Skeleton className="h-3 w-24 mb-3" />
-            <Skeleton className="h-3 w-full mb-3" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-          </div>
-        </div>
-      )}
-      {!isLoading && (
-        <>
-          <div className="relative">
-            {/* 1) Banner + Avatar */}
-            <Link
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
+
+      {/* --- 1. Header: Banner & Avatar --- */}
+      <div className="relative group/header">
+        <Link
           href={companyPath}
-          aria-label={`Ver detalhes de ${name}`}
-          className={[
-            'block relative w-full overflow-hidden bg-white rounded-t-2xl',
-            // ✅ menor no mobile
-            compact ? 'h-24 sm:h-28 md:h-32' : 'h-28 sm:h-32 md:h-40',
-          ].join(' ')}
+          className={cn(
+            'block relative w-full overflow-hidden rounded-t-2xl bg-gray-100',
+            // Altura do banner aumentada no mobile para dar respiro
+            'h-32 sm:h-36 md:h-40'
+          )}
           onClick={() => emit('card_click')}
+          aria-label={`Ver ${name}`}
         >
           {bannerUrl && !bannerError ? (
-            <>
-              <Image
-                src={bannerUrl}
-                alt={`Banner ${name}`}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={[
-                compact ? 'object-contain p-3 sm:p-4 md:p-5' : 'object-cover',
-                'transition-transform duration-500',
-                'group-hover:scale-[1.02] group-hover:brightness-[0.98]',
-              ].join(' ')}
-                onError={() => setBannerError(true)}
-                priority={false}
-                loading="lazy"
-              />
-              {!compact && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-black/0 to-black/0" />
+            <Image
+              src={bannerUrl}
+              alt={`Banner ${name}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={cn(
+                'object-cover transition-transform duration-700',
+                compact ? 'object-contain p-4 bg-white' : '',
+                'md:group-hover/header:scale-105'
               )}
-            </>
+              onError={() => setBannerError(true)}
+              priority={false}
+            />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-blue-50 to-gray-100 flex items-center justify-center">
-              <Building2 className="text-gray-300 w-10 h-10 opacity-50" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+              <Building2 className="text-blue-200 w-12 h-12" />
             </div>
           )}
-
-          {company.verified && null}
+          {/* Overlay sutil apenas no desktop para texto branco se necessário, aqui removido para clean look */}
         </Link>
 
-        {/* Avatar circular (menor no mobile) */}
-        <div className="absolute -bottom-7 sm:-bottom-8 md:-bottom-9 left-3 sm:left-4 z-10">
+        {/* Avatar Container: Flutuando entre o banner e o conteúdo */}
+        <div className="absolute -bottom-8 left-4 sm:left-5 z-10 pointer-events-none">
           <div
-            className={[
-              'relative rounded-full overflow-hidden bg-white shadow-md',
-              'transition-transform duration-200 group-hover:scale-[1.02]',
-              // ✅ menor no mobile
-              'w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20',
-            ].join(' ')}
-            style={{ boxShadow: `0 0 0 2px ${avatarRingColor}, 0 0 0 4px #ffffff, 0 8px 12px rgba(16,24,40,0.08)` }}
-          >
-            {logoUrl && !logoError ? (
-              <Image
-                src={logoUrl}
-                alt={`Logo ${name}`}
-                fill
-                sizes="(max-width: 768px) 56px, 80px"
-                className="object-contain p-1"
-                onError={() => setLogoError(true)}
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Building2 className="text-gray-300 w-6 h-6 md:w-8 md:h-8" />
-              </div>
+            className={cn(
+              'relative rounded-full bg-white p-0.5', // P-0.5 cria uma borda branca limpa
+              'w-20 h-20 sm:w-20 sm:h-20', // Tamanho fixo e generoso para mobile
+              'shadow-md'
             )}
+            style={{ 
+              boxShadow: `0 0 0 2px ${avatarRingColor}, 0 4px 6px -1px rgba(0,0,0,0.1)` 
+            }}
+          >
+            <div className="relative w-full h-full rounded-full overflow-hidden bg-white">
+              {logoUrl && !logoError ? (
+                <Image
+                  src={logoUrl}
+                  alt={`Logo ${name}`}
+                  fill
+                  sizes="80px"
+                  className="object-contain p-1"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                  <Building2 className="text-gray-300 w-8 h-8" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 2) Conteúdo (padding menor no mobile) */}
-      <div className={styles.content}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-          <div className="flex-1 min-w-0">
-            <Link
-              href={companyPath}
-              aria-label={`Abrir perfil de ${name}`}
-              className="transition-colors group-hover:text-blue-600"
+      {/* --- 2. Conteúdo --- */}
+      <div className="flex flex-col flex-1 px-4 sm:px-5 pb-5">
+        
+        {/* Espaçador superior para compensar o Avatar negativo */}
+        <div className="pt-12 sm:pt-14 flex justify-between items-start mb-2">
+          
+          {/* Coluna Esquerda: Título */}
+          <div className="flex-1 min-w-0 mr-2">
+            <Link 
+              href={companyPath} 
+              className="block"
               onClick={() => emit('title_click')}
             >
-              <h3 className={[styles.title, 'truncate'].join(' ')} title={name}>{name}</h3>
+              <h3 className="text-lg font-bold text-gray-900 leading-snug truncate pr-2 hover:text-blue-600 transition-colors">
+                {name}
+              </h3>
             </Link>
-            {company.verified && (
-              <div className="mt-1">
-                <Badge className="text-[10px] bg-white border border-emerald-200 text-emerald-600 px-2 py-0.5">
-                  {i18n.verified}
+            
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {company.verified && (
+                <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1.5 py-0 rounded-md font-semibold">
+                  {text.verified}
                 </Badge>
-              </div>
-            )}
-
-            {(city || state) && (
-              <div className={[styles.locationRow, 'mt-1'].join(' ')}>
-                <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 shrink-0" />
-                <span className="truncate">
-                  {city}
-                  {city && state ? ', ' : ''}
-                  {state}
+              )}
+               {category_name && (
+                <span className="text-[11px] text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-[140px]">
+                  {category_name}
                 </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Rating */}
-          {parseFloat(rating) > 0 ? (
-            <div className={styles.ratingBox}>
-              <div className="flex items-center gap-1">
-                <span className="font-bold text-sm md:text-base text-amber-700">{rating}</span>
-                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              </div>
-              <span className="text-[10px] text-amber-600/80 font-medium whitespace-nowrap">
-                {totalReviews} avaliações
-              </span>
-            </div>
-          ) : (
-            <div className="opacity-0 pointer-events-none select-none px-2 py-1 rounded-xl border border-transparent">
-              <div className="flex items-center gap-1">
-                <span className="font-bold text-sm md:text-base">0.0</span>
-                <Star className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[10px] whitespace-nowrap">0 avaliações</span>
-            </div>
-          )}
+          {/* Coluna Direita: Rating */}
+          <div className="shrink-0 flex flex-col items-end">
+             {parseFloat(rating) > 0 && (
+               <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100/50">
+                 <span className="text-sm font-bold text-amber-700">{rating}</span>
+                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+               </div>
+             )}
+             <span className="text-[10px] text-gray-400 mt-1">
+               {totalReviews > 0 ? `${totalReviews} ${text.reviews}` : 'Novo'}
+             </span>
+          </div>
         </div>
 
-        {/* Categoria */}
-        <div className="mb-2 sm:mb-3">
-          {category_name && (
-            <Badge
-              variant="secondary"
-              className="font-normal text-[10px] md:text-xs bg-gray-100 text-gray-700 hover:bg-gray-200"
-            >
-              {category_name}
-            </Badge>
-          )}
-        </div>
-
-        {/* Descrição (menos linhas no mobile) */}
-        {description ? (
-          <p className={styles.description}>{description}</p>
-        ) : (
-          <div className="min-h-[2.2rem] mb-3 sm:mb-4" />
+        {/* Localização */}
+        {(city || state) && (
+          <div className="flex items-center text-xs text-gray-500 mb-3">
+            <MapPin className="w-3.5 h-3.5 mr-1.5 text-gray-400 shrink-0" />
+            <span className="truncate max-w-full">
+              {city}{city && state ? ', ' : ''}{state}
+            </span>
+          </div>
         )}
 
-        <div className={[styles.divider, 'print:hidden'].join(' ')} />
+        {/* Descrição */}
+        <div className="mb-5 flex-1">
+          <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+            {description || <span className="text-gray-400 italic font-light">Visite o perfil para saber mais sobre nossos serviços.</span>}
+          </p>
+        </div>
 
-        {/* 3) Ações (compactadas em grid no mobile) */}
-        <div className={[styles.actions, 'print:hidden'].join(' ')}>
-          <div className={styles.actionsGrid}>
-            {hasWhatsapp && whatsappEnabled ? (
+        {/* Divisor */}
+        <div className="h-px bg-gray-100 w-full mb-4" />
+
+        {/* --- 3. Ações (UX Mobile Refinado) --- */}
+        <div className="mt-auto grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-2 print:hidden">
+          
+          {/* Botão Primário (WhatsApp ou Orçamento) */}
+          {hasWhatsapp && whatsappEnabled ? (
+            <div className="w-full">
               <WhatsappButton
                 enabled
                 href={whatsappLinkRaw}
-                label={i18n.whatsapp}
-                className={[styles.buttonPrimary, 'w-full shadow-sm hover:shadow-md transition-shadow'].join(' ')}
-                size="sm"
+                label={text.whatsapp}
+                className="w-full h-10 shadow-sm font-medium"
                 onClick={() => emit('cta_whatsapp_click')}
               />
-            ) : (
-              <Button
-                className={[styles.buttonPrimary, 'w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm'].join(' ')}
-                size="sm"
-                onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
-              >
-                <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
-                <span className="truncate">{i18n.budget}</span>
-              </Button>
-            )}
-
+            </div>
+          ) : (
             <Button
-              variant="outline"
-              size="sm"
-              className={[styles.buttonSecondary, 'w-full border-gray-200 hover:bg-gray-50 text-gray-700'].join(' ')}
-              asChild
+              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-medium"
+              onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
             >
-              <Link href={companyReviewPath} aria-label={i18n.review} onClick={() => emit('cta_review_click')}>
-                <Star className="w-4 h-4 mr-2 shrink-0 text-gray-400 group-hover:text-amber-400 transition-colors" />
-                {i18n.review}
-              </Link>
+              <MessageCircle className="w-4 h-4 mr-2" />
+              {text.budget}
             </Button>
+          )}
+
+          {/* Botão Secundário (Avaliar) */}
+          <Button
+            variant="outline"
+            className="w-full h-10 border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium"
+            asChild
+          >
+            <Link href={companyReviewPath} onClick={() => emit('cta_review_click')}>
+              <Star className="w-4 h-4 mr-2 text-gray-400 group-hover:text-amber-500 transition-colors" />
+              {text.review}
+            </Link>
+          </Button>
+        </div>
+
+        {/* Área de Impressão (Oculta na tela) */}
+        <div className="hidden print:block mt-4 pt-2 border-t border-gray-300 text-xs">
+          <div className="grid grid-cols-2 gap-2">
+            {company.whatsapp && <div>Tel: {formatPhone(company.whatsapp)}</div>}
+            {company.email && <div>Email: {company.email}</div>}
+            {website && <div className="col-span-2">{website.replace(/^https?:\/\//, '')}</div>}
           </div>
         </div>
 
-        {/* 4) Impressão */}
-        <div className="hidden print:block mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-bold text-gray-900 mb-2">Contatos:</h4>
-          <div className="space-y-1 text-xs text-gray-600">
-            {company.whatsapp && (
-              <div className="flex items-center gap-2">
-                <Phone className="w-3 h-3" />
-                <span>{formatPhone(company.whatsapp)}</span>
-              </div>
-            )}
-            {website && (
-              <div className="flex items-center gap-2">
-                <Globe className="w-3 h-3" />
-                <span>{website.replace(/^https?:\/\//, '')}</span>
-              </div>
-            )}
-            {company.email && (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">@</span>
-                <span>{company.email}</span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
-        </>
-      )}
     </div>
   );
 }
-
-CompanyCard.propTypes = {
-  company: PropTypes.object.isRequired,
-  className: PropTypes.string,
-  compact: PropTypes.bool,
-  lang: PropTypes.oneOf(['pt-BR', 'en-US', 'es-ES']),
-  isLoading: PropTypes.bool,
-  avatarRingColor: PropTypes.string,
-  schemaEnabled: PropTypes.bool,
-  onAnalyticsEvent: PropTypes.func,
-};
