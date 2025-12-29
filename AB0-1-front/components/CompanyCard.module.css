@@ -1,15 +1,21 @@
-/* Escala global aplicada ao card (50% por padrão via inline style) */
+:root {
+  --scale: 1;
+}
 
+/* Container principal */
 .card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: white;
   border-radius: calc(1rem * var(--scale));
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  transition: box-shadow 200ms ease, transform 200ms ease;
-  background: #fff;
   border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 200ms ease, transform 200ms ease;
 }
 
 .cardHover {
-  box-shadow: 0 6px 16px rgba(16,24,40,0.12);
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.12);
   transform: translateY(-0.5px);
 }
 
@@ -17,23 +23,21 @@
   position: relative;
   width: 100%;
   overflow: hidden;
+  background-color: #f3f4f6;
   border-top-left-radius: calc(1rem * var(--scale));
   border-top-right-radius: calc(1rem * var(--scale));
 }
 
-.bannerCompact {
-  height: calc(8rem * var(--scale));
-}
-
-.bannerDefault {
+.bannerHeight {
   height: calc(10rem * var(--scale));
 }
 
 .avatarWrap {
   position: absolute;
-  left: calc(0.75rem * var(--scale));
-  bottom: calc(-3.5rem * var(--scale));
+  left: calc(1rem * var(--scale));
+  bottom: calc(-2.5rem * var(--scale));
   z-index: 10;
+  pointer-events: none;
 }
 
 .avatar {
@@ -41,93 +45,80 @@
   height: calc(5rem * var(--scale));
   border-radius: 9999px;
   overflow: hidden;
-  background: #fff;
+  background: white;
+  box-shadow: 0 0 0 2px white, 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .content {
-  padding-top: calc(5rem * var(--scale));
-  padding-left: calc(0.75rem * var(--scale));
-  padding-right: calc(0.75rem * var(--scale));
-  padding-bottom: calc(0.75rem * var(--scale));
   display: flex;
   flex-direction: column;
+  flex: 1;
+  padding: calc(3.5rem * var(--scale)) calc(1.25rem * var(--scale)) calc(1.25rem * var(--scale));
 }
 
 .title {
+  font-size: calc(1.125rem * var(--scale));
   font-weight: 700;
-  font-size: calc(1rem * var(--scale));
-  line-height: 1.2;
   color: #111827;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.subtitle {
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.location {
+  display: flex;
+  align-items: center;
   font-size: calc(0.75rem * var(--scale));
-  color: #4b5563;
-}
-
-.badgeRow {
-  margin-top: calc(0.25rem * var(--scale));
+  color: #6b7280;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
 }
 
 .description {
-  font-size: calc(0.75rem * var(--scale));
+  margin-top: 0.75rem;
+  font-size: calc(0.875rem * var(--scale));
   color: #4b5563;
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: calc(0.75rem * var(--scale));
-  min-height: calc(2.2rem * var(--scale));
+  display: -webkit-box;
+  margin-bottom: 1rem;
+  min-height: calc(3.5rem * var(--scale));
 }
 
-.actions {
-  margin-top: auto;
-}
-
-.actionsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: calc(0.5rem * var(--scale));
-}
-
-.buttonPrimary {
-  height: calc(2.25rem * var(--scale));
-  font-size: calc(0.75rem * var(--scale));
-}
-
-.buttonSecondary {
-  height: calc(2.25rem * var(--scale));
-  font-size: calc(0.75rem * var(--scale));
-}
-
-.divider {
-  border-top: 1px solid #f3f4f6;
-  margin: calc(0.5rem * var(--scale)) 0;
-}
-
-.locationRow {
+.rating {
   display: flex;
-  align-items: center;
-  gap: calc(0.25rem * var(--scale));
-  font-size: calc(0.7rem * var(--scale));
-  color: #4b5563;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: calc(0.75rem * var(--scale));
+  color: #92400e;
+  margin-left: auto;
 }
 
 .ratingBox {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   background: #fffbeb;
   border: 1px solid #fef3c7;
-  border-radius: calc(0.75rem * var(--scale));
-  padding: calc(0.25rem * var(--scale)) calc(0.5rem * var(--scale));
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
 }
 
-.verifiedBadge {
-  font-size: calc(0.6rem * var(--scale));
-  padding: 0.1rem 0.3rem;
-  border-radius: calc(0.5rem * var(--scale));
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: auto;
 }
 
 .printSection {
@@ -137,8 +128,9 @@
 @media print {
   .printSection {
     display: block;
-    margin-top: calc(1rem * var(--scale));
-    padding-top: calc(1rem * var(--scale));
+    margin-top: 1rem;
+    padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
+    font-size: 0.75rem;
   }
 }
