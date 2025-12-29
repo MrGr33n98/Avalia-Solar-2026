@@ -138,41 +138,48 @@ export default function CompanyCard({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
 
-      {/* --- Banner --- */}
-      <div className={cn(styles.banner)}>
-        {bannerUrl && !bannerError ? (
-          <Image
-            src={bannerUrl}
-            alt={`Banner ${name}`}
-            fill
-            sizes="100vw"
-            onError={() => setBannerError(true)}
-            className="object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-            <Building2 className="text-blue-200 w-12 h-12" />
-          </div>
-        )}
-      </div>
-
-      {/* --- Avatar --- */}
-      <div className={styles.avatarWrap}>
-        <div className={styles.avatar} style={{ boxShadow: `0 0 0 2px ${avatarRingColor}, 0 4px 6px -1px rgba(0,0,0,0.1)` }}>
-          {logoUrl && !logoError ? (
+      {/* --- Banner + Avatar juntos --- */}
+      <div className="relative">
+        <div className={cn(styles.banner)}>
+          {bannerUrl && !bannerError ? (
             <Image
-              src={logoUrl}
-              alt={`Logo ${name}`}
+              src={bannerUrl}
+              alt={`Banner ${name}`}
               fill
-              sizes="80px"
-              onError={() => setLogoError(true)}
+              sizes="100vw"
+              onError={() => setBannerError(true)}
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50">
-              <Building2 className="text-gray-300 w-8 h-8" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+              <Building2 className="text-blue-200 w-12 h-12" />
             </div>
           )}
+        </div>
+
+        {/* Avatar POSICIONADO corretamente sobre o banner */}
+        <div className={styles.avatarWrap}>
+          <div
+            className={styles.avatar}
+            style={{
+              boxShadow: `0 0 0 2px ${avatarRingColor}, 0 4px 6px -1px rgba(0,0,0,0.1)`,
+            }}
+          >
+            {logoUrl && !logoError ? (
+              <Image
+                src={logoUrl}
+                alt={`Logo ${name}`}
+                fill
+                sizes="80px"
+                onError={() => setLogoError(true)}
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                <Building2 className="text-gray-300 w-8 h-8" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
