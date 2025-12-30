@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateAnalyticsEvents < ActiveRecord::Migration[7.0]
+class CreateAvaliaAnalyticsEvents < ActiveRecord::Migration[7.0]
   def change
     create_table :analytics_events do |t|
       t.integer :company_id
