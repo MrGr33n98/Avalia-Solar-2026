@@ -3,10 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Add package files (monorepo: frontend lives in AB0-1-front)
+# Add package files
 COPY AB0-1-front/package.json ./
 
-# Install dependencies with cache mount for speed
+# Install dependencies
 RUN --mount=type=cache,target=/root/.npm \
     npm config set registry https://registry.npmjs.org/ && \
     npm install -g npm@10.2.4 && \
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.npm \
 # Add app files
 COPY AB0-1-front/ .
 
-# GARANTIA: Limpa builds anteriores para evitar código fantasma
+# Limpa builds anteriores
 RUN rm -rf .next
 
 # Build configurations
@@ -23,7 +23,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=1536"
 
-# Build app com logs em tempo real para debug no GitHub Actions
+# Build app com logs
 RUN set -euo pipefail; \
   node -e "const p=require('./package.json'); if(!p.scripts||!p.scripts.build){console.error('ERROR: Missing scripts.build'); process.exit(1)}"; \
   (npm run build 2>&1 | tee /tmp/next-build.log) || ( \
@@ -37,19 +37,16 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Variáveis de ambiente de runtime
+# Runtime envs
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
-# Copiar apenas o necessário do estágio builder
-# O standalone já inclui os node_modules necessários
+# Copia artefatos do builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/.next/standalone ./
 
-# O standalone do Next.js coloca o servidor em server.js na raiz do output
-# Garantimos que ele rode corretamente
 EXPOSE 3000
 
 CMD ["node", "server.js"]
