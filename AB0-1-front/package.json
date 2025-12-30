@@ -76,6 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.2.2",
     "vaul": "^0.9.9",
+    "@rails/actioncable": "^7.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

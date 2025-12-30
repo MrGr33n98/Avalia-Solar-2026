@@ -19,6 +19,14 @@ Yabeda.configure do
     counter :notifications_sent,
             tags: [:type, :status],
             comment: 'Total number of notifications sent'
+
+    counter :analytics_events_total,
+            tags: [:event_type],
+            comment: 'Total number of analytics events persisted'
+
+    counter :company_views_total,
+            tags: [:company_id],
+            comment: 'Total number of company profile views'
     
     # Performance Metrics
     histogram :request_duration,

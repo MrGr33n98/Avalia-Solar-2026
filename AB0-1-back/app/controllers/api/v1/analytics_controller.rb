@@ -1,56 +1,61 @@
-require 'digest'
+# frozen_string_literal: true
 
 class Api::V1::AnalyticsController < Api::V1::BaseController
+  before_action :authenticate_api_user
+
+  # POST /api/v1/analytics/track
+  # Body: { company_id, event_type, metadata }
   def track
-    event = params[:event].presence || params[:event_type].presence
-    payload = params[:data].is_a?(Hash) ? params[:data] : {}
+    raw_type = params[:event_type].presence || params[:event].presence
+    company_id = params[:company_id].presence || params.dig(:company, :id)
+    metadata = params[:metadata].is_a?(Hash) ? params[:metadata] : (params[:data].is_a?(Hash) ? params[:data] : {})
 
-    case event.to_s
-    when 'banner_view', 'banner_click'
-      track_banner_event(event.to_s == 'banner_view' ? 'view' : 'click')
-      render json: { status: 'success' }
-    when 'view', 'click', 'whatsapp_click', 'lead'
-      Rails.logger.info("Analytics event=#{event} data=#{payload}")
-      render json: { status: 'success' }
-    else
-      Rails.logger.info("Analytics event=#{event} data=#{payload}")
-      return render json: { status: 'success' } if event.present?
+    return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request if company_id.blank?
+    return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request if raw_type.blank?
 
-      render json: { status: 'error', message: 'Evento não especificado' }, status: :bad_request
-    end
+    event_type = map_event_type(raw_type)
+
+    Analytics::TrackEventService.call(
+      company_id: company_id,
+      event_type: event_type,
+      metadata: metadata.merge(request_metadata),
+      user: current_user
+    )
+
+    render json: { status: 'success' }
+  rescue ActiveRecord::RecordNotFound
+    render json: { status: 'error', message: 'Company not found' }, status: :not_found
+  rescue Pundit::NotAuthorizedError
+    render json: { status: 'error', message: 'Forbidden' }, status: :forbidden
+  rescue StandardError => e
+    Rails.logger.error("[Analytics] track error: #{e.class}: #{e.message}")
+    render json: { status: 'error', message: 'Erro interno no servidor' }, status: :internal_server_error
   end
 
   private
 
-  def track_banner_event(event_type)
-    banner = Banner.find_by(id: params[:banner_id])
-    return unless banner
+  def map_event_type(raw)
+    case raw.to_s
+    when 'view'
+      'profile_view'
+    when 'click'
+      'cta_click'
+    when 'whatsapp_click'
+      'whatsapp_click'
+    when 'lead'
+      'lead_created'
+    when 'review'
+      'review_created'
+    else
+      raw.to_s
+    end
+  end
 
-    ip = request.remote_ip.to_s
-    ua = request.user_agent.to_s
-
-    utm = params[:utm].is_a?(Hash) ? params[:utm] : {}
-    metadata = params[:metadata].is_a?(Hash) ? params[:metadata] : {}
-
-    BannerEvent.create!(
-      banner: banner,
-      company: banner.company,
-      event_type: event_type,
-      ip_hash: Digest::SHA256.hexdigest(ip),
-      user_agent_hash: Digest::SHA256.hexdigest(ua),
+  def request_metadata
+    {
       referrer: request.referer.to_s,
-      utm_json: utm,
-      metadata_json: metadata,
-      tracked_at: Time.current
-    )
-
-    day = Time.current.to_date
-    stat = BannerDailyStat.find_or_initialize_by(banner_id: banner.id, day: day)
-    stat.views_count = stat.views_count.to_i + (event_type == 'view' ? 1 : 0)
-    stat.clicks_count = stat.clicks_count.to_i + (event_type == 'click' ? 1 : 0)
-    stat.ctr = stat.views_count.positive? ? (stat.clicks_count.to_f / stat.views_count.to_f) : 0
-    stat.save!
-  rescue => e
-    Rails.logger.error("Banner tracking error: #{e.message}")
+      user_agent: request.user_agent.to_s,
+      path: request.fullpath.to_s
+    }.compact
   end
 end

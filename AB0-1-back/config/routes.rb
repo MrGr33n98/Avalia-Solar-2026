@@ -79,6 +79,7 @@ Rails.application.routes.draw do
 
       # Dashboard routes
       get 'dashboard/stats', to: 'dashboard#stats'
+      get 'dashboard/export', to: 'dashboard_exports#export'
 
       # Company Dashboard routes
       scope :company_dashboard do

@@ -91,6 +91,11 @@ class Company < ApplicationRecord
   # =========================
   # Scopes
   # =========================
+
+  # Analytics hot counters (used by dashboard)
+  # Columns are added via migration AddAnalyticsCountersToCompanies
+  # Defaults to 0 in DB.
+
   scope :by_state,        ->(state) { where(state:) if state.present? }
   scope :by_city,         ->(city)  { where(city:) if city.present? }
   scope :featured,        ->        { where(featured: true) }

@@ -15,7 +15,7 @@ class User < ApplicationRecord
   belongs_to :company, optional: true
 
   # Role validation
-  ROLES = %w[user admin company].freeze
+  ROLES = %w[user admin company review].freeze
   enum status: { pending: 0, active: 1, rejected: 2, blocked: 3 }, _default: :pending
 
   validates :role, inclusion: { in: ROLES }, allow_nil: true
@@ -48,6 +48,10 @@ class User < ApplicationRecord
   
   def company_user?
     role == 'company'
+  end
+
+  def review_user?
+    role == 'review'
   end
   
   def regular_user?

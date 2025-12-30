@@ -37,6 +37,7 @@ import CompetitorBenchmark from './CompetitorBenchmark';
 import ThemeToggle from './ThemeToggle';
 import AzureOverview from './AzureOverview';
 import { fetchApi, companiesApi } from '@/lib/api';
+import { subscribeCompanyDashboard } from '@/lib/cable';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CompanyDashboardProps {
@@ -160,6 +161,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     fetchCompanyData();
     fetchDashboardStats();
     fetchNotifications();
+
+    const unsubscribe = subscribeCompanyDashboard(companyId, () => {
+      // Keep it simple: refetch on any realtime event
+      fetchDashboardStats();
+      fetchNotifications();
+    });
+
+    return unsubscribe;
   }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
 
   const handleNotificationClick = (id: string) => {

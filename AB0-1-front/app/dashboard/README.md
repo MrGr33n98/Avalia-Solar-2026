@@ -136,15 +136,51 @@ end
 
 ## 📊 Métricas e Analytics
 
-O dashboard exibe métricas em tempo real:
+O dashboard exibe métricas com **dados reais**, com suporte a **histórico** e **atualização em tempo real** via ActionCable.
 
-- **Visualizações de perfil**
-- **Cliques em CTAs**
-- **Cliques em WhatsApp**
-- **Leads recebidos**
-- **Reviews e rating médio**
-- **Taxa de conversão**
+### Métricas principais
+- **Visualizações de perfil** (`profile_view`)
+- **Cliques em CTAs** (`cta_click`)
+- **Cliques em WhatsApp** (`whatsapp_click`)
+- **Leads recebidos** (`lead_created`)
+- **Reviews** (`review_created`) e rating médio
+- **Taxa de conversão** (leads / views)
 - **Aprovações pendentes**
+
+### Tracking (API)
+Endpoint:
+- `POST /api/v1/analytics/track` (JWT obrigatório)
+
+Payload exemplo:
+```json
+{
+  "company_id": 123,
+  "event_type": "profile_view",
+  "metadata": {
+    "utm_source": "google",
+    "referrer": "https://google.com",
+    "path": "/companies/123"
+  }
+}
+```
+
+### Histórico
+- `GET /api/v1/companies/:id/analytics/historical?days=30`
+- `GET /api/v1/companies/:id/analytics/traffic?days=30`
+
+### Export (CSV)
+- `GET /api/v1/dashboard/export?company_id=123&range=30`
+
+### Realtime (ActionCable)
+Conexão WS:
+- `ws(s)://<API_ORIGIN>/cable?token=<JWT>`
+
+Subscribe:
+```json
+{ "channel": "CompanyDashboardChannel", "company_id": 123 }
+```
+
+📌 Documentação completa: `docs/API_ANALYTICS.md`
 
 ## 🎨 Design System
 

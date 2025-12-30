@@ -23,6 +23,8 @@ class Lead < ApplicationRecord
   before_validation :apply_address_fallbacks
   before_validation :ensure_otp_attempts_default
 
+  after_commit :track_analytics_event, on: :create
+
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
             :decision_timeline, :address_full,
             presence: true,
@@ -129,5 +131,23 @@ class Lead < ApplicationRecord
 
   def ensure_otp_attempts_default
     self.otp_attempts = 0 if otp_attempts.nil?
+  end
+
+  def track_analytics_event
+    return if company_id.blank?
+
+    Analytics::TrackEventService.call(
+      company_id: company_id,
+      event_type: 'lead_created',
+      metadata: {
+        source: 'lead',
+        estimated_budget: estimated_budget,
+        project_type: project_type
+      }.compact,
+      user: nil,
+      tracked_at: created_at
+    )
+  rescue StandardError => e
+    Rails.logger.warn("[Analytics] lead tracking failed: #{e.message}")
   end
 end

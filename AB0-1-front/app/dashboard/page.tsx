@@ -21,10 +21,12 @@ import {
   Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import RealtimeDashboard from '@/app/dashboard/components/RealtimeDashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [companyId, setCompanyId] = useState<number | null>(null);
 
   // Mock user and stats for demo - replace with actual auth
   const user = { name: 'Demo User' };
@@ -104,6 +106,19 @@ export default function DashboardPage() {
     },
   ];
 
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('auth');
+        if (raw) {
+          const data = JSON.parse(raw);
+          const cid = data?.user?.company_id ?? data?.company_id;
+          if (cid && Number(cid) > 0) setCompanyId(Number(cid));
+        }
+      }
+    } catch {}
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -180,6 +195,19 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Realtime Company Analytics */}
+      {companyId ? (
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <h2 className="text-3xl font-bold text-foreground mb-2">Analytics em Tempo Real</h2>
+              <p className="text-muted-foreground mb-6">Atualização contínua das métricas críticas da sua empresa.</p>
+              <RealtimeDashboard companyId={companyId} />
+            </motion.div>
+          </div>
+        </section>
+      ) : null}
 
       {/* Recent Activity */}
       <section className="py-12 bg-card">

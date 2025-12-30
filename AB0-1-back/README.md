@@ -32,7 +32,7 @@ API backend RESTful para a plataforma AB0-1, construída com Ruby on Rails 7 e P
 - **Conteúdo**: Sistema de artigos, banners e feeds personalizados
 - **Forum**: Perguntas e respostas para engajamento da comunidade
 - **Notificações**: Sistema de notificações em tempo real
-- **Analytics**: Endpoints para tracking e analytics
+- **Analytics**: Tracking, histórico e realtime (ActionCable) para dashboard
 - **Rate Limiting**: Proteção contra abuso com Rack::Attack
 - **Background Jobs**: Processamento assíncrono com Sidekiq
 - **Caching**: Redis para cache de queries e fragments
@@ -225,6 +225,17 @@ rails secret
 # Já está em config/master.key (não commite este arquivo!)
 ```
 
+## 📈 Analytics do Dashboard
+
+Documentação do contrato (payloads, event types, websocket e endpoints):
+- `docs/API_ANALYTICS.md`
+
+Principais endpoints:
+- `POST /api/v1/analytics/track`
+- `GET /api/v1/companies/:id/analytics/historical?days=30`
+- `GET /api/v1/companies/:id/analytics/traffic?days=30`
+- `GET /api/v1/dashboard/export?company_id=123&range=30`
+
 ## 🚀 Uso
 
 ### Desenvolvimento Local
@@ -312,11 +323,13 @@ GET    /api/v1/companies/:id      # Detalhes da empresa
 GET    /api/v1/company_dashboard  # Dashboard da empresa
 ```
 
-#### Analytics
+#### Analytics (Dashboard)
 
 ```http
-POST   /api/v1/analytics/track    # Track evento
-GET    /api/v1/analytics/stats    # Estatísticas
+POST   /api/v1/analytics/track                       # Track evento (JWT)
+GET    /api/v1/companies/:id/analytics/historical     # Série histórica (days=30)
+GET    /api/v1/companies/:id/analytics/traffic        # Origem de tráfego (days=30)
+GET    /api/v1/dashboard/export                       # Export CSV (company_id, range)
 ```
 
 ### Paginação

@@ -273,19 +273,14 @@ module Api
         days = params[:days]&.to_i || 30
         cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
 
-        begin
-          data = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-            if @company.respond_to?(:historical_stats)
-              @company.historical_stats(days)
-            else
-              generate_historical_data(@company, days)
-            end
-          end
-          render json: { data: data }, status: :ok
-        rescue => e
-          Rails.logger.error("analytics_historical error: #{e.message}")
-          render json: { data: generate_historical_data(nil, days) }, status: :ok
+        data = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
+          generate_historical_data(@company, days)
         end
+
+        render json: { data: data }, status: :ok
+      rescue => e
+        Rails.logger.error("analytics_historical error: #{e.message}")
+        render json: { data: [] }, status: :ok
       end
 
       def analytics_reviews
@@ -300,15 +295,14 @@ module Api
         days = params[:days]&.to_i || 30
         cache_key = "company_#{@company.id}_traffic_#{days}_#{Date.today}"
 
-        begin
-          sources = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-            generate_traffic_sources(@company, days)
-          end
-          render json: { sources: sources }, status: :ok
-        rescue => e
-          Rails.logger.error("analytics_traffic error: #{e.message}")
-          render json: { sources: [] }, status: :ok
+        sources = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
+          generate_traffic_sources(@company, days)
         end
+
+        render json: { sources: sources }, status: :ok
+      rescue => e
+        Rails.logger.error("analytics_traffic error: #{e.message}")
+        render json: { sources: [] }, status: :ok
       end
 
       def request_admin_access
@@ -420,28 +414,85 @@ module Api
        end
 
       def generate_traffic_sources(company, days)
-        [
-          { source: 'Direct', visits: 250, percentage: 25, conversion_rate: 12.3 },
-          { source: 'Referral', visits: 120, percentage: 12, conversion_rate: 6.8 },
-          { source: 'Social Media', visits: 180, percentage: 18, conversion_rate: 5.2 },
-          { source: 'Organic Search', visits: 450, percentage: 45, conversion_rate: 8.5 }
-        ]
+        from_time = days.to_i.days.ago.beginning_of_day
+        to_time = Time.current.end_of_day
+
+        events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time, event_type: 'profile_view')
+        lead_events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time, event_type: 'lead_created')
+
+        visit_counts = Hash.new(0)
+        lead_counts = Hash.new(0)
+
+        events.find_each do |e|
+          source = normalize_source(e.metadata)
+          visit_counts[source] += 1
+        end
+
+        lead_events.find_each do |e|
+          source = normalize_source(e.metadata)
+          lead_counts[source] += 1
+        end
+
+        total = visit_counts.values.sum
+        return [] if total.zero?
+
+        visit_counts.map do |source, visits|
+          leads = lead_counts[source].to_i
+          {
+            source: source,
+            visits: visits,
+            percentage: ((visits.to_f / total) * 100).round(2),
+            conversion_rate: visits.positive? ? ((leads.to_f / visits) * 100).round(2) : 0
+          }
+        end.sort_by { |row| -row[:visits].to_i }
       end
 
       def generate_historical_data(company, days)
-        (0...days).map do |day|
-          date = (Date.today - day)
+        days = days.to_i
+        from_day = days.days.ago.to_date
+        to_day = Date.current
+
+        by_day = CompanyDailyStat
+          .for_company(company.id)
+          .for_days(from_day, to_day)
+          .order(:day)
+          .index_by(&:day)
+
+        (from_day..to_day).map do |day|
+          stat = by_day[day]
+          views = stat&.profile_views.to_i
+          clicks = stat&.cta_clicks.to_i + stat&.whatsapp_clicks.to_i
+          leads = stat&.leads.to_i
+          conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
+
           {
-            date: date.to_s,
-            views: rand(50..200),
-            clicks: rand(10..80),
-            leads: company ? company.leads.where(created_at: date.beginning_of_day..date.end_of_day).count : rand(0..10),
-            conversion: rand(0.0..15.0).round(2)
+            date: day.to_s,
+            views: views,
+            clicks: clicks,
+            leads: leads,
+            conversion: conversion
           }
-        end.reverse
+        end
       end
+
+      def normalize_source(metadata)
+        meta = metadata.is_a?(Hash) ? metadata : {}
+        utm = meta['utm_source'].to_s.strip
+        return utm if utm.present?
+
+        ref = meta['referrer'].to_s
+        return 'Direct' if ref.blank?
+
+        host = URI.parse(ref).host.to_s.downcase rescue ''
+        return 'Organic Search' if host.include?('google') || host.include?('bing') || host.include?('duckduckgo')
+        return 'Social Media' if host.include?('facebook') || host.include?('instagram') || host.include?('linkedin') || host.include?('t.co') || host.include?('x.com')
+
+        'Referral'
+      end
+
       def authorize_company_scope!
-        return if current_user&.role == 'admin'
+        return if current_user&.role.in?(%w[admin review])
+
         if current_user&.role == 'company' && current_user.company_id == @company&.id
           unless @company.active?
             render json: { error: 'Company account is not active' }, status: :forbidden
@@ -449,6 +500,7 @@ module Api
           end
           return
         end
+
         Rails.logger.warn("[AccessDenied] analytics user=#{current_user&.id} role=#{current_user&.role} company_id=#{current_user&.company_id} target_company=#{@company&.id} path=#{request.path}")
         render json: { error: 'Forbidden' }, status: :forbidden
       end

@@ -76,3 +76,11 @@ monthly_digest_email_job:
   queue: mailers
   description: 'Send monthly digest emails to companies'
   enabled: true
+
+# Analytics daily aggregation
+analytics_daily_aggregation_job:
+  cron: '59 23 * * *'  # Every day at 23:59
+  class: AnalyticsDailyAggregationJob
+  queue: low
+  description: 'Aggregate analytics_events into company_daily_stats'
+  enabled: true
