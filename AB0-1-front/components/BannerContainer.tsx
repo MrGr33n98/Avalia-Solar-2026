@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface BannerData {
   id: number | string;
   type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar';
+  position: 'navbar' | 'sidebar' | 'categories_top';
   image_url: string;
   title: string;
   link?: string;
@@ -35,11 +35,11 @@ export function BannerContainer({ banners }: BannerContainerProps) {
   }
 
   try {
-    const navbarBanners = banners.filter(banner => banner?.position === 'navbar');
+    const displayBanners = banners;
 
   // Se houver apenas 1 banner, exiba-o estaticamente
-  if (navbarBanners.length === 1) {
-    const banner = navbarBanners[0];
+  if (displayBanners.length === 1) {
+    const banner = displayBanners[0];
     return (
       <div className="p-1">
         <Card className="overflow-hidden">
@@ -66,7 +66,7 @@ export function BannerContainer({ banners }: BannerContainerProps) {
   }
 
   // Se houver 2 ou mais banners, use o carrossel
-  if (navbarBanners.length > 1) {
+  if (displayBanners.length > 1) {
     return (
       <Carousel
         plugins={[Autoplay({ delay: 2000, stopOnInteraction: true })]}
@@ -76,7 +76,7 @@ export function BannerContainer({ banners }: BannerContainerProps) {
         }}
       >
         <CarouselContent>
-          {navbarBanners.map((banner) => (
+          {displayBanners.map((banner) => (
             <CarouselItem key={banner.id}>
               <div className="p-1">
                 <Card className="overflow-hidden">
