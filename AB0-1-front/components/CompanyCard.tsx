@@ -131,7 +131,7 @@ export default function CompanyCard({
   return (
     <div
       className={cn(styles.card, className)}
-      style={{ '--scale': '1' } as React.CSSProperties}
+      style={{ '--scale': '1', '--banner-height': compact ? '7.5rem' : '8.5rem', '--avatar-size': compact ? '4.25rem' : '4.5rem', '--avatar-offset': compact ? '-1.75rem' : '-2rem' } as React.CSSProperties}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
     >
       {jsonLd && (
