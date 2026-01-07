@@ -85,3 +85,5 @@ Thumbs.db
 /script/lint_fixes_report_*.txt
 /task0-test.md
 /tasks/TASK-10.md
+
+/.github/PULL_REQUEST_TEMPLATE.md
