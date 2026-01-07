@@ -13,7 +13,7 @@ interface BannerByLocationProps {
  * Blindado contra erros - retorna null silenciosamente se falhar
  */
 export default function BannerByLocation({ location, className = '' }: BannerByLocationProps) {
-  const { banners, loading, error } = useBanners();
+  const { banners, loading, error } = useBanners({ position: location });
 
   // Blindagem contra erros
   try {
@@ -24,17 +24,20 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
       );
     }
 
-    // Se houver erro ou não houver banners, retorna null silenciosamente
-    if (error || !banners || !Array.isArray(banners)) {
-      console.warn(`[BannerByLocation] No banners found for location: ${location}`, error);
+    // Se houver erro, loga mas não quebra a página
+    if (error) {
+      console.warn(`[BannerByLocation] Error loading banners for ${location}:`, error);
       return null;
     }
 
-    // Filtra banners pela localização (usando position como fallback)
-    const locationBanners = banners.filter(banner => 
-      banner?.position === location || 
-      banner?.position === 'navbar' // fallback para navbar
-    );
+    // Se não houver banners, retorna null silenciosamente
+    if (!banners || !Array.isArray(banners) || banners.length === 0) {
+      console.info(`[BannerByLocation] No banners found for position: ${location}`);
+      return null;
+    }
+
+    // Usa os banners retornados da API (já filtrados por position)
+    const locationBanners = banners;
 
     // Se não houver banners para essa localização, retorna null
     if (locationBanners.length === 0) {

@@ -112,9 +112,11 @@ export default function CategoriesIndexWithSidebar() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Carrossel (full width) */}
-      {banners.length > 0 && (
-        <section className="mb-8 bg-white shadow-sm" aria-label="Banners promocionais">
-          <div className="container mx-auto px-4 py-4">
+      <section className="mb-8 bg-white shadow-sm" aria-label="Banners promocionais">
+        <div className="container mx-auto px-4 py-4">
+          {bannersLoading ? (
+            <div className="w-full h-[280px] bg-gray-200 animate-pulse rounded-lg" />
+          ) : banners.length > 0 ? (
             <div className="overflow-hidden rounded-lg" ref={emblaRef}>
               <div className="flex">
                 {banners.map((banner) => (
@@ -131,6 +133,10 @@ export default function CategoriesIndexWithSidebar() {
                           alt={banner.title}
                           className="w-full h-[280px] object-cover rounded-lg"
                           loading="eager"
+                          onError={(e) => {
+                            console.error('[Banner] Failed to load:', banner.image_url);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       </a>
                     ) : (
@@ -139,15 +145,25 @@ export default function CategoriesIndexWithSidebar() {
                         alt={banner.title}
                         className="w-full h-[280px] object-cover rounded-lg"
                         loading="eager"
+                        onError={(e) => {
+                          console.error('[Banner] Failed to load:', banner.image_url);
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     )}
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div className="w-full h-[280px] bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+              <div className="text-center text-gray-400">
+                <p className="text-sm">Nenhum banner disponível no momento</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Layout Principal: Sidebar + Content */}
       <div className="container mx-auto px-4 pb-12">

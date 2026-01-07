@@ -9,11 +9,16 @@ interface Banner {
   link?: string;
   title?: string;
   banner_type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar';
+  position: 'navbar' | 'sidebar' | 'categories_top';
   sponsored?: boolean;
 }
 
-export function useBanners() {
+interface UseBannersOptions {
+  position?: string;
+  limit?: number;
+}
+
+export function useBanners(options?: UseBannersOptions) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,17 +27,35 @@ export function useBanners() {
     async function fetchBanners() {
       try {
         setLoading(true);
-        const data = await fetchApi<Banner[]>('/banners');
-        setBanners(data);
+        
+        // Constrói a URL com parâmetros
+        const params = new URLSearchParams();
+        if (options?.position) {
+          params.append('position', options.position);
+        }
+        if (options?.limit) {
+          params.append('limit', options.limit.toString());
+        }
+        
+        const queryString = params.toString();
+        const url = queryString ? `/banners?${queryString}` : '/banners';
+        
+        console.log('[useBanners] Fetching:', url);
+        const data = await fetchApi<Banner[]>(url);
+        console.log('[useBanners] Received:', data?.length || 0, 'banners');
+        
+        setBanners(Array.isArray(data) ? data : []);
       } catch (err: any) {
+        console.error('[useBanners] Error:', err);
         setError(err?.message || 'Erro ao carregar banners');
+        setBanners([]);
       } finally {
         setLoading(false);
       }
     }
 
     fetchBanners();
-  }, []);
+  }, [options?.position, options?.limit]);
 
   return { banners, loading, error };
 }
