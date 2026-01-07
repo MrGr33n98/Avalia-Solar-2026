@@ -30,10 +30,10 @@ export const metadata: Metadata = {
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
     images: [
       {
-        url: '/images/category-placeholder.jpg', // ✅ sua imagem local
+        url: '/images/logo.png',
         width: 1200,
         height: 630,
-        alt: 'Avalia - Marketplace de Energia Solar',
+        alt: 'Avalia Solar Logo',
       },
     ],
   },
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Avalia - Marketplace de Energia Solar',
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
-    images: ['/images/category-placeholder.jpg'], // ✅ mesma imagem no Twitter
+    images: ['/images/logo.png'],
     creator: '@avaliasolar',
   },
   robots: {

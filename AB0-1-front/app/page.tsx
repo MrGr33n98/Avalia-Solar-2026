@@ -165,6 +165,9 @@ export default function Home() {
 
   return (
     <main className="flex-grow">
+      <div className="flex items-center justify-center py-4">
+        <img src="/images/logo.png" alt="Avalia Solar" className="h-10 md:h-12 w-auto" />
+      </div>
       <Hero />
       <TrustRow />
 
