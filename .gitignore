@@ -53,4 +53,35 @@ Thumbs.db
 /AB0-1-back/db/*.sqlite3-journal
 
 # Documentação (não ignorar por padrão)
-# Removidas regras que ignoravam *.md e *.txt
+# Removidas regras que ignoravam *.md e *.txt/.github/PULL_REQUEST_TEMPLATE.md
+/.trae/
+/AB0-1-back/COMO_INICIAR_AGORA.txt
+/AB0-1-back/SIDEKIQ_NAMESPACE_FIX.md
+/AB0-1-back/fix_redis_connection.md
+/AB0-1-back/history.txt
+/AB0-1-back/public/robots.txt
+/AB0-1-back/routes.txt
+/AB0-1-front/OPTIMIZATION_CHANGES_SUMMARY.md
+/AB0-1-front/PERFORMANCE_OPTIMIZATION_REPORT.md
+/CICD_IMPLEMENTATION.md
+/COMANDOS_PARA_VM.txt
+/COMO_ASSOCIAR_USUARIO_EMPRESA.md
+/DEBUG_IMAGENS.md
+/FIXES_SUMMARY.md
+/FIX_REDIS_UPLOAD.md
+/GITHUB_SECRETS_CONFIG.txt
+/GITHUB_SECRETS_CONFIGURADOS.md
+/GITHUB_SECRETS_SETUP.md
+/IMAGENS_NAO_APARECEM_FIX.md
+/INSTALAR_REDIS_WINDOWS.md
+/INSTRUCOES_URGENTES.txt
+/QUICK_START_CICD.md
+/SOLUCAO_URGENTE.txt
+/SOLUCOES_APLICADAS.md
+/TESTE_IMAGENS_RAPIDO.md
+/history.txt
+/log.md
+/roteiro-de-estudo.md
+/script/lint_fixes_report_*.txt
+/task0-test.md
+/tasks/TASK-10.md
