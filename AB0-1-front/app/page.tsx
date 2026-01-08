@@ -242,7 +242,7 @@ export default function Home() {
         ) : errorCompanies ? (
           <ErrorState message={errorCompanies} />
         ) : (
-          <div className="px-2 md:px-0">
+          <div className="px-2 md:px-0 max-w-screen-xl mx-auto">
             <Carousel opts={{ align: 'start', loop: true }} className="w-full">
               <CarouselContent className="-ml-4">
                 {companies.map((company) => (

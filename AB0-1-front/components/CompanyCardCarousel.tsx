@@ -36,7 +36,7 @@ export default function CompanyCardCarousel({ items, interval = 5000, showContro
   };
 
   return (
-    <div className="relative w-full" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div className="relative w-full overflow-hidden" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 transition-transform duration-500 ease-in-out">
         {items.map((item, i) => (
           <div key={item.id} className={visible(i) ? 'opacity-100' : 'opacity-0 pointer-events-none'}>

@@ -69,4 +69,11 @@ describe('CompanyCard Image Rendering', () => {
     render(<CompanyCard company={mockCompany} />);
     expect(screen.getByText('Verificada')).toBeInTheDocument();
   });
+
+  it('aplica classes responsivas ao banner (object-contain em mobile, object-cover em desktop)', () => {
+    render(<CompanyCard company={mockCompany} />);
+    const bannerImg = screen.getByTestId('company-banner');
+    expect(bannerImg).toHaveClass('object-contain');
+    expect(bannerImg).toHaveClass('md:object-cover');
+  });
 });

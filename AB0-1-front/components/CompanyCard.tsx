@@ -146,12 +146,13 @@ export default function CompanyCard({
               src={bannerUrl}
               alt={`Banner ${name}`}
               fill
-              sizes="100vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={() => setBannerError(true)}
-              className="object-cover"
+              className="object-contain md:object-cover object-center"
+              data-testid="company-banner"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50" data-testid="banner-placeholder">
               <Building2 className="text-blue-200 w-12 h-12" />
             </div>
           )}
@@ -172,10 +173,11 @@ export default function CompanyCard({
                 fill
                 sizes="80px"
                 onError={() => setLogoError(true)}
-                className="object-cover"
+                className="object-cover object-center"
+                data-testid="company-logo"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+              <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
                 <Building2 className="text-gray-300 w-8 h-8" />
               </div>
             )}

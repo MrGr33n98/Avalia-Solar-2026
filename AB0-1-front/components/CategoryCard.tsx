@@ -111,7 +111,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
                 alt={`Categoria: ${displayData.name} - ${displayData.description.slice(0, 50)}...`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className={`object-cover transition-transform duration-300 ease-out ${variant !== 'minimal' ? 'group-hover:scale-105' : ''}`}
+                className={`object-contain md:object-cover object-center transition-transform duration-300 ease-out ${variant !== 'minimal' ? 'group-hover:scale-105' : ''}`}
                 onError={() => setImageError(true)}
                 priority={false}
               />
