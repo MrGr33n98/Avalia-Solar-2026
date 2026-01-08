@@ -66,6 +66,7 @@ services:
       ADDITIONAL_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      APP_HOST: "https://api.avaliasolar.com.br"
     ports:
       - "3001:3001"
     networks:
@@ -76,6 +77,8 @@ services:
       timeout: 20s        # Aumentei de 10s para 20s
       retries: 10         # Aumentei de 5 para 10
       start_period: 120s  # Aumentei de 40s para 120s (2 min para iniciar)
+    volumes:
+      - ./AB0-1-back/storage:/app/AB0-1-back/storage
 
   frontend:
     build:
