@@ -129,7 +129,7 @@ export default function CategoriesIndexWithSidebar() {
                         aria-label={banner.title}
                       >
                         <img
-                          src={banner.image_url}
+                          src={getFullImageUrl(banner.image_url) || ''}
                           alt={banner.title}
                           className="w-full h-[280px] object-cover rounded-lg"
                           loading="eager"
@@ -141,7 +141,7 @@ export default function CategoriesIndexWithSidebar() {
                       </a>
                     ) : (
                       <img
-                        src={banner.image_url}
+                        src={getFullImageUrl(banner.image_url) || ''}
                         alt={banner.title}
                         className="w-full h-[280px] object-cover rounded-lg"
                         loading="eager"
@@ -384,3 +384,4 @@ function EmptyState({ searchTerm }: { searchTerm: string }) {
     </div>
   );
 }
+import { getFullImageUrl } from '@/utils/image';

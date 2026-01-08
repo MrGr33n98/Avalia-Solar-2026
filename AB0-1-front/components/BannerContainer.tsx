@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface BannerData {
   id: number | string;
   type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar' | 'categories_top';
+  position: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
   image_url: string;
   title: string;
   link?: string;

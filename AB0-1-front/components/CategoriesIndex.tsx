@@ -8,6 +8,7 @@ import CategoryCard from '@/components/CategoryCard';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFullImageUrl } from '@/utils/image';
 
 interface Banner {
   id: number;
@@ -145,14 +146,14 @@ export default function CategoriesIndex() {
                   {banner.link_url ? (
                     <a href={banner.link_url} target="_blank" rel="noopener noreferrer">
                       <img
-                        src={banner.image_url}
+                        src={getFullImageUrl(banner.image_url) || ''}
                         alt={banner.title}
                         className="w-full h-[300px] object-cover rounded-lg"
                       />
                     </a>
                   ) : (
                     <img
-                      src={banner.image_url}
+                      src={getFullImageUrl(banner.image_url) || ''}
                       alt={banner.title}
                       className="w-full h-[300px] object-cover rounded-lg"
                     />

@@ -2,6 +2,7 @@
 
 import { useBanners } from '@/hooks/useBanners';
 import { BannerContainer } from './BannerContainer';
+import { getFullImageUrl } from '@/utils/image';
 
 interface BannerByLocationProps {
   location: string;
@@ -49,7 +50,7 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
       id: banner.id,
       type: banner.banner_type,
       position: banner.position,
-      image_url: banner.image_url,
+      image_url: getFullImageUrl(banner.image_url) || '',
       title: banner.title || '',
       link: banner.link,
       sponsored: banner.sponsored,

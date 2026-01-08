@@ -9,7 +9,7 @@ interface Banner {
   link?: string;
   title?: string;
   banner_type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar' | 'categories_top';
+  position: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
   sponsored?: boolean;
 }
 

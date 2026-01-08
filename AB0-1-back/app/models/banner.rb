@@ -8,7 +8,7 @@ class Banner < ApplicationRecord
 
   validates :title, :banner_type, :position, presence: true
   validates :banner_type, inclusion: { in: %w[rectangular_large rectangular_small] }
-  validates :position, inclusion: { in: %w[navbar sidebar categories_top] }
+  validates :position, inclusion: { in: %w[navbar sidebar categories_top home_top companies_top] }
   validates :image, presence: true
   validates :moderation_status, inclusion: { in: MODERATION_STATUSES }, if: -> { self.class.column_names.include?('moderation_status') }
 

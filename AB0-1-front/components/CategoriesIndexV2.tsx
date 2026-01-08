@@ -107,7 +107,7 @@ export default function CategoriesIndex() {
                       aria-label={banner.title}
                     >
                       <img
-                        src={banner.image_url}
+                        src={getFullImageUrl(banner.image_url) || ''}
                         alt={banner.title}
                         className="w-full h-[300px] object-cover rounded-lg"
                         loading="eager" // Prioridade alta para primeiro banner
@@ -115,7 +115,7 @@ export default function CategoriesIndex() {
                     </a>
                   ) : (
                     <img
-                      src={banner.image_url}
+                      src={getFullImageUrl(banner.image_url) || ''}
                       alt={banner.title}
                       className="w-full h-[300px] object-cover rounded-lg"
                       loading="eager"
@@ -240,3 +240,4 @@ function EmptyState({ searchTerm }: { searchTerm: string }) {
     </div>
   );
 }
+import { getFullImageUrl } from '@/utils/image';
