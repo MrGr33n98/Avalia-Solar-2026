@@ -1,5 +1,6 @@
 require "active_support/core_ext/integer/time"
 require "ipaddr"
+require "uri"
 
 Rails.application.configure do
   # Configurações básicas de performance
@@ -21,12 +22,16 @@ Rails.application.configure do
   config.active_storage.service_urls_expire_in = 7.days
   
   # --- CONFIGURAÇÃO UNIFICADA DE URL ---
-  # Remove as definições duplicadas e conflitantes do final do arquivo original
-  app_host = ENV.fetch('APP_HOST', 'api.avaliasolar.com.br')
-  
-  Rails.application.routes.default_url_options = { host: app_host, protocol: 'https' }
-  config.active_storage.default_url_options = { host: app_host, protocol: 'https' }
-  config.action_mailer.default_url_options = { host: app_host, protocol: 'https' }
+  # Usa APP_HOST com esquema; extrai host e protocolo corretamente
+  app_host = ENV.fetch('APP_HOST', 'https://api.avaliasolar.com.br')
+  uri = URI(app_host)
+  host = uri.host || app_host
+  protocol = uri.scheme || 'https'
+
+  Rails.application.routes.default_url_options = { host: host, protocol: protocol }
+  config.action_controller.default_url_options = { host: host, protocol: protocol }
+  config.active_storage.default_url_options = { host: host, protocol: protocol }
+  config.action_mailer.default_url_options = { host: host, protocol: protocol }
 
   # --- SEGURANÇA E SSL ---
   # Como o Nginx Proxy Manager cuida do SSL, informamos ao Rails para assumir HTTPS
