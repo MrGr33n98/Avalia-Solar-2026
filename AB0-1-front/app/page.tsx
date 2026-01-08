@@ -3,6 +3,7 @@
 import Hero from '@/components/Hero';
 import CategoryCard from '@/components/CategoryCard';
 import CompanyCard from '@/components/CompanyCard';
+import BannerByLocation from '@/components/BannerByLocation';
 import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
 import { Category, Company, Review } from '@/lib/api';
 import { useEffect, useState, ReactNode } from 'react';
@@ -168,6 +169,11 @@ export default function Home() {
       <Hero />
       <TrustRow />
 
+      {/* Banner no topo da homepage */}
+      <div className="container mx-auto px-4 md:px-6 py-8">
+        <BannerByLocation location="home_top" className="mb-8" />
+      </div>
+
       {featuredCategories.length > 0 && (
         <div className="container mx-auto px-4 md:px-6 max-w-[1000px]">
           <CategoryCard category={featuredCategories[0]} layout="top" />
@@ -175,6 +181,9 @@ export default function Home() {
       )}
 
       <SectionShell zebra>
+        {/* Banner antes das categorias */}
+        <BannerByLocation location="categories_top" className="mb-8" />
+        
         <SectionHeader
           title="Explore Nossas Categorias"
           subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
@@ -206,6 +215,9 @@ export default function Home() {
       </SectionShell>
 
       <SectionShell>
+        {/* Banner antes das empresas */}
+        <BannerByLocation location="companies_top" className="mb-8" />
+        
         <SectionHeader
           title="Empresas Parceiras"
           subtitle="Conheça as empresas mais bem avaliadas e verificadas pelos nossos usuários."
