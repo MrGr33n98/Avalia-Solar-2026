@@ -139,7 +139,11 @@ export default function Home() {
 
     const fetchCompanies = async () => {
       try {
-        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12, include: 'logo_url' });
+        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12, include: 'logo_url,banner_url' });
+        if (process.env.NODE_ENV !== 'production') {
+          const withBanner = (response || []).filter((c) => !!c.banner_url);
+          console.log('[Home] Companies loaded:', response?.length || 0, 'with banner_url:', withBanner.length);
+        }
         setCompanies(response);
       } catch (error) {
         setErrorCompanies('Erro ao carregar empresas.');
