@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Sparkles, Users, Package, TrendingUp } from 'lucide-react';
 import { Category } from '@/lib/api';
 
@@ -26,8 +27,8 @@ const CategoryBanner = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      // largura controlada e centralizada - altura reduzida para ficar igual aos outros banners
-      className={`relative w-auto max-w-5xl mx-auto ${height} rounded-xl overflow-hidden shadow-lg`}
+      // largura total em mobile para evitar cortes
+      className={`relative w-full max-w-5xl mx-auto ${height} rounded-xl overflow-hidden shadow-lg`}
     >
       {/* Background Image or Gradient */}
       <div className="absolute inset-0">
@@ -36,14 +37,17 @@ const CategoryBanner = ({
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 animate-pulse" />
             )}
-            <img
+            <Image
               src={category.banner_url}
               alt={`${category.name} Banner`}
-              className={`w-full h-full object-cover transition-opacity duration-500 ${
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={`object-contain md:object-cover object-center transition-opacity duration-500 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               onError={() => setImageError(true)}
-              onLoad={() => setImageLoaded(true)}
+              onLoadingComplete={() => setImageLoaded(true)}
+              priority={false}
             />
             <div className="absolute inset-0 bg-black/40" />
           </>

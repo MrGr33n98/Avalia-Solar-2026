@@ -43,16 +43,16 @@ export function BannerContainer({ banners }: BannerContainerProps) {
     return (
       <div className="p-1">
         <Card className="overflow-hidden">
-          <CardContent className="relative flex items-center justify-center p-0 aspect-[3/1]">
+          <CardContent className="relative flex items-center justify-center p-0 aspect-[16/9] sm:aspect-[3/1]">
             <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
               <Image
-                src={banner.image_url}
-                alt={banner.title}
-                fill
-                priority
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                className="object-cover"
-              />
+                        src={banner.image_url}
+                        alt={banner.title}
+                        fill
+                        priority
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+                        className="object-contain md:object-cover object-center"
+                      />
               {banner.sponsored && (
                   <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                       Patrocinado
@@ -80,7 +80,7 @@ export function BannerContainer({ banners }: BannerContainerProps) {
             <CarouselItem key={banner.id}>
               <div className="p-1">
                 <Card className="overflow-hidden">
-                  <CardContent className="relative flex items-center justify-center p-0 aspect-[3/1]">
+                  <CardContent className="relative flex items-center justify-center p-0 aspect-[16/9] sm:aspect-[3/1]">
                     <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                       <Image
                         src={banner.image_url}
@@ -88,7 +88,7 @@ export function BannerContainer({ banners }: BannerContainerProps) {
                         fill
                         priority
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
+                        className="object-contain md:object-cover object-center"
                       />
                       {banner.sponsored && (
                           <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">

@@ -23,7 +23,7 @@ export function Banner({
     <div
       className={cn(
         'relative overflow-hidden rounded-lg',
-        type === 'rectangular_large' ? 'w-full h-[200px]' : 'w-[300px] h-[250px]',
+        type === 'rectangular_large' ? 'w-full aspect-[16/9] sm:aspect-[3/1]' : 'w-full sm:w-[300px] aspect-[4/3] sm:h-[250px]',
         position === 'navbar' ? 'mb-6' : 'mb-4'
       )}
     >
@@ -31,7 +31,7 @@ export function Banner({
         src={imageUrl}
         alt={title}
         fill
-        className="object-cover"
+        className="object-contain md:object-cover object-center"
         priority={position === 'navbar'}
       />
       {sponsored && (
