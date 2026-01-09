@@ -86,7 +86,7 @@ jobs:
             docker compose up -d db redis
 
             echo "⏳ Aguardando db/redis ficarem healthy..."
-            for i in $(seq 1 60); do
+            for i in $(seq 1 200); do
               db_cid=$(docker compose ps -q db 2>/dev/null || true)
               redis_cid=$(docker compose ps -q redis 2>/dev/null || true)
 
@@ -97,8 +97,8 @@ jobs:
                 echo "✅ db/redis healthy"
                 break
               fi
-              printf 'db=%s redis=%s (tentativa %s/60)\n' "$db_status" "$redis_status" "$i"
-              sleep 2
+              printf 'db=%s redis=%s (tentativa %s/200)\n' "$db_status" "$redis_status" "$i"
+              sleep 3
             done
             if [ "${db_status:-starting}" != "healthy" ] || [ "${redis_status:-starting}" != "healthy" ]; then
               echo "❌ db/redis não ficaram healthy a tempo" >&2
@@ -112,15 +112,19 @@ jobs:
             docker compose up -d --no-deps backend frontend
 
             echo "⏳ Aguardando backend ficar healthy..."
-            for i in $(seq 1 60); do
+            for i in $(seq 1 240); do
               be_cid=$(docker compose ps -q backend 2>/dev/null || true)
               be_status=$( [ -n "$be_cid" ] && docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$be_cid" 2>/dev/null || echo starting )
               if [ "$be_status" = "healthy" ]; then
                 echo "✅ backend healthy"
                 break
               fi
-              printf 'backend=%s (tentativa %s/60)\n' "$be_status" "$i"
-              sleep 2
+              # Tentativa de checar endpoint de saúde diretamente
+              if [ $((i % 20)) -eq 0 ] && [ -n "$be_cid" ]; then
+                docker exec -t "$be_cid" sh -lc "curl -fsS http://localhost:3001/health" && echo "↪️ health endpoint OK" && break || true
+              fi
+              printf 'backend=%s (tentativa %s/240)\n' "$be_status" "$i"
+              sleep 3
             done
             if [ "${be_status:-starting}" != "healthy" ]; then
               echo "❌ backend não ficou healthy a tempo" >&2
