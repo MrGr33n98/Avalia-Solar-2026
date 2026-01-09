@@ -46,14 +46,10 @@ describe('CompanyCard Image Rendering', () => {
     expect(logo).toBeInTheDocument();
   });
 
-  it('exibe fallback de banner quando a URL é nula', () => {
+  it('exibe o banner padrão quando a URL é nula', () => {
     render(<CompanyCard company={mockCompanyNoImages} />);
-    // Deve renderizar o placeholder
-    const placeholder = screen.getByTestId('banner-placeholder');
-    expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveTextContent('BSOL');
-    // Não deve renderizar o TestImage do banner
-    expect(screen.queryByTestId('company-banner')).not.toBeInTheDocument();
+    const banner = screen.getByTestId('company-banner');
+    expect(banner).toBeInTheDocument();
   });
 
   it('exibe fallback de logo quando a URL é nula', () => {
@@ -70,10 +66,9 @@ describe('CompanyCard Image Rendering', () => {
     expect(screen.getByText('Verificada')).toBeInTheDocument();
   });
 
-  it('aplica classes responsivas ao banner (object-contain em mobile, object-cover em desktop)', () => {
+  it('aplica classe de cobertura ao banner', () => {
     render(<CompanyCard company={mockCompany} />);
     const bannerImg = screen.getByTestId('company-banner');
-    expect(bannerImg).toHaveClass('object-contain');
-    expect(bannerImg).toHaveClass('md:object-cover');
+    expect(bannerImg).toHaveClass('object-cover');
   });
 });

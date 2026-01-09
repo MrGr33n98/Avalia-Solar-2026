@@ -357,8 +357,8 @@ class Company < ApplicationRecord
 
   def validate_banner_attachment
     return unless banner.attached?
-    if !banner.blob.content_type.in?(%w[image/png image/jpeg])
-      errors.add(:banner, 'deve ser PNG ou JPG')
+    if !banner.blob.content_type.in?(%w[image/png image/jpeg image/webp])
+      errors.add(:banner, 'deve ser PNG, JPG ou WebP')
     end
     if banner.blob.byte_size > 5.megabytes
       errors.add(:banner, 'tamanho máximo é 5MB')

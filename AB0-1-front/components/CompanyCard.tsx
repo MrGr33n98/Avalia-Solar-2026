@@ -148,13 +148,18 @@ export default function CompanyCard({
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={() => setBannerError(true)}
-              className="object-contain md:object-cover object-center"
+              className="object-cover object-center"
               data-testid="company-banner"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50" data-testid="banner-placeholder">
-              <Building2 className="text-blue-200 w-12 h-12" />
-            </div>
+            <Image
+              src="/images/banner-avalia-solar.png"
+              alt={`Banner padrão ${name}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover object-center"
+              data-testid="company-banner"
+            />
           )}
         </div>
 
@@ -249,6 +254,7 @@ export default function CompanyCard({
           ) : (
             <Button
               className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-medium"
+              aria-label="Solicitar orçamento com a empresa"
               onClick={() => openQuoteWizard({ preferredCompanyId: id, source: 'company-card' })}
             >
               <MessageCircle className="w-4 h-4 mr-2" />
@@ -261,7 +267,7 @@ export default function CompanyCard({
             className="w-full h-10 border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium"
             asChild
           >
-            <Link href={companyReviewPath} onClick={() => emit('cta_review_click')}>
+            <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={() => emit('cta_review_click')}>
               <Star className="w-4 h-4 mr-2 text-gray-400 group-hover:text-amber-500 transition-colors" />
               {text.review}
             </Link>

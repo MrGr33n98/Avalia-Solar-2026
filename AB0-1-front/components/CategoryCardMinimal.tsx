@@ -76,6 +76,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
       </div>
 
       {/* Logo/Ícone Centralizado */}
+      {/* Área central da imagem: altura fixa com preenchimento sem distorcer em mobile */}
       <div className="flex items-center justify-center mb-4 h-32">
         {imageUrl ? (
           <div className="relative w-full h-full">
@@ -84,7 +85,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
               alt={displayData.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain"
+              className="object-cover object-center"
               onError={() => setImageError(true)}
             />
           </div>

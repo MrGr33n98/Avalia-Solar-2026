@@ -7,17 +7,27 @@
   border-radius: calc(1rem * var(--scale, 1));
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: box-shadow 200ms ease, transform 200ms ease;
+  /* Padding mínimo para todo o Card e contenção de conteúdo */
+  padding: 1rem; /* 16px */
+  overflow: hidden; /* evita que elementos ultrapassem os limites do card */
 }
 
 /* Banner */
 .banner {
   position: relative;
   width: 100%;
-  height: calc(10rem * var(--scale, 1));
+  /* Altura responsiva baseada na viewport com limites seguros */
+  /* Usamos uma variável para facilitar ajustes proporcionais em breakpoints */
+  --banner-h: clamp(140px, 28vw, 220px);
+  height: var(--banner-h);
   overflow: hidden;
   border-top-left-radius: calc(1rem * var(--scale, 1));
   border-top-right-radius: calc(1rem * var(--scale, 1));
   background-color: #f3f4f6;
+  /* Transição suave ao redimensionar */
+  transition: height 300ms ease, transform 300ms ease;
+  will-change: height, transform;
+  transform: translateZ(0);
 }
 
 /* Avatar Wrapper */
@@ -120,9 +130,54 @@
   margin-top: auto;
 }
 
+/* Botões responsivos e acessíveis dentro da área de ações */
+.actions :global(button) {
+  min-height: 3rem; /* 48px mínimo para touch devices */
+  padding: 0.75rem 1rem; /* 12px 16px usando unidades relativas */
+  font-size: 0.875rem; /* 14px em rem */
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 @media (max-width: 640px) {
   .actions {
+    grid-template-columns: 1fr; /* empilha botões em dispositivos pequenos */
+  }
+}
+
+/* 320px–480px: dispositivos móveis pequenos */
+@media (min-width: 320px) and (max-width: 480px) {
+  .banner {
+    height: calc(var(--banner-h) * 0.5); /* reduz para 50% */
+  }
+  .actions {
     grid-template-columns: 1fr;
+  }
+}
+
+/* 481px–768px: tablets e dispositivos maiores */
+@media (min-width: 481px) and (max-width: 768px) {
+  .banner {
+    height: calc(var(--banner-h) * 0.5); /* reduz para 50% */
+  }
+  .actions {
+    grid-template-columns: 1fr 1fr; /* dois botões lado a lado */
+  }
+}
+
+/* >=769px: desktop */
+@media (min-width: 769px) {
+  .actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Orientação: garante proporção em landscape até 768px */
+@media (orientation: landscape) and (max-width: 768px) {
+  .banner {
+    height: calc(var(--banner-h) * 0.5);
   }
 }
 

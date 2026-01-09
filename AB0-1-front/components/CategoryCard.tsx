@@ -101,8 +101,10 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* 1. Área da Imagem (Header) */}
+          {/* Header da imagem: wrapper com aspect-ratio e overflow para mobile */}
           <div className={[
             'relative overflow-hidden bg-gray-100',
+            // Mobile: mantém proporção e evita distorções
             layout === 'top' ? 'w-full aspect-[3/1]' : 'w-full md:w-2/5 aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]'
           ].join(' ')}>
             {displayData.banner_url && !imageError ? (
@@ -111,7 +113,8 @@ export default function CategoryCard({ category, className = "", variant = 'rich
                 alt={`Categoria: ${displayData.name} - ${displayData.description.slice(0, 50)}...`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className={`object-contain md:object-cover object-center transition-transform duration-300 ease-out ${variant !== 'minimal' ? 'group-hover:scale-105' : ''}`}
+                // Mobile: força object-cover para preencher sem distorcer; mantém center
+                className={`object-cover object-center transition-transform duration-300 ease-out ${variant !== 'minimal' ? 'group-hover:scale-105' : ''}`}
                 onError={() => setImageError(true)}
                 priority={false}
               />
@@ -128,6 +131,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
           </div>
 
           {/* 2. Corpo do Conteúdo */}
+          {/* Corpo do conteúdo com espaçamento responsivo e alinhamento consistente */}
           <div className={[
             'flex flex-col flex-1',
             layout === 'top' ? 'w-full' : 'md:w-3/5',
@@ -146,6 +150,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
               )}
             </div>
 
+            {/* Rodapé com grid/flex responsivo para elementos internos */}
             <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-50">
               {/* Stats / Badges */}
               <div className="flex items-center gap-3">
@@ -164,7 +169,7 @@ export default function CategoryCard({ category, className = "", variant = 'rich
                 )}
               </div>
               {/* Call to Action Visual */}
-              <div className={`flex items-center text-sm font-semibold text-blue-600 transform transition-all duration-300 ${variant === 'interactive' ? (isHovered ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0') : ''}`}>
+              <div className={`flex items-center text-sm font-semibold text-blue-600 transform transition-all duration-300 whitespace-nowrap text-ellipsis overflow-hidden ${variant === 'interactive' ? (isHovered ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0') : ''}`}>
                 {i18n.explore} <ArrowRight className="ml-1 w-4 h-4" />
               </div>
             </div>

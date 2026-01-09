@@ -80,7 +80,7 @@ export default function CompanyHero({
       <div className="relative w-full mb-8">
         <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px]">
           <Image
-            src={!bannerUrl || bannerError ? '/images/avalia-solar-place-holder.PNG' : bannerUrl}
+            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
             alt={!bannerUrl || bannerError ? `Banner padrão da empresa ${company.name}` : `${company.name} banner`}
             fill
             priority
