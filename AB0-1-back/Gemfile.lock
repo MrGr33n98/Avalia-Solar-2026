@@ -239,6 +239,7 @@ GEM
     method_source (1.1.0)
     mini_magick (4.12.0)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.27.0)
     msgpack (1.7.1)
     multi_xml (0.7.2)
@@ -462,8 +463,8 @@ GEM
       actionpack (>= 5.2)
       activesupport (>= 5.2)
       sprockets (>= 3.0.0)
-    sqlite3 (1.6.3-x64-mingw-ucrt)
-    sqlite3 (1.6.3-x86_64-linux)
+    sqlite3 (1.7.3)
+      mini_portile2 (~> 2.8.0)
     stimulus-rails (1.2.1)
       railties (>= 6.0.0)
     terminal-table (4.0.0)
@@ -583,7 +584,7 @@ DEPENDENCIES
   simplecov
   simplecov-console
   sprockets-rails
-  sqlite3 (~> 1.4)
+  sqlite3 (~> 1.7)
   stimulus-rails
   turbo-rails
   tzinfo-data
@@ -683,6 +684,7 @@ CHECKSUMS
   method_source (1.1.0) sha256=181301c9c45b731b4769bc81e8860e72f9161ad7d66dd99103c9ab84f560f5c5
   mini_magick (4.12.0) sha256=67302fa84e63f1002b71416a8466968ed0f33d22f5d42962a0c09a9f1c3a906a
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
+  mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
   msgpack (1.7.1) sha256=4f337a2cfd8e78850cb515812a2fc17ba114e92a33f82e12e46ae4be4d29c71a
   multi_xml (0.7.2) sha256=307a96dc48613badb7b2fc174fd4e62d7c7b619bc36ea33bfd0c49f64f5787ce
@@ -765,8 +767,7 @@ CHECKSUMS
   snaky_hash (2.0.3) sha256=25a3d299566e8153fb02fa23fd9a9358845950f7a523ddbbe1fa1e0d79a6d456
   sprockets (4.2.0) sha256=5c273487255c47523f30c0b673310fce70a09ca060a6bbcd3e5d0d489e19024c
   sprockets-rails (3.4.2) sha256=36d6327757ccf7460a00d1d52b2d5ef0019a4670503046a129fa1fb1300931ad
-  sqlite3 (1.6.3-x64-mingw-ucrt) sha256=5df1dcf85b2027fa5bc054250ca2201cf28721151470cb0c45fbb8e21b92399e
-  sqlite3 (1.6.3-x86_64-linux) sha256=aebdc5821f4ddeeb9cc36983f0a9c3815e1024e3bd4ddb0dcbc212bb20569de8
+  sqlite3 (1.7.3) sha256=fa77f63c709548f46d4e9b6bb45cda52aa3881aa12cc85991132758e8968701c
   stimulus-rails (1.2.1) sha256=831bbcc0c12ea9c751e0a96b85d9908a0e4b42031964724d5b507166e06f0e8a
   terminal-table (4.0.0) sha256=f504793203f8251b2ea7c7068333053f0beeea26093ec9962e62ea79f94301d2
   thor (1.4.0) sha256=8763e822ccb0f1d7bee88cde131b19a65606657b847cc7b7b4b82e772bcd8a3d
