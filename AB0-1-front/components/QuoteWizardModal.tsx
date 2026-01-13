@@ -251,7 +251,7 @@ export default function QuoteWizardModal() {
         }
       }}
     >
-      <DialogContent className="max-w-xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto z-[10000]">
         <div className="bg-green-600 text-white px-6 py-4 flex items-center justify-between">
           <p className="text-sm font-semibold">Ja ajudamos muitos clientes na sua regiao</p>
         </div>

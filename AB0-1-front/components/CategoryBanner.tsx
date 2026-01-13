@@ -1,126 +1,124 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { Sparkles, Users, Package, TrendingUp } from 'lucide-react';
+
 import { Category } from '@/lib/api';
+import { getFullImageUrl } from '@/utils/image';
+import { Button } from '@/components/ui/button';
+import { Building2, Package } from 'lucide-react'; // Sugestão: adicione ícones simples
+
+const MotionDiv = motion.div;
 
 interface CategoryBannerProps {
   category: Category;
   companiesCount?: number;
   productsCount?: number;
-  height?: string; // Nova prop para controlar altura
+  height?: string;
+  onQuoteClick?: () => void;
 }
 
-const CategoryBanner = ({ 
-  category, 
-  companiesCount = 0, 
+export default function CategoryBanner({
+  category,
+  companiesCount = 0,
   productsCount = 0,
-  height = "h-24 sm:h-28 md:h-32 lg:h-36" // Valor padrão
-}: CategoryBannerProps) => {
+  height = 'h-48 sm:h-56 md:h-64', // Aumentei um pouco a altura para melhor respiro
+  onQuoteClick,
+}: CategoryBannerProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  const bannerUrl = useMemo(() => {
+    return (
+      getFullImageUrl((category as any)?.banner_url) ||
+      getFullImageUrl((category as any)?.image_url) ||
+      ''
+    );
+  }, [(category as any)?.banner_url, (category as any)?.image_url]);
+
+  const hasImage = typeof bannerUrl === 'string' && bannerUrl.trim().length > 0 && !imageError;
+
+  const subtitle = (category as any)?.short_description || (category as any)?.description || '';
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+    <MotionDiv
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      // largura total em mobile para evitar cortes
-      className={`relative w-full max-w-5xl mx-auto ${height} rounded-xl overflow-hidden shadow-lg`}
+      className={[
+        'relative mx-auto w-full max-w-[1180px] overflow-hidden rounded-3xl',
+        'bg-slate-900 shadow-xl', // Fundo escuro para caso a imagem falhe
+        height,
+      ].join(' ')}
     >
-      {/* Background Image or Gradient */}
-      <div className="absolute inset-0">
-        {category.banner_url && !imageError ? (
-          <>
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 animate-pulse" />
-            )}
-            <Image
-              src={category.banner_url}
-              alt={`${category.name} Banner`}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className={`object-contain md:object-cover object-center transition-opacity duration-500 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              onError={() => setImageError(true)}
-              onLoadingComplete={() => setImageLoaded(true)}
-              priority={false}
-            />
-            <div className="absolute inset-0 bg-black/40" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800" />
-        )}
-      </div>
+      {/* IMAGEM DE FUNDO COM EFEITO */}
+      {hasImage && (
+        <Image
+          src={bannerUrl}
+          alt={`${category.name} Banner`}
+          fill
+          priority
+          className={[
+            'object-cover object-center transition-all duration-1000 ease-out',
+            imageLoaded ? 'scale-100 opacity-70' : 'scale-110 opacity-0',
+          ].join(' ')}
+          onError={() => setImageError(true)}
+          onLoad={() => setImageLoaded(true)}
+        />
+      )}
 
-      {/* Content Overlay */}
-      <div className="relative z-10 h-full flex items-center p-4 lg:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between w-full gap-4">
-          {/* Left Content */}
-          <div className="flex-1 text-white">
-            {category.featured && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 mb-2"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-300" />
-                <span className="text-xs font-medium">Categoria em Destaque</span>
-              </motion.div>
-            )}
+      {/* OVERLAY DE GRADIENTE (Essencial para UX) */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-2xl lg:text-3xl font-bold leading-tight mb-1"
-            >
-              {category.name}
-            </motion.h1>
+      {/* CONTEÚDO */}
+      <div className="relative z-20 flex h-full flex-col justify-center px-6 sm:px-12 max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
+            {category.name}
+          </h1>
 
-            {category.short_description && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="hidden sm:block text-sm text-gray-200 max-w-xl"
-              >
-                {category.short_description}
-              </motion.p>
-            )}
+          {subtitle && (
+            <p className="mt-2 text-sm sm:text-base text-gray-200 line-clamp-2 max-w-md font-light">
+              {subtitle}
+            </p>
+          )}
+
+          {/* BADGES DE STATUS */}
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-white/90">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+              <Building2 size={14} className="text-emerald-400" />
+              <span>{companiesCount} empresas</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+              <Package size={14} className="text-emerald-400" />
+              <span>{productsCount} produtos</span>
+            </div>
           </div>
 
-          {/* Right Stats */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex gap-3"
-          >
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center min-w-[90px]">
-              <Users className="h-4 w-4 text-blue-300 mx-auto mb-1" />
-              <span className="text-sm font-bold text-white">{companiesCount}</span>
-              <p className="text-[10px] text-gray-300">{companiesCount === 1 ? 'Empresa' : 'Empresas'}</p>
+          {/* BOTÃO DE AÇÃO */}
+          {onQuoteClick && (
+            <div className="mt-6">
+              <Button
+                onClick={onQuoteClick}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 py-6 rounded-xl transition-transform active:scale-95 shadow-lg shadow-emerald-500/20"
+              >
+                Solicitar Orçamento Grátis
+              </Button>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center min-w-[90px]">
-              <Package className="h-4 w-4 text-green-300 mx-auto mb-1" />
-              <span className="text-sm font-bold text-white">{productsCount}</span>
-              <p className="text-[10px] text-gray-300">{productsCount === 1 ? 'Produto' : 'Produtos'}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center min-w-[90px]">
-              <TrendingUp className="h-4 w-4 text-yellow-300 mx-auto mb-1" />
-              <span className="text-sm font-bold text-white">{category.featured ? '★' : '↗'}</span>
-              <p className="text-[10px] text-gray-300">{category.featured ? 'Destaque' : 'Crescendo'}</p>
-            </div>
-          </motion.div>
-        </div>
+          )}
+        </motion.div>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
-};
-
-export default CategoryBanner;
+}

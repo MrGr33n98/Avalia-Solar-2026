@@ -4,11 +4,15 @@ import { api } from '@/lib/api';
 export interface Banner {
   id: number;
   title: string;
-  image_url: string;
-  link_url: string;
-  sponsored: boolean;
-  position: string;
-  active: boolean;
+  image_url?: string | null;
+  link?: string | null;
+  link_url?: string | null;
+  sponsored?: boolean;
+  banner_type?: 'rectangular_large' | 'rectangular_small';
+  position?: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
+  width?: number | null;
+  height?: number | null;
+  active?: boolean;
 }
 
 interface UseBannersQueryOptions {

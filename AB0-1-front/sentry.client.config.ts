@@ -4,6 +4,28 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+const integrations: any[] = [
+  // Browser tracing
+  Sentry.browserTracingIntegration({
+    // Set sampling rate for performance monitoring
+    tracePropagationTargets: [
+      "localhost",
+      /^\//,
+      process.env.NEXT_PUBLIC_API_BASE_URL || "",
+    ].filter(Boolean),
+  } as any),
+];
+
+// Replay can inject/remove DOM nodes; enable only in production to avoid dev/hot-reload race conditions.
+if (process.env.NODE_ENV === "production") {
+  integrations.unshift(
+    Sentry.replayIntegration({
+      maskAllText: true,
+      blockAllMedia: true,
+    }),
+  );
+}
+
 Sentry.init({
   // Your Sentry DSN (Data Source Name)
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -21,22 +43,7 @@ Sentry.init({
   replaysOnErrorSampleRate: process.env.NODE_ENV === "production" ? 1.0 : 0.0,
   replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 0.0,
 
-  integrations: [
-    // Enable Replay for session recording
-    Sentry.replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-    // Browser tracing
-    Sentry.browserTracingIntegration({
-      // Set sampling rate for performance monitoring
-      tracePropagationTargets: [
-        "localhost",
-        /^\//,
-        process.env.NEXT_PUBLIC_API_BASE_URL || "",
-      ].filter(Boolean),
-    } as any),
-  ],
+  integrations,
 
   // Filter out specific errors
   ignoreErrors: [

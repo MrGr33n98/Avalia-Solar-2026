@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,10 +21,43 @@ interface BannerData {
   title: string;
   link?: string;
   sponsored?: boolean;
+  width?: number | null;
+  height?: number | null;
 }
 
 interface BannerContainerProps {
   banners: BannerData[];
+}
+
+const FALLBACK_BANNER_SRC = '/images/default-banner.svg';
+
+function BannerImage({
+  banner,
+  sizes,
+  priority,
+}: {
+  banner: BannerData;
+  sizes: string;
+  priority?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  const src = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
+
+  return (
+    <Image
+      src={src}
+      alt={banner.title}
+      fill
+      priority={priority}
+      sizes={sizes}
+      className="object-cover object-center"
+      onError={() => {
+        if (failed || !banner.image_url) return;
+        console.warn('[BannerContainer] Failed to load banner image, showing fallback:', banner.image_url);
+        setFailed(true);
+      }}
+    />
+  );
 }
 
 export function BannerContainer({ banners }: BannerContainerProps) {
@@ -37,22 +70,36 @@ export function BannerContainer({ banners }: BannerContainerProps) {
   try {
     const displayBanners = banners;
 
+    const dimsStyle = (banner: BannerData): React.CSSProperties => {
+      const style: React.CSSProperties = {};
+      if (typeof banner.width === 'number' && banner.width > 0) {
+        style.maxWidth = `${banner.width}px`;
+      }
+      if (typeof banner.height === 'number' && banner.height > 0) {
+        style.maxHeight = `${banner.height}px`;
+      }
+      if (typeof banner.width === 'number' && banner.width > 0 && typeof banner.height === 'number' && banner.height > 0) {
+        style.aspectRatio = `${banner.width} / ${banner.height}`;
+      }
+      return style;
+    };
+
   // Se houver apenas 1 banner, exiba-o estaticamente
   if (displayBanners.length === 1) {
     const banner = displayBanners[0];
     return (
       <div className="p-1">
         <Card className="overflow-hidden">
-          <CardContent className="relative flex items-center justify-center p-0 aspect-[16/9] sm:aspect-[3/1]">
+          <CardContent
+            className="relative flex items-center justify-center p-0 w-full mx-auto bg-white aspect-[6/1] sm:aspect-[4/1]"
+            style={dimsStyle(banner)}
+          >
             <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-              <Image
-                        src={banner.image_url}
-                        alt={banner.title}
-                        fill
-                        priority
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                        className="object-contain md:object-cover object-center"
-                      />
+              <BannerImage
+                banner={banner}
+                priority
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+              />
               {banner.sponsored && (
                   <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                       Patrocinado
@@ -80,15 +127,15 @@ export function BannerContainer({ banners }: BannerContainerProps) {
             <CarouselItem key={banner.id}>
               <div className="p-1">
                 <Card className="overflow-hidden">
-                  <CardContent className="relative flex items-center justify-center p-0 aspect-[16/9] sm:aspect-[3/1]">
+                  <CardContent
+                    className="relative flex items-center justify-center p-0 w-full mx-auto bg-white aspect-[6/1] sm:aspect-[4/1]"
+                    style={dimsStyle(banner)}
+                  >
                     <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                      <Image
-                        src={banner.image_url}
-                        alt={banner.title}
-                        fill
+                      <BannerImage
+                        banner={banner}
                         priority
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-contain md:object-cover object-center"
                       />
                       {banner.sponsored && (
                           <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">

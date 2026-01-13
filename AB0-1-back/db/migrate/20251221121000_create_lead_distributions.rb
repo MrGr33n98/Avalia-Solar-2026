@@ -5,7 +5,7 @@ class CreateLeadDistributions < ActiveRecord::Migration[7.0]
       t.references :company, null: false, foreign_key: true
       t.string :status, default: 'queued'
       t.datetime :assigned_at
-      t.jsonb :payload
+      t.json :payload
 
       t.timestamps
     end

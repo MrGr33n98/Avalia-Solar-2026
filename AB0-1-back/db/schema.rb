@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -38,8 +38,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
-    t.bigint "record_id", null: false
-    t.bigint "blob_id", null: false
+    t.integer "record_id", null: false
+    t.integer "blob_id", null: false
     t.datetime "created_at", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
@@ -58,7 +58,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   end
 
   create_table "active_storage_variant_records", force: :cascade do |t|
-    t.bigint "blob_id", null: false
+    t.integer "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
@@ -76,6 +76,19 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
 
+  create_table "analytics_events", force: :cascade do |t|
+    t.integer "company_id"
+    t.integer "user_id"
+    t.string "event_type", null: false
+    t.json "metadata", default: {}, null: false
+    t.datetime "tracked_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "event_type", "tracked_at"], name: "index_analytics_events_company_event_time"
+    t.index ["company_id", "tracked_at"], name: "index_analytics_events_on_company_id_and_tracked_at"
+    t.index ["event_type", "tracked_at"], name: "index_analytics_events_on_event_type_and_tracked_at"
+  end
+
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.text "content"
@@ -83,9 +96,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.integer "product_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "company_id"
-    t.boolean "sponsored", default: false
-    t.string "sponsored_label"
     t.string "slug"
     t.text "excerpt"
     t.string "meta_title"
@@ -97,12 +107,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.integer "author_id"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
-    t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
-    t.index ["company_id"], name: "index_articles_on_company_id"
-    t.index ["created_at"], name: "index_articles_on_created_at"
     t.index ["product_id"], name: "index_articles_on_product_id"
     t.index ["slug"], name: "index_articles_on_slug"
-    t.index ["sponsored"], name: "index_articles_on_sponsored"
   end
 
   create_table "articles_companies", id: false, force: :cascade do |t|
@@ -124,6 +130,36 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.index ["category_id"], name: "index_badges_on_category_id"
   end
 
+  create_table "banner_daily_stats", force: :cascade do |t|
+    t.integer "banner_id", null: false
+    t.date "day", null: false
+    t.integer "views_count", default: 0, null: false
+    t.integer "clicks_count", default: 0, null: false
+    t.decimal "ctr", default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["banner_id", "day"], name: "index_banner_daily_stats_on_banner_id_and_day", unique: true
+    t.index ["banner_id"], name: "index_banner_daily_stats_on_banner_id"
+  end
+
+  create_table "banner_events", force: :cascade do |t|
+    t.integer "banner_id", null: false
+    t.integer "company_id"
+    t.string "event_type", null: false
+    t.string "ip_hash"
+    t.string "user_agent_hash"
+    t.string "referrer"
+    t.json "utm_json", default: {}, null: false
+    t.json "metadata_json", default: {}, null: false
+    t.datetime "tracked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["banner_id"], name: "index_banner_events_on_banner_id"
+    t.index ["company_id"], name: "index_banner_events_on_company_id"
+    t.index ["event_type"], name: "index_banner_events_on_event_type"
+    t.index ["tracked_at"], name: "index_banner_events_on_tracked_at"
+  end
+
   create_table "banner_globals", force: :cascade do |t|
     t.string "title", null: false
     t.string "link", null: false
@@ -131,22 +167,78 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "banner_offers", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "price_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.integer "duration_days", default: 30, null: false
+    t.json "rules_json", default: {}, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_banner_offers_on_active"
+  end
+
+  create_table "banner_subscriptions", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.integer "banner_offer_id", null: false
+    t.string "status", default: "pending_payment", null: false
+    t.datetime "starts_at"
+    t.datetime "ends_at"
+    t.string "provider"
+    t.string "checkout_session_id"
+    t.string "payment_reference"
+    t.datetime "activated_at"
+    t.datetime "canceled_at"
+    t.string "failure_reason"
+    t.json "metadata_json", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["banner_offer_id"], name: "index_banner_subscriptions_on_banner_offer_id"
+    t.index ["checkout_session_id"], name: "index_banner_subscriptions_on_checkout_session_id"
+    t.index ["company_id"], name: "index_banner_subscriptions_on_company_id"
+    t.index ["payment_reference"], name: "index_banner_subscriptions_on_payment_reference"
+    t.index ["status"], name: "index_banner_subscriptions_on_status"
+  end
+
   create_table "banners", force: :cascade do |t|
     t.string "title"
     t.string "image_url"
     t.string "link"
     t.boolean "active", default: false
-    t.datetime "start_date"
-    t.datetime "end_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "category_id"
     t.boolean "sponsored", default: false
     t.string "banner_type"
     t.string "position"
-    t.integer "category_id"
+    t.datetime "start_date"
+    t.datetime "end_date"
+    t.integer "company_id"
+    t.string "moderation_status", default: "draft"
+    t.integer "priority", default: 100
+    t.string "slot_key"
+    t.integer "approved_by_admin_user_id"
+    t.datetime "approved_at"
+    t.text "rejected_reason"
+    t.integer "width"
+    t.integer "height"
+    t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
+    t.index ["company_id"], name: "index_banners_on_company_id"
     t.index ["end_date"], name: "index_banners_on_end_date"
+    t.index ["moderation_status"], name: "index_banners_on_moderation_status"
+    t.index ["priority"], name: "index_banners_on_priority"
+    t.index ["slot_key"], name: "index_banners_on_slot_key"
     t.index ["start_date"], name: "index_banners_on_start_date"
+  end
+
+  create_table "banners_categories", id: false, force: :cascade do |t|
+    t.integer "banner_id", null: false
+    t.integer "category_id", null: false
+    t.index ["banner_id", "category_id"], name: "index_banners_categories_unique", unique: true
+    t.index ["banner_id"], name: "index_banners_categories_on_banner_id"
+    t.index ["category_id"], name: "index_banners_categories_on_category_id"
   end
 
   create_table "campaign_reviews", force: :cascade do |t|
@@ -164,15 +256,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "end_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "company_id"
-    t.boolean "sponsored", default: false
-    t.string "status", default: "draft"
-    t.index ["company_id", "sponsored"], name: "index_campaign_reviews_on_company_sponsored"
-    t.index ["company_id"], name: "index_campaign_reviews_on_company_id"
-    t.index ["created_at"], name: "index_campaign_reviews_on_created_at"
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
-    t.index ["sponsored"], name: "index_campaign_reviews_on_sponsored"
-    t.index ["status"], name: "index_campaign_reviews_on_status"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -226,7 +310,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   end
 
   create_table "companies", force: :cascade do |t|
-    t.string "name", null: false
+    t.string "name"
     t.text "description"
     t.string "website"
     t.string "phone"
@@ -238,6 +322,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.string "email_public"
     t.boolean "featured", default: false
     t.boolean "verified", default: false
+    t.decimal "rating_cache", precision: 3, scale: 1
     t.integer "reviews_count", default: 0
     t.string "cnpj"
     t.string "email"
@@ -277,24 +362,23 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.boolean "email_notifications_enabled", default: true, null: false
-    t.datetime "last_digest_sent_at"
-    t.json "notification_preferences", default: {}
-    t.json "whatsapp_button_style_json", default: {}, null: false
-    t.boolean "cta_whatsapp_enabled", default: false, null: false
-    t.string "cta_whatsapp_url"
-    t.integer "plan_id"
-    t.string "plan_status", default: "inactive"
+    t.json "project_types", default: [], null: false
+    t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
-    t.index ["cta_whatsapp_enabled"], name: "index_companies_on_cta_whatsapp_enabled"
-    t.index ["email_notifications_enabled"], name: "index_companies_on_email_notifications_enabled"
-    t.index ["featured"], name: "index_companies_on_featured"
-    t.index ["plan_id"], name: "index_companies_on_plan_id"
-    t.index ["plan_status"], name: "index_companies_on_plan_status"
+    t.boolean "effect", default: false, null: false
+    t.integer "profile_views_count", default: 0, null: false
+    t.integer "cta_clicks_count", default: 0, null: false
+    t.integer "whatsapp_clicks_count", default: 0, null: false
+    t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
+    t.index ["effect"], name: "index_companies_on_effect"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
+    t.index ["project_types"], name: "index_companies_on_project_types"
+    t.index ["services_offered"], name: "index_companies_on_services_offered"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["status"], name: "index_companies_on_status"
-    t.index ["verified"], name: "index_companies_on_verified"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 
   create_table "company_buttons", force: :cascade do |t|
@@ -307,6 +391,20 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_company_buttons_on_company_id"
+  end
+
+  create_table "company_daily_stats", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.date "day", null: false
+    t.integer "profile_views", default: 0, null: false
+    t.integer "cta_clicks", default: 0, null: false
+    t.integer "whatsapp_clicks", default: 0, null: false
+    t.integer "leads", default: 0, null: false
+    t.integer "reviews", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "day"], name: "index_company_daily_stats_on_company_id_and_day", unique: true
+    t.index ["day"], name: "index_company_daily_stats_on_day"
   end
 
   create_table "contents", force: :cascade do |t|
@@ -394,12 +492,21 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "requested_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "company_id"
     t.index ["category_id"], name: "index_forum_questions_on_category_id"
-    t.index ["company_id"], name: "index_forum_questions_on_company_id"
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
-    t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
+  end
+
+  create_table "lead_distributions", force: :cascade do |t|
+    t.integer "lead_id", null: false
+    t.integer "company_id", null: false
+    t.string "status", default: "queued"
+    t.datetime "assigned_at"
+    t.json "payload"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_lead_distributions_on_company_id"
+    t.index ["lead_id"], name: "index_lead_distributions_on_lead_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -410,10 +517,25 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.text "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "project_type"
-    t.string "estimated_budget"
-    t.string "location"
     t.integer "company_id"
+    t.string "product_vertical"
+    t.string "project_profile"
+    t.string "quote_type"
+    t.string "system_size_band"
+    t.decimal "bill_value", precision: 15, scale: 2
+    t.decimal "monthly_kwh", precision: 15, scale: 2
+    t.string "decision_timeline"
+    t.string "address_full"
+    t.string "city"
+    t.string "state"
+    t.string "zipcode"
+    t.datetime "consent_at"
+    t.string "consent_ip"
+    t.datetime "otp_sent_at"
+    t.datetime "otp_verified_at"
+    t.string "otp_code_digest"
+    t.integer "otp_attempts", default: 0
+    t.string "wizard_status", default: "draft"
     t.index ["company_id"], name: "index_leads_on_company_id"
   end
 
@@ -439,27 +561,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_noticed_notifications_on_event_id"
     t.index ["recipient_type", "recipient_id"], name: "index_noticed_notifications_on_recipient"
-  end
-
-  create_table "notifications", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "notification_type", null: false
-    t.string "title", null: false
-    t.text "message"
-    t.json "data"
-    t.string "notifiable_type"
-    t.integer "notifiable_id"
-    t.datetime "read_at"
-    t.datetime "sent_at"
-    t.json "delivery_channels", default: ["in_app"]
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_at"], name: "index_notifications_on_created_at"
-    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
-    t.index ["notification_type"], name: "index_notifications_on_notification_type"
-    t.index ["read_at"], name: "index_notifications_on_read_at"
-    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
-    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "pending_changes", force: :cascade do |t|
@@ -490,7 +591,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.text "features"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.json "features_json", default: {}
   end
 
   create_table "posts", force: :cascade do |t|
@@ -531,10 +631,10 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   end
 
   create_table "products", force: :cascade do |t|
-    t.string "name", null: false
+    t.string "name"
     t.text "description"
     t.decimal "price", precision: 12, scale: 2
-    t.integer "company_id", null: false
+    t.integer "company_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "short_description"
@@ -544,14 +644,12 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.boolean "featured", default: false
     t.string "seo_title"
     t.text "seo_description"
-    t.string "image_url"
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
-    t.index ["status"], name: "index_products_on_status"
   end
 
   create_table "reviews", force: :cascade do |t|
-    t.decimal "rating", precision: 2, scale: 1, null: false
+    t.decimal "rating", precision: 2, scale: 1
     t.text "comment"
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
@@ -609,12 +707,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "updated_at", null: false
     t.string "name"
     t.integer "views", default: 0
-    t.datetime "welcome_email_sent_at"
-    t.datetime "last_email_sent_at"
-    t.boolean "email_notifications_enabled", default: true, null: false
-    t.integer "company_id"
-    t.string "role", default: "user"
-    t.boolean "approved_by_admin", default: false, null: false
     t.date "date_of_birth"
     t.boolean "terms_accepted", default: false, null: false
     t.datetime "terms_accepted_at"
@@ -624,13 +716,11 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
+    t.string "role", default: "user"
     t.integer "status", default: 0
     t.text "rejection_reason"
-    t.index ["approved_by_admin"], name: "index_users_on_approved_by_admin"
-    t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["email_notifications_enabled"], name: "index_users_on_email_notifications_enabled"
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["role"], name: "index_users_on_role"
@@ -652,11 +742,18 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "articles", "admin_users", column: "author_id"
   add_foreign_key "articles", "categories"
-  add_foreign_key "articles", "companies"
   add_foreign_key "articles", "products"
   add_foreign_key "badges", "categories"
+  add_foreign_key "banner_daily_stats", "banners"
+  add_foreign_key "banner_events", "banners"
+  add_foreign_key "banner_events", "companies"
+  add_foreign_key "banner_subscriptions", "banner_offers"
+  add_foreign_key "banner_subscriptions", "companies"
+  add_foreign_key "banners", "admin_users", column: "approved_by_admin_user_id"
   add_foreign_key "banners", "categories"
-  add_foreign_key "campaign_reviews", "companies"
+  add_foreign_key "banners", "companies"
+  add_foreign_key "banners_categories", "banners"
+  add_foreign_key "banners_categories", "categories"
   add_foreign_key "campaign_reviews", "products"
   add_foreign_key "campaigns", "companies"
   add_foreign_key "categories_companies", "categories"
@@ -665,17 +762,16 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   add_foreign_key "categories_products", "products"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
-  add_foreign_key "companies", "plans"
   add_foreign_key "company_buttons", "companies"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "forum_answers", "forum_questions"
   add_foreign_key "forum_answers", "users"
   add_foreign_key "forum_questions", "categories"
-  add_foreign_key "forum_questions", "companies"
   add_foreign_key "forum_questions", "products"
   add_foreign_key "forum_questions", "users"
+  add_foreign_key "lead_distributions", "companies"
+  add_foreign_key "lead_distributions", "leads"
   add_foreign_key "leads", "companies"
-  add_foreign_key "notifications", "users"
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
   add_foreign_key "pending_changes", "companies"
   add_foreign_key "pending_changes", "users"
@@ -692,5 +788,4 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_17_140000) do
   add_foreign_key "subscription_plans", "categories"
   add_foreign_key "subscription_plans", "plans"
   add_foreign_key "subscription_plans", "products"
-  add_foreign_key "users", "companies"
 end

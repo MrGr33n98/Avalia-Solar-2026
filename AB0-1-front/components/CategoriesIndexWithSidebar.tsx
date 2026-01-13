@@ -16,10 +16,13 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from '@/components/ui/sheet';
+import { getFullImageUrl } from '@/utils/image';
 
 // React Query hooks
 import { useCategoriesBannersQuery } from '@/hooks/useBannersQuery';
 import { useFeaturedCategoriesQuery, useAllCategoriesQuery } from '@/hooks/useCategoriesQuery';
+
+const FALLBACK_BANNER_SRC = '/images/default-banner.svg';
 
 /**
  * CategoriesIndexWithSidebar - Layout com navegação lateral
@@ -129,25 +132,31 @@ export default function CategoriesIndexWithSidebar() {
                         aria-label={banner.title}
                       >
                         <img
-                          src={getFullImageUrl(banner.image_url) || ''}
+                          src={getFullImageUrl(banner.image_url) || FALLBACK_BANNER_SRC}
                           alt={banner.title}
                           className="w-full h-[280px] object-cover rounded-lg"
                           loading="eager"
                           onError={(e) => {
-                            console.error('[Banner] Failed to load:', banner.image_url);
-                            (e.target as HTMLImageElement).style.display = 'none';
+                            const img = e.currentTarget;
+                            if (img.dataset.fallbackApplied === 'true') return;
+                            img.dataset.fallbackApplied = 'true';
+                            console.warn('[Banner] Failed to load, showing fallback:', banner.image_url);
+                            img.src = FALLBACK_BANNER_SRC;
                           }}
                         />
                       </a>
                     ) : (
                       <img
-                        src={getFullImageUrl(banner.image_url) || ''}
+                        src={getFullImageUrl(banner.image_url) || FALLBACK_BANNER_SRC}
                         alt={banner.title}
                         className="w-full h-[280px] object-cover rounded-lg"
                         loading="eager"
                         onError={(e) => {
-                          console.error('[Banner] Failed to load:', banner.image_url);
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          const img = e.currentTarget;
+                          if (img.dataset.fallbackApplied === 'true') return;
+                          img.dataset.fallbackApplied = 'true';
+                          console.warn('[Banner] Failed to load, showing fallback:', banner.image_url);
+                          img.src = FALLBACK_BANNER_SRC;
                         }}
                       />
                     )}
@@ -384,4 +393,3 @@ function EmptyState({ searchTerm }: { searchTerm: string }) {
     </div>
   );
 }
-import { getFullImageUrl } from '@/utils/image';

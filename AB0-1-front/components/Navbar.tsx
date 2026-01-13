@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
@@ -12,11 +12,14 @@ import { useCategories } from '@/hooks/useCategories';
 import { Category } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import SearchBar from './SearchBar'; // Corrected: Removed duplicate import of Button and useState
+import NavbarSearch from './NavbarSearch';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { categories, loading, error } = useCategories();
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement | null>(null);
+  const { categories, loading, error, refresh } = useCategories(true);
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
@@ -32,6 +35,12 @@ export default function Navbar() {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+
+  const closeDropdown = () => setIsDropdownOpen(false);
+
+  const activeDropdownRef = useMemo(() => {
+    return isMobileMenuOpen ? mobileDropdownRef : dropdownRef;
+  }, [isMobileMenuOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -52,24 +61,50 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const el = activeDropdownRef.current;
+      if (!el) return;
+      if (event.target instanceof Node && el.contains(event.target)) return;
+      closeDropdown();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeDropdown();
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [activeDropdownRef, isDropdownOpen]);
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4 h-16">
         {/* Logo - TAMANHO AUMENTADO */}
         <Link href="/" className="flex items-center space-x-2" aria-label="Home Avalia Solar">
-          <Image src="/images/logo.png" alt="Avalia Solar Logo" width={64} height={64} className="h-16 w-auto" priority /> {/* Valores alterados aqui */}
+          <Image src="/images/logo.png" alt="Avalia Solar Logo" width={64} height={64} className="h-16" style={{ width: 'auto' }} priority /> {/* Valores alterados aqui */}
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
+        <div className="hidden md:flex flex-1 items-center gap-4">
+          <NavbarSearch className="flex-1 max-w-[520px]" />
+
+          <div className="flex items-center space-x-6 ml-auto">
           {/* Categories Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef} data-testid="categories-dropdown-desktop">
             <Button
               variant="ghost"
               onClick={toggleDropdown}
               className="flex items-center text-sm font-medium text-gray-700 hover:text-primary focus:outline-none"
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
+              data-testid="categories-dropdown-trigger"
             >
               Categorias
               <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -82,19 +117,22 @@ export default function Navbar() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                   className="absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                  onMouseLeave={() => setIsDropdownOpen(false)} // Close on mouse leave
+                  data-testid="categories-dropdown-menu"
                 >
-                  <div className="py-1">
+                  <div className="py-1 max-h-96 overflow-y-auto">
                     {loading ? (
                       <div className="px-4 py-2 text-gray-500">Carregando...</div>
                     ) : error ? (
-                      <div className="px-4 py-2 text-red-500">Erro ao carregar categorias.</div>
+                      <div className="px-4 py-2 text-red-500">
+                        Erro ao carregar categorias.
+                        <Button variant="link" className="text-blue-600 ml-2" onClick={() => refresh()}>Tentar novamente</Button>
+                      </div>
                     ) : featuredCategories.length > 0 ? (
                       featuredCategories.map((category) => (
                         <CategoryDropdownItem
                           key={category.id}
                           category={category}
-                          onSelect={() => setIsDropdownOpen(false)}
+                          onSelect={closeDropdown}
                         />
                       ))
                     ) : (
@@ -103,10 +141,10 @@ export default function Navbar() {
                     <Link
                       href="/categories"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Ver Todas as Categorias <ChevronRight className="inline-block h-4 w-4 ml-1" />
-                    </Link>
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Ver Todas as Categorias <ChevronRight className="inline-block h-4 w-4 ml-1" />
+                      </Link>
                   </div>
                 </motion.div>
               )}
@@ -147,10 +185,11 @@ export default function Navbar() {
               </Button>
             </>
           )}
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden flex items-center ml-auto">
           <Button
             variant="ghost"
             size="icon"
@@ -181,13 +220,14 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col space-y-2 px-4 mt-2">
               {/* Mobile Categories Dropdown */}
-              <div className="relative">
+              <div className="relative" ref={mobileDropdownRef} data-testid="categories-dropdown-mobile">
                 <Button
                   variant="ghost"
                   onClick={toggleDropdown}
                   className="w-full justify-between text-gray-700 hover:text-primary"
                   aria-expanded={isDropdownOpen}
                   aria-haspopup="true"
+                  data-testid="categories-dropdown-trigger-mobile"
                 >
                   Categorias
                   <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -199,12 +239,16 @@ export default function Navbar() {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="bg-gray-50 rounded-md mt-1 overflow-hidden"
+                      className="bg-gray-50 rounded-md mt-1 max-h-96 overflow-y-auto"
+                      data-testid="categories-dropdown-menu-mobile"
                     >
                       {loading ? (
                         <div className="px-4 py-2 text-gray-500">Carregando...</div>
                       ) : error ? (
-                        <div className="px-4 py-2 text-red-500">Erro ao carregar categorias.</div>
+                        <div className="px-4 py-2 text-red-500">
+                          Erro ao carregar categorias.
+                          <Button variant="link" className="text-blue-600 ml-2" onClick={() => refresh()}>Tentar novamente</Button>
+                        </div>
                       ) : (
                         featuredCategories.map((category) => (
                           <CategoryDropdownItem

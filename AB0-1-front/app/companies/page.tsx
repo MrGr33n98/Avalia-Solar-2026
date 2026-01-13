@@ -1,22 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Filter,
-  MapPin,
-  Grid,
-  List,
-  Search,
-  Bell,
-  Home,
-  Heart,
-  User,
-  Zap,
-  Building2,
-  Package,
-  Star,
-  Folder
-} from 'lucide-react';
+import { Filter, Grid, List, Search, Home, Heart, User, Zap, Building2, Package, Star, Folder } from 'lucide-react';
 import Link from 'next/link';
 import CompanyCard from '@/components/CompanyCard';
 import { LocationFilter } from '@/components/LocationFilter';
@@ -27,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import BannerByLocation from '@/components/BannerByLocation';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -110,12 +94,6 @@ export default function CompaniesPage() {
     setSortBy('name');
   };
 
-  const locationLabel = cityFilter
-    ? `${cityFilter}${stateFilter && stateFilter !== 'all' ? `, ${stateFilter}` : ''}`
-    : stateFilter && stateFilter !== 'all'
-      ? stateFilter
-      : 'Brasil';
-
   const categoryChips = categories.length > 0
     ? categories.slice(0, 8).map((category) => ({
         label: category.name || 'Categoria',
@@ -168,37 +146,18 @@ export default function CompaniesPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="md:hidden">
-        <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
+        <div className="bg-gradient-to-r from-primary to-accent shadow-sm">
           <div className="px-4 pt-2 pb-1">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8 border border-white/70 bg-white">
-                <AvatarFallback className="bg-white text-[11px] font-semibold text-primary">AS</AvatarFallback>
-              </Avatar>
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <Input
-                  type="search"
-                  placeholder="Buscar empresas..."
-                  aria-label="Buscar empresas"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
-                />
-              </div>
-              <button
-                type="button"
-                className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-primary"
-                aria-label="Notificacoes (2 novas)"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-                  2
-                </span>
-              </button>
-            </div>
-            <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-primary-foreground/90">
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="truncate">Enviar para {locationLabel}</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="Buscar empresas..."
+                aria-label="Buscar empresas"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
+              />
             </div>
           </div>
           <div className="border-t border-white/20 px-4 pb-1">
@@ -426,12 +385,9 @@ export default function CompaniesPage() {
       </div>
 
       <div className="hidden md:block">
-        <header className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <header className="bg-white border-b border-gray-200 shadow-sm">
           <div className="mx-auto max-w-7xl px-6 pt-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10 border border-gray-200 bg-white">
-                <AvatarFallback className="bg-white text-xs font-semibold text-blue-600">AS</AvatarFallback>
-              </Avatar>
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
@@ -442,20 +398,6 @@ export default function CompaniesPage() {
                   className="h-11 rounded-full border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500/20"
                 />
               </div>
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"
-                aria-label="Notificacoes (2 novas)"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-                  2
-                </span>
-              </button>
-            </div>
-            <div className="mt-3 flex items-center gap-2 pb-3 text-xs font-medium text-gray-600">
-              <MapPin className="h-4 w-4" />
-              <span className="truncate">Enviar para {locationLabel}</span>
             </div>
           </div>
           <div className="border-t border-gray-100">

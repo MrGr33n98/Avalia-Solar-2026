@@ -202,6 +202,11 @@ export interface Banner {
   image_url?: string | null;
   banner_type?: string;
   position?: string;
+  width?: number | null;
+  height?: number | null;
+  category_ids?: number[];
+  sponsored?: boolean;
+  active?: boolean;
   start_date?: string | null;
   end_date?: string | null;
 }
@@ -835,9 +840,26 @@ export const fetchCategoryBySlug = async (slug: string): Promise<Category> => {
     return await categoriesApi.getBySlug(slug);
   } catch (error) {
     console.warn('Slug API not available, trying fallback...');
-    // Fallback: get all categories and find by seo_url
+
+    // Fallback: get all categories and find by seo_url/slug/name
     const categories = await categoriesApi.getAll();
-    const category = categories.find(c => c.seo_url === slug);
+    const normalize = (value?: string) =>
+      (value || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    const target = normalize(slug);
+    const category = categories.find((c) => {
+      const directMatch = c.seo_url === slug || (c as any).slug === slug;
+      if (directMatch) return true;
+      const normalizedSeo = normalize(c.seo_url);
+      const normalizedName = normalize(c.name);
+      return normalizedSeo === target || normalizedName === target;
+    });
     if (!category) {
       throw new Error(`Category with slug "${slug}" not found`);
     }

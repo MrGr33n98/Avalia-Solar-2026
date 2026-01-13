@@ -9,7 +9,7 @@ class Category < ApplicationRecord
   has_many :articles
   has_one_attached :banner
   has_one_attached :icon
-  has_many :banners
+  has_and_belongs_to_many :banners, join_table: :banners_categories
 
   # =========================
   # Validations

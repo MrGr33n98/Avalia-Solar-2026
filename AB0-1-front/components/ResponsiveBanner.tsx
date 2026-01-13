@@ -42,7 +42,7 @@ export default function ResponsiveBanner({
     <div 
       className={`
         relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 shadow-sm
-        aspect-[16/9] md:aspect-[3/1]
+        aspect-[6/1] md:aspect-[4/1]
         ${className}
       `}
     >
@@ -81,18 +81,6 @@ export default function ResponsiveBanner({
 
       {/* Overlay sutil para melhor legibilidade de texto sobreposto */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
-      
-      {/* Badge decorativo (opcional) */}
-      <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800">
-        Destaque da semana
-      </div>
-
-      {/* Indicadores de carrossel (opcional) */}
-      <div className="absolute bottom-2 right-2 flex gap-1">
-        <span className="h-1.5 w-1.5 rounded-full bg-white" />
-        <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-        <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-      </div>
     </div>
   );
 

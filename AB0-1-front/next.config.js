@@ -6,13 +6,7 @@ const nextConfig = {
   // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
   swcMinify: false,
   
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-      // Avoid false-positives behind reverse proxies / multi-zones
-      allowedOrigins: ['avaliasolar.com.br', 'www.avaliasolar.com.br'],
-    },
-  },
+  experimental: {},
 
   // TASK-023: Enable TypeScript and ESLint checks
   // ✅ FIXED: Stop ignoring build errors

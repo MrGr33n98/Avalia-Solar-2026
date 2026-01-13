@@ -1,16 +1,17 @@
 'use client';
 
-import Hero from '@/components/Hero';
-import CategoryCard from '@/components/CategoryCard';
-import CompanyCard from '@/components/CompanyCard';
-import BannerByLocation from '@/components/BannerByLocation';
-import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
-import { Category, Company, Review } from '@/lib/api';
 import { useEffect, useState, ReactNode } from 'react';
-import { ArrowRight, MessageCircle, ShieldCheck, Clock, Info, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, ArrowRight, Info } from 'lucide-react';
+
+import BannerByLocation from '@/components/BannerByLocation';
+import CompanyCard from '@/components/CompanyCard';
+import FloatingWhatsApp from '@/components/FloatingWhatsApp';
+import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
+import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
+import LandingHeroBanner from '@/components/landing/LandingHeroBanner';
+import LandingTrustBanner from '@/components/landing/LandingTrustBanner';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Carousel,
@@ -19,8 +20,19 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
+import type { Category, Company, Review } from '@/lib/api';
 
-function SectionShell({ children, zebra, className }: { children: ReactNode; zebra?: boolean; className?: string }) {
+function SectionShell({
+  children,
+  zebra,
+  className,
+}: {
+  children: ReactNode;
+  zebra?: boolean;
+  className?: string;
+}) {
   return (
     <section className={[zebra ? 'bg-gray-50' : '', 'py-10 md:py-14'].join(' ')}>
       <div className={['container mx-auto', 'px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
@@ -37,29 +49,6 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
           {subtitle ? <p className="text-gray-600 max-w-2xl leading-relaxed">{subtitle}</p> : null}
         </div>
         {right ? <div className="hidden md:block">{right}</div> : null}
-      </div>
-    </div>
-  );
-}
-
-function TrustRow() {
-  return (
-    <div className="px-4 md:px-6">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <ShieldCheck className="h-5 w-5 text-emerald-600" />
-            <span className="text-sm text-gray-700">Empresas verificadas</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
-            <span className="text-sm text-gray-700">Avaliações reais</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <Clock className="h-5 w-5 text-indigo-600" />
-            <span className="text-sm text-gray-700">Orçamento rápido</span>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -86,7 +75,7 @@ function ErrorState({ message }: { message: string }) {
 function SkeletonCategoryCard() {
   return (
     <Card className="overflow-hidden">
-      <div className="relative h-28 bg-gray-100">
+      <div className="relative aspect-[16/9] bg-gray-100">
         <Skeleton className="w-full h-full" />
       </div>
       <div className="p-4 space-y-2">
@@ -130,7 +119,7 @@ export default function Home() {
         const response = await categoriesApiSafe.getAll({ featured: true, status: 'active', limit: 8 });
         if (process.env.NODE_ENV !== 'production') console.log('[Home] Categories response:', response);
         setFeaturedCategories(response);
-      } catch (error) {
+      } catch {
         setErrorCategories('Erro ao carregar categorias.');
       } finally {
         setLoadingCategories(false);
@@ -139,13 +128,18 @@ export default function Home() {
 
     const fetchCompanies = async () => {
       try {
-        const response = await companiesApiSafe.getAll({ status: 'active', featured: true, limit: 12, include: 'logo_url,banner_url' });
+        const response = await companiesApiSafe.getAll({
+          status: 'active',
+          featured: true,
+          limit: 12,
+          include: 'logo_url,banner_url',
+        });
         if (process.env.NODE_ENV !== 'production') {
           const withBanner = (response || []).filter((c) => !!c.banner_url);
           console.log('[Home] Companies loaded:', response?.length || 0, 'with banner_url:', withBanner.length);
         }
         setCompanies(response);
-      } catch (error) {
+      } catch {
         setErrorCompanies('Erro ao carregar empresas.');
       } finally {
         setLoadingCompanies(false);
@@ -156,7 +150,7 @@ export default function Home() {
       try {
         const response = await reviewsApiSafe.getAll();
         setReviews(response);
-      } catch (error) {
+      } catch {
         setErrorReviews('Erro ao carregar avaliações.');
       } finally {
         setLoadingReviews(false);
@@ -170,30 +164,25 @@ export default function Home() {
 
   return (
     <main className="flex-grow">
-      <Hero />
-      <TrustRow />
-
-      {/* Banner no topo da homepage */}
-      <div className="container mx-auto px-4 md:px-6 py-8">
-        <BannerByLocation location="home_top" className="mb-8" />
+      <div className="bg-gradient-to-b from-blue-50/70 via-white to-white">
+        <LandingHeroBanner />
+        <div className="pt-4 pb-8">
+          <LandingCategoryChips categories={featuredCategories} />
+        </div>
       </div>
 
-      {featuredCategories.length > 0 && (
-        <div className="container mx-auto px-4 md:px-6 max-w-[1000px]">
-          <CategoryCard category={featuredCategories[0]} layout="top" />
-        </div>
-      )}
+      <LandingTrustBanner />
 
       <SectionShell zebra>
-        {/* Banner antes das categorias */}
         <BannerByLocation location="categories_top" className="mb-8" />
-        
+
         <SectionHeader
           title="Explore Nossas Categorias"
           subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
         />
+
         {loadingCategories ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <SkeletonCategoryCard key={i} />
             ))}
@@ -201,14 +190,15 @@ export default function Home() {
         ) : errorCategories ? (
           <ErrorState message={errorCategories} />
         ) : featuredCategories.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {featuredCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} layout="top" />
+              <LandingCategoryCard key={category.id} category={category} />
             ))}
           </div>
         ) : (
           <EmptyState message={`Nenhuma categoria encontrada. (${featuredCategories.length} categorias carregadas)`} />
         )}
+
         <div className="mt-8 md:mt-10 text-center">
           <Button asChild>
             <Link href="/categories" className="group">
@@ -219,9 +209,8 @@ export default function Home() {
       </SectionShell>
 
       <SectionShell>
-        {/* Banner antes das empresas */}
         <BannerByLocation location="companies_top" className="mb-8" />
-        
+
         <SectionHeader
           title="Empresas Parceiras"
           subtitle="Conheça as empresas mais bem avaliadas e verificadas pelos nossos usuários."
@@ -233,6 +222,7 @@ export default function Home() {
             </Button>
           }
         />
+
         {loadingCompanies ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -246,8 +236,11 @@ export default function Home() {
             <Carousel opts={{ align: 'start', loop: true }} className="w-full">
               <CarouselContent className="-ml-4">
                 {companies.map((company) => (
-                  <CarouselItem key={company.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                    <CompanyCard company={company} compact={true} />
+                  <CarouselItem
+                    key={company.id}
+                    className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                  >
+                    <CompanyCard company={company} compact />
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -260,6 +253,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
         <div className="mt-8 md:mt-10 text-center md:hidden">
           <Button asChild>
             <Link href="/companies" className="group">
@@ -269,6 +263,12 @@ export default function Home() {
         </div>
       </SectionShell>
 
+      <div className="pb-10">
+        <LandingCategoryChips categories={featuredCategories} />
+      </div>
+
+      <FloatingWhatsApp />
     </main>
   );
 }
+

@@ -11,6 +11,9 @@ interface Banner {
   banner_type: 'rectangular_large' | 'rectangular_small';
   position: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
   sponsored?: boolean;
+  width?: number | null;
+  height?: number | null;
+  category_ids?: number[];
 }
 
 interface UseBannersOptions {

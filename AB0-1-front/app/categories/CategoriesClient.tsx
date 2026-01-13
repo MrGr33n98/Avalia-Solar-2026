@@ -4,20 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Bell,
-  Filter,
-  Folder,
-  Grid,
-  Heart,
-  Home,
-  MapPin,
-  Search,
-  Star,
-  User,
-  X,
-  Zap
-} from 'lucide-react';
+import { Filter, Folder, Grid, Heart, Home, Search, Star, User, X, Zap } from 'lucide-react';
 
 // Hooks & Utils
 import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
@@ -38,7 +25,12 @@ import { ClientOnly } from '@/components/ClientOnly';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import CompaniesSidebarFilters from '@/components/CompaniesSidebarFilters';
+import CompaniesResultsBar from '@/components/CompaniesResultsBar';
+import CompaniesFiltersSheet from '@/components/CompaniesFiltersSheet';
 
 type Filters = {
   searchTerm: string;
@@ -122,6 +114,8 @@ export default function CategoriesClient() {
   });
 
   const debouncedFilters = useDebounce(filters, 300);
+  const [sort, setSort] = useState<string>('name_asc');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const selectedCategory = useMemo(() => {
     if (!filters.category || !categories) return null;
@@ -232,6 +226,18 @@ export default function CategoriesClient() {
     }
   }, [companies, categories, filters]);
 
+  const sortedCompanies = useMemo(() => {
+    const list = [...filteredCompanies];
+    if (sort === 'name_asc') {
+      list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } else if (sort === 'name_desc') {
+      list.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    } else if (sort === 'rating_desc') {
+      list.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    }
+    return list;
+  }, [filteredCompanies, sort]);
+
   const loading = companiesLoading || categoriesLoading;
   const mobileStates = useMemo(() => Object.keys(locationsData).sort().slice(0, 8), [locationsData]);
   const mobileCities = useMemo(() => {
@@ -242,6 +248,7 @@ export default function CategoriesClient() {
   
   const mobileBanner = allBanners.find((banner) => banner?.image_url)?.image_url;
   const locationLabel = filters.city ? `${filters.city}${filters.state ? `, ${filters.state}` : ''}` : filters.state ? filters.state : 'Brasil';
+  const activeCount = Object.entries(filters).filter(([_, v]) => Boolean(v)).length;
 
   const getFilterLabel = (key: string, value: any): string => {
     switch (key) {
@@ -283,31 +290,29 @@ export default function CategoriesClient() {
       <div className="bg-gray-100 min-h-screen">
         {/* --- MOBILE VIEW --- */}
         <div className="md:hidden">
+          <CompaniesFiltersSheet
+            open={mobileFiltersOpen}
+            onOpenChange={setMobileFiltersOpen}
+            filters={{ state: filters.state, city: filters.city, rating: filters.rating, verified: filters.verified }}
+            locationsData={locationsData}
+            sort={sort}
+            onSortChange={setSort}
+            onFilterChange={handleFilterChange}
+            activeCount={activeCount}
+            onClearAll={() => handleFilterChange('clearAll', null)}
+          />
           {/* Header Mobile */}
-          <div className="sticky top-16 z-40 bg-gradient-to-r from-primary to-accent shadow-sm">
+          <div className="bg-gradient-to-r from-primary to-accent shadow-sm">
             <div className="px-4 pt-3 pb-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9 border border-white/70 bg-white">
-                  <AvatarFallback className="bg-white text-[11px] font-semibold text-primary">AS</AvatarFallback>
-                </Avatar>
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <Input
-                    type="search"
-                    placeholder="Buscar categorias..."
-                    value={filters.searchTerm}
-                    onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                    className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
-                  />
-                </div>
-                <button type="button" className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-primary">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">2</span>
-                </button>
-              </div>
-              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary-foreground/90">
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="truncate">Enviar para {locationLabel}</span>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="Buscar categorias..."
+                  value={filters.searchTerm}
+                  onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                  className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
+                />
               </div>
             </div>
             {/* Chips de Categoria Mobile */}
@@ -349,7 +354,7 @@ export default function CategoriesClient() {
               })}
             </section>
 
-            <section>
+            <section className="relative z-[950]">
               {mobileBanner ? (
                 <ResponsiveBanner src={mobileBanner} alt="Banner promocional" priority />
               ) : (
@@ -404,12 +409,39 @@ export default function CategoriesClient() {
               </div>
             </section>
 
-            {/* Lista de Empresas MOBILE (Grid Compacto) */}
             <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-gray-900">Empresas</h2>
-                <span className="text-xs text-gray-600">{loading ? '...' : filteredCompanies.length} empresas</span>
-              </div>
+              <CompaniesResultsBar
+                count={loading ? 0 : sortedCompanies.length}
+                sort={sort}
+                onSortChange={setSort}
+                verified={filters.verified}
+                onToggleVerified={(v) => handleFilterChange('verified', v)}
+                onClearAll={() => handleFilterChange('clearAll', null)}
+                onOpenFilters={() => setMobileFiltersOpen(true)}
+                compact
+              />
+              <ClientOnly>
+                <AnimatePresence>
+                  {Object.entries(filters).some(([_, value]) => Boolean(value)) && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex flex-wrap gap-2 mt-2 items-center"
+                    >
+                      {Object.entries(filters).map(([key, value]) => {
+                        if (!value) return null;
+                        return (
+                          <Badge key={key} variant="secondary" className="cursor-pointer" onClick={() => handleFilterChange(key, null)}>
+                            {getFilterLabel(key, value)} <X className="ml-2 h-3 w-3" />
+                          </Badge>
+                        );
+                      })}
+                      <button onClick={() => handleFilterChange('clearAll', null)} className="text-xs text-gray-600 underline ml-2">Limpar todos</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </ClientOnly>
 
               {loading ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -425,7 +457,7 @@ export default function CategoriesClient() {
               ) : (
                 /* AQUI ESTÁ A MÁGICA: grid-cols-2 + compact */
                 <div className="grid grid-cols-2 gap-3">
-                  {filteredCompanies.map((company) => (
+                  {sortedCompanies.map((company) => (
                     <CompanyCard 
                       key={company.id} 
                       company={company} 
@@ -462,24 +494,22 @@ export default function CategoriesClient() {
             </div>
           ) : (
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <BannerContainer banners={allBanners} />
+              <div className="relative z-[950]">
+                <BannerContainer banners={allBanners} />
+              </div>
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-6 px-4 lg:px-8 pb-10">
-            <SidebarFilter
-              onFilterChange={handleFilterChange}
-              filters={{
-                state: filters.state || '',
-                city: filters.city || '',
-                rating: filters.rating || 0,
-                verified: filters.verified
-              }}
+          <div className="relative flex flex-col lg:flex-row lg:gap-8 gap-6 px-4 lg:px-8 pb-10">
+            <CompaniesSidebarFilters
+              filters={{ state: filters.state, city: filters.city, rating: filters.rating, verified: filters.verified }}
               locationsData={locationsData}
               categories={categories}
-              categoriesLoading={categoriesLoading}
+              onFilterChange={handleFilterChange}
+              sort={sort}
+              onSortChange={setSort}
             />
-            <div className="flex-1">
+            <div className="flex-1 relative z-20">
               {selectedCategory && selectedCategory.banner_url && (
                 <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8">
                   <TestImage
@@ -494,13 +524,15 @@ export default function CategoriesClient() {
                 </div>
               )}
               
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                  {selectedCategory ? selectedCategory.name : 'Todas as Categorias'}
-                </h1>
-                <p className="text-gray-600 mt-2 md:mt-0">
-                  <span className="font-semibold text-orange-600">{loading ? '...' : filteredCompanies.length}</span> Empresas encontradas
-                </p>
+              <div className="mb-6">
+                <CompaniesResultsBar
+                  count={loading ? 0 : sortedCompanies.length}
+                  sort={sort}
+                  onSortChange={setSort}
+                  verified={filters.verified}
+                  onToggleVerified={(v) => handleFilterChange('verified', v)}
+                  onClearAll={() => handleFilterChange('clearAll', null)}
+                />
               </div>
 
               {/* Filtros Ativos Desktop */}
@@ -535,6 +567,9 @@ export default function CategoriesClient() {
               ) : filteredCompanies.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-xl text-gray-500">Nenhuma empresa encontrada com os filtros selecionados.</p>
+                  <div className="mt-4">
+                    <Button variant="outline" onClick={() => handleFilterChange('clearAll', null)}>Limpar filtros</Button>
+                  </div>
                 </div>
               ) : (
                 <ClientOnly>
@@ -543,7 +578,7 @@ export default function CategoriesClient() {
                     animate={{ opacity: 1 }}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                   >
-                    {filteredCompanies.map((company) => (
+                    {sortedCompanies.map((company) => (
                       <motion.div
                         key={company.id}
                         initial={{ opacity: 0, y: 20 }}

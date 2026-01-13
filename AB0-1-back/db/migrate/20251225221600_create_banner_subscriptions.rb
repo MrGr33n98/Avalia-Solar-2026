@@ -16,7 +16,7 @@ class CreateBannerSubscriptions < ActiveRecord::Migration[7.0]
       t.datetime :canceled_at
       t.string :failure_reason
 
-      t.jsonb :metadata_json, null: false, default: {}
+      t.json :metadata_json, null: false, default: {}
 
       t.timestamps
     end

@@ -1,8 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState, ReactNode } from 'react';
+import { useEffect, useMemo, useState, ReactNode } from 'react';
 
 interface QueryProviderProps {
   children: ReactNode;
@@ -18,6 +17,32 @@ interface QueryProviderProps {
  * - Refetch em background
  */
 export function QueryProvider({ children }: QueryProviderProps) {
+  const [Devtools, setDevtools] = useState<null | React.ComponentType<{ initialIsOpen?: boolean }>>(null);
+
+  const devtoolsEnabled = useMemo(() => {
+    if (process.env.NODE_ENV !== 'development') return false;
+    const flag = process.env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS;
+    return flag === '1' || flag?.toLowerCase() === 'true';
+  }, []);
+
+  useEffect(() => {
+    if (!devtoolsEnabled) return;
+
+    let alive = true;
+    import('@tanstack/react-query-devtools')
+      .then((mod) => {
+        if (!alive) return;
+        setDevtools(() => mod.ReactQueryDevtools);
+      })
+      .catch((err) => {
+        console.warn('[QueryProvider] Failed to load React Query Devtools (disabled):', err);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [devtoolsEnabled]);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -44,12 +69,7 @@ export function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {/* DevTools apenas em desenvolvimento */}
-      {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools 
-          initialIsOpen={false}
-        />
-      )}
+      {Devtools ? <Devtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   );
 }

@@ -1,11 +1,15 @@
 'use client';
 
-import { useBanners } from '@/hooks/useBanners';
+import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
 
+type BannerLocation = 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
+type BannerContainerBanners = Parameters<typeof BannerContainer>[0]['banners'];
+type BannerData = BannerContainerBanners[number];
+
 interface BannerByLocationProps {
-  location: string;
+  location: BannerLocation;
   className?: string;
 }
 
@@ -14,7 +18,7 @@ interface BannerByLocationProps {
  * Blindado contra erros - retorna null silenciosamente se falhar
  */
 export default function BannerByLocation({ location, className = '' }: BannerByLocationProps) {
-  const { banners, loading, error } = useBanners({ position: location });
+  const { data: banners = [], isLoading: loading, error } = useBannersQuery({ position: location });
 
   // Blindagem contra erros
   try {
@@ -46,14 +50,16 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
     }
 
     // Renderiza os banners usando o BannerContainer
-    const normalizedBanners = locationBanners.map((banner) => ({
+    const normalizedBanners: BannerContainerBanners = locationBanners.map((banner): BannerData => ({
       id: banner.id,
-      type: banner.banner_type,
-      position: banner.position,
+      type: banner.banner_type === 'rectangular_small' ? 'rectangular_small' : 'rectangular_large',
+      position: (banner.position || location) as BannerLocation,
       image_url: getFullImageUrl(banner.image_url) || '',
       title: banner.title || '',
-      link: banner.link,
-      sponsored: banner.sponsored,
+      link: banner.link || banner.link_url || undefined,
+      sponsored: !!banner.sponsored,
+      width: banner.width ?? null,
+      height: banner.height ?? null,
     }));
 
     return (

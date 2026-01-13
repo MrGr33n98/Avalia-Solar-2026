@@ -8,8 +8,8 @@ class CreateBannerEventsAndStats < ActiveRecord::Migration[7.0]
       t.string :ip_hash
       t.string :user_agent_hash
       t.string :referrer
-      t.jsonb :utm_json, null: false, default: {}
-      t.jsonb :metadata_json, null: false, default: {}
+      t.json :utm_json, null: false, default: {}
+      t.json :metadata_json, null: false, default: {}
 
       t.datetime :tracked_at, null: false
       t.timestamps

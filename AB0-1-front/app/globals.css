@@ -150,6 +150,16 @@
   .smooth-transition {
     @apply transition-all duration-300 ease-in-out;
   }
+
+  /* Hide scrollbars (horizontal chips, tabs, etc) */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 }
 /* TASK-027: Toast animations */
 @keyframes slide-in {

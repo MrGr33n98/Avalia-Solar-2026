@@ -89,24 +89,27 @@ module Api
       # GET /categories/:id/banners
       # =========================
       def banners
-        cache_key = "categories/#{@category.id}/banners/#{@category.updated_at.to_i}"
+        banners_scope = Banner.currently_active
+
+        if Banner.reflect_on_association(:categories)
+          # Includes banners targeted to this category + global banners (no categories selected)
+          banners_scope = banners_scope.left_joins(:categories)
+                                       .where('categories.id = ? OR categories.id IS NULL', @category.id)
+                                       .distinct
+        else
+          banners_scope = banners_scope.where(category_id: @category.id)
+        end
+
+        banners_scope = banners_scope.where(position: params[:position]) if params[:position].present?
+        banners_scope = banners_scope.limit(params[:limit].to_i) if limit_present?
+
+        max_updated_at = banners_scope.maximum(:updated_at)&.to_i || 0
+        cache_key = "categories/#{@category.id}/banners/#{max_updated_at}"
 
         cached_json(cache_key, expires_in: 30.minutes) do
-          banners_scope = @category.banners.where(active: true)
-
-          if Banner.column_names.include?('start_date')
-            banners_scope = banners_scope.where('start_date IS NULL OR start_date <= ?', Time.current)
-          end
-
-          if Banner.column_names.include?('end_date')
-            banners_scope = banners_scope.where('end_date IS NULL OR end_date >= ?', Time.current)
-          end
-
-          banners_scope = banners_scope.limit(params[:limit].to_i) if limit_present?
-
           banners_scope.as_json(
-            only: %i[id title link banner_type position],
-            methods: :image_url
+            only: %i[id title link banner_type position width height],
+            methods: %i[image_url category_ids]
           )
         end
       end
@@ -265,7 +268,7 @@ module Api
         @categories = @categories.order(featured: :desc, name: :asc)
 
         # Eager loading para evitar N+1
-        @categories = @categories.includes(:banners, :companies, :products)
+        @categories = @categories.includes(:companies, :products, banner_attachment: :blob, icon_attachment: :blob)
 
         # Paginação (se parâmetros fornecidos)
         if params[:page].present? || params[:per_page].present?
@@ -285,8 +288,8 @@ module Api
               seo_title: category.seo_title,
               short_description: category.short_description,
               featured: category.featured,
-              banner_url: category.banners.find { |b| b.active }&.image_url,
-              icon_url: category.icon.attached? ? Rails.application.routes.url_helpers.rails_blob_url(category.icon, only_path: false) : nil,
+              banner_url: category.banner_url,
+              icon_url: category.icon_url,
               companies_count: category.companies.size,
               products_count: category.products.size,
               reviews_count: category.companies.joins(:reviews).count
@@ -315,8 +318,8 @@ module Api
               seo_title: category.seo_title,
               short_description: category.short_description,
               featured: category.featured,
-              banner_url: category.banners.find { |b| b.active }&.image_url,
-              icon_url: category.icon.attached? ? Rails.application.routes.url_helpers.rails_blob_url(category.icon, only_path: false) : nil,
+              banner_url: category.banner_url,
+              icon_url: category.icon_url,
               companies_count: category.companies.size,
               products_count: category.products.size,
               reviews_count: category.companies.joins(:reviews).count
