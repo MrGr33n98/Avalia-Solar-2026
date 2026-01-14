@@ -29,7 +29,8 @@ interface BannerContainerProps {
   banners: BannerData[];
 }
 
-const FALLBACK_BANNER_SRC = '/images/default-banner.svg';
+// Use brand-friendly fallback instead of the orange default
+const FALLBACK_BANNER_SRC = '/images/banner-avalia-solar.png';
 
 function BannerImage({
   banner,

@@ -42,7 +42,13 @@ module Api
           query = apply_category_filters(query)
           query = apply_limit(query)
 
-          query = query.includes(:companies) if Category.reflect_on_association(:companies)
+          # Optimization: Eager load associations to avoid N+1 queries
+          query = query.preload(
+            :products,
+            :banner_attachment, :banner_blob,
+            :icon_attachment, :icon_blob,
+            companies: [:logo_attachment, :logo_blob]
+          )
 
           if params[:page].present?
             paginated = paginate(query)
@@ -244,7 +250,22 @@ module Api
         end
 
         fallback = fallback.limit(params[:limit].to_i) if limit_present?
-        fallback = fallback.includes(:companies) if Category.reflect_on_association(:companies)
+        
+        # Optimization: Eager load associations to avoid N+1 queries in fallback
+        includes_list = []
+        includes_list << :products if Category.reflect_on_association(:products)
+        includes_list << :banner_attachment if Category.reflect_on_association(:banner_attachment)
+        includes_list << :icon_attachment if Category.reflect_on_association(:icon_attachment)
+        
+        if Category.reflect_on_association(:companies)
+           if Company.reflect_on_association(:logo_attachment)
+              includes_list << { companies: :logo_attachment }
+           else
+              includes_list << :companies
+           end
+        end
+
+        fallback = fallback.includes(includes_list) if includes_list.any?
 
         fallback.to_a
       end

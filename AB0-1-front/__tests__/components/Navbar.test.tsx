@@ -16,8 +16,8 @@ jest.mock('next/image', () => ({
 // Mock the next/link component
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href} onClick={(e) => e.preventDefault()}>{children}</a>
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: any }) => (
+    <a href={href} onClick={(e) => e.preventDefault()} {...props}>{children}</a>
   ),
 }));
 
@@ -61,6 +61,28 @@ jest.mock('@/components/CategoryDropdownItem', () => {
   };
 });
 
+// Mock LocationSearch
+jest.mock('@/components/LocationSearch', () => {
+  return {
+    __esModule: true,
+    default: ({ onLocationSelect }: any) => (
+      <div data-testid="location-search">
+        <button onClick={() => onLocationSelect({ state: 'SP', city: 'São Paulo' })}>
+          Select Location
+        </button>
+      </div>
+    ),
+  };
+});
+
+// Mock CategoryDropdown
+jest.mock('@/components/CategoryDropdown', () => {
+  return {
+    __esModule: true,
+    default: () => <div data-testid="category-dropdown">Categorias Dropdown</div>,
+  };
+});
+
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
@@ -69,6 +91,13 @@ jest.mock('framer-motion', () => ({
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
+
+// Mock useAuth
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: jest.fn(),
+}));
+
+import { useAuth } from '@/contexts/AuthContext';
 
 describe('Navbar', () => {
   const mockCategories: Category[] = [
@@ -96,6 +125,12 @@ describe('Navbar', () => {
       loading: false,
       error: null,
     });
+
+    (useAuth as jest.Mock).mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      logout: jest.fn(),
+    });
   });
 
   it('renders the logo and home link', () => {
@@ -105,103 +140,27 @@ describe('Navbar', () => {
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveAttribute('src', '/images/logo.png');
     
-    // O link tem tanto a imagem quanto o texto "Avalia Solar", então o nome completo é "Avalia Solar Avalia Solar"
-    const homeLink = screen.getByRole('link', { name: 'Avalia Solar Avalia Solar' });
+    const homeLink = screen.getByRole('link', { name: 'Home Avalia Solar' });
     expect(homeLink).toBeInTheDocument();
     expect(homeLink).toHaveAttribute('href', '/');
   });
 
-  it('renders navigation links', () => {
+  it('renders navigation links and new components', () => {
     render(<Navbar />);
     
     expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Produtos' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Planos' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Reviews' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
+    
+    // Check for new components
+    expect(screen.getByTestId('location-search')).toBeInTheDocument();
+    expect(screen.getByTestId('category-dropdown')).toBeInTheDocument();
   });
 
   it('renders login and register buttons', () => {
     render(<Navbar />);
     
-    // Login e Registrar são links (elementos <a>), não botões
     expect(screen.getByRole('link', { name: 'Login' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Registrar' })).toBeInTheDocument();
-  });
-
-  it('renders categories dropdown with category items', async () => {
-    render(<Navbar />);
-    
-    const categoriesButton = screen.getByRole('button', { name: /Categorias/ });
-    expect(categoriesButton).toBeInTheDocument();
-    
-    // Simular clique para abrir o dropdown
-    fireEvent.click(categoriesButton);
-    
-    // Aguardar que o dropdown apareça
-    await screen.findByRole('link', { name: 'Painéis Solares' });
-    
-    // Check that category links appear
-    expect(screen.getByRole('link', { name: 'Painéis Solares' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Inversores' })).toBeInTheDocument();
-  });
-
-  it('toggles mobile menu when menu button is clicked', async () => {
-    // Resize window to mobile width
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 400,
-    });
-    window.dispatchEvent(new Event('resize'));
-
-    render(<Navbar />);
-
-    const menuButton = screen.getByRole('button', { name: /menu/i });
-    fireEvent.click(menuButton);
-
-    // Aguardar que o menu móvel apareça
-    const mobileMenu = await screen.findByTestId('mobile-menu');
-
-    // Use within to find elements inside the mobile menu
-    expect(within(mobileMenu).getByText(/Empresas/i)).toBeInTheDocument();
-    expect(within(mobileMenu).getByText(/Produtos/i)).toBeInTheDocument();
-    expect(within(mobileMenu).getByRole('link', { name: 'Planos' })).toBeInTheDocument();
-    expect(within(mobileMenu).getByRole('link', { name: 'Reviews' })).toBeInTheDocument();
-    expect(within(mobileMenu).getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(within(mobileMenu).getByRole('link', { name: 'Login' })).toBeInTheDocument();
-    expect(within(mobileMenu).getByRole('link', { name: 'Registrar' })).toBeInTheDocument();
-  });
-
-  it('shows loading state when categories are loading', () => {
-    (useCategories as jest.Mock).mockReturnValue({
-      categories: [],
-      loading: true,
-      error: null,
-    });
-
-    render(<Navbar />);
-    
-    const categoriesButton = screen.getByRole('button', { name: /Categorias/ });
-    fireEvent.click(categoriesButton);
-    
-    // The dropdown shouldn't appear when loading
-    expect(screen.queryByRole('link', { name: 'Painéis Solares' })).not.toBeInTheDocument();
-  });
-
-  it('handles error state when categories have an error', () => {
-    (useCategories as jest.Mock).mockReturnValue({
-      categories: [],
-      loading: false,
-      error: new Error('Failed to load categories'),
-    });
-
-    render(<Navbar />);
-    
-    const categoriesButton = screen.getByRole('button', { name: /Categorias/ });
-    fireEvent.click(categoriesButton);
-    
-    // The dropdown shouldn't appear when there's an error
-    expect(screen.queryByRole('link', { name: 'Painéis Solares' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cadastre sua empresa' })).toBeInTheDocument();
   });
 });

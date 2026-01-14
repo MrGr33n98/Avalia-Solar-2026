@@ -84,12 +84,12 @@ export default function CategoryBanner({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-md">
             {category.name}
           </h1>
 
           {subtitle && (
-            <p className="mt-2 text-sm sm:text-base text-gray-200 line-clamp-2 max-w-md font-light">
+            <p className="mt-2 text-sm sm:text-base text-gray-100 line-clamp-2 max-w-md font-medium drop-shadow-sm">
               {subtitle}
             </p>
           )}

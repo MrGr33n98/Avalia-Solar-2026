@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import CategoryCardMinimal from '@/components/CategoryCardMinimal';
+import CategoryCardFeatured from '@/components/CategoryCardFeatured';
 import { Input } from '@/components/ui/input';
 import { Search, AlertCircle, Grid3x3, List, Menu } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -197,10 +197,12 @@ export default function CategoriesIndexWithSidebar() {
                 <SheetTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2"
+                    className="lg:hidden w-full sm:w-auto flex items-center justify-center"
                   >
-                    <Menu className="h-5 w-5" />
-                    <span>Categorias</span>
+                    <span className="flex items-center gap-2">
+                      <Menu className="h-5 w-5" />
+                      <span>Categorias</span>
+                    </span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] sm:w-[340px]">
@@ -258,7 +260,7 @@ export default function CategoriesIndexWithSidebar() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {featuredCategories.map((category) => (
-                    <CategoryCardMinimal key={category.id} category={category} />
+                    <CategoryCardFeatured key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
               </section>
@@ -283,7 +285,7 @@ export default function CategoriesIndexWithSidebar() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredCategories.map((category) => (
-                    <CategoryCardMinimal key={category.id} category={category} />
+                    <CategoryCardFeatured key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
               )}

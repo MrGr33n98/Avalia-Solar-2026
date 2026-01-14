@@ -105,6 +105,9 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
       </div>
     );
   } catch (error) {
+    const errorMessage = (error as Error)?.message || 'Erro ao carregar categoria';
+    const slugNotFound =
+      /category with slug/i.test(errorMessage) || errorMessage.toLowerCase().includes('not found');
     if (logTiming) {
       console.error(`[CategoryPage] Error for slug: ${params.slug}`, error);
       console.timeEnd(totalLabel);
@@ -119,7 +122,9 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Categoria não encontrada</h1>
             <p className="text-gray-600 mb-6">
-              A categoria &quot;{params.slug}&quot; não existe ou foi removida.
+              {slugNotFound
+                ? `A categoria &quot;${params.slug}&quot; não existe ou foi removida.`
+                : 'Não foi possível carregar esta categoria no momento.'}
             </p>
             <div className="space-x-4">
               <Button asChild>
@@ -130,7 +135,9 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
               </Button>
             </div>
             <p className="mt-4 text-sm text-red-600">
-              Erro: {(error as Error)?.message || 'Erro ao carregar categoria'}
+              {slugNotFound
+                ? 'Slug inválido ou categoria removida. Tente outra categoria ou retorne à lista.'
+                : `Erro: ${errorMessage}`}
             </p>
           </div>
         </div>

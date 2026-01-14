@@ -25,9 +25,7 @@ class Banner < ApplicationRecord
 
   def self.banner_variants_enabled?
     flag = ENV['BANNER_VARIANTS_ENABLED']
-    return true if flag&.casecmp('true')&.zero?
     return false if flag&.casecmp('false')&.zero?
-
     variants_supported?
   end
 
@@ -120,7 +118,11 @@ class Banner < ApplicationRecord
     Rails.application.routes.url_helpers.rails_blob_url(source, **safe_url_options, only_path: false)
   rescue StandardError => e
     Rails.logger.error("Error generating banner image URL: #{e.message}")
-    nil
+    begin
+      Rails.application.routes.url_helpers.rails_blob_url(image, **safe_url_options, only_path: false)
+    rescue StandardError
+      nil
+    end
   end
 
   def as_json(options = {})

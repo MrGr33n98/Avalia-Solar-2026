@@ -67,7 +67,7 @@ export default function BlogCard({ article }: BlogCardProps) {
       <CardFooter className="p-4 border-t bg-gray-50">
         <Button asChild variant="ghost" size="sm" className="w-full justify-between hover:bg-transparent p-0">
           <Link href={`/blog/${article.slug}`}>
-            Ler mais <ArrowRight className="w-4 h-4 ml-1" />
+            <span>Ler mais <ArrowRight className="w-4 h-4 ml-1" /></span>
           </Link>
         </Button>
       </CardFooter>

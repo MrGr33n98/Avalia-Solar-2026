@@ -19,6 +19,13 @@ class IdempotencyMiddleware
   end
 
   def call(env)
+    # Otimização: Ignora verificação para métodos não-idempotentes (GET, HEAD, OPTIONS)
+    # Isso evita criar ActionDispatch::Request para requests de assets/imagens (ActiveStorage)
+    # que são muito frequentes e causavam overhead desnecessário.
+    unless IDEMPOTENT_METHODS.include?(env['REQUEST_METHOD'])
+      return @app.call(env)
+    end
+
     request = ActionDispatch::Request.new(env)
 
     # Verifica se a requisição precisa de idempotência

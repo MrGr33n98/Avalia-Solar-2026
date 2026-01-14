@@ -77,7 +77,9 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: an
         {/* Categories Filter */}
         <div className="flex overflow-x-auto pb-4 gap-2 mb-8 no-scrollbar">
           <Button variant={!searchParams.category ? "default" : "outline"} asChild>
-            <Link href="/blog">Todos</Link>
+            <Link href="/blog">
+              <span>Todos</span>
+            </Link>
           </Button>
           {categories.map((cat: any) => (
             <Button 
@@ -85,7 +87,9 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: an
               variant={searchParams.category === String(cat.id) ? "default" : "outline"} 
               asChild
             >
-              <Link href={`/blog?category=${cat.id}`}>{cat.name}</Link>
+              <Link href={`/blog?category=${cat.id}`}>
+                <span>{cat.name}</span>
+              </Link>
             </Button>
           ))}
         </div>

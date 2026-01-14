@@ -198,6 +198,7 @@ export interface Category {
 export interface Banner {
   id: number;
   title: string;
+  description?: string | null;
   link?: string | null;
   image_url?: string | null;
   banner_type?: string;
@@ -368,6 +369,7 @@ export const api = {
           : undefined,
         ...(config.next ? { next: config.next } : {}),
         ...(config.cache ? { cache: config.cache } : {}),
+        signal: config.signal,
       });
 
       if (!response.ok) {
