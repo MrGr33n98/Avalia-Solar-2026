@@ -26,7 +26,6 @@ echo "✅ Postgres disponível!"
 
 bundle install
 bundle exec rails db:create || true
-bundle exec rails db:migrate
 
 echo "Starting Rails server..."
 exec "$@"
