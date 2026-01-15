@@ -123,7 +123,10 @@ const nextConfig = {
 // Export the config with Sentry wrapper for source maps
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(
+// Only enable Sentry source map upload if credentials are available
+const hasSentryConfig = process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT;
+
+module.exports = hasSentryConfig ? withSentryConfig(
   nextConfig,
   {
     // Sentry Webpack Plugin Options
@@ -172,4 +175,4 @@ module.exports = withSentryConfig(
     // Transpiles SDK to be compatible with IE11 (increases bundle size)
     transpileClientSDK: false,
   }
-);
+) : nextConfig;

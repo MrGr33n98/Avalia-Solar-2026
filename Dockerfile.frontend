@@ -16,6 +16,9 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
 ARG NEXT_PUBLIC_API_BASE_URL="http://localhost:3001"
 ARG NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+ARG SENTRY_AUTH_TOKEN=""
+ARG SENTRY_ORG=""
+ARG SENTRY_PROJECT=""
 
 # Copia os manifestos de dependência primeiro para aproveitar o cache do Docker
 COPY AB0-1-front/package.json AB0-1-front/package-lock.json ./
@@ -37,6 +40,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 # Aumenta a memória disponível para o processo de build do Next.js para 4GB
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Sentry variables (optional - only used if provided)
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+ENV SENTRY_ORG=${SENTRY_ORG}
+ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 
 # --- Build da Aplicação com Depuração Avançada ---
 RUN set -euo pipefail; \
