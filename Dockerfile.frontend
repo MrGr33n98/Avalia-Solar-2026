@@ -68,6 +68,10 @@ FROM node:20-alpine
 WORKDIR /app
 
 # --- Variáveis de Ambiente de Runtime ---
+# Repete os ARGs para que possam ser usados no estágio de produção
+ARG LINKEDIN_CLIENT_ID
+ARG LINKEDIN_CLIENT_SECRET
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
