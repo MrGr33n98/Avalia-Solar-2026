@@ -14,4 +14,5 @@ export const auth = betterAuth({
   },
 });
 
+// Adicionando um comentário para acionar o deploy
 export const { GET, POST } = handlers(auth);
