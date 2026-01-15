@@ -33,6 +33,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve Server Actions key
+        if: matrix.component == 'frontend'
+        run: |
+          KEY="${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || vars.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}"
+          if [ -z "$KEY" ] && [ -f .env ]; then
+            KEY=$(grep -E '^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=' .env | head -n1 | cut -d= -f2- | tr -d '\r')
+          fi
+          if [ -z "$KEY" ]; then
+            KEY="p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go"
+          fi
+          echo "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$KEY" >> $GITHUB_ENV
+
       - name: Build and Push Backend
         if: matrix.component == 'backend'
         uses: docker/build-push-action@v5
@@ -58,6 +70,7 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}

@@ -88,7 +88,7 @@ services:
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
       # URL interna para comunicação entre containers (Docker Network)
       API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}
     ports:
       - "3000:3000"
     command: ["node", "server.js"]

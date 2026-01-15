@@ -107,7 +107,7 @@ services:
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
       API_URL_INTERNAL: "http://backend:3001/api/v1"
       # Next.js Server Actions: keep key stable across deployments (self-host)
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
