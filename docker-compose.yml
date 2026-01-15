@@ -72,12 +72,14 @@ services:
       - "3001:3001"
     networks:
       - ab0-network
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
-    #   interval: 30s
-    #   timeout: 20s        # Aumentei de 10s para 20s
-    #   retries: 10         # Aumentei de 5 para 10
-    #   start_period: 120s  # Aumentei de 40s para 120s (2 min para iniciar)
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ./AB0-1-back/storage:/app/AB0-1-back/storage
 
