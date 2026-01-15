@@ -1,5 +1,5 @@
 module Videos
-  class YouTubeExtractor
+  class YoutubeExtractor
     YT_REGEX = %r{
       (?:https?:\/\/)?                                      # scheme
       (?:www\.)?                                           # www
