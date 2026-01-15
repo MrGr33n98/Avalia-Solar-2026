@@ -14,7 +14,10 @@ export default function CategoriesList() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen">
-      <CategoriesHero banners={banners} loading={bannersLoading} />
+      <CategoriesHero
+        banners={banners.map((b: any) => ({ ...b, link_url: b?.link_url || undefined }))}
+        loading={bannersLoading}
+      />
       
       <div className="container mx-auto py-12 px-4">
         <div className="mb-12 text-center">

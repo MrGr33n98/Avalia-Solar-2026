@@ -39,8 +39,8 @@ export default function ProductsPage() {
 
     products.forEach(p => {
       // Categories extraction
-      if (p.categories && Array.isArray(p.categories)) {
-        p.categories.forEach((c: any) => cats.add(c.name));
+      if ((p as any).categories && Array.isArray((p as any).categories)) {
+        (p as any).categories.forEach((c: any) => cats.add(c.name));
       } else if (p.category?.name) {
         cats.add(p.category.name);
       }
@@ -95,7 +95,9 @@ export default function ProductsPage() {
 
       // Category
       if (filters.category !== 'all') {
-        const productCats = product.categories?.map((c: any) => c.name) || (product.category?.name ? [product.category.name] : []);
+        const productCats =
+          (product as any).categories?.map((c: any) => c.name) ||
+          (product.category?.name ? [product.category.name] : []);
         if (!productCats.includes(filters.category)) return false;
       }
 

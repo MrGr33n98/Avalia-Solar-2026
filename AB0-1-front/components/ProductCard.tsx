@@ -56,7 +56,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   }, [product.id, product.name]);
 
   const companyName = product.company?.name || 'Fornecedor não informado';
-  const categoryName = product.categories?.[0]?.name || product.category?.name || 'Geral';
+  const categoryName =
+    (product as any).categories?.[0]?.name || product.category?.name || 'Geral';
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();

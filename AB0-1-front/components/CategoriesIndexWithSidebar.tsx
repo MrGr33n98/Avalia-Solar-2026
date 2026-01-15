@@ -113,7 +113,13 @@ export default function CategoriesIndexWithSidebar() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Hero Carrossel (full width) */}
-      <CategoriesHero banners={banners} loading={bannersLoading} />
+      <CategoriesHero
+        banners={banners.map((b: any) => ({ 
+          ...b, 
+          link_url: b?.link_url ?? b?.link ?? undefined 
+        }))}
+        loading={bannersLoading}
+      />
 
       {/* Layout Principal: Sidebar + Content */}
       <div className="container mx-auto px-4 pb-12">

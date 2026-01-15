@@ -12,15 +12,16 @@ import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useBanners } from '@/hooks/useBanners';
 import { useBannerGlobal } from '@/hooks/useBannerGlobal';
+import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCategoryPath } from '@/lib/slug';
+import ResponsiveBanner from '@/components/ResponsiveBanner';
 
 // UI Components
 import CompanyCard from '@/components/CompanyCard'; // O card novo que criamos
 import SidebarFilter from '@/components/SidebarFilter';
 import CategoriesHero from '@/components/categories/CategoriesHero';
-import { getFullImageUrl } from '@/utils/image';
-import Image from 'next/image';
+// 
 import { ClientOnly } from '@/components/ClientOnly';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';

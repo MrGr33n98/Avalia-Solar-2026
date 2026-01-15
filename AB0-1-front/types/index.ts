@@ -18,10 +18,14 @@ export interface Product {
   id: number;
   name: string;
   description: string;
+  short_description?: string;
   price: number;
   status?: string;
   created_at: string;
   updated_at: string;
   category: Category;
+  categories?: Category[];
   company: Company;
+  image_url?: string;
+  sku?: string;
 }

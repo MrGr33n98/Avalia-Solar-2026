@@ -48,7 +48,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                     <Badge variant="outline" className="mb-2 w-fit">
-                        {product.categories?.[0]?.name || product.category?.name || 'Geral'}
+                        {(product as any).categories?.[0]?.name || product.category?.name || 'Geral'}
                     </Badge>
                     <DialogTitle className="text-xl font-bold leading-tight">
                         {product.name}
@@ -68,7 +68,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                             <Check className="w-4 h-4" /> Em estoque
                         </span>
                         <span>•</span>
-                        <span className="text-slate-500">SKU: {product.sku || 'N/A'}</span>
+                        <span className="text-slate-500">SKU: {(product as any).sku || 'N/A'}</span>
                     </div>
                 </div>
 

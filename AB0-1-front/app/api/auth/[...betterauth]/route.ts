@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
-import { handlers } from 'better-auth/next';
+import { toNextJsHandler, nextCookies } from 'better-auth/next-js';
 
-export const auth = betterAuth({
+const auth = betterAuth({
   socialProviders: {
     linkedin: {
       clientId: process.env.LINKEDIN_CLIENT_ID as string,
@@ -12,7 +12,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  plugins: [nextCookies()],
 });
 
-// Adicionando um comentário para acionar o deploy
-export const { GET, POST } = handlers(auth);
+export const { GET, POST, PATCH, PUT, DELETE } = toNextJsHandler(auth);

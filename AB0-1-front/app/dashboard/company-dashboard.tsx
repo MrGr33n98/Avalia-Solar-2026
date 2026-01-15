@@ -157,15 +157,15 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
     fetchNotifications();
     (async () => {
       try {
-        const data = await fetchApi<{ items: any[] }>('/company/pending_changes');
+        await fetchApi<{ items: any[] }>('/company/pending_changes');
       } catch {}
       try {
         const data = await fetchApi<{ items: any[] }>('/company/members');
         const me = (data?.items || []).find((m) => m?.user?.id && company?.id && m.user.id);
         if (me?.role) setMemberRole(me.role);
       } catch {}
-    }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
-
+    })();
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6">

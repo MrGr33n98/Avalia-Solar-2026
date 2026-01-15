@@ -103,7 +103,7 @@ export function useLocationData() {
             return null;
           })
           .filter((s: any) => s && s.name && String(s.name).trim() !== '');
-        names = cleaned.map(s => String(s.name).trim());
+        names = cleaned.map(s => s?.name ? String(s.name).trim() : '').filter(Boolean);
         cleaned.forEach(s => {
           if (s && s.name && s.id) {
             index[String(s.name)] = Number(s.id) || 0;

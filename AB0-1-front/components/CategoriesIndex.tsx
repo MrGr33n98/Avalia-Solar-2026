@@ -171,7 +171,7 @@ export default function CategoriesIndex() {
           <h2 className="text-2xl font-bold mb-6 text-gray-900">Categorias em Destaque</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {featuredCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} layout="top" />
+              <CategoryCard key={category.id} category={category} />
             ))}
           </div>
         </section>
@@ -209,7 +209,7 @@ export default function CategoriesIndex() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} layout="top" />
+              <CategoryCard key={category.id} category={category} />
             ))}
           </div>
         )}

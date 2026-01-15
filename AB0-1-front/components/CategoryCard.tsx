@@ -19,6 +19,7 @@ const MotionDiv = motion.div;
 interface CategoryCardProps {
   category: Category;
   className?: string;
+  layout?: string;
 }
 
 export default function CategoryCard({ category, className = "" }: CategoryCardProps) {
