@@ -1,7 +1,7 @@
-import { createAuthClient } from 'better-auth'
+import { createAuthClient } from 'better-auth/react'
 
 export const betterAuth = createAuthClient({
-  baseUrl: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || '',
+  baseUrl: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   socialProviders: {
     google: {
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '',
