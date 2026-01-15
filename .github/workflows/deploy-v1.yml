@@ -33,36 +33,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set build args for backend
+      - name: Build and Push Backend
         if: matrix.component == 'backend'
-        id: backend_args
-        run: |
-          echo "args=RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}" >> $GITHUB_OUTPUT
-
-      - name: Set build args for frontend
-        if: matrix.component == 'frontend'
-        id: frontend_args
-        run: |
-          echo "args<<EOF" >> $GITHUB_OUTPUT
-          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
-          echo "NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
-          echo "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
-          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> $GITHUB_OUTPUT
-          echo "SENTRY_ORG=${{ secrets.SENTRY_ORG }}" >> $GITHUB_OUTPUT
-          echo "SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Build and Push ${{ matrix.component }}
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.${{ matrix.component }}
+          file: ./Dockerfile.backend
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-${{ matrix.component }}:latest
-          build-args: ${{ matrix.component == 'backend' && steps.backend_args.outputs.args || steps.frontend_args.outputs.args }}
-          # --- ATIVAÇÃO DE CACHE INTELIGENTE ---
-          cache-from: type=gha,scope=${{ matrix.component }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
+          build-args: |
+            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build and Push Frontend
+        if: matrix.component == 'frontend'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br' }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+            SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
   deploy:
     needs: build-and-push
