@@ -3,15 +3,20 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCategories } from '@/hooks/useCategories';
+import { useCategoriesBannersQuery } from '@/hooks/useBannersQuery';
 import CategoryCard from '@/components/CategoryCard';
+import CategoriesHero from '@/components/categories/CategoriesHero';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CategoriesList() {
-  const { categories, loading } = useCategories(true); // Pass true to fetch all categories
+  const { categories, loading } = useCategories(true);
+  const { data: banners = [], isLoading: bannersLoading } = useCategoriesBannersQuery();
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="container mx-auto py-12">
+    <div className="bg-gray-50/50 min-h-screen">
+      <CategoriesHero banners={banners} loading={bannersLoading} />
+      
+      <div className="container mx-auto py-12 px-4">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
             Todas as Categorias

@@ -18,7 +18,7 @@ common: &defaults
   log_file_path: log/scout_apm.log
   
   # Enable Git integration for deployment tracking
-  revision_sha: <%= ENV['GIT_SHA'] || `git rev-parse --short HEAD 2>/dev/null`.strip %>
+  revision_sha: <%= ENV['GIT_SHA'] || `git rev-parse --short HEAD`.strip rescue "unknown" %>
   
   # Hostname override (useful for containers)
   hostname: <%= ENV['HOSTNAME'] || Socket.gethostname %>
@@ -55,7 +55,7 @@ common: &defaults
 development:
   <<: *defaults
   # Disable in development to avoid noise
-  monitor: false
+  monitor: true
 
 test:
   <<: *defaults

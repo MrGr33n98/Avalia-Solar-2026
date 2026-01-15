@@ -308,88 +308,128 @@ export interface City {
 const API_BASE_URL = getApiBaseUrl();
 
 // Update the api configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1s
+const TIMEOUT = 15000; // 15s
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const api = {
   baseUrl: API_BASE_URL,
   
   request: async function<T>(config: any): Promise<{ data: T }> {
-    try {
-      // Fix URL construction to prevent double slashes
-      const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
-      const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
-      let url = `${basePath}/${endpoint}`;
-      
-      // Handle query parameters
-      if (config.params) {
-        const searchParams = new URLSearchParams();
-        Object.keys(config.params).forEach(key => {
-          if (config.params[key] !== null && config.params[key] !== undefined) {
-            searchParams.append(key, config.params[key]);
+    let lastError: any;
+    
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        // Fix URL construction to prevent double slashes
+        const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
+        const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
+        let url = `${basePath}/${endpoint}`;
+        
+        // Handle query parameters
+        if (config.params) {
+          const searchParams = new URLSearchParams();
+          Object.keys(config.params).forEach(key => {
+            if (config.params[key] !== null && config.params[key] !== undefined) {
+              searchParams.append(key, config.params[key]);
+            }
+          });
+          const queryString = searchParams.toString();
+          if (queryString) {
+            url += (url.includes('?') ? '&' : '?') + queryString;
           }
-        });
-        const queryString = searchParams.toString();
-        if (queryString) {
-          url += (url.includes('?') ? '&' : '?') + queryString;
         }
-      }
-      
-      console.log('[API] Request ->', config.method, url, config.params || '');
-      
-      // Attach auth token if present
-      let token = null;
-      if (typeof window !== 'undefined') {
-        const authData = localStorage.getItem('auth');
-        if (authData) {
-          try {
-            const parsed = JSON.parse(authData);
-            token = parsed.token;
-            console.log('[API] Token attached:', token ? `${token.substring(0, 20)}...` : 'null');
-          } catch (e) {
-            console.warn('[API] Failed to parse auth data:', e);
+        
+        console.log(`[API] Request (Attempt ${attempt + 1}) ->`, config.method, url, config.params || '');
+        
+        // Attach auth token if present
+        let token = null;
+        if (typeof window !== 'undefined') {
+          const authData = localStorage.getItem('auth');
+          if (authData) {
+            try {
+              const parsed = JSON.parse(authData);
+              token = parsed.token;
+            } catch (e) {
+              console.warn('[API] Failed to parse auth data:', e);
+            }
           }
-        } else {
-          console.warn('[API] No auth data in localStorage');
         }
-      }
-      
-      const isFormData = config.data instanceof FormData;
-      const baseHeaders = getApiRequestHeaders(
-        isFormData ? {} : { 'Content-Type': 'application/json' }
-      );
-      const response = await fetch(url, {
-        method: config.method,
-        headers: {
-          ...baseHeaders,
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          ...config.headers,
-        },
-        body: config.data
-          ? isFormData
-            ? config.data
-            : JSON.stringify(config.data)
-          : undefined,
-        ...(config.next ? { next: config.next } : {}),
-        ...(config.cache ? { cache: config.cache } : {}),
-        signal: config.signal,
-      });
+        
+        const isFormData = config.data instanceof FormData;
+        const baseHeaders = getApiRequestHeaders(
+          isFormData ? {} : { 'Content-Type': 'application/json' }
+        );
 
-      if (!response.ok) {
-        let details: any = null;
+        // Add timeout support using AbortController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
         try {
-          details = await response.json();
-        } catch {}
-        const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
-        if (response.status === 401 || response.status === 403) {
-          throw new Error(`[${response.status}] Unauthorized`);
-        }
-        throw new Error(`[${response.status}] ${message}`);
-      }
+          const response = await fetch(url, {
+            method: config.method,
+            headers: {
+              ...baseHeaders,
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              ...config.headers,
+            },
+            body: config.data
+              ? isFormData
+                ? config.data
+                : JSON.stringify(config.data)
+              : undefined,
+            ...(config.next ? { next: config.next } : {}),
+            ...(config.cache ? { cache: config.cache } : {}),
+            signal: controller.signal,
+          });
 
-      const data = await response.json();
-      return { data };
-    } catch (error) {
-      console.error('[API] Error:', error);
-      throw error;
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            let details: any = null;
+            try {
+              details = await response.json();
+            } catch {}
+            const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
+            
+            // Don't retry on 4xx errors (client errors), except 429 (Too Many Requests)
+            if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+              throw new Error(`[${response.status}] ${message}`);
+            }
+            
+            throw new Error(`[${response.status}] ${message}`);
+          }
+
+          const data = await response.json();
+          return { data };
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Request timeout');
+          }
+          throw fetchError;
+        }
+
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry if it's not a fetch error or 5xx/429
+        const isRetryable = error.message === 'Request timeout' || 
+                           error.message.includes('Network request failed') ||
+                           error.message.match(/\[(5\d{2}|429)\]/);
+                           
+        if (!isRetryable || attempt === MAX_RETRIES - 1) {
+          console.error('[API] Final Error:', error);
+          throw error;
+        }
+        
+        console.warn(`[API] Attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY}ms...`, error.message);
+        await sleep(RETRY_DELAY * Math.pow(2, attempt)); // Exponential backoff
+      }
     }
+    
+    throw lastError;
   }
 };
 

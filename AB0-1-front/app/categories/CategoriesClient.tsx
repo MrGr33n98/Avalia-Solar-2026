@@ -18,9 +18,9 @@ import { buildCategoryPath } from '@/lib/slug';
 // UI Components
 import CompanyCard from '@/components/CompanyCard'; // O card novo que criamos
 import SidebarFilter from '@/components/SidebarFilter';
-import { BannerContainer } from '@/components/BannerContainer';
-import ResponsiveBanner from '@/components/ResponsiveBanner';
-import TestImage from '@/components/TestImage';
+import CategoriesHero from '@/components/categories/CategoriesHero';
+import { getFullImageUrl } from '@/utils/image';
+import Image from 'next/image';
 import { ClientOnly } from '@/components/ClientOnly';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -486,19 +486,7 @@ export default function CategoriesClient() {
 
         {/* --- DESKTOP VIEW --- */}
         <div className="hidden md:block">
-          {bannersLoading || bannerGlobalLoading ? (
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-center items-center h-56 w-full rounded-lg shadow-sm mb-6">
-                <Skeleton className="w-full h-full" />
-              </div>
-            </div>
-          ) : (
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="relative z-[950]">
-                <BannerContainer banners={allBanners} />
-              </div>
-            </div>
-          )}
+          <CategoriesHero banners={allBanners} loading={bannersLoading || bannerGlobalLoading} />
 
           <div className="relative flex flex-col lg:flex-row lg:gap-8 gap-6 px-4 lg:px-8 pb-10">
             <CompaniesSidebarFilters
@@ -511,13 +499,14 @@ export default function CategoriesClient() {
             />
             <div className="flex-1 relative z-20">
               {selectedCategory && selectedCategory.banner_url && (
-                <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8">
-                  <TestImage
+                <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8 group">
+                  <Image
                     src={buildUrl(selectedCategory.banner_url)}
                     alt={`Banner ${selectedCategory.name}`}
-                    className="brightness-75 object-cover"
+                    className="brightness-75 object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
                   />
+                  <div className="absolute inset-0 bg-black/20" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <h1 className="text-white text-4xl font-bold text-center drop-shadow-lg">{selectedCategory.name}</h1>
                   </div>

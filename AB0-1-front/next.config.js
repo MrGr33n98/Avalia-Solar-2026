@@ -15,6 +15,14 @@ const nextConfig = {
     dirs: ['app', 'components', 'lib', 'utils', 'contexts', 'hooks'], // Especificar diretórios
   },
 
+  // ⚡ Performance Optimization for Dev Server
+  onDemandEntries: {
+    // Period (in ms) where the server will keep pages in the buffer
+    maxInactiveAge: 25 * 1000,
+    // Number of pages that should be kept simultaneously without being disposed
+    pagesBufferLength: 4,
+  },
+
   typescript: {
     ignoreBuildErrors: false, // Habilitado para garantir type safety
     // tsconfigPath: './tsconfig.json', // Usar tsconfig padrão

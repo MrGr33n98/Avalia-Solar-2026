@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_14_211750) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -753,6 +753,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_211750) do
     t.integer "status", default: 0
     t.text "rejection_reason"
     t.integer "company_id"
+    t.boolean "approved_by_admin", default: false, null: false
     t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true

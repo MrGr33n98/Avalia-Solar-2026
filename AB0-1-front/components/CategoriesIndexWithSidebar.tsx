@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay';
-import CategoryCardFeatured from '@/components/CategoryCardFeatured';
+import CategoryCard from '@/components/CategoryCard';
+import CategoriesHero from '@/components/categories/CategoriesHero';
 import { Input } from '@/components/ui/input';
 import { Search, AlertCircle, Grid3x3, List, Menu } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,7 +36,6 @@ export default function CategoriesIndexWithSidebar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
   // React Query hooks
   const { 
@@ -113,66 +111,9 @@ export default function CategoriesIndexWithSidebar() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50">
       {/* Hero Carrossel (full width) */}
-      <section className="mb-8 bg-white shadow-sm" aria-label="Banners promocionais">
-        <div className="container mx-auto px-4 py-4">
-          {bannersLoading ? (
-            <div className="w-full h-[280px] bg-gray-200 animate-pulse rounded-lg" />
-          ) : banners.length > 0 ? (
-            <div className="overflow-hidden rounded-lg" ref={emblaRef}>
-              <div className="flex">
-                {banners.map((banner) => (
-                  <div key={banner.id} className="flex-[0_0_100%] min-w-0">
-                    {banner.link_url ? (
-                      <a 
-                        href={banner.link_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        aria-label={banner.title}
-                      >
-                        <img
-                          src={getFullImageUrl(banner.image_url) || FALLBACK_BANNER_SRC}
-                          alt={banner.title}
-                          className="w-full h-[280px] object-cover rounded-lg"
-                          loading="eager"
-                          onError={(e) => {
-                            const img = e.currentTarget;
-                            if (img.dataset.fallbackApplied === 'true') return;
-                            img.dataset.fallbackApplied = 'true';
-                            console.warn('[Banner] Failed to load, showing fallback:', banner.image_url);
-                            img.src = FALLBACK_BANNER_SRC;
-                          }}
-                        />
-                      </a>
-                    ) : (
-                      <img
-                        src={getFullImageUrl(banner.image_url) || FALLBACK_BANNER_SRC}
-                        alt={banner.title}
-                        className="w-full h-[280px] object-cover rounded-lg"
-                        loading="eager"
-                        onError={(e) => {
-                          const img = e.currentTarget;
-                          if (img.dataset.fallbackApplied === 'true') return;
-                          img.dataset.fallbackApplied = 'true';
-                          console.warn('[Banner] Failed to load, showing fallback:', banner.image_url);
-                          img.src = FALLBACK_BANNER_SRC;
-                        }}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-[280px] bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-              <div className="text-center text-gray-400">
-                <p className="text-sm">Nenhum banner disponível no momento</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+      <CategoriesHero banners={banners} loading={bannersLoading} />
 
       {/* Layout Principal: Sidebar + Content */}
       <div className="container mx-auto px-4 pb-12">
@@ -251,16 +192,19 @@ export default function CategoriesIndexWithSidebar() {
 
             {/* Categorias em Destaque (apenas quando "Todas" está selecionado) */}
             {selectedCategory === null && !searchTerm && featuredCategories.length > 0 && (
-              <section className="mb-8" aria-labelledby="featured-heading">
-                <h3 
-                  id="featured-heading" 
-                  className="text-xl font-bold mb-4 text-gray-900"
-                >
-                  Em Destaque
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <section className="mb-10" aria-labelledby="featured-heading">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 
+                    id="featured-heading" 
+                    className="text-2xl font-bold text-gray-900"
+                  >
+                    Em Destaque
+                  </h3>
+                  <Button variant="link" className="text-primary">Ver todas</Button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {featuredCategories.map((category) => (
-                    <CategoryCardFeatured key={category.id} category={category} className="h-full" />
+                    <CategoryCard key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
               </section>
@@ -270,7 +214,7 @@ export default function CategoriesIndexWithSidebar() {
             <section aria-labelledby="main-categories-heading">
               <h3 
                 id="main-categories-heading" 
-                className="text-xl font-bold mb-4 text-gray-900"
+                className="text-2xl font-bold mb-6 text-gray-900"
               >
                 {searchTerm 
                   ? 'Resultados da Busca' 
@@ -283,9 +227,9 @@ export default function CategoriesIndexWithSidebar() {
               {filteredCategories.length === 0 ? (
                 <EmptyState searchTerm={searchTerm} />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredCategories.map((category) => (
-                    <CategoryCardFeatured key={category.id} category={category} className="h-full" />
+                    <CategoryCard key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
               )}

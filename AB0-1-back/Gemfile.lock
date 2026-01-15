@@ -175,7 +175,6 @@ GEM
       actionpack (>= 5.2)
       activesupport (>= 5.2)
     hashie (5.0.0)
-    hiredis (0.6.3)
     htmlentities (4.4.2)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
@@ -545,7 +544,6 @@ DEPENDENCIES
   factory_bot_rails
   faker (~> 3.5)
   friendly_id (~> 5.5)
-  hiredis
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
@@ -655,7 +653,6 @@ CHECKSUMS
   globalid (1.1.0) sha256=b337e1746f0c8cb0a6c918234b03a1ddeb4966206ce288fbb57779f59b2d154f
   has_scope (0.8.2) sha256=48cd53d684aecd55d3ede060b3c1da37bbbcab58e273d99936e271fe6d125a54
   hashie (5.0.0) sha256=9d6c4e51f2a36d4616cbc8a322d619a162d8f42815a792596039fc95595603da
-  hiredis (0.6.3) sha256=7f052e320f7d24b5c2a9fdf67c6ff6facdf6e256394a703511bce34ecf445212
   htmlentities (4.4.2) sha256=bbafbdf69f2eca9262be4efef7e43e6a1de54c95eb600f26984f71d2fe96c5c3
   i18n (1.14.1) sha256=9d03698903547c060928e70a9bc8b6b87fda674453cda918fc7ab80235ae4a61
   image_processing (1.12.2) sha256=d3b9e9c5a1cc2607a5214cc28b90d317a03bdd06239584c97535dd73e46f62b8

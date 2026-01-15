@@ -36,7 +36,7 @@ gem 'amazing_print' # Better console output
 # TASK-014: Redis for caching, sessions, and background jobs
 gem 'redis', '~> 5.0'
 # gem 'redis-namespace' # Removed: Not compatible with Sidekiq 7+
-gem 'hiredis' # C-based Redis client for better performance
+# gem 'hiredis' # Removed: C-based Redis client causes issues on Windows; Redis 5+ uses pure Ruby fallback automatically
 
 # TASK-017: Background job processing
 gem 'sidekiq', '~> 7.0'
