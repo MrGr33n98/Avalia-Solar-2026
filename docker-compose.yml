@@ -84,7 +84,7 @@ services:
       - ./AB0-1-back/storage:/app/AB0-1-back/storage
 
   frontend:
-    image: ghcr.io/mrg3n3r98/avalia-solar-2026-frontend:latest
+    image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
