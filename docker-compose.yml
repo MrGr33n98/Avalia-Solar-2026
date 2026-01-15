@@ -37,7 +37,7 @@ services:
       retries: 10
 
   backend:
-    image: ghcr.io/mrg3n3r98/avalia-solar-2026-backend:latest
+    image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -72,8 +72,6 @@ services:
       - "3001:3001"
     networks:
       - ab0-network
-    entrypoint: ["/app/entrypoint.sh"]
-    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 10s
@@ -81,7 +79,7 @@ services:
       retries: 5
       start_period: 30s
     volumes:
-      - ./AB0-1-back/storage:/app/AB0-1-back/storage
+      - ./AB0-1-back/storage:/app/storage
 
   frontend:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
