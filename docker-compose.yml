@@ -37,6 +37,7 @@ services:
       retries: 10
 
   backend:
+    image: ghcr.io/mrg3n3r98/avalia-solar-2026-backend:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -71,16 +72,17 @@ services:
       - "3001:3001"
     networks:
       - ab0-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
-      interval: 30s
-      timeout: 20s        # Aumentei de 10s para 20s
-      retries: 10         # Aumentei de 5 para 10
-      start_period: 120s  # Aumentei de 40s para 120s (2 min para iniciar)
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
+    #   interval: 30s
+    #   timeout: 20s        # Aumentei de 10s para 20s
+    #   retries: 10         # Aumentei de 5 para 10
+    #   start_period: 120s  # Aumentei de 40s para 120s (2 min para iniciar)
     volumes:
       - ./AB0-1-back/storage:/app/AB0-1-back/storage
 
   frontend:
+    image: ghcr.io/mrg3n3r98/avalia-solar-2026-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
