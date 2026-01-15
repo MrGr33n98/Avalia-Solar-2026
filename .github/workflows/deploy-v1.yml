@@ -33,6 +33,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set build args for backend
+        if: matrix.component == 'backend'
+        id: backend_args
+        run: |
+          echo "args=RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}" >> $GITHUB_OUTPUT
+
+      - name: Set build args for frontend
+        if: matrix.component == 'frontend'
+        id: frontend_args
+        run: |
+          echo "args<<EOF" >> $GITHUB_OUTPUT
+          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
+          echo "NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
+          echo "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}" >> $GITHUB_OUTPUT
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> $GITHUB_OUTPUT
+          echo "SENTRY_ORG=${{ secrets.SENTRY_ORG }}" >> $GITHUB_OUTPUT
+          echo "SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build and Push ${{ matrix.component }}
         uses: docker/build-push-action@v5
         with:
@@ -40,14 +59,7 @@ jobs:
           file: ./Dockerfile.${{ matrix.component }}
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-${{ matrix.component }}:latest
-          build-args: |
-            ${{ matrix.component == 'backend' && secrets.RAILS_MASTER_KEY && format('RAILS_MASTER_KEY={0}', secrets.RAILS_MASTER_KEY) || '' }}
-            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_API_URL={0}', vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br') || '' }}
-            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_API_BASE_URL={0}', vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br') || '' }}
-            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_SITE_URL={0}', vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br') || '' }}
-            ${{ matrix.component == 'frontend' && secrets.SENTRY_AUTH_TOKEN && format('SENTRY_AUTH_TOKEN={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
-            ${{ matrix.component == 'frontend' && secrets.SENTRY_ORG && format('SENTRY_ORG={0}', secrets.SENTRY_ORG) || '' }}
-            ${{ matrix.component == 'frontend' && secrets.SENTRY_PROJECT && format('SENTRY_PROJECT={0}', secrets.SENTRY_PROJECT) || '' }}
+          build-args: ${{ matrix.component == 'backend' && steps.backend_args.outputs.args || steps.frontend_args.outputs.args }}
           # --- ATIVAÇÃO DE CACHE INTELIGENTE ---
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
