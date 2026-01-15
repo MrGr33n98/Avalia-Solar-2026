@@ -18,6 +18,9 @@ COPY AB0-1-front/ .
 # Limpa builds anteriores
 RUN rm -rf .next
 
+# Limpa builds anteriores
+RUN rm -rf .next
+
 # Build configurations
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

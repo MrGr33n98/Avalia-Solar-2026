@@ -1,6 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import CompanyCard from '../CompanyCard';
 
+// Mock do router do Next.js para corrigir o erro "invariant" nos testes
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    get: jest.fn(),
+  }),
+}));
+
 const company = {
   id: 1,
   name: 'GoodWe',
