@@ -9,17 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { signInWithGoogle, signInWithLinkedIn } from '@/lib/betterAuthClient';
-import Link from 'next/link';
-
-export default function LoginTab() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const { login } = useAuth();
+  const { login, signInWithLinkedIn } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -63,7 +53,7 @@ export default function LoginTab() {
         <Button 
             variant="outline" 
             className="w-full h-11 border-slate-200 hover:bg-slate-50 hover:text-slate-900 justify-center gap-2 font-medium"
-            onClick={() => signInWithGoogle()}
+            onClick={() => console.log('Google Sign-in clicked')}
             type="button"
         >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

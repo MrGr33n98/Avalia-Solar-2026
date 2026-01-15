@@ -84,6 +84,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
+        LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
     container_name: ab0-frontend
     restart: unless-stopped
     depends_on:
@@ -91,6 +94,8 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_API_BASE_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"

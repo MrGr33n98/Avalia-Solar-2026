@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { User, authApi } from '@/lib/api';
+import { authClient } from '@/lib/authClient';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  signInWithLinkedIn: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,6 +82,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithLinkedIn = async () => {
+    try {
+      await authClient.signIn.social({ provider: 'linkedin' });
+      // After successful social login, the user is redirected back.
+      // The checkAuth function will be triggered on page load to fetch user data.
+      await checkAuth();
+    } catch (error) {
+      console.error('[Auth] LinkedIn sign-in failed', error);
+      setError('LinkedIn sign-in failed');
+      throw error;
+    }
+  };
+
   const logout = async () => {
     await authApi.logout();
     setUser(null);
@@ -91,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, isAuthenticated, login, logout, signInWithLinkedIn }}>
       {children}
     </AuthContext.Provider>
   );

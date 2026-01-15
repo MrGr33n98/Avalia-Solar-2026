@@ -16,6 +16,8 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
 ARG NEXT_PUBLIC_API_BASE_URL="http://localhost:3001"
 ARG NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+ARG LINKEDIN_CLIENT_ID
+ARG LINKEDIN_CLIENT_SECRET
 
 # Copia os manifestos de dependência primeiro para aproveitar o cache do Docker
 COPY AB0-1-front/package.json AB0-1-front/package-lock.json ./
@@ -35,6 +37,8 @@ RUN rm -rf .next
 # --- Configurações de Build ---
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID
+ENV LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET
 # Aumenta a memória disponível para o processo de build do Next.js para 4GB
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -67,6 +71,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ENV LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID
+ENV LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET
 
 # Copia os artefatos de build da etapa anterior
 COPY --from=builder /app/public ./public
