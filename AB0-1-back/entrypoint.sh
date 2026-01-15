@@ -25,6 +25,7 @@ echo "✅ Postgres disponível!"
 # === INÍCIO DA APLICAÇÃO ===
 
 bundle install
+bundle exec rails db:create || true
 bundle exec rails db:migrate
 
 echo "Starting Rails server..."
