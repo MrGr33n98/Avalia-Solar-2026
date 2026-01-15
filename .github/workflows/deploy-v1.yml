@@ -41,7 +41,10 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-${{ matrix.component }}:latest
           build-args: |
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+            ${{ matrix.component == 'backend' && format('RAILS_MASTER_KEY={0}', secrets.RAILS_MASTER_KEY) || '' }}
+            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_API_URL={0}', vars.NEXT_PUBLIC_API_URL) || '' }}
+            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_API_BASE_URL={0}', vars.NEXT_PUBLIC_API_BASE_URL) || '' }}
+            ${{ matrix.component == 'frontend' && format('NEXT_PUBLIC_SITE_URL={0}', vars.NEXT_PUBLIC_SITE_URL) || '' }}
           # --- ATIVAÇÃO DE CACHE INTELIGENTE ---
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
