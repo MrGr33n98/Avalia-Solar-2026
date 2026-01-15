@@ -39,15 +39,24 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # --- Build da Aplicação com Depuração Avançada ---
-# O `set -euo pipefail` garante que o script falhe em qualquer erro.
-# O output do build é salvo em /tmp/next-build.log e exibido no final em caso de falha.
 RUN set -euo pipefail; \
-  echo "📦 Building Next.js app..."; \
-  (npm run build) || ( \
-    echo "❌ ERROR: npm run build failed. Displaying last 200 lines of log:" >&2; \
-    tail -n 200 /tmp/next-build.log >&2; \
-    exit 1; \
-  )
+    echo "--- DEBUG: Verifying build environment ---"; \
+    echo "Current directory: $(pwd)"; \
+    echo "Listing files:"; ls -la; \
+    echo "--- package.json content ---"; cat package.json; echo; \
+    echo "------------------------------"; \
+    echo "📦 Building Next.js app..."; \
+    (npm run build 2>&1 | tee /tmp/next-build.log) || ( \
+        echo "❌ ERROR: npm run build failed. Dumping debug information:" >&2; \
+        echo "--- Node and NPM versions ---" >&2; \
+        node -v >&2; \
+        npm -v >&2; \
+        echo "--- Relevant Environment Variables (secrets redacted) ---" >&2; \
+        printenv | sort | grep -E '^(NEXT_|NODE_)' | grep -iv 'KEY' || echo "No NEXT_ or NODE_ env vars found." >&2; \
+        echo "--- Last 300 lines of /tmp/next-build.log ---" >&2; \
+        tail -n 300 /tmp/next-build.log >&2; \
+        exit 1; \
+    )
 
 # Production stage
 FROM node:20-alpine
