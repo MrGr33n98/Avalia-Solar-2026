@@ -5,6 +5,7 @@ import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import JsonLd from '@/components/JsonLd';
 
 
 export const metadata: Metadata = {
