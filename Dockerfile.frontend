@@ -25,7 +25,10 @@ ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Build app com logs
 RUN set -euo pipefail; \
-  node -e "const p=require('./package.json'); if(!p.scripts||!p.scripts.build){console.error('ERROR: Missing scripts.build'); process.exit(1)}"; \
+  echo "🔍 DEBUG: Checking package.json in $(pwd)..."; \
+  ls -la package.json; \
+  cat package.json; \
+  node -e "const p=require('./package.json'); if(!p.scripts||!p.scripts.build){console.error('ERROR: Missing scripts.build'); console.log('Current scripts:', p.scripts); process.exit(1)}"; \
   (npm run build 2>&1 | tee /tmp/next-build.log) || ( \
     echo "❌ ERROR: npm run build falhou. Mostrando logs finais:" >&2; \
     tail -n 100 /tmp/next-build.log >&2; \
