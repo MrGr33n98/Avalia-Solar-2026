@@ -256,6 +256,11 @@ module Api
       def media
         render json: { photos: @company.media_urls }
       end
+      # GET /api/v1/company_dashboard/videos
+      def videos
+        videos = @company.published_videos.map { |v| { id: v.id, url: v.url, thumbnail_url: v.thumbnail_url, provider: v.provider, video_id: v.video_id } }
+        render json: { videos: videos }
+      end
 
       # POST /api/v1/company_dashboard/upload_media
       def upload_media
@@ -294,6 +299,51 @@ module Api
         )
 
         render json: { message: 'Mídia enviada para aprovação', pending_change: pending_change }, status: :created
+      end
+
+      # POST /api/v1/company_dashboard/add_video
+      def add_video
+        unless current_user&.role == 'company'
+          return render json: { error: 'Unauthorized' }, status: :unauthorized
+        end
+        unless @company.featured || @company.verified
+          return render json: { error: 'Plano necessário para adicionar vídeo' }, status: :forbidden
+        end
+        url = params[:url].to_s
+        result = Videos::YouTubeExtractor.extract(url)
+        return render json: { error: result[:error] }, status: :unprocessable_entity unless result[:valid]
+
+        pending_change = @company.pending_changes.create!(
+          change_type: 'video',
+          data: {
+            url: url,
+            provider: result[:provider],
+            video_id: result[:video_id],
+            thumbnail_url: result[:thumbnail_url],
+            action: 'add'
+          },
+          user_id: current_user.id,
+          status: 'pending'
+        )
+        render json: { message: 'Vídeo enviado para aprovação', pending_change: pending_change }, status: :created
+      end
+
+      # DELETE /api/v1/company_dashboard/remove_video
+      def remove_video
+        unless current_user&.role == 'company'
+          return render json: { error: 'Unauthorized' }, status: :unauthorized
+        end
+        vid = params[:video_id].to_s.presence || params[:id].to_s
+        if vid.blank?
+          return render json: { error: 'Parâmetro video_id ausente' }, status: :unprocessable_entity
+        end
+        pending_change = @company.pending_changes.create!(
+          change_type: 'video',
+          data: { video_id: vid, action: 'remove' },
+          user_id: current_user.id,
+          status: 'pending'
+        )
+        render json: { message: 'Remoção de vídeo enviada para aprovação', pending_change: pending_change }, status: :created
       end
 
       private

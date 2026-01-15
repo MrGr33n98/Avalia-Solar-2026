@@ -11,7 +11,7 @@ module Api
         per   = (params[:per_page] || 10).to_i
         category_id = params[:category_id].presence
 
-        results = SearchService.new(query, state: state, city: city, category_id: category_id).call
+        results = ::SearchService.new(query, state: state, city: city, category_id: category_id).call
 
         # ordenação simples sem quebrar nada
         case sort
@@ -32,10 +32,10 @@ module Api
         articles   = results[:articles].limit(per).offset((page - 1) * per)
 
         render json: {
-          companies: companies.map { |c| CompanySerializer.new(c).as_json },
+          companies: companies.map { |c| ::CompanySerializer.new(c).as_json },
           products: products.as_json(only: %i[id name description price company_id image_url]),
-          categories: categories.map { |c| CategorySerializer.new(c).as_json },
-          articles: articles.as_json(only: %i[id title content]),
+          categories: categories.map { |c| ::CategorySerializer.new(c).as_json },
+          articles: articles.as_json(only: %i[id title slug published_at]),
           meta: {
             total_count: {
               companies: results[:companies].count,

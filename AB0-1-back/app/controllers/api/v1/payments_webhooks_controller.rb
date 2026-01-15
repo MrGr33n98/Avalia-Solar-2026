@@ -8,7 +8,7 @@ module Api
         checkout_session_id = params[:checkout_session_id].to_s
         payment_reference = params[:payment_reference].to_s
 
-        sub = BannerSubscription.find_by(checkout_session_id: checkout_session_id)
+        sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
         return render json: { error: 'subscription_not_found' }, status: :not_found if sub.nil?
 
         sub.update!(provider: provider) if provider.present?

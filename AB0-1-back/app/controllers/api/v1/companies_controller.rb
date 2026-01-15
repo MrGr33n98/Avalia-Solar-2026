@@ -12,7 +12,7 @@ module Api
       def index
         Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
-        @companies = Company.includes(:categories, :reviews)
+        @companies = ::Company.includes(:categories, :reviews)
                             .order(created_at: :desc)
 
         # Filtros
@@ -20,7 +20,7 @@ module Api
           @companies = @companies.where(status: params[:status])
         else
           # Default: listar apenas empresas ativas
-          @companies = @companies.where(status: Company.statuses[:active])
+          @companies = @companies.where(status: ::Company.statuses[:active])
         end
         if params[:featured].present?
           featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
@@ -110,7 +110,7 @@ module Api
 
       # POST /api/v1/companies
       def create
-        @company = Company.new(company_params)
+        @company = ::Company.new(company_params)
         @company.status = 'pending' if @company.status.blank?
         if @company.save
           PendingChange.create!(
@@ -131,7 +131,7 @@ module Api
             end
             
             # Send confirmation email to company
-            CompanyMailer.registration_received(@company).deliver_later
+            ::CompanyMailer.registration_received(@company).deliver_later
           rescue => e
             Rails.logger.warn "Falha ao notificar: #{e.message}"
           end
@@ -198,7 +198,7 @@ module Api
 
       # GET /api/v1/companies/locations
       def locations
-        locations = Company.distinct.pluck(:state, :city).compact
+        locations = ::Company.distinct.pluck(:state, :city).compact
                            .map { |state, city| { state: state, city: city } }
                            .sort_by { |loc| [loc[:state], loc[:city]] }
         render json: { locations: locations }
@@ -207,7 +207,7 @@ module Api
       private
 
       def set_company
-        @company = Company.find(params[:id])
+        @company = ::Company.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Company not found' }, status: :not_found and return
         nil

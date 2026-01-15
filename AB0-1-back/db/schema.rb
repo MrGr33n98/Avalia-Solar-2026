@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_14_211750) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -370,14 +370,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
     t.integer "profile_views_count", default: 0, null: false
     t.integer "cta_clicks_count", default: 0, null: false
     t.integer "whatsapp_clicks_count", default: 0, null: false
+    t.integer "plan_id"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
     t.index ["project_types"], name: "index_companies_on_project_types"
     t.index ["services_offered"], name: "index_companies_on_services_offered"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 
@@ -405,6 +407,33 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
     t.datetime "updated_at", null: false
     t.index ["company_id", "day"], name: "index_company_daily_stats_on_company_id_and_day", unique: true
     t.index ["day"], name: "index_company_daily_stats_on_day"
+  end
+
+  create_table "company_members", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.integer "user_id", null: false
+    t.integer "role", default: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "user_id"], name: "index_company_members_on_company_id_and_user_id", unique: true
+    t.index ["company_id"], name: "index_company_members_on_company_id"
+    t.index ["user_id"], name: "index_company_members_on_user_id"
+  end
+
+  create_table "company_videos", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "url", null: false
+    t.string "provider", default: "youtube", null: false
+    t.string "video_id", null: false
+    t.string "title"
+    t.string "thumbnail_url"
+    t.string "status", default: "pending", null: false
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status"], name: "index_company_videos_on_company_id_and_status"
+    t.index ["company_id"], name: "index_company_videos_on_company_id"
+    t.index ["video_id"], name: "index_company_videos_on_video_id"
   end
 
   create_table "contents", force: :cascade do |t|
@@ -576,6 +605,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
     t.datetime "applied_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "approved_ip"
+    t.string "approved_user_agent"
+    t.string "rejected_ip"
+    t.string "rejected_user_agent"
     t.index ["approved_by_id"], name: "index_pending_changes_on_approved_by_id"
     t.index ["change_type"], name: "index_pending_changes_on_change_type"
     t.index ["company_id", "status"], name: "index_pending_changes_on_company_id_and_status"
@@ -719,6 +752,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
     t.string "role", default: "user"
     t.integer "status", default: 0
     t.text "rejection_reason"
+    t.integer "company_id"
+    t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -762,7 +797,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
   add_foreign_key "categories_products", "products"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "companies", "plans"
   add_foreign_key "company_buttons", "companies"
+  add_foreign_key "company_members", "companies"
+  add_foreign_key "company_members", "users"
+  add_foreign_key "company_videos", "companies"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "forum_answers", "forum_questions"
   add_foreign_key "forum_answers", "users"
@@ -788,4 +827,5 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_10_160000) do
   add_foreign_key "subscription_plans", "categories"
   add_foreign_key "subscription_plans", "plans"
   add_foreign_key "subscription_plans", "products"
+  add_foreign_key "users", "companies"
 end

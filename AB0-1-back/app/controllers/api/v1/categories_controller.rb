@@ -38,7 +38,7 @@ module Api
         cache_key = cache_key_for('categories', params.except(:page, :per_page))
 
         cached_json(cache_key, expires_in: 1.hour) do
-          query = Category.all
+          query = ::Category.all
           query = apply_category_filters(query)
           query = apply_limit(query)
 
@@ -82,22 +82,22 @@ module Api
       def companies
         companies_scope = @category.companies
 
-        if params[:status].present? && Company.column_names.include?('status')
+        if params[:status].present? && ::Company.column_names.include?('status')
           companies_scope = companies_scope.where(status: params[:status])
         end
 
         companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
 
-        render json: companies_scope.map { |c| CompanySerializer.new(c).as_json }, status: :ok
+        render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
       end
 
       # =========================
       # GET /categories/:id/banners
       # =========================
       def banners
-        banners_scope = Banner.currently_active
+        banners_scope = ::Banner.currently_active
 
-        if Banner.reflect_on_association(:categories)
+        if ::Banner.reflect_on_association(:categories)
           # Includes banners targeted to this category + global banners (no categories selected)
           banners_scope = banners_scope.left_joins(:categories)
                                        .where('categories.id = ? OR categories.id IS NULL', @category.id)
@@ -136,7 +136,7 @@ module Api
       # POST /categories
       # =========================
       def create
-        @category = Category.new(category_params)
+        @category = ::Category.new(category_params)
 
         if @category.save
           render json: category_json(@category), status: :created
@@ -170,7 +170,7 @@ module Api
       # =========================
       def show_by_slug
         slug = params.require(:slug)
-        @category = Category.find_by!(seo_url: slug)
+        @category = ::Category.find_by!(seo_url: slug)
 
         cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
 
@@ -198,7 +198,7 @@ module Api
       # Finders / Params
       # -------------------------
       def set_category
-        @category = Category.find(params[:id])
+        @category = ::Category.find(params[:id])
       end
 
       def category_params
@@ -216,11 +216,11 @@ module Api
       end
 
       def apply_category_filters(query)
-        if Category.column_names.include?('status') && params[:status].present?
+        if ::Category.column_names.include?('status') && params[:status].present?
           query = query.where(status: params[:status])
         end
 
-        if Category.column_names.include?('featured') && params[:featured].present?
+        if ::Category.column_names.include?('featured') && params[:featured].present?
           query = query.where(featured: featured_true?)
         end
 
@@ -243,9 +243,9 @@ module Api
       end
 
       def featured_fallback(_results)
-        fallback = Category.all
+        fallback = ::Category.all
 
-        if Category.column_names.include?('status')
+        if ::Category.column_names.include?('status')
           fallback = fallback.where(status: params[:status].presence || 'active')
         end
 
@@ -253,12 +253,12 @@ module Api
         
         # Optimization: Eager load associations to avoid N+1 queries in fallback
         includes_list = []
-        includes_list << :products if Category.reflect_on_association(:products)
-        includes_list << :banner_attachment if Category.reflect_on_association(:banner_attachment)
-        includes_list << :icon_attachment if Category.reflect_on_association(:icon_attachment)
+        includes_list << :products if ::Category.reflect_on_association(:products)
+        includes_list << :banner_attachment if ::Category.reflect_on_association(:banner_attachment)
+        includes_list << :icon_attachment if ::Category.reflect_on_association(:icon_attachment)
         
-        if Category.reflect_on_association(:companies)
-           if Company.reflect_on_association(:logo_attachment)
+        if ::Category.reflect_on_association(:companies)
+           if ::Company.reflect_on_association(:logo_attachment)
               includes_list << { companies: :logo_attachment }
            else
               includes_list << :companies
@@ -280,7 +280,7 @@ module Api
       # Cards View Mode
       # -------------------------
       def render_cards_view
-        @categories = Category.where(status: 'active')
+        @categories = ::Category.where(status: 'active')
 
         # Filtros opcionais
         @categories = @categories.where(featured: true) if params[:featured] == 'true'

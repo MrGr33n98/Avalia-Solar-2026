@@ -2,7 +2,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
   before_action :set_product, only: %i[show update destroy]
 
   def index
-    @products = Product.includes(:company, :categories)
+    @products = ::Product.includes(:company, :categories)
 
     # Filtra por company_id se fornecido
     @products = @products.where(company_id: params[:company_id]) if params[:company_id].present?

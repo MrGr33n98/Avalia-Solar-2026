@@ -89,6 +89,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAccessDenied, setIsAccessDenied] = useState(false);
+  const [memberRole, setMemberRole] = useState<string | null>(null);
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -154,7 +155,16 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
     fetchCompanyData();
     fetchDashboardStats();
     fetchNotifications();
-  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
+    (async () => {
+      try {
+        const data = await fetchApi<{ items: any[] }>('/company/pending_changes');
+      } catch {}
+      try {
+        const data = await fetchApi<{ items: any[] }>('/company/members');
+        const me = (data?.items || []).find((m) => m?.user?.id && company?.id && m.user.id);
+        if (me?.role) setMemberRole(me.role);
+      } catch {}
+    }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
 
   if (loading) {
     return (
@@ -292,6 +302,9 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
                   {company?.name}
                   {company?.verified && (
                     <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                  )}
+                  {memberRole && (
+                    <Badge variant="outline" className="ml-2">{memberRole}</Badge>
                   )}
                 </h1>
                 <p className="text-sm text-muted-foreground">

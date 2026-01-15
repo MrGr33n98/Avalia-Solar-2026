@@ -8,7 +8,7 @@ FactoryBot.define do
   factory :plan do
     name { "Basic Plan" }
     price { 99.90 }
-    features_json { { max_products: 50, dashboard_access: true }.to_json }
+    features { { max_products: 50, dashboard_access: true } }
   end
 
   factory :company do
@@ -65,11 +65,20 @@ FactoryBot.define do
   end
 
   factory :user do
+    name { Faker::Name.name }
     email { Faker::Internet.email }
-    password { "password123" }
+    password { "Password123" } # Meets complexity: Upper, lower, number, 8+
     association :company
     status { :active }
-    role { :company_admin }
+    role { :company }
+    terms_accepted { true }
+    terms_accepted_at { Time.current }
+  end
+
+  factory :company_member do
+    association :company
+    association :user
+    role { :editor }
   end
   
   factory :lead do

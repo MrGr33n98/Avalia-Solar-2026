@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { signInWithGoogle, signInWithLinkedIn } from '@/lib/betterAuthClient';
 import { getApiOrigin } from '@/lib/api-config';
 
 export function LoginPageContent() {
@@ -102,11 +103,12 @@ export function LoginPageContent() {
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
-            {googleAuthUrl ? (
-              <Button type="button" variant="outline" className="w-full" asChild>
-                <Link href={googleAuthUrl}>Continuar com Google</Link>
-              </Button>
-            ) : null}
+            <Button type="button" variant="outline" className="w-full" onClick={() => signInWithGoogle()}>
+              Continuar com Google
+            </Button>
+            <Button type="button" variant="outline" className="w-full" onClick={() => signInWithLinkedIn()}>
+              Continuar com LinkedIn
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

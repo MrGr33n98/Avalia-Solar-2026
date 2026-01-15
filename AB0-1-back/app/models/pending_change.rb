@@ -19,6 +19,7 @@ class PendingChange < ApplicationRecord
     logo
     product
     media
+    video
     cta_config
     access_request
     profile_update
@@ -64,6 +65,8 @@ class PendingChange < ApplicationRecord
       apply_product_changes
     when 'media'
       apply_media_changes
+    when 'video'
+      apply_video_changes
     when 'cta_config'
       apply_cta_changes
     when 'access_request'
@@ -126,6 +129,24 @@ class PendingChange < ApplicationRecord
       rescue => e
         Rails.logger.error "Failed to attach media blob: #{e.message}"
       end
+    end
+  end
+
+  def apply_video_changes
+    action = data['action']
+    if action == 'add'
+      CompanyVideo.create!(
+        company: company,
+        url: data['url'],
+        provider: data['provider'] || 'youtube',
+        video_id: data['video_id'],
+        title: data['title'],
+        thumbnail_url: data['thumbnail_url'],
+        status: 'published'
+      )
+    elsif action == 'remove'
+      vid = data['video_id']
+      CompanyVideo.where(company: company, video_id: vid).delete_all
     end
   end
 

@@ -241,6 +241,43 @@ end
         end
       end
     end
+
+    panel 'Galeria' do
+      columns do
+        column do
+          panel 'Imagens' do
+            if resource.media_assets.attached?
+              ul do
+                resource.media_assets.each do |img|
+                  li { image_tag(url_for(img), style: 'max-width: 120px; height: auto;') }
+                end
+              end
+            else
+              status_tag 'Sem imagens'
+            end
+          end
+        end
+        column do
+          panel 'Vídeos' do
+            vids = resource.company_videos.where(status: 'published')
+            if vids.any?
+              ul do
+                vids.each do |v|
+                  li do
+                    if v.thumbnail_url.present?
+                      span(image_tag(v.thumbnail_url, style: 'max-width: 120px; height: auto;'))
+                    end
+                    text_node " #{v.provider} – #{v.video_id}"
+                  end
+                end
+              end
+            else
+              status_tag 'Sem vídeos'
+            end
+          end
+        end
+      end
+    end
   end
 
   filter :name

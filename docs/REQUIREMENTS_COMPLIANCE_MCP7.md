@@ -1,0 +1,21 @@
+# Relatório de Conformidade MCP7
+
+- Pending Changes
+  - Endpoints de lista/detalhe implementados
+  - Audit log em aprovações/rejeições
+- Acesso Corporativo
+  - CompanyMember criado com roles
+  - Endpoints CRUD de membros
+- Better Auth
+  - Bridge backend aceitando BETTER_AUTH_SECRET
+  - Frontend com botões Google/LinkedIn
+- Segurança
+  - Rack::Attack ajustado
+  - Cookies e CSRF mantidos conforme API
+- Desempenho
+  - Suporte a processamento assíncrono via Sidekiq (arquitetura)
+- Testes
+  - Backend integração cobrindo endpoints novos
+  - Frontend coverage ajustado para 80%
+- CI
+  - Workflow de testes e cobertura adicionado

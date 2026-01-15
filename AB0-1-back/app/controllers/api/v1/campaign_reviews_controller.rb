@@ -2,11 +2,11 @@ class Api::V1::CampaignReviewsController < Api::V1::BaseController
   before_action :set_campaign_review, only: %i[show update destroy]
 
   def index
-    scope = CampaignReview.includes(:company, :product, :campaign).order(created_at: :desc)
+    scope = ::CampaignReview.includes(:company, :product, :campaign).order(created_at: :desc)
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
     scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
     scope = scope.sponsored if ActiveModel::Type::Boolean.new.cast(params[:sponsored])
-    render json: scope, each_serializer: CampaignReviewSerializer
+    render json: scope, each_serializer: ::CampaignReviewSerializer
   rescue StandardError => e
     Rails.logger.error("CampaignReviews#index error: #{e.message}")
     render json: { error: 'Erro interno' }, status: :internal_server_error

@@ -50,7 +50,13 @@ module Api
         begin
           JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
         rescue JWT::DecodeError
-          nil
+          begin
+            secret = ENV['BETTER_AUTH_SECRET']
+            return nil unless secret.present?
+            JWT.decode(token, secret, true, algorithm: 'HS256').first.with_indifferent_access
+          rescue JWT::DecodeError
+            nil
+          end
         end
       end
 

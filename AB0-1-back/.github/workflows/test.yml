@@ -1,4 +1,4 @@
-name: Backend Tests
+name: Backend CI
 
 on:
   push:
@@ -7,10 +7,29 @@ on:
     branches: [ main, develop, master ]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-    
-    # Service containers para PostgreSQL
+    env:
+      RAILS_ENV: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+
+      - name: Run RuboCop
+        run: bundle exec rubocop --parallel
+
+      - name: Run Brakeman
+        run: bundle exec brakeman -q -w2
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:14
@@ -40,7 +59,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2.2'
-          bundler-cache: true # Executa 'bundle install' e faz cache
+          bundler-cache: true
 
       - name: Install dependencies
         run: |
@@ -49,18 +68,13 @@ jobs:
 
       - name: Setup Database
         run: |
-          bundle exec rails db:create db:schema:load --trace
+          bundle exec rails db:create db:schema:load
 
-      - name: Run Tests with Coverage
+      - name: Run RSpec Tests
         run: |
-          COVERAGE=true bundle exec rails test
+          bundle exec rspec
         env:
           COVERAGE: true
-
-      - name: Run System Tests (if exists)
-        run: |
-          bundle exec rails test:system
-        continue-on-error: true # Não falhar se system tests não existirem
 
       - name: Upload Coverage Report
         if: always()
@@ -68,21 +82,3 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: |
-            log/test.log
-            tmp/screenshots/
-
-      - name: Test Summary
-        if: always()
-        run: |
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
-          if [ -f log/test.log ]; then
-            echo "📝 Test log available in artifacts" >> $GITHUB_STEP_SUMMARY
-          fi

@@ -2,11 +2,11 @@ class Api::V1::ForumQuestionsController < Api::V1::BaseController
   before_action :set_forum_question, only: %i[show update destroy]
 
   def index
-    scope = ForumQuestion.includes(:category, :company, :product, :user).order(created_at: :desc)
+    scope = ::ForumQuestion.includes(:category, :company, :product, :user).order(created_at: :desc)
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
     scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
-    render json: scope, each_serializer: ForumQuestionSerializer
+    render json: scope, each_serializer: ::ForumQuestionSerializer
   rescue StandardError => e
     Rails.logger.error("ForumQuestions#index error: #{e.message}")
     render json: { error: 'Erro interno' }, status: :internal_server_error

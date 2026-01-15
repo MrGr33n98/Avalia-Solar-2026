@@ -32,7 +32,10 @@ class Company < ApplicationRecord
   accepts_nested_attributes_for :financing_options, allow_destroy: true
   has_many :banners, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
+  has_many :company_videos, dependent: :destroy
   belongs_to :plan, optional: true
+  has_many :company_members, dependent: :destroy
+  has_many :members, through: :company_members, source: :user
 
   # =========================
   # Validations
@@ -245,6 +248,10 @@ class Company < ApplicationRecord
 
   def media_urls
     media_assets.attached? ? media_assets.map { |m| Rails.application.routes.url_helpers.rails_blob_url(m, only_path: false) } : []
+  end
+
+  def published_videos
+    company_videos.where(status: 'published')
   end
 
   def whatsapp_url

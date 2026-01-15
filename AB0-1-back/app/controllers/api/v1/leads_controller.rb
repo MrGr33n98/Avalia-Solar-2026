@@ -2,10 +2,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
 
   def index
-    @leads = Lead.all
+    @leads = ::Lead.all
     
     # Check if status column exists before filtering
-    if params[:status].present? && Lead.column_names.include?('status')
+    if params[:status].present? && ::Lead.column_names.include?('status')
       @leads = @leads.where(status: params[:status])
     end
     
@@ -13,7 +13,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
       cid = params[:company_id].presence && params[:company_id].to_i
       cname = params[:company_name].presence
 
-      company_id_supported = Lead.column_names.include?('company_id')
+      company_id_supported = ::Lead.column_names.include?('company_id')
 
       if cid && cname && company_id_supported
         @leads = @leads.where('(company_id = ? OR company = ?)', cid, cname)
@@ -25,7 +25,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
     
     # Only order by created_at if the column exists
-    if Lead.column_names.include?('created_at')
+    if ::Lead.column_names.include?('created_at')
       @leads = @leads.order(created_at: :desc)
     end
     

@@ -5,12 +5,12 @@ class Api::V1::BannersController < ApplicationController
   #   - category_id: integer (optional) - When provided, returns banners assigned to the category OR global (no categories)
   #   - limit: integer (optional) - Limit number of results
   def index
-    @banners = Banner.currently_active
+    @banners = ::Banner.currently_active
 
     @banners = @banners.where(position: params[:position]) if params[:position].present?
 
     if params[:category_id].present?
-      if Banner.reflect_on_association(:categories)
+      if ::Banner.reflect_on_association(:categories)
         @banners = @banners.left_joins(:categories)
                            .where('categories.id = ? OR categories.id IS NULL', params[:category_id])
                            .distinct
@@ -20,7 +20,7 @@ class Api::V1::BannersController < ApplicationController
     end
 
     # Sponsored first, then newest
-    if Banner.column_names.include?('sponsored')
+    if ::Banner.column_names.include?('sponsored')
       @banners = @banners.order(sponsored: :desc, created_at: :desc)
     else
       @banners = @banners.order(created_at: :desc)

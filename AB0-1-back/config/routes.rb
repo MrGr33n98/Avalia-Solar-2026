@@ -89,11 +89,14 @@ Rails.application.routes.draw do
         get 'notifications', to: 'company_dashboard#notifications'
         get 'pending_changes', to: 'company_dashboard#pending_changes'
         get 'media', to: 'company_dashboard#media'
+        get 'videos', to: 'company_dashboard#videos'
         post 'update_info', to: 'company_dashboard#update_info'
         post 'add_categories', to: 'company_dashboard#add_categories'
         post 'remove_category', to: 'company_dashboard#remove_category'
         post 'update_ctas', to: 'company_dashboard#update_ctas'
         post 'upload_media', to: 'company_dashboard#upload_media'
+        post 'add_video', to: 'company_dashboard#add_video'
+        delete 'remove_video', to: 'company_dashboard#remove_video'
 
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
           member do
@@ -176,6 +179,15 @@ Rails.application.routes.draw do
         resources :leads, only: [:index]
         resources :products, only: [:index]
         resource :company, only: [:update]
+      end
+      
+      namespace :company do
+        resources :members do
+          collection do
+            post :invite
+          end
+        end
+        resources :pending_changes, only: [:index, :show]
       end
     end
   end

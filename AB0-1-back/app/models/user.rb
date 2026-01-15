@@ -13,6 +13,8 @@ class User < ApplicationRecord
   has_many :notification_mentions, as: :record, dependent: :destroy, class_name: 'Noticed::Event'
 
   belongs_to :company, optional: true
+  has_many :company_members, dependent: :destroy
+  has_many :member_companies, through: :company_members, source: :company
 
   # Role validation
   ROLES = %w[user admin company review].freeze
