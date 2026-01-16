@@ -118,7 +118,7 @@ export default function LandingHeroBanner({
                   style={typeof slide.width === 'number' && slide.width > 0 ? { maxWidth: `${slide.width}px` } : undefined}
                 >
                   <CardContent
-                    className="relative p-0 h-[220px] sm:h-[260px] md:h-[300px] lg:h-[320px]"
+                    className="relative p-0 h-[220px] sm:h-[280px] md:h-[340px] lg:h-[380px]"
                     style={
                       typeof slide.width === 'number' &&
                       slide.width > 0 &&
@@ -134,7 +134,7 @@ export default function LandingHeroBanner({
                       fill
                       priority={index === 0}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                      className="object-cover object-center"
+                      className="object-cover object-top"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/20 to-transparent" />
