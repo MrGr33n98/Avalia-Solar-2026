@@ -76,7 +76,7 @@ export default function LandingHeroBanner({
         id: 'fallback',
         title,
         link: undefined,
-        imageSrc: '/images/banner-avalia-solar.png',
+        imageSrc: '/images/herro-banner-avalia-solar.png',
         width: null,
         height: null,
       },
