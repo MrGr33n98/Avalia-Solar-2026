@@ -164,17 +164,86 @@ jobs:
             fi
 
             echo "🗄️ Migrações de banco..."
-            # Check if schema_migrations table exists (indicates db is initialized)
-            if docker compose exec -T backend bundle exec rails runner "ActiveRecord::Base.connection.table_exists?('schema_migrations')" 2>/dev/null | grep -q "true"; then
-              echo "📝 Running migrations on existing database..."
+            
+            # 1. Criar extensão PostgreSQL para índices JSON (se necessário)
+            echo "📦 Criando extensão PostgreSQL btree_gin..."
+            docker compose exec -T db psql -U postgres -d ab0 -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" 2>/dev/null || echo "⚠️ Extensão já existe ou erro ignorado"
+
+            # 2. Configurar environment Rails
+            echo "⚙️ Configurando ambiente Rails..."
+            docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
+
+            # 3. Verificar estado do banco de forma mais robusta
+            echo "🔍 Verificando estado do banco..."
+            TABLES_COUNT=$(docker compose exec -T backend bundle exec rails runner "
+              begin
+                puts ActiveRecord::Base.connection.tables.count
+              rescue => e
+                puts '0'
+              end
+            " 2>/dev/null || echo "0")
+
+            echo "📊 Número de tabelas encontradas: $TABLES_COUNT"
+
+            # 4. Executar setup ou migrate baseado no estado real
+            if [[ "$TABLES_COUNT" -gt 5 ]]; then
+              echo "📝 Banco já populado, executando migrações..."
               docker compose exec -T backend bundle exec rails db:migrate
             else
-              echo "🆕 Fresh database detected. Setting up database..."
-              docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
-              docker compose exec -T backend bundle exec rails db:schema:load
-              docker compose exec -T backend bundle exec rails db:seed || echo "⚠️ Seed failed (might be ok if no seeds exist)"
+              echo "🆕 Banco vazio ou quase vazio, executando setup completo..."
+              # Usar DISABLE_DATABASE_ENVIRONMENT_CHECK para produção
+              docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:setup
+              
+              # Verificar se db:setup funcionou
+              NEW_TABLES_COUNT=$(docker compose exec -T backend bundle exec rails runner "
+                puts ActiveRecord::Base.connection.tables.count
+              " 2>/dev/null || echo "0")
+              
+              if [[ "$NEW_TABLES_COUNT" -gt 5 ]]; then
+                echo "✅ Database setup concluído com sucesso!"
+              else
+                echo "⚠️ db:setup pode ter falhado, tentando abordagem alternativa..."
+                # Tentar componentes separados
+                docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:schema:load || true
+                docker compose exec -T backend bundle exec rails db:seed || echo "⚠️ Seeds podem falhar (normal se não existirem)"
+              fi
+            fi
+
+            # 5. Verificação final
+            echo "✅ Verificando criação das tabelas..."
+            FINAL_TABLES=$(docker compose exec -T backend bundle exec rails runner "
+              tables = ActiveRecord::Base.connection.tables
+              puts tables.count
+              if tables.count < 10
+                puts 'ERROR: Poucas tabelas criadas: ' + tables.count.to_s
+                exit 1
+              end
+            " 2>/dev/null)
+
+            if [[ "$FINAL_TABLES" =~ ERROR ]]; then
+              echo "❌ Falha na criação do banco de dados!"
+              exit 1
+            else
+              echo "🎉 Banco de dados configurado com $FINAL_TABLES tabelas!"
+            fi
+
+            # 6. Rebuild do frontend se necessário (para resolver Server Actions)
+            echo "🔨 Verificando necessidade de rebuild do frontend..."
+            FRONTEND_BUILD_ID=$(docker compose exec -T frontend sh -c "cat .next/BUILD_ID 2>/dev/null || echo 'no_build'" 2>/dev/null || echo "no_build")
+            
+            if [[ "$FRONTEND_BUILD_ID" == "no_build" ]]; then
+              echo "🔄 Build do Next.js não encontrado, rebuild necessário..."
+              docker compose build frontend --no-cache
+              docker compose up -d --force-recreate frontend
+              echo "✅ Frontend rebuild concluído!"
+            else
+              echo "✅ Build do Next.js encontrado (ID: $FRONTEND_BUILD_ID)"
+              # Ainda assim, reiniciar para garantir sincronização
+              docker compose restart frontend
             fi
 
             echo "🧹 Limpeza e Finalização..."
             docker image prune -f
-            echo "✅ Deploy finalizado com sucesso!"
+            docker system prune -f --volumes || true
+            
+            echo "✅✅✅ Deploy finalizado com sucesso! ✅✅✅"

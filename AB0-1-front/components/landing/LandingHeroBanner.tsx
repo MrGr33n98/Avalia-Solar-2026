@@ -137,7 +137,7 @@ export default function LandingHeroBanner({
                       className="object-cover object-center"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/35 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/20 to-transparent" />
 
                     <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[520px] space-y-2 md:space-y-3 pr-4">
                       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
