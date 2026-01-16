@@ -119,55 +119,88 @@ export default function LandingHeroBanner({
           <CarouselContent className="-ml-0">
             {slides.map((slide, index) => {
               const hasNativeRatio = isValidNumber(slide.width) && isValidNumber(slide.height);
-              // Se o banner não vier com w/h do backend, assume o padrão 3:1 (2400x800)
               const aspectRatioStyle = hasNativeRatio
                 ? ({ aspectRatio: `${slide.width} / ${slide.height}` } as const)
-                : ({ aspectRatio: '3 / 1' } as const);
-
-              // Mantém “hero” consistente (evita maxWidth virar gargalo e forçar cortes estranhos)
-              // Se você QUISER respeitar maxWidth do banner, reative o style abaixo.
-              const cardStyle = undefined as React.CSSProperties | undefined;
+                : undefined;
 
               return (
                 <CarouselItem key={slide.id} className="pl-0">
-                  <Card
-                    className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm mx-auto w-full"
-                    style={cardStyle}
-                  >
-                    <CardContent className="relative p-0 w-full" style={aspectRatioStyle}>
-                      <Image
-                        src={slide.imageSrc}
-                        alt={slide.title || title}
-                        fill
-                        priority={index === 0}
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                        className="object-cover object-center"
-                      />
+                  <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm w-full">
+                    {/* Wrapper: no mobile vira "imagem + card texto", no desktop vira "overlay" */}
+                    <CardContent className="p-0">
+                      {/* ====== HERO VISUAL ====== */}
+                      <div
+                        className={cn(
+                          'relative w-full',
+                          // Mobile: um pouco mais alto pra ficar bonito e não cortar rosto
+                          'aspect-[16/10] sm:aspect-[16/9]',
+                          // Desktop: wide startup
+                          'md:aspect-[3/1]'
+                        )}
+                        style={aspectRatioStyle}
+                      >
+                        <Image
+                          src={slide.imageSrc}
+                          alt={slide.title || title}
+                          fill
+                          priority={index === 0}
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+                          className={cn(
+                            'object-cover',
+                            // Mobile: prioriza centro/um pouco acima pra não cortar
+                            'object-[60%_35%]',
+                            // Desktop: desloca um pouco pra direita (evita cortar assunto)
+                            'md:object-[70%_40%]'
+                          )}
+                        />
 
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/25 to-transparent" />
+                        {/* Desktop overlay (premium) */}
+                        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-white/80 via-white/25 to-transparent" />
+                        <div className="hidden md:block absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 to-transparent" />
 
-                      <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[520px] space-y-2 md:space-y-3 pr-4">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-                          {title}
-                        </h1>
-
-                        <p className="text-slate-700 text-sm sm:text-base md:text-lg">
-                          {subtitle}
-                        </p>
-
-                        <div className="pt-2 flex items-center gap-3">
-                          <Button
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-                            onClick={() => openQuoteWizard({ source: ctaSource })}
-                          >
-                            {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                          </Button>
+                        {/* Desktop content overlay */}
+                        <div className="hidden md:flex absolute inset-0 items-center">
+                          <div className="pl-6 lg:pl-10 pr-6 max-w-[560px]">
+                            <div className="rounded-2xl bg-white/55 backdrop-blur-md border border-white/60 shadow-sm p-5 lg:p-6">
+                              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+                                {title}
+                              </h1>
+                              <p className="mt-2 text-slate-700 text-base lg:text-lg">
+                                {subtitle}
+                              </p>
+                              <div className="mt-4 flex items-center gap-3">
+                                <Button
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                                  onClick={() => openQuoteWizard({ source: ctaSource })}
+                                >
+                                  {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Opcional: melhora legibilidade no mobile (borda inferior mais escura)
-                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 to-transparent" />
-                      */}
+                      {/* ====== MOBILE CONTENT (abaixo da imagem) ====== */}
+                      <div className="md:hidden p-4">
+                        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+                          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                            {title}
+                          </h1>
+                          <p className="mt-1 text-slate-600 text-sm">
+                            {subtitle}
+                          </p>
+
+                          <div className="mt-3">
+                            <Button
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                              onClick={() => openQuoteWizard({ source: ctaSource })}
+                            >
+                              {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </CarouselItem>
@@ -197,4 +230,22 @@ export default function LandingHeroBanner({
                   onClick={() => api?.scrollTo(idx)}
                   className={cn(
                     'h-1.5 w-8 rounded-full transition-colors',
-                    idx === selectedIndex ? 'bg-blue-600' : 'bg-blue-200/70 hover:bg-blue-
+                    idx === selectedIndex ? 'bg-blue-600' : 'bg-blue-200/70 hover:bg-blue-300'
+                  )}
+                  aria-label={`Ir para o banner ${idx + 1}`}
+                  aria-current={idx === selectedIndex}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {!loading && error ? (
+            <p className="mt-2 text-xs text-gray-500">
+              Não foi possível carregar os banners agora. Exibindo imagem padrão.
+            </p>
+          ) : null}
+        </Carousel>
+      </div>
+    </section>
+  );
+}
