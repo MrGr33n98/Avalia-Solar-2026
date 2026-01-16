@@ -164,7 +164,14 @@ jobs:
             fi
 
             echo "🗄️ Migrações de banco..."
-            docker compose exec -T backend bundle exec rails db:migrate
+            # Check if schema_migrations table exists (indicates db is initialized)
+            if docker compose exec -T backend bundle exec rails runner "ActiveRecord::Base.connection.table_exists?('schema_migrations')" 2>/dev/null | grep -q "true"; then
+              echo "📝 Running migrations on existing database..."
+              docker compose exec -T backend bundle exec rails db:migrate
+            else
+              echo "🆕 Fresh database detected. Loading schema..."
+              docker compose exec -T backend bundle exec rails db:schema:load db:seed
+            fi
 
             echo "🧹 Limpeza e Finalização..."
             docker image prune -f
