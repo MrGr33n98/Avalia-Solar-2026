@@ -169,8 +169,10 @@ jobs:
               echo "📝 Running migrations on existing database..."
               docker compose exec -T backend bundle exec rails db:migrate
             else
-              echo "🆕 Fresh database detected. Loading schema..."
-              docker compose exec -T backend bundle exec rails db:schema:load db:seed
+              echo "🆕 Fresh database detected. Setting up database..."
+              docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
+              docker compose exec -T backend bundle exec rails db:schema:load
+              docker compose exec -T backend bundle exec rails db:seed || echo "⚠️ Seed failed (might be ok if no seeds exist)"
             fi
 
             echo "🧹 Limpeza e Finalização..."

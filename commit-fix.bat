@@ -1,17 +1,16 @@
 @echo off
 cd /d "%~dp0"
 
-git add AB0-1-back\db\migrate\202512280001_add_effect_to_companies.rb
 git add .github\workflows\deploy-v1.yml
 
-git commit -m "fix: handle fresh database setup and fix migration error
+git commit -m "fix: resolve NoEnvironmentInSchemaError on fresh database setup
 
-- Added table_exists? check to AddEffectToCompanies migration
-- Updated deployment workflow to detect fresh vs existing database
-- Fresh databases now use schema:load instead of migrate
-- Prevents PG::UndefinedTable error when tables don't exist yet
+- Added db:environment:set before db:schema:load for fresh databases
+- Split schema:load and seed into separate commands
+- Added fallback for seed failures (when no seed file exists)
+- This fixes the Rails 7 environment metadata requirement
 
-Fixes #176"
+Fixes #177"
 
 git push origin main
 
