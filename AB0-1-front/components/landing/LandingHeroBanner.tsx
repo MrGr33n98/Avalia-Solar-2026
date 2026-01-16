@@ -134,7 +134,7 @@ export default function LandingHeroBanner({
                       fill
                       priority={index === 0}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                      className="object-contain object-center"
+                      className="object-cover object-center"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/35 to-transparent" />
