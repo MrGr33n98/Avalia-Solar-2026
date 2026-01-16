@@ -46,6 +46,10 @@ function resolveImageSrc(imageUrl?: string | null): string | null {
   return getFullImageUrl(trimmed);
 }
 
+function isValidNumber(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0;
+}
+
 export default function LandingHeroBanner({
   position = 'home_top',
   className,
@@ -70,8 +74,10 @@ export default function LandingHeroBanner({
         height: b.height ?? null,
       }))
       .filter((s) => Boolean(s.imageSrc));
+
     if (normalized.length > 0) return normalized;
-      return [
+
+    return [
       {
         id: 'fallback',
         title,
@@ -111,55 +117,62 @@ export default function LandingHeroBanner({
           className="w-full"
         >
           <CarouselContent className="-ml-0">
-            {slides.map((slide, index) => (
-              <CarouselItem key={slide.id} className="pl-0">
-                <Card
-                  className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm mx-auto w-full"
-                  style={typeof slide.width === 'number' && slide.width > 0 ? { maxWidth: `${slide.width}px` } : undefined}
-                >
-                  <CardContent
-                    className="relative p-0 h-[220px] sm:h-[280px] md:h-[340px] lg:h-[380px]"
-                    style={
-                      typeof slide.width === 'number' &&
-                      slide.width > 0 &&
-                      typeof slide.height === 'number' &&
-                      slide.height > 0
-                        ? { aspectRatio: `${slide.width} / ${slide.height}` }
-                        : undefined
-                    }
+            {slides.map((slide, index) => {
+              const hasNativeRatio = isValidNumber(slide.width) && isValidNumber(slide.height);
+              // Se o banner não vier com w/h do backend, assume o padrão 3:1 (2400x800)
+              const aspectRatioStyle = hasNativeRatio
+                ? ({ aspectRatio: `${slide.width} / ${slide.height}` } as const)
+                : ({ aspectRatio: '3 / 1' } as const);
+
+              // Mantém “hero” consistente (evita maxWidth virar gargalo e forçar cortes estranhos)
+              // Se você QUISER respeitar maxWidth do banner, reative o style abaixo.
+              const cardStyle = undefined as React.CSSProperties | undefined;
+
+              return (
+                <CarouselItem key={slide.id} className="pl-0">
+                  <Card
+                    className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm mx-auto w-full"
+                    style={cardStyle}
                   >
-                    <Image
-                      src={slide.imageSrc}
-                      alt={slide.title || title}
-                      fill
-                      priority={index === 0}
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                      className="object-cover object-top"
-                    />
+                    <CardContent className="relative p-0 w-full" style={aspectRatioStyle}>
+                      <Image
+                        src={slide.imageSrc}
+                        alt={slide.title || title}
+                        fill
+                        priority={index === 0}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+                        className="object-cover object-center"
+                      />
 
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/25 to-transparent" />
 
-                    <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[520px] space-y-2 md:space-y-3 pr-4">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-                        {title}
-                      </h1>
-                      <p className="text-slate-700 text-sm sm:text-base md:text-lg">
-                        {subtitle}
-                      </p>
+                      <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[520px] space-y-2 md:space-y-3 pr-4">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+                          {title}
+                        </h1>
 
-                      <div className="pt-2 flex items-center gap-3">
-                        <Button
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-                          onClick={() => openQuoteWizard({ source: ctaSource })}
-                        >
-                          {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        <p className="text-slate-700 text-sm sm:text-base md:text-lg">
+                          {subtitle}
+                        </p>
+
+                        <div className="pt-2 flex items-center gap-3">
+                          <Button
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                            onClick={() => openQuoteWizard({ source: ctaSource })}
+                          >
+                            {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
+
+                      {/* Opcional: melhora legibilidade no mobile (borda inferior mais escura)
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 to-transparent" />
+                      */}
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
 
           {slides.length > 1 ? (
@@ -184,22 +197,4 @@ export default function LandingHeroBanner({
                   onClick={() => api?.scrollTo(idx)}
                   className={cn(
                     'h-1.5 w-8 rounded-full transition-colors',
-                    idx === selectedIndex ? 'bg-blue-600' : 'bg-blue-200/70 hover:bg-blue-300'
-                  )}
-                  aria-label={`Ir para o banner ${idx + 1}`}
-                  aria-current={idx === selectedIndex}
-                />
-              ))}
-            </div>
-          ) : null}
-
-          {!loading && error ? (
-            <p className="mt-2 text-xs text-gray-500">
-              Não foi possível carregar os banners agora. Exibindo imagem padrão.
-            </p>
-          ) : null}
-        </Carousel>
-      </div>
-    </section>
-  );
-}
+                    idx === selectedIndex ? 'bg-blue-600' : 'bg-blue-200/70 hover:bg-blue-
