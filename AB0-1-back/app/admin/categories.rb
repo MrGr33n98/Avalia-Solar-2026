@@ -1,7 +1,7 @@
 require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
-  permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
+  permit_params :name, :seo_url, :seo_title, :short_description, :description, :kind, :status, :featured,
                 :banner, :icon, company_ids: [], product_ids: [],
                 badges_attributes: [:id, :name, :description, :year, :badge_image, :_destroy]
 
@@ -31,7 +31,6 @@ ActiveAdmin.register Category, namespace: :admin do
           seo_title: row['seo_title'],
           short_description: row['short_description'],
           description: row['description'],
-          parent_id: row['parent_id'].present? ? row['parent_id'] : nil,
           kind: row['kind'] || 'product',
           status: row['status'] || 'active',
           featured: row['featured'] == 'true'
@@ -57,7 +56,6 @@ ActiveAdmin.register Category, namespace: :admin do
 
   # Define filters
   filter :name
-  filter :parent, as: :select, collection: proc { Category.where(parent_id: nil) }
   filter :kind
   filter :featured
   filter :status
@@ -71,9 +69,6 @@ ActiveAdmin.register Category, namespace: :admin do
   # Enhanced form
   form do |f|
     f.inputs 'Basic Information' do
-      f.input :parent_id, as: :select, 
-              collection: Category.where.not(id: f.object.id).map { |c| ["#{'-' * (c.respond_to?(:depth) ? c.depth : 0)} #{c.name}", c.id] }, 
-              include_blank: 'Root Category'
       f.input :name
       f.input :short_description, label: 'Meta Description / Short Description', hint: 'Used for SEO and card previews'
       f.input :description, as: :text, input_html: { rows: 10 }
@@ -124,7 +119,6 @@ ActiveAdmin.register Category, namespace: :admin do
         link_to category.name, admin_category_path(category)
       end
     end
-    column :parent
     column :companies_count
     column :products_count
     column :average_rating do |category|
@@ -161,7 +155,6 @@ ActiveAdmin.register Category, namespace: :admin do
         status_tag(category.status == 'active' ? 'Active' : 'Inactive', class: (category.status == 'active' ? 'ok' : 'error'))
       end
       row :kind
-      row :parent
       row :companies_count
       row :products_count
       row :average_rating
