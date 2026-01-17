@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_16_234500) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -283,7 +283,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
     t.boolean "featured", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "companies_count", default: 0
+    t.integer "products_count", default: 0
+    t.decimal "average_rating", precision: 3, scale: 2, default: "0.0"
+    t.decimal "average_price", precision: 10, scale: 2, default: "0.0"
+    t.integer "views_count", default: 0
+    t.index ["average_price"], name: "index_categories_on_average_price"
+    t.index ["average_rating"], name: "index_categories_on_average_rating"
+    t.index ["companies_count"], name: "index_categories_on_companies_count"
     t.index ["seo_url"], name: "index_categories_on_seo_url", unique: true
+    t.index ["views_count"], name: "index_categories_on_views_count"
   end
 
   create_table "categories_companies", id: false, force: :cascade do |t|
@@ -362,8 +371,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.jsonb "project_types", default: [], null: false
-    t.jsonb "services_offered", default: [], null: false
+    t.json "project_types", default: [], null: false
+    t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
     t.boolean "effect", default: false, null: false
@@ -371,13 +380,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
     t.integer "cta_clicks_count", default: 0, null: false
     t.integer "whatsapp_clicks_count", default: 0, null: false
     t.integer "plan_id"
+    t.string "moderation_status"
+    t.datetime "submitted_at"
+    t.datetime "approved_at"
+    t.integer "approved_by_admin_user_id"
+    t.text "rejected_reason"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
-    t.index ["project_types"], name: "index_companies_on_project_types", using: :gin
-    t.index ["services_offered"], name: "index_companies_on_services_offered", using: :gin
+    t.index ["project_types"], name: "index_companies_on_project_types"
+    t.index ["services_offered"], name: "index_companies_on_services_offered"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
     t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
@@ -690,6 +704,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
     t.integer "company_id"
     t.boolean "verified", default: false
     t.boolean "featured", default: false
+    t.integer "status", default: 0
+    t.text "reply"
+    t.datetime "replied_at"
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
@@ -754,6 +771,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_15_144826) do
     t.text "rejection_reason"
     t.integer "company_id"
     t.boolean "approved_by_admin", default: false, null: false
+    t.string "city"
+    t.string "state"
+    t.string "phone"
     t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true

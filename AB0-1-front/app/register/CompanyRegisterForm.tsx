@@ -146,7 +146,7 @@ export default function CompanyRegisterForm({ onSuccess }: CompanyRegisterFormPr
             id="name"
             placeholder="Ex: Solar Tech Soluções"
             className={`border-slate-200 focus:ring-emerald-500/20 ${errors.name ? 'border-red-500' : ''}`}
-            {...register('name', { required: 'Nome é obrigatório', minLength: { value: 3, message: 'Mínimo 3 caracteres' } })}
+            {...register('name', { required: 'Nome é obrigatório', minLength: { value: 5, message: 'Mínimo 5 caracteres' } })}
           />
           {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
         </div>

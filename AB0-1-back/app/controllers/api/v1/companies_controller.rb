@@ -15,6 +15,15 @@ module Api
         @companies = ::Company.includes(:categories, :reviews)
                             .order(created_at: :desc)
 
+        # Filtra por company_id se fornecido (para sub-recursos se houver)
+        # ...
+        
+        # Filtra por empresas do usuário autenticado
+        if ActiveModel::Type::Boolean.new.cast(params[:mine])
+          authenticate_api_user
+          @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
+        end
+
         # Filtros
         if params[:status].present?
           @companies = @companies.where(status: params[:status])

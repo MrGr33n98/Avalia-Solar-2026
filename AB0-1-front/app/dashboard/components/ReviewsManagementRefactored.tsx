@@ -5,7 +5,7 @@
  * Gestão profissional de avaliações com filtros, ordenação e ações
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Star, 
   ThumbsUp, 
@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
+import { reviewsApi } from '@/lib/api';
 
 // shadcn/ui components
 import {
@@ -60,31 +61,75 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Types
-import type { Review } from '../types';
-
 // Utils
-import { cn, formatRelativeTime } from '../utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 
-interface ReviewsManagementProps {
-  companyId: string;
+// Types
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  user_name: string;
+  user_avatar?: string;
+  created_at: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reply?: string;
+  replied_at?: string;
+  company_name: string;
+  featured?: boolean;
+  verified?: boolean;
+  helpful_count?: number;
 }
 
-type FilterType = 'all' | 'featured' | 'verified' | 'pending';
-type SortType = 'recent' | 'rating' | 'helpful';
+type FilterType = 'all' | 'pending' | 'approved' | 'rejected';
+type SortType = 'recent' | 'rating';
 
-export default function ReviewsManagement({ companyId }: ReviewsManagementProps) {
+export function ReviewsManagementRefactored() {
   const { toast } = useToast();
   
   // State
-  const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [loading, setLoading] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [sortType, setSortType] = useState<SortType>('recent');
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      const data = await reviewsApi.listMine();
+      setReviews(data);
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+      toast({
+        title: 'Erro ao carregar avaliações',
+        description: 'Não foi possível carregar suas avaliações. Tente novamente mais tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Aprovada</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Rejeitada</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Em Análise</Badge>;
+      default:
+        return null;
+    }
+  };
 
   // Computed values
   const filteredAndSortedReviews = useMemo(() => {
@@ -93,22 +138,14 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     // Apply search filter
     if (searchQuery) {
       result = result.filter(review =>
-        review.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        review.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         review.comment.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply type filter
-    switch (filterType) {
-      case 'featured':
-        result = result.filter(r => r.featured);
-        break;
-      case 'verified':
-        result = result.filter(r => r.verified);
-        break;
-      case 'pending':
-        result = result.filter(r => !r.verified);
-        break;
+    // Apply status filter
+    if (filterType !== 'all') {
+      result = result.filter(r => r.status === filterType);
     }
 
     // Apply sorting
@@ -119,41 +156,12 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       case 'rating':
         result.sort((a, b) => b.rating - a.rating);
         break;
-      case 'helpful':
-        result.sort((a, b) => b.helpful_count - a.helpful_count);
-        break;
     }
 
     return result;
   }, [reviews, searchQuery, filterType, sortType]);
 
-  // Statistics
-  const stats = useMemo(() => {
-    const total = reviews.length;
-    const featured = reviews.filter(r => r.featured).length;
-    const verified = reviews.filter(r => r.verified).length;
-    const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / total || 0;
-
-    return { total, featured, verified, avgRating: avgRating.toFixed(1) };
-  }, [reviews]);
-
   // Handlers
-  const handleToggleFeatured = async (reviewId: string) => {
-    const review = reviews.find(r => r.id === reviewId);
-    if (!review) return;
-
-    setReviews(reviews.map(r => 
-      r.id === reviewId ? { ...r, featured: !r.featured } : r
-    ));
-
-    toast({
-      title: review.featured ? 'Review removida do destaque' : 'Review destacada!',
-      description: review.featured 
-        ? 'A avaliação não aparecerá mais no topo.'
-        : 'Esta avaliação agora aparece no topo do seu perfil.',
-    });
-  };
-
   const handleReportReview = async () => {
     if (!selectedReview || !reportReason.trim()) return;
 
@@ -161,8 +169,8 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     toast({
-      title: 'Contestação enviada!',
-      description: 'Nossa equipe irá revisar esta avaliação em breve.',
+      title: 'Solicitação enviada!',
+      description: 'Sua solicitação de exclusão será analisada.',
     });
 
     setShowReportDialog(false);
@@ -183,64 +191,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Avaliações</h2>
+        <h2 className="text-2xl font-bold text-foreground">Minhas Avaliações</h2>
         <p className="text-muted-foreground">
-          Gerencie as avaliações e feedback dos clientes
+          Gerencie as avaliações que você fez para empresas.
         </p>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <Star className="h-8 w-8 text-muted-foreground/20" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Média</p>
-                <p className="text-2xl font-bold flex items-center gap-1">
-                  {stats.avgRating}
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                </p>
-              </div>
-              <Star className="h-8 w-8 text-yellow-400/20" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Verificadas</p>
-                <p className="text-2xl font-bold">{stats.verified}</p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500/20" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Destacadas</p>
-                <p className="text-2xl font-bold">{stats.featured}</p>
-              </div>
-              <Pin className="h-8 w-8 text-blue-500/20" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters and Search */}
@@ -251,7 +205,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome ou comentário..."
+                  placeholder="Buscar por empresa ou comentário..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -262,13 +216,13 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
             <Select value={filterType} onValueChange={(value: FilterType) => setFilterType(value)}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtrar" />
+                <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="featured">Destacadas</SelectItem>
-                <SelectItem value="verified">Verificadas</SelectItem>
+                <SelectItem value="approved">Aprovadas</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
+                <SelectItem value="rejected">Rejeitadas</SelectItem>
               </SelectContent>
             </Select>
 
@@ -279,7 +233,6 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
               <SelectContent>
                 <SelectItem value="recent">Mais recentes</SelectItem>
                 <SelectItem value="rating">Maior nota</SelectItem>
-                <SelectItem value="helpful">Mais úteis</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -296,37 +249,25 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
               <p className="text-muted-foreground text-center">
                 {searchQuery || filterType !== 'all'
                   ? 'Tente ajustar os filtros de busca.'
-                  : 'Quando clientes avaliarem sua empresa, elas aparecerão aqui.'}
+                  : 'Você ainda não avaliou nenhuma empresa.'}
               </p>
             </CardContent>
           </Card>
         ) : (
           filteredAndSortedReviews.map((review) => (
-            <Card key={review.id} className={cn(review.featured && 'border-blue-500 bg-blue-50/50')}>
+            <Card key={review.id} className={cn(review.status === 'pending' && 'border-yellow-200 bg-yellow-50/30')}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
-                  {/* User Info */}
                   <div className="flex gap-4 flex-1">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={review.user_avatar} />
-                      <AvatarFallback>{review.user_name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-semibold">{review.user_name}</h4>
-                        {review.verified && (
-                          <Badge variant="outline" className="gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-green-600" />
-                            Verificado
-                          </Badge>
-                        )}
-                        {review.featured && (
-                          <Badge variant="secondary" className="gap-1">
-                            <Pin className="h-3 w-3" />
-                            Destaque
-                          </Badge>
-                        )}
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-lg">{review.company_name}</h4>
+                          {getStatusBadge(review.status)}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {formatRelativeTime(review.created_at)}
+                        </span>
                       </div>
 
                       {/* Rating */}
@@ -344,9 +285,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                             />
                           ))}
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                          {formatRelativeTime(review.created_at)}
-                        </span>
+                        <span className="text-sm font-medium">{review.rating.toFixed(1)}</span>
                       </div>
 
                       {/* Comment */}
@@ -354,13 +293,20 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                         {review.comment}
                       </p>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 pt-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          <ThumbsUp className="h-4 w-4" />
-                          {review.helpful_count}
-                        </Button>
-                      </div>
+                      {/* Company Reply */}
+                      {review.reply && (
+                        <div className="mt-4 pl-4 border-l-2 border-blue-200 bg-blue-50/50 p-3 rounded-r-md">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm text-blue-900">Resposta da Empresa</span>
+                            {review.replied_at && (
+                              <span className="text-xs text-blue-700">
+                                • {formatRelativeTime(review.replied_at)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-blue-800">{review.reply}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -374,21 +320,12 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleToggleFeatured(review.id)}>
-                        <Pin className="h-4 w-4 mr-2" />
-                        {review.featured ? 'Remover destaque' : 'Destacar'}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver detalhes
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => openReportDialog(review)}
                         className="text-red-600"
                       >
                         <Flag className="h-4 w-4 mr-2" />
-                        Contestar avaliação
+                        Excluir avaliação
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -399,13 +336,13 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         )}
       </div>
 
-      {/* Report Dialog */}
+      {/* Report/Delete Dialog */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Contestar Avaliação</DialogTitle>
+            <DialogTitle>Excluir Avaliação</DialogTitle>
             <DialogDescription>
-              Descreva o motivo da contestação. Nossa equipe irá revisar.
+              Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
 
@@ -413,34 +350,27 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>{selectedReview.user_name}</strong> -{' '}
+                <strong>{selectedReview.company_name}</strong> -{' '}
                 {selectedReview.rating} estrelas
               </AlertDescription>
             </Alert>
           )}
-
-          <Textarea
-            placeholder="Motivo da contestação..."
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            className="min-h-[120px]"
-          />
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setShowReportDialog(false);
-                setReportReason('');
+                setSelectedReview(null);
               }}
             >
               Cancelar
             </Button>
             <Button
+              variant="destructive"
               onClick={handleReportReview}
-              disabled={!reportReason.trim()}
             >
-              Enviar Contestação
+              Excluir
             </Button>
           </DialogFooter>
         </DialogContent>

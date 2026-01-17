@@ -69,6 +69,7 @@ module Api
       # GET /categories/:id
       # =========================
       def show
+        @category.increment!(:views_count)
         cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
@@ -171,6 +172,7 @@ module Api
       def show_by_slug
         slug = params.require(:slug)
         @category = ::Category.find_by!(seo_url: slug)
+        @category.increment!(:views_count)
 
         cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
 
@@ -284,12 +286,35 @@ module Api
 
         # Filtros opcionais
         @categories = @categories.where(featured: true) if params[:featured] == 'true'
+        @categories = @categories.by_region(params[:region]) if params[:region].present?
+        @categories = @categories.by_min_rating(params[:min_rating]) if params[:min_rating].present?
+        @categories = @categories.by_max_price(params[:max_price]) if params[:max_price].present?
+        @categories = @categories.where(kind: params[:kind]) if params[:kind].present?
+        
+        # Busca textual
+        if params[:search].present?
+          term = "%#{params[:search].downcase}%"
+          @categories = @categories.where("LOWER(name) LIKE ? OR LOWER(short_description) LIKE ?", term, term)
+        end
         
         # Ordenação (Destaques primeiro ou A-Z)
-        @categories = @categories.order(featured: :desc, name: :asc)
+        case params[:sort_by]
+        when 'rating_desc'
+          @categories = @categories.order(average_rating: :desc)
+        when 'views_desc'
+          @categories = @categories.order(views_count: :desc)
+        when 'price_desc'
+          @categories = @categories.order(average_price: :desc)
+        when 'name_asc'
+          @categories = @categories.order(name: :asc)
+        when 'companies_count_desc'
+          @categories = @categories.order(companies_count: :desc)
+        else
+          @categories = @categories.order(featured: :desc, name: :asc)
+        end
 
-        # Eager loading para evitar N+1
-        @categories = @categories.includes(:companies, :products, banner_attachment: :blob, icon_attachment: :blob)
+        # Otimização: removemos includes de companies/products pois usamos counter columns
+        @categories = @categories.includes(:badges, banner_attachment: :blob, icon_attachment: :blob)
 
         # Paginação (se parâmetros fornecidos)
         if params[:page].present? || params[:per_page].present?
@@ -300,22 +325,8 @@ module Api
           total = @categories.count
           @categories = @categories.offset((page - 1) * per_page).limit(per_page)
 
-          # Mapeamento manual incluindo contadores
-          data = @categories.map do |category|
-            {
-              id: category.id,
-              name: category.name,
-              seo_url: category.seo_url,
-              seo_title: category.seo_title,
-              short_description: category.short_description,
-              featured: category.featured,
-              banner_url: category.banner_url,
-              icon_url: category.icon_url,
-              companies_count: category.companies.size,
-              products_count: category.products.size,
-              reviews_count: category.companies.joins(:reviews).count
-            }
-          end
+          # Mapeamento manual otimizado
+          data = map_categories_data(@categories)
 
           # Retorna com metadata de paginação
           render json: {
@@ -330,24 +341,38 @@ module Api
         else
           # Sem paginação - aplicar limite se fornecido
           @categories = @categories.limit(params[:limit]) if params[:limit].present?
-
-          data = @categories.map do |category|
-            {
-              id: category.id,
-              name: category.name,
-              seo_url: category.seo_url,
-              seo_title: category.seo_title,
-              short_description: category.short_description,
-              featured: category.featured,
-              banner_url: category.banner_url,
-              icon_url: category.icon_url,
-              companies_count: category.companies.size,
-              products_count: category.products.size,
-              reviews_count: category.companies.joins(:reviews).count
-            }
-          end
-
+          data = map_categories_data(@categories)
           render json: data
+        end
+      end
+
+      private
+
+      def map_categories_data(categories)
+        categories.map do |category|
+          {
+            id: category.id,
+            name: category.name,
+            seo_url: category.seo_url,
+            seo_title: category.seo_title,
+            short_description: category.short_description,
+            featured: category.featured,
+            banner_url: category.banner_url,
+            icon_url: category.icon_url,
+            # Usando colunas cacheadas para performance O(1)
+            companies_count: (category.respond_to?(:companies_count) ? category.companies_count : 0).to_i,
+            products_count: (category.respond_to?(:products_count) ? category.products_count : 0).to_i,
+            average_rating: (category.respond_to?(:average_rating) ? category.average_rating : 0.0).to_f,
+            average_price: (category.respond_to?(:average_price) ? category.average_price : 0.0).to_f,
+            views_count: (category.respond_to?(:views_count) ? category.views_count : 0).to_i,
+            tags: category.tags,
+            badges: category.badges.map do |b|
+              {
+                name: b.name,
+                image_url: (Rails.application.routes.url_helpers.rails_blob_url(b.badge_image, only_path: false) if b.badge_image.attached?)
+              }
+            end
+          }
         end
       end
     end

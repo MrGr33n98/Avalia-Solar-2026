@@ -166,9 +166,11 @@ export interface Review {
   company_id?: number;
   created_at: string;
   updated_at: string;
-  user?: { id: number; name: string };
+  user?: { id: number; name: string; avatar_url?: string | null };
   product?: { id: number; name: string };
-  company?: { name: string };
+  company?: { id: number; name: string; logo_url?: string | null; slug?: string };
+  reply?: string;
+  replied_at?: string;
 }
 
 export interface Category {
@@ -188,6 +190,17 @@ export interface Category {
   status: string;
   featured: boolean;
   banner_url?: string | null;
+  icon_url?: string | null;
+  average_rating?: number;
+  average_price?: number;
+  views_count?: number;
+  reviews_count?: number;
+  tags?: string[];
+  badges?: Array<{
+    name: string;
+    description?: string;
+    image_url?: string | null;
+  }>;
   logo: {
     url: string;
   } | null;
@@ -310,7 +323,7 @@ const API_BASE_URL = getApiBaseUrl();
 // Update the api configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1s
-const TIMEOUT = 15000; // 15s
+const TIMEOUT = 30000; // 30s
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -320,7 +333,10 @@ export const api = {
   request: async function<T>(config: any): Promise<{ data: T }> {
     let lastError: any;
     
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const maxRetries = config.retries ?? MAX_RETRIES;
+    const timeoutDuration = config.timeout ?? TIMEOUT;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         // Fix URL construction to prevent double slashes
         const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
@@ -364,7 +380,12 @@ export const api = {
 
         // Add timeout support using AbortController
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+        const timeoutId = setTimeout(() => {
+          console.warn(`[API] Request timed out after ${timeoutDuration}ms:`, url);
+          // Pass reason to abort if supported by environment
+          const timeoutError = new Error('Request timeout');
+          controller.abort(timeoutError); 
+        }, timeoutDuration);
 
         try {
           const response = await fetch(url, {
@@ -419,7 +440,7 @@ export const api = {
                            error.message.includes('Network request failed') ||
                            error.message.match(/\[(5\d{2}|429)\]/);
                            
-        if (!isRetryable || attempt === MAX_RETRIES - 1) {
+        if (!isRetryable || attempt === maxRetries - 1) {
           console.error('[API] Final Error:', error);
           throw error;
         }
@@ -494,7 +515,7 @@ export const dashboardApi = {
 };
 
 export const companiesApi = {
-  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; } = {}): Promise<Company[]> => {
+  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; mine?: boolean; } = {}): Promise<Company[]> => {
     try {
       const response = await fetchApi<any>('/companies', { params });
       if (Array.isArray(response)) {

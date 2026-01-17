@@ -4,8 +4,17 @@ class Category < ApplicationRecord
   # =========================
   # Associations
   # =========================
-  has_and_belongs_to_many :companies, join_table: :categories_companies
-  has_and_belongs_to_many :products,  join_table: :categories_products
+  belongs_to :parent, class_name: 'Category', optional: true
+  has_many :children, class_name: 'Category', foreign_key: :parent_id, dependent: :nullify
+  has_many :badges, dependent: :destroy
+  
+  has_and_belongs_to_many :companies, join_table: :categories_companies,
+                          after_add: :update_metrics_on_change,
+                          after_remove: :update_metrics_on_change
+
+  has_and_belongs_to_many :products, join_table: :categories_products,
+                          after_add: :update_metrics_on_change,
+                          after_remove: :update_metrics_on_change
   has_many :articles
   has_one_attached :banner
   has_one_attached :icon
@@ -16,6 +25,19 @@ class Category < ApplicationRecord
   # =========================
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
+
+  # =========================
+  # Scopes
+  # =========================
+  scope :roots,     -> { where(parent_id: nil) }
+  scope :featured,  -> { where(featured: true) }
+  scope :active,    -> { where(status: 'active') }
+  scope :by_region, ->(state) { joins(:companies).where(companies: { state: state }).distinct }
+  scope :by_min_rating, ->(rating) { where("average_rating >= ?", rating) }
+  # Use new average_price column for category filtering
+  scope :by_max_price, ->(price) { where("average_price <= ?", price) }
+  # Keep legacy product-based scope just in case, or rename it
+  scope :containing_products_by_price, ->(price) { joins(:products).where("products.price <= ?", price).distinct }
 
   # =========================
   # Cacheable Queries - TASK-016
@@ -61,6 +83,40 @@ class Category < ApplicationRecord
 
   def self.ransackable_associations(_auth_object = nil)
     %w[companies products banner_attachment banner_blob]
+  end
+
+  # =========================
+  # Metrics Updates
+  # =========================
+  def update_metrics!
+    active_companies = companies.where(status: 'active').count
+    active_products = products.where(status: 'active')
+    
+    update_columns(
+      companies_count: active_companies,
+      products_count: active_products.count,
+      average_rating: companies.joins(:reviews).average('reviews.rating') || 0.0,
+      average_price: active_products.average(:price) || 0.0
+    )
+    clear_related_caches
+  end
+
+
+
+  # =========================
+  # Instance Methods
+  # =========================
+  
+  def tags
+    t = []
+    t << 'Destaque' if featured?
+    t << 'Mais procurado' if companies_count.to_i > 10
+    t << 'Novidade' if created_at > 30.days.ago
+    t
+  end
+
+  def depth
+    parent ? parent.depth + 1 : 0
   end
 
   # =========================
@@ -126,10 +182,23 @@ class Category < ApplicationRecord
       json[:icon_url] = nil
     end
 
-    # Add cached counts
-    json[:products_count] = cached_products_count
-    json[:companies_count] = companies.count
+    # Add cached counts (using DB columns)
+    json[:products_count] = self[:products_count] || 0
+    json[:companies_count] = self[:companies_count] || 0
+    json[:average_rating] = (self[:average_rating] || 0.0).to_f.round(1)
+    json[:average_price] = (self[:average_price] || 0.0).to_f.round(2)
+    json[:views_count] = self[:views_count] || 0
     json[:reviews_count] = total_reviews_count
+
+    # Add tags and badges
+    json[:tags] = tags
+    json[:badges] = badges.map do |b|
+      {
+        name: b.name,
+        description: b.description,
+        image_url: (Rails.application.routes.url_helpers.rails_blob_url(b.badge_image, only_path: false) if b.badge_image.attached?)
+      }
+    end
 
     json
   end
@@ -165,6 +234,10 @@ class Category < ApplicationRecord
   # =========================
   
   private
+
+  def update_metrics_on_change(_item)
+    update_metrics!
+  end
 
   # Extend QueryCacheable invalidation to also expire API caches
   # so changes from ActiveAdmin/seed/import are reflected immediately.

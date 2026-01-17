@@ -14,6 +14,15 @@ export interface CategoryCardData {
   companies_count: number;
   products_count: number;
   reviews_count?: number;
+  average_rating?: number;
+  average_price?: number;
+  views_count?: number;
+  tags?: string[];
+  badges?: Array<{
+    name: string;
+    description?: string;
+    image_url?: string | null;
+  }>;
 }
 
 // Adapter: converte CategoryCardData para Category completo
@@ -30,53 +39,93 @@ function adaptCategoryData(data: CategoryCardData): Category {
   };
 }
 
-interface UseCategoriesQueryOptions {
+export interface CategoryFilterParams {
   view?: 'cards' | 'default';
   featured?: boolean;
   limit?: number;
   enabled?: boolean;
+  page?: number;
+  per_page?: number;
+  region?: string;
+  min_rating?: number;
+   max_price?: number;
+   kind?: string;
+   sort_by?: string;
+   search?: string;
+ }
+ 
+export interface PaginationMeta {
+  current_page: number;
+  per_page: number;
+  total_items: number;
+  total_pages: number;
 }
 
-/**
- * Custom hook para buscar categorias com React Query
+export interface CategoriesResult {
+  data: Category[];
+  meta?: PaginationMeta;
+}
+
+ /**
+  * Custom hook para buscar categorias com React Query
  * 
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
- * 
- * @example
- * // Todas as categorias em modo cards
- * const { data, isLoading } = useCategoriesQuery({ view: 'cards' });
- * 
- * @example
- * // Apenas categorias em destaque
- * const { data } = useCategoriesQuery({ view: 'cards', featured: true, limit: 8 });
  */
-export function useCategoriesQuery(options: UseCategoriesQueryOptions = {}) {
-  const { view = 'cards', featured, limit, enabled = true } = options;
+export function useCategoriesQuery(options: CategoryFilterParams = {}) {
+  const { 
+    view = 'cards', 
+    featured, 
+    limit, 
+    enabled = true,
+    page,
+    per_page,
+    region,
+    min_rating,
+    max_price,
+    kind,
+    sort_by,
+    search
+  } = options;
 
-  return useQuery<Category[]>({
-    queryKey: ['categories', { view, featured, limit }],
+  return useQuery<CategoriesResult>({
+    queryKey: ['categories', { view, featured, limit, page, per_page, region, min_rating, max_price, kind, sort_by, search }],
     queryFn: async () => {
       const params = new URLSearchParams();
       
       if (view) params.append('view', view);
       if (featured !== undefined) params.append('featured', String(featured));
       if (limit) params.append('limit', String(limit));
+      if (page) params.append('page', String(page));
+      if (per_page) params.append('per_page', String(per_page));
+      if (region) params.append('region', region);
+      if (min_rating) params.append('min_rating', String(min_rating));
+      if (max_price) params.append('max_price', String(max_price));
+      if (kind) params.append('kind', kind);
+      if (sort_by) params.append('sort_by', sort_by);
+      if (search) params.append('search', search);
 
       // Usar api.request ao invés de api.get
-      const response = await api.request<CategoryCardData[]>({
+      const response = await api.request<any>({
         url: `/categories?${params.toString()}`,
         method: 'GET'
       });
       
+      // Handle pagination response format { data, meta }
+      const items = Array.isArray(response.data) ? response.data : response.data.data;
+      const meta = !Array.isArray(response.data) ? response.data.meta : undefined;
+      
       // Adaptar dados da API para formato Category completo
-      return response.data.map(adaptCategoryData);
+      return {
+        data: items.map(adaptCategoryData),
+        meta
+      };
     },
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutos - dados são considerados "frescos"
-    gcTime: 10 * 60 * 1000, // 10 minutos - tempo em cache
-    retry: 2, // Retry 2x em caso de falha
-    refetchOnWindowFocus: false, // Não refetch ao focar janela
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -94,8 +143,9 @@ export function useFeaturedCategoriesQuery(limit: number = 8) {
 /**
  * Hook para buscar todas as categorias
  */
-export function useAllCategoriesQuery() {
+export function useAllCategoriesQuery(params: CategoryFilterParams = {}) {
   return useCategoriesQuery({
     view: 'cards',
+    ...params
   });
 }

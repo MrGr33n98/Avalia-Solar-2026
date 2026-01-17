@@ -1,13 +1,23 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import CategoryCard from '@/components/CategoryCard';
 import CategoriesHero from '@/components/categories/CategoriesHero';
 import { Input } from '@/components/ui/input';
-import { Search, AlertCircle, Grid3x3, List, Menu } from 'lucide-react';
+import { Search, AlertCircle, Grid3x3, List, Menu, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Sheet, 
   SheetContent, 
@@ -15,93 +25,112 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from '@/components/ui/sheet';
-import { getFullImageUrl } from '@/utils/image';
+import { Separator } from '@/components/ui/separator';
 
 // React Query hooks
 import { useCategoriesBannersQuery } from '@/hooks/useBannersQuery';
 import { useFeaturedCategoriesQuery, useAllCategoriesQuery } from '@/hooks/useCategoriesQuery';
 
-const FALLBACK_BANNER_SRC = '/images/default-banner.svg';
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
 
-/**
- * CategoriesIndexWithSidebar - Layout com navegação lateral
- * 
- * Features:
- * - Sidebar de navegação por categorias
- * - Cards minimalistas estilo referência
- * - Grid responsivo
- * - Busca em tempo real
- */
 export default function CategoriesIndexWithSidebar() {
+  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  
+  const [filters, setFilters] = useState({
+    region: '',
+    min_rating: 0,
+    max_price: 0,
+    kind: '',
+    sort_by: 'featured_desc'
+  });
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // React Query hooks
+  // Queries
   const { 
     data: banners = [], 
-    isLoading: bannersLoading,
-    error: bannersError 
+    isLoading: bannersLoading 
   } = useCategoriesBannersQuery();
 
   const { 
-    data: featuredCategories = [], 
-    isLoading: featuredLoading,
-    error: featuredError 
-  } = useFeaturedCategoriesQuery(8);
+    data: featuredData, 
+    isLoading: featuredLoading 
+  } = useFeaturedCategoriesQuery(4); // Mostrar top 4 destaques
+  
+  const featuredCategories = featuredData?.data || [];
+
+  const [page, setPage] = useState(1);
+  const perPage = 12;
 
   const { 
-    data: allCategories = [], 
+    data: allData, 
     isLoading: allLoading,
     error: allError,
     refetch: refetchCategories 
-  } = useAllCategoriesQuery();
+  } = useAllCategoriesQuery({
+    search: debouncedSearch,
+    region: filters.region,
+    min_rating: filters.min_rating > 0 ? filters.min_rating : undefined,
+    max_price: filters.max_price > 0 ? filters.max_price : undefined,
+    kind: filters.kind,
+    sort_by: filters.sort_by,
+    page,
+    per_page: perPage
+  });
 
-  // Filtro combinado: busca + categoria selecionada
-  const filteredCategories = useMemo(() => {
-    if (!Array.isArray(allCategories)) return [];
-    
-    let filtered = allCategories;
+  const allCategories = allData?.data || [];
+  const meta = allData?.meta;
 
-    // Filtro por categoria selecionada na sidebar
-    if (selectedCategory !== null) {
-      filtered = filtered.filter(cat => cat.id === selectedCategory);
-    }
+  // Handlers
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPage(1); // Reset page on filter change
+  };
 
-    // Filtro por busca
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(cat =>
-        cat.name.toLowerCase().includes(term) ||
-        cat.short_description?.toLowerCase().includes(term)
-      );
-    }
+  const clearFilters = () => {
+    setFilters({
+      region: '',
+      min_rating: 0,
+      max_price: 0,
+      kind: '',
+      sort_by: 'featured_desc'
+    });
+    setSearchTerm('');
+    setPage(1);
+  };
 
-    return filtered;
-  }, [searchTerm, allCategories, selectedCategory]);
-
-  // Estados derivados
-  const isLoading = bannersLoading || featuredLoading || allLoading;
-  const hasError = bannersError || featuredError || allError;
+  const hasActiveFilters = searchTerm || filters.region || filters.min_rating > 0 || filters.max_price > 0 || filters.kind;
 
   // Loading state
+  const isLoading = bannersLoading || (featuredLoading && !featuredCategories.length) || (allLoading && !allCategories.length);
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
 
   // Error state
-  if (hasError) {
+  if (allError) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar categorias. Tente novamente.</span>
-            <Button 
-              onClick={() => refetchCategories()} 
-              variant="outline" 
-              size="sm"
-            >
+            <Button onClick={() => refetchCategories()} variant="outline" size="sm">
               Tentar Novamente
             </Button>
           </AlertDescription>
@@ -111,8 +140,8 @@ export default function CategoriesIndexWithSidebar() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      {/* Hero Carrossel (full width) */}
+    <div className="min-h-screen bg-gray-50/50 pb-12">
+      {/* Hero Carrossel */}
       <CategoriesHero
         banners={banners.map((b: any) => ({ 
           ...b, 
@@ -121,125 +150,150 @@ export default function CategoriesIndexWithSidebar() {
         loading={bannersLoading}
       />
 
-      {/* Layout Principal: Sidebar + Content */}
-      <div className="container mx-auto px-4 pb-12">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="container mx-auto px-4 mt-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* SIDEBAR - Desktop (hidden on mobile/tablet) */}
-          <aside className="hidden lg:block lg:w-64 flex-shrink-0">
-            <SidebarContent 
-              allCategories={allCategories}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+          {/* SIDEBAR - Desktop */}
+          <aside className="hidden lg:block w-64 flex-shrink-0 space-y-6">
+            <SidebarFilters 
+              filters={filters} 
+              onFilterChange={handleFilterChange} 
+              onClear={clearFilters}
+              hasActiveFilters={!!hasActiveFilters}
             />
           </aside>
 
-          {/* CONTENT */}
+          {/* MAIN CONTENT */}
           <main className="flex-1">
             
-            {/* Barra de Busca e Botão Mobile Menu */}
-            <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Botão Menu Mobile (visible only < lg) */}
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="lg:hidden w-full sm:w-auto flex items-center justify-center"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Menu className="h-5 w-5" />
-                      <span>Categorias</span>
-                    </span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] sm:w-[340px]">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center gap-2">
-                      <List className="h-5 w-5" />
-                      Categorias
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <SidebarContent 
-                      allCategories={allCategories}
-                      selectedCategory={selectedCategory}
-                      setSelectedCategory={(id) => {
-                        setSelectedCategory(id);
-                        setMobileMenuOpen(false);
-                      }}
-                    />
+            {/* Toolbar: Busca + Mobile Toggle + Ordenação */}
+            <div className="bg-white p-4 rounded-xl border border-border/50 shadow-sm mb-6 sticky top-20 z-20">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                
+                {/* Mobile Filter Trigger */}
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="lg:hidden w-full sm:w-auto">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filtros
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <SidebarFilters 
+                        filters={filters} 
+                        onFilterChange={handleFilterChange} 
+                        onClear={() => {
+                          clearFilters();
+                          setMobileMenuOpen(false);
+                        }}
+                        hasActiveFilters={!!hasActiveFilters}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
+                {/* Busca */}
+                <div className="relative w-full sm:max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar categorias..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                  />
+                </div>
+
+                {/* Ordenação e Contagem */}
+                <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="text-sm text-muted-foreground whitespace-nowrap hidden sm:block">
+                    {meta?.total_items || allCategories.length} resultados
                   </div>
-                </SheetContent>
-              </Sheet>
-              
-              {/* Barra de Busca */}
-              <div className="relative flex-1">
-                <Search 
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" 
-                  aria-hidden="true"
-                />
-                <Input
-                  type="search"
-                  placeholder="Buscar categorias..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white"
-                  aria-label="Campo de busca de categorias"
-                />
-              </div>
-              
-              {/* Contador de Resultados */}
-              <div className="text-sm text-gray-600 flex items-center justify-center sm:justify-start gap-2">
-                <Grid3x3 className="h-4 w-4" />
-                <span className="font-medium">{filteredCategories.length}</span> 
-                {filteredCategories.length === 1 ? 'categoria' : 'categorias'}
+                  
+                  <Select 
+                    value={filters.sort_by} 
+                    onValueChange={(val) => handleFilterChange('sort_by', val)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="featured_desc">Destaques</SelectItem>
+                      <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
+                      <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
+                      <SelectItem value="companies_count_desc">Mais Empresas</SelectItem>
+                      <SelectItem value="price_desc">Maior Preço Médio</SelectItem>
+                      <SelectItem value="views_desc">Mais Populares</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            {/* Categorias em Destaque (apenas quando "Todas" está selecionado) */}
-            {selectedCategory === null && !searchTerm && featuredCategories.length > 0 && (
-              <section className="mb-10" aria-labelledby="featured-heading">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 
-                    id="featured-heading" 
-                    className="text-2xl font-bold text-gray-900"
-                  >
-                    Em Destaque
-                  </h3>
-                  <Button variant="link" className="text-primary">Ver todas</Button>
+            {/* Destaques (apenas se sem busca/filtros pesados) */}
+            {!hasActiveFilters && featuredCategories.length > 0 && (
+              <section className="mb-10">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Grid3x3 className="h-5 w-5 text-primary" />
+                    Categorias em Destaque
+                  </h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {featuredCategories.map((category) => (
                     <CategoryCard key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
+                <Separator className="my-8" />
               </section>
             )}
 
             {/* Grid Principal */}
-            <section aria-labelledby="main-categories-heading">
-              <h3 
-                id="main-categories-heading" 
-                className="text-2xl font-bold mb-6 text-gray-900"
-              >
-                {searchTerm 
-                  ? 'Resultados da Busca' 
-                  : selectedCategory 
-                    ? allCategories.find(c => c.id === selectedCategory)?.name 
-                    : 'Todas as Categorias'
-                }
-              </h3>
+            <section>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <List className="h-5 w-5 text-primary" />
+                {hasActiveFilters ? 'Resultados Filtrados' : 'Todas as Categorias'}
+              </h2>
               
-              {filteredCategories.length === 0 ? (
-                <EmptyState searchTerm={searchTerm} />
+              {allCategories.length === 0 ? (
+                <EmptyState onClear={clearFilters} />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredCategories.map((category) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allCategories.map((category) => (
                     <CategoryCard key={category.id} category={category} className="h-full" />
                   ))}
                 </div>
               )}
             </section>
+
+            {/* Paginação */}
+            {meta && meta.total_pages > 1 && (
+              <div className="mt-8 flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="flex items-center px-4 text-sm font-medium">
+                  Página {page} de {meta.total_pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(meta.total_pages, p + 1))}
+                  disabled={page === meta.total_pages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
           </main>
         </div>
       </div>
@@ -247,101 +301,132 @@ export default function CategoriesIndexWithSidebar() {
   );
 }
 
-/**
- * Componente reutilizável para o conteúdo da Sidebar
- */
-interface SidebarContentProps {
-  allCategories: any[];
-  selectedCategory: number | null;
-  setSelectedCategory: (id: number | null) => void;
-}
-
-function SidebarContent({ allCategories, selectedCategory, setSelectedCategory }: SidebarContentProps) {
+// Subcomponente de Filtros
+function SidebarFilters({ filters, onFilterChange, onClear, hasActiveFilters }: any) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:sticky lg:top-4">
-      {/* Botão "Todas" */}
-      <button
-        onClick={() => setSelectedCategory(null)}
-        className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors mb-1
-          ${selectedCategory === null 
-            ? 'bg-blue-600 text-white' 
-            : 'text-gray-700 hover:bg-gray-100'
-          }`}
-      >
-        Todas as Categorias
-      </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-lg">Filtros</h3>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={onClear} className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive">
+            <X className="h-3 w-3 mr-1" /> Limpar
+          </Button>
+        )}
+      </div>
 
-      {/* Lista de categorias */}
-      <nav className="space-y-1 max-h-[500px] overflow-y-auto">
-        {allCategories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
-            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors
-              ${selectedCategory === category.id 
-                ? 'bg-blue-600 text-white border-l-4 border-blue-700' 
-                : 'text-gray-700 hover:bg-gray-100'
-              }`}
-          >
-            {category.name}
-          </button>
-        ))}
-      </nav>
+      {/* Região */}
+      <div className="space-y-2">
+        <Label>Região</Label>
+        <Select value={filters.region} onValueChange={(val) => onFilterChange('region', val === 'all' ? '' : val)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="SP">São Paulo</SelectItem>
+            <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+            <SelectItem value="MG">Minas Gerais</SelectItem>
+            <SelectItem value="RS">Rio Grande do Sul</SelectItem>
+            <SelectItem value="PR">Paraná</SelectItem>
+            {/* Adicionar mais estados conforme necessário */}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      {/* Tipo */}
+      <div className="space-y-2">
+        <Label>Tipo de Solução</Label>
+        <Select value={filters.kind} onValueChange={(val) => onFilterChange('kind', val === 'all' ? '' : val)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Qualquer tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="residencial">Residencial</SelectItem>
+            <SelectItem value="comercial">Comercial</SelectItem>
+            <SelectItem value="industrial">Industrial</SelectItem>
+            <SelectItem value="rural">Rural</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      {/* Avaliação Mínima */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label>Avaliação Mínima</Label>
+          <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded">
+            {filters.min_rating > 0 ? `${filters.min_rating}+ estrelas` : 'Qualquer'}
+          </span>
+        </div>
+        <Slider
+          value={[filters.min_rating]}
+          min={0}
+          max={5}
+          step={0.5}
+          onValueChange={([val]) => onFilterChange('min_rating', val)}
+          className="py-4"
+        />
+      </div>
+
+      {/* Preço Máximo */}
+      <Separator />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label>Preço Médio Até</Label>
+          <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded">
+            {filters.max_price > 0 ? `R$ ${filters.max_price}` : 'Sem limite'}
+          </span>
+        </div>
+        <Slider
+          value={[filters.max_price]}
+          min={0}
+          max={50000}
+          step={1000}
+          onValueChange={([val]) => onFilterChange('max_price', val)}
+        />
+      </div>
     </div>
   );
 }
 
-/**
- * Skeleton de carregamento
- */
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-4">
-        <Skeleton className="w-full h-[280px] rounded-lg mb-8" />
-      </div>
-      
-      <div className="container mx-auto px-4 pb-12">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="hidden lg:block lg:w-64 flex-shrink-0">
-            <Skeleton className="w-full h-[400px] rounded-lg" />
-          </aside>
-          
-          <main className="flex-1">
-            <Skeleton className="w-full h-10 mb-6" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[...Array(12)].map((_, i) => (
-                <Skeleton key={i} className="h-[240px] rounded-lg" />
-              ))}
-            </div>
-          </main>
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <Skeleton className="w-full h-[300px] rounded-xl" />
+      <div className="flex gap-8">
+        <Skeleton className="hidden lg:block w-64 h-[500px] rounded-xl" />
+        <div className="flex-1 space-y-4">
+          <Skeleton className="w-full h-16 rounded-xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-[300px] rounded-xl" />
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/**
- * Estado vazio
- */
-function EmptyState({ searchTerm }: { searchTerm: string }) {
+function EmptyState({ onClear }: { onClear: () => void }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-      <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-        <Search className="h-8 w-8 text-gray-400" />
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+      <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+        <Search className="h-8 w-8 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Nenhuma categoria encontrada
+        Nenhum resultado encontrado
       </h3>
-      <p className="text-gray-500">
-        {searchTerm ? (
-          <>
-            Não encontramos resultados para <strong>&quot;{searchTerm}&quot;</strong>
-          </>
-        ) : (
-          'Nenhuma categoria disponível no momento.'
-        )}
+      <p className="text-gray-500 max-w-md mb-6">
+        Não encontramos categorias que correspondam aos seus filtros. Tente ajustar os termos de busca ou remover alguns filtros.
       </p>
+      <Button onClick={onClear} variant="outline">
+        Limpar Filtros
+      </Button>
     </div>
   );
 }

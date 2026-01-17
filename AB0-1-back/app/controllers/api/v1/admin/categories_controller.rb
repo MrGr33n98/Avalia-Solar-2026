@@ -4,10 +4,7 @@ require 'csv'
 module Api
   module V1
     module Admin
-      class CategoriesController < ApplicationController
-        # Remove the problematic skip_before_action
-        # skip_before_action :verify_authenticity_token
-
+      class CategoriesController < Api::V1::Admin::BaseController
         before_action :set_category, only: %i[show update destroy]
 
         def index
@@ -42,6 +39,45 @@ module Api
           render json: { message: 'Category deleted successfully' }, status: :ok
         end
 
+        def import
+          if params[:file].nil?
+            render json: { error: 'No file uploaded' }, status: :bad_request
+            return
+          end
+
+          success_count = 0
+          errors = []
+
+          begin
+            CSV.foreach(params[:file].path, headers: true) do |row|
+              category = Category.new(
+                name: row['name'],
+                seo_url: row['seo_url'] || row['name'].parameterize,
+                seo_title: row['seo_title'],
+                short_description: row['short_description'],
+                description: row['description'],
+                parent_id: row['parent_id'].present? ? row['parent_id'] : nil,
+                kind: row['kind'] || 'product',
+                status: row['status'] || 'active',
+                featured: row['featured'] == 'true'
+              )
+
+              if category.save
+                success_count += 1
+              else
+                errors << "Row #{$INPUT_LINE_NUMBER + 1}: #{category.errors.full_messages.join(', ')}"
+              end
+            end
+
+            render json: {
+              message: "Import completed: #{success_count} categories created successfully",
+              errors: errors
+            }, status: errors.empty? ? :ok : :partial_content
+          rescue StandardError => e
+            render json: { error: "Import failed: #{e.message}" }, status: :unprocessable_entity
+          end
+        end
+
         private
 
         def set_category
@@ -54,44 +90,5 @@ module Api
         end
       end
     end
-  end
-end
-
-def import
-  if params[:file].nil?
-    render json: { error: 'No file uploaded' }, status: :bad_request
-    return
-  end
-
-  success_count = 0
-  errors = []
-
-  begin
-    CSV.foreach(params[:file].path, headers: true) do |row|
-      category = Category.new(
-        name: row['name'],
-        seo_url: row['seo_url'] || row['name'].parameterize,
-        seo_title: row['seo_title'],
-        short_description: row['short_description'],
-        description: row['description'],
-        parent_id: row['parent_id'].present? ? row['parent_id'] : nil,
-        kind: row['kind'] || 'product',
-        status: row['status'] || 'active',
-        featured: row['featured'] == 'true'
-      )
-
-      if category.save
-        success_count += 1
-      else
-        errors << "Row #{$INPUT_LINE_NUMBER + 1}: #{category.errors.full_messages.join(', ')}"
-      end
-    end
-
-    render json: {
-      message: "Import completed: #{success_count} categories created successfully",
-      errors: errors
-    }, status: errors.empty? ? :ok : :partial_content
-  rescue StandardError => e
-    render json: { error: "Import failed: #{e.message}" }, status: :unprocessable_entity
   end
 end

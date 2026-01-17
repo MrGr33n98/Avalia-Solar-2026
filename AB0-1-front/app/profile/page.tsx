@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
 import { 
   User as UserIcon, 
   Mail, 
@@ -59,11 +60,15 @@ export default function ProfilePage() {
   const fetchUserCompanies = async () => {
     try {
       setLoadingCompanies(true);
-      // In a real implementation, you would fetch companies associated with this user
-      // const companies = await companiesApi.getByUserId(user.id);
-      // setUserCompanies(companies);
+      const companies = await companiesApi.getAll({ mine: true, limit: 50 });
+      setUserCompanies(Array.isArray(companies) ? companies : []);
     } catch (err) {
       console.error('Error fetching user companies:', err);
+      toast({
+        title: 'Erro ao carregar',
+        description: 'Não foi possível carregar suas empresas.',
+        variant: 'destructive',
+      });
     } finally {
       setLoadingCompanies(false);
     }
@@ -72,11 +77,15 @@ export default function ProfilePage() {
   const fetchUserReviews = async () => {
     try {
       setLoadingReviews(true);
-      // In a real implementation, you would fetch reviews associated with this user
-      // const reviews = await reviewsApi.getByUserId(user.id);
-      // setUserReviews(reviews);
+      const reviews = await reviewsApi.getAll({ mine: true, limit: 50 });
+      setUserReviews(Array.isArray(reviews) ? reviews : []);
     } catch (err) {
       console.error('Error fetching user reviews:', err);
+      toast({
+        title: 'Erro ao carregar',
+        description: 'Não foi possível carregar suas avaliações.',
+        variant: 'destructive',
+      });
     } finally {
       setLoadingReviews(false);
     }
@@ -375,7 +384,7 @@ export default function ProfilePage() {
                   ) : userReviews.length > 0 ? (
                     <div className="space-y-6">
                       {userReviews.map((review) => (
-                        <ReviewCard key={review.id} review={review} />
+                        <ReviewCard key={review.id} review={review} variant="company" />
                       ))}
                     </div>
                   ) : (

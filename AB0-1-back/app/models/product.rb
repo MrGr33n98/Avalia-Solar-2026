@@ -5,6 +5,11 @@ class Product < ApplicationRecord
   has_and_belongs_to_many :categories
   has_one_attached :image
 
+  attr_accessor :category_ids_for_metrics_update
+  before_save :capture_category_ids_for_metrics, prepend: true
+  after_save :update_associated_categories_metrics
+  # after_commit :update_associated_categories_metrics, on: [:create, :update, :destroy]
+
   enum status: {
     draft: 'draft',
     active: 'active',
@@ -63,4 +68,24 @@ class Product < ApplicationRecord
     end
   end
 
+  def capture_category_ids_for_metrics
+    self.category_ids_for_metrics_update = categories.pluck(:id)
+  end
+
+  def update_associated_categories_metrics
+    ids_to_update = category_ids_for_metrics_update
+
+    if ids_to_update.blank?
+      categories.reload
+      ids_to_update = categories.pluck(:id)
+    end
+    
+    if ids_to_update.present?
+      Category.where(id: ids_to_update).find_each do |cat|
+        cat.update_metrics!
+      end
+    end
+  rescue => e
+    Rails.logger.error("Failed to update categories metrics for product #{id}: #{e.message}")
+  end
 end

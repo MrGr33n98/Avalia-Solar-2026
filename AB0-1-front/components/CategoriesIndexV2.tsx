@@ -36,17 +36,21 @@ export default function CategoriesIndex() {
   } = useCategoriesBannersQuery();
 
   const { 
-    data: featuredCategories = [], 
+    data: featuredData, 
     isLoading: featuredLoading,
     error: featuredError 
   } = useFeaturedCategoriesQuery(8);
+  
+  const featuredCategories = featuredData?.data || [];
 
   const { 
-    data: allCategories = [], 
+    data: allData, 
     isLoading: allLoading,
     error: allError,
     refetch: refetchCategories 
   } = useAllCategoriesQuery();
+  
+  const allCategories = allData?.data || [];
 
   // Filtro client-side memoizado
   const filteredCategories = useMemo(() => {

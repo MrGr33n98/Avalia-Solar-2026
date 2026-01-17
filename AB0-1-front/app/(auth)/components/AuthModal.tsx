@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuthBenefits from './AuthBenefits';
 import LoginTab from './LoginTab';
 import RegisterCompanyTab from './RegisterCompanyTab';
+import RegisterUserTab from './RegisterUserTab';
 
 interface AuthModalProps {
   initialTab: 'login' | 'register';
@@ -17,6 +18,7 @@ interface AuthModalProps {
 export default function AuthModal({ initialTab }: AuthModalProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
+  const [registerType, setRegisterType] = useState<'user' | 'company'>('user');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -120,15 +122,40 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
                             </motion.div>
                         </TabsContent>
                         
-                        <TabsContent value="register" className="h-full m-0 data-[state=inactive]:hidden">
+                        <TabsContent value="register" className="h-full m-0 data-[state=inactive]:hidden flex flex-col">
+                            <div className="px-8 pt-4 pb-2">
+                                <div className="flex rounded-lg bg-slate-100 p-1">
+                                    <button
+                                        onClick={() => setRegisterType('user')}
+                                        className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                                            registerType === 'user' 
+                                            ? 'bg-white text-slate-900 shadow-sm' 
+                                            : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        Para Você
+                                    </button>
+                                    <button
+                                        onClick={() => setRegisterType('company')}
+                                        className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                                            registerType === 'company' 
+                                            ? 'bg-white text-slate-900 shadow-sm' 
+                                            : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        Para Empresas
+                                    </button>
+                                </div>
+                            </div>
                              <motion.div
+                                key={registerType}
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
                                 transition={{ duration: 0.3 }}
-                                className="h-full"
+                                className="h-full overflow-hidden"
                             >
-                                <RegisterCompanyTab />
+                                {registerType === 'user' ? <RegisterUserTab /> : <RegisterCompanyTab />}
                             </motion.div>
                         </TabsContent>
                     </div>

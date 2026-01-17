@@ -4,9 +4,12 @@ class Review < ApplicationRecord
   belongs_to :company, counter_cache: :rating_count
   belongs_to :user
 
+  enum status: { pending: 0, approved: 1, rejected: 2 }
+
   after_commit :track_analytics_event, on: :create
 
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
+  validates :comment, presence: true, length: { minimum: 10 }
 
   # Update ransackable attributes to include comment
   def self.ransackable_attributes(_auth_object = nil)

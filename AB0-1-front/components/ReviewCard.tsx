@@ -1,15 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp, User } from 'lucide-react';
+import { Star, ThumbsUp, User, Building2 } from 'lucide-react';
 import { Review } from '@/lib/api';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ReviewCardProps {
   review: Review;
   className?: string;
+  variant?: 'user' | 'company';
 }
 
-export default function ReviewCard({ review, className = "" }: ReviewCardProps) {
+export default function ReviewCard({ review, className = "", variant = 'user' }: ReviewCardProps) {
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -20,6 +22,10 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
     });
   };
 
+  const isCompany = variant === 'company';
+  const displayName = isCompany ? review.company?.name : (review.user?.name || `Usuário ${review.user_id}`);
+  const displayImage = isCompany ? review.company?.logo_url : review.user?.avatar_url;
+
   return (
     <motion.div
       className={`bg-white rounded-xl shadow-md border border-gray-200 p-6 ${className}`}
@@ -29,21 +35,31 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
     >
       {/* Header */}
       <div className="flex items-start space-x-4 mb-4">
-        {/* User Avatar */}
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-          <User className="h-6 w-6 text-gray-600" />
-        </div>
+        {/* Avatar */}
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={displayImage || undefined} />
+          <AvatarFallback className="bg-gray-200">
+            {isCompany ? (
+              <Building2 className="h-6 w-6 text-gray-600" />
+            ) : (
+              <User className="h-6 w-6 text-gray-600" />
+            )}
+          </AvatarFallback>
+        </Avatar>
 
-        {/* User Info & Rating */}
+        {/* Info & Rating */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-2">
               <h4 className="font-semibold text-gray-900">
-                Usuário {review.user_id}
+                {isCompany && review.company ? (
+                  <span>Avaliou <strong>{review.company.name}</strong></span>
+                ) : (
+                  displayName
+                )}
               </h4>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-xs text-green-600 ml-1">Verificado</span>
+                {/* Verification badge logic could go here */}
               </div>
             </div>
             <span className="text-sm text-gray-500">

@@ -13,6 +13,15 @@ import { reviewsApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath, parseIdFromSlug } from '@/lib/slug';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
 interface ReviewFormProps {
   companyId: number;
   companyPath: string;
@@ -23,7 +32,7 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   const router = useRouter();
   const { user } = useAuth();
@@ -64,20 +73,20 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
         company_id: companyId
       });
       
-      setSubmitSuccess(true);
+      setShowConfirmModal(true);
       setRating(0);
       setComment('');
-      
-      // Redirecionar após 3 segundos
-      setTimeout(() => {
-        router.push(companyPath);
-      }, 3000);
     } catch (error) {
       console.error('Error submitting review:', error);
       setSubmitError('Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    router.push(companyPath);
   };
 
   if (!user) {
@@ -129,89 +138,81 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {submitSuccess ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="h-8 w-8 text-green-600 fill-current" />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Label className="text-base">Classificação</Label>
+              <div className="flex gap-1 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${
+                        star <= rating
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-300 hover:text-yellow-200'
+                      }`}
+                    />
+                  </button>
+                ))}
               </div>
-              <h3 className="text-xl font-semibold mb-2">Avaliação Enviada!</h3>
-              <p className="text-gray-600 mb-4">
-                Sua avaliação foi enviada com sucesso e está aguardando aprovação.
-              </p>
-              <p className="text-sm text-gray-500">
-                Você será redirecionado para a página da empresa em breve...
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="comment">Seu Comentário</Label>
+              <Textarea
+                id="comment"
+                placeholder="Conte-nos como foi sua experiência..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="min-h-[150px]"
+              />
+              <p className="text-xs text-gray-500 text-right">
+                Mínimo de 10 caracteres
               </p>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label className="text-base">Classificação</Label>
-                <div className="flex gap-1 mt-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className="text-3xl focus:outline-none"
-                    >
-                      <Star
-                        className={`${
-                          star <= rating
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        } transition-colors`}
-                      />
-                    </button>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {rating > 0 ? `${rating} estrela${rating > 1 ? 's' : ''}` : 'Selecione uma classificação'}
-                </p>
+
+            {submitError && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md">
+                {submitError}
               </div>
-              
-              <div>
-                <Label htmlFor="comment" className="text-base">
-                  Comentário
-                </Label>
-                <Textarea
-                  id="comment"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Descreva sua experiência com esta empresa..."
-                  rows={5}
-                  className="mt-2"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  {comment.length}/10 caracteres mínimos
-                </p>
-              </div>
-              
-              {submitError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md">
-                  {submitError}
-                </div>
-              )}
-              
-              <div className="flex gap-3">
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="flex-1"
-                >
-                  {isSubmitting ? 'Enviando...' : 'Enviar Avaliação'}
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => router.back()}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          )}
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Enviando...' : 'Enviar Avaliação'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
+
+      <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-2 bg-green-100 rounded-full">
+                <Star className="h-5 w-5 text-green-600 fill-green-600" />
+              </div>
+              Avaliação Enviada!
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Sua avaliação foi recebida com sucesso e está aguardando aprovação da nossa equipe.
+              Você será notificado assim que ela for publicada.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleCloseModal} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
+              Entendi, voltar para a empresa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

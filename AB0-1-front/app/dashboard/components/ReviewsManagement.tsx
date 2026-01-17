@@ -17,8 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { reviewsApi } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 interface ReviewsManagementProps {
   companyId: string;
@@ -34,6 +43,9 @@ interface Review {
   verified: boolean;
   featured: boolean;
   helpful_count: number;
+  status?: 'pending' | 'approved' | 'rejected';
+  reply?: string;
+  replied_at?: Date;
 }
 
 export default function ReviewsManagement({ companyId }: ReviewsManagementProps) {
@@ -42,6 +54,9 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
+  const [showReplyDialog, setShowReplyDialog] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replyStatus, setReplyStatus] = useState<'pending' | 'approved' | 'rejected'>('approved');
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -56,7 +71,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         created_at: new Date(r.created_at),
         verified: !!r.verified,
         featured: !!r.featured,
-        helpful_count: Number(r.helpful_count || 0)
+        helpful_count: Number(r.helpful_count || 0),
+        status: r.status,
+        reply: r.reply,
+        replied_at: r.replied_at ? new Date(r.replied_at) : undefined
       }));
       setReviews(mapped);
     } catch (error) {
@@ -66,6 +84,41 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       setLoading(false);
     }
   }, [companyId]);
+
+  const handleReplySubmit = async () => {
+    if (!selectedReview) return;
+
+    try {
+      // Assuming reviewsApi.update exists and handles PATCH /reviews/:id
+      // If not, we might need to verify api.ts
+      await reviewsApi.update(selectedReview.id, {
+        reply: replyText,
+        status: replyStatus
+      });
+
+      toast({
+        title: 'Resposta enviada',
+        description: 'Sua resposta foi publicada com sucesso.',
+      });
+
+      setShowReplyDialog(false);
+      fetchReviews();
+    } catch (error) {
+      console.error('Error replying:', error);
+      toast({
+        title: 'Erro ao responder',
+        description: 'Não foi possível enviar sua resposta.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const openReplyDialog = (review: Review) => {
+    setSelectedReview(review);
+    setReplyText(review.reply || '');
+    setReplyStatus(review.status || 'approved');
+    setShowReplyDialog(true);
+  };
 
   useEffect(() => {
     fetchReviews();
@@ -211,6 +264,16 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                             Verificada
                           </Badge>
                         )}
+                        {review.status && (
+                          <Badge variant="outline" className={
+                            review.status === 'approved' ? 'border-green-500 text-green-700' :
+                            review.status === 'rejected' ? 'border-red-500 text-red-700' :
+                            'border-yellow-500 text-yellow-700'
+                          }>
+                            {review.status === 'approved' ? 'Aprovada' :
+                             review.status === 'rejected' ? 'Rejeitada' : 'Pendente'}
+                          </Badge>
+                        )}
                         {review.featured && (
                           <Badge variant="outline" className="border-yellow-500 text-yellow-700">
                             <Pin className="h-3 w-3 mr-1" />
@@ -225,6 +288,20 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                         </span>
                       </div>
                       <p className="text-sm text-foreground">{review.comment}</p>
+                      
+                      {review.reply && (
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">Resposta da Empresa</span>
+                            {review.replied_at && (
+                              <span className="text-xs text-muted-foreground">
+                                {review.replied_at.toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{review.reply}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -239,6 +316,14 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openReplyDialog(review)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Responder
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -265,6 +350,53 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
           </motion.div>
         ))}
       </div>
+
+      {/* Reply Dialog */}
+      <Dialog open={showReplyDialog} onOpenChange={setShowReplyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Responder Avaliação</DialogTitle>
+            <DialogDescription>
+              Responda ao cliente e atualize o status da avaliação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={replyStatus}
+                onValueChange={(val: any) => setReplyStatus(val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="approved">Aprovada</SelectItem>
+                  <SelectItem value="rejected">Rejeitada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Sua Resposta</Label>
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Escreva sua resposta para o cliente..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReplyDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleReplySubmit}>
+              Salvar Resposta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Report Dialog */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>

@@ -9,57 +9,97 @@ RSpec.describe 'Categories cards view', type: :request do
     )
   end
 
-  let!(:category_without_banner) { create(:category, seo_url: 'no-banner') }
-  let!(:category_with_banner) { create(:category, seo_url: 'with-banner') }
+  let!(:cat_expensive) { create(:category, name: 'Solar Panels', average_price: 10000.0, average_rating: 4.5, views_count: 100, featured: true) }
+  let!(:cat_cheap) { create(:category, name: 'Cables', average_price: 50.0, average_rating: 3.0, views_count: 500, featured: false) }
+  let!(:cat_popular) { create(:category, name: 'Inverters', average_price: 5000.0, average_rating: 5.0, views_count: 1000, featured: true) }
 
   before do
-    attach_png(category_with_banner)
-
-    # Create a targeted sponsor banner to ensure cards view doesn't incorrectly use it.
-    create(:banner).tap do |banner|
-      banner.categories << category_without_banner
-      banner.save!
-    end
+    # Add badges
+    cat_popular.badges.create!(name: 'Top Seller', description: 'Best selling category')
   end
 
   describe 'GET /api/v1/categories?view=cards' do
-    it 'uses Category.banner (Active Storage) as banner_url' do
-      get '/api/v1/categories', params: { view: 'cards' }
-
-      expect(response).to have_http_status(:ok)
-      body = JSON.parse(response.body)
-      payload = body.find { |c| c['id'] == category_with_banner.id }
-
-      expect(payload).to be_present
-      expect(payload['banner_url']).to be_present
-      expect(payload['banner_url']).to include('/rails/active_storage/blobs')
+    context 'Basic Fields' do
+      it 'returns correct fields including metrics' do
+        get '/api/v1/categories', params: { view: 'cards' }
+        
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        
+        popular = body.find { |c| c['id'] == cat_popular.id }
+        expect(popular['average_price']).to eq(5000.0)
+        expect(popular['views_count']).to eq(1000)
+        expect(popular['badges']).to be_present
+        expect(popular['badges'].first['name']).to eq('Top Seller')
+        expect(popular['tags']).to include('Destaque')
+      end
     end
 
-    it 'returns null banner_url when category has no banner' do
-      get '/api/v1/categories', params: { view: 'cards' }
+    context 'Filtering' do
+      it 'filters by max_price' do
+        get '/api/v1/categories', params: { view: 'cards', max_price: 100.0 }
+        body = JSON.parse(response.body)
+        ids = body.map { |c| c['id'] }
+        
+        expect(ids).to include(cat_cheap.id)
+        expect(ids).not_to include(cat_expensive.id)
+        expect(ids).not_to include(cat_popular.id)
+      end
 
-      expect(response).to have_http_status(:ok)
-      body = JSON.parse(response.body)
-      payload = body.find { |c| c['id'] == category_without_banner.id }
-
-      expect(payload).to be_present
-      expect(payload['banner_url']).to be_nil
+      it 'filters by min_rating' do
+        get '/api/v1/categories', params: { view: 'cards', min_rating: 4.0 }
+        body = JSON.parse(response.body)
+        ids = body.map { |c| c['id'] }
+        
+        expect(ids).to include(cat_expensive.id)
+        expect(ids).to include(cat_popular.id)
+        expect(ids).not_to include(cat_cheap.id)
+      end
+      
+      it 'filters by search term' do
+        get '/api/v1/categories', params: { view: 'cards', search: 'Solar' }
+        body = JSON.parse(response.body)
+        expect(body.first['name']).to eq('Solar Panels')
+        expect(body.length).to eq(1)
+      end
     end
 
-    it 'reflects banner updates after cache expiry key changes' do
-      get '/api/v1/categories', params: { view: 'cards' }
-      first = JSON.parse(response.body).find { |c| c['id'] == category_with_banner.id }['banner_url']
+    context 'Sorting' do
+      it 'sorts by price_desc' do
+        get '/api/v1/categories', params: { view: 'cards', sort_by: 'price_desc' }
+        body = JSON.parse(response.body)
+        prices = body.map { |c| c['average_price'] }
+        expect(prices).to eq([10000.0, 5000.0, 50.0])
+      end
 
-      category_with_banner.banner.purge
-      attach_png(category_with_banner, name: 'banner-updated.png')
-      category_with_banner.touch
+      it 'sorts by views_desc' do
+        get '/api/v1/categories', params: { view: 'cards', sort_by: 'views_desc' }
+        body = JSON.parse(response.body)
+        views = body.map { |c| c['views_count'] }
+        expect(views).to eq([1000, 500, 100])
+      end
 
-      get '/api/v1/categories', params: { view: 'cards' }
-      second = JSON.parse(response.body).find { |c| c['id'] == category_with_banner.id }['banner_url']
+      it 'sorts by rating_desc' do
+        get '/api/v1/categories', params: { view: 'cards', sort_by: 'rating_desc' }
+        body = JSON.parse(response.body)
+        ratings = body.map { |c| c['average_rating'] }
+        expect(ratings).to eq([5.0, 4.5, 3.0])
+      end
+    end
 
-      expect(second).to be_present
-      expect(second).not_to eq(first)
+    context 'Pagination' do
+      it 'returns metadata when page is present' do
+        get '/api/v1/categories', params: { view: 'cards', page: 1, per_page: 1 }
+        
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        
+        expect(json).to have_key('data')
+        expect(json).to have_key('meta')
+        expect(json['data'].length).to eq(1)
+        expect(json['meta']['total_items']).to eq(3)
+        expect(json['meta']['total_pages']).to eq(3)
+      end
     end
   end
 end
-

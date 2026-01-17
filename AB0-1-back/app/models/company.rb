@@ -1,5 +1,6 @@
 class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
+  include Moderation
   has_paper_trail # Enable rollback capabilities
 
   enum status: {
@@ -36,6 +37,15 @@ class Company < ApplicationRecord
   belongs_to :plan, optional: true
   has_many :company_members, dependent: :destroy
   has_many :members, through: :company_members, source: :user
+
+  # =========================
+  # Callbacks
+  # =========================
+  attr_accessor :category_ids_for_metrics_update
+
+  before_save :capture_category_ids_for_metrics, prepend: true
+  after_save :update_associated_categories_metrics
+  # after_commit :update_associated_categories_metrics, on: [:create, :update, :destroy]
 
   # =========================
   # Validations
@@ -216,6 +226,9 @@ class Company < ApplicationRecord
 
     # Clear cache after recalculation
     clear_cache!
+    
+    # Update categories metrics as rating changed
+    update_associated_categories_metrics
   end
 
   def years_in_business
@@ -521,5 +534,26 @@ class Company < ApplicationRecord
 
   def calculate_historical_stats(days)
     # Implementation...
+  end
+
+  def capture_category_ids_for_metrics
+    self.category_ids_for_metrics_update = categories.pluck(:id)
+  end
+
+  def update_associated_categories_metrics
+    ids_to_update = category_ids_for_metrics_update
+
+    if ids_to_update.blank?
+      categories.reload
+      ids_to_update = categories.pluck(:id)
+    end
+    
+    if ids_to_update.present?
+      Category.where(id: ids_to_update).find_each do |cat|
+        cat.update_metrics!
+      end
+    end
+  rescue => e
+    Rails.logger.error("Failed to update categories metrics for company #{id}: #{e.message}")
   end
 end

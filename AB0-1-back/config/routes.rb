@@ -151,7 +151,7 @@ Rails.application.routes.draw do
       end
 
       # Users routes
-      resources :users, only: [:show, :update]
+      resources :users, only: [:show, :update, :create]
 
       # Search routes
       get 'search', to: 'search#index'

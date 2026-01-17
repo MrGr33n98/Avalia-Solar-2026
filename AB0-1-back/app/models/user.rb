@@ -11,6 +11,7 @@ class User < ApplicationRecord
   # such as when a new user joins a team or any similar occurrences,
   # It's important to ensure that notifications mentioning us are accessible.
   has_many :notification_mentions, as: :record, dependent: :destroy, class_name: 'Noticed::Event'
+  has_one_attached :avatar
 
   belongs_to :company, optional: true
   has_many :company_members, dependent: :destroy
@@ -22,6 +23,8 @@ class User < ApplicationRecord
 
   validates :role, inclusion: { in: ROLES }, allow_nil: true
   validates :name, presence: true, length: { minimum: 3, maximum: 100 }
+  validates :city, presence: true, if: -> { regular_user? }
+  validates :state, length: { is: 2 }, allow_blank: true
   validate :password_complexity
   validate :adult_birthdate
   validates :terms_accepted, acceptance: { accept: true }

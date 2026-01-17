@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
+import { useCategoriesQuery, useFeaturedCategoriesQuery } from '@/hooks/useCategoriesQuery';
 
 interface Banner {
   id: number;
@@ -18,78 +19,44 @@ interface Banner {
   sponsored: boolean;
 }
 
-// Response da API (modo cards)
-interface CategoryCardData {
-  id: number;
-  name: string;
-  seo_url: string;
-  seo_title: string;
-  short_description: string;
-  featured: boolean;
-  banner_url: string | null;
-  companies_count: number;
-  products_count: number;
-}
-
-// Adapter: converte CategoryCardData para Category completo
-function adaptCategoryData(data: CategoryCardData): Category {
-  return {
-    ...data,
-    description: data.short_description,
-    kind: 'standard',
-    status: 'active',
-    parent_id: null,
-    logo: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-}
-
 export default function CategoriesIndex() {
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Queries
+  const { 
+    data: featuredData, 
+    isLoading: loadingFeatured 
+  } = useFeaturedCategoriesQuery(8);
+
+  const { 
+    data: allData, 
+    isLoading: loadingAll,
+    error 
+  } = useCategoriesQuery({ 
+    view: 'cards',
+    search: searchTerm 
+  });
+
+  const featuredCategories = featuredData?.data || [];
+  const filteredCategories = allData?.data || [];
+  const loading = loadingFeatured || loadingAll;
 
   const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
   useEffect(() => {
-    fetchData();
+    fetchBanners();
   }, []);
 
-  useEffect(() => {
-    // Filtro client-side
-    const filtered = allCategories.filter(cat =>
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredCategories(filtered);
-  }, [searchTerm, allCategories]);
-
-  const fetchData = async () => {
+  const fetchBanners = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Buscar banners em paralelo usando api.request
-      const [bannersRes, featuredRes, allRes] = await Promise.all([
-        api.request<Banner[]>({ url: '/banners?position=categories_top', method: 'GET' }).catch(() => ({ data: [] })),
-        api.request<CategoryCardData[]>({ url: '/categories?view=cards&featured=true&limit=8', method: 'GET' }).catch(() => ({ data: [] })),
-        api.request<CategoryCardData[]>({ url: '/categories?view=cards', method: 'GET' }).catch(() => ({ data: [] }))
-      ]);
-
-      setBanners(bannersRes.data);
-      // Adaptar dados da API para formato Category completo
-      setFeaturedCategories(featuredRes.data.map(adaptCategoryData));
-      setAllCategories(allRes.data.map(adaptCategoryData));
-      setFilteredCategories(allRes.data.map(adaptCategoryData));
+      const { data } = await api.request<Banner[]>({ 
+        url: '/banners?position=categories_top', 
+        method: 'GET' 
+      });
+      setBanners(data);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      setError('Erro ao carregar categorias. Tente novamente.');
-    } finally {
-      setLoading(false);
+      console.error('Erro ao carregar banners:', error);
     }
   };
 
@@ -122,9 +89,9 @@ export default function CategoriesIndex() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4">Erro ao carregar categorias. Tente novamente.</p>
           <button
-            onClick={fetchData}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Tentar Novamente

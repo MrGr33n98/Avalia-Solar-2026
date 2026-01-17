@@ -5,6 +5,48 @@ brazil_states = Locations::BrLocations.states.map do |state|
 end.freeze
 
 ActiveAdmin.register Company do
+  # Scopes
+  scope :all
+  scope :pending_review
+  scope :approved
+  scope :rejected
+  scope :suspended
+
+  # Actions
+  action_item :approve, only: :show, if: proc { resource.moderation_pending_review? || resource.moderation_draft? } do
+    link_to 'Approve', approve_admin_company_path(resource), method: :put, class: 'member_link'
+  end
+
+  action_item :reject, only: :show, if: proc { resource.moderation_pending_review? || resource.moderation_approved? } do
+    link_to 'Reject', reject_admin_company_path(resource), method: :put, class: 'member_link'
+  end
+
+  action_item :suspend, only: :show, if: proc { resource.moderation_approved? } do
+    link_to 'Suspend', suspend_admin_company_path(resource), method: :put, class: 'member_link'
+  end
+
+  member_action :approve, method: :put do
+    resource.approve!(current_admin_user)
+    redirect_to resource_path, notice: "Company approved!"
+  end
+
+  member_action :reject, method: :put do
+    resource.update(moderation_status: :rejected, rejected_reason: "Rejected by admin") # Simple rejection for now
+    redirect_to resource_path, notice: "Company rejected!"
+  end
+
+  member_action :suspend, method: :put do
+    resource.update(moderation_status: :suspended)
+    redirect_to resource_path, notice: "Company suspended!"
+  end
+
+  batch_action :approve do |ids|
+    batch_action_collection.find(ids).each do |company|
+      company.approve!(current_admin_user)
+    end
+    redirect_to collection_path, alert: "The companies have been approved."
+  end
+
   permit_params do
   permitted = [
     :name, :website, :phone, :address,
@@ -17,6 +59,7 @@ ActiveAdmin.register Company do
     :response_time_sla, :languages,
     :email_public, :phone_alt, :facebook, :instagram,
     :linkedin, :description,
+    :moderation_status, :rejected_reason,
     project_types: [], services_offered: [], category_ids: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy]
@@ -36,10 +79,30 @@ ActiveAdmin.register Company do
   end
 end
 
+  index do
+    selectable_column
+    id_column
+    column :name
+    column :cnpj
+    column :state
+    column :city
+    column :status do |company|
+      status_tag company.status
+    end
+    column :moderation_status do |company|
+      status_tag company.moderation_status, class: "status_#{company.moderation_status}"
+    end
+    column :featured
+    column :created_at
+    actions
+  end
+
   form do |f|
     f.inputs 'Basic Information' do
       f.input :name
       f.input :description
+      f.input :moderation_status, as: :select, collection: Company.moderation_statuses.keys
+      f.input :rejected_reason, input_html: { rows: 3 }
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
       f.input :verified
@@ -197,6 +260,26 @@ end
   end
 
   show do
+    panel 'Moderation Details' do
+      attributes_table_for resource do
+        row :moderation_status do |company|
+          status_tag company.moderation_status, class: "status_#{company.moderation_status}"
+        end
+        row :submitted_at
+        row :approved_at
+        row :approved_by
+        row :rejected_reason
+      end
+    end
+
+    panel 'Analytics' do
+      attributes_table_for resource do
+        row :profile_views_count
+        row :cta_clicks_count
+        row :whatsapp_clicks_count
+      end
+    end
+
     if Company.column_names.include?('effect')
       panel 'Visual Effect Preview' do
         div class: 'company-card admin-preview', 'data-controller': 'effect', 'data-effect-active-value': resource.effect do

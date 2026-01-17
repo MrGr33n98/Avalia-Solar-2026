@@ -3,7 +3,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   before_action :set_review, only: %i[show update destroy]
   before_action :authenticate_api_user, only: %i[create update destroy]
   before_action :require_regular_user, only: %i[create update destroy]
-  before_action :ensure_owner, only: %i[update destroy]
+  before_action :ensure_owner, only: %i[destroy]
 
   def index
     # Eager load associations to prevent N+1 queries
@@ -21,13 +21,19 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       authenticate_api_user
       @reviews = @reviews.where(user_id: current_user.id)
     end
+    
+    # Filtra por status se fornecido (útil para dashboards)
+    if params[:status].present?
+      @reviews = @reviews.where(status: params[:status])
+    end
 
     # Add a limit to avoid sending too much data
     @reviews = @reviews.limit(params[:limit].present? ? params[:limit].to_i : 10)
 
     # Render a custom JSON response that includes associated data
     render json: @reviews, include: {
-      user: { only: %i[id name] }
+      user: { only: %i[id name], methods: [:avatar_url] },
+      company: { only: %i[id name logo_url slug] }
     }
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Registros não encontrados' }, status: :not_found
@@ -46,6 +52,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     @review = Review.new(review_params.merge(user_id: current_user.id))
 
     if @review.save
+      # Notify company owners
+      owners = @review.company.company_members.owner.includes(:user).map(&:user)
+      ReviewNotifier.with(review: @review, type: :new_review).deliver(owners) if owners.any?
+
       render json: @review, status: :created
     else
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
@@ -53,10 +63,25 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def update
-    if @review.update(review_params)
-      render json: @review
+    if @review.user_id == current_user.id
+      # User updating their own review
+      if @review.update(review_params)
+        render json: @review
+      else
+        render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+      end
+    elsif current_user.company_user? && current_user.company_id == @review.company_id
+      # Company replying to a review
+      if @review.update(reply_params.merge(replied_at: Time.current))
+        # Notify review author
+        ReviewNotifier.with(review: @review, type: :reply).deliver(@review.user)
+
+        render json: @review
+      else
+        render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+      end
     else
-      render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: 'Forbidden' }, status: :forbidden
     end
   end
 
@@ -73,6 +98,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def review_params
     params.require(:review).permit(:rating, :comment, :company_id)
+  end
+
+  def reply_params
+    params.require(:review).permit(:reply, :status)
   end
 
   def require_regular_user
