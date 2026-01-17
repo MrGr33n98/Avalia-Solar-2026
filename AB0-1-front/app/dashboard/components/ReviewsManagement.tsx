@@ -91,7 +91,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     try {
       // Assuming reviewsApi.update exists and handles PATCH /reviews/:id
       // If not, we might need to verify api.ts
-      await reviewsApi.update(selectedReview.id, {
+      await reviewsApi.update(Number(selectedReview.id), {
         reply: replyText,
         status: replyStatus
       });
