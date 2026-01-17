@@ -171,6 +171,10 @@ export interface Review {
   company?: { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
   replied_at?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  verified?: boolean;
+  featured?: boolean;
+  helpful_count?: number;
 }
 
 export interface Category {
@@ -693,7 +697,8 @@ export const leadsApi = {
 };
 
 export const reviewsApi = {
-  getAll: (params?: any) => fetchApi('/reviews', { params }),
+  getAll: (params: any = {}) => fetchApi('/reviews', { params }),
+  listMine: (params: any = {}) => fetchApi('/reviews/mine', { params }),
   getById: (id: number) => fetchApi(`/reviews/${id}`),
   create: (review: Partial<Review>) =>
     fetchApi('/reviews', {
