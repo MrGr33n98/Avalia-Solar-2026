@@ -119,21 +119,21 @@ ActiveAdmin.register Category, namespace: :admin do
       end
     end
     column :name do |category|
-      indent = category.depth * 2
+      indent = (category.respond_to?(:depth) ? category.depth : 0) * 2
       span style: "padding-left: #{indent}em" do
         link_to category.name, admin_category_path(category)
       end
     end
     column :parent
-    column :companies_count, sortable: :companies_count
-    column :products_count, sortable: :products_count
-    column :average_rating, sortable: :average_rating do |category|
-      number_with_precision(category.average_rating, precision: 1) if category.average_rating.present?
+    column :companies_count
+    column :products_count
+    column :average_rating do |category|
+      number_with_precision(category.average_rating, precision: 1) if category.respond_to?(:average_rating) && category.average_rating.present?
     end
-    column :average_price, sortable: :average_price do |category|
-      number_to_currency(category.average_price, unit: 'R$ ') if category.average_price.present?
+    column :average_price do |category|
+      number_to_currency(category.average_price, unit: 'R$ ') if category.respond_to?(:average_price) && category.average_price.present?
     end
-    column :views_count, sortable: :views_count
+    column :views_count
     column :status do |category|
       status_tag category.status
     end
