@@ -92,7 +92,8 @@ ActiveAdmin.register Category, namespace: :admin do
         b.input :name
         b.input :description
         b.input :year
-        b.input :badge_image, as: :file, hint: b.object.badge_image.attached? ? image_tag(url_for(b.object.badge_image), size: '50x50') : 'No image'
+        b.input :badge_image, as: :file,
+                hint: (b.object&.badge_image&.attached? ? image_tag(url_for(b.object.badge_image), size: '50x50') : 'No image')
       end
     end
 
