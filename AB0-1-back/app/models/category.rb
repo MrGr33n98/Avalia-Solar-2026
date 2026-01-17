@@ -7,6 +7,7 @@ class Category < ApplicationRecord
   belongs_to :parent, class_name: 'Category', optional: true
   has_many :children, class_name: 'Category', foreign_key: :parent_id, dependent: :nullify
   has_many :badges, dependent: :destroy
+  accepts_nested_attributes_for :badges, allow_destroy: true
   
   has_and_belongs_to_many :companies, join_table: :categories_companies,
                           after_add: :update_metrics_on_change,
