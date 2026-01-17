@@ -77,7 +77,8 @@ class Category < ApplicationRecord
   def self.ransackable_attributes(_auth_object = nil)
     %w[
       id name description created_at updated_at
-      featured status seo_url seo_title short_description
+      featured status kind seo_url seo_title short_description
+      companies_count products_count average_rating average_price views_count
     ]
   end
 
