@@ -358,9 +358,6 @@ class Company < ApplicationRecord
     'Consultoria Energética'
   ].freeze
 
-  # Atributos virtuais para ActiveAdmin
-  attr_accessor :project_types, :services_offered
-
   before_validation :normalize_company_fields
   before_validation :normalize_multiselects
   validate :validate_project_types, :validate_services_offered

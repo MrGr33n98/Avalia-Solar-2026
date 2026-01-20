@@ -1,34 +1,55 @@
 class FixCompaniesProjectTypesIndex < ActiveRecord::Migration[7.0]
   def up
-    # Verifica se o índice antigo existe antes de remover
+    # 1. Corrigir project_types
     if index_exists?(:companies, :project_types, name: 'index_companies_on_project_types')
       remove_index :companies, name: 'index_companies_on_project_types'
     end
 
-    # Altera o tipo da coluna se necessário (json para jsonb)
     if column_exists?(:companies, :project_types)
-      # Postgres requires an explicit USING clause to convert json -> jsonb
       change_column :companies, :project_types, :jsonb, using: 'project_types::jsonb'
     end
 
-    # Cria novo índice GIN
     unless index_exists?(:companies, :project_types, name: 'index_companies_on_project_types_gin')
       add_index :companies, :project_types, using: :gin, name: 'index_companies_on_project_types_gin'
+    end
+
+    # 2. Corrigir services_offered
+    if index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered')
+      remove_index :companies, name: 'index_companies_on_services_offered'
+    end
+
+    if column_exists?(:companies, :services_offered)
+      change_column :companies, :services_offered, :jsonb, using: 'services_offered::jsonb'
+    end
+
+    unless index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered_gin')
+      add_index :companies, :services_offered, using: :gin, name: 'index_companies_on_services_offered_gin'
     end
   end
 
   def down
-    # Remove novo índice
+    # Reverter services_offered
+    if index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered_gin')
+      remove_index :companies, name: 'index_companies_on_services_offered_gin'
+    end
+
+    if column_exists?(:companies, :services_offered)
+      change_column :companies, :services_offered, :json, using: 'services_offered::json'
+    end
+
+    unless index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered')
+      add_index :companies, :services_offered, name: 'index_companies_on_services_offered'
+    end
+
+    # Reverter project_types
     if index_exists?(:companies, :project_types, name: 'index_companies_on_project_types_gin')
       remove_index :companies, name: 'index_companies_on_project_types_gin'
     end
 
-    # Reverte para o tipo original se necessário
     if column_exists?(:companies, :project_types)
       change_column :companies, :project_types, :json, using: 'project_types::json'
     end
 
-    # Recria índice antigo (pode falhar se for B-tree em JSON, mas mantém simetria)
     unless index_exists?(:companies, :project_types, name: 'index_companies_on_project_types')
       add_index :companies, :project_types, name: 'index_companies_on_project_types'
     end
