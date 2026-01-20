@@ -2,7 +2,7 @@ module Api
   module V1
     class BannerEventsController < Api::V1::BaseController
       skip_before_action :authenticate_api_user, raise: false
-      skip_before_action :verify_authenticity_token
+      skip_before_action :verify_authenticity_token, raise: false
 
       def create
         event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {}, metadata: {})
