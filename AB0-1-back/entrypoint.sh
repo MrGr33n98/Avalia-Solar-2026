@@ -52,7 +52,7 @@ if [ "$TABLES_COUNT" -gt 5 ]; then
   echo "🔄 Banco já populado, executando migrações..."
   bundle exec rails db:migrate
 else
-  echo "🆕 Banco vazio/quase vazio, executando setup..."
+  echo "🆕 Banco vazio/quase vazio (tabelas: $TABLES_COUNT), executando setup..."
   # Usa schema:load para garantir que o schema.rb corrigido seja aplicado
   DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bundle exec rails db:schema:load
   bundle exec rails db:seed || echo "⚠️ Seed falhou, mas continuando..."

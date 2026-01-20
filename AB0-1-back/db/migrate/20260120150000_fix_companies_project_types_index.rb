@@ -1,14 +1,18 @@
 class FixCompaniesProjectTypesIndex < ActiveRecord::Migration[7.0]
   def up
     # 1. Corrigir project_types
+    # Remover índices antigos se existirem
     if index_exists?(:companies, :project_types, name: 'index_companies_on_project_types')
       remove_index :companies, name: 'index_companies_on_project_types'
     end
 
+    # Garantir que a coluna seja jsonb
     if column_exists?(:companies, :project_types)
-      change_column :companies, :project_types, :jsonb, using: 'project_types::jsonb'
+      # Usar SQL direto para garantir conversão correta
+      execute 'ALTER TABLE companies ALTER COLUMN project_types TYPE jsonb USING project_types::jsonb'
     end
 
+    # Criar índice GIN se não existir
     unless index_exists?(:companies, :project_types, name: 'index_companies_on_project_types_gin')
       add_index :companies, :project_types, using: :gin, name: 'index_companies_on_project_types_gin'
     end
@@ -19,7 +23,7 @@ class FixCompaniesProjectTypesIndex < ActiveRecord::Migration[7.0]
     end
 
     if column_exists?(:companies, :services_offered)
-      change_column :companies, :services_offered, :jsonb, using: 'services_offered::jsonb'
+      execute 'ALTER TABLE companies ALTER COLUMN services_offered TYPE jsonb USING services_offered::jsonb'
     end
 
     unless index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered_gin')
