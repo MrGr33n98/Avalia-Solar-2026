@@ -18,7 +18,8 @@ import {
   Upload,
   AlertCircle,
   CheckCircle2,
-  Pencil
+  Pencil,
+  ImageIcon
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useCompany } from '../hooks';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 

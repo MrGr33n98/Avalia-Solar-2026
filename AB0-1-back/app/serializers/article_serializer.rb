@@ -1,12 +1,11 @@
 class ArticleSerializer < ActiveModel::Serializer
   attributes :id, :title, :slug, :content, :excerpt, :status, :published_at, :views_count,
              :meta_title, :meta_description, :featured, :image_url,
-             :category_id, :company_id, :product_id, :sponsored, :sponsored_label,
+             :category_id, :product_id, :sponsored, :sponsored_label,
              :author_name, :author_email, :author_avatar_url,
              :created_at, :updated_at
 
   belongs_to :category
-  belongs_to :company, if: -> { object.company_id.present? }
   belongs_to :product, if: -> { object.product_id.present? }
   has_many :companies
 
@@ -28,5 +27,9 @@ class ArticleSerializer < ActiveModel::Serializer
       object.author.avatar_photo.variant(resize_to_fill: [150, 150]),
       only_path: false
     )
+  end
+
+  def author_bio
+    object.author&.try(:bio)
   end
 end

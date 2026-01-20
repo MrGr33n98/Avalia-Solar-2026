@@ -341,11 +341,12 @@ export const api = {
     const timeoutDuration = config.timeout ?? TIMEOUT;
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
+      let url = '';
       try {
         // Fix URL construction to prevent double slashes
         const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
         const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
-        let url = `${basePath}/${endpoint}`;
+        url = `${basePath}/${endpoint}`;
         
         // Handle query parameters
         if (config.params) {
@@ -416,14 +417,31 @@ export const api = {
             try {
               details = await response.json();
             } catch {}
-            const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
             
-            // Don't retry on 4xx errors (client errors), except 429 (Too Many Requests)
-            if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-              throw new Error(`[${response.status}] ${message}`);
+            const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
+            const errorContext = {
+              status: response.status,
+              statusText: response.statusText,
+              url,
+              method: config.method,
+              params: config.params,
+              details
+            };
+
+            console.error(`[API] Request failed:`, errorContext);
+            
+            // Don't retry on most 4xx errors (client errors), except 429 (Too Many Requests)
+            // We also allow retrying 404 once in case of transient backend issues during deployments
+            if (response.status >= 400 && response.status < 500 && 
+                response.status !== 429 && response.status !== 404) {
+              const err = new Error(`[${response.status}] ${message}`);
+              (err as any).context = errorContext;
+              throw err;
             }
             
-            throw new Error(`[${response.status}] ${message}`);
+            const err = new Error(`[${response.status}] ${message}`);
+            (err as any).context = errorContext;
+            throw err;
           }
 
           const data = await response.json();
@@ -439,18 +457,23 @@ export const api = {
       } catch (error: any) {
         lastError = error;
         
-        // Don't retry if it's not a fetch error or 5xx/429
+        // Retry if it's a timeout, network failure, or 5xx/429/404
         const isRetryable = error.message === 'Request timeout' || 
                            error.message.includes('Network request failed') ||
-                           error.message.match(/\[(5\d{2}|429)\]/);
+                           error.message.match(/\[(5\d{2}|429|404)\]/);
                            
         if (!isRetryable || attempt === maxRetries - 1) {
-          console.error('[API] Final Error:', error);
+          if (error.context?.status === 404) {
+            console.warn(`[API] Resource not found (404) after ${attempt + 1} attempts: ${url}`);
+          } else {
+            console.error('[API] Final Error:', error);
+          }
           throw error;
         }
         
-        console.warn(`[API] Attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY}ms...`, error.message);
-        await sleep(RETRY_DELAY * Math.pow(2, attempt)); // Exponential backoff
+        const delay = RETRY_DELAY * Math.pow(2, attempt);
+        console.warn(`[API] Attempt ${attempt + 1} failed (${error.message}), retrying in ${delay}ms...`);
+        await sleep(delay); // Exponential backoff
       }
     }
     
@@ -467,16 +490,28 @@ export async function fetchApi<T = any>(
   endpoint: string,
   options: any = {}
 ): Promise<T> {
+  const cleanEndpoint = endpoint.replace(/^\/+/, '');
+  const url = `${API_BASE_URL}/${cleanEndpoint}`;
+
   try {
-    const cleanEndpoint = endpoint.replace(/^\/+/, '');
-    console.log('[API] Fetching:', `${API_BASE_URL}/${cleanEndpoint}`, options.params);
+    if (options.debug) {
+      console.log('[API] Debug Fetching:', {
+        url,
+        method: options.method || 'GET',
+        params: options.params,
+        body: options.body
+      });
+    }
+
     const response = await api.request<T>({
       url: cleanEndpoint,
       method: options.method || 'GET',
       data: options.body
         ? options.body instanceof FormData
           ? options.body
-          : JSON.parse(options.body)
+          : typeof options.body === 'string' 
+            ? JSON.parse(options.body)
+            : options.body
         : undefined,
       headers: { ...options.headers },
       params: options.params,
@@ -485,14 +520,45 @@ export async function fetchApi<T = any>(
     });
     return response.data;
   } catch (error: any) {
-    console.error('API error:', error);
+    // If a fallback is provided, return it instead of throwing
+    if (options.fallback !== undefined) {
+      console.warn(`[API] Using fallback for ${url} due to error:`, error.message);
+      return options.fallback;
+    }
+
+    // Log the error with full context
+    const errorContext = error.context || {
+      url,
+      method: options.method || 'GET',
+      params: options.params
+    };
+    
+    console.error(`[API] fetchApi Error for ${url}:`, {
+      message: error.message,
+      context: errorContext,
+      stack: error.stack
+    });
+
+    // Specific handling for 404 Not Found
+    if (error.message?.includes('[404]') || error.context?.status === 404) {
+      const customMessage = `[404] O recurso solicitado não foi encontrado (${url}). Por favor, verifique se o endereço está correto ou se o serviço está temporariamente indisponível.`;
+      console.warn(`[API] 404 Error: ${customMessage}`);
+      
+      const enhancedError = new Error(customMessage);
+      (enhancedError as any).status = 404;
+      (enhancedError as any).context = errorContext;
+      throw enhancedError;
+    }
+
     if (error?.response) {
       throw new Error(
         error.response.data?.error ||
-          `API error (${error.response.status})`
+          `Erro na API (${error.response.status}): ${error.message}`
       );
     }
-    throw new Error(error?.message || error?.toString?.() || 'Unknown API error');
+
+    const detailedMessage = error?.message || error?.toString?.() || 'Erro desconhecido na API';
+    throw new Error(`${detailedMessage} (Endpoint: ${endpoint})`);
   }
 }
 
@@ -510,7 +576,8 @@ export const dashboardApi = {
           return await fetchApi('/dashboard/stats');
         }
         return await fetchApi('/company_dashboard/stats');
-      } catch {
+      } catch (error) {
+        console.warn('[dashboardApi.getStats] Falling back to default stats due to error:', error);
         return await fetchApi('/company_dashboard/stats');
       }
     }

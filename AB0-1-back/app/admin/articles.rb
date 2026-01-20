@@ -88,7 +88,7 @@ ActiveAdmin.register Article do
           f.input :featured, label: 'Destaque?'
           f.input :sponsored, label: 'Patrocinado?'
           f.input :sponsored_label, hint: 'Ex.: Oferta patrocinada, Conteúdo de marca'
-          f.input :author, as: :select, collection: AdminUser.all.collect { |u| [u.email, u.id] }, include_blank: true
+          f.input :author, as: :select, collection: AdminUser.all.collect { |u| [u.name || u.email, u.id] }, include_blank: true
         end
 
         f.inputs 'Texto' do

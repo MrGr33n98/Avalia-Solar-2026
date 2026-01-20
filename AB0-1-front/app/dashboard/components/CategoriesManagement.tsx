@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { fetchApi, categoriesApi } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface CategoriesManagementProps {
   companyId: string;
@@ -32,6 +33,7 @@ interface Category {
 }
 
 export default function CategoriesManagement({ companyId }: CategoriesManagementProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
@@ -87,8 +89,19 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         method: 'POST',
         body: JSON.stringify({ category_ids: selectedCategories })
       });
+      toast({
+        title: 'Sucesso',
+        description: 'Categorias enviadas para aprovação.'
+      });
       await fetchCategories();
       await fetchAvailableCategories();
+    } catch (error: any) {
+      console.error('[CategoriesManagement] Add error:', error);
+      toast({
+        title: 'Erro ao adicionar categorias',
+        description: error.message || 'Não foi possível adicionar as categorias.',
+        variant: 'destructive'
+      });
     } finally {
       setSelectedCategories([]);
       setShowAddDialog(false);
@@ -102,9 +115,20 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         method: 'POST',
         body: JSON.stringify({ category_id: categoryId })
       });
+      toast({
+        title: 'Sucesso',
+        description: 'Categoria removida.'
+      });
       await fetchCategories();
       await fetchAvailableCategories();
-    } catch (e) {}
+    } catch (error: any) {
+      console.error('[CategoriesManagement] Remove error:', error);
+      toast({
+        title: 'Erro ao remover categoria',
+        description: error.message || 'Não foi possível remover a categoria.',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (

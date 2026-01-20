@@ -184,17 +184,20 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
   const allowed = useMemo(() => hasBannersFeature(planFeatures), [planFeatures]);
   const [loading, setLoading] = useState(false);
   const [banners, setBanners] = useState<CompanyBanner[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!allowed) return;
 
     const run = async () => {
       setLoading(true);
+      setError(null);
       try {
         const data = await fetchApi<{ banners: CompanyBanner[] }>('/company_dashboard/banners');
         setBanners(data?.banners || []);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error fetching company banners:', e);
+        setError(e.message || 'Erro ao carregar banners. Por favor, tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -260,6 +263,18 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
       {loading ? (
         <Card>
           <CardContent className="p-6 text-muted-foreground">Carregando banners...</CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center text-center">
+              <p className="text-destructive font-medium mb-2">Erro ao carregar dados</p>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       ) : banners.length === 0 ? (
         <Card className="border-dashed">

@@ -52,198 +52,105 @@ export default function ArticleConversionSection({ article }: { article: any }) 
   const sidebarBanners = (banners || []).filter(b => b.position === 'sidebar');
 
   return (
-    <section className="mt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Avance para a energia solar</h2>
+    <section className="bg-slate-50 rounded-xl p-6 sm:p-8 border border-slate-100 my-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">Avance para a energia solar</h2>
               {article?.category?.name && (
-                <Badge variant="secondary">{article.category.name}</Badge>
+                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">{article.category.name}</Badge>
               )}
             </div>
-            <p className="text-gray-600">
+            <p className="text-slate-600 leading-relaxed">
               Economize na conta de luz e aumente o valor do seu imóvel com painéis solares.
               Nossa equipe ajuda você a escolher a melhor empresa e financiamento.
             </p>
-
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link href={article?.category?.slug ? `/categories/${article.category.slug}` : '/categories'}>
-                <Button className="w-full" variant="default">
-                  <Sun className="w-4 h-4 mr-2" /> Pedir orçamento
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button className="w-full" variant="secondary">
-                  <PhoneCall className="w-4 h-4 mr-2" /> Falar com especialista
-                </Button>
-              </Link>
-              <Link href="/simulador">
-                <Button className="w-full" variant="outline">
-                  <Wallet className="w-4 h-4 mr-2" /> Simular economia
-                </Button>
-              </Link>
-            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Solicite um contato</h3>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
-              <div className="md:col-span-1">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href={article?.category?.slug ? `/categories/${article.category.slug}` : '/categories'} className="flex-1">
+              <Button className="w-full" variant="default">
+                <Sun className="w-4 h-4 mr-2" /> Pedir orçamento
+              </Button>
+            </Link>
+            <Link href="/simulador" className="flex-1">
+              <Button className="w-full" variant="outline">
+                <Wallet className="w-4 h-4 mr-2" /> Simular economia
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="pt-4 border-t border-slate-200">
+             <h4 className="font-semibold text-sm text-slate-900 mb-3">Benefícios</h4>
+             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-600">
+               <li className="flex items-center"><Leaf className="w-4 h-4 mr-2 text-green-500"/> Energia limpa</li>
+               <li className="flex items-center"><Wallet className="w-4 h-4 mr-2 text-blue-500"/> Economia real</li>
+               <li className="flex items-center"><ShieldCheck className="w-4 h-4 mr-2 text-primary"/> Valoriza imóvel</li>
+               <li className="flex items-center"><Sun className="w-4 h-4 mr-2 text-amber-500"/> Sustentável</li>
+             </ul>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+            <MessageSquare className="w-5 h-5 mr-2 text-primary"/>
+            Solicite um contato
+          </h3>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
                 <Input
                   placeholder="Seu nome"
                   value={lead.name}
                   onChange={(e) => setLead({ ...lead, name: e.target.value })}
                   required
+                  className="bg-slate-50"
                 />
               </div>
-              <div className="md:col-span-1">
-                <Input
+              <div className="space-y-1">
+                 <Input
+                  placeholder="Seu email"
                   type="email"
-                  placeholder="Seu e-mail"
                   value={lead.email}
                   onChange={(e) => setLead({ ...lead, email: e.target.value })}
                   required
+                  className="bg-slate-50"
                 />
-              </div>
-              <div className="md:col-span-1">
-                <Input
-                  placeholder="Seu telefone"
-                  value={lead.phone}
-                  onChange={(e) => setLead({ ...lead, phone: e.target.value })}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Textarea
-                  placeholder="Mensagem (opcional)"
-                  value={lead.message}
-                  onChange={(e) => setLead({ ...lead, message: e.target.value })}
-                  rows={4}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Button type="submit" className="w-full" disabled={status === 'loading'}>
-                  {status === 'loading' ? 'Enviando...' : 'Enviar'}
-                </Button>
-                {status === 'success' && (
-                  <p className="text-green-600 text-sm mt-2">Recebemos sua solicitação. Entraremos em contato.</p>
-                )}
-                {status === 'error' && (
-                  <p className="text-red-600 text-sm mt-2">Não foi possível enviar. Tente novamente.</p>
-                )}
-              </div>
-            </form>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Benefícios dos painéis solares</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-start gap-3">
-                <Sun className="w-5 h-5 text-orange-500" />
-                <div>
-                  <p className="font-semibold">Energia limpa e renovável</p>
-                  <p className="text-gray-600 text-sm">Reduza emissões e contribua com o meio ambiente.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Wallet className="w-5 h-5 text-orange-500" />
-                <div>
-                  <p className="font-semibold">Economia real</p>
-                  <p className="text-gray-600 text-sm">Diminua sua conta de luz com retorno previsível.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Leaf className="w-5 h-5 text-orange-500" />
-                <div>
-                  <p className="font-semibold">Valorização do imóvel</p>
-                  <p className="text-gray-600 text-sm">Maior atratividade e valor de mercado.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-orange-500" />
-                <div>
-                  <p className="font-semibold">Garantias e suporte</p>
-                  <p className="text-gray-600 text-sm">Empresas avaliadas com garantia de instalação.</p>
-                </div>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Depoimentos</h3>
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-2 text-gray-800">
-                  <MessageSquare className="w-4 h-4" /> Excelente atendimento e instalação rápida.
-                </div>
-                <p className="text-sm text-gray-500 mt-1">Cliente verificado</p>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-2 text-gray-800">
-                  <MessageSquare className="w-4 h-4" /> Já vimos a economia na primeira fatura.
-                </div>
-                <p className="text-sm text-gray-500 mt-1">Cliente verificado</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside className="lg:col-span-4 space-y-8">
-          {bannerGlobal?.image_url && (
-            <a
-              href={bannerGlobal.link || '#'}
-              target={bannerGlobal.link ? '_blank' : undefined}
-              rel={bannerGlobal.link ? 'noopener noreferrer' : undefined}
-              className="block"
-            >
-              <img
-                src={getFullImageUrl(bannerGlobal.image_url) || ''}
-                alt={bannerGlobal.title || 'Patrocínio'}
-                className="w-full h-40 object-cover rounded-lg"
+            <div className="space-y-1">
+              <Input
+                placeholder="Seu telefone"
+                type="tel"
+                value={lead.phone}
+                onChange={(e) => setLead({ ...lead, phone: e.target.value })}
+                required
+                className="bg-slate-50"
               />
-            </a>
-          )}
-
-          {sponsoredBanners.length > 0 && (
-            <div className="space-y-4">
-              {sponsoredBanners.map(b => (
-                <a
-                  key={b.id}
-                  href={b.link || '#'}
-                  target={b.link ? '_blank' : undefined}
-                  rel={b.link ? 'noopener noreferrer' : undefined}
-                  className="block"
-                >
-                  <img
-                    src={getFullImageUrl(b.image_url) || ''}
-                    alt={b.title || 'Patrocínio'}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                </a>
-              ))}
             </div>
-          )}
-
-          {sidebarBanners.length > 0 && (
-            <div className="space-y-4">
-              {sidebarBanners.map(b => (
-                <a
-                  key={b.id}
-                  href={b.link || '#'}
-                  target={b.link ? '_blank' : undefined}
-                  rel={b.link ? 'noopener noreferrer' : undefined}
-                  className="block"
-                >
-                  <img
-                    src={getFullImageUrl(b.image_url) || ''}
-                    alt={b.title || 'Publicidade'}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                </a>
-              ))}
+            <div className="space-y-1">
+              <Textarea
+                placeholder="Como podemos ajudar?"
+                value={lead.message}
+                onChange={(e) => setLead({ ...lead, message: e.target.value })}
+                rows={3}
+                className="bg-slate-50 resize-none"
+              />
             </div>
-          )}
-        </aside>
+            
+            <Button type="submit" className="w-full" disabled={status === 'loading'}>
+              {status === 'loading' ? 'Enviando...' : 'Enviar solicitação'}
+            </Button>
+            
+            {status === 'success' && (
+              <p className="text-sm text-green-600 text-center font-medium">Solicitação enviada com sucesso!</p>
+            )}
+            {status === 'error' && (
+              <p className="text-sm text-red-600 text-center font-medium">Erro ao enviar. Tente novamente.</p>
+            )}
+          </form>
+        </div>
       </div>
     </section>
   );

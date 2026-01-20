@@ -1,10 +1,10 @@
 
-import { api } from '../../lib/api';
+import { api, fetchApi } from '../../lib/api';
 
 // Mock fetch
 global.fetch = jest.fn();
 
-describe('API Timeout Logic', () => {
+describe('API Logic', () => {
   beforeEach(() => {
     jest.useRealTimers();
     (global.fetch as jest.Mock).mockClear();
@@ -25,29 +25,61 @@ describe('API Timeout Logic', () => {
     });
   });
 
-  it('should timeout if request takes too long', async () => {
-    // Config with short timeout and no retries
-    // We expect it to fail with 'Request timeout'
-    const requestPromise = api.request({ 
-      url: '/test', 
-      method: 'GET',
-      timeout: 50, // 50ms timeout
-      retries: 1
+  describe('api.request', () => {
+    it('should timeout if request takes too long', async () => {
+      // Config with short timeout and no retries
+      // We expect it to fail with 'Request timeout'
+      const requestPromise = api.request({ 
+        url: '/test', 
+        method: 'GET',
+        timeout: 50, // 50ms timeout
+        retries: 1
+      });
+
+      await expect(requestPromise).rejects.toThrow('Request timeout');
     });
 
-    await expect(requestPromise).rejects.toThrow('Request timeout');
+    it('should handle AbortError correctly', async () => {
+      // Mock fetch to throw AbortError immediately
+      (global.fetch as jest.Mock).mockRejectedValue({ name: 'AbortError' });
+
+      const requestPromise = api.request({ 
+        url: '/test', 
+        method: 'GET',
+        retries: 1 
+      });
+      
+      await expect(requestPromise).rejects.toThrow('Request timeout');
+    });
+
+    it('should handle 404 error correctly', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.resolve({ error: 'Resource not found' })
+      });
+
+      const requestPromise = api.request({ 
+        url: '/not-found', 
+        method: 'GET',
+        retries: 1 
+      });
+      
+      await expect(requestPromise).rejects.toThrow('[404] Resource not found');
+    });
   });
 
-  it('should handle AbortError correctly', async () => {
-    // Mock fetch to throw AbortError immediately
-    (global.fetch as jest.Mock).mockRejectedValue({ name: 'AbortError' });
+  describe('fetchApi', () => {
+    it('should provide detailed 404 error message', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.resolve({ error: 'Resource not found' })
+      });
 
-    const requestPromise = api.request({ 
-      url: '/test', 
-      method: 'GET',
-      retries: 1 
+      await expect(fetchApi('/test-404')).rejects.toThrow(/\[404\] O recurso solicitado não foi encontrado/);
     });
-    
-    await expect(requestPromise).rejects.toThrow('Request timeout');
   });
 });

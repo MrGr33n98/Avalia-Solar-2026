@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Bell,
   CheckCircle2,
   Star,
@@ -12,8 +12,11 @@ import {
   LogOut,
   Settings,
   Menu,
-  X
+  X,
+  Search,
+  HelpCircle
 } from 'lucide-react';
+import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,6 +46,7 @@ interface EnterpriseHeaderProps {
   notifications: Notification[];
   onNotificationClick?: (id: string) => void;
   onMenuClick: () => void;
+  onTabChange: (tabId: string) => void;
   themeToggle?: React.ReactNode;
 }
 
@@ -51,6 +55,7 @@ export default function EnterpriseHeader({
   notifications = [],
   onNotificationClick,
   onMenuClick,
+  onTabChange,
   themeToggle
 }: EnterpriseHeaderProps) {
   const { user } = useAuth();
@@ -87,12 +92,12 @@ export default function EnterpriseHeader({
       <div className="h-full px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Left: Menu Button + Company Info */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          {/* Hamburger Menu Button */}
+          {/* Hamburger Menu Button (Hidden on desktop) */}
           <Button
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="shrink-0 hover:bg-muted/60"
+            className="lg:hidden shrink-0 hover:bg-muted/60"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -122,10 +127,41 @@ export default function EnterpriseHeader({
           </div>
         </div>
 
+        {/* Center: Global Search (Hidden on mobile) */}
+        <div className="hidden md:flex flex-1 justify-center max-w-md">
+          <CommandMenu onSelectTab={onTabChange} />
+        </div>
+
         {/* Right: Actions */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Theme Toggle */}
           {themeToggle}
+
+          {/* Help Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-muted/60"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Ajuda</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://horizon-ui.com/boilerplate-shadcn#pricing', '_blank')}>
+                Planos e Preços
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = 'mailto:suporte@ab01.com'}>
+                Suporte Técnico
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('/#faqs', '_blank')}>
+                Perguntas Frequentes
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {/* Notifications Dropdown */}
           <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>

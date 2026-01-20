@@ -9,7 +9,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     cache_key = cache_key_for('articles', params.except(:page, :per_page))
     
     cached_json(cache_key, expires_in: 15.minutes) do
-      scope = Article.includes(:category, :companies, :author, :company).with_attached_banner.order(published_at: :desc)
+      scope = Article.includes(:category, :companies, :author).with_attached_banner.order(published_at: :desc)
       scope = scope.where(status: 'published')
       scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
       scope = scope.where(featured: true) if boolean_param(:featured)
@@ -94,7 +94,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
 
   def set_article
     # Supports both numeric IDs and friendly slugs
-    @article = Article.with_attached_banner.includes(:category, :companies, :author, :company).friendly.find(params[:id])
+    @article = Article.with_attached_banner.includes(:category, :companies, :author).friendly.find(params[:id])
   end
 
   def article_params

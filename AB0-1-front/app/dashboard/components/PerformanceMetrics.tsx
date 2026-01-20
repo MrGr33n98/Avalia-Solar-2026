@@ -18,6 +18,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StatsCard from './StatsCard';
 
 interface PerformanceMetricsProps {
   companyId: string;

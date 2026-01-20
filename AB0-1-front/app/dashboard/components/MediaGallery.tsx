@@ -76,30 +76,61 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
   const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const form = new FormData();
-    Array.from(files).forEach((f) => form.append('images[]', f));
-    const resp = await fetchApi('/company_dashboard/upload_media', { method: 'POST', body: form });
-    if ((resp as any)?.error) {
-      toast({ title: 'Erro no upload', description: String((resp as any).error) });
-    } else {
-      toast({ title: 'Upload enviado para aprovação' });
+    
+    try {
+      const form = new FormData();
+      Array.from(files).forEach((f) => form.append('images[]', f));
+      const resp = await fetchApi('/company_dashboard/upload_media', { method: 'POST', body: form });
+      
+      if ((resp as any)?.error) {
+        toast({ 
+          title: 'Erro no upload', 
+          description: String((resp as any).error),
+          variant: 'destructive'
+        });
+      } else {
+        toast({ title: 'Sucesso', description: 'Upload enviado para aprovação' });
+      }
+    } catch (error: any) {
+      console.error('[MediaGallery] Upload error:', error);
+      toast({ 
+        title: 'Erro no upload', 
+        description: error.message || 'Ocorreu um erro ao tentar enviar as fotos.',
+        variant: 'destructive'
+      });
     }
   };
 
   const onAddVideo = async () => {
     if (!videoUrl || !showControls) return;
-    const resp = await fetchApi('/company_dashboard/add_video', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: videoUrl }),
-    });
-    if ((resp as any)?.error) {
-      toast({ title: 'URL inválida', description: String((resp as any).error) });
-      return;
+    
+    try {
+      const resp = await fetchApi('/company_dashboard/add_video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: videoUrl }),
+      });
+      
+      if ((resp as any)?.error) {
+        toast({ 
+          title: 'URL inválida', 
+          description: String((resp as any).error),
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      toast({ title: 'Sucesso', description: 'Vídeo enviado para aprovação' });
+      setShowVideoDialog(false);
+      setVideoUrl('');
+    } catch (error: any) {
+      console.error('[MediaGallery] Add video error:', error);
+      toast({ 
+        title: 'Erro ao adicionar vídeo', 
+        description: error.message || 'Ocorreu um erro ao tentar adicionar o vídeo.',
+        variant: 'destructive'
+      });
     }
-    toast({ title: 'Vídeo enviado para aprovação' });
-    setShowVideoDialog(false);
-    setVideoUrl('');
   };
 
   return (

@@ -4,7 +4,6 @@ class Article < ApplicationRecord
 
   belongs_to :category
   belongs_to :product, optional: true
-  belongs_to :company, optional: true
   belongs_to :author, class_name: 'AdminUser', optional: true
   
   # Companies relationship (Many-to-Many)

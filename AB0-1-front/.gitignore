@@ -3,3 +3,6 @@
 coverage/
 .coverage/
 *.lcov
+
+# Boilerplate Reference
+codebase/

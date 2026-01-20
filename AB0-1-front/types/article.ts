@@ -20,6 +20,7 @@ export interface Article {
   published_at?: string | null;
   views_count?: number | null;
   image_url?: string | null;
+  cover_image_url?: string | null;
   sponsored?: boolean;
   sponsored_label?: string | null;
   category?: ArticleCategory | null;
@@ -27,6 +28,8 @@ export interface Article {
   author?: ArticleAuthor | null;
   author_name?: string | null;
   author_email?: string | null;
+  author_avatar_url?: string | null;
+  author_bio?: string | null;
   meta_title?: string | null;
   meta_description?: string | null;
   created_at?: string;

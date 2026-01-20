@@ -19,62 +19,65 @@ export default function BlogCard({ article }: BlogCardProps) {
     : 'Data indisponível';
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48 w-full bg-gray-100">
+    <Card className="group flex flex-col h-full overflow-hidden hover:shadow-xl transition-all duration-300 border-slate-200/60 bg-white">
+      <div className="relative h-52 w-full bg-slate-100 overflow-hidden">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={article.title}
             fill
-            className="object-cover"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <span className="text-sm">Sem imagem</span>
+          <div className="flex items-center justify-center h-full text-slate-400 bg-slate-50">
+            <span className="text-sm font-medium">Sem imagem</span>
           </div>
         )}
         {article.category && (
-          <Badge className="absolute top-2 right-2 bg-primary text-white">
+          <Badge className="absolute top-3 right-3 bg-white/90 text-slate-900 hover:bg-white shadow-sm backdrop-blur-sm">
             {article.category.name}
           </Badge>
         )}
       </div>
       
-      <CardHeader className="p-4 pb-2">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center text-xs text-gray-500 space-x-3">
+      <CardHeader className="p-5 pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center text-xs font-medium text-slate-500 space-x-3">
             <span className="flex items-center">
-              <Calendar className="w-3 h-3 mr-1" />
+              <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
               {publishedLabel}
             </span>
-            <span className="flex items-center">
-              <Eye className="w-3 h-3 mr-1" />
-              {article.views_count ?? 0}
-            </span>
+            {article.views_count !== null && (
+              <span className="flex items-center">
+                <Eye className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                {article.views_count}
+              </span>
+            )}
           </div>
           {article.sponsored && (
-            <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-wider">
               {article.sponsored_label || 'Patrocinado'}
             </span>
           )}
         </div>
-        <Link href={`/blog/${article.slug}`}>
-          <h3 className="text-lg font-bold text-gray-900 hover:text-primary line-clamp-2">
+        <Link href={`/blog/${article.slug}`} className="block group-hover:text-primary transition-colors">
+          <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
             {article.title}
           </h3>
         </Link>
       </CardHeader>
       
-      <CardContent className="p-4 pt-0 flex-grow">
-        <p className="text-sm text-gray-600 line-clamp-3">
+      <CardContent className="p-5 pt-0 flex-grow">
+        <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
           {article.excerpt}
         </p>
       </CardContent>
       
-      <CardFooter className="p-4 border-t bg-gray-50">
-        <Button asChild variant="ghost" size="sm" className="w-full justify-between hover:bg-transparent p-0">
+      <CardFooter className="p-5 pt-3 border-t border-slate-100 bg-slate-50/50">
+        <Button asChild variant="ghost" size="sm" className="w-full justify-between hover:bg-white hover:text-primary hover:shadow-sm transition-all p-0 px-2 -ml-2 font-medium text-slate-600">
           <Link href={`/blog/${article.slug}`}>
-            <span>Ler mais <ArrowRight className="w-4 h-4 ml-1" /></span>
+            <span>Ler artigo completo</span>
+            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
           </Link>
         </Button>
       </CardFooter>

@@ -103,7 +103,13 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
           company: l.company,
         })) : [];
         setLeads(mapped);
-      } catch (e) {
+      } catch (e: any) {
+        console.error('[LeadsOpportunitiesRefactored] Error:', e);
+        toast({
+          title: 'Erro ao carregar leads',
+          description: e.message || 'Não foi possível carregar os leads da sua empresa.',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }

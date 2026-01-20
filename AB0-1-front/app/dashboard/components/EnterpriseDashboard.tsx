@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye,
   Zap,
@@ -26,7 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import CompanyInfo from './CompanyInfo';
 import CategoriesManagement from './CategoriesManagement';
 import BannersSponsorship from './BannersSponsorship';
-import ProductsManagement from './ProductsManagementRefactored';
+import ProductsManagement from './ProductsManagement';
 import ReviewsManagement from './ReviewsManagement';
 import MediaGallery from './MediaGallery';
 import LeadsOpportunities from './LeadsOpportunities';
@@ -40,6 +39,7 @@ import PerformanceMetrics from './PerformanceMetrics';
 import CompetitorBenchmark from './CompetitorBenchmark';
 import ThemeToggle from './ThemeToggle';
 import AzureOverview from './AzureOverview';
+import StyleAnalysis from './StyleAnalysis';
 import { fetchApi, companiesApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 import { useAuth } from '@/contexts/AuthContext';
@@ -312,7 +312,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
-      {/* Drawer Sidebar */}
+      {/* Sidebar (Drawer on mobile, Fixed on desktop) */}
       <EnterpriseSidebar
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -321,28 +321,23 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         pendingCount={stats?.pendingApprovals || 0}
       />
 
-      {/* Header */}
-      <EnterpriseHeader
-        company={company}
-        notifications={notifications}
-        onNotificationClick={handleNotificationClick}
-        onMenuClick={() => setSidebarOpen(true)}
-        themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
-      />
+      <div className="lg:pl-[260px] flex flex-col min-h-screen">
+        {/* Header */}
+        <EnterpriseHeader
+          company={company}
+          notifications={notifications}
+          onNotificationClick={handleNotificationClick}
+          onMenuClick={() => setSidebarOpen(true)}
+          onTabChange={handleTabChange}
+          themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
+        />
 
-      {/* Main Content */}
-      <main className="pt-16 min-h-screen">
-        <div className="max-w-[1600px] mx-auto p-4 lg:p-6">
-          {/* Content based on active tab */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === 'overview' && (
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-[1600px] mx-auto p-4 lg:p-8">
+            {/* Content based on active tab using Shadcn Tabs */}
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
+              <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
                 <AzureOverview 
                   metrics={metrics}
                   themeMode={themeMode}
@@ -350,23 +345,29 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   onNavigateToAnalytics={() => handleTabChange('analytics')}
                   onNavigateToBenchmark={() => handleTabChange('benchmark')}
                 />
-              )}
+              </TabsContent>
 
-              {activeTab === 'analytics' && (company?.has_paid_plan || company?.plan_status === 'active') && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Analytics Avançado
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Métricas detalhadas de performance e engajamento
-                    </p>
+              <TabsContent value="style-analysis" className="mt-0 focus-visible:outline-none">
+                <StyleAnalysis themeMode={themeMode} />
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-0 focus-visible:outline-none">
+                {(company?.has_paid_plan || company?.plan_status === 'active') && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Analytics Avançado
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Métricas detalhadas de performance e engajamento
+                      </p>
+                    </div>
+                    <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
                   </div>
-                  <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
-                </div>
-              )}
+                )}
+              </TabsContent>
 
-              {activeTab === 'benchmark' && (
+              <TabsContent value="benchmark" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -378,9 +379,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompetitorBenchmark companyId={companyId} themeMode={themeMode} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'info' && (
+              <TabsContent value="info" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -392,9 +393,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompanyInfo companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'categories' && (
+              <TabsContent value="categories" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -406,9 +407,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CategoriesManagement companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'banners' && (
+              <TabsContent value="banners" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -420,9 +421,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <BannersSponsorship companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'products' && (
+              <TabsContent value="products" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -434,9 +435,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ProductsManagement companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'reviews' && (
+              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -448,9 +449,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ReviewsManagement companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'media' && (
+              <TabsContent value="media" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -462,9 +463,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <MediaGallery companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'leads' && (
+              <TabsContent value="leads" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -476,9 +477,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <LeadsOpportunities companyId={companyId} companyName={company?.name} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'approvals' && (
+              <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -490,9 +491,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ApprovalsPanel companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'campaigns' && (
+              <TabsContent value="campaigns" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -504,9 +505,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CampaignsMarketing companyId={companyId} />
                 </div>
-              )}
+              </TabsContent>
 
-              {activeTab === 'settings' && (
+              <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -518,11 +519,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompanySettings companyId={companyId} />
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
