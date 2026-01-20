@@ -22,10 +22,33 @@ done
 
 echo "✅ Postgres disponível!"
 
-# === INÍCIO DA APLICAÇÃO ===
+# === CONFIGURAÇÃO DO BANCO DE DADOS ===
 
-bundle install
+echo "🔧 Configurando banco de dados..."
 bundle exec rails db:create || true
+
+# Criar extensão PostgreSQL necessária
+echo "🔧 Criando extensão btree_gin..."
+psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" 2>/dev/null || true
+
+# Configurar ambiente Rails
+echo "🔧 Configurando ambiente Rails..."
+bundle exec rails db:environment:set RAILS_ENV=production || true
+
+# Verificar se o banco precisa de setup inicial ou apenas migrations
+TABLES_COUNT=$(bundle exec rails runner "puts ActiveRecord::Base.connection.tables.count rescue 0" 2>/dev/null || echo "0")
+echo "📊 Tabelas encontradas: $TABLES_COUNT"
+
+if [[ "$TABLES_COUNT" -gt 5 ]]; then
+  echo "🔄 Banco já populado, executando migrações..."
+  bundle exec rails db:migrate
+else
+  echo "🆕 Banco vazio/quase vazio, executando setup..."
+  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bundle exec rails db:schema:load || true
+  bundle exec rails db:seed || true
+fi
+
+# === INÍCIO DA APLICAÇÃO ===
 
 echo "Starting Rails server..."
 exec "$@"
