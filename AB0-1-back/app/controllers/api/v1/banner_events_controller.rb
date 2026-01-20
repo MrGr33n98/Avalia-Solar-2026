@@ -1,7 +1,7 @@
 module Api
   module V1
     class BannerEventsController < Api::V1::BaseController
-      skip_before_action :authenticate_api_user, only: [:create]
+      skip_before_action :authenticate_api_user, raise: false
       skip_before_action :verify_authenticity_token
 
       def create
