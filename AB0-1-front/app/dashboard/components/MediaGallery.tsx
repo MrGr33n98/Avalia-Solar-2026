@@ -10,12 +10,16 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { companiesApi, fetchApi } from '@/lib/api';
 import { useGalleryContext7 } from '@/app/context7/provider';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFullImageUrl } from '@/utils/image';
 
 interface MediaGalleryProps {
   companyId: string;
+  showControls?: boolean;
+  showHeader?: boolean;
 }
 
-export default function MediaGallery({ companyId }: MediaGalleryProps) {
+export default function MediaGallery({ companyId, showControls = true, showHeader = true }: MediaGalleryProps) {
   const { toast } = useToast();
   const { gallery, dispatchGallery } = useGalleryContext7();
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
@@ -23,19 +27,40 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxItem, setLightboxItem] = useState<{ type: 'photo' | 'video'; url: string; video_id?: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         dispatchGallery({ type: 'loading', loading: true });
-        const company = await companiesApi.getById(Number(companyId));
-        setCanUpload(!!(company?.featured || company?.verified));
-        const photosResp = await fetchApi<{ photos: string[] }>('/company_dashboard/media');
-        const videosResp = await fetchApi<{ videos: any[] }>('/company_dashboard/videos');
-        const photoItems = (photosResp?.photos || []).map((url, idx) => ({ id: `${idx}`, url }));
-        const videoItems = (videosResp?.videos || []).map((v) => ({ id: String(v.id), url: v.url, thumbnail_url: v.thumbnail_url, provider: v.provider, video_id: v.video_id }));
-        dispatchGallery({ type: 'set_photos', photos: photoItems });
-        dispatchGallery({ type: 'set_videos', videos: videoItems });
+        try {
+          const company = await companiesApi.getById(Number(companyId));
+          setCanUpload(!!(company?.featured || company?.verified));
+        } catch {}
+        try {
+          const photosResp = await fetchApi<{ photos: string[] }>('/company_dashboard/media');
+          const photoItems = (photosResp?.photos || []).map((url, idx) => {
+            const normalized = getFullImageUrl(url) || url;
+            return { id: `${idx}`, url: normalized };
+          });
+          dispatchGallery({ type: 'set_photos', photos: photoItems });
+        } catch {
+          dispatchGallery({ type: 'set_photos', photos: [] });
+        }
+        try {
+          const videosResp = await fetchApi<{ videos: any[] }>('/company_dashboard/videos');
+          const videoItems = (videosResp?.videos || []).map((v) => ({
+            id: String(v.id),
+            url: v.url,
+            thumbnail_url: getFullImageUrl(v.thumbnail_url) || v.thumbnail_url,
+            provider: v.provider,
+            video_id: v.video_id,
+          }));
+          dispatchGallery({ type: 'set_videos', videos: videoItems });
+        } catch {
+          dispatchGallery({ type: 'set_videos', videos: [] });
+        }
       } finally {
         dispatchGallery({ type: 'loading', loading: false });
       }
@@ -44,7 +69,7 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
   }, [companyId]);
 
   const handleUpload = () => {
-    if (!canUpload) return;
+    if (!canUpload || !showControls) return;
     fileInputRef.current?.click();
   };
 
@@ -62,7 +87,7 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
   };
 
   const onAddVideo = async () => {
-    if (!videoUrl) return;
+    if (!videoUrl || !showControls) return;
     const resp = await fetchApi('/company_dashboard/add_video', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,23 +104,27 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Galeria de Mídia</h2>
-          <p className="text-muted-foreground">Gerencie fotos e vídeos da empresa</p>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Galeria de Mídia</h2>
+            <p className="text-muted-foreground">Fotos e vídeos da empresa</p>
+          </div>
+          {showControls && (
+            <div className="flex gap-2">
+              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFilesSelected} />
+              <Button onClick={handleUpload} disabled={!canUpload}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload de Fotos
+              </Button>
+              <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
+                <Video className="h-4 w-4 mr-2" />
+                Adicionar Vídeo
+              </Button>
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFilesSelected} />
-          <Button onClick={handleUpload} disabled={!canUpload}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload de Fotos
-          </Button>
-          <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
-            <Video className="h-4 w-4 mr-2" />
-            Adicionar Vídeo
-          </Button>
-        </div>
-      </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'photos' | 'videos')}>
         <TabsList>
@@ -105,15 +134,28 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
 
         <TabsContent value="photos">
           {gallery.loading ? (
-            <Card><CardContent className="p-6">Carregando fotos...</CardContent></Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="w-full aspect-square rounded-lg" />
+              ))}
+            </div>
           ) : gallery.photos.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {gallery.photos.map((photo) => (
-                <Card key={photo.id} className="overflow-hidden group">
-                  <CardContent className="p-0">
-                    <img src={photo.url} alt={photo.title} className="w-full aspect-square object-cover" />
-                  </CardContent>
-                </Card>
+                <button
+                  key={photo.id}
+                  className="rounded-lg overflow-hidden group"
+                  onClick={() => {
+                    setLightboxItem({ type: 'photo', url: photo.url });
+                    setLightboxOpen(true);
+                  }}
+                >
+                  <Card className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <img src={photo.url} alt={photo.title} className="w-full aspect-square object-cover" />
+                    </CardContent>
+                  </Card>
+                </button>
               ))}
             </div>
           ) : (
@@ -124,10 +166,12 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
                 <p className="text-muted-foreground text-center mb-4">
                   Adicione fotos para mostrar seus projetos e instalações.
                 </p>
-                <Button onClick={handleUpload} disabled={!canUpload}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload de Fotos
-                </Button>
+                {showControls && (
+                  <Button onClick={handleUpload} disabled={!canUpload}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload de Fotos
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
@@ -135,15 +179,28 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
 
         <TabsContent value="videos">
           {gallery.loading ? (
-            <Card><CardContent className="p-6">Carregando vídeos...</CardContent></Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="w-full aspect-square rounded-lg" />
+              ))}
+            </div>
           ) : gallery.videos.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {gallery.videos.map((v) => (
-                <Card key={v.id} className="overflow-hidden group">
-                  <CardContent className="p-0">
-                    <img src={v.thumbnail_url || ''} alt={v.video_id} className="w-full aspect-square object-cover" />
-                  </CardContent>
-                </Card>
+                <button
+                  key={v.id}
+                  className="rounded-lg overflow-hidden group"
+                  onClick={() => {
+                    setLightboxItem({ type: 'video', url: v.url, video_id: v.video_id });
+                    setLightboxOpen(true);
+                  }}
+                >
+                  <Card className="overflow-hidden group">
+                    <CardContent className="p-0">
+                      <img src={v.thumbnail_url || ''} alt={v.video_id} className="w-full aspect-square object-cover" />
+                    </CardContent>
+                  </Card>
+                </button>
               ))}
             </div>
           ) : (
@@ -154,10 +211,12 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
                 <p className="text-muted-foreground text-center mb-4">
                   Adicione vídeos do YouTube com suas instalações e projetos.
                 </p>
-                <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Vídeo
-                </Button>
+                {showControls && (
+                  <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Vídeo
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
@@ -175,6 +234,28 @@ export default function MediaGallery({ companyId }: MediaGalleryProps) {
           <DialogFooter>
             <Button onClick={onAddVideo} disabled={!videoUrl}>Enviar para Aprovação</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Visualização</DialogTitle>
+          </DialogHeader>
+          {lightboxItem?.type === 'photo' && (
+            <img src={lightboxItem.url} alt="" className="w-full h-auto object-contain rounded-lg" />
+          )}
+          {lightboxItem?.type === 'video' && lightboxItem?.video_id && (
+            <div className="aspect-video w-full">
+              <iframe
+                className="w-full h-full rounded-lg"
+                src={`https://www.youtube.com/embed/${lightboxItem.video_id}`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

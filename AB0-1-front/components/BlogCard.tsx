@@ -41,15 +41,22 @@ export default function BlogCard({ article }: BlogCardProps) {
       </div>
       
       <CardHeader className="p-4 pb-2">
-        <div className="flex items-center text-xs text-gray-500 mb-2 space-x-3">
-          <span className="flex items-center">
-            <Calendar className="w-3 h-3 mr-1" />
-            {publishedLabel}
-          </span>
-          <span className="flex items-center">
-            <Eye className="w-3 h-3 mr-1" />
-            {article.views_count ?? 0}
-          </span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center text-xs text-gray-500 space-x-3">
+            <span className="flex items-center">
+              <Calendar className="w-3 h-3 mr-1" />
+              {publishedLabel}
+            </span>
+            <span className="flex items-center">
+              <Eye className="w-3 h-3 mr-1" />
+              {article.views_count ?? 0}
+            </span>
+          </div>
+          {article.sponsored && (
+            <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+              {article.sponsored_label || 'Patrocinado'}
+            </span>
+          )}
         </div>
         <Link href={`/blog/${article.slug}`}>
           <h3 className="text-lg font-bold text-gray-900 hover:text-primary line-clamp-2">

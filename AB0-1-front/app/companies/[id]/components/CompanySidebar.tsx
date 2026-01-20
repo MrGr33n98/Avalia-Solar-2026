@@ -1,6 +1,7 @@
 import { Phone, Globe, MapPin, ExternalLink, Mail, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Company } from '@/lib/api';
+import SponsoredBanner from './SponsoredBanner';
 
 interface CompanySidebarProps {
   company: Company;
@@ -14,6 +15,13 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
 
   return (
     <div className="space-y-6 sticky top-24">
+      {/* Sponsored Square Banner */}
+      <SponsoredBanner
+        slotKey="company_sidebar_square"
+        companyId={company.id}
+        variant="square"
+      />
+
       {/* Contact Info Card */}
       <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">
         <CardHeader className="bg-muted/30 pb-4 border-b">

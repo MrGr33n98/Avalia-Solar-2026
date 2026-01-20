@@ -57,19 +57,28 @@ export const metadata: Metadata = {
   },
 };
 
+import { ThemeProvider } from '@/components/theme-provider';
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className="light" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ClientBody>
-          <Navbar />
-          {children}
-          <Footer />
-        </ClientBody>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClientBody>
+            <Navbar />
+            {children}
+            <Footer />
+          </ClientBody>
+        </ThemeProvider>
       </body>
     </html>
   );

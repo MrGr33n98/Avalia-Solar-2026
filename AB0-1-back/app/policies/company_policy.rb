@@ -23,6 +23,18 @@ class CompanyPolicy < ApplicationPolicy
     admin?
   end
 
+  def approve?
+    admin?
+  end
+
+  def reject?
+    admin?
+  end
+
+  def suspend?
+    admin?
+  end
+
   class Scope < Scope
     def resolve
       if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)

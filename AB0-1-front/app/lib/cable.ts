@@ -20,7 +20,7 @@ let consumer: Cable | null = null
 
 export function getConsumer() {
   if (consumer) return consumer
-  const url = process.env.NEXT_PUBLIC_CABLE_URL || '/cable'
+  const url = process.env.NEXT_PUBLIC_CABLE_URL || 'ws://localhost:3001/cable'
   consumer = createConsumer(url)
   return consumer
 }

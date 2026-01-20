@@ -11,13 +11,23 @@ class Lead < ApplicationRecord
     draft: 'draft',
     pending_otp: 'pending_otp',
     verified: 'verified',
-    distributed: 'distributed'
+    distributed: 'distributed',
+    proposal_submitted: 'proposal_submitted',
+    proposal_processing: 'proposal_processing',
+    proposal_sent: 'proposal_sent',
+    proposal_failed: 'proposal_failed'
   }, _suffix: true
 
   SIMPLE_EMAIL_REGEX = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
   OTP_TTL = 10.minutes
   OTP_MAX_ATTEMPTS = 5
   OTP_RESEND_COOLDOWN = 60.seconds
+  PROPOSAL_STATUSES = %w[
+    proposal_submitted
+    proposal_processing
+    proposal_sent
+    proposal_failed
+  ].freeze
 
   before_validation :normalize_contact_fields
   before_validation :apply_address_fallbacks
@@ -34,6 +44,10 @@ class Lead < ApplicationRecord
             format: { with: SIMPLE_EMAIL_REGEX, message: 'must be a valid email' },
             if: :wizard_validation_required?
   validates :consent_at, presence: true, if: :wizard_validation_required?
+  validates :name, :email, :phone, presence: true, if: :proposal_validation_required?
+  validates :email,
+            format: { with: SIMPLE_EMAIL_REGEX, message: 'must be a valid email' },
+            if: :proposal_validation_required?
 
   # Add these methods for Ransack
   def self.ransackable_attributes(_auth_object = nil)
@@ -51,7 +65,15 @@ class Lead < ApplicationRecord
   end
 
   def wizard_validation_required?
-    wizard_status.present? && wizard_status != 'draft'
+    wizard_status.present? && wizard_status != 'draft' && !proposal_status?
+  end
+
+  def proposal_validation_required?
+    proposal_status?
+  end
+
+  def proposal_status?
+    PROPOSAL_STATUSES.include?(wizard_status)
   end
 
   def otp_expired?

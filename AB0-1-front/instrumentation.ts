@@ -2,7 +2,7 @@
 // This file is automatically loaded by Next.js before the application starts
 // Documentation: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
 
-export const runtime = 'experimental-edge'
+export const runtime = 'nodejs'
 
 export async function register() {
   // Only run on server-side

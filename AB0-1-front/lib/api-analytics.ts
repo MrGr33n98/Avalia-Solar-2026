@@ -75,6 +75,53 @@ export interface CampaignPerformance {
   status: 'active' | 'paused' | 'completed';
 }
 
+export type VerificationStatus = 'declared' | 'verified' | 'calculated';
+
+export interface CompanyClaim {
+  key:
+    | 'projects_delivered'
+    | 'installed_capacity_kwp'
+    | 'years_in_market'
+    | 'ev_projects'
+    | 'commercial_projects'
+    | 'impact_co2'
+    | 'impact_economy';
+  value: number | string;
+  status: VerificationStatus;
+  updated_at: string;
+  evidence?: string[];
+}
+
+export interface PublicVisibilityToggles {
+  rating_reviews_public: boolean;
+  verification_public: boolean;
+  response_time_public: boolean;
+  response_band?: '1h' | '4h' | '24h' | '48h' | '48h_plus';
+  claims_public: {
+    projects_delivered: boolean;
+    installed_capacity_kwp: boolean;
+    years_in_market: boolean;
+    ev_projects: boolean;
+    commercial_projects: boolean;
+    impact_co2: boolean;
+    impact_economy: boolean;
+  };
+}
+
+export interface CompanyAnalyticsSettings {
+  collection_modes: {
+    automatic_tracking: boolean;
+    declared_input: boolean;
+    integrated_sources: {
+      utm: boolean;
+      crm_import: boolean;
+      ga4_meta_ads: boolean;
+    };
+  };
+  public_visibility: PublicVisibilityToggles;
+  claims: CompanyClaim[];
+}
+
 // =======================
 // Analytics API Endpoints
 // =======================
@@ -138,6 +185,62 @@ export const analyticsApi = {
     }
   },
 
+  // Settings: get
+  getAnalyticsSettings: async (
+    companyId: number
+  ): Promise<CompanyAnalyticsSettings> => {
+    const storageKey = `analytics_settings_company_${companyId}`;
+    try {
+      const response = await fetchApi<{ settings: CompanyAnalyticsSettings }>(
+        `/companies/${companyId}/analytics/settings`
+      );
+      const settings = response.settings;
+      if (settings) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(settings));
+        } catch {}
+      }
+      return (
+        settings ||
+        JSON.parse(localStorage.getItem(storageKey) || 'null') ||
+        defaultAnalyticsSettings()
+      );
+    } catch (error) {
+      try {
+        const cached = localStorage.getItem(storageKey);
+        if (cached) return JSON.parse(cached);
+      } catch {}
+      return defaultAnalyticsSettings();
+    }
+  },
+
+  // Settings: update
+  updateAnalyticsSettings: async (
+    companyId: number,
+    settings: CompanyAnalyticsSettings
+  ): Promise<CompanyAnalyticsSettings> => {
+    const storageKey = `analytics_settings_company_${companyId}`;
+    try {
+      const response = await fetchApi<{ settings: CompanyAnalyticsSettings }>(
+        `/companies/${companyId}/analytics/settings`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ settings }),
+        }
+      );
+      const updated = response.settings || settings;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    } catch (error) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(settings));
+      } catch {}
+      return settings;
+    }
+  },
+
   // Get competitor benchmarking
   getCompetitorBenchmark: async (
     companyId: number,
@@ -188,7 +291,7 @@ export const analyticsApi = {
   // Track event (for user actions)
   trackEvent: async (eventData: {
     company_id: number;
-    event_type: 'view' | 'click' | 'lead' | 'whatsapp_click';
+    event_type: 'view' | 'click' | 'lead' | 'whatsapp_click' | 'badge_cta_click' | 'badge_cta_view' | 'badges_tab_open' | string;
     metadata?: Record<string, any>;
   }): Promise<void> => {
     try {
@@ -197,7 +300,41 @@ export const analyticsApi = {
         body: JSON.stringify(eventData),
       });
     } catch (error) {
-      console.error('[analyticsApi.trackEvent] Error:', error);
+      // Silence logs for 500 errors to avoid console noise
+      // console.error('[analyticsApi.trackEvent] Error:', error);
+    }
+  },
+
+  // Conversion metrics grouped by event_type
+  getConversionMetrics: async (companyId: number, days = 30): Promise<{ metrics: Record<string, number>; daily: Record<string, number> }> => {
+    try {
+      const response = await fetchApi<{ metrics: Record<string, number>; daily: Record<string, number> }>(
+        '/analytics/conversions',
+        { params: { company_id: companyId, days } }
+      );
+      return response;
+    } catch (error) {
+      console.error('[analyticsApi.getConversionMetrics] Error:', error);
+      return { metrics: {}, daily: {} };
+    }
+  },
+
+  // Track banner-specific events
+  trackBannerEvent: async (payload: {
+    banner_id: number;
+    company_id?: number;
+    event_type: 'view' | 'click';
+    utm?: Record<string, any>;
+    metadata?: Record<string, any>;
+    tracked_at?: string;
+  }): Promise<void> => {
+    try {
+      await fetchApi('/banner_events', {
+        method: 'POST',
+        body: JSON.stringify({ banner_event: payload }),
+      });
+    } catch (error) {
+      console.error('[analyticsApi.trackBannerEvent] Error:', error);
     }
   },
 };
@@ -224,6 +361,36 @@ function generateMockHistoricalData(days: number): HistoricalData[] {
   }
 
   return data;
+}
+
+function defaultAnalyticsSettings(): CompanyAnalyticsSettings {
+  return {
+    collection_modes: {
+      automatic_tracking: true,
+      declared_input: true,
+      integrated_sources: {
+        utm: true,
+        crm_import: false,
+        ga4_meta_ads: false,
+      },
+    },
+    public_visibility: {
+      rating_reviews_public: true,
+      verification_public: true,
+      response_time_public: true,
+      response_band: '1h',
+      claims_public: {
+        projects_delivered: true,
+        installed_capacity_kwp: true,
+        years_in_market: true,
+        ev_projects: false,
+        commercial_projects: true,
+        impact_co2: false,
+        impact_economy: false,
+      },
+    },
+    claims: [],
+  };
 }
 
 // Export all functions

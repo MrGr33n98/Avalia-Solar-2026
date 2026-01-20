@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -216,8 +216,12 @@ export default function QuoteWizardModal() {
     setSubmitting(true);
     try {
       const response = await leadsWizardApi.verifyOtp(leadId, otpCode);
-      setCompanies(response.companies || []);
-      setStep(9);
+      if (response && response.companies) {
+        setCompanies(response.companies);
+        setStep(9);
+      } else {
+        throw new Error('Resposta inválida do servidor.');
+      }
     } catch (err: any) {
       setError(err?.message || 'Codigo invalido.');
     } finally {
@@ -253,7 +257,7 @@ export default function QuoteWizardModal() {
     >
       <DialogContent className="max-w-xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto z-[10000]">
         <div className="bg-green-600 text-white px-6 py-4 flex items-center justify-between">
-          <p className="text-sm font-semibold">Ja ajudamos muitos clientes na sua regiao</p>
+          <DialogTitle className="text-sm font-semibold">Ja ajudamos muitos clientes na sua regiao</DialogTitle>
         </div>
 
         <div className="px-6 pt-4">

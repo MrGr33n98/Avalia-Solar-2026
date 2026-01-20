@@ -4,11 +4,10 @@ module Analytics
   class TrackEventService
     Result = Struct.new(:ok, :event, :error, keyword_init: true)
 
-    def initialize(company_id:, user_id:, event_type:, source: nil, metadata: {}, occurred_at: Time.current)
+    def initialize(company_id:, user_id:, event_type:, metadata: {}, occurred_at: Time.current)
       @company_id = company_id
       @user_id = user_id
       @event_type = event_type.to_s
-      @source = source
       @metadata = sanitize_metadata(metadata)
       @occurred_at = occurred_at
     end
@@ -21,7 +20,6 @@ module Analytics
           company_id: @company_id,
           user_id: @user_id,
           event_type: @event_type,
-          source: @source,
           metadata: @metadata,
           tracked_at: @occurred_at
         )
@@ -39,7 +37,7 @@ module Analytics
 
     private
 
-    WHITELIST_KEYS = %w[utm_source utm_medium utm_campaign referrer path item_id].freeze
+    WHITELIST_KEYS = %w[utm_source utm_medium utm_campaign referrer path item_id ip user_agent viewport source placement variant button_variant].freeze
 
     def sanitize_metadata(meta)
       return {} unless meta.is_a?(Hash)

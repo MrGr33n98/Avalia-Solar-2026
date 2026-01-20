@@ -27,6 +27,14 @@ class PendingChange < ApplicationRecord
 
   validates :change_type, inclusion: { in: CHANGE_TYPES }
 
+  def self.change_types
+    CHANGE_TYPES.index_with { |value| value }
+  end
+
+  def self.statuses
+    %w[pending approved rejected].index_with { |value| value }
+  end
+
   # Ransack allowlist for associations
   def self.ransackable_associations(auth_object = nil)
     # Restrict to safe associations only

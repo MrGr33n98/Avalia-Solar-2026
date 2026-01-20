@@ -144,6 +144,11 @@ more_companies.each do |attrs|
 end
 
 # ================================
+# Empresas do dump Ever Energia
+# ================================
+load Rails.root.join('db', 'seeds_companies_dump.rb')
+
+# ================================
 # Extra: +5 categorias para totalizar 10
 # ================================
 extra_categories = [

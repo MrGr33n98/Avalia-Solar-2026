@@ -52,6 +52,7 @@ module QueryCacheable
         cache_key = custom_cache_key || "#{name.underscore}/#{method_name}"
         if defined?(REDIS) && REDIS
           keys = REDIS.keys("cache:#{cache_key}*")
+          keys = Array(keys)
           keys.each { |key| Rails.cache.delete(key.sub('cache:', '')) }
           Rails.logger.info("🗑️  Cleared #{keys.size} cache keys for #{method_name}")
         else
@@ -121,6 +122,7 @@ module QueryCacheable
       if defined?(REDIS) && REDIS
         pattern = "#{name.underscore}/*"
         keys = REDIS.keys("cache:#{pattern}")
+        keys = Array(keys)
         keys.each { |key| Rails.cache.delete(key.sub('cache:', '')) }
         Rails.logger.info("🗑️  Cleared #{keys.size} cache keys for #{name}")
         keys.size

@@ -45,8 +45,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def create
-    @lead = Lead.new(lead_params)
-    if Lead.column_names.include?('company') && params[:lead].is_a?(ActionController::Parameters) && params[:lead][:company].present?
+    @lead = ::Lead.new(lead_params)
+    if ::Lead.column_names.include?('company') && params[:lead].is_a?(ActionController::Parameters) && params[:lead][:company].present?
       @lead[:company] = params[:lead][:company]
     end
 
@@ -64,7 +64,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def wizard_create
     payload = wizard_lead_params
-    lead = Lead.new(payload.except(:full_name, :consent))
+    lead = ::Lead.new(payload.except(:full_name, :consent))
     lead.name = payload[:full_name] if lead.name.blank? && payload[:full_name].present?
     lead.wizard_status = 'pending_otp'
     lead.consent_at = Time.current if truthy?(payload[:consent])
@@ -80,7 +80,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     )
 
     preferred_company_id = params[:preferred_company_id].presence&.to_i
-    if preferred_company_id.present? && Lead.column_names.include?('company_id')
+    if preferred_company_id.present? && ::Lead.column_names.include?('company_id')
       lead.company_id = preferred_company_id
     end
 
@@ -94,8 +94,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
   rescue ActionController::ParameterMissing => e
     render json: { error: e.message }, status: :bad_request
   rescue StandardError => e
-    Rails.logger.error("Leads wizard_create error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    Rails.logger.error("Leads wizard_create error: #{e.class} - #{e.message}\nBacktrace: #{e.backtrace.first(5).join("\n")}")
+    render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
   end
 
   def send_otp
@@ -106,7 +106,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
 
     unless @lead.otp_can_resend?
-      retry_in = Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
+      retry_in = ::Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
       return render json: { error: 'OTP recently sent', retry_in: retry_in.to_i }, status: :too_many_requests
     end
 
@@ -149,7 +149,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
 
     companies = []
-    Lead.transaction do
+    ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
@@ -196,13 +196,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
   private
 
   def set_lead
-    @lead = Lead.find(params[:id])
+    @lead = ::Lead.find(params[:id])
   end
 
   def lead_params
     base_keys = [:name, :email, :phone, :message]
     optional_keys = []
-    columns = Lead.column_names
+    columns = ::Lead.column_names
     optional_keys << :project_type if columns.include?('project_type')
     optional_keys << :estimated_budget if columns.include?('estimated_budget')
     optional_keys << :location if columns.include?('location')

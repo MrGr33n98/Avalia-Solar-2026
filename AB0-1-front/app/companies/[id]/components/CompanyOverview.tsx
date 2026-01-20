@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Company } from '@/lib/api';
 import { CheckCircle2, Award, Zap, ShieldCheck } from 'lucide-react';
+import SponsoredBanner from './SponsoredBanner';
 
 interface CompanyOverviewProps {
   company: Company;
@@ -23,6 +24,13 @@ export default function CompanyOverview({ company }: CompanyOverviewProps) {
           )}
         </div>
       </section>
+
+      {/* Sponsored Inline Banner */}
+      <SponsoredBanner
+        slotKey="company_overview_inline"
+        companyId={company.id}
+        variant="inline"
+      />
 
       {/* Tipos de Projetos */}
       {company.project_types && company.project_types.length > 0 && (

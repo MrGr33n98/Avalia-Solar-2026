@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_16_234500) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_20_035152) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -105,6 +105,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_16_234500) do
     t.boolean "featured"
     t.integer "views_count"
     t.integer "author_id"
+    t.boolean "sponsored"
+    t.string "sponsored_label"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["product_id"], name: "index_articles_on_product_id"
@@ -469,6 +471,21 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_16_234500) do
     t.integer "article_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "faqs", force: :cascade do |t|
+    t.string "question", null: false
+    t.text "answer", null: false
+    t.string "category", default: "geral", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "helpful_yes", default: 0, null: false
+    t.integer "helpful_no", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_faqs_on_active"
+    t.index ["category", "active"], name: "index_faqs_on_category_and_active"
+    t.index ["category"], name: "index_faqs_on_category"
   end
 
   create_table "feature_groups", force: :cascade do |t|

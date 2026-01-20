@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import QuoteWizardModal from '@/components/QuoteWizardModal';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function ClientBody({
   children,
@@ -16,6 +17,7 @@ export default function ClientBody({
         <AuthProvider>
           {children}
           <QuoteWizardModal />
+          <Toaster />
         </AuthProvider>
       </ThemeProvider>
     </QueryProvider>

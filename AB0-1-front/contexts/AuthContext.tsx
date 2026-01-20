@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Only try to fetch user data if we have authentication data
       if (hasAuthData || hasToken) {
         const userData = await authApi.me();
-        setUser(userData);
+        setUser(userData || null);
       } else {
         console.log('[Auth] No authentication data found, skipping user fetch');
         setUser(null);
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Try to fetch current user after login (if login endpoint sets session cookie)
       try {
         const me = await authApi.me();
-        setUser(me);
+        setUser(me || null);
         return;
       } catch (e) {
         throw e;

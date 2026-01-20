@@ -8,8 +8,9 @@ import {
   Activity,
   BarChart2
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AdvancedAnalytics from './AdvancedAnalytics';
 
@@ -37,52 +38,6 @@ interface AzureOverviewProps {
 function AzureMetricCard({ metric, index, themeMode }: MetricCardProps) {
   const isDark = themeMode === 'dark';
   
-  const colorMap = {
-    blue: { 
-      bg: isDark ? 'bg-blue-500/5' : 'bg-blue-50/50',
-      hover: isDark ? 'hover:bg-blue-500/10' : 'hover:bg-blue-50',
-      icon: 'text-blue-500',
-      border: isDark ? 'border-blue-500/20' : 'border-blue-200/50'
-    },
-    purple: { 
-      bg: isDark ? 'bg-purple-500/5' : 'bg-purple-50/50',
-      hover: isDark ? 'hover:bg-purple-500/10' : 'hover:bg-purple-50',
-      icon: 'text-purple-500',
-      border: isDark ? 'border-purple-500/20' : 'border-purple-200/50'
-    },
-    green: { 
-      bg: isDark ? 'bg-emerald-500/5' : 'bg-emerald-50/50',
-      hover: isDark ? 'hover:bg-emerald-500/10' : 'hover:bg-emerald-50',
-      icon: 'text-emerald-500',
-      border: isDark ? 'border-emerald-500/20' : 'border-emerald-200/50'
-    },
-    orange: { 
-      bg: isDark ? 'bg-orange-500/5' : 'bg-orange-50/50',
-      hover: isDark ? 'hover:bg-orange-500/10' : 'hover:bg-orange-50',
-      icon: 'text-orange-500',
-      border: isDark ? 'border-orange-500/20' : 'border-orange-200/50'
-    },
-    yellow: { 
-      bg: isDark ? 'bg-yellow-500/5' : 'bg-yellow-50/50',
-      hover: isDark ? 'hover:bg-yellow-500/10' : 'hover:bg-yellow-50',
-      icon: 'text-yellow-500',
-      border: isDark ? 'border-yellow-500/20' : 'border-yellow-200/50'
-    },
-    pink: { 
-      bg: isDark ? 'bg-pink-500/5' : 'bg-pink-50/50',
-      hover: isDark ? 'hover:bg-pink-500/10' : 'hover:bg-pink-50',
-      icon: 'text-pink-500',
-      border: isDark ? 'border-pink-500/20' : 'border-pink-200/50'
-    },
-    emerald: { 
-      bg: isDark ? 'bg-emerald-500/5' : 'bg-emerald-50/50',
-      hover: isDark ? 'hover:bg-emerald-500/10' : 'hover:bg-emerald-50',
-      icon: 'text-emerald-500',
-      border: isDark ? 'border-emerald-500/20' : 'border-emerald-200/50'
-    }
-  };
-
-  const colors = colorMap[metric.color as keyof typeof colorMap] || colorMap.blue;
   const isPositive = metric.changeType === 'positive';
   const isNegative = metric.changeType === 'negative';
 
@@ -92,50 +47,22 @@ function AzureMetricCard({ metric, index, themeMode }: MetricCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Card className={cn(
-        'border transition-all duration-300',
-        colors.border,
-        colors.hover,
-        isDark ? 'bg-card/50' : 'bg-white/50',
-        'backdrop-blur-sm'
-      )}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            {/* Icon */}
-            <div className={cn(
-              'p-2 rounded-lg',
-              colors.bg
-            )}>
-              <metric.icon className={cn('h-4 w-4', colors.icon)} />
-            </div>
-
-            {/* Change Badge */}
-            <div className={cn(
-              'flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full',
-              isPositive && 'text-emerald-600 bg-emerald-500/10',
-              isNegative && 'text-red-600 bg-red-500/10',
-              !isPositive && !isNegative && (isDark ? 'text-slate-400 bg-slate-500/10' : 'text-gray-600 bg-gray-500/10')
-            )}>
-              {isPositive && <TrendingUp className="h-3 w-3" />}
-              {isNegative && <TrendingDown className="h-3 w-3" />}
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            {metric.title}
+          </CardTitle>
+          <metric.icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{metric.value}</div>
+          <div className="flex items-center space-x-2 mt-1">
+            <Badge variant={isPositive ? 'default' : isNegative ? 'destructive' : 'secondary'} className="px-1.5 py-0 text-[10px]">
+              {isPositive && <TrendingUp className="mr-1 h-3 w-3" />}
+              {isNegative && <TrendingDown className="mr-1 h-3 w-3" />}
               {metric.change}
-            </div>
-          </div>
-
-          {/* Value */}
-          <div className="mt-3">
-            <div className={cn(
-              'text-2xl font-semibold tracking-tight',
-              isDark ? 'text-white' : 'text-gray-900'
-            )}>
-              {metric.value.toLocaleString ? metric.value.toLocaleString('pt-BR') : metric.value}
-            </div>
-            <div className={cn(
-              'text-xs mt-1',
-              isDark ? 'text-slate-400' : 'text-gray-600'
-            )}>
-              {metric.title}
-            </div>
+            </Badge>
+            <p className="text-xs text-muted-foreground">vs mês anterior</p>
           </div>
         </CardContent>
       </Card>

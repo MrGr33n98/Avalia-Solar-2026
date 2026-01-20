@@ -21,6 +21,9 @@ class Article < ApplicationRecord
   validate :banner_dimensions, if: -> { banner.attached? }
   validates :status, inclusion: { in: %w[draft published], message: "%{value} is not a valid status" }, allow_nil: true
 
+  # Defaults
+  after_initialize :set_defaults, if: :new_record?
+
   scope :published, -> { where(status: 'published').where('published_at <= ?', Time.current) }
   scope :featured, -> { where(featured: true) }
   scope :sponsored, -> { where(sponsored: true) }
@@ -43,6 +46,13 @@ class Article < ApplicationRecord
   end
 
   private
+
+  def set_defaults
+    self.sponsored ||= false
+    self.featured ||= false
+    self.views_count ||= 0
+    self.status ||= 'draft'
+  end
 
   def banner_mime_type
     allowed = %w[image/jpeg image/png image/gif]

@@ -100,5 +100,28 @@ export default async function CompanyDetailPage({ params }: Props) {
     logo_url: company.logo_url
   });
 
-  return <CompanyDetailClient company={company} />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: company.name,
+    description: company.description || undefined,
+    url: company.website || undefined,
+    telephone: company.phone || undefined,
+    address: company.address
+      ? {
+          '@type': 'PostalAddress',
+          streetAddress: company.address,
+          addressLocality: company.city || undefined,
+          addressRegion: company.state || undefined,
+        }
+      : undefined,
+    image: company.banner_url || company.logo_url || undefined,
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <CompanyDetailClient company={company} />
+    </>
+  );
 }

@@ -81,8 +81,39 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     ? getFullImageUrl((article.author as any).avatar_photo_url)
     : undefined;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.excerpt || article.meta_description,
+    image: ogImage ? [ogImage] : [],
+    datePublished: article.published_at,
+    dateModified: article.updated_at || article.published_at,
+    author: {
+      '@type': 'Person',
+      name: article.author_name || article.author?.name || 'Avalia Solar',
+      image: authorAvatarUrl
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Avalia Solar',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.avaliasolar.com.br/images/logo.png'
+      }
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.avaliasolar.com.br/blog/${article.slug}`
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <main>
         {article.image_url ? (
           <ArticleBanner

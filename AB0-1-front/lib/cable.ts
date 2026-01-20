@@ -18,7 +18,7 @@ function toWsUrl(origin: string): string {
   if (!origin) return '';
   if (origin.startsWith('https://')) return origin.replace('https://', 'wss://');
   if (origin.startsWith('http://')) return origin.replace('http://', 'ws://');
-  return origin;
+  return origin.replace(/^http/, 'ws');
 }
 
 export function subscribeCompanyDashboard(
@@ -28,9 +28,13 @@ export function subscribeCompanyDashboard(
   const token = getAuthToken();
   const origin = getApiOrigin();
   const wsOrigin = toWsUrl(origin);
-  if (!wsOrigin || !token) return () => {};
+  if (!wsOrigin || !token) {
+    console.warn('ActionCable: Missing WS Origin or Token', { wsOrigin, hasToken: !!token });
+    return () => {};
+  }
 
   const url = `${wsOrigin}/cable?token=${encodeURIComponent(token)}`;
+  console.log('ActionCable: Connecting to', url);
   const socket = new WebSocket(url);
 
   socket.onopen = () => {
@@ -49,7 +53,8 @@ export function subscribeCompanyDashboard(
     }
   };
 
-  socket.onerror = () => {
+  socket.onerror = (error) => {
+    console.error('ActionCable: WebSocket Error', error);
     // ignore; UI can fall back to polling
   };
 

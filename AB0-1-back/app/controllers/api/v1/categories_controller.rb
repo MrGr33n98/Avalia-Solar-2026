@@ -81,13 +81,22 @@ module Api
       # GET /categories/:id/companies
       # =========================
       def companies
+        Rails.logger.info("🔎 [CategoriesController#companies] Fetching companies for Category ##{@category.id} (#{@category.name})")
+
         companies_scope = @category.companies
 
         if params[:status].present? && ::Company.column_names.include?('status')
           companies_scope = companies_scope.where(status: params[:status])
         end
 
+        # Log count before limit
+        total_count = companies_scope.count
+        Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit)")
+
         companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
+
+        # Optimization: Eager load associations
+        companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
 
         render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
       end

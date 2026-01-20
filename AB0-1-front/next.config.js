@@ -125,8 +125,9 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 // Only enable Sentry source map upload if credentials are available
 const hasSentryConfig = process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT;
+const enableSentryWrapper = process.env.NODE_ENV === 'production' && hasSentryConfig;
 
-module.exports = hasSentryConfig ? withSentryConfig(
+module.exports = enableSentryWrapper ? withSentryConfig(
   nextConfig,
   {
     // Sentry Webpack Plugin Options

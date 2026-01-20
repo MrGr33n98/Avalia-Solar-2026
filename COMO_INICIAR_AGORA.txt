@@ -1,0 +1,35 @@
+═══════════════════════════════════════════════════════════════════
+⚡ FIX FINANCING 500 - COPIE E COLE ⚡
+═══════════════════════════════════════════════════════════════════
+
+PASSO 1: Abra terminal e execute:
+───────────────────────────────────────────────────────────────────
+cd C:\Users\Bobi\Desktop\AB0-1-main\AB0-1-back
+rails console
+
+
+PASSO 2: Cole ESTE COMANDO COMPLETO (tudo de uma vez):
+───────────────────────────────────────────────────────────────────
+company = Company.find_or_create_by!(id: 1) { |c| c.name = "Empresa Solar"; c.email = "test@test.com"; c.phone = "48999999999"; c.city = "Florianópolis"; c.state = "SC"; c.status = :active }; company.financing_options.destroy_all; company.financing_options.create!([{ institution_name: "Banco Solar Brasil", credit_line: "Crédito Solar Residencial", target_audience: "PF", max_term_months: 60, grace_period_months: 3, interest_rate_percent: 1.39, interest_rate_details: "Taxa 1,39% a.m.", active: true }, { institution_name: "Banco Verde", credit_line: "Linha Empresarial", target_audience: "PJ", max_term_months: 84, grace_period_months: 6, interest_rate_percent: 1.89, interest_rate_details: "Taxa 1,89% a.m.", active: true }, { institution_name: "Banco Agro", credit_line: "Energia Solar Rural", target_audience: "Rural", max_term_months: 72, grace_period_months: 12, interest_rate_percent: 0.99, interest_rate_details: "Taxa 0,99% a.m.", active: true }]); puts "✅ SUCESSO! #{company.financing_options.count} opções criadas"
+
+
+PASSO 3: Saia do console:
+───────────────────────────────────────────────────────────────────
+exit
+
+
+PASSO 4: Reinicie o Rails Server:
+───────────────────────────────────────────────────────────────────
+# Pressione Ctrl+C no terminal do Rails, depois:
+rails s -p 3001
+
+
+PASSO 5: TESTE NO BROWSER:
+───────────────────────────────────────────────────────────────────
+http://localhost:3001/api/v1/companies/1/financing_options/simulate?amount=50000&audience=pf&months=60
+
+DEVE RETORNAR JSON (não erro 500)
+
+═══════════════════════════════════════════════════════════════════
+✅ PRONTO! Tempo: 2 minutos
+═══════════════════════════════════════════════════════════════════

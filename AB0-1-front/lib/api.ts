@@ -803,20 +803,30 @@ export const authApi = {
       console.warn('Logout endpoint error:', error);
     }
   },
-  me: async (): Promise<User> => {
-    // Check if we have authentication data before making the request
+  me: async (): Promise<User | null> => {
+    // Só chama se tiver algum token em disco (evita 401 ruidosos)
     if (typeof window !== 'undefined') {
       const authData = localStorage.getItem('auth');
       const token = localStorage.getItem('auth_token');
-      
+
       if (!authData && !token) {
-        console.log('[authApi.me] No authentication data found, throwing error');
-        throw new Error('No authentication data available');
+        console.log('[authApi.me] No auth data found, skipping /auth/me');
+        return null;
       }
     }
-    
-    const resp = await fetchApi<{ user: User }>('/auth/me');
-    return resp.user;
+
+    try {
+      const resp = await fetchApi<{ user: User }>('/auth/me');
+      return resp.user;
+    } catch (error: any) {
+      // Silencia 401 / Not authenticated e retorna null
+      const msg = error?.message || '';
+      if (msg.includes('[401]') || msg.toLowerCase().includes('not authenticated')) {
+        console.warn('[authApi.me] Not authenticated, returning null');
+        return null;
+      }
+      throw error;
+    }
   },
 };
 
@@ -882,6 +892,44 @@ export const financingOptionsApi = {
     fetchApi<{ options: FinancingOption[] }>(
       `/companies/${companyId}/financing_options/compare`,
       { params: { ids } }
+    ),
+  simulate: (companyId: number, params: { amount: number; audience?: string; months?: number }) =>
+    fetchApi<{
+      best: any;
+      options: Array<
+        FinancingOption & {
+          monthly_payment: number;
+          total_cost: number;
+          cet_annual_percent: number;
+        }
+      >;
+      ranking: Array<{ id: number; score: number; reason: string }>;
+    }>(`/companies/${companyId}/financing_options/simulate`, { params }),
+};
+
+export const financingProposalsApi = {
+  submit: (
+    companyId: number,
+    payload: {
+      option_id?: number;
+      amount: number;
+      months: number;
+      audience?: string;
+      entry?: number;
+      use_type?: string;
+      project_amount?: number;
+      name?: string;
+      email?: string;
+      phone?: string;
+    }
+  ) =>
+    fetchApi<{ proposal_id: number; status: string }>(
+      `/companies/${companyId}/financing_proposals`,
+      { method: 'POST', body: JSON.stringify(payload) }
+    ),
+  status: (companyId: number, proposalId: number) =>
+    fetchApi<{ proposal_id: number; status: string }>(
+      `/companies/${companyId}/financing_proposals/${proposalId}/status`
     ),
 };
 

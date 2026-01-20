@@ -446,9 +446,29 @@ class Company < ApplicationRecord
   end
 
   def validate_ready_for_activation
-    return if ready_for_activation?
+    if name.blank?
+      errors.add(:name, 'é obrigatório para ativação')
+    end
 
-    errors.add(:status, 'não pode ser active sem requisitos mínimos')
+    if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+      errors.add(:email, 'inválido ou ausente para ativação')
+    end
+
+    unless Locations::BrLocations.valid_state?(state)
+      errors.add(:state, 'inválido ou ausente para ativação')
+    end
+
+    unless Locations::BrLocations.valid_city?(state, city)
+      errors.add(:city, 'inválida ou ausente para ativação')
+    end
+
+    unless categories.any?
+      errors.add(:categories, 'pelo menos uma categoria é necessária para ativação')
+    end
+
+    unless phone.present? || whatsapp.present? || email_public.present?
+      errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email Público) é necessário para ativação')
+    end
   end
 
   def validate_featured_requires_active
@@ -549,6 +569,7 @@ class Company < ApplicationRecord
     end
     
     if ids_to_update.present?
+      Rails.logger.info("ℹ️ [Company#update_associated_categories_metrics] Updating metrics for categories: #{ids_to_update.join(', ')} (Company ##{id})")
       Category.where(id: ids_to_update).find_each do |cat|
         cat.update_metrics!
       end

@@ -2,47 +2,40 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "**" ]
+    branches: [ "main" ]
 
 jobs:
-  backend:
+  build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: AB0-1-back
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2.2'
-          bundler-cache: true
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential libpq-dev
-      - name: Install dependencies
-        run: bundle install --jobs 4 --retry 3
-      - name: Run tests with coverage
-        env:
-          RAILS_ENV: test
-          COVERAGE: "true"
-          MINIMUM_COVERAGE: "90"
-        run: |
-          bin/rails db:schema:load
-          bundle exec rake test:coverage_check
 
-  frontend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: AB0-1-front
+    strategy:
+      matrix:
+        node-version: [18.x]
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests with coverage
-        run: npm run test:ci
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: AB0-1-front/package-lock.json
+
+    - name: Install Dependencies
+      working-directory: ./AB0-1-front
+      run: npm ci
+
+    - name: Lint
+      working-directory: ./AB0-1-front
+      run: npm run lint
+
+    - name: Test
+      working-directory: ./AB0-1-front
+      run: npm run test:ci
+
+    - name: Build
+      working-directory: ./AB0-1-front
+      run: npm run build

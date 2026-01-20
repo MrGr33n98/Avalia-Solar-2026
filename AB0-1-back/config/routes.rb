@@ -64,15 +64,26 @@ Rails.application.routes.draw do
         resources :financing_options, only: [:index, :create, :update, :destroy] do
           collection do
             get :compare
+            get :simulate
+          end
+        end
+
+        resources :financing_proposals, only: [:create, :show] do
+          member do
+            get :status
           end
         end
       end
 
       # Analytics routes
       post 'analytics/track', to: 'analytics#track'
+      get 'analytics/conversions', to: 'analytics#conversions'
 
       # Banner offers (catalog)
       resources :banner_offers, only: [:index]
+
+      # Banner events (tracking)
+      resources :banner_events, only: [:create]
 
       # Payments webhooks
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
@@ -91,6 +102,8 @@ Rails.application.routes.draw do
         get 'media', to: 'company_dashboard#media'
         get 'videos', to: 'company_dashboard#videos'
         post 'update_info', to: 'company_dashboard#update_info'
+        post 'update_logo', to: 'company_dashboard#update_logo'
+        post 'update_banner', to: 'company_dashboard#update_banner'
         post 'add_categories', to: 'company_dashboard#add_categories'
         post 'remove_category', to: 'company_dashboard#remove_category'
         post 'update_ctas', to: 'company_dashboard#update_ctas'
@@ -188,6 +201,12 @@ Rails.application.routes.draw do
           end
         end
         resources :pending_changes, only: [:index, :show]
+      end
+
+      resources :faqs do
+        member do
+          post :vote
+        end
       end
     end
   end

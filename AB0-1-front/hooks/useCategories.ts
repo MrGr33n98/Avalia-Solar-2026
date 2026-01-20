@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { categoriesApiSafe } from '@/lib/api-client';
 import { Category } from '@/lib/api';
 
@@ -37,7 +37,10 @@ export function useCategories(fetchAll: boolean = false) {
     }
   }, [fetchAll]);
 
+  const didRunRef = useRef(false);
   useEffect(() => {
+    if (didRunRef.current) return;
+    didRunRef.current = true;
     loadCategories();
   }, [loadCategories]);
 

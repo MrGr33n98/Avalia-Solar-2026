@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye,
@@ -16,7 +17,10 @@ import {
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
 import EnterpriseHeader from './EnterpriseHeader';
-import { EnterpriseMetricsGrid } from './EnterpriseMetricCard';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 // Feature Components
 import CompanyInfo from './CompanyInfo';
@@ -66,9 +70,29 @@ interface Notification {
 }
 
 export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Sync tab change with URL
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Sync URL changes back to state (e.g. back button)
+   useEffect(() => {
+     const tab = searchParams.get('tab');
+     if (tab && tab !== activeTab) {
+       setActiveTab(tab);
+     }
+   }, [searchParams, activeTab]);
   const [company, setCompany] = useState<any>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -291,7 +315,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       {/* Drawer Sidebar */}
       <EnterpriseSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         pendingCount={stats?.pendingApprovals || 0}
@@ -323,8 +347,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   metrics={metrics}
                   themeMode={themeMode}
                   companyId={companyId}
-                  onNavigateToAnalytics={() => setActiveTab('analytics')}
-                  onNavigateToBenchmark={() => setActiveTab('benchmark')}
+                  onNavigateToAnalytics={() => handleTabChange('analytics')}
+                  onNavigateToBenchmark={() => handleTabChange('benchmark')}
                 />
               )}
 
@@ -540,18 +564,22 @@ function ApprovalsPanel({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-4">
       {items.map((pc) => (
-        <div key={pc.id} className="p-4 border rounded-xl bg-card">
-          <div className="flex items-center justify-between">
+        <Card key={pc.id} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{String(pc.change_type).replace(/_/g,' ').toUpperCase()}</p>
               <p className="text-xs text-muted-foreground">Criado em {new Date(pc.created_at).toLocaleString()}</p>
             </div>
-            <span className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Pendente</span>
-          </div>
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+              Pendente
+            </Badge>
+          </CardContent>
           {pc.rejection_reason && (
-            <p className="text-xs text-destructive mt-2">Motivo da rejeição: {pc.rejection_reason}</p>
+            <div className="px-4 pb-4">
+              <p className="text-xs text-destructive">Motivo da rejeição: {pc.rejection_reason}</p>
+            </div>
           )}
-        </div>
+        </Card>
       ))}
     </div>
   );
