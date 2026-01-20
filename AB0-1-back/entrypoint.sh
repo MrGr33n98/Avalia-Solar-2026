@@ -60,5 +60,8 @@ fi
 
 # === INÍCIO DA APLICAÇÃO ===
 
+echo "🔍 Verificando boot do Rails..."
+bundle exec rails runner "puts '✅ Rails boot check passed'" || { echo "❌ Rails boot falhou"; exit 1; }
+
 echo "Starting Rails server..."
 exec "$@"

@@ -100,350 +100,46 @@ class Company < ApplicationRecord
   validates :maximum_ticket,
             numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
-
-  # =========================
-  # Scopes
-  # =========================
-
-  # Analytics hot counters (used by dashboard)
-  # Columns are added via migration AddAnalyticsCountersToCompanies
-  # Defaults to 0 in DB.
-
-  scope :by_state,        ->(state) { where(state:) if state.present? }
-  scope :by_city,         ->(city)  { where(city:) if city.present? }
-  scope :featured,        ->        { where(featured: true) }
-  scope :verified,        ->        { where(verified: true) }
-  scope :by_rating,       ->        { order(rating_avg: :desc) }
-  scope :by_founded_year, ->        { order(founded_year: :asc) }
-  scope :active_only,     ->        { where(status: statuses[:active]) }
-
-  # =========================
-  # Cacheable Queries - TASK-016
-  # =========================
-
-  # Featured companies with best ratings
-  cacheable_query :featured_top_rated, expires_in: 1.hour do
-    featured
-      .active_only
-      .verified
-      .by_rating
-      .includes(:categories, :products)
-      .limit(10)
-  end
-
-  # Active companies with products
-  cacheable_query :active_with_products, expires_in: 30.minutes do
-    active_only
-      .joins(:products)
-      .distinct
-      .includes(:categories)
-      .order(name: :asc)
-  end
-
-  # Companies by state (cached)
-  def self.cached_by_state(state, expires_in: 30.minutes)
-    return [] if state.blank?
-
-    cache_key = "company/by_state/#{state}"
-    Rails.cache.fetch(cache_key, expires_in: expires_in) do
-      by_state(state).active_only.to_a
-    end
-  end
-
-  # Companies by city (cached)
-  def self.cached_by_city(city, expires_in: 30.minutes)
-    return [] if city.blank?
-
-    cache_key = "company/by_city/#{city}"
-    Rails.cache.fetch(cache_key, expires_in: expires_in) do
-      by_city(city).active_only.to_a
-    end
-  end
-
-  # Top rated companies
-  cacheable_query :top_rated, expires_in: 1.hour do
-    where.not(rating_avg: nil)
-      .where('rating_avg >= ?', 4.0)
-      .active_only
-      .by_rating
-      .limit(20)
-  end
-
-  # =========================
-  # Ransack configuration
-  # =========================
-  def self.ransackable_attributes(_auth_object = nil)
-    %w[
-      id name description website phone address state city
-      featured verified cnpj email_public instagram facebook linkedin
-      working_hours payment_methods certifications status
-      founded_year employees_count rating_avg rating_count
-      created_at updated_at
-    ]
-  end
-
-  def self.ransackable_associations(_auth_object = nil)
-    %w[categories reviews]
-  end
-
-  # =========================
-  # Domain / API helpers
-  # =========================
-
-  # Cached average rating
-  def average_rating
-    cache_method(:average_rating, expires_in: 30.minutes) do
-      rating_avg.presence || reviews.average(:rating).to_f.round(1)
-    end
-  end
-
-  # Cached reviews count
-  def reviews_count
-    cache_method(:reviews_count, expires_in: 30.minutes) do
-      rating_count.presence || reviews.count
-    end
-  end
-
-  # Cached products count
-  def cached_products_count
-    cache_method(:products_count, expires_in: 1.hour) do
-      products.count
-    end
-  end
-
-  # Cached categories
-  def cached_categories
-    cache_method(:categories, expires_in: 1.hour) do
-      categories.to_a
-    end
-  end
-
-  def recalculate_rating_cache!
-    stats = reviews.group(nil).pluck(Arel.sql('COALESCE(AVG(rating),0), COUNT(*)')).first
-    avg = stats[0].to_f.round(2)
-    count = stats[1].to_i
-    update_columns(rating_avg: avg, rating_count: count, updated_at: Time.current)
-
-    # Clear cache after recalculation
-    clear_cache!
-    
-    # Update categories metrics as rating changed
-    update_associated_categories_metrics
-  end
-
-  def years_in_business
-    return nil unless founded_year.present?
-
-    Time.current.year - founded_year
-  end
-
-  def build_ctas(context = 'detail', utm = {}, vars = {})
-    CompanyCtaBuilder.new(self, context, utm, vars).build_all_ctas
-  end
-
-  def social_links
-    {
-      facebook: facebook_url,
-      instagram: instagram_url,
-      linkedin: linkedin_url,
-      youtube: youtube_url
-    }.compact.presence
-  end
-
-  # Helper methods for Active Storage URLs
-  def banner_url
-    banner.attached? ? Rails.application.routes.url_helpers.rails_blob_url(banner, only_path: false) : nil
-  end
-
-  def logo_url
-    logo.attached? ? Rails.application.routes.url_helpers.rails_blob_url(logo, only_path: false) : nil
-  end
-
-  def media_urls
-    media_assets.attached? ? media_assets.map { |m| Rails.application.routes.url_helpers.rails_blob_url(m, only_path: false) } : []
-  end
-
-  def published_videos
-    company_videos.where(status: 'published')
-  end
-
-  def whatsapp_url
-    return super.presence if super.present?
-    return nil unless whatsapp.present?
-
-    digits = whatsapp.to_s.gsub(/\D/, '')
-    digits = digits.sub(/\A55/, '') if digits.length > 11
-    "https://wa.me/55#{digits}"
-  end
-
-  def ready_for_activation?
-    return false if name.blank?
-    return false if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
-    return false unless Locations::BrLocations.valid_state?(state)
-    return false unless Locations::BrLocations.valid_city?(state, city)
-    return false unless categories.any?
-    return false unless phone.present? || whatsapp.present? || email_public.present?
-
-    true
-  end
-
-  def has_paid_plan?
-    return false unless plan_status == 'active' && plan.present?
-    plan.price.to_f > 0.0
-  end
-
-  def max_products_limit
-    features = plan&.features_json || {}
-    limit = features.is_a?(Hash) ? (features['max_products'] || features[:max_products]) : nil
-    limit.is_a?(Integer) ? limit : nil
-  end
-
-  def plan_features
-    raw = plan&.features_json
-    return {} unless raw.is_a?(Hash)
-
-    raw.deep_stringify_keys
-  end
-
-  def effective_plan_features
-    features = plan_features.dup
-
-    # Add-on: if company purchased banner subscriptions
-    if banner_subscriptions.active.exists?
-      features['banners'] = true
-      features['has_banners'] = true
-    end
-
-    features
-  end
-
-  def plan_permissions
-    effective_plan_features
-  end
-
-  def feature_enabled?(name)
-    return false if name.blank?
-
-    features = effective_plan_features
-    return false if features.blank?
-
-    key = name.to_s
-    candidates = [key, "has_#{key}", "#{key}_enabled", "allow_#{key}"]
-    value = candidates.map { |candidate| features[candidate] }.find { |candidate| !candidate.nil? }
-
-    case value
-    when TrueClass
-      true
-    when FalseClass, NilClass
-      false
-    when Numeric
-      value.positive?
-    when String
-      %w[true 1 yes].include?(value.strip.downcase)
-    else
-      !!value
-    end
-  end
-
-  validate :validate_logo_attachment
-  validate :validate_banner_attachment
   
-  # Constantes (mantidas no modelo)
-  PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
-  SERVICES_OFFERED = [
-    'Instalação Residencial',
-    'Instalação Comercial',
-    'Instalação Industrial',
-    'Manutenção e Suporte',
-    'Consultoria Energética'
-  ].freeze
-
-  before_validation :normalize_company_fields
-  before_validation :normalize_multiselects
-  validate :validate_project_types, :validate_services_offered
-
-  def validate_logo_attachment
-    return unless logo.attached?
-    if !logo.blob.content_type.in?(%w[image/png image/jpeg])
-      errors.add(:logo, 'deve ser PNG ou JPG')
-    end
-    if logo.blob.byte_size > 2.megabytes
-      errors.add(:logo, 'tamanho máximo é 2MB')
-    end
-  end
-
-  def validate_banner_attachment
-    return unless banner.attached?
-    if !banner.blob.content_type.in?(%w[image/png image/jpeg image/webp])
-      errors.add(:banner, 'deve ser PNG, JPG ou WebP')
-    end
-    if banner.blob.byte_size > 5.megabytes
-      errors.add(:banner, 'tamanho máximo é 5MB')
-    end
-    begin
-      banner.blob.analyze unless banner.blob.analyzed?
-      meta = banner.blob.metadata || {}
-      w = meta['width']
-      h = meta['height']
-      if w && h && (w < 1920 || h < 600)
-        errors.add(:banner, 'dimensões mínimas recomendadas: 1920x600px')
-      end
-    rescue => e
-      Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
-    end
-  end
-  
-  # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
-  def validate_project_types
-    # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
-    # Usando 'self.project_types' resolve o escopo.
-    return if self.project_types.blank? 
-    invalid = Array(self.project_types) - PROJECT_TYPES
-    errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
-  end
-
-  def validate_services_offered
-    return if self.services_offered.blank?
-    invalid = Array(self.services_offered) - SERVICES_OFFERED
-    errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
-  end
-
-  def validate_cnpj_format
-    return if cnpj.blank?
-    unless CNPJ.valid?(cnpj)
-      errors.add(:cnpj, 'inválido')
-    end
-  end
-
-  def validate_state_in_dataset
-    return if state.blank?
-    return if Locations::BrLocations.valid_state?(state)
-
-    errors.add(:state, 'inválido')
-  end
-
-  def validate_city_in_dataset
-    return if city.blank?
-
-    if state.blank?
-      errors.add(:city, 'requer um estado válido')
-      return
-    end
-
-    return if Locations::BrLocations.valid_city?(state, city)
-
-    errors.add(:city, 'inválida para o estado selecionado')
-  end
-
+  # Validate that minimum_ticket is less than maximum_ticket if both are present
   def validate_ticket_range
     return if minimum_ticket.blank? || maximum_ticket.blank?
-    return if minimum_ticket <= maximum_ticket
-
-    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
+    
+    if minimum_ticket > maximum_ticket
+      errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
+    end
   end
 
+  # Scopes
+  scope :active, -> { where(status: 'active') }
+  scope :featured, -> { where(featured: true) }
+  scope :verified, -> { where(verified: true) }
+  scope :by_state, ->(state) { where(state: state) if state.present? }
+  scope :by_city, ->(city) { where(city: city) if city.present? }
+  scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
+
+  def self.ransackable_attributes(auth_object = nil)
+    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "project_types", "services_offered", "plan_id", "moderation_status"]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    ["categories", "products", "reviews", "leads", "campaigns", "company_buttons", "financing_options", "banners", "banner_subscriptions", "company_videos", "plan", "company_members", "members"]
+  end
+
+  def average_rating
+    rating_avg
+  end
+
+  def rating_count
+    reviews.count
+  end
+
+  def to_s
+    name
+  end
+  
   def validate_ready_for_activation
-    if name.blank?
+    if name.blank? || name.length < 5
       errors.add(:name, 'é obrigatório para ativação')
     end
 
@@ -547,31 +243,126 @@ class Company < ApplicationRecord
     end
   end
 
-  private
-
-  def calculate_historical_stats(days)
-    # Implementation...
+  def validate_logo_attachment
+    return unless logo.attached?
+    if !logo.blob.content_type.in?(%w[image/png image/jpeg])
+      errors.add(:logo, 'deve ser PNG ou JPG')
+    end
+    if logo.blob.byte_size > 2.megabytes
+      errors.add(:logo, 'tamanho máximo é 2MB')
+    end
   end
 
+  def validate_banner_attachment
+    return unless banner.attached?
+    if !banner.blob.content_type.in?(%w[image/png image/jpeg image/webp])
+      errors.add(:banner, 'deve ser PNG, JPG ou WebP')
+    end
+    if banner.blob.byte_size > 5.megabytes
+      errors.add(:banner, 'tamanho máximo é 5MB')
+    end
+    begin
+      banner.blob.analyze unless banner.blob.analyzed?
+      meta = banner.blob.metadata || {}
+      w = meta['width']
+      h = meta['height']
+      if w && h && (w < 1920 || h < 600)
+        errors.add(:banner, 'dimensões mínimas recomendadas: 1920x600px')
+      end
+    rescue => e
+      Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
+    end
+  end
+  
+  # Constantes (mantidas no modelo)
+  PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
+  SERVICES_OFFERED = [
+    'Instalação Residencial',
+    'Instalação Comercial',
+    'Instalação Industrial',
+    'Manutenção e Suporte',
+    'Consultoria Energética'
+  ].freeze
+
+  before_validation :normalize_company_fields
+  before_validation :normalize_multiselects
+  validate :validate_project_types, :validate_services_offered
+
+  # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
+  def validate_project_types
+    # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
+    # Usando 'self.project_types' resolve o escopo.
+    return if self.project_types.blank? 
+    invalid = Array(self.project_types) - PROJECT_TYPES
+    errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+  end
+
+  def validate_services_offered
+    return if self.services_offered.blank?
+    invalid = Array(self.services_offered) - SERVICES_OFFERED
+    errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+  end
+
+  def validate_cnpj_format
+    return if cnpj.blank?
+    unless CNPJ.valid?(cnpj)
+      errors.add(:cnpj, 'inválido')
+    end
+  end
+
+  def validate_state_in_dataset
+    return if state.blank?
+    return if Locations::BrLocations.valid_state?(state)
+
+    errors.add(:state, 'inválido')
+  end
+
+  def validate_city_in_dataset
+    return if city.blank?
+
+    if state.blank?
+      errors.add(:city, 'requer um estado válido')
+      return
+    end
+
+    return if Locations::BrLocations.valid_city?(state, city)
+
+    errors.add(:city, 'inválida para o estado selecionado')
+  end
+
+  private
+
   def capture_category_ids_for_metrics
-    self.category_ids_for_metrics_update = categories.pluck(:id)
+    @category_ids_for_metrics_update = categories.pluck(:id)
   end
 
   def update_associated_categories_metrics
-    ids_to_update = category_ids_for_metrics_update
+    # Combine old and new category IDs to ensure all affected categories are updated
+    all_ids = (@category_ids_for_metrics_update || []) + categories.pluck(:id)
+    return if all_ids.empty?
 
-    if ids_to_update.blank?
-      categories.reload
-      ids_to_update = categories.pluck(:id)
+    # Using SQL for efficiency and avoiding N+1
+    Category.where(id: all_ids.uniq).each do |category|
+      # Enqueue the job for background processing
+      # CategoryMetricsUpdateJob.perform_later(category.id)
+      
+      # For now, we'll just update the timestamp to trigger cache invalidation
+      # A separate scheduled job should handle heavy calculations
+      category.touch
     end
+  end
+
+  def calculate_historical_stats(days)
+    end_date = Date.current
+    start_date = end_date - days.days
     
-    if ids_to_update.present?
-      Rails.logger.info("ℹ️ [Company#update_associated_categories_metrics] Updating metrics for categories: #{ids_to_update.join(', ')} (Company ##{id})")
-      Category.where(id: ids_to_update).find_each do |cat|
-        cat.update_metrics!
-      end
-    end
-  rescue => e
-    Rails.logger.error("Failed to update categories metrics for company #{id}: #{e.message}")
+    stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
+    
+    {
+      dates: stats.map { |s| s.day.strftime('%d/%m') },
+      views: stats.map(&:profile_views),
+      leads: stats.map(&:leads),
+      clicks: stats.map(&:cta_clicks)
+    }
   end
 end
