@@ -330,7 +330,46 @@ class Company < ApplicationRecord
     errors.add(:city, 'inválida para o estado selecionado')
   end
 
+  def has_paid_plan?
+    return false unless respond_to?(:plan_status) && respond_to?(:plan)
+    plan_status == 'active' && plan.present? && plan.price.to_f > 0
+  end
+
+  def whatsapp_enabled?
+    # Ensure it returns a boolean even if the column is missing
+    return false unless respond_to?(:whatsapp_enabled)
+    !!whatsapp_enabled
+  end
+
+  def banner_url
+    generate_attachment_url(banner)
+  end
+
+  def logo_url
+    generate_attachment_url(logo)
+  end
+
   private
+
+  def generate_attachment_url(attachment)
+    return nil unless attachment&.attached?
+
+    begin
+      # In Rails 7, we can use rails_blob_url if host is configured
+      # or simply use the route helper
+      options = Rails.application.routes.default_url_options.dup
+      
+      # For development, ensure port is correct if using localhost
+      if Rails.env.development? && options[:host] == 'localhost'
+        options[:port] = 3001
+      end
+
+      Rails.application.routes.url_helpers.rails_blob_url(attachment, options)
+    rescue => e
+      Rails.logger.error("Error generating attachment URL for company #{id}: #{e.message}")
+      nil
+    end
+  end
 
   def capture_category_ids_for_metrics
     @category_ids_for_metrics_update = categories.pluck(:id)

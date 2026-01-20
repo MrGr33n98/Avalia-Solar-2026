@@ -9,6 +9,13 @@ if ENV['SEED_ADMIN_EMAIL'] && ENV['SEED_ADMIN_PASSWORD']
   end
 end
 
+# Criar usuário específico felipe@avaliasolar.com.br
+AdminUser.find_or_create_by!(email: 'felipe@avaliasolar.com.br') do |admin|
+  admin.password = 'ZAbgbZeVAK+!5!'
+  admin.password_confirmation = 'ZAbgbZeVAK+!5!'
+  puts "Admin user criado: felipe@avaliasolar.com.br"
+end
+
 # ================================
 # Empresas de Energia Solar
 # ================================

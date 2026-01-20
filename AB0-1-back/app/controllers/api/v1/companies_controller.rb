@@ -12,57 +12,72 @@ module Api
       def index
         Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
-        @companies = ::Company.includes(:categories, :reviews)
-                            .order(created_at: :desc)
+        retries = 0
+        begin
+          @companies = ::Company.includes(:categories, :reviews)
+                              .order(created_at: :desc)
 
-        # Filtra por company_id se fornecido (para sub-recursos se houver)
-        # ...
-        
-        # Filtra por empresas do usuário autenticado
-        if ActiveModel::Type::Boolean.new.cast(params[:mine])
-          authenticate_api_user
-          @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
-        end
+          # Filtra por empresas do usuário autenticado
+          if ActiveModel::Type::Boolean.new.cast(params[:mine])
+            authenticate_api_user
+            @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
+          end
 
-        # Filtros
-        if params[:status].present?
-          @companies = @companies.where(status: params[:status])
-        else
-          # Default: listar apenas empresas ativas
-          @companies = @companies.where(status: ::Company.statuses[:active])
-        end
-        if params[:featured].present?
-          featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-          @companies = @companies.where(featured: featured_value)
-        end
-        if params[:category_id].present?
-          @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
-        end
-        
-        # Apply manual limit only if not using pagination
-        if params[:limit].present? && !params[:page].present?
-          @companies = @companies.limit(params[:limit].to_i)
-        end
+          # Filtros
+          if params[:status].present?
+            @companies = @companies.where(status: params[:status])
+          else
+            # Default: listar apenas empresas ativas
+            @companies = @companies.where(status: ::Company.statuses[:active])
+          end
 
-        # Apply pagination if page parameter is present
-        if params[:page].present?
-          paginated = paginate(@companies)
-          set_pagination_headers(paginated)
+          if params[:featured].present?
+            featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
+            @companies = @companies.where(featured: featured_value)
+          end
+
+          if params[:category_id].present?
+            @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
+          end
           
-          companies_json = paginated.map do |company|
-            company_json_attributes(company)
+          # Apply manual limit only if not using pagination
+          if params[:limit].present? && !params[:page].present?
+            @companies = @companies.limit(params[:limit].to_i)
           end
 
+          # Apply pagination if page parameter is present
+          if params[:page].present?
+            paginated = paginate(@companies)
+            set_pagination_headers(paginated)
+            
+            companies_json = paginated.map do |company|
+              company_json_attributes(company)
+            end
+
+            render json: { 
+              data: companies_json,
+              meta: { pagination: pagination_metadata(paginated) }
+            }, status: :ok
+          else
+            companies_json = @companies.map do |company|
+              company_json_attributes(company)
+            end
+
+            render json: companies_json, status: :ok
+          end
+        rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotEstablished => e
+          if (retries += 1) <= 3
+            Rails.logger.warn("Transient database error in CompaniesController#index, retrying (#{retries}/3): #{e.message}")
+            sleep(0.1 * retries)
+            retry
+          end
+          raise e
+        rescue => e
+          Rails.logger.error("Error in CompaniesController#index: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
           render json: { 
-            data: companies_json,
-            meta: { pagination: pagination_metadata(paginated) }
-          }, status: :ok
-        else
-          companies_json = @companies.map do |company|
-            company_json_attributes(company)
-          end
-
-          render json: companies_json, status: :ok
+            error: 'Internal Server Error', 
+            message: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.'
+          }, status: :internal_server_error
         end
       end
 
@@ -259,7 +274,7 @@ module Api
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
-          has_paid_plan: (company.respond_to?(:plan_status) && company.respond_to?(:plan)) ? company.has_paid_plan? : false
+          has_paid_plan: company.has_paid_plan?
         }
       end
 
