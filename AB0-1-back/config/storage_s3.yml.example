@@ -1,0 +1,12 @@
+# Exemplo de configuração para DigitalOcean Spaces
+# Copie este arquivo para storage_s3.yml e preencha com suas credenciais
+
+spaces:
+  service: S3
+  access_key_id: <%= ENV['SPACES_ACCESS_KEY_ID'] %>
+  secret_access_key: <%= ENV['SPACES_SECRET_ACCESS_KEY'] %>
+  region: sfo3
+  bucket: avalia-assets
+  endpoint: https://sfo3.digitaloceanspaces.com
+  force_path_style: false
+  public: true
