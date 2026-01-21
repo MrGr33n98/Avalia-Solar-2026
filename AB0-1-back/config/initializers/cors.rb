@@ -12,7 +12,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
         'https://www.avaliasolar.com.br',
         'https://avaliasolar.com.br',
         'http://www.avaliasolar.com.br',
-        'http://avaliasolar.com.br'
+        'http://avaliasolar.com.br',
+        ENV.fetch("FRONTEND_ORIGIN", "https://www.avaliasolar.com.br")
       ]
       # Permitir origins adicionais via ENV (comma-separated)
       additional_origins = ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
@@ -21,6 +22,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       [
         'https://staging.avaliasolar.com.br',
         'https://staging-api.avaliasolar.com.br',
+        ENV.fetch("FRONTEND_ORIGIN", "https://staging.avaliasolar.com.br"),
         ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
       ].flatten.compact
     when 'development', 'test'
@@ -31,11 +33,12 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
         'http://127.0.0.1:3001',
         # Permitir qualquer localhost na porta 3000-3010
         /http:\/\/localhost:\d{4}/,
-        /http:\/\/127\.0\.0\.1:\d{4}/
+        /http:\/\/127\.0\.0\.1:\d{4}/,
+        ENV.fetch("FRONTEND_ORIGIN", "http://localhost:3000")
       ]
     else
       # Por padrão, não permite nenhum origin (segurança)
-      []
+      [ENV.fetch("FRONTEND_ORIGIN", "")]
     end
 
     origins origins_list

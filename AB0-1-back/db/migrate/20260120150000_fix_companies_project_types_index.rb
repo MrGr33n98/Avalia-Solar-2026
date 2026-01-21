@@ -1,61 +1,116 @@
 class FixCompaniesProjectTypesIndex < ActiveRecord::Migration[7.0]
+  disable_ddl_transaction!
+
   def up
-    # 1. Corrigir project_types
-    # Remover índices antigos se existirem
-    if index_exists?(:companies, :project_types, name: 'index_companies_on_project_types')
-      remove_index :companies, name: 'index_companies_on_project_types'
-    end
-
-    # Garantir que a coluna seja jsonb
-    if column_exists?(:companies, :project_types)
-      # Usar SQL direto para garantir conversão correta
-      execute 'ALTER TABLE companies ALTER COLUMN project_types TYPE jsonb USING project_types::jsonb'
-    end
-
-    # Criar índice GIN se não existir
-    unless index_exists?(:companies, :project_types, name: 'index_companies_on_project_types_gin')
-      add_index :companies, :project_types, using: :gin, name: 'index_companies_on_project_types_gin'
-    end
-
-    # 2. Corrigir services_offered
-    if index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered')
-      remove_index :companies, name: 'index_companies_on_services_offered'
-    end
-
-    if column_exists?(:companies, :services_offered)
-      execute 'ALTER TABLE companies ALTER COLUMN services_offered TYPE jsonb USING services_offered::jsonb'
-    end
-
-    unless index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered_gin')
-      add_index :companies, :services_offered, using: :gin, name: 'index_companies_on_services_offered_gin'
-    end
+    sqlite? ? up_sqlite : up_postgres
   end
 
   def down
-    # Reverter services_offered
-    if index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered_gin')
-      remove_index :companies, name: 'index_companies_on_services_offered_gin'
-    end
+    sqlite? ? down_sqlite : down_postgres
+  end
 
-    if column_exists?(:companies, :services_offered)
-      change_column :companies, :services_offered, :json, using: 'services_offered::json'
-    end
+  private
 
-    unless index_exists?(:companies, :services_offered, name: 'index_companies_on_services_offered')
-      add_index :companies, :services_offered, name: 'index_companies_on_services_offered'
-    end
+  def sqlite?
+    adapter = connection.adapter_name.to_s.downcase
+    adapter.include?("sqlite")
+  end
 
-    # Reverter project_types
-    if index_exists?(:companies, :project_types, name: 'index_companies_on_project_types_gin')
-      remove_index :companies, name: 'index_companies_on_project_types_gin'
-    end
+  # -------------------------
+  # SQLITE
+  # -------------------------
+  def up_sqlite
+    # SQLite não suporta jsonb nem índice GIN.
+    # Aqui o objetivo é evitar conflitos e deixar o schema consistente.
+    remove_index_if_exists(:companies, name: "index_companies_on_project_types")
+    remove_index_if_exists(:companies, name: "index_companies_on_services_offered")
+  end
+
+  def down_sqlite
+    # Recria índices "simples" (o que existia antes)
+    add_index_if_missing(:companies, :project_types, name: "index_companies_on_project_types")
+    add_index_if_missing(:companies, :services_offered, name: "index_companies_on_services_offered")
+  end
+
+  # -------------------------
+  # POSTGRES
+  # -------------------------
+  def up_postgres
+    # 1) project_types
+    remove_index_if_exists(:companies, name: "index_companies_on_project_types")
 
     if column_exists?(:companies, :project_types)
-      change_column :companies, :project_types, :json, using: 'project_types::json'
+      # Converte para jsonb (se já for jsonb, o Postgres pode aceitar ou reclamar dependendo do tipo atual)
+      execute <<~SQL
+        ALTER TABLE companies
+        ALTER COLUMN project_types
+        TYPE jsonb
+        USING project_types::jsonb
+      SQL
     end
 
-    unless index_exists?(:companies, :project_types, name: 'index_companies_on_project_types')
-      add_index :companies, :project_types, name: 'index_companies_on_project_types'
+    add_gin_index_if_missing(:companies, :project_types, "index_companies_on_project_types_gin")
+
+    # 2) services_offered
+    remove_index_if_exists(:companies, name: "index_companies_on_services_offered")
+
+    if column_exists?(:companies, :services_offered)
+      execute <<~SQL
+        ALTER TABLE companies
+        ALTER COLUMN services_offered
+        TYPE jsonb
+        USING services_offered::jsonb
+      SQL
     end
+
+    add_gin_index_if_missing(:companies, :services_offered, "index_companies_on_services_offered_gin")
+  end
+
+  def down_postgres
+    # Reverte services_offered
+    remove_index_if_exists(:companies, name: "index_companies_on_services_offered_gin")
+
+    if column_exists?(:companies, :services_offered)
+      execute <<~SQL
+        ALTER TABLE companies
+        ALTER COLUMN services_offered
+        TYPE json
+        USING services_offered::json
+      SQL
+    end
+
+    add_index_if_missing(:companies, :services_offered, name: "index_companies_on_services_offered")
+
+    # Reverte project_types
+    remove_index_if_exists(:companies, name: "index_companies_on_project_types_gin")
+
+    if column_exists?(:companies, :project_types)
+      execute <<~SQL
+        ALTER TABLE companies
+        ALTER COLUMN project_types
+        TYPE json
+        USING project_types::json
+      SQL
+    end
+
+    add_index_if_missing(:companies, :project_types, name: "index_companies_on_project_types")
+  end
+
+  # -------------------------
+  # HELPERS
+  # -------------------------
+  def remove_index_if_exists(table, name:)
+    return unless index_exists?(table, name: name)
+    remove_index table, name: name
+  end
+
+  def add_index_if_missing(table, column, name:)
+    return if index_exists?(table, column, name: name)
+    add_index table, column, name: name
+  end
+
+  def add_gin_index_if_missing(table, column, name)
+    return if index_exists?(table, column, name: name)
+    add_index table, column, using: :gin, name: name, algorithm: :concurrently
   end
 end

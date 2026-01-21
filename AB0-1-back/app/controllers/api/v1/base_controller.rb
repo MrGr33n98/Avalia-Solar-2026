@@ -42,11 +42,7 @@ module Api
         @current_user ||= User.find_by(id: decoded_token[:user_id]) if decoded_token
       end
 
-      def decoded_token
-        header = request.headers['Authorization']
-        return unless header
-
-        token = header.split.last
+      def jwt_decode(token)
         begin
           JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
         rescue JWT::DecodeError
@@ -58,6 +54,19 @@ module Api
             nil
           end
         end
+      end
+
+      def decoded_token
+        # Try to get token from cookie first (new method)
+        token = cookies.signed[:jwt_token]
+        return jwt_decode(token) if token.present?
+
+        # Fallback to header (old method) for migration
+        header = request.headers['Authorization']
+        return unless header
+
+        token = header.split.last
+        jwt_decode(token)
       end
 
       def render_error(message, status = :unprocessable_entity)
