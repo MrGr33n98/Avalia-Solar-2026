@@ -89,3 +89,10 @@ Thumbs.db
 /tasks/TASK-10.md
 
 /.github/PULL_REQUEST_TEMPLATE.md
+# Rascunhos locais / planejamento
+code-base-dashboards/
+docs-v1/
+docs/infra/
+dashboard-sumario-*.md
+tasks-v1.md
+
