@@ -294,7 +294,11 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
                 <MetricsGrid metrics={metrics} />
 
                 {/* Additional Overview Content */}
-                <OverviewTab company={company} stats={stats} />
+                <OverviewTab
+                  companyId={companyId}
+                  company={company}
+                  themeMode={isDark ? 'dark' : 'light'}
+                />
               </div>
             )}
 

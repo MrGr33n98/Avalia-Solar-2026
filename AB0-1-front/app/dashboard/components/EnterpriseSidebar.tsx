@@ -1,25 +1,23 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-  Building2, 
-  Package, 
-  Star, 
-  Image as ImageIcon, 
-  Target, 
-  Megaphone,
-  Settings,
+import {
+  BadgeCheck,
   BarChart3,
-  FileText,
-  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  Edit3,
   Home,
-  TrendingUp,
-  Award
+  Link2,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useEffect, useMemo, useState } from 'react';
 
 interface SidebarProps {
   activeTab: string;
@@ -29,130 +27,268 @@ interface SidebarProps {
   pendingCount?: number;
 }
 
-const menuItems = [
-  { id: 'overview', label: 'Visão Geral', icon: BarChart3 },
-  { id: 'style-analysis', label: 'Design System', icon: Sparkles },
-  { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-  { id: 'benchmark', label: 'Benchmark', icon: Award },
-  { id: 'info', label: 'Minha Empresa', icon: Building2 },
-  { id: 'categories', label: 'Categorias', icon: FileText },
-  { id: 'banners', label: 'Banners', icon: Sparkles },
-  { id: 'products', label: 'Produtos', icon: Package },
-  { id: 'reviews', label: 'Reviews', icon: Star },
-  { id: 'approvals', label: 'Aprovações', icon: FileText },
-  { id: 'media', label: 'Mídia', icon: ImageIcon },
-  { id: 'leads', label: 'Oportunidades', icon: Target },
-  { id: 'campaigns', label: 'Campanhas', icon: Megaphone },
-];
+type SidebarLeafItem = {
+  id: string;
+  label: string;
+  icon: any;
+};
 
-const bottomMenuItems = [
-  { id: 'settings', label: 'Configurações', icon: Settings }
-];
+type SidebarGroupItem = {
+  id: string;
+  label: string;
+  icon: any;
+  children: Array<{ id: string; label: string }>;
+};
+
+const COLLAPSE_STORAGE_KEY = 'avalia:enterpriseSidebarCollapsed';
 
 function SidebarContent({ 
   activeTab, 
   onTabChange, 
-  pendingCount = 0 
+  pendingCount = 0,
+  isCollapsed,
+  onToggleCollapse,
 }: { 
   activeTab: string; 
   onTabChange: (tab: string) => void; 
-  pendingCount?: number 
+  pendingCount?: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }) {
+  const groups: SidebarGroupItem[] = useMemo(
+    () => [
+      {
+        id: 'analytics-group',
+        label: 'Analytics',
+        icon: BarChart3,
+        children: [{ id: 'analytics', label: 'Analytics' }],
+      },
+      {
+        id: 'reviews-group',
+        label: 'Avaliações',
+        icon: Star,
+        children: [{ id: 'reviews', label: 'Avaliações' }],
+      },
+      {
+        id: 'interaction-group',
+        label: 'Dados de interação',
+        icon: Database,
+        children: [{ id: 'leads', label: 'Oportunidades' }],
+      },
+      {
+        id: 'product-edit-group',
+        label: 'Edição de produto',
+        icon: Edit3,
+        children: [
+          { id: 'product-general', label: 'Informações gerais' },
+          { id: 'product-categories', label: 'Categorias' },
+          { id: 'product-pricing', label: 'Planos e preços' },
+          { id: 'product-support', label: 'Suporte e treinamento' },
+          { id: 'product-banner', label: 'Banner' },
+          { id: 'product-sponsored-description', label: 'Descrição patrocinada' },
+          { id: 'product-downloads', label: 'Conteúdo Baixável' },
+          { id: 'product-features', label: 'Funcionalidades' },
+          { id: 'product-videos', label: 'Vídeos' },
+          { id: 'product-images', label: 'Imagens' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const leafItems: SidebarLeafItem[] = useMemo(
+    () => [
+      { id: 'overview', label: 'Home', icon: Home },
+      { id: 'integrations', label: 'Integrações', icon: Link2 },
+      { id: 'avalia-badges', label: 'Selos Avalia Solar', icon: BadgeCheck },
+    ],
+    []
+  );
+
+  const groupByActiveTab = useMemo(() => {
+    if (activeTab === 'analytics') return 'analytics-group';
+    if (activeTab === 'reviews') return 'reviews-group';
+    if (activeTab === 'leads') return 'interaction-group';
+    if (activeTab.startsWith('product-')) return 'product-edit-group';
+    return null;
+  }, [activeTab]);
+
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!groupByActiveTab) return;
+    setOpenGroups((prev) => (prev.includes(groupByActiveTab) ? prev : [...prev, groupByActiveTab]));
+  }, [groupByActiveTab]);
+
+  const renderLeafButton = (item: SidebarLeafItem) => {
+    const Icon = item.icon;
+    const isActive = activeTab === item.id;
+    return (
+      <Button
+        key={item.id}
+        variant="ghost"
+        className={cn(
+          'w-full justify-start h-10 px-3 rounded-lg transition-all',
+          isCollapsed ? 'justify-center px-0' : 'justify-start',
+          isActive
+            ? 'bg-white text-blue-700 shadow-sm border border-blue-100'
+            : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+        )}
+        onClick={() => onTabChange(item.id)}
+        aria-label={item.label}
+        title={item.label}
+      >
+        <Icon className={cn('h-4 w-4', isActive ? 'text-blue-600' : 'text-gray-500')} />
+        {!isCollapsed && <span className="ml-3 text-sm font-medium">{item.label}</span>}
+      </Button>
+    );
+  };
+
+  const renderChildButton = (child: { id: string; label: string }) => {
+    const isActive = activeTab === child.id;
+
+    const badgeValue =
+      pendingCount > 0 && (child.id === 'reviews' || child.id === 'leads') ? pendingCount : null;
+
+    return (
+      <button
+        key={child.id}
+        type="button"
+        onClick={() => onTabChange(child.id)}
+        className={cn(
+          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+          isActive
+            ? 'bg-white text-blue-700 border border-blue-100 shadow-sm'
+            : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+        )}
+        aria-label={child.label}
+        title={child.label}
+      >
+        <span className={cn('ml-7 flex-1 text-left', isCollapsed && 'ml-0')}>{child.label}</span>
+        {badgeValue !== null && (
+          <Badge className="h-5 min-w-[20px] justify-center px-1.5 text-[10px] bg-blue-600 text-white">
+            {badgeValue}
+          </Badge>
+        )}
+      </button>
+    );
+  };
+
+  const renderGroupTrigger = (group: SidebarGroupItem) => {
+    const Icon = group.icon;
+    const groupIsActive = group.children.some((child) => child.id === activeTab);
+
+    return (
+      <AccordionTrigger
+        className={cn(
+          'px-3 py-2 rounded-lg hover:no-underline transition-all',
+          isCollapsed ? 'justify-center px-0' : 'justify-between',
+          groupIsActive ? 'bg-white shadow-sm border border-blue-100' : 'hover:bg-white/70'
+        )}
+        aria-label={group.label}
+        title={group.label}
+      >
+        <div className={cn('flex items-center', isCollapsed ? 'justify-center w-full' : '')}>
+          <Icon className={cn('h-4 w-4', groupIsActive ? 'text-blue-600' : 'text-gray-500')} />
+          {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-900">{group.label}</span>}
+        </div>
+      </AccordionTrigger>
+    );
+  };
+
   return (
-    <div className="flex flex-col h-full bg-card">
-      {/* Logo/Header */}
-      <div className="h-16 flex items-center px-6 border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-gradient-to-br from-blue-600 to-blue-500 rounded-md flex items-center justify-center shadow-sm">
+    <div className={cn('flex flex-col h-full bg-[#f5f5f5]', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
+      <div className={cn('h-16 flex items-center border-b border-gray-200', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
+        <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
+          <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shadow-sm">
             <Home className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Dashboard</h2>
-            <p className="text-xs text-muted-foreground">Gestão Enterprise</p>
-          </div>
+          {!isCollapsed && (
+            <div className="leading-tight">
+              <div className="text-sm font-semibold text-gray-900">Avaliasolar</div>
+              <div className="text-xs text-gray-500 font-medium">Advanced</div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-        {menuItems.map((item, index) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.02 }}
-            >
-              <Button
-                variant={isActive ? 'default' : 'ghost'}
-                className={cn(
-                  'w-full justify-start h-10 relative group transition-all',
-                  isActive 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' 
-                    : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground'
-                )}
-                onClick={() => onTabChange(item.id)}
+      <nav className={cn('flex-1 overflow-y-auto py-4 space-y-2', isCollapsed ? 'px-2' : 'px-3')}>
+        <div className="space-y-1">
+          {leafItems.slice(0, 1).map(renderLeafButton)}
+        </div>
+
+        {isCollapsed ? (
+          <div className="space-y-1">
+            {groups.map((group) => {
+              const Icon = group.icon;
+              const groupIsActive = group.children.some((child) => child.id === activeTab);
+              const target = group.children[0]?.id;
+              return (
+                <Button
+                  key={group.id}
+                  type="button"
+                  variant="ghost"
+                  className={cn(
+                    'w-full justify-center h-10 px-0 rounded-lg transition-all',
+                    groupIsActive
+                      ? 'bg-white text-blue-700 shadow-sm border border-blue-100'
+                      : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+                  )}
+                  onClick={() => target && onTabChange(target)}
+                  aria-label={group.label}
+                  title={group.label}
+                >
+                  <Icon className={cn('h-4 w-4', groupIsActive ? 'text-blue-600' : 'text-gray-500')} />
+                </Button>
+              );
+            })}
+          </div>
+        ) : (
+          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="space-y-1">
+            {groups.map((group, index) => (
+              <motion.div
+                key={group.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.02 }}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabIndicator"
-                    className="absolute left-0 top-1 bottom-1 w-1 bg-white rounded-r"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
+                <AccordionItem value={group.id} className="border-none">
+                  {renderGroupTrigger(group)}
+                  <AccordionContent className="pb-0 pt-2">
+                    <div className="space-y-1">
+                      {group.children.map(renderChildButton)}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
+            ))}
+          </Accordion>
+        )}
 
-                <Icon className={cn(
-                  'h-4 w-4 mr-3 transition-transform',
-                  isActive && 'scale-110'
-                )} />
-                
-                <span className="flex-1 text-left text-sm font-medium">
-                  {item.label}
-                </span>
-
-                {pendingCount > 0 && (item.id === 'leads' || item.id === 'reviews' || item.id === 'approvals') && (
-                  <Badge 
-                    variant={isActive ? 'secondary' : 'destructive'} 
-                    className={cn(
-                      "ml-auto h-5 min-w-[20px] px-1.5 text-[10px]",
-                      isActive && "bg-white/20 text-white border-transparent"
-                    )}
-                  >
-                    {pendingCount}
-                  </Badge>
-                )}
-              </Button>
-            </motion.div>
-          );
-        })}
+        <div className="space-y-1">
+          {leafItems.slice(1).map(renderLeafButton)}
+        </div>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="border-t border-border/50 p-3">
-        {bottomMenuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          
-          return (
-            <Button
-              key={item.id}
-              variant={isActive ? 'default' : 'ghost'}
-              className={cn(
-                'w-full justify-start h-10',
-                isActive 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => onTabChange(item.id)}
-            >
-              <Icon className="h-4 w-4 mr-3" />
-              <span className="text-sm font-medium">{item.label}</span>
-            </Button>
-          );
-        })}
+      <div className={cn('border-t border-gray-200', isCollapsed ? 'p-2' : 'p-3')}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onToggleCollapse}
+          className={cn(
+            'w-full h-10 rounded-lg text-gray-700 hover:bg-white/70 hover:text-gray-900',
+            isCollapsed ? 'justify-center px-0' : 'justify-start px-3'
+          )}
+          aria-label="Recolher menu"
+          title="Recolher menu"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          ) : (
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          )}
+          {!isCollapsed && <span className="ml-3 text-sm font-medium">Recolher menu</span>}
+        </Button>
       </div>
     </div>
   );
@@ -165,6 +301,35 @@ export default function EnterpriseSidebar({
   onClose,
   pendingCount = 0
 }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+      if (stored === '1') setIsCollapsed(true);
+    } catch {
+      setIsCollapsed(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.style.setProperty('--enterprise-sidebar-width', isCollapsed ? '80px' : '280px');
+    } catch {
+    }
+  }, [isCollapsed]);
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0');
+      } catch {
+      }
+      return next;
+    });
+  };
+
   const handleTabChange = (tab: string) => {
     onTabChange(tab);
     onClose();
@@ -176,22 +341,31 @@ export default function EnterpriseSidebar({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent 
           side="left" 
-          className="w-[280px] p-0 bg-card border-r border-border"
+          className="w-[280px] p-0 bg-[#f5f5f5] border-r border-gray-200"
         >
           <SidebarContent 
             activeTab={activeTab} 
             onTabChange={handleTabChange} 
             pendingCount={pendingCount} 
+            isCollapsed={false}
+            onToggleCollapse={() => {}}
           />
         </SheetContent>
       </Sheet>
 
       {/* Desktop Fixed Sidebar */}
-      <aside className="hidden lg:flex flex-col w-[260px] fixed inset-y-0 left-0 z-40 border-r border-border/50">
+      <aside
+        className={cn(
+          'hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-gray-200 bg-[#f5f5f5] transition-[width] duration-200',
+          isCollapsed ? 'w-[80px]' : 'w-[280px]'
+        )}
+      >
         <SidebarContent 
           activeTab={activeTab} 
           onTabChange={onTabChange} 
           pendingCount={pendingCount} 
+          isCollapsed={isCollapsed}
+          onToggleCollapse={toggleCollapse}
         />
       </aside>
     </>

@@ -2,22 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { 
-  Eye,
-  Zap,
-  MessageSquare,
-  Target,
-  Star,
-  Award,
-  Clock,
-  TrendingUp
-} from 'lucide-react';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
 import EnterpriseHeader from './EnterpriseHeader';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -38,7 +27,6 @@ import ReviewsAnalytics from './ReviewsAnalytics';
 import PerformanceMetrics from './PerformanceMetrics';
 import CompetitorBenchmark from './CompetitorBenchmark';
 import ThemeToggle from './ThemeToggle';
-import AzureOverview from './AzureOverview';
 import StyleAnalysis from './StyleAnalysis';
 import { fetchApi, companiesApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
@@ -201,81 +189,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     );
   };
 
-  const metrics = [
-    {
-      title: 'Visualizações',
-      value: stats?.profileViews || 0,
-      icon: Eye,
-      color: 'blue',
-      change: '+23.5%',
-      changeType: 'positive' as const,
-      trend: [40, 55, 45, 70, 60, 85, 75]
-    },
-    {
-      title: 'Cliques em CTAs',
-      value: stats?.ctaClicks || 0,
-      icon: Zap,
-      color: 'purple',
-      change: '+18.2%',
-      changeType: 'positive' as const,
-      trend: [30, 45, 60, 50, 65, 70, 80]
-    },
-    {
-      title: 'WhatsApp',
-      value: stats?.whatsappClicks || 0,
-      icon: MessageSquare,
-      color: 'green',
-      change: '+15.7%',
-      changeType: 'positive' as const,
-      trend: [25, 35, 55, 45, 60, 75, 85]
-    },
-    {
-      title: 'Leads',
-      value: stats?.leadsReceived || 0,
-      icon: Target,
-      color: 'orange',
-      change: '+23.1%',
-      changeType: 'positive' as const,
-      trend: [20, 40, 35, 50, 60, 70, 90]
-    },
-    {
-      title: 'Avaliações',
-      value: stats?.reviewsCount || 0,
-      icon: Star,
-      color: 'yellow',
-      change: '+12.5%',
-      changeType: 'positive' as const,
-      trend: [50, 55, 50, 60, 65, 70, 75]
-    },
-    {
-      title: 'Rating Médio',
-      value: (Number(stats?.averageRating) || 0).toFixed(1),
-      icon: Award,
-      color: 'pink',
-      change: '+0.3',
-      changeType: 'positive' as const,
-      trend: [60, 65, 70, 75, 80, 85, 90]
-    },
-    {
-      title: 'Pendentes',
-      value: stats?.pendingApprovals || 0,
-      icon: Clock,
-      color: 'orange',
-      change: '-2',
-      changeType: stats?.pendingApprovals ? 'negative' : 'neutral' as const,
-      trend: [80, 70, 60, 50, 40, 30, 20]
-    },
-    {
-      title: 'Conversão',
-      value: `${stats?.conversionRate || 0}%`,
-      icon: TrendingUp,
-      color: 'emerald',
-      change: '+1.8%',
-      changeType: 'positive' as const,
-      trend: [30, 35, 40, 50, 55, 65, 72]
-    }
-  ];
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -321,7 +234,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         pendingCount={stats?.pendingApprovals || 0}
       />
 
-      <div className="lg:pl-[260px] flex flex-col min-h-screen">
+      <div className="lg:pl-[var(--enterprise-sidebar-width,280px)] flex flex-col min-h-screen">
         {/* Header */}
         <EnterpriseHeader
           company={company}
@@ -338,17 +251,44 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
             {/* Content based on active tab using Shadcn Tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
               <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
-                <AzureOverview 
-                  metrics={metrics}
-                  themeMode={themeMode}
+                <OverviewTab
                   companyId={companyId}
-                  onNavigateToAnalytics={() => handleTabChange('analytics')}
-                  onNavigateToBenchmark={() => handleTabChange('benchmark')}
+                  company={company}
+                  themeMode={themeMode}
+                  onNavigateToReviews={() => handleTabChange('reviews')}
                 />
               </TabsContent>
 
               <TabsContent value="style-analysis" className="mt-0 focus-visible:outline-none">
                 <StyleAnalysis themeMode={themeMode} />
+              </TabsContent>
+
+              <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Integrações</h2>
+                    <p className="text-sm text-muted-foreground">Conecte ferramentas e serviços ao seu painel.</p>
+                  </div>
+                  <Card>
+                    <CardContent className="p-6 text-sm text-muted-foreground">
+                      Em breve.
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Selos Avalia Solar</h2>
+                    <p className="text-sm text-muted-foreground">Gerencie e compartilhe seus selos no Avaliasolar.</p>
+                  </div>
+                  <Card>
+                    <CardContent className="p-6 text-sm text-muted-foreground">
+                      Em breve.
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="analytics" className="mt-0 focus-visible:outline-none">
@@ -378,6 +318,146 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     </p>
                   </div>
                   <CompetitorBenchmark companyId={companyId} themeMode={themeMode} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-general" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Informações gerais
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Atualize as informações principais do seu produto/empresa no Avaliasolar.
+                    </p>
+                  </div>
+                  <CompanyInfo companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-categories" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Categorias
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione as categorias onde seu produto estará presente.
+                    </p>
+                  </div>
+                  <CategoriesManagement companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-pricing" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Planos e preços
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Ajuste configurações relacionadas ao seu plano e comercialização.
+                    </p>
+                  </div>
+                  <CompanySettings companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-support" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Suporte e treinamento
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Configure canais e informações de suporte para seus clientes.
+                    </p>
+                  </div>
+                  <CompanySettings companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-banner" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Banner
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie seu banner e opções de patrocínio.
+                    </p>
+                  </div>
+                  <BannersSponsorship companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-sponsored-description" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Descrição patrocinada
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Ajuste o conteúdo e a apresentação do seu produto.
+                    </p>
+                  </div>
+                  <ProductsManagement companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Conteúdo Baixável
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Envie arquivos e materiais para seus clientes.
+                    </p>
+                  </div>
+                  <MediaGallery companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-features" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Funcionalidades
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
+                    </p>
+                  </div>
+                  <ProductsManagement companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-videos" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Vídeos
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie vídeos e mídias do seu produto.
+                    </p>
+                  </div>
+                  <MediaGallery companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="product-images" className="mt-0 focus-visible:outline-none">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Imagens
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie imagens do seu produto.
+                    </p>
+                  </div>
+                  <MediaGallery companyId={companyId} />
                 </div>
               </TabsContent>
 

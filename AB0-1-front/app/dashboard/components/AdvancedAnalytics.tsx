@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart,
@@ -33,6 +33,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -40,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
 
 interface AdvancedAnalyticsProps {
   themeMode: 'light' | 'dark';
@@ -53,59 +55,65 @@ const colorPalette = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#2
 export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnalyticsProps) {
   const [timeRange, setTimeRange] = useState('30');
   const [selectedMetric, setSelectedMetric] = useState<'views' | 'clicks' | 'leads' | 'conversion'>('views');
-  const [historicalData, setHistoricalData] = useState<any[]>([]);
-  const [trafficSourceData, setTrafficSourceData] = useState<any[]>([]);
-  const [conversionFunnelData, setConversionFunnelData] = useState<any[]>([]);
-  const [topPages, setTopPages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  
+
   const isDark = themeMode === 'dark';
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const days = parseInt(timeRange);
-        const hist = await analyticsApi.getHistoricalData(Number(companyId), days);
-        setHistoricalData((hist || []).map(d => ({
-          date: new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-          views: d.views ?? 0,
-          clicks: d.clicks ?? 0,
-          leads: d.leads ?? 0,
-          conversion: d.conversion ?? 0,
-        })));
-        const stats = await analyticsApi.getStats();
-        const views = stats.profile_views ?? 0;
-        const engagement = (stats.cta_clicks ?? 0) + (stats.whatsapp_clicks ?? 0);
-        const ctas = stats.cta_clicks ?? 0;
-        const leads = stats.leads_received ?? 0;
-        setConversionFunnelData([
-          { name: 'Visualizações', value: views, percentage: views ? 100 : 0, color: colorPalette[0] },
-          { name: 'Engajamento', value: engagement, percentage: views ? Math.round((engagement / views) * 100) : 0, color: colorPalette[1] },
-          { name: 'CTAs', value: ctas, percentage: views ? Math.round((ctas / views) * 100) : 0, color: colorPalette[2] },
-          { name: 'Leads', value: leads, percentage: views ? Number(((leads / views) * 100).toFixed(1)) : 0, color: colorPalette[3] }
-        ]);
-        const sources = await analyticsApi.getTrafficSources(Number(companyId), days);
-        setTrafficSourceData((sources || []).map((s, idx) => ({
-          name: s.source,
-          value: s.visits,
-          percentage: s.percentage,
-          color: colorPalette[idx % colorPalette.length]
-        })));
-        
-        // Mock top pages data - replace with actual API call when available
-        setTopPages([
-          { page: '/empresa/painel', views: 1250, avgTime: '2m 45s', bounceRate: '23%' },
-          { page: '/empresa/analytics', views: 890, avgTime: '3m 12s', bounceRate: '18%' },
-          { page: '/empresa/configuracoes', views: 567, avgTime: '1m 58s', bounceRate: '31%' },
-          { page: '/empresa/perfil', views: 445, avgTime: '2m 23s', bounceRate: '27%' },
-          { page: '/empresa/metricas', views: 234, avgTime: '1m 45s', bounceRate: '35%' }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [companyId, timeRange]);
+
+  const days = Number(timeRange) || 30;
+
+  const statsQuery = useQuery({
+    queryKey: ['company-analytics-stats', companyId],
+    queryFn: async () => analyticsApi.getStats(Number(companyId)),
+    enabled: Boolean(companyId),
+  });
+
+  const historicalQuery = useQuery({
+    queryKey: ['company-analytics-historical', companyId, days],
+    queryFn: async () => analyticsApi.getHistoricalData(Number(companyId), days),
+    enabled: Boolean(companyId) && Number.isFinite(days),
+  });
+
+  const trafficQuery = useQuery({
+    queryKey: ['company-analytics-traffic', companyId, days],
+    queryFn: async () => analyticsApi.getTrafficSources(Number(companyId), days),
+    enabled: Boolean(companyId) && Number.isFinite(days),
+  });
+
+  const historicalData = useMemo(() => {
+    const hist = historicalQuery.data || [];
+    return hist.map((d) => ({
+      date: new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+      views: d.views ?? 0,
+      clicks: d.clicks ?? 0,
+      leads: d.leads ?? 0,
+      conversion: d.conversion ?? 0,
+    }));
+  }, [historicalQuery.data]);
+
+  const trafficSourceData = useMemo(() => {
+    const sources = trafficQuery.data || [];
+    return sources.map((s, idx) => ({
+      name: s.source,
+      value: s.visits,
+      percentage: s.percentage,
+      color: colorPalette[idx % colorPalette.length],
+    }));
+  }, [trafficQuery.data]);
+
+  const conversionFunnelData = useMemo(() => {
+    const stats = statsQuery.data;
+    const views = stats?.profile_views ?? 0;
+    const engagement = (stats?.cta_clicks ?? 0) + (stats?.whatsapp_clicks ?? 0);
+    const ctas = stats?.cta_clicks ?? 0;
+    const leads = stats?.leads_received ?? 0;
+    return [
+      { name: 'Visualizações', value: views, percentage: views ? 100 : 0, color: colorPalette[0] },
+      { name: 'Engajamento', value: engagement, percentage: views ? Math.round((engagement / views) * 100) : 0, color: colorPalette[1] },
+      { name: 'CTAs', value: ctas, percentage: views ? Math.round((ctas / views) * 100) : 0, color: colorPalette[2] },
+      { name: 'Leads', value: leads, percentage: views ? Number(((leads / views) * 100).toFixed(1)) : 0, color: colorPalette[3] },
+    ];
+  }, [statsQuery.data]);
+
+  const topPages: any[] = [];
   
   // Calcular tendências
   const calculateTrend = (data: any[], key: string) => {
@@ -150,6 +158,37 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
   };
 
   const currentConfig = metricConfig[selectedMetric];
+
+  const isLoading =
+    statsQuery.isLoading || historicalQuery.isLoading || trafficQuery.isLoading;
+
+  if (isLoading && !statsQuery.data && !historicalQuery.data) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-white' : 'text-gray-900')}>
+              Analytics Histórico
+            </div>
+            <div className={cn('text-xs', isDark ? 'text-slate-400' : 'text-gray-600')}>
+              Análise detalhada de performance e tendências
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-[130px]" />
+            <Skeleton className="h-8 w-[90px]" />
+          </div>
+        </div>
+
+        <Skeleton className="h-[260px] w-full rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Skeleton className="h-[110px] w-full rounded-xl" />
+          <Skeleton className="h-[110px] w-full rounded-xl" />
+          <Skeleton className="h-[110px] w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -469,108 +508,102 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
         </Card>
       </div>
 
-      {/* Top Pages Table */}
-      <Card className={cn(
-        'border',
-        isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
-      )}>
-        <CardHeader className="pb-2">
-          <CardTitle className={cn(
-            'text-sm font-medium',
-            isDark ? 'text-slate-200' : 'text-gray-900'
-          )}>
-            Páginas Mais Visitadas
-          </CardTitle>
-          <p className={cn(
-            'text-xs',
-            isDark ? 'text-slate-400' : 'text-gray-600'
-          )}>
-            Performance por página
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className={cn(
-                  'border-b text-xs',
-                  isDark ? 'border-slate-800' : 'border-gray-200'
-                )}>
-                  <th className={cn(
-                    'text-left py-2 font-medium',
-                    isDark ? 'text-slate-400' : 'text-gray-600'
+      {topPages.length > 0 && (
+        <Card className={cn(
+          'border',
+          isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
+        )}>
+          <CardHeader className="pb-2">
+            <CardTitle className={cn(
+              'text-sm font-medium',
+              isDark ? 'text-slate-200' : 'text-gray-900'
+            )}>
+              Páginas Mais Visitadas
+            </CardTitle>
+            <p className={cn(
+              'text-xs',
+              isDark ? 'text-slate-400' : 'text-gray-600'
+            )}>
+              Performance por página
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className={cn(
+                    'border-b text-xs',
+                    isDark ? 'border-slate-800' : 'border-gray-200'
                   )}>
-                    Página
-                  </th>
-                  <th className={cn(
-                    'text-right py-2 font-medium',
-                    isDark ? 'text-slate-400' : 'text-gray-600'
-                  )}>
-                    Visualizações
-                  </th>
-                  <th className={cn(
-                    'text-right py-2 font-medium',
-                    isDark ? 'text-slate-400' : 'text-gray-600'
-                  )}>
-                    Tempo Médio
-                  </th>
-                  <th className={cn(
-                    'text-right py-2 font-medium',
-                    isDark ? 'text-slate-400' : 'text-gray-600'
-                  )}>
-                    Taxa Rejeição
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {topPages.map((page, index) => (
-                  <motion.tr
-                    key={page.page}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={cn(
-                      'border-b text-xs',
-                      isDark ? 'border-slate-800/50' : 'border-gray-100'
-                    )}
-                  >
-                    <td className={cn(
-                      'py-3 font-medium',
-                      isDark ? 'text-slate-300' : 'text-gray-900'
-                    )}>
-                      {page.page}
-                    </td>
-                    <td className={cn(
-                      'text-right',
+                    <th className={cn(
+                      'text-left py-2 font-medium',
                       isDark ? 'text-slate-400' : 'text-gray-600'
                     )}>
-                      {page.views.toLocaleString('pt-BR')}
-                    </td>
-                    <td className={cn(
-                      'text-right',
+                      Página
+                    </th>
+                    <th className={cn(
+                      'text-right py-2 font-medium',
                       isDark ? 'text-slate-400' : 'text-gray-600'
                     )}>
-                      {page.avgTime}
-                    </td>
-                    <td className="text-right">
-                      <span className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium',
-                        page.bounceRate < 25
-                          ? 'bg-emerald-500/10 text-emerald-600'
-                          : page.bounceRate < 35
-                          ? 'bg-yellow-500/10 text-yellow-600'
-                          : 'bg-red-500/10 text-red-600'
+                      Visualizações
+                    </th>
+                    <th className={cn(
+                      'text-right py-2 font-medium',
+                      isDark ? 'text-slate-400' : 'text-gray-600'
+                    )}>
+                      Tempo Médio
+                    </th>
+                    <th className={cn(
+                      'text-right py-2 font-medium',
+                      isDark ? 'text-slate-400' : 'text-gray-600'
+                    )}>
+                      Taxa Rejeição
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topPages.map((page, index) => (
+                    <motion.tr
+                      key={page.page}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={cn(
+                        'border-b text-xs',
+                        isDark ? 'border-slate-800/50' : 'border-gray-100'
+                      )}
+                    >
+                      <td className={cn(
+                        'py-3 font-medium',
+                        isDark ? 'text-slate-300' : 'text-gray-900'
                       )}>
-                        {page.bounceRate}%
-                      </span>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                        {page.page}
+                      </td>
+                      <td className={cn(
+                        'text-right',
+                        isDark ? 'text-slate-400' : 'text-gray-600'
+                      )}>
+                        {page.views.toLocaleString('pt-BR')}
+                      </td>
+                      <td className={cn(
+                        'text-right',
+                        isDark ? 'text-slate-400' : 'text-gray-600'
+                      )}>
+                        {page.avgTime}
+                      </td>
+                      <td className="text-right">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                          {page.bounceRate}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
