@@ -31,7 +31,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
   return (
     <Card className={cn('overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow', className)}>
       <Link href={href} className="block outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
-        <div className="relative aspect-[16/9] bg-gray-100">
+        <div className="relative aspect-[3/2] bg-gray-100">
           <Image
             src={resolveCategoryImage(category)}
             alt={category?.name || 'Categoria'}

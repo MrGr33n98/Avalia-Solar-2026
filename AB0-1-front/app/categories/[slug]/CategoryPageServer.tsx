@@ -2,101 +2,174 @@ import { redirect } from 'next/navigation';
 
 import CategoryClientComponent from './CategoryClientComponent';
 import { fetchCategoryBySlug, categoriesApi, api, Banner } from '@/lib/api';
+
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CategorySlugPageProps {
-  params: {
-    slug: string;
-  };
+  params: { slug: string };
+}
+
+const REDIRECT_SLUGS = new Set([
+  'register-user',
+  'register',
+  'cadastro-usuario',
+  'signup',
+]);
+
+const isDev = process.env.NODE_ENV === 'development';
+
+function timeStart(label: string) {
+  if (isDev) console.time(label);
+}
+function timeEnd(label: string) {
+  if (isDev) console.timeEnd(label);
+}
+
+function isBannerActiveForNow(b: Banner, now: Date) {
+  const active = b.active !== false;
+  const hasImage = typeof b.image_url === 'string' && b.image_url.trim().length > 0;
+
+  const start = b.start_date ? new Date(b.start_date) : null;
+  const end = b.end_date ? new Date(b.end_date) : null;
+  const okStart = !start || now >= start;
+  const okEnd = !end || now <= end;
+
+  return active && hasImage && okStart && okEnd;
+}
+
+function filterBannersForCategory(raw: Banner[], categoryId: number, now: Date) {
+  return raw.filter((b) => {
+    const inCategory =
+      !b.category_ids ||
+      b.category_ids.length === 0 ||
+      b.category_ids.includes(categoryId);
+
+    return isBannerActiveForNow(b, now) && inCategory;
+  });
+}
+
+async function fetchFallbackTopBanners(now: Date): Promise<Banner[]> {
+  try {
+    const resp = await api.request<Banner[] | { banners: Banner[] }>({
+      url: `/banners?position=categories_top`,
+      method: 'GET',
+    });
+
+    const dataAny = resp as any;
+    const raw: Banner[] = Array.isArray(resp.data)
+      ? (resp.data as Banner[])
+      : Array.isArray(dataAny?.data?.banners)
+      ? (dataAny.data.banners as Banner[])
+      : [];
+
+    return raw.filter((b) => isBannerActiveForNow(b, now));
+  } catch {
+    return [];
+  }
+}
+
+function CategoryErrorState({
+  slug,
+  errorMessage,
+  slugNotFound,
+}: {
+  slug: string;
+  errorMessage: string;
+  slugNotFound: boolean;
+}) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <div className="mx-auto max-w-4xl px-6 py-16">
+        <div className="rounded-2xl border bg-card p-8 shadow-sm">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Categoria não encontrada
+            </h1>
+
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              {slugNotFound
+                ? `A categoria "${slug}" não existe ou foi removida.`
+                : 'Não foi possível carregar esta categoria no momento.'}
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <a href="/categories">Ver todas as categorias</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/">Ir para Home</a>
+              </Button>
+            </div>
+
+            {!slugNotFound && (
+              <p className="mt-5 text-xs text-destructive/80">
+                Erro: {errorMessage}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default async function CategoryPageServer({ params }: CategorySlugPageProps) {
-  const logTiming = process.env.NODE_ENV === 'development';
-  const totalLabel = `[CategoryPage] Total load time for ${params.slug}`;
-  const fetchLabel = `[CategoryPage] Fetch category ${params.slug}`;
-  const parallelLabel = '[CategoryPage] Fetch parallel data';
+  if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
 
-  if (logTiming) {
-    console.time(totalLabel);
-  }
+  const totalLabel = `[CategoryPage] total ${params.slug}`;
+  const fetchLabel = `[CategoryPage] fetch category ${params.slug}`;
+  const parallelLabel = `[CategoryPage] parallel data ${params.slug}`;
 
-  const specialSlugs = new Set(['register-user', 'register', 'cadastro-usuario', 'signup']);
-  if (specialSlugs.has(params.slug)) {
-    redirect('/signup');
-  }
+  timeStart(totalLabel);
 
   try {
-    if (logTiming) {
-      console.time(fetchLabel);
-    }
+    timeStart(fetchLabel);
     const category = await fetchCategoryBySlug(params.slug);
-    if (logTiming) {
-      console.timeEnd(fetchLabel);
-    }
+    timeEnd(fetchLabel);
 
-    if (logTiming) {
-      console.time(parallelLabel);
-    }
+    timeStart(parallelLabel);
+
     const [companies, rawBanners] = await Promise.all([
       categoriesApi.getCompanies(category.id, { status: 'active' }),
       categoriesApi.getBanners(category.id, { limit: 10 }).catch(() => []),
     ]);
 
     const now = new Date();
-    let banners = Array.isArray(rawBanners)
-      ? rawBanners.filter((b) => {
-          const active = b.active !== false;
-          const hasImage = typeof b.image_url === 'string' && b.image_url.trim().length > 0;
-          const inSchedule = (() => {
-            const start = b.start_date ? new Date(b.start_date) : null;
-            const end = b.end_date ? new Date(b.end_date) : null;
-            const okStart = !start || now >= start;
-            const okEnd = !end || now <= end;
-            return okStart && okEnd;
-          })();
-          const inCategory = !b.category_ids || b.category_ids.length === 0 || b.category_ids.includes(category.id);
-          return active && hasImage && inSchedule && inCategory;
-        })
-      : [];
 
-    if (!Array.isArray(banners) || banners.length === 0) {
-      try {
-        const resp = await api.request<Banner[] | { banners: Banner[] }>({
-          url: `/banners?position=categories_top`,
-          method: 'GET',
-        });
-        const raw: Banner[] = Array.isArray(resp.data)
-          ? (resp.data as Banner[])
-          : Array.isArray((resp as any)?.data?.banners)
-          ? (((resp as any).data.banners as Banner[]) || [])
-          : [];
-        banners = raw.filter((b: Banner) => {
-          const active = b.active !== false;
-          const hasImage = typeof b.image_url === 'string' && b.image_url.trim().length > 0;
-          const inSchedule = (() => {
-            const start = b.start_date ? new Date(b.start_date) : null;
-            const end = b.end_date ? new Date(b.end_date) : null;
-            const okStart = !start || now >= start;
-            const okEnd = !end || now <= end;
-            return okStart && okEnd;
-          })();
-          return active && hasImage && inSchedule;
-        });
-      } catch {
-        // ignore fallback errors
-      }
+    const raw = Array.isArray(rawBanners) ? rawBanners : [];
+    let banners = filterBannersForCategory(raw, category.id, now);
+
+    // fallback: se não vier banner por categoria, busca top banners globais
+    if (banners.length === 0) {
+      banners = await fetchFallbackTopBanners(now);
     }
 
-    if (logTiming) {
-      console.timeEnd(parallelLabel);
-      console.log('[CategoryPage] Banners raw count:', Array.isArray(rawBanners) ? rawBanners.length : 0);
-      console.log('[CategoryPage] Banners filtered:', banners.map((b) => ({ id: b.id, active: b.active, sponsored: b.sponsored, start_date: b.start_date, end_date: b.end_date, image_url: b.image_url })));
-      console.timeEnd(totalLabel);
+    timeEnd(parallelLabel);
+
+    if (isDev) {
+      console.log('[CategoryPage] banners raw:', raw.length);
+      console.log(
+        '[CategoryPage] banners filtered:',
+        banners.map((b) => ({
+          id: b.id,
+          active: b.active,
+          sponsored: b.sponsored,
+          start_date: b.start_date,
+          end_date: b.end_date,
+          image_url: b.image_url,
+        }))
+      );
     }
+
+    timeEnd(totalLabel);
 
     return (
-      <div className="relative z-[800]">
+      <div className="relative">
         <CategoryClientComponent
           initialCategory={category}
           initialCompanies={companies || []}
@@ -107,41 +180,20 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
   } catch (error) {
     const errorMessage = (error as Error)?.message || 'Erro ao carregar categoria';
     const slugNotFound =
-      /category with slug/i.test(errorMessage) || errorMessage.toLowerCase().includes('not found');
-    if (logTiming) {
-      console.error(`[CategoryPage] Error for slug: ${params.slug}`, error);
-      console.timeEnd(totalLabel);
+      /category with slug/i.test(errorMessage) ||
+      errorMessage.toLowerCase().includes('not found');
+
+    if (isDev) {
+      console.error(`[CategoryPage] error slug=${params.slug}`, error);
+      timeEnd(totalLabel);
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertCircle className="h-12 w-12 text-red-500" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Categoria não encontrada</h1>
-            <p className="text-gray-600 mb-6">
-              {slugNotFound
-                ? `A categoria &quot;${params.slug}&quot; não existe ou foi removida.`
-                : 'Não foi possível carregar esta categoria no momento.'}
-            </p>
-            <div className="space-x-4">
-              <Button asChild>
-                <a href="/categories">Ver todas as categorias</a>
-              </Button>
-              <Button asChild variant="outline">
-                <a href="/">Ir para Home</a>
-              </Button>
-            </div>
-            <p className="mt-4 text-sm text-red-600">
-              {slugNotFound
-                ? 'Slug inválido ou categoria removida. Tente outra categoria ou retorne à lista.'
-                : `Erro: ${errorMessage}`}
-            </p>
-          </div>
-        </div>
-      </div>
+      <CategoryErrorState
+        slug={params.slug}
+        errorMessage={errorMessage}
+        slugNotFound={slugNotFound}
+      />
     );
   }
 }

@@ -327,7 +327,7 @@ const API_BASE_URL = getApiBaseUrl();
 // Update the api configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1s
-const TIMEOUT = 30000; // 30s
+const TIMEOUT = 60000; // Aumentado para 60s para evitar timeouts em conexões lentas ou cold start
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -386,10 +386,10 @@ export const api = {
         // Add timeout support using AbortController
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-          console.warn(`[API] Request timed out after ${timeoutDuration}ms:`, url);
-          // Pass reason to abort if supported by environment
-          const timeoutError = new Error('Request timeout');
-          controller.abort(timeoutError); 
+          const errorMessage = `[API] Request timed out after ${timeoutDuration}ms: ${config.method} ${url}`;
+          console.warn(errorMessage);
+          const timeoutError = new Error(errorMessage);
+          controller.abort(timeoutError);
         }, timeoutDuration);
 
         try {

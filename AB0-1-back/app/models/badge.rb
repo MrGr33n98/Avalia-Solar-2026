@@ -14,4 +14,21 @@ class Badge < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     %w[category products badge_image_attachment badge_image_blob]
   end
+
+  def image_url
+    return nil unless badge_image.attached?
+
+    begin
+      options = Rails.application.routes.default_url_options.dup
+      
+      if Rails.env.development? && options[:host] == 'localhost'
+        options[:port] = 3001
+      end
+
+      Rails.application.routes.url_helpers.rails_blob_url(badge_image, options)
+    rescue => e
+      Rails.logger.error("Error generating badge image URL for badge #{id}: #{e.message}")
+      nil
+    end
+  end
 end

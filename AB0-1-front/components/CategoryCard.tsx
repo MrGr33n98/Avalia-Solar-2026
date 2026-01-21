@@ -58,7 +58,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Image Header */}
-          <div className="relative h-48 overflow-hidden bg-muted">
+          <div className="relative aspect-[3/2] overflow-hidden bg-muted">
              {displayData.banner_url ? (
                <Image
                  src={displayData.banner_url}

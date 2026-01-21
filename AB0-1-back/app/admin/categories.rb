@@ -84,7 +84,17 @@ ActiveAdmin.register Category, namespace: :admin do
 
     f.inputs 'Assets' do
       f.input :icon, as: :file, hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
-      f.input :banner, as: :file, hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), size: '200x50') : 'No banner'
+      f.input :banner, as: :file, hint: (
+        hint_text = "Requisitos técnicos: 1200x800px (Proporção 3:2), Formato PNG ou JPG, Máximo de 500KB. Mantenha conteúdo importante dentro de 1000x700px."
+        if f.object.banner.attached?
+          content_tag(:div) do
+            concat image_tag(url_for(f.object.banner), style: 'max-width: 300px; display: block; margin-bottom: 10px;')
+            concat content_tag(:span, hint_text, style: 'font-size: 0.9em; color: #666;')
+          end
+        else
+          hint_text
+        end
+      ).html_safe
     end
 
     f.inputs 'Badges' do

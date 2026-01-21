@@ -54,13 +54,13 @@ module Api
             paginated = paginate(query)
             set_pagination_headers(paginated)
             {
-              data: paginated.map(&:as_json),
+              data: paginated.map { |c| category_json(c) },
               meta: { pagination: pagination_metadata(paginated) }
             }
           else
             results = query.to_a
             results = featured_fallback(results) if featured_true? && results.empty?
-            results.map(&:as_json)
+            results.map { |c| category_json(c) }
           end
         end
       end
@@ -73,7 +73,7 @@ module Api
         cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
-          @category.as_json
+          category_json(@category)
         end
       end
 
@@ -123,10 +123,19 @@ module Api
         cache_key = "categories/#{@category.id}/banners/#{max_updated_at}"
 
         cached_json(cache_key, expires_in: 30.minutes) do
-          banners_scope.as_json(
-            only: %i[id title link banner_type position width height],
-            methods: %i[image_url category_ids]
-          )
+          banners_scope.map do |banner|
+            {
+              id: banner.id,
+              title: banner.title,
+              link: banner.link,
+              banner_type: banner.banner_type,
+              position: banner.position,
+              width: banner.width,
+              height: banner.height,
+              image_url: banner.try(:image_url),
+              category_ids: banner.try(:category_ids) || []
+            }
+          end
         end
       end
 
@@ -186,7 +195,7 @@ module Api
         cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
-          @category.as_json
+          category_json(@category)
         end
       end
 
@@ -223,7 +232,9 @@ module Api
       # Helpers
       # -------------------------
       def category_json(category)
-        category.as_json(only: CATEGORY_JSON_FIELDS)
+        ActiveModelSerializers::Adapter.create(
+          CategorySerializer.new(category)
+        ).as_json
       end
 
       def apply_category_filters(query)
@@ -294,7 +305,7 @@ module Api
         @categories = ::Category.where(status: 'active')
 
         # Filtros opcionais
-        @categories = @categories.where(featured: true) if params[:featured] == 'true'
+        @categories = @categories.where(featured: true) if featured_true?
         @categories = @categories.by_region(params[:region]) if params[:region].present?
         @categories = @categories.by_min_rating(params[:min_rating]) if params[:min_rating].present?
         @categories = @categories.by_max_price(params[:max_price]) if params[:max_price].present?
@@ -349,7 +360,7 @@ module Api
           }
         else
           # Sem paginação - aplicar limite se fornecido
-          @categories = @categories.limit(params[:limit]) if params[:limit].present?
+          @categories = @categories.limit(params[:limit].to_i) if limit_present?
           data = map_categories_data(@categories)
           render json: data
         end
