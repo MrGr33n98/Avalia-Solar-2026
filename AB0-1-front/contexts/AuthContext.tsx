@@ -28,18 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function checkAuth() {
     try {
-      // Check if we have auth data before making the API call
-      const hasAuthData = typeof window !== 'undefined' && localStorage.getItem('auth');
-      const hasToken = typeof window !== 'undefined' && localStorage.getItem('auth_token');
-      
-      // Only try to fetch user data if we have authentication data
-      if (hasAuthData || hasToken) {
-        const userData = await authApi.me();
-        setUser(userData || null);
-      } else {
-        console.log('[Auth] No authentication data found, skipping user fetch');
-        setUser(null);
-      }
+      // Try to fetch user data without checking localStorage
+      const userData = await authApi.me();
+      setUser(userData || null);
     } catch (error) {
       console.error('[Auth] Failed to fetch user data:', error);
       setUser(null);
@@ -51,16 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response: any = await authApi.login(email, password);
-
-      // Persist auth data (token + user)
-      if (typeof window !== 'undefined' && response?.token) {
-        // Save complete auth object
-        localStorage.setItem('auth', JSON.stringify({
-          token: response.token,
-          user: response.user
-        }));
-        console.log('[Auth] Saved auth data to localStorage');
-      }
 
       // Normal case: API returns user
       if (response?.user) {
@@ -98,11 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await authApi.logout();
     setUser(null);
-    // Clear localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth');
-      console.log('[Auth] Cleared auth data from localStorage');
-    }
+    // No need to clear localStorage anymore
   };
 
   return (

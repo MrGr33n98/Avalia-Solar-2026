@@ -11,7 +11,17 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
       @user = User.find_by(email: email)
       if @user&.valid_password?(password)
         token = jwt_encode(user_id: @user.id)
-        return render json: { token: token, user: @user }, status: :ok
+        # Set httpOnly cookie
+        cookie_opts = {
+          value: token,
+          httponly: true,
+          secure: Rails.env.production?,
+          same_site: :lax,
+          expires: 24.hours.from_now,
+          path: "/"
+        }
+        cookies.signed[:jwt_token] = cookie_opts
+        return render json: { user: @user }, status: :ok
       end
 
       # Development fallback: always allow mock login to unblock frontend
@@ -19,7 +29,16 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
         mock_email = email.presence || 'mock@example.com'
         mock_user = @user || User.first || User.new(id: 0, name: 'Mock User', email: mock_email)
         token = jwt_encode(user_id: mock_user.id)
-        return render json: { token: token, user: mock_user, mocked: true }, status: :ok
+        cookie_opts = {
+          value: token,
+          httponly: true,
+          secure: false,
+          same_site: :lax,
+          expires: 24.hours.from_now,
+          path: "/"
+        }
+        cookies.signed[:jwt_token] = cookie_opts
+        return render json: { user: mock_user, mocked: true }, status: :ok
       end
 
       render json: { error: 'Invalid email or password' }, status: :unauthorized
@@ -27,7 +46,16 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
       if Rails.env.development?
         mock_user = User.first || User.new(id: 0, name: 'Mock User', email: 'dev-mock@example.com')
         token = jwt_encode(user_id: mock_user.id)
-        return render json: { token: token, user: mock_user, mocked: true, warning: e.message }, status: :ok
+        cookie_opts = {
+          value: token,
+          httponly: true,
+          secure: false,
+          same_site: :lax,
+          expires: 24.hours.from_now,
+          path: "/"
+        }
+        cookies.signed[:jwt_token] = cookie_opts
+        return render json: { user: mock_user, mocked: true, warning: e.message }, status: :ok
       end
       render json: { error: 'Authentication failed' }, status: :internal_server_error
     end
@@ -37,10 +65,24 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
     @user = User.new(user_params)
     if @user.save
       token = jwt_encode(user_id: @user.id)
-      render json: { token: token, user: @user }, status: :created
+      cookie_opts = {
+        value: token,
+        httponly: true,
+        secure: Rails.env.production?,
+        same_site: :lax,
+        expires: 24.hours.from_now,
+        path: "/"
+      }
+      cookies.signed[:jwt_token] = cookie_opts
+      render json: { user: @user }, status: :created
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
     end
+  end
+
+  def logout
+    cookies.delete(:jwt_token, path: "/")
+    render json: { message: 'Logout successful' }, status: :ok
   end
 
   private

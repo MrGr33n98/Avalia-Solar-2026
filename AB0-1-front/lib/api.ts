@@ -364,20 +364,6 @@ export const api = {
         
         console.log(`[API] Request (Attempt ${attempt + 1}) ->`, config.method, url, config.params || '');
         
-        // Attach auth token if present
-        let token = null;
-        if (typeof window !== 'undefined') {
-          const authData = localStorage.getItem('auth');
-          if (authData) {
-            try {
-              const parsed = JSON.parse(authData);
-              token = parsed.token;
-            } catch (e) {
-              console.warn('[API] Failed to parse auth data:', e);
-            }
-          }
-        }
-        
         const isFormData = config.data instanceof FormData;
         const baseHeaders = getApiRequestHeaders(
           isFormData ? {} : { 'Content-Type': 'application/json' }
@@ -397,7 +383,6 @@ export const api = {
             method: config.method,
             headers: {
               ...baseHeaders,
-              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
               ...config.headers,
             },
             body: config.data
@@ -408,6 +393,7 @@ export const api = {
             ...(config.next ? { next: config.next } : {}),
             ...(config.cache ? { cache: config.cache } : {}),
             signal: controller.signal,
+            credentials: 'include' // Add this line to send cookies
           });
 
           clearTimeout(timeoutId);
