@@ -68,6 +68,13 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       APP_HOST: "https://api.avaliasolar.com.br"
+      # DigitalOcean Spaces (S3) para persistência de imagens
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-spaces}
+      SPACES_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
+      SPACES_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
+      SPACES_REGION: ${SPACES_REGION:-nyc3}
+      SPACES_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
+      SPACES_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
     ports:
       - "3001:3001"
     networks:

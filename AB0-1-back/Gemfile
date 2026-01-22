@@ -64,6 +64,9 @@ gem 'rqrcode', '~> 2.2'
 gem 'omniauth-google-oauth2'
 gem 'image_processing', '~> 1.2'
 
+# Active Storage S3 support (DigitalOcean Spaces)
+gem 'aws-sdk-s3', '~> 1.0', require: false
+
 group :development, :test do
   # Use sqlite3 as the database for Active Record
   gem 'sqlite3', '~> 1.4'

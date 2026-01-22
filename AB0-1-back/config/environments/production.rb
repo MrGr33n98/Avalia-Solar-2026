@@ -17,7 +17,8 @@ Rails.application.configure do
   config.assets.digest = true
 
   # Armazenamento e Host de API
-  config.active_storage.service = :local
+  # IMPORTANTE: Usar Spaces em produção para persistir imagens entre deploys
+  config.active_storage.service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'spaces').to_sym
   # Evita 404 por URL expirada do DiskService em páginas cacheadas
   config.active_storage.service_urls_expire_in = 7.days
   
