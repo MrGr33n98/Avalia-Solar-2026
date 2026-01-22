@@ -397,8 +397,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
-    t.index ["project_types"], name: "index_companies_on_project_types_gin"
-    t.index ["services_offered"], name: "index_companies_on_services_offered"
+    t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
+    t.index ["services_offered"], name: "index_companies_on_services_offered", using: :gin
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
     t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
