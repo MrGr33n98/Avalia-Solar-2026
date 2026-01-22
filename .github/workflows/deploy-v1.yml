@@ -101,7 +101,7 @@ jobs:
             }
             trap on_error ERR
 
-            echo "?? Atualizando código local..."
+            echo "?? Atualizando cï¿½digo local..."
             git fetch origin main
             git reset --hard origin/main
 
@@ -111,7 +111,7 @@ jobs:
             echo "?? Pulling novas imagens..."
             docker compose pull backend frontend
 
-            echo "?? Garantindo dependências (db/redis) ativas..."
+            echo "?? Garantindo dependï¿½ncias (db/redis) ativas..."
             docker compose up -d db redis
 
             echo "? Aguardando db/redis ficarem healthy..."
@@ -130,7 +130,7 @@ jobs:
               sleep 3
             done
             if [ "${db_status:-starting}" != "healthy" ] || [ "${redis_status:-starting}" != "healthy" ]; then
-              echo "? db/redis não ficaram healthy a tempo" >&2
+              echo "? db/redis nï¿½o ficaram healthy a tempo" >&2
               docker compose ps || true
               docker compose logs --tail 200 db redis || true
               exit 1
@@ -154,14 +154,14 @@ jobs:
               sleep 3
             done
             if [ "${be_status:-starting}" != "healthy" ]; then
-              echo "? backend não ficou healthy a tempo" >&2
+              echo "? backend nï¿½o ficou healthy a tempo" >&2
               docker compose logs --tail 200 backend || true
               exit 1
             fi
 
-            echo "??? Migrações de banco..."
+            echo "??? Migraï¿½ï¿½es de banco..."
 
-            echo "?? Criando extensão PostgreSQL btree_gin..."
+            echo "?? Criando extensï¿½o PostgreSQL btree_gin..."
             docker compose exec -T db psql -U postgres -d ab0 -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" 2>/dev/null || true
 
             echo "?? Configurando ambiente Rails..."
@@ -178,7 +178,7 @@ jobs:
             echo "?? Tabelas encontradas: $TABLES_COUNT"
 
             if [[ "$TABLES_COUNT" -gt 5 ]]; then
-              echo "?? Banco já populado, executando migrações..."
+              echo "?? Banco jï¿½ populado, executando migraï¿½ï¿½es..."
               docker compose exec -T backend bundle exec rails db:migrate
             else
               echo "?? Banco vazio/quase vazio, executando setup..."
@@ -189,7 +189,7 @@ jobs:
               }
             fi
 
-            echo "? Verificação essencial..."
+            echo "? Verificaï¿½ï¿½o essencial..."
             docker compose exec -T backend bundle exec rails runner "
               tables = ActiveRecord::Base.connection.tables
               essential = %w[schema_migrations categories companies users]
@@ -202,20 +202,33 @@ jobs:
               end
             "
 
-            echo "?? Verificando necessidade de rebuild do frontend..."
-            FRONTEND_BUILD_ID=$(docker compose exec -T frontend sh -c "cat .next/BUILD_ID 2>/dev/null || echo 'no_build'" 2>/dev/null || echo "no_build")
+            echo "?? Limpando cache do frontend..."
+            docker compose exec -T frontend sh -c "rm -rf /app/.next/cache /app/.next/server" 2>/dev/null || true
+            
+            echo "?? ForÃ§ando rebuild completo do frontend..."
+            docker compose build frontend --no-cache
+            docker compose up -d --force-recreate frontend
+            
+            echo "? Aguardando frontend inicializar..."
+            for i in $(seq 1 60); do
+              fe_cid=$(docker compose ps -q frontend 2>/dev/null || true)
+              if [ -n "$fe_cid" ]; then
+                fe_status=$(docker inspect -f '{{.State.Status}}' "$fe_cid" 2>/dev/null || echo "starting")
+                if [ "$fe_status" = "running" ]; then
+                  # Testar se o Next.js estÃ¡ respondendo
+                  if docker exec "$fe_cid" wget -q -O- http://localhost:3000 >/dev/null 2>&1; then
+                    echo "? Frontend healthy e respondendo!"
+                    break
+                  fi
+                fi
+              fi
+              printf 'frontend=%s (tentativa %s/60)\n' "$fe_status" "$i"
+              sleep 2
+            done
+            
+            echo "? Frontend rebuild concluÃ­do!"
 
-            if [[ "$FRONTEND_BUILD_ID" == "no_build" ]]; then
-              echo "?? Build do Next.js não encontrado, rebuild necessário..."
-              docker compose build frontend --no-cache
-              docker compose up -d --force-recreate frontend
-              echo "? Frontend rebuild concluído!"
-            else
-              echo "? Build do Next.js encontrado (ID: $FRONTEND_BUILD_ID). Reiniciando para sincronizar..."
-              docker compose restart frontend
-            fi
-
-            echo "?? Limpeza e Finalização..."
+            echo "?? Limpeza e Finalizaï¿½ï¿½o..."
             docker image prune -f
             docker system prune -f --volumes || true
 
