@@ -67,8 +67,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     # Active Storage resources
     resource '/rails/active_storage/*',
       headers: :any,
-      methods: [:get, :options, :head],
-      credentials: false
+      methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      credentials: true
 
     # Health check endpoint (não precisa credentials)
     resource '/health',
