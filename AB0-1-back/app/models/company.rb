@@ -404,4 +404,8 @@ class Company < ApplicationRecord
       clicks: stats.map(&:cta_clicks)
     }
   end
+  # Metodo para validar ativacao 
+  def ready_for_activation? 
+    name.present? && email.present? && (cnpj.present? || website.present?) 
+  end 
 end
