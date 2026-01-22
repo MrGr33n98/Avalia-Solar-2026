@@ -55,6 +55,7 @@ export async function fetchApiSafe<T>(
     
     const response = await fetch(url, {
       ...options,
+      credentials: 'include', // Important for JWT cookies
       headers: {
         ...defaultHeaders,
         ...options.headers,
@@ -65,6 +66,38 @@ export async function fetchApiSafe<T>(
     console.log('[API] Response data:', responseBody);
 
     if (!response.ok) {
+      // Handle token revocation (401 with specific error codes)
+      if (response.status === 401 && responseBody) {
+        const errorCode = responseBody.code;
+        const errorMsg = responseBody.error || responseBody.message || '';
+        
+        // Check for JWT revocation errors
+        if (errorCode === 'TOKEN_REVOKED' || errorCode === 'SESSION_EXPIRED' ||
+            errorMsg.toLowerCase().includes('revoked') || 
+            errorMsg.toLowerCase().includes('session expired')) {
+          
+          console.warn('[Auth] Token revoked, clearing session and redirecting to login');
+          
+          // Clear all auth data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            
+            // Clear cookies
+            document.cookie.split(";").forEach((c) => {
+              document.cookie = c.replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            
+            // Redirect to login with reason
+            window.location.href = '/login?reason=session_expired';
+          }
+          
+          throw new Error('Session expired. Please login again.');
+        }
+      }
+      
       // Handle different error statuses gracefully
       if (response.status === 404) {
         console.log(`[404] Resource not found at ${url}`);

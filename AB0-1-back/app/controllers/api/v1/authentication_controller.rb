@@ -1,5 +1,6 @@
 # app/controllers/api/v1/authentication_controller.rb
 class Api::V1::AuthenticationController < Api::V1::BaseController
+  include JwtAuthenticatable
   # skip_before_action removed because authenticate_api_user before_action is disabled in BaseController
 
   def login
@@ -81,6 +82,12 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
   end
 
   def logout
+    # Revoke the current JWT token
+    if current_token
+      revoke_current_token
+      Rails.logger.info("[Auth] User logged out: user_id=#{current_user&.id}")
+    end
+    
     cookies.delete(:jwt_token, path: "/")
     render json: { message: 'Logout successful' }, status: :ok
   end
@@ -93,6 +100,13 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
 
   def jwt_encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i
+    payload[:iat] = Time.current.to_i  # Issued at
+    payload[:jti] = SecureRandom.uuid  # JWT ID for revocation
     JWT.encode(payload, Rails.application.secret_key_base)
+  end
+  
+  def skip_token_check?
+    # Skip revocation check for login and register
+    %w[login register].include?(action_name)
   end
 end

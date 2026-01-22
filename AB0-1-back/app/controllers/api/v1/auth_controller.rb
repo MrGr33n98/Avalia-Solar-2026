@@ -2,6 +2,8 @@
 module Api
   module V1
     class AuthController < Api::V1::BaseController
+      include JwtAuthenticatable
+      
       # Este controller é baseado em ActionController::API (direta ou indiretamente) e portanto
       # não possui o callback verify_authenticity_token usado para proteção CSRF em controllers
       # que herdam de ActionController::Base. Não é necessário (nem possível) chamar
@@ -64,7 +66,35 @@ module Api
       end
 
       def logout
-        head :no_content
+        # Revoke the current JWT token
+        if current_token
+          revoke_current_token
+          Rails.logger.info("[Auth] User logged out: user_id=#{current_user&.id} ip=#{request.remote_ip}")
+        end
+        
+        # Clear cookie
+        cookies.delete(:jwt_token, path: "/")
+        
+        render json: { 
+          message: 'Logout successful',
+          code: 'LOGOUT_SUCCESS'
+        }, status: :ok
+      end
+      
+      def logout_all
+        # Revoke all tokens for current user (all devices)
+        if current_user
+          revoke_all_user_tokens
+          Rails.logger.info("[Auth] User logged out from all devices: user_id=#{current_user.id} ip=#{request.remote_ip}")
+        end
+        
+        # Clear cookie
+        cookies.delete(:jwt_token, path: "/")
+        
+        render json: { 
+          message: 'Logged out from all devices successfully',
+          code: 'LOGOUT_ALL_SUCCESS'
+        }, status: :ok
       end
 
       def me
@@ -116,7 +146,14 @@ module Api
 
       def jwt_encode(payload, exp = 24.hours.from_now)
         payload[:exp] = exp.to_i
+        payload[:iat] = Time.current.to_i  # Issued at
+        payload[:jti] = SecureRandom.uuid  # JWT ID for revocation
         JWT.encode(payload, Rails.application.secret_key_base)
+      end
+      
+      def skip_token_check?
+        # Skip revocation check for login, register, signup
+        %w[login register signup forgot_password reset_password confirm_email].include?(action_name)
       end
 
       def development_fallback(action, error)

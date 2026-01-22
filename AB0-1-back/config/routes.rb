@@ -177,6 +177,7 @@ Rails.application.routes.draw do
         post :signup
         post :register
         post :logout
+        post :logout_all  # New: logout from all devices
         get :me
         post :forgot_password
         post :reset_password
