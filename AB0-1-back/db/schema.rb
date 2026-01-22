@@ -378,8 +378,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.json "project_types"
-    t.json "services_offered", default: [], null: false
+    t.jsonb "project_types"
+    t.jsonb "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
     t.boolean "effect", default: false, null: false
