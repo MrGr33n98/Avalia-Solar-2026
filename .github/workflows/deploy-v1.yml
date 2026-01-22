@@ -234,13 +234,6 @@ jobs:
                 puts 'Banco OK. Total de tabelas: ' + tables.count.to_s
               end
             "
-
-            echo "?? Limpando cache do frontend..."
-            docker compose exec -T frontend sh -c "rm -rf /app/.next/cache /app/.next/server" 2>/dev/null || true
-            
-            echo "?? Forçando rebuild completo do frontend..."
-            docker compose build frontend --no-cache
-            docker compose up -d --force-recreate frontend
             
             echo "? Aguardando frontend inicializar..."
             for i in $(seq 1 60); do
@@ -259,8 +252,8 @@ jobs:
               sleep 2
             done
             
-            echo "? Frontend rebuild concluído!"
-
+            echo "? Frontend inicializado!"
+            
             echo "?? Limpeza e Finaliza��o..."
             docker image prune -f
             docker system prune -f --volumes || true
