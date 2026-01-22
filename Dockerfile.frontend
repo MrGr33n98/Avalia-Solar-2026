@@ -85,7 +85,8 @@ ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
 
 # Copia os artefatos de build da etapa anterior
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/static ./.next/static
+# Copia TODA a pasta .next para garantir que nada falte
+COPY --from=builder /app/.next ./.next
 # Copia a aplicação standalone gerada pelo `output: 'standalone'` no next.config.js
 COPY --from=builder /app/.next/standalone ./
 
