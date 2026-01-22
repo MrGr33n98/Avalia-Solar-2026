@@ -1,0 +1,43 @@
+<h3>Gerenciar Autenticação de Dois Fatores</h3>
+
+<div class="two-factor-manage">
+  <div class="status-card">
+    <h4>Status da Autenticação de Dois Fatores</h4>
+    <div class="status">
+      <% if current_admin_user.otp_enabled? %>
+        <span class="badge badge-success">Ativada</span>
+      <% else %>
+        <span class="badge badge-danger">Desativada</span>
+      <% end %>
+    </div>
+  </div>
+  
+  <% if current_admin_user.otp_enabled? %>
+    <div class="actions">
+      <div class="section">
+        <h4>Gerênciar Códigos de Recuperação</h4>
+        <p>Você tem <%= current_admin_user.otp_backup_codes.to_a.length %> códigos de recuperação restantes.</p>
+        <div class="code-actions">
+          <%= link_to "Ver Códigos de Recuperação", admin_two_factor_backup_codes_path, class: "btn btn-primary" %>
+          <%= form_tag regenerate_admin_two_factor_backup_codes_path, method: :post do %>
+            <%= submit_tag "Gerar Novos Códigos", class: "btn btn-secondary", data: { confirm: "Isso irá invalidar todos os códigos antigos. Tem certeza?" } %>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h4>Desativar 2FA</h4>
+        <p>Desativar a autenticação de dois fatores reduzirá a segurança da sua conta.</p>
+        <%= form_tag disable_admin_two_factor_path, method: :post do %>
+          <%= submit_tag "Desativar 2FA", class: "btn btn-danger", data: { confirm: "Tem certeza que deseja desativar a autenticação de dois fatores?" } %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="enable-section">
+      <h4>Ativar Autenticação de Dois Fatores</h4>
+      <p>A autenticação de dois fatores adiciona uma camada extra de segurança à sua conta.</p>
+      <%= link_to "Ativar 2FA", admin_two_factor_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
