@@ -168,13 +168,59 @@ jobs:
             docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
 
             echo "?? Executando migra��es..."
-            docker compose exec -T backend bundle exec rails db:migrate || {
-              echo "?? Migrate falhou, criando banco..."
-              docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:setup || true
-            }
+            if ! docker compose exec -T backend bundle exec rails db:migrate; then
+              echo "?? Migrate falhou, mas N�O vamos recriar o banco (preservar dados)"
+              echo "?? Tentando criar banco se n�o existir..."
+              docker compose exec -T backend bundle exec rails db:create || true
+              docker compose exec -T backend bundle exec rails db:migrate || true
+            fi
             
-            echo "?? Populando dados essenciais..."
-            docker compose exec -T backend bundle exec rails db:seed || true
+            echo "?? Verificando se h� dados no banco..."
+            HAS_DATA=$(docker compose exec -T backend bundle exec rails runner "puts Company.count" 2>/dev/null || echo "0")
+            
+            if [ "$HAS_DATA" -eq "0" ] || [ -z "$HAS_DATA" ]; then
+              echo "?? Banco vazio, restaurando dados do backup..."
+              
+              # Importar empresas do backup
+              docker compose exec -T backend bundle exec rails runner "
+                require 'json'
+                
+                # Ler arquivo JSON com empresas
+                backup_file = Rails.root.join('companies.json')
+                if File.exist?(backup_file)
+                  puts '📦 Carregando empresas do backup...'
+                  companies_data = JSON.parse(File.read(backup_file))
+                  
+                  companies_data.each do |company_data|
+                    company = Company.find_or_initialize_by(id: company_data['id'])
+                    company.assign_attributes(
+                      name: company_data['name'],
+                      description: company_data['description'],
+                      website: company_data['website'],
+                      phone: company_data['phone'],
+                      address: company_data['address'],
+                      state: company_data['state'],
+                      city: company_data['city'],
+                      rating_avg: company_data['rating_avg'],
+                      rating_count: company_data['rating_count'],
+                      status: company_data['status'],
+                      featured: company_data['featured'],
+                      verified: company_data['verified']
+                    )
+                    company.save
+                  end
+                  
+                  puts \"✅ #{Company.count} empresas restauradas do backup\"
+                else
+                  puts '⚠️  Arquivo de backup n�o encontrado, populando com seeds...'
+                end
+              " || echo "Falha ao restaurar backup, continuando..."
+              
+              # Seeds padrão se não houver backup
+              docker compose exec -T backend bundle exec rails db:seed || true
+            else
+              echo "✅ Banco j� cont�m dados ($HAS_DATA empresas), pulando restaura��o"
+            fi
 
             echo "? Verifica��o essencial..."
             docker compose exec -T backend bundle exec rails runner "
