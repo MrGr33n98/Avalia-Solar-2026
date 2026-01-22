@@ -73,7 +73,7 @@ services:
       SPACES_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
       SPACES_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
       SPACES_REGION: ${SPACES_REGION:-nyc3}
-      SPACES_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
+      SPACES_BUCKET: ${SPACES_BUCKET:-avalia-backups}
       SPACES_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
     ports:
       - "3001:3001"
