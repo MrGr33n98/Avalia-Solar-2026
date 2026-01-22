@@ -167,27 +167,14 @@ jobs:
             echo "?? Configurando ambiente Rails..."
             docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
 
-            echo "?? Verificando estado do banco..."
-            TABLES_COUNT=$(docker compose exec -T backend bundle exec rails runner "
-              begin
-                puts ActiveRecord::Base.connection.tables.count
-              rescue
-                puts '0'
-              end
-            " 2>/dev/null || echo "0")
-            echo "?? Tabelas encontradas: $TABLES_COUNT"
-
-            if [[ "$TABLES_COUNT" -gt 5 ]]; then
-              echo "?? Banco j� populado, executando migra��es..."
-              docker compose exec -T backend bundle exec rails db:migrate
-            else
-              echo "?? Banco vazio/quase vazio, executando setup..."
-              docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:setup || {
-                echo "?? db:setup falhou, tentando schema:load + seed..."
-                docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:schema:load || true
-                docker compose exec -T backend bundle exec rails db:seed || true
-              }
-            fi
+            echo "?? Executando migra��es..."
+            docker compose exec -T backend bundle exec rails db:migrate || {
+              echo "?? Migrate falhou, criando banco..."
+              docker compose exec -T -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 backend bundle exec rails db:setup || true
+            }
+            
+            echo "?? Populando dados essenciais..."
+            docker compose exec -T backend bundle exec rails db:seed || true
 
             echo "? Verifica��o essencial..."
             docker compose exec -T backend bundle exec rails runner "
