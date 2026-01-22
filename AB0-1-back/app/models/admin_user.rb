@@ -2,12 +2,49 @@ class AdminUser < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable,
+         :two_factor_authenticatable,
+         otp_secret_encryption_key: Rails.application.secret_key_base
          
   # Notifications association
   has_many :notifications, as: :recipient, dependent: :destroy, class_name: 'Noticed::Notification'
 
   has_one_attached :avatar_photo
+  
+  # Two-Factor Authentication
+  serialize :otp_backup_codes, type: Array, coder: YAML
+  
+  # Generate backup codes when enabling 2FA
+  def generate_otp_backup_codes!
+    codes = Array.new(10) { SecureRandom.hex(4) }
+    self.otp_backup_codes = codes.map { |code| Devise.bcrypt(AdminUser, code) }
+    codes # Return plain codes to show to user
+  end
+  
+  # Validate backup code
+  def validate_and_consume_otp_backup_code!(code)
+    otp_backup_codes.to_a.each_with_index do |backup_code_digest, index|
+      if Devise.secure_compare(Devise.bcrypt(AdminUser, code), backup_code_digest)
+        codes = otp_backup_codes.to_a.dup
+        codes.delete_at(index)
+        self.otp_backup_codes = codes
+        save!
+        return true
+      end
+    end
+    false
+  end
+  
+  # Check if 2FA is enabled
+  def otp_enabled?
+    otp_required_for_login?
+  end
+  
+  # Provisioning URI for QR code
+  def otp_provisioning_uri(email, issuer: 'Avalia Solar Admin')
+    return nil unless otp_secret.present?
+    ROTP::TOTP.new(otp_secret, issuer: issuer).provisioning_uri(email)
+  end
 
   validate :avatar_photo_type, if: -> { avatar_photo.attached? }
   validate :avatar_photo_size, if: -> { avatar_photo.attached? }

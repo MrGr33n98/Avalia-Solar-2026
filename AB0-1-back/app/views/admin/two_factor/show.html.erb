@@ -1,0 +1,38 @@
+<h3>Configurar Autenticação de Dois Fatores</h3>
+
+<div class="two-factor-setup">
+  <p>Para habilitar a autenticação de dois fatores, siga estas etapas:</p>
+  
+  <div class="step">
+    <h4>1. Instale um aplicativo de autenticação</h4>
+    <p>Use Google Authenticator, Authy ou qualquer outro aplicativo compatível com TOTP.</p>
+  </div>
+  
+  <div class="step">
+    <h4>2. Escaneie o QR Code abaixo</h4>
+    <div class="qr-code-container">
+      <%= image_tag(current_admin_user.otp_provisioning_uri(current_admin_user.email), alt: 'QR Code para 2FA') %>
+    </div>
+    <p class="or">Ou insira manualmente:</p>
+    <div class="secret-key">
+      <code><%= current_admin_user.otp_secret %></code>
+    </div>
+  </div>
+  
+  <div class="step">
+    <h4>3. Digite o código gerado</h4>
+    <p>O aplicativo gerará um código de 6 dígitos. Digite-o abaixo:</p>
+    
+    <%= form_tag enable_admin_two_factor_path, method: :post do %>
+      <div class="form-group">
+        <%= label_tag :code, "Código de verificação:" %>
+        <%= text_field_tag :code, nil, class: "form-control", placeholder: "123456", maxlength: 6, autofocus: true %>
+      </div>
+      
+      <div class="actions">
+        <%= submit_tag "Habilitar 2FA", class: "btn btn-primary" %>
+        <%= link_to "Cancelar", admin_root_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -74,6 +74,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.datetime "avatar_uploaded_at"
     t.string "name"
     t.text "bio"
+    t.string "two_factor_secret"
+    t.text "two_factor_recovery_codes"
+    t.boolean "two_factor_enabled", default: false
     t.index ["email"], name: "index_admin_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
@@ -375,8 +378,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.jsonb "project_types"
-    t.jsonb "services_offered", default: [], null: false
+    t.json "project_types"
+    t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
     t.boolean "effect", default: false, null: false
@@ -391,13 +394,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.text "rejected_reason"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
-    t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
-    t.index ["services_offered"], name: "index_companies_on_services_offered_gin", using: :gin
+    t.index ["project_types"], name: "index_companies_on_project_types_gin"
+    t.index ["services_offered"], name: "index_companies_on_services_offered"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 

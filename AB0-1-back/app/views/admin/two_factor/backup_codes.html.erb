@@ -1,0 +1,27 @@
+<h3>Códigos de Recuperação</h3>
+
+<div class="backup-codes">
+  <div class="alert alert-warning">
+    <strong>Importante!</strong> Guarde esses códigos em um local seguro. Eles serão usados para recuperar acesso à sua conta se perder o dispositivo de autenticação.
+  </div>
+  
+  <div class="codes-list">
+    <h4>Seus códigos de recuperação:</h4>
+    <ul>
+      <% @recovery_codes.each_with_index do |code, index| %>
+        <li><%= code %></li>
+      <% end %>
+    </ul>
+  </div>
+  
+  <div class="warning">
+    <p><strong>Aviso:</strong> Esses códigos só serão exibidos uma vez. Se perder, você precisará gerar novos.</p>
+  </div>
+  
+  <div class="actions">
+    <%= link_to "Voltar para o Painel", admin_root_path, class: "btn btn-primary" %>
+    <%= form_tag regenerate_admin_two_factor_backup_codes_path, method: :post do %>
+      <%= submit_tag "Gerar Novos Códigos", class: "btn btn-secondary", data: { confirm: "Isso irá invalidar todos os códigos antigos. Tem certeza?" } %>
+    <% end %>
+  </div>
+</div>

@@ -17,6 +17,16 @@ Rails.application.routes.draw do
       sessions: 'admin/sessions'
     }
   )
+
+  # Two-Factor Authentication routes for Admin
+  namespace :admin do
+    resource :two_factor, only: [:show, :manage] do
+      post :enable
+      post :disable
+      get :backup_codes
+      post :regenerate_backup_codes
+    end
+  end
   devise_for :users, controllers: {
     omniauth_callbacks: 'users/omniauth_callbacks'
   }
