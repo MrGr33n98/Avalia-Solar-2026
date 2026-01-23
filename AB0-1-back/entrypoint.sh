@@ -43,20 +43,10 @@ psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENS
 echo "🔧 Configurando ambiente Rails..."
 bundle exec rails db:environment:set RAILS_ENV=production || true
 
-# Verificar se o banco precisa de setup inicial ou apenas migrations
-echo "📊 Verificando estado do banco..."
-TABLES_COUNT=$(bundle exec rails runner "puts ActiveRecord::Base.connection.tables.count rescue 0" 2>/dev/null || echo "0")
-echo "📊 Tabelas encontradas: $TABLES_COUNT"
-
-if [ "$TABLES_COUNT" -gt 5 ]; then
-  echo "🔄 Banco já populado, executando migrações..."
+  # Se o banco existe mas está "vazio" (sem tabelas), o rails db:prepare já cuida disso
+  # sem precisar de db:reset ou db:drop que são perigosos em produção.
+  echo "Banco de dados já existe. Verificando migrações..."
   bundle exec rails db:migrate
-else
-  echo "🆕 Banco vazio/quase vazio (tabelas: $TABLES_COUNT), executando setup..."
-  # Usa schema:load para garantir que o schema.rb corrigido seja aplicado
-  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bundle exec rails db:schema:load
-  bundle exec rails db:seed || echo "⚠️ Seed falhou, mas continuando..."
-fi
 
 # === INÍCIO DA APLICAÇÃO ===
 

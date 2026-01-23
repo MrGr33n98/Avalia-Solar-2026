@@ -86,7 +86,7 @@ services:
       retries: 10
       start_period: 60s
     volumes:
-      - ./AB0-1-back/storage:/app/storage
+      - storage_data:/app/storage
 
   frontend:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
@@ -130,6 +130,7 @@ services:
 volumes:
   db_data:
   redis_data:
+  storage_data:
 
 networks:
   ab0-network:
