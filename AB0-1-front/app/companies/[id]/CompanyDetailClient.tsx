@@ -76,7 +76,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [logoError, setLogoError] = useState<boolean>(false);
 
   const [activeTab, setActiveTab] = useState<string>("overview");
-  const [timeRange, setTimeRange] = useState<string>("30d");
+  const [timeRange, setTimeRange] = useState<number>(30);
 
   const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
 
