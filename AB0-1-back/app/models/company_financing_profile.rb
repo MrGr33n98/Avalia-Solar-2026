@@ -21,7 +21,7 @@ class CompanyFinancingProfile < ApplicationRecord
 
   # Ransack configuration
   def self.ransackable_attributes(_auth_object = nil)
-    %w[amortization_type company_id created_at currency default_amount_cents default_down_payment_percent default_interest_rate_monthly default_term_months disclaimer id max_grace_months status updated_at]
+    column_names
   end
 
   def self.ransackable_associations(_auth_object = nil)

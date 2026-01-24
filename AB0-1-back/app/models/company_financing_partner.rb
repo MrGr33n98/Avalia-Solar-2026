@@ -18,7 +18,7 @@ class CompanyFinancingPartner < ApplicationRecord
 
   # Ransack configuration
   def self.ransackable_attributes(_auth_object = nil)
-    %w[active badge company_id created_at id name partner_type position priority updated_at website]
+    column_names
   end
 
   def self.ransackable_associations(_auth_object = nil)
