@@ -50,7 +50,7 @@ class Company < ApplicationRecord
   # =========================
   # Validations
   # =========================
-  validates :name, presence: true, length: { minimum: 5 }
+  validates :name, presence: true, length: { minimum: 2 }
   validates :description, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validate :validate_cnpj_format

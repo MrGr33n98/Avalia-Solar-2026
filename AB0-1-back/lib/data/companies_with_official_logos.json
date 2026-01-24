@@ -1,0 +1,2663 @@
+[
+  {
+    "id": 1,
+    "name": "Volvo Recharge",
+    "cnpj": "00111222000104",
+    "city": "Curitiba",
+    "state": "PR",
+    "description": "Rede de carregamento rápido",
+    "address": "R. Comendador Araújo, 499, Centro, Curitiba, PR, Cep: - Centro, Curitiba - PR, 80420-000, Brasil",
+    "latitude": -25.4373276,
+    "longitude": -49.2796181,
+    "phone": null,
+    "website": "https://eletropostosvolvocars.com.br/",
+    "working_hours": [
+      "segunda-feira: 00:00 – 23:59",
+      "terça-feira: 00:00 – 23:59",
+      "quarta-feira: 00:00 – 23:59",
+      "quinta-feira: 00:00 – 23:59",
+      "sexta-feira: 00:00 – 23:59",
+      "sábado: 00:00 – 23:59",
+      "domingo: 00:00 – 23:59"
+    ],
+    "rating_avg": "1",
+    "rating_count": 1,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/eletropostosvolvocars.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "PR"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://eletropostosvolvocars.com.br/images/volvo-menu.svg",
+    "logo_file": "logos\\1_volvo-recharge.svg",
+    "logo_sha256": "98d5f11eaee91053a6aada011281cb84632e705155d98374f3c89064d3357fb0"
+  },
+  {
+    "id": 2,
+    "name": "Raízen Power (Shell Recharge)",
+    "cnpj": "33454354000160",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Infraestrutura e CPO",
+    "address": "Av. Brig. Faria Lima, 4100 - Itaim Bibi, São Paulo - SP, 04538-132, Brasil",
+    "latitude": -23.5920422,
+    "longitude": -46.6816737,
+    "phone": "(11) 2344-6200",
+    "website": "http://www.raizen.com/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 18:00",
+      "terça-feira: 08:00 – 18:00",
+      "quarta-feira: 08:00 – 18:00",
+      "quinta-feira: 08:00 – 18:00",
+      "sexta-feira: 08:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.7",
+    "rating_count": 220,
+    "instagram": "https://instagram.com/raizen/",
+    "linkedin": "https://www.linkedin.com/company/raizenoficial/",
+    "facebook": "https://www.facebook.com/raizenoficial?fref=ts",
+    "youtube": "https://www.youtube.com/user/raizenenergia",
+    "social_media": {
+      "instagram": "https://instagram.com/raizen/",
+      "linkedin": "https://www.linkedin.com/company/raizenoficial/",
+      "facebook": "https://www.facebook.com/raizenoficial?fref=ts",
+      "youtube": "https://www.youtube.com/user/raizenenergia"
+    },
+    "partner_brands": [],
+    "project_types": [
+      "Comercial"
+    ],
+    "logo_url": "https://img.logo.dev/raizen.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.raizen.com.br/img/frontend/header/logo.svg",
+    "logo_file": "logos\\2_ra-zen-power-shell-recharge.svg",
+    "logo_sha256": "28eebb5c0f48d3d019e249f4ef2bb3d9c0c829e96a94c89d6425cd7b3ec3e3eb"
+  },
+  {
+    "id": 3,
+    "name": "Neoenergia (Iberdrola)",
+    "cnpj": "01015333000170",
+    "city": "Rio de Janeiro",
+    "state": "RJ",
+    "description": "Eletropostos e Energia",
+    "address": "Praia do Flamengo, 78 - Flamengo, Rio de Janeiro - RJ, 22210-904, Brasil",
+    "latitude": -22.9272301,
+    "longitude": -43.1737289,
+    "phone": "(21) 3235-9800",
+    "website": "https://ri.neoenergia.com/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.7",
+    "rating_count": 75,
+    "facebook": "https://www.facebook.com/neoenergia/",
+    "instagram": "https://www.instagram.com/neoenergia_oficial/",
+    "youtube": "https://www.youtube.com/channel/ucevlrlr5ymh6khc5qmgcewa",
+    "linkedin": "https://www.linkedin.com/company/neoenergia/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/neoenergia/",
+      "instagram": "https://www.instagram.com/neoenergia_oficial/",
+      "youtube": "https://www.youtube.com/channel/ucevlrlr5ymh6khc5qmgcewa",
+      "linkedin": "https://www.linkedin.com/company/neoenergia/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/ri.neoenergia.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "RJ"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn-sites-assets.mziq.com/wp-content/uploads/sites/1282/2023/10/Logo-horizontal.png",
+    "logo_file": "logos\\3_neoenergia-iberdrola.png",
+    "logo_sha256": "7fe7384dcb76e3bbcd38dfbf540ad8747992d381cb39e53306ad901826d53adf"
+  },
+  {
+    "id": 4,
+    "name": "EDP Smart",
+    "cnpj": "03983431000103",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Corredores elétricos",
+    "address": "Rua Werner Von Siemens, 111 - Lapa, São Paulo - SP, 05069-010, Brasil",
+    "latitude": -23.5101157,
+    "longitude": -46.7102633,
+    "phone": "(11) 2185-5000",
+    "website": null,
+    "working_hours": null,
+    "rating_avg": "4.4",
+    "rating_count": 75,
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places"
+    },
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 5,
+    "name": "Eletroposto Brasil",
+    "cnpj": "44111222000133",
+    "city": "Florianópolis",
+    "state": "SC",
+    "description": "Instalação e Operação",
+    "address": "Rod. Admar Gonzaga, 500 - Itacorubi, Florianópolis - SC, 88034-000, Brasil",
+    "latitude": -27.578036,
+    "longitude": -48.5106091,
+    "phone": "(48) 3234-3213",
+    "website": "https://portal.ipiranga/",
+    "working_hours": [
+      "segunda-feira: 00:00 – 23:59",
+      "terça-feira: 00:00 – 23:59",
+      "quarta-feira: 00:00 – 23:59",
+      "quinta-feira: 00:00 – 23:59",
+      "sexta-feira: 00:00 – 23:59",
+      "sábado: 00:00 – 23:59",
+      "domingo: 00:00 – 23:59"
+    ],
+    "rating_avg": "1.8",
+    "rating_count": 5,
+    "facebook": "https://www.facebook.com/ipirangaoficial/",
+    "youtube": "https://www.youtube.com/canalipiranga",
+    "linkedin": "https://www.linkedin.com/company/petroleo-ipiranga/?originalsubdomain=br",
+    "instagram": "https://www.instagram.com/ipiranga/",
+    "tiktok": "https://www.tiktok.com/@ipiranga",
+    "social_media": {
+      "facebook": "https://www.facebook.com/ipirangaoficial/",
+      "youtube": "https://www.youtube.com/canalipiranga",
+      "linkedin": "https://www.linkedin.com/company/petroleo-ipiranga/?originalsubdomain=br",
+      "instagram": "https://www.instagram.com/ipiranga/",
+      "tiktok": "https://www.tiktok.com/@ipiranga"
+    },
+    "partner_brands": [],
+    "project_types": [
+      "Rural/Agro"
+    ],
+    "logo_url": "https://img.logo.dev/portal.ipiranga?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SC"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://portal.ipiranga/imagens/meta-tag-ipiranga.png",
+    "logo_file": "logos\\5_eletroposto-brasil.png",
+    "logo_sha256": "37b93d0ab74faae94acbf2cec44ec261309564264d65247aea5cefc71d6e637e"
+  },
+  {
+    "id": 6,
+    "name": "AppEV",
+    "cnpj": "12321321000180",
+    "city": "Curitiba",
+    "state": "PR",
+    "description": "Software de gestão",
+    "address": "R. Vicente de Carvalho, 113 - Loja 2B - Cajuru, Curitiba - PR, 82940-370, Brasil",
+    "latitude": -25.4521751,
+    "longitude": -49.22583770000001,
+    "phone": "(41) 99288-4545",
+    "website": "http://arpaenergiasolar.com.br/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 53,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/arpaenergiasolar.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "PR"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 7,
+    "name": "Zletric",
+    "cnpj": "35876543000122",
+    "city": "Porto Alegre",
+    "state": "RS",
+    "description": "Rede de recarga urbana",
+    "address": "Av. Dr. Nilo Peçanha, 3228 - Chácara das Pedras, Porto Alegre - RS, 91330-001, Brasil",
+    "latitude": -30.0285467,
+    "longitude": -51.1581299,
+    "phone": "(51) 3073-7130",
+    "website": "http://www.zletric.com.br/",
+    "working_hours": [
+      "segunda-feira: 10:00 – 22:00",
+      "terça-feira: 10:00 – 22:00",
+      "quarta-feira: 10:00 – 22:00",
+      "quinta-feira: 10:00 – 22:00",
+      "sexta-feira: 10:00 – 22:00",
+      "sábado: 10:00 – 22:00",
+      "domingo: 10:00 – 22:00"
+    ],
+    "rating_avg": "4.8",
+    "rating_count": 6,
+    "linkedin": "https://www.linkedin.com/company/zletric",
+    "instagram": "https://www.instagram.com/zletric_oficial/",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/zletric",
+      "instagram": "https://www.instagram.com/zletric_oficial/"
+    },
+    "whatsapp_url": "https://wa.me/5508003350034",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [
+      "Comercial"
+    ],
+    "logo_url": "https://img.logo.dev/zletric.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "RS"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn.prod.website-files.com/6048f25355960948b2831579/64366b73206686d869ee6561_zletric-logo.png",
+    "logo_file": "logos\\7_zletric.png",
+    "logo_sha256": "ee740de4bf2695f242e57bb0dd7256116d28ae0c45e5883adc4091f5b1092200"
+  },
+  {
+    "id": 8,
+    "name": "Move",
+    "cnpj": "22333444000199",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Mobilidade corporativa",
+    "address": "R. Cristóvão Nunes Píres, 110 - sala 201 - Centro, Florianópolis - SC, 88010-120, Brasil",
+    "latitude": -27.5947967,
+    "longitude": -48.5586236,
+    "phone": "(48) 99117-3295",
+    "website": "http://www.moveenergia.com/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.2",
+    "rating_count": 47,
+    "social_media": {},
+    "whatsapp_url": "https://wa.me/5548991173295",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/moveenergia.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://moveenergia.com/wp-content/uploads/2025/07/Distribuicao-de-Energia-Renovavel.webp",
+    "logo_file": "logos\\8_move.webp",
+    "logo_sha256": "e51678a6de3505f796d5b5536b8d68a7abe31d02aaf0049ad6a59419b9b7d859"
+  },
+  {
+    "id": 9,
+    "name": "Electric Mobility Brasil",
+    "cnpj": "08765432000111",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Consultoria e Equipamentos",
+    "address": "Av. Santo Amaro, 1764 - Vila Olímpia, São Paulo - SP, 04506-002, Brasil",
+    "latitude": -23.5996624,
+    "longitude": -46.6740741,
+    "phone": "(11) 5505-0958",
+    "website": "https://electricmobilitybrasil.com/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.2",
+    "rating_count": 10,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/electricmobilitybrasil.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 7,
+        "name": "Cabos e Conectores",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 10,
+    "name": "ABB Brasil",
+    "cnpj": "61074829000106",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Fabricação de carregadores",
+    "address": "Av. Nicolas Boer, 399 - Água Branca, São Paulo - SP, 01140-060, Brasil",
+    "latitude": -23.5195894,
+    "longitude": -46.6795729,
+    "phone": "(08) 00014-9111",
+    "website": "https://loja.br.abb.com/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 17:00",
+      "terça-feira: 08:00 – 17:00",
+      "quarta-feira: 08:00 – 17:00",
+      "quinta-feira: 08:00 – 17:00",
+      "sexta-feira: 08:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.9",
+    "rating_count": 14,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/loja.br.abb.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 11,
+    "name": "Schneider Electric Brasil",
+    "cnpj": "82137456000188",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Soluções de hardware",
+    "address": "R. Arquiteto Olavo Redig de Campos, 105 - Andar 31 - Vila Sao Francisco (Zona Sul), São Paulo - SP, 04711-904, Brasil",
+    "latitude": -23.6273397,
+    "longitude": -46.70155310000001,
+    "phone": "(11) 2165-5400",
+    "website": "https://www.se.com/br/pt/?utm_source=gmb&utm_medium=Yext&utm_campaign=BR1",
+    "working_hours": [
+      "segunda-feira: 08:00 – 18:00",
+      "terça-feira: 08:00 – 18:00",
+      "quarta-feira: 08:00 – 18:00",
+      "quinta-feira: 08:00 – 18:00",
+      "sexta-feira: 08:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.7",
+    "rating_count": 135,
+    "facebook": "https://facebook.com/schneiderelectric",
+    "linkedin": "https://www.linkedin.com/",
+    "youtube": "https://www.youtube.com/",
+    "instagram": "https://instagram.com/schneiderelectric",
+    "social_media": {
+      "facebook": "https://facebook.com/schneiderelectric",
+      "linkedin": "https://www.linkedin.com/",
+      "youtube": "https://www.youtube.com/",
+      "instagram": "https://instagram.com/schneiderelectric"
+    },
+    "partner_brands": [],
+    "project_types": [
+      "Residencial",
+      "Industrial"
+    ],
+    "logo_url": "https://img.logo.dev/se.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.se.com/pt/br/assets/custom_logo/Schneider-Electric-Social.png",
+    "logo_file": "logos\\11_schneider-electric-brasil.png",
+    "logo_sha256": "fa14924722df84d26d4ec79841e6eb2d3859807cebd542b216963b7b2e758d65"
+  },
+  {
+    "id": 12,
+    "name": "Wallbox Brasil",
+    "cnpj": "45123456000190",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Carregadores inteligentes",
+    "address": "Av. Paulista, 2001 - Conj. 403 - Bela Vista, São Paulo - SP, 01311-931, Brasil",
+    "latitude": -23.5592361,
+    "longitude": -46.6592936,
+    "phone": "(11) 95959-9107",
+    "website": "http://www.aztecenergia.com.br/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 17:00",
+      "terça-feira: 08:00 – 17:00",
+      "quarta-feira: 08:00 – 17:00",
+      "quinta-feira: 08:00 – 17:00",
+      "sexta-feira: 08:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 87,
+    "facebook": "https://www.facebook.com/aztecenergia",
+    "instagram": "https://instagram.com/aztecenergia",
+    "linkedin": "https://www.linkedin.com/company/16189419/aztecenergia",
+    "tiktok": "https://www.tiktok.com/@aztecenergia",
+    "youtube": "https://www.youtube.com/@aztecenergia",
+    "social_media": {
+      "facebook": "https://www.facebook.com/aztecenergia",
+      "instagram": "https://instagram.com/aztecenergia",
+      "linkedin": "https://www.linkedin.com/company/16189419/aztecenergia",
+      "tiktok": "https://www.tiktok.com/@aztecenergia",
+      "youtube": "https://www.youtube.com/@aztecenergia"
+    },
+    "whatsapp_url": "https://wa.me/5519984407089",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [
+      "Residencial",
+      "Industrial"
+    ],
+    "logo_url": "https://img.logo.dev/aztecenergia.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://aztecenergia.com.br/wp-content/uploads/2025/02/Piramide-Aztec-Energia.png",
+    "logo_file": "logos\\12_wallbox-brasil.webp",
+    "logo_sha256": "ff89d4c81a783c5772178db791336ac1a6fa232a93063dcff61b4222e065121b"
+  },
+  {
+    "id": 13,
+    "name": "Enel X Way",
+    "cnpj": "22444555000177",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Infraestrutura global no BR",
+    "address": "Av. Das Nações Unidas, n° 14.401 - Torre B1 Aroeira - 22° Andar, Conj. 234 - Chácara Santo Antônio (Zona Sul), São Paulo - SP, 04794-000, Brasil",
+    "latitude": -23.624593,
+    "longitude": -46.7024568,
+    "phone": null,
+    "website": "https://www.enelx.com/br/pt",
+    "working_hours": [
+      "segunda-feira: 08:30 – 17:00",
+      "terça-feira: 08:30 – 17:00",
+      "quarta-feira: 08:30 – 17:00",
+      "quinta-feira: 08:30 – 17:00",
+      "sexta-feira: 08:30 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "3.5",
+    "rating_count": 13,
+    "facebook": "https://www.facebook.com/enelxbrasil/?brand_redir=999580736901416",
+    "youtube": "https://www.youtube.com/watch?v=dqoox4lplzq&list=plkrj3s6fhfmlpbbhpjqlv5p1n4oegchcl",
+    "linkedin": "https://www.linkedin.com/company/enelx/?originalsubdomain=en",
+    "instagram": "https://www.instagram.com/enelxbrasil/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/enelxbrasil/?brand_redir=999580736901416",
+      "youtube": "https://www.youtube.com/watch?v=dqoox4lplzq&list=plkrj3s6fhfmlpbbhpjqlv5p1n4oegchcl",
+      "linkedin": "https://www.linkedin.com/company/enelx/?originalsubdomain=en",
+      "instagram": "https://www.instagram.com/enelxbrasil/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/enelx.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.enelx.com/content/dam/local-brazil/menu/Logo.svg",
+    "logo_file": "logos\\13_enel-x-way.svg",
+    "logo_sha256": "214cbfa150b65287fec009c44bb6afceaa4eff9c54f160d6ad6a390187310cd8"
+  },
+  {
+    "id": 14,
+    "name": "Movida (Rede de Recarga)",
+    "cnpj": "11000999000155",
+    "city": "São Paulo",
+    "state": "SP",
+    "description": "Frotas elétricas",
+    "address": "R. Otávio Tarquínio de Sousa, 23 - Campo Belo, São Paulo - SP, 04613-000, Brasil",
+    "latitude": -23.6206398,
+    "longitude": -46.6623406,
+    "phone": "(08) 00606-8686",
+    "website": "https://www.movida.com.br/?utm_source=google&utm_medium=maps&utm_campaign=gmn_183",
+    "working_hours": [
+      "segunda-feira: 05:00 – 00:00",
+      "terça-feira: 05:00 – 00:00",
+      "quarta-feira: 05:00 – 00:00",
+      "quinta-feira: 05:00 – 00:00",
+      "sexta-feira: 05:00 – 00:00",
+      "sábado: 05:00 – 00:00",
+      "domingo: 05:00 – 00:00"
+    ],
+    "rating_avg": "4",
+    "rating_count": 4968,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/movida.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "SP"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 15,
+    "name": "Evolua Energia",
+    "cnpj": "21321321000177",
+    "city": "Belo Horizonte",
+    "state": "MG",
+    "description": "Geração e Recarga",
+    "address": "R. Levindo Lopes, 357 - Savassi, Belo Horizonte - MG, 30140-171, Brasil",
+    "latitude": -19.9392128,
+    "longitude": -43.9398218,
+    "phone": "(08) 00031-5200",
+    "website": "https://evoluaenergia.com.br/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 18:00",
+      "terça-feira: 08:00 – 18:00",
+      "quarta-feira: 08:00 – 18:00",
+      "quinta-feira: 08:00 – 18:00",
+      "sexta-feira: 08:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "3.2",
+    "rating_count": 346,
+    "instagram": "https://www.instagram.com/evoluaenergia/",
+    "linkedin": "https://www.linkedin.com/company/evolua-energia/",
+    "facebook": "https://www.facebook.com/evoluaenergia/",
+    "youtube": "https://www.youtube.com/@evoluaenergia",
+    "social_media": {
+      "instagram": "https://www.instagram.com/evoluaenergia/",
+      "linkedin": "https://www.linkedin.com/company/evolua-energia/",
+      "facebook": "https://www.facebook.com/evoluaenergia/",
+      "youtube": "https://www.youtube.com/@evoluaenergia"
+    },
+    "whatsapp_url": "https://wa.me/553140428350",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [
+      "Comercial",
+      "Industrial"
+    ],
+    "logo_url": "https://img.logo.dev/evoluaenergia.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "MG"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://evoluaenergia.com.br/wp-content/uploads/2024/12/logo-evolua.webp",
+    "logo_file": "logos\\15_evolua-energia.webp",
+    "logo_sha256": "fd3a88f35b2f12a0ea63fe7c56ec0451342e595f8061e9734c0f13a62c52f41b"
+  },
+  {
+    "id": 16,
+    "name": "ChargePoint",
+    "cnpj": "99888777000100",
+    "city": "",
+    "state": "EUA",
+    "description": "Maior rede do mundo",
+    "address": "Av. Me. Benvenuta, 686 - Santa Monica, Florianópolis - SC, 88035-001, Brasil",
+    "latitude": -27.5915778,
+    "longitude": -48.5143706,
+    "phone": "(48) 3226-4270",
+    "website": "https://berlinburgers.business.site/?utm_source=gmb&utm_medium=referral",
+    "working_hours": null,
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/berlinburgers.business.site?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "EUA"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 17,
+    "name": "Tesla Superchargers",
+    "cnpj": "99888777000111",
+    "city": "",
+    "state": "EUA",
+    "description": "Rede própria global",
+    "address": "R. José de Anchieta, 95 - Balneario, Florianópolis - SC, 88075-547, Brasil",
+    "latitude": -27.5786463,
+    "longitude": -48.5887099,
+    "phone": "(48) 3113-2010",
+    "website": "https://www.wecharge.com.br/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 18:00",
+      "terça-feira: 08:00 – 18:00",
+      "quarta-feira: 08:00 – 18:00",
+      "quinta-feira: 08:00 – 18:00",
+      "sexta-feira: 08:00 – 18:00",
+      "sábado: 09:00 – 13:00",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 1,
+    "facebook": "https://www.facebook.com/wecharge-109426168307515/",
+    "instagram": "https://www.instagram.com/wecharge.br/",
+    "linkedin": "https://www.linkedin.com/company/wecharge-eletropostos/",
+    "youtube": "https://www.youtube.com/watch?v=kgr5_18unxi",
+    "social_media": {
+      "facebook": "https://www.facebook.com/wecharge-109426168307515/",
+      "instagram": "https://www.instagram.com/wecharge.br/",
+      "linkedin": "https://www.linkedin.com/company/wecharge-eletropostos/",
+      "youtube": "https://www.youtube.com/watch?v=kgr5_18unxi"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/wecharge.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "EUA"
+    ],
+    "categories": [
+      {
+        "id": 3,
+        "name": "Baterias de Armazenamento",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.wecharge.com.br/static/opengraph-9719f6cf781863fb4775b1e8f4f0664c.jpg",
+    "logo_file": "logos\\17_tesla-superchargers.jpg",
+    "logo_sha256": "f406c767bfdf4bccf60acc62664da73a5460bca62c7b3607fc1dd2558f54dfe0"
+  },
+  {
+    "id": 18,
+    "name": "EVBox",
+    "cnpj": "99888777000122",
+    "city": "",
+    "state": "Holanda",
+    "description": "Hardware e Software",
+    "address": "Av. Eng. Domingos Ferreira, 2050 - 1 andar - Boa Viagem, Recife - PE, 51111-020, Brasil",
+    "latitude": -8.107335599999999,
+    "longitude": -34.8909083,
+    "phone": "(81) 98553-6438",
+    "website": "https://evboxbrasil.com.br/",
+    "working_hours": null,
+    "rating_avg": "5",
+    "rating_count": 22,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/evboxbrasil.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [
+      {
+        "id": 7,
+        "name": "Cabos e Conectores",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://evboxbrasil.com.br/wp-content/uploads/2024/05/evbox-brasil-logo-site-horizontal.webp",
+    "logo_file": "logos\\18_evbox.webp",
+    "logo_sha256": "db843bada659689f7614c4873ab843a81b5452be6e083a4e2883aa01426c44eb"
+  },
+  {
+    "id": 19,
+    "name": "Tritium",
+    "cnpj": "99888777000133",
+    "city": "",
+    "state": "Austrália",
+    "description": "Carregadores rápidos DC",
+    "address": "48 Miller St, Murarrie QLD 4172, Austrália",
+    "latitude": -27.457262,
+    "longitude": 153.098999,
+    "phone": "(07) 3147-8500",
+    "website": "https://tritiumcharging.com/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 17:00",
+      "terça-feira: 08:00 – 17:00",
+      "quarta-feira: 08:00 – 17:00",
+      "quinta-feira: 08:00 – 17:00",
+      "sexta-feira: 08:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.5",
+    "rating_count": 39,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/tritiumcharging.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Austrália"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://tritiumcharging.com/wp-content/uploads/2025/03/LOGO-WEB-white.png",
+    "logo_file": "logos\\19_tritium.png",
+    "logo_sha256": "db685e3cdb94a2f140a7b0c39cee4a6e22e8d105c4a1fdf4a39d6c14493789e6"
+  },
+  {
+    "id": 20,
+    "name": "Wallbox Chargers",
+    "cnpj": "99888777000144",
+    "city": "",
+    "state": "Espanha",
+    "description": "Inovação doméstica",
+    "address": "Carrer del Foc, 68, Sants-Montjuïc, 08038 Barcelona, Espanha",
+    "latitude": 41.3558901,
+    "longitude": 2.1413868,
+    "phone": "673 22 84 82",
+    "website": "https://wallbox.com/",
+    "working_hours": [
+      "segunda-feira: 10:00 – 18:00",
+      "terça-feira: 10:00 – 18:00",
+      "quarta-feira: 10:00 – 18:00",
+      "quinta-feira: 10:00 – 18:00",
+      "sexta-feira: 10:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "3.7",
+    "rating_count": 85,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/wallbox.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Espanha"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 21,
+    "name": "Virta",
+    "cnpj": "99888777000155",
+    "city": "",
+    "state": "Finlândia",
+    "description": "Plataforma white-label",
+    "address": "Energiakatu 4, 00180 Helsinki, Finlândia",
+    "latitude": 60.1658734,
+    "longitude": 24.9020566,
+    "phone": null,
+    "website": "https://www.virta.global/",
+    "working_hours": null,
+    "rating_avg": "3.8",
+    "rating_count": 25,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/virta.global?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Finlândia"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.virta.global/hubfs/Website%20assets%202024/Logotypes/virta_logo_white_borderless_RGB.svg",
+    "logo_file": "logos\\21_virta.svg",
+    "logo_sha256": "a69dbf2204e8722946b3858c6b142f75a617a0d44645f32f08d1569586b5426b"
+  },
+  {
+    "id": 22,
+    "name": "Allego",
+    "cnpj": "99888777000166",
+    "city": "",
+    "state": "Holanda",
+    "description": "Operador europeu",
+    "address": "R. Tiradentes, 15 - Kobrasol, São José - SC, 88102-040, Brasil",
+    "latitude": -27.6005702,
+    "longitude": -48.61691649999999,
+    "phone": "(48) 99110-4567",
+    "website": "http://genialenergia.com.br/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 12:00, 13:30 – 18:00",
+      "terça-feira: 09:00 – 12:00, 13:30 – 18:00",
+      "quarta-feira: 09:00 – 12:00, 13:30 – 18:00",
+      "quinta-feira: 09:00 – 12:00, 13:30 – 18:00",
+      "sexta-feira: 09:00 – 12:00, 13:30 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 20,
+    "facebook": "https://www.facebook.com/genialenergia",
+    "instagram": "https://www.instagram.com/genialenergia/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/genialenergia",
+      "instagram": "https://www.instagram.com/genialenergia/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/genialenergia.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "http://genialenergia.com.br/wp-content/uploads/2020/06/logotipo-genial-energia.png",
+    "logo_file": "logos\\22_allego.png",
+    "logo_sha256": "8ace2c52aaa2b473a3a65fa28ace15f995389a8153e086031193afb67ca600df"
+  },
+  {
+    "id": 23,
+    "name": "Ionity",
+    "cnpj": "99888777000177",
+    "city": "",
+    "state": "Alemanha",
+    "description": "Consórcio de montadoras",
+    "address": "Robert-Bosch-Straße, 89343 Jettingen-Scheppach, Alemanha",
+    "latitude": 48.4123104,
+    "longitude": 10.4401692,
+    "phone": "(08) 94425-5071",
+    "website": "https://ionity.eu/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "4.3",
+    "rating_count": 35,
+    "linkedin": "https://www.linkedin.com/company/ionity",
+    "facebook": "https://www.facebook.com/ionity.eu/",
+    "instagram": "https://www.instagram.com/ionity",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/ionity",
+      "facebook": "https://www.facebook.com/ionity.eu/",
+      "instagram": "https://www.instagram.com/ionity"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/ionity.eu?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Alemanha"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn.prod.website-files.com/66e197644ead7b648dbae27d/66e2627203d480d2af60fe99_ionity_logo.svg",
+    "logo_file": "logos\\23_ionity.svg",
+    "logo_sha256": "cd229a91f1bfb5c3d8b934ce7f67510bfb15f951e316afc1502c3d270a65e1e9"
+  },
+  {
+    "id": 24,
+    "name": "Blink Charging",
+    "cnpj": "99888777000188",
+    "city": "",
+    "state": "EUA",
+    "description": "Operador de rede",
+    "address": "680 Lionshead Pl, Vail, CO 81657, EUA",
+    "latitude": 39.642488,
+    "longitude": -106.390608,
+    "phone": "(88) 8998-2546",
+    "website": "http://www.blinkcharging.com/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "facebook": "https://www.facebook.com/blinkcharging/",
+    "instagram": "https://www.instagram.com/blinkcharging/",
+    "linkedin": "https://www.linkedin.com/company/blinkcharging",
+    "youtube": "https://www.youtube.com/blinkcharging",
+    "social_media": {
+      "facebook": "https://www.facebook.com/blinkcharging/",
+      "instagram": "https://www.instagram.com/blinkcharging/",
+      "linkedin": "https://www.linkedin.com/company/blinkcharging",
+      "youtube": "https://www.youtube.com/blinkcharging"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/blinkcharging.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "EUA"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://a-us.storyblok.com/f/1016941/2048x1365/6a4385354e/healthcare-landing-page.jpg",
+    "logo_file": "logos\\24_blink-charging.jpg",
+    "logo_sha256": "0aa27205ff123da19a7c25016abaacf9c6510ab87040acf1087b823bc8a56009"
+  },
+  {
+    "id": 25,
+    "name": "Fastned",
+    "cnpj": "99888777000199",
+    "city": "",
+    "state": "Holanda",
+    "description": "Estações de recarga solar",
+    "address": "Tafelbergweg 4, 1105 BN Amsterdam, Países Baixos",
+    "latitude": 52.29207599999999,
+    "longitude": 4.945501,
+    "phone": "(02) 0705-5300",
+    "website": "https://fastnedcharging.com/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "4.4",
+    "rating_count": 129,
+    "linkedin": "https://www.linkedin.com/company/fastned",
+    "instagram": "https://www.instagram.com/fastned_europe/",
+    "youtube": "https://www.youtube.com/channel/ucgtvyz-y6hjty71jrzoz69w",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/fastned",
+      "instagram": "https://www.instagram.com/fastned_europe/",
+      "youtube": "https://www.youtube.com/channel/ucgtvyz-y6hjty71jrzoz69w"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/fastnedcharging.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [
+      {
+        "id": 3,
+        "name": "Baterias de Armazenamento",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.fastnedcharging.com/media/dqwbe1mq/fastned-logo.jpg?width=1200&amp;height=630&amp;v=1da7134f7bfc830",
+    "logo_file": "logos\\25_fastned.jpg",
+    "logo_sha256": "e9ffdd0f48ef18b6b72b109b85dbc7d2fe0789646a9141c7fee05b45c4f11867"
+  },
+  {
+    "id": 26,
+    "name": "Kempower",
+    "cnpj": "99000111000110",
+    "city": "",
+    "state": "Finlândia",
+    "description": "Carregadores modulares",
+    "address": "Ala-Okeroistentie 29, 15700 Lahti, Finlândia",
+    "latitude": 60.95001449999999,
+    "longitude": 25.6010941,
+    "phone": "(02) 9002-1900",
+    "website": "http://kempower.com/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 16:00",
+      "terça-feira: 08:00 – 16:00",
+      "quarta-feira: 08:00 – 16:00",
+      "quinta-feira: 08:00 – 16:00",
+      "sexta-feira: 08:00 – 16:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.5",
+    "rating_count": 17,
+    "instagram": "https://www.instagram.com/kempower_oyj/",
+    "facebook": "https://www.facebook.com/kempowerfi/",
+    "linkedin": "https://www.linkedin.com/company/kempower-corporation",
+    "youtube": "https://www.youtube.com/@kempower",
+    "social_media": {
+      "instagram": "https://www.instagram.com/kempower_oyj/",
+      "facebook": "https://www.facebook.com/kempowerfi/",
+      "linkedin": "https://www.linkedin.com/company/kempower-corporation",
+      "youtube": "https://www.youtube.com/@kempower"
+    },
+    "partner_brands": [],
+    "project_types": [
+      "Industrial"
+    ],
+    "logo_url": "https://img.logo.dev/kempower.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Finlândia"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://earj6jxwkhd.exactdn.com/wp-content/uploads/2024/04/kp-logo-orangelarge.svg",
+    "logo_file": "logos\\26_kempower.svg",
+    "logo_sha256": "d9d047f68e396625a7b8a849388e5f60230e7e8ffc0dfee950acfc0f46db99f4"
+  },
+  {
+    "id": 27,
+    "name": "Luminator",
+    "cnpj": "99000111000120",
+    "city": "",
+    "state": "EUA",
+    "description": "Software de frota",
+    "address": "R. João da Costa, 570 - São Caetano, Caxias do Sul - RS, 95095-270, Brasil",
+    "latitude": -29.203686,
+    "longitude": -51.2091718,
+    "phone": "(54) 3209-8500",
+    "website": "https://luminator.com/pt/",
+    "working_hours": [
+      "segunda-feira: 07:30 – 17:33",
+      "terça-feira: 07:30 – 17:33",
+      "quarta-feira: 07:30 – 17:33",
+      "quinta-feira: 07:30 – 17:33",
+      "sexta-feira: 07:30 – 16:18",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.4",
+    "rating_count": 60,
+    "linkedin": "#linkedinde",
+    "social_media": {
+      "linkedin": "#linkedinde"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/luminator.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "EUA"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://luminator.com/images/ltg_logos/ltg_emea_logo.svg",
+    "logo_file": "logos\\27_luminator.svg",
+    "logo_sha256": "8835e91772741e5bffe56ea1bccfd3e2537e2f82b40d351311e4e0900471adaf"
+  },
+  {
+    "id": 28,
+    "name": "NewMotion (Shell)",
+    "cnpj": "99000111000130",
+    "city": "",
+    "state": "Holanda",
+    "description": "Software e Cartões",
+    "address": "Willem Barentszstraat 3, 3572 BS Utrecht, Países Baixos",
+    "latitude": 52.0958444,
+    "longitude": 5.141223399999999,
+    "phone": "(01) 0436-5065",
+    "website": "https://www.wedrivesolar.nl/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "linkedin": "https://www.linkedin.com/company/wedrivesolar/",
+    "instagram": "https://www.instagram.com/wedrivesolar/",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/wedrivesolar/",
+      "instagram": "https://www.instagram.com/wedrivesolar/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/wedrivesolar.nl?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.wedrivesolar.nl/uploads/1/3/4/9/13495396/159493933.png",
+    "logo_file": "logos\\28_newmotion-shell.png",
+    "logo_sha256": "560126e2a98261ca9ca72c285442b24ccf21cd6f79af47fcedbf996d27c50ab2"
+  },
+  {
+    "id": 29,
+    "name": "Smatrics",
+    "cnpj": "99000111000140",
+    "city": "",
+    "state": "Áustria",
+    "description": "Operador e Software",
+    "address": "5163, Áustria",
+    "latitude": 48.006895,
+    "longitude": 13.126135,
+    "phone": "(05) 03135-1855",
+    "website": "https://smatrics.com/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "linkedin": "https://www.linkedin.com/company/smatrics-gmbh-&-co-kg",
+    "instagram": "https://www.instagram.com/smatrics/",
+    "facebook": "https://www.facebook.com/smatrics.net",
+    "youtube": "https://www.youtube.com/@smatrics-emobility",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/smatrics-gmbh-&-co-kg",
+      "instagram": "https://www.instagram.com/smatrics/",
+      "facebook": "https://www.facebook.com/smatrics.net",
+      "youtube": "https://www.youtube.com/@smatrics-emobility"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/smatrics.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Áustria"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://smatrics.com/themes/instant/logo.svg",
+    "logo_file": "logos\\29_smatrics.svg",
+    "logo_sha256": "17d2f5601ca5057b410fd172bcece9dc1472dbe9b25f38cd10f5c5a63d3509cf"
+  },
+  {
+    "id": 30,
+    "name": "Compleo",
+    "cnpj": "99000111000150",
+    "city": "",
+    "state": "Alemanha",
+    "description": "Fabricante e Software",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Alemanha"
+    ],
+    "categories": [],
+    "_enrich_sources": {},
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 31,
+    "name": "Etrel",
+    "cnpj": "99000111000160",
+    "city": "",
+    "state": "Eslovênia",
+    "description": "Plataforma Ocean",
+    "address": "Rodovia Dr. Antônio Luiz Moura Gonzaga, 3339 - Rio Tavares, Florianópolis - SC, 88048-301, Brasil",
+    "latitude": -27.6575975,
+    "longitude": -48.4860854,
+    "phone": null,
+    "website": "http://www.zletric.com.br/",
+    "working_hours": [
+      "segunda-feira: 07:00 – 21:00",
+      "terça-feira: 07:00 – 21:00",
+      "quarta-feira: 07:00 – 21:00",
+      "quinta-feira: 07:00 – 21:00",
+      "sexta-feira: 07:00 – 21:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "linkedin": "https://www.linkedin.com/company/zletric",
+    "instagram": "https://www.instagram.com/zletric_oficial/",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/zletric",
+      "instagram": "https://www.instagram.com/zletric_oficial/"
+    },
+    "whatsapp_url": "https://wa.me/5508003350034",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [
+      "Comercial"
+    ],
+    "logo_url": "https://img.logo.dev/zletric.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Eslovênia"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn.prod.website-files.com/6048f25355960948b2831579/64366b73206686d869ee6561_zletric-logo.png",
+    "logo_file": "logos\\31_etrel.png",
+    "logo_sha256": "ee740de4bf2695f242e57bb0dd7256116d28ae0c45e5883adc4091f5b1092200"
+  },
+  {
+    "id": 32,
+    "name": "GreenFlux",
+    "cnpj": "99000111000170",
+    "city": "",
+    "state": "Holanda",
+    "description": "Gestão inteligente de carga",
+    "address": "Joan Muyskenweg 22, 1096 CJ Amsterdam, Países Baixos",
+    "latitude": 52.33283369999999,
+    "longitude": 4.9146616,
+    "phone": "(02) 0225-7200",
+    "website": "https://www.greenflux.com/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.1",
+    "rating_count": 15,
+    "linkedin": "https://www.linkedin.com/company/greenflux/",
+    "youtube": "https://www.youtube.com/@truegreenflux/",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/greenflux/",
+      "youtube": "https://www.youtube.com/@truegreenflux/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/greenflux.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.greenflux.com/file/upload/img/video/greenflux-homepage.png",
+    "logo_file": "logos\\32_greenflux.png",
+    "logo_sha256": "2294ed4d6ffa78baa290014e90cc97cd5db259489c0c55a7293a58aa18aa2eed"
+  },
+  {
+    "id": 33,
+    "name": "Has·to·be",
+    "cnpj": "99000111000180",
+    "city": "",
+    "state": "Áustria",
+    "description": "Adquirida pela ChargePoint",
+    "address": "Rod. Dr - Rodovia Dr. Antônio Luiz Moura Gonzaga, 4466 - Rio Tavares, Florianópolis - SC, 88048-300, Brasil",
+    "latitude": -27.6613573,
+    "longitude": -48.49669350000001,
+    "phone": "(48) 99675-4466",
+    "website": "https://atthosenergy.com.br/home/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 47,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [
+      "Residencial",
+      "Comercial"
+    ],
+    "financing_options": [
+      "Bancário/Próprio"
+    ],
+    "logo_url": "https://img.logo.dev/atthosenergy.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Áustria"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://atthosenergy.com.br/wp-content/uploads/2025/02/logo-horizontal.png",
+    "logo_file": "logos\\33_has-to-be.png",
+    "logo_sha256": "bd34bc6c0aa3e6e535769a086891bc9b359778ee6d5e914fdc9f26b99602e681"
+  },
+  {
+    "id": 34,
+    "name": "Juice Technology",
+    "cnpj": "99000111000190",
+    "city": "",
+    "state": "Suíça",
+    "description": "Carregadores portáteis",
+    "address": "Kasernenstrasse 2, 8184 Bachenbülach, Suíça",
+    "latitude": 47.5041524,
+    "longitude": 8.5350169,
+    "phone": "(04) 1510-0219",
+    "website": "https://www.juice.world/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 12:00, 13:00 – 17:00",
+      "terça-feira: 09:00 – 12:00, 13:00 – 17:00",
+      "quarta-feira: 09:00 – 12:00, 13:00 – 17:00",
+      "quinta-feira: 09:00 – 12:00, 13:00 – 17:00",
+      "sexta-feira: 09:00 – 12:00, 13:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "3.9",
+    "rating_count": 71,
+    "facebook": "https://www.facebook.com/juicetechnologyag/",
+    "youtube": "https://www.youtube.com/juicetechnology",
+    "instagram": "https://www.instagram.com/juice_technology/",
+    "tiktok": "https://www.tiktok.com/@juice.technology",
+    "linkedin": "https://www.linkedin.com/company/juicetechnology",
+    "social_media": {
+      "facebook": "https://www.facebook.com/juicetechnologyag/",
+      "youtube": "https://www.youtube.com/juicetechnology",
+      "instagram": "https://www.instagram.com/juice_technology/",
+      "tiktok": "https://www.tiktok.com/@juice.technology",
+      "linkedin": "https://www.linkedin.com/company/juicetechnology"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/juice.world?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Suíça"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn.shopify.com/s/files/1/0884/4551/8170/files/Juice_Logo_Orange.png?v=1722560621&width=1114",
+    "logo_file": "logos\\34_juice-technology.png",
+    "logo_sha256": "a4d58490a792d64e497a3321be8d16ef674799156c0de178449bdd14fd5bef3c"
+  },
+  {
+    "id": 35,
+    "name": "Pod Point",
+    "cnpj": "99555666000110",
+    "city": "",
+    "state": "Reino Unido",
+    "description": "CPO e Equipamentos",
+    "address": "96 Banners Ln, Redditch B97 5NA, Reino Unido",
+    "latitude": 52.2724262,
+    "longitude": -1.9400741,
+    "phone": "(03) 30133-3152",
+    "website": "http://evpp.co.uk/",
+    "working_hours": [
+      "segunda-feira: 08:30 – 17:30",
+      "terça-feira: 08:30 – 17:30",
+      "quarta-feira: 08:30 – 17:30",
+      "quinta-feira: 08:30 – 17:30",
+      "sexta-feira: 08:30 – 17:30",
+      "sábado: 08:30 – 12:00",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "5",
+    "rating_count": 82,
+    "facebook": "https://www.facebook.com/greenerearth/",
+    "instagram": "https://www.instagram.com/evpp.co.uk/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/greenerearth/",
+      "instagram": "https://www.instagram.com/evpp.co.uk/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/evpp.co.uk?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Reino Unido"
+    ],
+    "categories": [
+      {
+        "id": 7,
+        "name": "Cabos e Conectores",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://evpp.co.uk/wp-content/uploads/2019/09/logo-evpp.png",
+    "logo_file": "logos\\35_pod-point.png",
+    "logo_sha256": "aeba9cef20281b9df4b394264feb0e6a24c54cb74592d92cb41998fae1d59a22"
+  },
+  {
+    "id": 36,
+    "name": "Driivz",
+    "cnpj": "99555666000120",
+    "city": "",
+    "state": "Israel",
+    "description": "Software de Backend",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Israel"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {},
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 37,
+    "name": "AeroVironment",
+    "cnpj": "99555666000130",
+    "city": "",
+    "state": "EUA",
+    "description": "Infraestrutura técnica",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "EUA"
+    ],
+    "categories": [],
+    "_enrich_sources": {},
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 38,
+    "name": "Siemens eMobility",
+    "cnpj": "99555666000140",
+    "city": "",
+    "state": "Alemanha",
+    "description": "Hardware e Soluções Grid",
+    "address": "Huttenstraße 12, 10553 Berlin, Alemanha",
+    "latitude": 52.528122,
+    "longitude": 13.3240983,
+    "phone": "030 756494455",
+    "website": "http://www.siemens-energy.com/",
+    "working_hours": [
+      "segunda-feira: 08:00 – 17:00",
+      "terça-feira: 08:00 – 17:00",
+      "quarta-feira: 08:00 – 17:00",
+      "quinta-feira: 08:00 – 17:00",
+      "sexta-feira: 08:00 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.4",
+    "rating_count": 118,
+    "facebook": "https://www.facebook.com/siemensenergy",
+    "linkedin": "https://linkedin.com/showcase/siemens-energy",
+    "social_media": {
+      "facebook": "https://www.facebook.com/siemensenergy",
+      "linkedin": "https://linkedin.com/showcase/siemens-energy"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/siemens-energy.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Alemanha"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png",
+    "logo_file": "logos\\38_siemens-emobility.png",
+    "logo_sha256": "9cfea1d0e7d97578359c91d2bcc2b48fdf21c7c6680bbe65b61da1da48ce734d"
+  },
+  {
+    "id": 39,
+    "name": "Delta Electronics",
+    "cnpj": "99555666000150",
+    "city": "",
+    "state": "Taiwan",
+    "description": "Eletrônica de potência",
+    "address": "No. 186, Ruiguang Rd, Neihu District, Taipei City, Taiwan 114",
+    "latitude": 25.0741922,
+    "longitude": 121.5778116,
+    "phone": "(02) 8797-2088",
+    "website": "http://www.deltaww.com/default.aspx?hl=zh-TW",
+    "working_hours": [
+      "segunda-feira: 08:00 – 18:00",
+      "terça-feira: 08:00 – 18:00",
+      "quarta-feira: 08:00 – 18:00",
+      "quinta-feira: 08:00 – 18:00",
+      "sexta-feira: 08:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.3",
+    "rating_count": 327,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/deltaww.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Taiwan"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 40,
+    "name": "TELD",
+    "cnpj": "99555666000160",
+    "city": "",
+    "state": "China",
+    "description": "Maior rede da China",
+    "address": "Av. Me. Benvenuta, 686 - Santa Monica, Florianópolis - SC, 88035-001, Brasil",
+    "latitude": -27.5915778,
+    "longitude": -48.5143706,
+    "phone": "(48) 3226-4270",
+    "website": "https://berlinburgers.business.site/?utm_source=gmb&utm_medium=referral",
+    "working_hours": null,
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/berlinburgers.business.site?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "China"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 41,
+    "name": "Star Charge",
+    "cnpj": "99555666000170",
+    "city": "",
+    "state": "China",
+    "description": "Infraestrutura global",
+    "address": "Multi Open Shopping - Rodovia Dr. Antônio Luiz Moura Gonzaga, 3339 - 105 Bloco C - Rio Tavares, Florianópolis - SC, 88048-300, Brasil",
+    "latitude": -27.6574897,
+    "longitude": -48.4859862,
+    "phone": "(48) 3207-0443",
+    "website": "http://newcharge.com.br/",
+    "working_hours": [
+      "segunda-feira: 08:30 – 17:00",
+      "terça-feira: 08:30 – 17:00",
+      "quarta-feira: 08:30 – 17:00",
+      "quinta-feira: 08:30 – 17:00",
+      "sexta-feira: 08:30 – 17:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "facebook": "https://www.facebook.com/newchargeenergy",
+    "linkedin": "https://www.linkedin.com/company/newchargeenergy",
+    "youtube": "https://www.youtube.com/@newchargeenergy",
+    "instagram": "https://www.instagram.com/newchargeenergy/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/newchargeenergy",
+      "linkedin": "https://www.linkedin.com/company/newchargeenergy",
+      "youtube": "https://www.youtube.com/@newchargeenergy",
+      "instagram": "https://www.instagram.com/newchargeenergy/"
+    },
+    "partner_brands": [],
+    "project_types": [
+      "Rural/Agro"
+    ],
+    "logo_url": "https://img.logo.dev/newcharge.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "China"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://newcharge.com.br/wp-content/uploads/2025/02/a59ec7a24978368cf85f0126d4ebaec7.png",
+    "logo_file": "logos\\41_star-charge.png",
+    "logo_sha256": "a5c78510b8dadb814f4fe91f954ee987c9b00f8d9f6fbc1b7ffdce803104d399"
+  },
+  {
+    "id": 42,
+    "name": "BP Pulse",
+    "cnpj": "99555666000180",
+    "city": "",
+    "state": "Reino Unido",
+    "description": "Operador de energia",
+    "address": "7th floor, 33 Holborn, London EC1N 2HU, Reino Unido",
+    "latitude": 51.5173485,
+    "longitude": -0.108377,
+    "phone": "(03) 33200-0755",
+    "website": "https://www.lightsourcebp.com/uk/?utm_source=GMB&utm_medium=organic",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 09:00 – 18:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.3",
+    "rating_count": 9,
+    "linkedin": "https://www.linkedin.com/company/lightsourcebp/",
+    "instagram": "https://www.instagram.com/lightsourcebp/",
+    "youtube": "https://www.youtube.com/user/lightsourcesolar",
+    "social_media": {
+      "linkedin": "https://www.linkedin.com/company/lightsourcebp/",
+      "instagram": "https://www.instagram.com/lightsourcebp/",
+      "youtube": "https://www.youtube.com/user/lightsourcesolar"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/lightsourcebp.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Reino Unido"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://assets.lightsourcebp.com/app/uploads/2022/12/26172523/lightsouce-bp-main-logo-11.png",
+    "logo_file": "logos\\42_bp-pulse.png",
+    "logo_sha256": "730f8e4c3cdcfef0e538559dcc0b5d89778177ba2e7c020c0ddc51b1f9f4f1ea"
+  },
+  {
+    "id": 43,
+    "name": "TotalEnergies EV",
+    "cnpj": "99555666000190",
+    "city": "",
+    "state": "França",
+    "description": "Rede de recarga rápida",
+    "address": "Av. Mauro Ramos, 1512 - Centro, Florianópolis - SC, 88020-300, Brasil",
+    "latitude": -27.5879714,
+    "longitude": -48.5429335,
+    "phone": null,
+    "website": "https://www.wecharge.com.br/",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "5",
+    "rating_count": 2,
+    "facebook": "https://www.facebook.com/wecharge-109426168307515/",
+    "instagram": "https://www.instagram.com/wecharge.br/",
+    "linkedin": "https://www.linkedin.com/company/wecharge-eletropostos/",
+    "youtube": "https://www.youtube.com/watch?v=kgr5_18unxi",
+    "social_media": {
+      "facebook": "https://www.facebook.com/wecharge-109426168307515/",
+      "instagram": "https://www.instagram.com/wecharge.br/",
+      "linkedin": "https://www.linkedin.com/company/wecharge-eletropostos/",
+      "youtube": "https://www.youtube.com/watch?v=kgr5_18unxi"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/wecharge.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "França"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://www.wecharge.com.br/static/opengraph-9719f6cf781863fb4775b1e8f4f0664c.jpg",
+    "logo_file": "logos\\43_totalenergies-ev.jpg",
+    "logo_sha256": "f406c767bfdf4bccf60acc62664da73a5460bca62c7b3607fc1dd2558f54dfe0"
+  },
+  {
+    "id": 44,
+    "name": "Webasto",
+    "cnpj": "99444333000110",
+    "city": "",
+    "state": "Alemanha",
+    "description": "Carregadores integrados",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Alemanha"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {},
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 45,
+    "name": "Free2move eSolutions",
+    "cnpj": "99444333000120",
+    "city": "",
+    "state": "Itália",
+    "description": "Stellantis Group",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Itália"
+    ],
+    "categories": [],
+    "_enrich_sources": {},
+    "_enrich_flags": [],
+    "logo_url": null
+  },
+  {
+    "id": 46,
+    "name": "Monta",
+    "cnpj": "99444333000130",
+    "city": "",
+    "state": "Dinamarca",
+    "description": "Software de carregamento",
+    "address": "Av. Me. Benvenuta, 686 - Santa Monica, Florianópolis - SC, 88035-001, Brasil",
+    "latitude": -27.5915778,
+    "longitude": -48.5143706,
+    "phone": "(48) 3226-4270",
+    "website": "https://berlinburgers.business.site/?utm_source=gmb&utm_medium=referral",
+    "working_hours": null,
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/berlinburgers.business.site?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Dinamarca"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": []
+  },
+  {
+    "id": 47,
+    "name": "Jedlix",
+    "cnpj": "99444333000140",
+    "city": "",
+    "state": "Holanda",
+    "description": "Smart charging e V2G",
+    "address": "Stationsplein 45, 3013 AK Rotterdam, Países Baixos",
+    "latitude": 51.9232753,
+    "longitude": 4.4691417,
+    "phone": null,
+    "website": "https://jedlix.com/",
+    "working_hours": [
+      "segunda-feira: 08:30 – 17:30",
+      "terça-feira: 08:30 – 17:30",
+      "quarta-feira: 08:30 – 17:30",
+      "quinta-feira: 08:30 – 17:30",
+      "sexta-feira: 08:30 – 17:30",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.3",
+    "rating_count": 21,
+    "facebook": "https://www.facebook.com/jedlix/",
+    "linkedin": "https://www.linkedin.com/company/jedlix/",
+    "social_media": {
+      "facebook": "https://www.facebook.com/jedlix/",
+      "linkedin": "https://www.linkedin.com/company/jedlix/"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/jedlix.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Holanda"
+    ],
+    "categories": [
+      {
+        "id": 10,
+        "name": "Monitoramento e IoT (SaaS/Apps)",
+        "status": "active"
+      },
+      {
+        "id": 3,
+        "name": "Baterias de Armazenamento",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://cdn.prod.website-files.com/62878c4d0dfe00f4bb68d20a/66068de49c2c82ed1141b7b6_webclip.png",
+    "logo_file": "logos\\47_jedlix.png",
+    "logo_sha256": "ed359d946146ab5bc7d091b3e710e12811b4b7b8ddb0570104f58d1a3213c668"
+  },
+  {
+    "id": 48,
+    "name": "The Mobility House",
+    "cnpj": "99444333000150",
+    "city": "",
+    "state": "Alemanha",
+    "description": "Integração com rede elétrica",
+    "address": "R. Bocaiúva, 2077 - Centro, Florianópolis - SC, 88015-530, Brasil",
+    "latitude": -27.586189,
+    "longitude": -48.548248,
+    "phone": "04 356 9911",
+    "website": "https://porsche.com/destinationcharging",
+    "working_hours": [
+      "segunda-feira: Atendimento 24 horas",
+      "terça-feira: Atendimento 24 horas",
+      "quarta-feira: Atendimento 24 horas",
+      "quinta-feira: Atendimento 24 horas",
+      "sexta-feira: Atendimento 24 horas",
+      "sábado: Atendimento 24 horas",
+      "domingo: Atendimento 24 horas"
+    ],
+    "rating_avg": "0.0",
+    "rating_count": 0,
+    "social_media": {},
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/porsche.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Alemanha"
+    ],
+    "categories": [
+      {
+        "id": 3,
+        "name": "Baterias de Armazenamento",
+        "status": "active"
+      }
+    ],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://images-porsche.imgix.net/-/media/73A0D249066F47208C145071DD42644A_37BA19A03FC64F21BF0D2263F2855A3A_SM25T4DOX0005-woman-with-luggage-next-to-charging-macan-4s-open-graph",
+    "logo_file": "logos\\48_the-mobility-house.jpg",
+    "logo_sha256": "12c3e5c0784976ee808347906e47e8b3a46d2ec5b3e40d5314b9dcc219461f36"
+  },
+  {
+    "id": 49,
+    "name": "Circontrol",
+    "cnpj": "99444333000160",
+    "city": "",
+    "state": "Espanha",
+    "description": "Sensores e Carregadores",
+    "address": "Pol. Ind. Can Mitjans, Innovació, 3, 08232 Viladecavalls, Barcelona, Espanha",
+    "latitude": 41.5547103,
+    "longitude": 1.965677,
+    "phone": "937 36 29 40",
+    "website": "http://www.circontrol.com/",
+    "working_hours": [
+      "segunda-feira: 09:00 – 18:00",
+      "terça-feira: 09:00 – 18:00",
+      "quarta-feira: 09:00 – 18:00",
+      "quinta-feira: 09:00 – 18:00",
+      "sexta-feira: 08:00 – 14:00",
+      "sábado: Fechado",
+      "domingo: Fechado"
+    ],
+    "rating_avg": "4.3",
+    "rating_count": 32,
+    "facebook": "https://es-es.facebook.com/circontrol",
+    "instagram": "https://instagram.com/circontrol/",
+    "linkedin": "https://www.linkedin.com/company/circontrol-s.a/",
+    "youtube": "https://www.youtube.com/user/circontrol",
+    "social_media": {
+      "facebook": "https://es-es.facebook.com/circontrol",
+      "instagram": "https://instagram.com/circontrol/",
+      "linkedin": "https://www.linkedin.com/company/circontrol-s.a/",
+      "youtube": "https://www.youtube.com/user/circontrol"
+    },
+    "partner_brands": [],
+    "project_types": [],
+    "logo_url": "https://img.logo.dev/circontrol.com?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Espanha"
+    ],
+    "categories": [
+      {
+        "id": 5,
+        "name": "Hardware (Carregadores e Infra)",
+        "status": "active"
+      }
+    ],
+    "moderation_status": "approved",
+    "status": "active",
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://circontrol.com/wp-content/themes/ltw-aqua/assets/img/logo-circontrol.svg",
+    "logo_file": "logos\\49_circontrol.svg",
+    "logo_sha256": "64a47bf6f8285dce5aae7334c7dd3a2c6ad942599c3a9ea3245368419f542ef9"
+  },
+  {
+    "id": 50,
+    "name": "Flo",
+    "cnpj": "99444333000170",
+    "city": "",
+    "state": "Canadá",
+    "description": "Operador América do Norte",
+    "address": "Rua Intendente João Nunes Vieira, 1101 - Ingleses do Rio Vermelho - 88058-100 Sala 9 - Ingleses Norte, Florianópolis - SC, 88058-100, Brasil",
+    "latitude": -27.4392549,
+    "longitude": -48.3998133,
+    "phone": "(48) 98444-3163",
+    "website": "https://fluxoenergiasolar.com.br/",
+    "working_hours": null,
+    "rating_avg": "4.4",
+    "rating_count": 13,
+    "instagram": "https://www.instagram.com/fluxoenergiasolar/",
+    "facebook": "https://www.facebook.com/fluxoenergiasolar",
+    "social_media": {
+      "instagram": "https://www.instagram.com/fluxoenergiasolar/",
+      "facebook": "https://www.facebook.com/fluxoenergiasolar"
+    },
+    "whatsapp_url": "https://wa.me/5548984443163",
+    "whatsapp_enabled": true,
+    "partner_brands": [],
+    "project_types": [
+      "Residencial",
+      "Comercial",
+      "Industrial"
+    ],
+    "logo_url": "https://img.logo.dev/fluxoenergiasolar.com.br?token=pk_Py9GhmbgSkaUqPlW9rg_2Q",
+    "languages": [
+      "pt-BR"
+    ],
+    "coverage_states": [
+      "Canadá"
+    ],
+    "categories": [],
+    "_enrich_sources": {
+      "address": "google_places",
+      "geo": "google_places",
+      "phone": "google_places",
+      "website": "google_places",
+      "ratings": "google_places",
+      "crawl": "website_analysis",
+      "logo": "logodev_api"
+    },
+    "_enrich_flags": [],
+    "logo_official_url": "https://fluxoenergiasolar.com.br/wp-content/uploads/2024/10/cropped-Logos-Fluxo-1-180x180.png",
+    "logo_file": "logos\\50_flo.png",
+    "logo_sha256": "d6c0d6a5b9ccf40d67e9a69a7bbd81c9a27c795b1ae3cb86555ffccc9a257a11"
+  }
+]
