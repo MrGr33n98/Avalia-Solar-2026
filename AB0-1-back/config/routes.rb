@@ -204,7 +204,7 @@ Rails.application.routes.draw do
         resources :products, only: [:index]
         resource :company, only: [:update]
       end
-      
+
       namespace :company do
         resources :members do
           collection do
@@ -212,6 +212,28 @@ Rails.application.routes.draw do
           end
         end
         resources :pending_changes, only: [:index, :show]
+      end
+
+      namespace :company_admin do
+        resources :faqs, only: %i[index create update destroy] do
+          collection do
+            post :reorder
+          end
+        end
+
+        resource :financing_profile, only: %i[show update]
+
+        resources :financing_partners, only: %i[index create update destroy] do
+          collection do
+            post :reorder
+          end
+        end
+
+        resources :financing_offers, only: %i[index create update destroy] do
+          collection do
+            post :reorder
+          end
+        end
       end
 
       resources :faqs do

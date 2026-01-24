@@ -31,6 +31,11 @@ class Company < ApplicationRecord
   accepts_nested_attributes_for :company_buttons, allow_destroy: true
   has_many :financing_options, dependent: :destroy
   accepts_nested_attributes_for :financing_options, allow_destroy: true
+  has_many :company_faqs, dependent: :destroy
+  accepts_nested_attributes_for :company_faqs, allow_destroy: true
+  has_one :company_financing_profile, dependent: :destroy
+  has_many :company_financing_partners, dependent: :destroy
+  has_many :company_financing_offers, dependent: :destroy
   has_many :banners, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
   has_many :company_videos, dependent: :destroy
@@ -123,7 +128,13 @@ class Company < ApplicationRecord
   end
 
   def self.ransackable_associations(auth_object = nil)
-    ["categories", "products", "reviews", "leads", "campaigns", "company_buttons", "financing_options", "banners", "banner_subscriptions", "company_videos", "plan", "company_members", "members"]
+    [
+      "categories", "products", "reviews", "leads", "campaigns",
+      "company_buttons", "financing_options", "company_faqs",
+      "company_financing_profile", "company_financing_partners",
+      "company_financing_offers", "banners", "banner_subscriptions",
+      "company_videos", "plan", "company_members", "members"
+    ]
   end
 
   def average_rating
@@ -333,6 +344,29 @@ class Company < ApplicationRecord
   def has_paid_plan?
     return false unless respond_to?(:plan_status) && respond_to?(:plan)
     plan_status == 'active' && plan.present? && plan.price.to_f > 0
+  end
+
+  def financing_feature_allowed?
+    raw_features =
+      if respond_to?(:effective_plan_features) && effective_plan_features.present?
+        effective_plan_features
+      elsif respond_to?(:plan_features) && plan_features.present?
+        plan_features
+      elsif plan&.respond_to?(:features) && plan.features.present?
+        JSON.parse(plan.features) rescue {}
+      else
+        {}
+      end
+
+    flag = raw_features.is_a?(Hash) ? (raw_features[:financing_simulation] || raw_features['financing_simulation']) : nil
+    allowed = ActiveModel::Type::Boolean.new.cast(flag)
+    allowed.nil? ? has_paid_plan? : allowed
+  rescue StandardError
+    has_paid_plan?
+  end
+
+  def financing_tab_visible?
+    financing_enabled && financing_feature_allowed?
   end
 
   def whatsapp_enabled?

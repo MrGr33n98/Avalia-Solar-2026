@@ -84,31 +84,12 @@ module Api
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company
-        company_json = {
-          id: @company.id,
-          name: @company.name,
-          description: @company.description,
-          website: @company.website,
-          phone: @company.phone,
-          address: @company.address,
-          state: @company.state,
-          city: @company.city,
-          created_at: @company.created_at,
-          updated_at: @company.updated_at,
-          banner_url: @company.banner_url,
-          logo_url: @company.logo_url,
-          rating_avg: @company.rating_avg,
-          rating_count: @company.rating_count,
+        serialized_company = CompanySerializer.new(@company).as_json
+        company_json = serialized_company.merge(
           status: @company.status,
           featured: @company.featured,
           verified: @company.verified,
-          founded_year: @company.founded_year,
-          employees_count: @company.employees_count,
           certifications: @company.certifications,
-          email_public: @company.email_public,
-          instagram: @company.instagram,
-          facebook: @company.facebook,
-          linkedin: @company.linkedin,
           working_hours: @company.working_hours,
           payment_methods: @company.payment_methods,
           buttons: Rails.cache.fetch("company_buttons/#{@company.id}/#{@company.updated_at.to_i}", expires_in: 5.minutes) do
@@ -123,7 +104,7 @@ module Api
           has_paid_plan: (@company.respond_to?(:plan_status) && @company.respond_to?(:plan)) ? @company.has_paid_plan? : false,
           project_types: @company.project_types || [],
           services_offered: @company.services_offered || []
-        }
+        )
         render json: { company: company_json }, status: :ok
       end
 
@@ -274,7 +255,9 @@ module Api
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
-          has_paid_plan: company.has_paid_plan?
+          has_paid_plan: company.has_paid_plan?,
+          financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
+          financing_tab_visible: company.respond_to?(:financing_tab_visible?) ? company.financing_tab_visible? : false
         }
       end
 
@@ -397,6 +380,9 @@ module Api
            .limit(10)
          total_companies = competitors.count
          company_position = competitors.index { |c| c.rating_avg <= company.rating_avg } || total_companies
+         collection_for_peers = ([company] + competitors).uniq { |c| c.id }
+         max_reviews = collection_for_peers.map { |c| c.try(:reviews_count).to_i }.max.to_f
+         max_reviews = 1.0 if max_reviews.zero?
          {
            competitors: competitors.map.with_index(1) do |competitor, index|
              {
@@ -406,10 +392,20 @@ module Api
                reviews_count: competitor.reviews_count || 0,
                market_position: index,
                category_share: calculate_market_share(competitor, category_id)
-             }
-           end,
+              }
+            end,
            company_position: company_position + 1,
-           total_competitors: total_companies
+           total_competitors: total_companies,
+           comparison_peers: collection_for_peers.map do |c|
+             {
+               company_id: c.id,
+               company_name: c.name,
+               execution: ((c.rating_avg || 0).to_f * 20).round(2),
+               innovation: (((c.try(:reviews_count) || 0).to_f / max_reviews) * 100).round(2),
+               presence: (c.try(:profile_views_count) || c.try(:reviews_count) || 0).to_i,
+               current: c.id == company.id
+             }
+           end
          }
        rescue ActiveRecord::RecordNotFound
          { error: 'Company not found' }
@@ -486,15 +482,11 @@ module Api
           stat = by_day[day]
           views = stat&.profile_views.to_i
           clicks = stat&.cta_clicks.to_i + stat&.whatsapp_clicks.to_i
-          leads = stat&.leads.to_i
-          conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
 
           {
             date: day.to_s,
             views: views,
-            clicks: clicks,
-            leads: leads,
-            conversion: conversion
+            clicks: clicks
           }
         end
       end

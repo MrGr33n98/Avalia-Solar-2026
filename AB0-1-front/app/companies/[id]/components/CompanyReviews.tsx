@@ -7,14 +7,15 @@ import { Review } from '@/lib/api';
 import { buildCompanySubPath } from '@/lib/slug';
 
 interface CompanyReviewsProps {
-  reviews: Review[];
-  loading: boolean;
+  reviews?: Review[];
+  loading?: boolean;
   companyId: number;
   companyName?: string | null;
 }
 
-export default function CompanyReviews({ reviews, loading, companyId, companyName }: CompanyReviewsProps) {
+export default function CompanyReviews({ reviews = [], loading = false, companyId, companyName }: CompanyReviewsProps) {
   const reviewPath = buildCompanySubPath(companyId, companyName, 'review');
+  
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -23,7 +24,7 @@ export default function CompanyReviews({ reviews, loading, companyId, companyNam
     );
   }
 
-  if (reviews.length === 0) {
+  if (!reviews || reviews.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-muted/20 rounded-2xl border border-dashed border-border/60 animate-in fade-in zoom-in-95 duration-500">
         <div className="bg-muted p-6 rounded-full mb-6">

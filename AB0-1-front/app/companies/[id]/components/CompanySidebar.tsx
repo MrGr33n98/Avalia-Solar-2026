@@ -1,5 +1,6 @@
-import { Phone, Globe, MapPin, ExternalLink, Mail, Clock } from 'lucide-react';
+﻿import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
 
@@ -126,6 +127,33 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
         </Card>
       )}
 
+      {company.faqs && company.faqs.length > 0 && (
+        <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">
+          <CardHeader className="bg-muted/30 pb-4 border-b">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <HelpCircle className="h-5 w-5" />
+              Dúvidas frequentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <Accordion type="single" collapsible className="w-full">
+              {company.faqs.slice(0, 5).map((faq, index) => (
+                <AccordionItem
+                  key={faq.id || index}
+                  value={`faq-${faq.id ?? index}`}
+                >
+                  <AccordionTrigger className="text-left">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
+      )}
       {/* Map Placeholder (Future Feature) */}
       {(company.latitude && company.longitude) && (
         <div className="rounded-xl overflow-hidden shadow-lg border h-48 bg-muted relative group cursor-pointer">

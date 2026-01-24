@@ -156,11 +156,18 @@ export const analyticsApi = {
     days: number = 30
   ): Promise<HistoricalData[]> => {
     try {
-      const response = await fetchApi<{ data: HistoricalData[] }>(
+      const response = await fetchApi<{ data: any[] }>(
         `/companies/${companyId}/analytics/historical`,
         { params: { days } }
       );
-      return response.data;
+      const data = response?.data || [];
+      return data.map((row) => ({
+        date: row.date,
+        views: row.views ?? 0,
+        clicks: row.clicks ?? 0,
+        leads: row.leads ?? 0,
+        conversion: row.conversion ?? 0,
+      }));
     } catch (error) {
       console.error('[analyticsApi.getHistoricalData] Error:', error);
       throw error; // Propagate error to UI instead of returning mock data

@@ -97,78 +97,63 @@ export default function CompanyHero({
       </div>
 
       {/* Info da empresa */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 -mt-24 z-10 relative px-4 sm:px-0">
-        <div className="bg-card p-6 rounded-2xl shadow-xl border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
-          <div className="mr-6 mb-4 sm:mb-0 relative">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
+        <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
+          <div className="mr-4 mb-3 sm:mb-0 relative">
             {logoUrl && !logoError ? (
               <Image
                 src={logoUrl}
                 alt={company.name}
-                width={96}
-                height={96}
-                className="w-24 h-24 rounded-full border-4 border-white object-cover bg-white shadow-md"
+                width={64}
+                height={64}
+                className="w-16 h-16 rounded-full border-2 border-white object-cover bg-white shadow-sm"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="w-24 h-24 rounded-full mr-3 bg-gray-100 flex items-center justify-center border-4 border-white shadow-md">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-white shadow-sm">
                 <Image
                   src="/images/logo-placeholder.svg"
                   alt="Logo placeholder"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 opacity-50"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 opacity-50"
                 />
               </div>
             )}
             {company.verified && (
-              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm" title="Empresa Verificada">
-                <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-50" />
+              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
+                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
               </div>
             )}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground truncate max-w-[300px] sm:max-w-md" title={company.name}>
+            <div className="flex items-center gap-2 mb-0.5">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate max-w-[250px] sm:max-w-xs" title={company.name}>
                 {company.name}
               </h1>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full h-8 w-8 text-muted-foreground hover:text-foreground"
+                className="rounded-full h-7 w-7 text-muted-foreground hover:text-foreground"
                 onClick={handleShare}
                 title="Compartilhar perfil"
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="h-3.5 w-3.5" />
               </Button>
             </div>
             
-            <p className="text-lg text-muted-foreground line-clamp-1 max-w-lg mb-3">
+            <p className="text-sm text-muted-foreground line-clamp-1 max-w-md mb-2">
               {company.description}
             </p>
             
-            {company.project_types && company.project_types.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {company.project_types.slice(0, 3).map((t) => (
-                  <Badge key={t} variant="secondary" className="font-normal bg-secondary/50 hover:bg-secondary">
-                    {t}
-                  </Badge>
-                ))}
-                {company.project_types.length > 3 && (
-                  <Badge variant="outline" className="font-normal text-muted-foreground">
-                    +{company.project_types.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <div className="flex items-center">
-                <div className="flex items-center mr-2">
+                <div className="flex items-center mr-1.5">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
+                      className={`w-3.5 h-3.5 ${
                         i < Math.round(companyStats.rating)
                           ? 'text-yellow-400 fill-yellow-400'
                           : 'text-gray-200 fill-gray-200'
@@ -176,30 +161,30 @@ export default function CompanyHero({
                     />
                   ))}
                 </div>
-                <span className="text-xl font-bold text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   {companyStats.rating.toFixed(1)}
                 </span>
-                <span className="text-muted-foreground ml-1 text-sm">
-                  ({companyStats.reviewCount} avaliações)
+                <span className="text-muted-foreground ml-1 text-xs">
+                  ({companyStats.reviewCount})
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-3 md:mt-0">
           {company.buttons && company.buttons.length > 0 ? (
             company.buttons.map((btn, idx) => {
               if (btn.button_type === 'whatsapp') {
                 return (
                   <div key={idx} className="flex-1 sm:flex-none">
                     <WhatsappButton
-                      size="lg"
+                      size="default"
                       enabled
                       href={btn.url}
                       styles={{ variant: 'solid' }}
                       preset="brandSolid"
-                      className="w-full text-foreground shadow-md hover:shadow-lg transition-all font-semibold"
+                      className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
                       label={btn.label}
                     />
                   </div>
@@ -210,9 +195,9 @@ export default function CompanyHero({
               return (
                 <Button
                   key={idx}
-                  size="lg"
+                  size="default"
                   variant={isPrimary ? 'default' : 'outline'}
-                  className={`flex-1 sm:flex-none transition-all shadow-md hover:shadow-lg gap-2 font-semibold ${
+                  className={`flex-1 sm:flex-none transition-all shadow-sm hover:shadow-md gap-1.5 font-medium text-sm ${
                     isPrimary 
                       ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
                       : 'bg-background hover:bg-muted text-foreground border-input'
@@ -225,7 +210,7 @@ export default function CompanyHero({
                      }
                   }}
                 >
-                  {isPrimary ? <MessageCircle className="h-5 w-5" /> : null}
+                  {isPrimary ? <MessageCircle className="h-4 w-4" /> : null}
                   {btn.label}
                 </Button>
               );
@@ -233,22 +218,22 @@ export default function CompanyHero({
           ) : (
             <>
               <Button
-                size="lg"
-                className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 transition-all shadow-md hover:shadow-lg text-primary-foreground gap-2 font-semibold"
+                size="default"
+                className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-primary-foreground gap-1.5 font-medium text-sm"
                 onClick={() => openQuoteWizard({ preferredCompanyId: company.id, source: 'company-hero' })}
               >
-                <MessageCircle className="h-5 w-5" />
-                Solicitar Orcamento
+                <MessageCircle className="h-4 w-4" />
+                Orcamento
               </Button>
               {ctaEnabled && ctaUrl && (
                 <div className="flex-1 sm:flex-none">
                   <WhatsappButton
-                    size="lg"
+                    size="default"
                     enabled
                     href={ctaUrl}
                     styles={{ variant: 'solid' }}
                     preset="brandSolid"
-                    className="w-full text-foreground shadow-md hover:shadow-lg transition-all font-semibold"
+                    className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
                     label="WhatsApp"
                   />
                 </div>

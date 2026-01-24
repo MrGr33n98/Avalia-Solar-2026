@@ -276,6 +276,25 @@ export const reviewsApiSafe = {
       return null;
     }
   },
+  getByCompany: async (companyId: number): Promise<Review[]> => {
+    try {
+      const url = `reviews${buildQueryParams({ company_id: companyId })}`;
+      const response = await fetchApiSafe<any>(url);
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (response && Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response && Array.isArray(response.reviews)) {
+        return response.reviews;
+      }
+      return [];
+    } catch (error) {
+      console.error(`Error fetching reviews for company ${companyId}:`, error);
+      return [];
+    }
+  },
 };
 
 // Produtos
@@ -304,6 +323,25 @@ export const productsApiSafe = {
       console.error(`Error fetching product with ID ${id}:`, error);
       // Return null on error to prevent breaking the UI
       return null;
+    }
+  },
+  getByCompany: async (companyId: number): Promise<Product[]> => {
+    try {
+      const url = `products${buildQueryParams({ company_id: companyId })}`;
+      const response = await fetchApiSafe<any>(url);
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (response && Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response && Array.isArray(response.products)) {
+        return response.products;
+      }
+      return [];
+    } catch (error) {
+      console.error(`Error fetching products for company ${companyId}:`, error);
+      return [];
     }
   },
 };

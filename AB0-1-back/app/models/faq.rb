@@ -14,4 +14,13 @@ class Faq < ApplicationRecord
   def helpful_total
     helpful_yes.to_i + helpful_no.to_i
   end
+
+  # Ransack configuration
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[active answer category created_at helpful_no helpful_yes id position question updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    []
+  end
 end

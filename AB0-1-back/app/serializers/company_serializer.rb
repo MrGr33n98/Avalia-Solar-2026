@@ -11,7 +11,14 @@ class CompanySerializer < ActiveModel::Serializer
              :instagram, :facebook, :linkedin,
              :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
-             :effect
+             :effect,
+             :faqs,
+             :financing_enabled,
+             :financing_feature_allowed,
+             :financing_tab_visible,
+             :financing_profile,
+             :financing_partners,
+             :financing_offers
 
 
 
@@ -34,6 +41,65 @@ class CompanySerializer < ActiveModel::Serializer
 
   def effect
     object.respond_to?(:effect) ? !!object.effect : false
+  end
+
+  def faqs
+    object.company_faqs.published_only.ordered.map do |faq|
+      faq.as_json(only: %i[id question answer status position])
+    end
+  end
+
+  def financing_enabled
+    object.respond_to?(:financing_enabled) ? !!object.financing_enabled : false
+  end
+
+  def financing_feature_allowed
+    object.respond_to?(:financing_feature_allowed?) ? !!object.financing_feature_allowed? : false
+  end
+
+  def financing_tab_visible
+    financing_enabled && financing_feature_allowed
+  end
+
+  def financing_profile
+    return unless financing_tab_visible
+    profile = object.company_financing_profile
+    return unless profile
+
+    profile.as_json(
+      only: %i[
+        id title subtitle disclaimer cta_label cta_url currency status
+        default_amount_cents min_amount_cents max_amount_cents
+        default_down_payment_percent min_down_payment_percent max_down_payment_percent
+        default_term_months min_term_months max_term_months
+        default_interest_rate_monthly min_interest_rate_monthly max_interest_rate_monthly
+        grace_months_enabled max_grace_months amortization_type show_bank_logos show_fee_inputs
+      ]
+    )
+  end
+
+  def financing_partners
+    return [] unless financing_tab_visible
+
+    object.company_financing_partners.active.ordered.map do |partner|
+      partner.as_json(only: %i[id name partner_type website priority position active badge]).merge(
+        logo_url: generate_attachment_url(partner.logo)
+      )
+    end
+  end
+
+  def financing_offers
+    return [] unless financing_tab_visible
+
+    object.company_financing_offers.active.ordered.map do |offer|
+      offer.as_json(
+        only: %i[
+          id name offer_type term_months interest_rate_monthly
+          min_down_payment_percent grace_months amortization_type
+          notes active position
+        ]
+      )
+    end
   end
 
   private

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_24_091000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -378,8 +378,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.jsonb "project_types"
-    t.jsonb "services_offered", default: [], null: false
+    t.json "project_types"
+    t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
     t.boolean "effect", default: false, null: false
@@ -392,13 +392,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.datetime "approved_at"
     t.integer "approved_by_admin_user_id"
     t.text "rejected_reason"
+    t.boolean "financing_enabled", default: false, null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
-    t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
-    t.index ["services_offered"], name: "index_companies_on_services_offered", using: :gin
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
     t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
@@ -428,6 +427,85 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
     t.datetime "updated_at", null: false
     t.index ["company_id", "day"], name: "index_company_daily_stats_on_company_id_and_day", unique: true
     t.index ["day"], name: "index_company_daily_stats_on_day"
+  end
+
+  create_table "company_faqs", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "question", null: false
+    t.text "answer", null: false
+    t.integer "position", default: 0, null: false
+    t.string "status", default: "published", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "position"], name: "index_company_faqs_on_company_id_and_position"
+    t.index ["company_id", "status"], name: "index_company_faqs_on_company_id_and_status"
+    t.index ["company_id"], name: "index_company_faqs_on_company_id"
+  end
+
+  create_table "company_financing_offers", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "name", null: false
+    t.string "offer_type"
+    t.integer "term_months"
+    t.decimal "interest_rate_monthly", precision: 8, scale: 4
+    t.decimal "min_down_payment_percent", precision: 5, scale: 2
+    t.integer "grace_months"
+    t.string "amortization_type"
+    t.text "notes"
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "active"], name: "index_company_financing_offers_on_company_id_and_active"
+    t.index ["company_id", "position"], name: "index_company_financing_offers_on_company_id_and_position"
+    t.index ["company_id"], name: "index_company_financing_offers_on_company_id"
+  end
+
+  create_table "company_financing_partners", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "name", null: false
+    t.string "partner_type"
+    t.string "website"
+    t.integer "priority", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.string "badge"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "position"], name: "index_company_financing_partners_on_company_id_and_position"
+    t.index ["company_id", "priority"], name: "index_company_financing_partners_on_company_id_and_priority"
+    t.index ["company_id"], name: "index_company_financing_partners_on_company_id"
+  end
+
+  create_table "company_financing_profiles", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "title"
+    t.string "subtitle"
+    t.text "disclaimer"
+    t.string "cta_label"
+    t.string "cta_url"
+    t.string "currency", default: "BRL"
+    t.integer "default_amount_cents"
+    t.integer "min_amount_cents"
+    t.integer "max_amount_cents"
+    t.decimal "default_down_payment_percent", precision: 5, scale: 2
+    t.decimal "min_down_payment_percent", precision: 5, scale: 2
+    t.decimal "max_down_payment_percent", precision: 5, scale: 2
+    t.integer "default_term_months"
+    t.integer "min_term_months"
+    t.integer "max_term_months"
+    t.decimal "default_interest_rate_monthly", precision: 8, scale: 4
+    t.decimal "min_interest_rate_monthly", precision: 8, scale: 4
+    t.decimal "max_interest_rate_monthly", precision: 8, scale: 4
+    t.boolean "grace_months_enabled", default: false, null: false
+    t.integer "max_grace_months"
+    t.string "amortization_type", default: "price"
+    t.boolean "show_bank_logos", default: true, null: false
+    t.boolean "show_fee_inputs", default: false, null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_company_financing_profiles_on_company_id", unique: true
   end
 
   create_table "company_members", force: :cascade do |t|
@@ -842,6 +920,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_20_150000) do
   add_foreign_key "comments", "users"
   add_foreign_key "companies", "plans"
   add_foreign_key "company_buttons", "companies"
+  add_foreign_key "company_faqs", "companies"
+  add_foreign_key "company_financing_offers", "companies"
+  add_foreign_key "company_financing_partners", "companies"
+  add_foreign_key "company_financing_profiles", "companies"
   add_foreign_key "company_members", "companies"
   add_foreign_key "company_members", "users"
   add_foreign_key "company_videos", "companies"

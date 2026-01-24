@@ -4,11 +4,11 @@ import { PackageOpen } from 'lucide-react';
 import { Product } from '@/lib/api';
 
 interface CompanyProductsProps {
-  products: Product[];
-  loading: boolean;
+  products?: Product[];
+  loading?: boolean;
 }
 
-export default function CompanyProducts({ products, loading }: CompanyProductsProps) {
+export default function CompanyProducts({ products = [], loading = false }: CompanyProductsProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -17,7 +17,7 @@ export default function CompanyProducts({ products, loading }: CompanyProductsPr
     );
   }
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-muted/20 rounded-2xl border border-dashed border-border/60 animate-in fade-in zoom-in-95 duration-500">
         <div className="bg-muted p-6 rounded-full mb-6">

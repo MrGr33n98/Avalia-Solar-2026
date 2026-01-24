@@ -1,4 +1,4 @@
-require 'csv'
+﻿require 'csv'
 
 brazil_states = Locations::BrLocations.states.map do |state|
   [state['name'], state['acronym']]
@@ -59,10 +59,11 @@ ActiveAdmin.register Company do
     :response_time_sla, :languages,
     :email_public, :phone_alt, :facebook, :instagram,
     :linkedin, :description,
-    :moderation_status, :rejected_reason,
+    :moderation_status, :rejected_reason, :financing_enabled,
     project_types: [], services_offered: [], category_ids: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
-    company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy]
+    company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
+    company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]
   ]
   permitted << :effect if Company.column_names.include?('effect')
   permitted << :plan_id if Company.column_names.include?('plan_id')
@@ -177,6 +178,11 @@ end
       end
     end
 
+    f.inputs 'Financiamento (nova aba)' do
+      f.input :financing_enabled, label: 'Habilitar Financiamento Premium'
+      para 'Configurações detalhadas (perfil, parceiros, ofertas) estão no menu Financiamento.'
+    end
+
     f.inputs 'Coverage & Certifications' do
       f.input :coverage_states
       f.input :coverage_cities
@@ -243,6 +249,14 @@ end
       end
     end
 
+    f.inputs 'FAQ da Empresa' do
+      f.has_many :company_faqs, allow_destroy: true, new_record: 'Adicionar FAQ' do |cf|
+        cf.input :question
+        cf.input :answer
+        cf.input :status, as: :select, collection: CompanyFaq.statuses.keys
+        cf.input :position
+      end
+    end
     f.inputs 'Categories' do
       f.input :categories, as: :check_boxes
     end

@@ -12,6 +12,68 @@ export interface CompanyButton {
   button_type: 'primary' | 'whatsapp' | 'secondary' | 'custom';
 }
 
+export interface CompanyFaq {
+  id: number;
+  question: string;
+  answer: string;
+  status?: string;
+  position?: number;
+}
+
+export interface CompanyFinancingProfile {
+  id?: number;
+  title?: string | null;
+  subtitle?: string | null;
+  disclaimer?: string | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  currency?: string | null;
+  status?: string | null;
+  default_amount_cents?: number | null;
+  min_amount_cents?: number | null;
+  max_amount_cents?: number | null;
+  default_down_payment_percent?: number | null;
+  min_down_payment_percent?: number | null;
+  max_down_payment_percent?: number | null;
+  default_term_months?: number | null;
+  min_term_months?: number | null;
+  max_term_months?: number | null;
+  default_interest_rate_monthly?: number | null;
+  min_interest_rate_monthly?: number | null;
+  max_interest_rate_monthly?: number | null;
+  grace_months_enabled?: boolean;
+  max_grace_months?: number | null;
+  amortization_type?: 'price' | 'sac' | string | null;
+  show_bank_logos?: boolean;
+  show_fee_inputs?: boolean;
+}
+
+export interface CompanyFinancingPartner {
+  id: number;
+  name: string;
+  partner_type?: string | null;
+  website?: string | null;
+  priority?: number;
+  position?: number;
+  active?: boolean;
+  badge?: string | null;
+  logo_url?: string | null;
+}
+
+export interface CompanyFinancingOffer {
+  id: number;
+  name: string;
+  offer_type?: string | null;
+  term_months?: number | null;
+  interest_rate_monthly?: number | null;
+  min_down_payment_percent?: number | null;
+  grace_months?: number | null;
+  amortization_type?: 'price' | 'sac' | string | null;
+  notes?: string | null;
+  active?: boolean;
+  position?: number;
+}
+
 export interface Company {
   id: number;
   name: string;
@@ -103,6 +165,13 @@ export interface Company {
     priority: number;
     analytics_event?: string;
   }[];
+  faqs?: CompanyFaq[];
+  financing_enabled?: boolean;
+  financing_feature_allowed?: boolean;
+  financing_tab_visible?: boolean;
+  financing_profile?: CompanyFinancingProfile | null;
+  financing_partners?: CompanyFinancingPartner[];
+  financing_offers?: CompanyFinancingOffer[];
 }
 
 export interface FinancingOption {
