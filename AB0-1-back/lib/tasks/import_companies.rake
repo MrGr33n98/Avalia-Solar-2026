@@ -1,8 +1,8 @@
 require 'open-uri'
 
 namespace :import do
-  desc "Importa empresas do JSON enriquecido com logos e categorias"
-  task companies: :environment do
+  desc "Sincronização mestre de logos e nomes com relatório final"
+  task fix_logos: :environment do
     json_path = Rails.root.join('lib', 'data', 'companies_enriched_final.json')
     
     unless File.exist?(json_path)
@@ -10,74 +10,59 @@ namespace :import do
       next
     end
 
-    file_content = File.read(json_path)
-    companies_data = JSON.parse(file_content)
-    puts "🚀 Iniciando importação de #{companies_data.count} empresas..."
+    data_list = JSON.parse(File.read(json_path))
+    puts "🚀 Iniciando sincronização de #{data_list.count} empresas..."
+    
+    success_count = 0
+    error_count = 0
+    not_found_count = 0
 
-    companies_data.each do |data|
-      # Busca por ID, CNPJ ou Nome
-      company = Company.find_by(id: data['id']) || 
-                Company.find_by(cnpj: data['cnpj']&.to_s&.gsub(/\D/, '')) || 
-                Company.find_by(name: data['name'])
+    data_list.each do |data|
+      clean_name = data['name'].strip
       
-      if company.nil?
-        company = Company.new(name: data['name'])
-        puts "✨ Criando nova empresa: #{data['name']}"
-      else
-        puts "🔄 Atualizando empresa: #{company.name}"
-      end
+      # Busca flexível: ignora espaços no início/fim e maiúsculas/minúsculas
+      company = Company.where("LOWER(TRIM(name)) = ?", clean_name.downcase).first
+      
+      # Se não achou pelo nome, tenta pelo ID do JSON
+      company ||= Company.find_by(id: data['id'])
 
-      # Atualiza atributos
-      company.assign_attributes(
-        cnpj:              data['cnpj']&.to_s&.gsub(/\D/, ''),
-        address:           data['address'],
-        latitude:          data['latitude'],
-        longitude:         data['longitude'],
-        website:           data['website'],
-        phone:             data['phone']&.to_s&.gsub(/\D/, ''),
-        whatsapp:          data['whatsapp']&.to_s&.gsub(/\D/, ''),
-        rating_avg:        data['rating_avg'],
-        rating_count:      data['rating_count'],
-        description:       data['description'],
-        city:              data['city'],
-        state:             data['state']&.to_s&.strip&.upcase&.slice(0, 2),
-        instagram:         data['instagram_url'] || data['instagram'],
-        linkedin:          data['linkedin_url'] || data['linkedin'],
-        facebook:          data['facebook_url'] || data['facebook'],
-        moderation_status: data['moderation_status'] || 'approved',
-        status:            data['status'] || 'active'
-      )
-
-      # Download do Logo (Se houver URL e não tiver logo anexo)
-      if data['logo_url'].present? && !company.logo.attached?
-        begin
-          puts "  🖼️  Baixando logo para #{company.name}..."
-          logo_file = URI.open(data['logo_url'], open_timeout: 5)
-          company.logo.attach(
-            io: logo_file, 
-            filename: "logo_#{company.id || 'new'}.png", 
-            content_type: 'image/png'
-          )
-        rescue => e
-          puts "  ⚠️  Erro ao baixar logo: #{e.message}"
-        end
-      end
-
-      if company.save(validate: false)
-        # Associa Categorias
-        if data['categories'].present?
-          data['categories'].each do |cat_data|
-            category = Category.find_by(id: cat_data['id']) || Category.find_by(name: cat_data['name'])
-            if category && !company.categories.include?(category)
-              company.categories << category
-            end
+      if company
+        print "📦 #{company.name} -> #{clean_name} "
+        
+        # Sincroniza o nome
+        company.update_column(:name, clean_name)
+        
+        if data['logo_url'].present?
+          begin
+            company.logo.purge if company.logo.attached?
+            
+            file = URI.open(data['logo_url'], open_timeout: 15)
+            company.logo.attach(
+              io: file,
+              filename: "logo_#{company.id}.png",
+              content_type: 'image/png'
+            )
+            puts "✅"
+            success_count += 1
+          rescue => e
+            puts "❌ (Erro: #{e.message})"
+            error_count += 1
           end
+        else
+          puts "⚠️ (Sem URL de logo)"
+          success_count += 1
         end
-        puts "✅ #{company.name} salva."
       else
-        puts "❌ Erro: #{company.errors.full_messages.join(', ')}"
+        puts "❓ Não encontrada: '#{clean_name}'"
+        not_found_count += 1
       end
     end
-    puts "\n🏁 Concluído!"
+
+    puts "\n" + "="*40
+    puts "📊 RELATÓRIO FINAL:"
+    puts "✅ Sincronizados: #{success_count}"
+    puts "❌ Erros de Upload: #{error_count}"
+    puts "❓ Não encontradas: #{not_found_count}"
+    puts "="*40
   end
 end
