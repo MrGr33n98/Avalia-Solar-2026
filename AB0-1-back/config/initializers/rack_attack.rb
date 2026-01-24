@@ -6,10 +6,42 @@
 
 class Rack::Attack
   ### Configuração de Cache ###
-  # Usar MemoryStore para início, migrar para Redis depois (TASK-014)
-  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+  # Migrado para Redis (Fase 1)
+  Rack::Attack.cache.store = ActiveSupport::Cache::RedisCacheStore.new(
+    url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/2'),
+    namespace: 'avaliasolar:rack_attack'
+  )
 
   ### Throttle Configurations ###
+
+  # === Fase 1: Banner Events Tracking Protection ===
+  
+  # Limite: 100 requests por minuto por IP em banner_events
+  # Previne spam de eventos falsos
+  throttle('banner_events/ip', limit: 100, period: 1.minute) do |req|
+    if req.path == '/api/v1/banner_events' && req.post?
+      req.ip
+    end
+  end
+
+  # Limite burst: 20 eventos por 10 segundos
+  # Detecta scripts automatizados tentando inflar métricas
+  throttle('banner_events/burst', limit: 20, period: 10.seconds) do |req|
+    if req.path == '/api/v1/banner_events' && req.post?
+      req.ip
+    end
+  end
+
+  # Anti-fraude: Mesma combinação IP + User-Agent
+  # Limite: 30 eventos por minuto para mesma fingerprint
+  throttle('banner_events/fingerprint', limit: 30, period: 1.minute) do |req|
+    if req.path == '/api/v1/banner_events' && req.post?
+      fingerprint = Digest::SHA256.hexdigest("#{req.ip}:#{req.user_agent}")
+      fingerprint
+    end
+  end
+
+  # === Existing Rules ===
 
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta

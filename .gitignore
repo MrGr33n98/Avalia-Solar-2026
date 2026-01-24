@@ -90,6 +90,7 @@ Thumbs.db
 
 /.github/PULL_REQUEST_TEMPLATE.md
 # Rascunhos locais / planejamento
+/docs/
 code-base-dashboards/
 docs-v1/
 docs/infra/

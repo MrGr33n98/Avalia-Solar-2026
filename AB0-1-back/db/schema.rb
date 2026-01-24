@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_24_091000) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_24_210000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -161,6 +161,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_24_091000) do
     t.datetime "tracked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["banner_id", "event_type", "tracked_at"], name: "idx_banner_events_analytics", order: { tracked_at: :desc }
     t.index ["banner_id"], name: "index_banner_events_on_banner_id"
     t.index ["company_id"], name: "index_banner_events_on_company_id"
     t.index ["event_type"], name: "index_banner_events_on_event_type"
@@ -203,6 +204,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_24_091000) do
     t.datetime "updated_at", null: false
     t.index ["banner_offer_id"], name: "index_banner_subscriptions_on_banner_offer_id"
     t.index ["checkout_session_id"], name: "index_banner_subscriptions_on_checkout_session_id"
+    t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "status = 'active' /*application:RailsBlogDemo*/"
     t.index ["company_id"], name: "index_banner_subscriptions_on_company_id"
     t.index ["payment_reference"], name: "index_banner_subscriptions_on_payment_reference"
     t.index ["status"], name: "index_banner_subscriptions_on_status"
@@ -230,19 +232,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_24_091000) do
     t.text "rejected_reason"
     t.integer "width"
     t.integer "height"
+    t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
     t.index ["company_id"], name: "index_banners_on_company_id"
     t.index ["end_date"], name: "index_banners_on_end_date"
     t.index ["moderation_status"], name: "index_banners_on_moderation_status"
+    t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
     t.index ["priority"], name: "index_banners_on_priority"
     t.index ["slot_key"], name: "index_banners_on_slot_key"
+    t.index ["start_date", "end_date"], name: "idx_banners_date_range", where: "active = true /*application:RailsBlogDemo*/"
     t.index ["start_date"], name: "index_banners_on_start_date"
   end
 
   create_table "banners_categories", id: false, force: :cascade do |t|
     t.integer "banner_id", null: false
     t.integer "category_id", null: false
+    t.index ["banner_id", "category_id"], name: "idx_banners_categories_unique", unique: true
     t.index ["banner_id", "category_id"], name: "index_banners_categories_unique", unique: true
     t.index ["banner_id"], name: "index_banners_categories_on_banner_id"
     t.index ["category_id"], name: "index_banners_categories_on_category_id"

@@ -11,17 +11,48 @@ class Banner < ApplicationRecord
   has_one_attached :image
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
+  ALLOWED_POSITIONS = %w[navbar sidebar categories_top home_top companies_top].freeze
+  ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
 
+  # === Validações Básicas ===
   validates :title, :banner_type, :position, presence: true
-  validates :banner_type, inclusion: { in: %w[rectangular_large rectangular_small] }
-  validates :position, inclusion: { in: %w[navbar sidebar categories_top home_top companies_top] }
+  validates :banner_type, inclusion: { in: ALLOWED_BANNER_TYPES }
+  validates :position, inclusion: { in: ALLOWED_POSITIONS }
   validates :image, presence: true
-  validates :moderation_status, inclusion: { in: MODERATION_STATUSES }, if: -> { self.class.column_names.include?('moderation_status') }
-  validates :width, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
-  validates :height, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :moderation_status, inclusion: { in: MODERATION_STATUSES }, 
+            if: -> { self.class.column_names.include?('moderation_status') }
 
+  # === Validações de Dimensões (Fase 1) ===
+  # Garante que width e height sejam obrigatórias e válidas
+  validates :width, presence: true, 
+            numericality: { only_integer: true, greater_than: 0 }
+  validates :height, presence: true,
+            numericality: { only_integer: true, greater_than: 0 }
+
+  # === Validação de Prioridade (Fase 1) ===
+  # Priority deve estar entre 1 e 1000, ou nil (usa default 100)
+  validates :priority, numericality: { 
+    only_integer: true, 
+    greater_than: 0,
+    less_than_or_equal_to: 1000
+  }, allow_nil: true
+
+  # === Validações de Datas (Fase 1 - CRÍTICO) ===
+  # Garante que end_date seja posterior a start_date
+  validate :end_date_must_be_after_start_date, 
+           if: -> { start_date.present? && end_date.present? }
+
+  # === Validação de Limite por Empresa (Fase 1) ===
+  # Garante que empresa respeita limite de banners ativos conforme sua assinatura
+  validate :respect_company_active_banners_limit, 
+           on: :create,
+           if: -> { company_id.present? && active == true }
+
+  # === Callbacks ===
   before_validation :ensure_dimensions
   before_save :sync_legacy_category_id
+  after_save :invalidate_cache
+  after_destroy :invalidate_cache
 
   def self.banner_variants_enabled?
     flag = ENV['BANNER_VARIANTS_ENABLED']
@@ -154,6 +185,70 @@ class Banner < ApplicationRecord
 
     ids = category_ids
     self.category_id = ids.first
+  end
+
+  # === Validações Customizadas (Fase 1) ===
+
+  # Valida que end_date seja posterior a start_date
+  # Previne banners com período inválido que nunca seriam exibidos
+  def end_date_must_be_after_start_date
+    return unless end_date < start_date
+
+    errors.add(:end_date, 'deve ser posterior à data de início')
+  end
+
+  # Valida limite de banners ativos por empresa conforme assinatura
+  # Verifica regras do BannerOffer associado à assinatura ativa da empresa
+  def respect_company_active_banners_limit
+    return unless company
+
+    # Busca assinatura ativa da empresa
+    active_subscription = company.banner_subscriptions
+                                 .where(status: 'active')
+                                 .where('starts_at <= ?', Time.current)
+                                 .where('ends_at IS NULL OR ends_at >= ?', Time.current)
+                                 .first
+
+    return unless active_subscription&.banner_offer
+
+    # Extrai regras do offer
+    offer = active_subscription.banner_offer
+    max_total = offer.rules.dig('max_total_active')&.to_i
+    max_per_position = offer.rules.dig('max_active_per_position')&.to_i
+
+    # Valida limite total de banners ativos
+    if max_total.present?
+      current_active_count = company.banners
+                                    .where(active: true)
+                                    .where.not(id: id) # Exclui self se for update
+                                    .count
+
+      if current_active_count >= max_total
+        errors.add(:base, "Limite de #{max_total} banners ativos atingido. Upgrade seu plano.")
+        return
+      end
+    end
+
+    # Valida limite por posição
+    if max_per_position.present? && position.present?
+      current_position_count = company.banners
+                                      .where(active: true, position: position)
+                                      .where.not(id: id)
+                                      .count
+
+      if current_position_count >= max_per_position
+        errors.add(:position, "Limite de #{max_per_position} banners ativos na posição '#{position}' atingido.")
+      end
+    end
+  end
+
+  # Invalida cache quando banner é alterado
+  # Garante que API sempre retorna dados atualizados
+  def invalidate_cache
+    Rails.cache.delete_matched('banners/v1/*')
+    Rails.logger.info("[Banner##{id}] Cache invalidado após alteração")
+  rescue StandardError => e
+    Rails.logger.error("[Banner##{id}] Erro ao invalidar cache: #{e.message}")
   end
 
   def safe_url_options
