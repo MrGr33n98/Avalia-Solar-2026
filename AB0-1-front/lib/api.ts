@@ -438,6 +438,22 @@ export const api = {
           isFormData ? {} : { 'Content-Type': 'application/json' }
         );
 
+        // Add Authorization header from localStorage if available
+        if (typeof window !== 'undefined') {
+          try {
+            const authData = localStorage.getItem('auth');
+            if (authData) {
+              const parsed = JSON.parse(authData);
+              const token = parsed?.token;
+              if (token) {
+                baseHeaders['Authorization'] = `Bearer ${token}`;
+              }
+            }
+          } catch (e) {
+            console.warn('[API] Failed to parse auth data from localStorage', e);
+          }
+        }
+
         // Add timeout support using AbortController
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
