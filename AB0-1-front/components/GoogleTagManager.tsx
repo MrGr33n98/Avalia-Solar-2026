@@ -53,6 +53,6 @@ export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
 }
 
 // Exportações prontas para uso
-export const GTM_ID = 'GTM-5RV76ZKR';
+export const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-5RV76ZKR';
 
 export default GoogleTagManager;
