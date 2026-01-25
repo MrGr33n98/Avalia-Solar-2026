@@ -1,15 +1,19 @@
 class Api::V1::LeadsController < Api::V1::BaseController
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
+  before_action :authenticate_api_user, only: %i[index show update destroy]
+  before_action :ensure_leads_access!, only: %i[index]
+  before_action :ensure_lead_access!, only: %i[show update destroy]
 
   def index
-    @leads = ::Lead.all
-    
+    @leads = scoped_leads
+    return if performed? || @leads.nil?
+
     # Check if status column exists before filtering
     if params[:status].present? && ::Lead.column_names.include?('status')
       @leads = @leads.where(status: params[:status])
     end
     
-    if params[:company_id].present? || params[:company_name].present?
+    if current_user&.admin? && (params[:company_id].present? || params[:company_name].present?)
       cid = params[:company_id].presence && params[:company_id].to_i
       cname = params[:company_name].presence
 
@@ -32,16 +36,21 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render json: [], status: :ok
+    render_error_response(
+      error: 'Internal Server Error',
+      message: 'Erro ao listar leads',
+      status: :internal_server_error,
+      code: 'INTERNAL_ERROR'
+    )
   end
 
   def show
     render json: @lead
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Lead não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def create
@@ -174,29 +183,94 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.update(lead_params)
       render json: @lead
     else
-      render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity
+      render_error_response(
+        error: 'Unprocessable Entity',
+        message: 'Não foi possível atualizar o lead',
+        status: :unprocessable_entity,
+        code: 'UNPROCESSABLE_ENTITY',
+        details: @lead.errors.full_messages
+      )
     end
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Lead não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def destroy
     @lead.destroy
     render json: { message: 'Lead excluído' }, status: :ok
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Lead não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   private
 
   def set_lead
     @lead = ::Lead.find(params[:id])
+  end
+
+  def scoped_leads
+    return ::Lead.all if current_user&.admin?
+
+    if current_user&.company_user? && current_user.company_id.present?
+      company = current_user.company
+      unless company&.active?
+        render_error_response(
+          error: 'Forbidden',
+          message: 'Company account is not active',
+          status: :forbidden,
+          code: 'COMPANY_INACTIVE'
+        )
+        return nil
+      end
+
+      return ::Lead.where(company_id: current_user.company_id)
+    end
+
+    render_error_response(
+      error: 'Forbidden',
+      message: 'Not authorized to list leads',
+      status: :forbidden,
+      code: 'FORBIDDEN'
+    )
+    nil
+  end
+
+  def ensure_leads_access!
+    return if performed? || current_user.nil?
+    scoped_leads
+  end
+
+  def ensure_lead_access!
+    return if performed? || current_user.nil?
+    return if current_user&.admin?
+
+    if current_user&.company_user? && current_user.company_id.present?
+      company = current_user.company
+      unless company&.active?
+        render_error_response(
+          error: 'Forbidden',
+          message: 'Company account is not active',
+          status: :forbidden,
+          code: 'COMPANY_INACTIVE'
+        )
+        return
+      end
+
+      return if @lead.company_id == current_user.company_id
+    end
+
+    render_error_response(
+      error: 'Forbidden',
+      message: 'Not authorized to access this lead',
+      status: :forbidden,
+      code: 'FORBIDDEN'
+    )
   end
 
   def lead_params
@@ -206,7 +280,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     optional_keys << :project_type if columns.include?('project_type')
     optional_keys << :estimated_budget if columns.include?('estimated_budget')
     optional_keys << :location if columns.include?('location')
-    optional_keys << :company_id if columns.include?('company_id')
+    allow_company_assignment = action_name == 'create' || current_user&.admin?
+    optional_keys << :company_id if columns.include?('company_id') && allow_company_assignment
     params.require(:lead).permit(*(base_keys + optional_keys))
   end
 

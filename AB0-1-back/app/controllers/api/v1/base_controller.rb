@@ -11,7 +11,6 @@ module Api
       
       # JSON responses by default
       respond_to :json
-      
       # Error handling
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
@@ -22,7 +21,12 @@ module Api
       def require_role(*roles)
         unless current_user && roles.include?(current_user.role)
           Rails.logger.warn("[AccessDenied] user=#{current_user&.id || 'guest'} role=#{current_user&.role || 'none'} path=#{request.path} action=#{params[:action]}")
-          return render json: { error: 'Forbidden' }, status: :forbidden
+          return render_error_response(
+            error: 'Forbidden',
+            message: 'Not authorized to perform this action',
+            status: :forbidden,
+            code: 'FORBIDDEN'
+          )
         end
       end
 
@@ -35,7 +39,15 @@ module Api
       end
 
       def authenticate_api_user
-        render json: { error: 'Unauthorized' }, status: :unauthorized unless current_user
+        return if current_user
+
+        render_error_response(
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          status: :unauthorized,
+          code: 'UNAUTHORIZED'
+        )
+        false
       end
 
       def current_user
@@ -70,29 +82,51 @@ module Api
       end
 
       def render_error(message, status = :unprocessable_entity)
-        render json: { error: message }, status: status
+        error_label = status.to_s.tr('_', ' ').titleize
+        render_error_response(error: error_label, message: message, status: status)
+      end
+
+      def render_error_response(error:, message:, status:, code: nil, details: nil, retry_after: nil)
+        error_value = error.to_s
+        payload = {
+          error: error_value,
+          message: message,
+          code: code || error_value.gsub(/\s+/, '_').upcase
+        }
+        payload[:details] = details if details.present?
+
+        response_headers = {}
+        response_headers['Retry-After'] = retry_after.to_s if retry_after
+
+        render json: payload, status: status, headers: response_headers
       end
 
       def not_found(exception)
-        render json: {
+        render_error_response(
           error: 'Not Found',
-          message: exception.message
-        }, status: :not_found
+          message: exception.message,
+          status: :not_found,
+          code: 'NOT_FOUND'
+        )
       end
       
       def unprocessable_entity(exception)
-        render json: {
+        render_error_response(
           error: 'Unprocessable Entity',
           message: exception.message,
+          status: :unprocessable_entity,
+          code: 'UNPROCESSABLE_ENTITY',
           details: exception.record&.errors&.full_messages
-        }, status: :unprocessable_entity
+        )
       end
       
       def bad_request(exception)
-        render json: {
+        render_error_response(
           error: 'Bad Request',
-          message: exception.message
-        }, status: :bad_request
+          message: exception.message,
+          status: :bad_request,
+          code: 'BAD_REQUEST'
+        )
       end
     end
   end

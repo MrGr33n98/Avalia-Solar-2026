@@ -1,5 +1,8 @@
 class Api::V1::UsersController < Api::V1::BaseController
   before_action :set_user, only: %i[show update destroy]
+  before_action :authenticate_api_user, except: %i[create]
+  before_action :authorize_index!, only: %i[index]
+  before_action :authorize_user_access!, only: %i[show update destroy]
 
   def me
     render json: user_with_avatar(current_user)
@@ -10,16 +13,16 @@ class Api::V1::UsersController < Api::V1::BaseController
     render json: @users.map { |u| user_with_avatar(u) }
   rescue StandardError => e
     Rails.logger.error("Users error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def show
     render json: user_with_avatar(@user)
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Usuário não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Usuário não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Users error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def create
@@ -29,34 +32,46 @@ class Api::V1::UsersController < Api::V1::BaseController
     if @user.save
       render json: user_with_avatar(@user), status: :created
     else
-      render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+      render_error_response(
+        error: 'Unprocessable Entity',
+        message: 'Não foi possível criar o usuário',
+        status: :unprocessable_entity,
+        code: 'UNPROCESSABLE_ENTITY',
+        details: @user.errors.full_messages
+      )
     end
   rescue StandardError => e
     Rails.logger.error("Users error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def update
     if @user.update(user_params)
       render json: user_with_avatar(@user)
     else
-      render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+      render_error_response(
+        error: 'Unprocessable Entity',
+        message: 'Não foi possível atualizar o usuário',
+        status: :unprocessable_entity,
+        code: 'UNPROCESSABLE_ENTITY',
+        details: @user.errors.full_messages
+      )
     end
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Usuário não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Usuário não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Users error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def destroy
     @user.destroy
     render json: { message: 'Usuário excluído' }, status: :ok
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Usuário não encontrado' }, status: :not_found
+    render_error_response(error: 'Not Found', message: 'Usuário não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Users error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   private
@@ -66,7 +81,42 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation, :city, :state, :phone, :avatar)
+    permitted = [
+      :name, :email, :password, :password_confirmation,
+      :city, :state, :phone, :avatar
+    ]
+
+    if current_user&.admin?
+      permitted += [:role, :status, :company_id]
+    end
+
+    params.require(:user).permit(*permitted)
+  end
+
+  def authorize_index!
+    return if current_user&.admin?
+
+    render_error_response(
+      error: 'Forbidden',
+      message: 'Not authorized to list users',
+      status: :forbidden,
+      code: 'FORBIDDEN'
+    )
+  end
+
+  def authorize_user_access!
+    return if current_user&.admin?
+
+    if @user.present? && current_user == @user
+      return
+    end
+
+    render_error_response(
+      error: 'Forbidden',
+      message: 'Not authorized to access this user',
+      status: :forbidden,
+      code: 'FORBIDDEN'
+    )
   end
 
   def user_with_avatar(user)

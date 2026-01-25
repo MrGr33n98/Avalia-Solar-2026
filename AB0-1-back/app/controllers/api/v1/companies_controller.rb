@@ -5,7 +5,8 @@ module Api
       include Paginatable # TASK-017: Enable pagination
       
       before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories]
-      before_action :authenticate_api_user, only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
+      before_action :authenticate_api_user, only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors analytics_traffic]
+      before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!, only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
 
       # GET /api/v1/companies
@@ -262,18 +263,24 @@ module Api
       end
 
       def company_params
-        params.require(:company).permit(
+        permitted = [
           :name, :description, :website, :phone, :address, :state, :city,
-          :featured, :status, :verified, :founded_year, :employees_count,
+          :founded_year, :employees_count,
           :cnpj, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications,
-          :cta_whatsapp_enabled, :cta_whatsapp_url, :plan_id, :plan_status,
+          :cta_whatsapp_enabled, :cta_whatsapp_url,
           whatsapp_button_style_json: [
             :variant, :bg_color, :text_color, :border_color,
             :hover_bg_color, :icon_color, :rounded_px
           ],
           project_types: [], services_offered: []
-        )
+        ]
+
+        if current_user&.admin?
+          permitted += [:featured, :status, :verified, :plan_id, :plan_status]
+        end
+
+        params.require(:company).permit(*permitted)
       end
 
       def analytics_historical
@@ -508,7 +515,32 @@ module Api
         'Referral'
       end
 
+      def authorize_company_update!
+        return if performed?
+        return if current_user&.admin?
+
+        if current_user&.company_user? && current_user.company_id == @company&.id
+          return if @company&.active?
+
+          render_error_response(
+            error: 'Forbidden',
+            message: 'Company account is not active',
+            status: :forbidden,
+            code: 'COMPANY_INACTIVE'
+          )
+          return
+        end
+
+        render_error_response(
+          error: 'Forbidden',
+          message: 'Not authorized to manage this company',
+          status: :forbidden,
+          code: 'FORBIDDEN'
+        )
+      end
+
       def authorize_company_scope!
+        return if performed?
         return if current_user&.role.in?(%w[admin review])
 
         if current_user&.role == 'company' && current_user.company_id == @company&.id
