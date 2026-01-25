@@ -63,28 +63,47 @@ ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${NEXT_PUBLIC_LINKEDIN_CLIENT_ID}
 
 # --- Build da Aplicação ---
 RUN set -euo pipefail; \
+    echo "========================================"; \
     echo "📦 Building Next.js app..."; \
+    echo "========================================"; \
     echo "Node version: $(node -v)"; \
     echo "NPM version: $(npm -v)"; \
     echo ""; \
-    echo "Environment variables:"; \
-    echo "  NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"; \
-    echo "  NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL"; \
-    echo "  NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL"; \
-    echo "  NEXT_PUBLIC_ENABLE_ANALYTICS=$NEXT_PUBLIC_ENABLE_ANALYTICS"; \
-    echo "  NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID"; \
-    echo "  NODE_ENV=$NODE_ENV"; \
+    echo "Environment Variables (with values):"; \
+    echo "  NEXT_PUBLIC_API_URL='$NEXT_PUBLIC_API_URL'"; \
+    echo "  NEXT_PUBLIC_API_BASE_URL='$NEXT_PUBLIC_API_BASE_URL'"; \
+    echo "  NEXT_PUBLIC_SITE_URL='$NEXT_PUBLIC_SITE_URL'"; \
+    echo "  NEXT_PUBLIC_ENABLE_ANALYTICS='$NEXT_PUBLIC_ENABLE_ANALYTICS'"; \
+    echo "  NEXT_PUBLIC_GTM_ID='$NEXT_PUBLIC_GTM_ID'"; \
+    echo "  NEXT_PUBLIC_BETTER_AUTH_URL='$NEXT_PUBLIC_BETTER_AUTH_URL'"; \
+    echo "  NODE_ENV='$NODE_ENV'"; \
     echo ""; \
-    echo "🔨 Building Next.js application..."; \
+    echo "Validating required variables..."; \
+    MISSING_VARS=""; \
+    [ -z "$NEXT_PUBLIC_API_URL" ] && MISSING_VARS="$MISSING_VARS NEXT_PUBLIC_API_URL"; \
+    [ -z "$NEXT_PUBLIC_SITE_URL" ] && MISSING_VARS="$MISSING_VARS NEXT_PUBLIC_SITE_URL"; \
+    if [ -n "$MISSING_VARS" ]; then \
+        echo "❌ ERROR: Missing required environment variables:$MISSING_VARS" >&2; \
+        exit 1; \
+    fi; \
+    echo "✅ All required variables present"; \
+    echo ""; \
+    echo "========================================"; \
+    echo "🔨 Starting Next.js build..."; \
+    echo "========================================"; \
     npm run build 2>&1 | tee /tmp/build.log; \
-    BUILD_EXIT_CODE=$?; \
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}; \
+    echo ""; \
+    echo "Build process exit code: $BUILD_EXIT_CODE"; \
     if [ $BUILD_EXIT_CODE -ne 0 ]; then \
         echo "" >&2; \
-        echo "❌ ERROR: npm run build failed with exit code $BUILD_EXIT_CODE" >&2; \
         echo "========================================" >&2; \
-        echo "Last 100 lines of build output:" >&2; \
+        echo "❌ BUILD FAILED - Exit Code: $BUILD_EXIT_CODE" >&2; \
         echo "========================================" >&2; \
-        tail -100 /tmp/build.log 2>/dev/null || cat /tmp/build.log 2>/dev/null || echo "No build log available" >&2; \
+        echo "" >&2; \
+        echo "📋 Full build log:" >&2; \
+        cat /tmp/build.log >&2; \
+        echo "" >&2; \
         echo "========================================" >&2; \
         exit $BUILD_EXIT_CODE; \
     fi; \
