@@ -520,7 +520,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
             </TabsContent>
 
             <TabsContent value="media">
-              <MediaGallery companyId={companyId} />
+              <MediaGallery companyId={companyId} planFeatures={planFeatures} />
             </TabsContent>
 
             <TabsContent value="leads">

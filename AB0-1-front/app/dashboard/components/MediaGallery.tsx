@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ImageIcon, Upload, Video, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,21 +9,50 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { companiesApi, fetchApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useGalleryContext7 } from '@/app/context7/provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
+
+function hasMediaUploadFeature(planFeatures: any): boolean | null {
+  if (!planFeatures) return null;
+  if (typeof planFeatures === 'string') {
+    try {
+      return hasMediaUploadFeature(JSON.parse(planFeatures));
+    } catch {
+      return null;
+    }
+  }
+  const candidates = [
+    planFeatures.media_upload,
+    planFeatures.media_gallery,
+    planFeatures.allow_media_uploads,
+    planFeatures.gallery_uploads,
+    planFeatures.media,
+  ];
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null) continue;
+    if (typeof candidate === 'string') {
+      return candidate === 'true';
+    }
+    return !!candidate;
+  }
+  return null;
+}
 
 interface MediaGalleryProps {
   companyId: string;
   showControls?: boolean;
   showHeader?: boolean;
+  planFeatures?: any;
 }
 
-export default function MediaGallery({ companyId, showControls = true, showHeader = true }: MediaGalleryProps) {
+export default function MediaGallery({ companyId, showControls = true, showHeader = true, planFeatures }: MediaGalleryProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { gallery, dispatchGallery } = useGalleryContext7();
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
-  const [canUpload, setCanUpload] = useState(false);
+  const [companyData, setCompanyData] = useState<any>(null);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -36,7 +65,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         dispatchGallery({ type: 'loading', loading: true });
         try {
           const company = await companiesApi.getById(Number(companyId));
-          setCanUpload(!!(company?.featured || company?.verified));
+          setCompanyData(company);
         } catch {}
         try {
           const photosResp = await fetchApi<{ photos: string[] }>('/company_dashboard/media');
@@ -68,8 +97,21 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
     load();
   }, [companyId]);
 
+  const isSuperAdmin = user?.role === 'admin';
+  const isCompanyMember = user?.role === 'company' && Number(user.company_id) === Number(companyId);
+  const planFlag = useMemo(() => hasMediaUploadFeature(planFeatures), [planFeatures]);
+  const companyFlag = useMemo(
+    () =>
+      hasMediaUploadFeature(companyData?.plan_features) ??
+      (companyData?.media_upload_allowed ?? (companyData?.featured || companyData?.verified)),
+    [companyData]
+  );
+
+  const canUpload = Boolean(isSuperAdmin || (isCompanyMember && (planFlag ?? companyFlag ?? false)));
+  const controlsVisible = showControls && canUpload;
+
   const handleUpload = () => {
-    if (!canUpload || !showControls) return;
+    if (!controlsVisible) return;
     fileInputRef.current?.click();
   };
 
@@ -102,7 +144,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
   };
 
   const onAddVideo = async () => {
-    if (!videoUrl || !showControls) return;
+    if (!videoUrl || !controlsVisible) return;
     
     try {
       const resp = await fetchApi('/company_dashboard/add_video', {
@@ -141,7 +183,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
             <h2 className="text-2xl font-bold">Galeria de Mídia</h2>
             <p className="text-muted-foreground">Fotos e vídeos da empresa</p>
           </div>
-          {showControls && (
+          {controlsVisible && (
             <div className="flex gap-2">
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFilesSelected} />
               <Button onClick={handleUpload} disabled={!canUpload}>
@@ -197,7 +239,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 <p className="text-muted-foreground text-center mb-4">
                   Adicione fotos para mostrar seus projetos e instalações.
                 </p>
-                {showControls && (
+                {controlsVisible && (
                   <Button onClick={handleUpload} disabled={!canUpload}>
                     <Upload className="h-4 w-4 mr-2" />
                     Upload de Fotos
@@ -242,7 +284,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 <p className="text-muted-foreground text-center mb-4">
                   Adicione vídeos do YouTube com suas instalações e projetos.
                 </p>
-                {showControls && (
+                {controlsVisible && (
                   <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Vídeo
@@ -254,7 +296,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         </TabsContent>
       </Tabs>
 
-      <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
+      <Dialog open={showVideoDialog && controlsVisible} onOpenChange={setShowVideoDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar Vídeo do YouTube</DialogTitle>

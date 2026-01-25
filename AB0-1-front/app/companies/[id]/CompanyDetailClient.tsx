@@ -111,6 +111,20 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     return isAuthenticated && user?.role === "company" && user?.company_id === companyId;
   }, [isAuthenticated, user?.role, user?.company_id, companyId]);
 
+  const mediaUploadAllowed = useMemo(() => {
+    return Boolean(
+      (currentCompany as any)?.media_upload_allowed ||
+      currentCompany?.featured ||
+      currentCompany?.verified
+    );
+  }, [currentCompany?.featured, currentCompany?.verified, currentCompany]);
+
+  const canManageMedia = useMemo(() => {
+    if (!isAuthenticated) return false;
+    if (user?.role === 'admin') return true;
+    return user?.role === 'company' && user?.company_id === companyId && mediaUploadAllowed;
+  }, [companyId, isAuthenticated, mediaUploadAllowed, user?.company_id, user?.role]);
+
   const extendedCompany = currentCompany as ExtendedCompany;
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
@@ -320,7 +334,11 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="gallery" className="mt-0 focus-visible:outline-none">
-                    <MediaGallery companyId={companyId.toString()} />
+                    <MediaGallery
+                      companyId={companyId.toString()}
+                      showControls={canManageMedia}
+                      planFeatures={(currentCompany as any)?.plan_features}
+                    />
                   </TabsContent>
 
                   <TabsContent value="faq" className="mt-0 focus-visible:outline-none">

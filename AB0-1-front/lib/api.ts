@@ -146,6 +146,8 @@ export interface Company {
   plan_status?: 'active' | 'inactive' | 'trial' | 'expired';
   plan_id?: number | null;
   has_paid_plan?: boolean;
+  plan_features?: Record<string, any>;
+  media_upload_allowed?: boolean;
   project_types?: string[];
   services_offered?: string[];
   social_links?: {

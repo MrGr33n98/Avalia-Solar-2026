@@ -347,22 +347,45 @@ class Company < ApplicationRecord
   end
 
   def financing_feature_allowed?
+    flag = feature_enabled_from_plan?(:financing_simulation)
+    flag.nil? ? has_paid_plan? : flag
+  rescue StandardError
+    has_paid_plan?
+  end
+
+  def media_upload_allowed?
+    flag = feature_enabled_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media)
+    flag.nil? ? (featured? || verified? || has_paid_plan?) : flag
+  rescue StandardError
+    featured? || verified? || has_paid_plan?
+  end
+
+  def resolved_plan_features
+    return @resolved_plan_features if defined?(@resolved_plan_features)
+
     raw_features =
       if respond_to?(:effective_plan_features) && effective_plan_features.present?
         effective_plan_features
       elsif respond_to?(:plan_features) && plan_features.present?
         plan_features
       elsif plan&.respond_to?(:features) && plan.features.present?
-        JSON.parse(plan.features) rescue {}
+        plan.features
       else
         {}
       end
 
-    flag = raw_features.is_a?(Hash) ? (raw_features[:financing_simulation] || raw_features['financing_simulation']) : nil
-    allowed = ActiveModel::Type::Boolean.new.cast(flag)
-    allowed.nil? ? has_paid_plan? : allowed
+    @resolved_plan_features = parse_features(raw_features)
   rescue StandardError
-    has_paid_plan?
+    @resolved_plan_features = {}
+  end
+
+  def feature_enabled_from_plan?(*keys)
+    features = resolved_plan_features
+    keys.flatten.each do |key|
+      value = features[key.to_s] || features[key.to_sym]
+      return ActiveModel::Type::Boolean.new.cast(value) unless value.nil?
+    end
+    nil
   end
 
   def financing_tab_visible?
@@ -384,6 +407,17 @@ class Company < ApplicationRecord
   end
 
   private
+
+  def parse_features(raw_features)
+    case raw_features
+    when String
+      JSON.parse(raw_features) rescue (YAML.safe_load(raw_features) rescue {})
+    when Hash
+      raw_features
+    else
+      {}
+    end
+  end
 
   def generate_attachment_url(attachment)
     return nil unless attachment&.attached?

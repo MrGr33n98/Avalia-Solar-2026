@@ -25,6 +25,10 @@ ActiveAdmin.register Company do
     link_to 'Suspend', suspend_admin_company_path(resource), method: :put, class: 'member_link'
   end
 
+  action_item :add_product, only: :show do
+    link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
+  end
+
   member_action :approve, method: :put do
     resource.approve!(current_admin_user)
     redirect_to resource_path, notice: "Company approved!"
@@ -60,7 +64,7 @@ ActiveAdmin.register Company do
     :email_public, :phone_alt, :facebook, :instagram,
     :linkedin, :description,
     :moderation_status, :rejected_reason, :financing_enabled,
-    project_types: [], services_offered: [], category_ids: [],
+    project_types: [], services_offered: [], category_ids: [], media_assets: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
     company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]
@@ -201,6 +205,7 @@ end
     f.inputs 'Media' do
       f.input :banner, as: :file
       f.input :logo, as: :file
+      f.input :media_assets, as: :file, input_html: { multiple: true }, hint: 'Envie uma ou mais imagens para a galeria'
     end
 
     f.inputs 'CTAs' do
@@ -373,6 +378,24 @@ end
             end
           end
         end
+      end
+    end
+
+    panel 'Produtos' do
+      table_for resource.products do
+        column :id
+        column :name
+        column :price
+        column :created_at
+        column 'Ações' do |product|
+          links = []
+          links << link_to('Ver', admin_product_path(product))
+          links << link_to('Editar', edit_admin_product_path(product))
+          safe_join(links, ' | ')
+        end
+      end
+      div class: 'mt-2' do
+        link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id), class: 'button'
       end
     end
   end

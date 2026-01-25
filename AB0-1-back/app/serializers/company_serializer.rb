@@ -4,6 +4,7 @@ class CompanySerializer < ActiveModel::Serializer
   attributes :id, :name, :description, :website,
              :state, :city, :address, :phone, :whatsapp,
              :email_public, :featured, :verified,
+             :media_upload_allowed,
              :rating_avg, :rating_count,
              :banner_url, :logo_url,
              :created_at, :updated_at,

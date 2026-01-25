@@ -1,8 +1,8 @@
-# app/controllers/api/v1/company_dashboard_controller.rb
+﻿# app/controllers/api/v1/company_dashboard_controller.rb
 module Api
   module V1
     class CompanyDashboardController < BaseController
-      before_action :authenticate_company_user!
+      before_action :authenticate_company_user_or_admin!
       before_action :set_company
 
       # GET /api/v1/company_dashboard/stats
@@ -57,7 +57,7 @@ module Api
       def update_info
         if current_user&.role == 'admin'
           if @company.update(company_params)
-            return render json: { message: 'Alterações aplicadas com sucesso' }, status: :ok
+            return render json: { message: 'AlteraÃ§Ãµes aplicadas com sucesso' }, status: :ok
           else
             return render json: { errors: @company.errors }, status: :unprocessable_entity
           end
@@ -80,7 +80,7 @@ module Api
         )
 
         render json: {
-          message: direct_update_attrs.present? ? 'Alterações aplicadas e enviadas para aprovação' : 'Alterações enviadas para aprovação',
+          message: direct_update_attrs.present? ? 'AlteraÃ§Ãµes aplicadas e enviadas para aprovaÃ§Ã£o' : 'AlteraÃ§Ãµes enviadas para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
       end
@@ -98,7 +98,7 @@ module Api
         )
 
         render json: {
-          message: 'Solicitação de categorias enviada para aprovação',
+          message: 'SolicitaÃ§Ã£o de categorias enviada para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
       end
@@ -116,7 +116,7 @@ module Api
         )
 
         render json: {
-          message: 'Solicitação de remoção enviada para aprovação',
+          message: 'SolicitaÃ§Ã£o de remoÃ§Ã£o enviada para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
       end
@@ -131,7 +131,7 @@ module Api
         )
 
         render json: {
-          message: 'Configurações de CTAs enviadas para aprovação',
+          message: 'ConfiguraÃ§Ãµes de CTAs enviadas para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
       end
@@ -142,7 +142,7 @@ module Api
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
         unless %w[image/png image/jpeg].include?(file.content_type)
-          return render json: { error: 'Formato inválido. Use PNG ou JPG' }, status: :unprocessable_entity
+          return render json: { error: 'Formato invÃ¡lido. Use PNG ou JPG' }, status: :unprocessable_entity
         end
         if file.size.to_i > 2.megabytes
           return render json: { error: 'Logo acima de 2MB' }, status: :unprocessable_entity
@@ -157,7 +157,7 @@ module Api
           status: 'pending'
         )
 
-        render json: { message: 'Logo enviada para aprovação', pending_change: pending_change }, status: :created
+        render json: { message: 'Logo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # POST /api/v1/company_dashboard/update_banner
@@ -166,7 +166,7 @@ module Api
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
         unless %w[image/png image/jpeg].include?(file.content_type)
-          return render json: { error: 'Formato inválido. Use PNG ou JPG' }, status: :unprocessable_entity
+          return render json: { error: 'Formato invÃ¡lido. Use PNG ou JPG' }, status: :unprocessable_entity
         end
         if file.size.to_i > 5.megabytes
           return render json: { error: 'Banner acima de 5MB' }, status: :unprocessable_entity
@@ -178,10 +178,10 @@ module Api
           meta = blob.metadata || {}
           w, h = meta['width'], meta['height']
           if w && h && (w < 1920 || h < 600)
-            return render json: { error: 'Dimensões mínimas recomendadas: 1920x600px' }, status: :unprocessable_entity
+            return render json: { error: 'DimensÃµes mÃ­nimas recomendadas: 1920x600px' }, status: :unprocessable_entity
           end
         rescue => e
-          Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
+          Rails.logger.warn "Falha ao analisar dimensÃµes do banner: #{e.message}"
         end
 
         pending_change = @company.pending_changes.create!(
@@ -191,7 +191,7 @@ module Api
           status: 'pending'
         )
 
-        render json: { message: 'Banner enviado para aprovação', pending_change: pending_change }, status: :created
+        render json: { message: 'Banner enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # GET /api/v1/company_dashboard/pending_changes
@@ -214,8 +214,8 @@ module Api
           @company.pending_changes.approved.where('approved_at > ?', 7.days.ago).each do |change|
             notifications << {
               type: 'approval',
-              title: 'Alteração Aprovada',
-              message: "Sua alteração de #{change.change_type.humanize} foi aprovada",
+              title: 'AlteraÃ§Ã£o Aprovada',
+              message: "Sua alteraÃ§Ã£o de #{change.change_type.humanize} foi aprovada",
               timestamp: change.approved_at,
               read: false
             }
@@ -226,8 +226,8 @@ module Api
         @company&.reviews&.where('created_at > ?', 7.days.ago)&.each do |review|
           notifications << {
             type: 'review',
-            title: 'Nova Avaliação',
-            message: "Nova avaliação de #{review.rating} estrelas recebida",
+            title: 'Nova AvaliaÃ§Ã£o',
+            message: "Nova avaliaÃ§Ã£o de #{review.rating} estrelas recebida",
             timestamp: review.created_at,
             read: false
           }
@@ -264,11 +264,11 @@ module Api
 
       # POST /api/v1/company_dashboard/upload_media
       def upload_media
-        unless current_user&.role == 'company'
+        unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
 
-        unless @company.featured || @company.verified
+        unless media_upload_permitted?
           return render json: { error: 'Plano necessário para upload de mídia' }, status: :forbidden
         end
 
@@ -298,16 +298,16 @@ module Api
           status: 'pending'
         )
 
-        render json: { message: 'Mídia enviada para aprovação', pending_change: pending_change }, status: :created
+        render json: { message: 'MÃ­dia enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # POST /api/v1/company_dashboard/add_video
       def add_video
-        unless current_user&.role == 'company'
+        unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
-        unless @company.featured || @company.verified
-          return render json: { error: 'Plano necessário para adicionar vídeo' }, status: :forbidden
+        unless media_upload_permitted?
+          return render json: { error: 'Plano necessÃ¡rio para adicionar vÃ­deo' }, status: :forbidden
         end
         url = params[:url].to_s
         result = Videos::YouTubeExtractor.extract(url)
@@ -325,17 +325,20 @@ module Api
           user_id: current_user.id,
           status: 'pending'
         )
-        render json: { message: 'Vídeo enviado para aprovação', pending_change: pending_change }, status: :created
+        render json: { message: 'VÃ­deo enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # DELETE /api/v1/company_dashboard/remove_video
       def remove_video
-        unless current_user&.role == 'company'
+        unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
+        end
+        unless media_upload_permitted?
+          return render json: { error: 'Plano necessÃ¡rio para gerenciar vÃ­deos' }, status: :forbidden
         end
         vid = params[:video_id].to_s.presence || params[:id].to_s
         if vid.blank?
-          return render json: { error: 'Parâmetro video_id ausente' }, status: :unprocessable_entity
+          return render json: { error: 'ParÃ¢metro video_id ausente' }, status: :unprocessable_entity
         end
         pending_change = @company.pending_changes.create!(
           change_type: 'video',
@@ -343,16 +346,27 @@ module Api
           user_id: current_user.id,
           status: 'pending'
         )
-        render json: { message: 'Remoção de vídeo enviada para aprovação', pending_change: pending_change }, status: :created
+        render json: { message: 'RemoÃ§Ã£o de vÃ­deo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       private
 
       def set_company
-        @company = current_user.company
+        @company =
+          if current_user&.admin?
+            Company.find_by(id: params[:company_id] || params[:id] || params.dig(:company, :id))
+          else
+            current_user&.company
+          end
+
         unless @company
           render json: { error: 'Company not found' }, status: :not_found and return
         end
+      end
+
+      def authenticate_company_user_or_admin!
+        return if current_user&.admin?
+        authenticate_company_user!
       end
 
       def authenticate_company_user!
@@ -362,6 +376,13 @@ module Api
         unless current_user&.active?
           return render json: { error: 'Access pending approval' }, status: :forbidden
         end
+      end
+
+      def media_upload_permitted?
+        return true if current_user&.admin?
+        return false unless @company
+
+        @company.media_upload_allowed?
       end
 
       def company_params
@@ -391,3 +412,6 @@ module Api
     end
   end
 end
+
+
+
