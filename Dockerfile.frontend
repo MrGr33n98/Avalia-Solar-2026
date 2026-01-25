@@ -62,19 +62,43 @@ ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${NEXT_PUBLIC_LINKEDIN_CLIENT_ID}
 
 # --- Build da Aplicação ---
+# Valida variáveis de ambiente críticas antes do build
 RUN set -euo pipefail; \
     echo "📦 Building Next.js app..."; \
     echo "Node version: $(node -v)"; \
     echo "NPM version: $(npm -v)"; \
+    echo ""; \
     echo "Environment variables:"; \
     echo "  NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"; \
+    echo "  NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}"; \
     echo "  NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}"; \
-    npm run build || ( \
-        echo "❌ ERROR: npm run build failed" >&2; \
-        echo "Last 50 lines of build output:" >&2; \
-        tail -50 /tmp/build.log 2>/dev/null || true; \
+    echo "  NEXT_PUBLIC_ENABLE_ANALYTICS=${NEXT_PUBLIC_ENABLE_ANALYTICS}"; \
+    echo "  NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}"; \
+    echo "  NODE_ENV=${NODE_ENV}"; \
+    echo ""; \
+    if [ -z "${NEXT_PUBLIC_API_URL}" ] || [ -z "${NEXT_PUBLIC_SITE_URL}" ]; then \
+        echo "❌ ERROR: Required environment variables are not set" >&2; \
+        echo "  NEXT_PUBLIC_API_URL and NEXT_PUBLIC_SITE_URL must be set" >&2; \
         exit 1; \
-    )
+    fi; \
+    echo "✅ Environment variables validated"; \
+    echo ""; \
+    echo "📝 Running TypeScript check..."; \
+    npx tsc --noEmit || echo "⚠️  TypeScript check warnings (continuing build)"; \
+    echo ""; \
+    echo "🔨 Building Next.js application..."; \
+    npm run build 2>&1 | tee /tmp/build.log || ( \
+        echo "" >&2; \
+        echo "❌ ERROR: npm run build failed with exit code $?" >&2; \
+        echo "========================================" >&2; \
+        echo "Last 100 lines of build output:" >&2; \
+        echo "========================================" >&2; \
+        tail -100 /tmp/build.log 2>/dev/null || cat /tmp/build.log 2>/dev/null || echo "No build log available" >&2; \
+        echo "========================================" >&2; \
+        exit 1; \
+    ); \
+    echo ""; \
+    echo "✅ Build completed successfully"
 
 # Production stage
 FROM node:20-alpine
