@@ -437,7 +437,7 @@ module Api
        end
 
        def calculate_market_share(company, category_id)
-         total_reviews = Company.joins(:categories).where(categories: { id: category_id }).sum(:reviews_count)
+         total_reviews = ::Company.joins(:categories).where(categories: { id: category_id }).sum(:reviews_count)
          company_reviews = company.reviews_count || 0
          total_reviews > 0 ? (company_reviews.to_f / total_reviews * 100).round(2) : 0
        end
