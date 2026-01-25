@@ -37,7 +37,8 @@ Rails.application.configure do
   # --- SEGURANÇA E SSL ---
   # Como o Nginx Proxy Manager cuida do SSL, informamos ao Rails para assumir HTTPS
   config.assume_ssl = true
-  config.force_ssl = true
+  # Disable force_ssl to prevent redirect loops in Docker/Proxy environments
+  config.force_ssl = false
 
   # Logs e Monitoramento
   config.log_level = :info

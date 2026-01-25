@@ -75,6 +75,13 @@ services:
       SPACES_REGION: ${SPACES_REGION:-nyc3}
       SPACES_BUCKET: ${SPACES_BUCKET:-avalia-backups}
       SPACES_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      # Brevo SMTP Configuration
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
+      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
+      SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
     ports:
       - "3001:3001"
     networks:
@@ -109,6 +116,7 @@ services:
       LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-G-9SD4S6S434}
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_API_BASE_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"

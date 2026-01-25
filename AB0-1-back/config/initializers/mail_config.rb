@@ -12,16 +12,16 @@ Rails.application.configure do
 
   # Delivery method configuration
   if Rails.env.production?
-    smtp_username = ENV['SMTP_USERNAME']
-    smtp_password = ENV['SMTP_PASSWORD']
+    smtp_username = ENV['BREVO_SMTP_USER'] || ENV['SMTP_USERNAME']
+    smtp_password = ENV['BREVO_SMTP_PASS'] || ENV['SMTP_PASSWORD']
 
     if smtp_username.present? && smtp_password.present?
-      # Production: Use SMTP (e.g., SendGrid, Mailgun, AWS SES)
+      # Production: Use SMTP (e.g., Brevo, SendGrid, Mailgun)
       config.action_mailer.delivery_method = :smtp
       config.action_mailer.smtp_settings = {
-        address: ENV.fetch('SMTP_ADDRESS', 'smtp.sendgrid.net'),
+        address: ENV.fetch('SMTP_ADDRESS', 'smtp-relay.brevo.com'),
         port: ENV.fetch('SMTP_PORT', 587).to_i,
-        domain: ENV.fetch('SMTP_DOMAIN', 'ab0-1.com'),
+        domain: ENV.fetch('SMTP_DOMAIN', 'avalia-solar.com.br'),
         user_name: smtp_username,
         password: smtp_password,
         authentication: :plain,
@@ -67,6 +67,12 @@ Rails.application.configure do
 end
 
 # SMTP Provider Options:
+#
+# Brevo (formerly Sendinblue):
+# SMTP_ADDRESS=smtp-relay.brevo.com
+# SMTP_PORT=587
+# BREVO_SMTP_USER=your_email@domain.com
+# BREVO_SMTP_PASS=your_brevo_smtp_password
 #
 # SendGrid:
 # SMTP_ADDRESS=smtp.sendgrid.net
