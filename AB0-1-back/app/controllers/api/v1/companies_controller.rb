@@ -212,10 +212,10 @@ module Api
       private
 
       def set_company
-        @company = ::Company.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Company not found' }, status: :not_found and return
-        nil
+        @company = find_company_by_id_or_slug(params[:id])
+        unless @company
+          render json: { error: 'Company not found' }, status: :not_found and return
+        end
       end
 
       def company_json_attributes(company)
@@ -330,7 +330,8 @@ module Api
       private
 
        def historical_data
-         company = Company.find(params[:id])
+         company = find_company_by_id_or_slug(params[:id])
+         return { error: 'Company not found' } unless company
          days = params[:days]&.to_i || 30
          data = generate_historical_data(company, days)
          { data: data }
@@ -339,7 +340,8 @@ module Api
        end
 
        def reviews_data
-         company = Company.find(params[:id])
+         company = find_company_by_id_or_slug(params[:id])
+         return { error: 'Company not found' } unless company
          reviews = company.reviews.includes(:user)
          distribution = reviews.group(:rating).count
          {
@@ -519,6 +521,19 @@ module Api
 
         Rails.logger.warn("[AccessDenied] analytics user=#{current_user&.id} role=#{current_user&.role} company_id=#{current_user&.company_id} target_company=#{@company&.id} path=#{request.path}")
         render json: { error: 'Forbidden' }, status: :forbidden
+      end
+
+      def find_company_by_id_or_slug(raw_id)
+        return nil if raw_id.blank?
+
+        candidate_id = raw_id.to_s[/\A\d+/]
+        company = Company.find_by(id: candidate_id) if candidate_id.present?
+
+        if company.nil? && Company.column_names.include?('slug')
+          company = Company.find_by(slug: raw_id)
+        end
+
+        company
       end
     end
   end

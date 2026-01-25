@@ -58,6 +58,10 @@ class User < ApplicationRecord
   def review_user?
     role == 'review'
   end
+
+  def reviewer?
+    review_user?
+  end
   
   def regular_user?
     role == 'user'

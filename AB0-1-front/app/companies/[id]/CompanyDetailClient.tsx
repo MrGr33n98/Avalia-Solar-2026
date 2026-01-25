@@ -107,6 +107,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     return Number(id);
   }, [currentCompany?.id, company?.id]);
 
+  const isAdmin = user?.role === 'admin';
+  const isReviewer = user?.role === 'review';
+
   const canEdit = useMemo(() => {
     return isAuthenticated && user?.role === "company" && user?.company_id === companyId;
   }, [isAuthenticated, user?.role, user?.company_id, companyId]);
@@ -118,6 +121,12 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       currentCompany?.verified
     );
   }, [currentCompany?.featured, currentCompany?.verified, currentCompany]);
+
+  const canViewAnalytics = useMemo(() => {
+    const companyIsActive = currentCompany?.status === 'active';
+    if (isAdmin || isReviewer) return true;
+    return isAuthenticated && user?.role === 'company' && user?.company_id === companyId && companyIsActive;
+  }, [companyId, currentCompany?.status, isAdmin, isReviewer, isAuthenticated, user?.company_id, user?.role]);
 
   const canManageMedia = useMemo(() => {
     if (!isAuthenticated) return false;
@@ -196,7 +205,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         setProducts(pData || []);
         setReviews(rData || []);
 
-        if (analyticsEnabled) {
+        if (analyticsEnabled && canViewAnalytics) {
           try {
             const [rAnalytics, tSources, hData] = await Promise.all([
               analyticsApi.getReviewAnalytics(companyId),
@@ -208,6 +217,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
             setHistoricalData(hData);
           } catch (analyticsError) {
             console.error("Erro ao carregar analytics:", analyticsError);
+            setReviewAnalytics(null);
+            setTrafficSources(null);
+            setHistoricalData(null);
           }
         }
       } catch (err) {
@@ -220,7 +232,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     };
 
     fetchData();
-  }, [companyId, analyticsEnabled, timeRange]);
+  }, [companyId, analyticsEnabled, canViewAnalytics, timeRange]);
 
   const bannerUrl = useMemo(() => {
     if (!currentCompany?.banner_url) return null;

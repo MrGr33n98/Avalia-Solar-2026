@@ -530,10 +530,10 @@ export const api = {
       } catch (error: any) {
         lastError = error;
         
-        // Retry if it's a timeout, network failure, or 5xx/429/404
+        // Retry if it's a timeout, network failure, or 5xx/429 (avoid retrying 4xx like 403/404)
         const isRetryable = error.message === 'Request timeout' || 
                            error.message.includes('Network request failed') ||
-                           error.message.match(/\[(5\d{2}|429|404)\]/);
+                           error.message.match(/\[(5\d{2}|429)\]/);
                            
         if (!isRetryable || attempt === maxRetries - 1) {
           if (error.context?.status === 404) {
