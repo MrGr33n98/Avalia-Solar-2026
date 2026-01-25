@@ -25,6 +25,9 @@ import { Company, Product, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { productsApiSafe, reviewsApiSafe } from "@/lib/api-client";
 
+// GTM Tracking
+import { usePageTracking } from "@/hooks/usePageTracking";
+
 import analyticsApi, {
   ReviewAnalytics,
   TrafficSource,
@@ -57,6 +60,24 @@ interface ExtendedCompany extends Company {
 
 export default function CompanyDetailClient({ company }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
+
+  // GTM Page Tracking
+  usePageTracking({
+    type: 'company',
+    title: `${company.name} - Empresa de Energia Solar`,
+    additionalData: {
+      company: {
+        id: company.id,
+        name: company.name,
+        slug: company.slug,
+        category: company.category_name,
+        city: company.city,
+        state: company.state,
+        rating: company.rating,
+        verified: company.verified,
+      },
+    },
+  });
 
   // Estados (mantidos)
   const [currentCompany, setCurrentCompany] = useState<Company>(company);

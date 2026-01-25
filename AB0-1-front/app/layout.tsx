@@ -6,6 +6,7 @@ import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import JsonLd from '@/components/JsonLd';
+import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 
 
 export const metadata: Metadata = {
@@ -66,7 +67,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        {/* Google Tag Manager */}
+        <GoogleTagManager gtmId={GTM_ID} />
+      </head>
       <body suppressHydrationWarning>
+        {/* Google Tag Manager (noscript) */}
+        <GoogleTagManagerNoScript gtmId={GTM_ID} />
+        
+        {/* Inicializar Data Layer */}
+        <Script
+          id="gtm-init-datalayer"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];`,
+          }}
+        />
+        
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

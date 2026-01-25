@@ -1,4 +1,14 @@
+'use client';
+
+import { usePageTracking } from '@/hooks/usePageTracking';
+
 export default function ContactPage() {
+  // GTM Page Tracking
+  usePageTracking({
+    type: 'other',
+    title: 'Contato - Avalia Solar',
+  });
+
   return (
     <div className="min-h-screen py-16 px-4">
       <div className="max-w-3xl mx-auto text-center">

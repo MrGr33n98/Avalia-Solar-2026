@@ -23,6 +23,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
 import type { Category, Company, Review } from '@/lib/api';
+import { usePageTracking } from '@/hooks/usePageTracking';
+import { trackCompanyClick, trackCategoryClick, trackCTAClick } from '@/lib/dataLayer';
 
 function SectionShell({
   children,
@@ -102,6 +104,13 @@ function SkeletonCompanyCard() {
 }
 
 export default function Home() {
+  // GTM Page Tracking
+  usePageTracking({
+    type: 'homepage',
+    title: 'Avalia Solar - Encontre Empresas de Energia Solar',
+    sections: ['hero', 'categories', 'companies', 'testimonials'],
+  });
+
   const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);

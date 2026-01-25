@@ -11,8 +11,15 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { usePageTracking } from '@/hooks/usePageTracking';
 
 export default function ProductsPage() {
+  // GTM Page Tracking
+  usePageTracking({
+    type: 'other',
+    title: 'Produtos - Avalia Solar',
+  });
+
   const { products, loading, error } = useProducts();
   
   // Pagination State (Prepared for future backend integration)

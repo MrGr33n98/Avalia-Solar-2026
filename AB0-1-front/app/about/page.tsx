@@ -1,8 +1,15 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePageTracking } from '@/hooks/usePageTracking';
 
 export default function AboutPage() {
+  // GTM Page Tracking
+  usePageTracking({
+    type: 'other',
+    title: 'Sobre Nós - Avalia Solar',
+  });
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-4xl font-bold mb-8 text-center">Sobre a Avalia Solar</h1>
