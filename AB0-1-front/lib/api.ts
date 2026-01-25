@@ -933,6 +933,20 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ user: userData, terms_accepted: userData.terms_accepted ?? true }),
     }),
+  forgotPassword: (email: string) =>
+    fetchApi('/auth/forgot_password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string, password_confirmation?: string) =>
+    fetchApi('/auth/reset_password', {
+      method: 'POST',
+      body: JSON.stringify({
+        token,
+        password,
+        password_confirmation: password_confirmation || password,
+      }),
+    }),
   logout: async () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');

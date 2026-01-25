@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { Loader2, AlertCircle, CheckCircle, ArrowRight, Upload, X, User } from 'lucide-react';
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { fetchApi } from '@/lib/api';
 import { formatPhone } from '@/app/dashboard/utils';
 import { useRouter } from 'next/navigation';
@@ -33,6 +34,7 @@ interface FormData {
   phone: string;
   city: string;
   state: string;
+  termsAccepted: boolean;
 }
 
 export default function RegisterUserTab() {
@@ -51,9 +53,18 @@ export default function RegisterUserTab() {
     watch,
     reset,
     formState: { errors },
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    defaultValues: {
+      termsAccepted: false,
+    },
+  });
 
   const password = watch('password');
+  const termsAccepted = watch('termsAccepted');
+
+  useEffect(() => {
+    register('termsAccepted', { required: 'Você precisa aceitar os termos para continuar.' });
+  }, [register]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -96,17 +107,34 @@ export default function RegisterUserTab() {
       formData.append('user[city]', data.city);
       if (data.state) formData.append('user[state]', data.state);
       if (data.phone) formData.append('user[phone]', data.phone);
+      formData.append('terms_accepted', data.termsAccepted ? 'true' : 'false');
+      formData.append('user[terms_accepted]', data.termsAccepted ? 'true' : 'false');
       if (avatarFile) formData.append('user[avatar]', avatarFile);
 
-      await fetchApi('/users', {
+      await fetchApi('/auth/register', {
         method: 'POST',
         body: formData,
       });
       setIsSuccess(true);
+      reset({
+        name: '',
+        email: '',
+        password: '',
+        passwordConfirmation: '',
+        phone: '',
+        city: '',
+        state: '',
+        termsAccepted: false,
+      });
+      removeAvatar();
     } catch (err: any) {
-      console.error('Registration error:', err);
+      const status = err?.context?.status;
       const message = err?.message || 'Ocorreu um erro ao processar o cadastro.';
-      setSubmitError(message);
+      if (status === 422 || `${message}`.includes('[422]')) {
+        setSubmitError('Você deve aceitar os termos e corrigir os campos destacados.');
+      } else {
+        setSubmitError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -242,6 +270,34 @@ export default function RegisterUserTab() {
           <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
           <Input id="confirmPassword" type="password" {...register('passwordConfirmation', { validate: (val) => val === password || 'As senhas não conferem' })} className={errors.passwordConfirmation ? 'border-red-500' : ''} />
           {errors.passwordConfirmation && <span className="text-xs text-red-500">{errors.passwordConfirmation.message}</span>}
+        </div>
+
+        <div className="flex items-start space-x-3 pt-2">
+          <Checkbox
+            id="terms"
+            checked={termsAccepted}
+            onCheckedChange={(checked) => setValue('termsAccepted', !!checked, { shouldValidate: true })}
+          />
+          <div className="space-y-1">
+            <Label htmlFor="terms" className="font-medium text-slate-700">
+              Aceito os termos de uso e privacidade
+            </Label>
+            <p className="text-xs text-slate-500">
+              Ao continuar, você concorda com os{' '}
+              <a href="/terms" className="text-emerald-600 hover:text-emerald-700 underline">
+                Termos de Uso
+              </a>{' '}
+              e a{' '}
+              <a href="/privacy" className="text-emerald-600 hover:text-emerald-700 underline">
+                Política de Privacidade
+              </a>.
+            </p>
+            {errors.termsAccepted && (
+              <span className="text-xs text-red-500">
+                {errors.termsAccepted.message || 'Você precisa aceitar os termos para continuar.'}
+              </span>
+            )}
+          </div>
         </div>
 
         <Button type="submit" className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white mt-4" disabled={isLoading}>

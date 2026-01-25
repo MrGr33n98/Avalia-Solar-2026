@@ -12,6 +12,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signInWithLinkedIn: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string, passwordConfirmation?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,7 +85,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, isAuthenticated, login, logout, signInWithLinkedIn }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error,
+      isAuthenticated,
+      login,
+      logout,
+      signInWithLinkedIn,
+      forgotPassword: (email: string) => authApi.forgotPassword(email),
+      resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
+        authApi.resetPassword(token, password, passwordConfirmation),
+    }}>
       {children}
     </AuthContext.Provider>
   );
