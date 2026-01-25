@@ -51,15 +51,28 @@ ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 ENV SENTRY_ORG=${SENTRY_ORG}
 ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+# Expose build-time environment variables to Next.js
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+ENV NEXT_PUBLIC_ENABLE_ANALYTICS=${NEXT_PUBLIC_ENABLE_ANALYTICS}
+ENV NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}
+ENV NEXT_PUBLIC_BETTER_AUTH_URL=${NEXT_PUBLIC_BETTER_AUTH_URL}
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${NEXT_PUBLIC_LINKEDIN_CLIENT_ID}
 
 # --- Build da Aplicação ---
 RUN set -euo pipefail; \
     echo "📦 Building Next.js app..."; \
     echo "Node version: $(node -v)"; \
     echo "NPM version: $(npm -v)"; \
+    echo "Environment variables:"; \
+    echo "  NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"; \
+    echo "  NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}"; \
     npm run build || ( \
         echo "❌ ERROR: npm run build failed" >&2; \
-        echo "Check GitHub Actions logs for details" >&2; \
+        echo "Last 50 lines of build output:" >&2; \
+        tail -50 /tmp/build.log 2>/dev/null || true; \
         exit 1; \
     )
 
