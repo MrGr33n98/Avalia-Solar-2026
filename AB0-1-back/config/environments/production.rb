@@ -34,11 +34,16 @@ Rails.application.configure do
   config.active_storage.default_url_options = { host: host, protocol: protocol }
   config.action_mailer.default_url_options = { host: host, protocol: protocol }
 
-  # --- SEGURANÇA E SSL ---
-  # Como o Nginx Proxy Manager cuida do SSL, informamos ao Rails para assumir HTTPS
   config.assume_ssl = true
   # Disable force_ssl to prevent redirect loops in Docker/Proxy environments
   config.force_ssl = false
+
+  # Garante que o Rails identifique o protocolo HTTPS vindo do Proxy/Cloudflare
+  config.action_dispatch.default_headers = {
+    'X-Frame-Options' => 'SAMEORIGIN',
+    'X-Content-Type-Options' => 'nosniff',
+    'X-XSS-Protection' => '1; mode=block'
+  }
 
   # Logs e Monitoramento
   config.log_level = :info
@@ -64,8 +69,8 @@ Rails.application.configure do
     config.cache_store = :memory_store
   end
 
-  # Fila de processamento (Sidekiq)
-  config.active_job.queue_adapter = ENV.fetch('REDIS_ENABLED', 'true') == 'true' ? :sidekiq : :async
+  # Fila de processamento (Usando :async para garantir envio imediato sem Sidekiq)
+  config.active_job.queue_adapter = :async
 
   # Localização e Fallbacks
   config.i18n.fallbacks = true
