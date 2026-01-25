@@ -1,8 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePageTracking } from '@/hooks/usePageTracking';
 
-export default function ContactPage() {
+function ContactPageContent() {
   // GTM Page Tracking
   usePageTracking({
     type: 'other',
@@ -22,6 +23,14 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={null}>
+      <ContactPageContent />
+    </Suspense>
   );
 }
 

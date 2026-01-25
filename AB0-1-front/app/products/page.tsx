@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { usePageTracking } from '@/hooks/usePageTracking';
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   // GTM Page Tracking
   usePageTracking({
     type: 'other',
@@ -288,5 +288,13 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

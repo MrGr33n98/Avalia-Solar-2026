@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, ReactNode, Suspense } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowRight, Info } from 'lucide-react';
 
@@ -103,7 +103,7 @@ function SkeletonCompanyCard() {
   );
 }
 
-export default function Home() {
+function HomePageContent() {
   // GTM Page Tracking
   usePageTracking({
     type: 'homepage',
@@ -281,3 +281,10 @@ export default function Home() {
   );
 }
 
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
+  );
+}

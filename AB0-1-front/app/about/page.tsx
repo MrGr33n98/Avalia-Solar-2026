@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePageTracking } from '@/hooks/usePageTracking';
 
-export default function AboutPage() {
+function AboutPageContent() {
   // GTM Page Tracking
   usePageTracking({
     type: 'other',
@@ -58,5 +59,13 @@ export default function AboutPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AboutPage() {
+  return (
+    <Suspense fallback={null}>
+      <AboutPageContent />
+    </Suspense>
   );
 }
