@@ -158,7 +158,11 @@ export const analyticsApi = {
     try {
       const response = await fetchApi<{ data: any[] }>(
         `/companies/${companyId}/analytics/historical`,
-        { params: { days } }
+        {
+          params: { days },
+          retries: 1, // avoid noisy retries for missing endpoints
+          fallback: { data: [] },
+        }
       );
       const data = response?.data || [];
       return data.map((row) => ({
@@ -168,9 +172,10 @@ export const analyticsApi = {
         leads: row.leads ?? 0,
         conversion: row.conversion ?? 0,
       }));
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.status === 404) return [];
       console.error('[analyticsApi.getHistoricalData] Error:', error);
-      throw error; // Propagate error to UI instead of returning mock data
+      return [];
     }
   },
 
@@ -178,7 +183,16 @@ export const analyticsApi = {
   getReviewAnalytics: async (companyId: number): Promise<ReviewAnalytics> => {
     try {
       const response = await fetchApi<ReviewAnalytics>(
-        `/companies/${companyId}/analytics/reviews`
+        `/companies/${companyId}/analytics/reviews`,
+        {
+          retries: 1,
+          fallback: {
+            total_reviews: 0,
+            average_rating: 0,
+            rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+            recent_reviews: [],
+          },
+        }
       );
       return response;
     } catch (error) {
@@ -273,12 +287,17 @@ export const analyticsApi = {
     try {
       const response = await fetchApi<{ sources: TrafficSource[] }>(
         `/companies/${companyId}/analytics/traffic`,
-        { params: { days } }
+        {
+          params: { days },
+          retries: 1, // avoid retry loop on 404/502
+          fallback: { sources: [] },
+        }
       );
       return response.sources;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.status === 404) return [];
       console.error('[analyticsApi.getTrafficSources] Error:', error);
-      throw error; // Propagate error to UI instead of returning mock data
+      return [];
     }
   },
 

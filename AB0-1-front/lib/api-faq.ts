@@ -25,7 +25,11 @@ type FaqListParams = { category?: string; q?: string; page?: number; per_page?: 
 
 export const faqApi = {
   list: async (params?: FaqListParams): Promise<FaqResponse> => {
-    const response = await fetchApi<FaqResponse>('/faqs', { params });
+    const response = await fetchApi<FaqResponse>('/faqs', {
+      params,
+      retries: 1, // avoid repeated CORS/502 retries
+      fallback: { faqs: [] },
+    });
     return response;
   },
   vote: async (faqId: number, helpful: boolean): Promise<FaqItem> => {
