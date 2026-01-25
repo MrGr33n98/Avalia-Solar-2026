@@ -36,12 +36,12 @@ Rails.application.configure do
   
   # SMTP settings
   config.action_mailer.smtp_settings = {
-    address: ENV.fetch('SMTP_ADDRESS', 'localhost'),
+    address: ENV.fetch('SMTP_ADDRESS', 'smtp-relay.brevo.com'),
     port: ENV.fetch('SMTP_PORT', 587).to_i,
-    domain: ENV.fetch('SMTP_DOMAIN', 'localhost'),
-    user_name: ENV['SMTP_USERNAME'],
-    password: ENV['SMTP_PASSWORD'],
-    authentication: ENV.fetch('SMTP_AUTHENTICATION', 'plain'),
+    domain: ENV.fetch('SMTP_DOMAIN', 'avaliasolar.com.br'),
+    user_name: ENV['BREVO_SMTP_USER'] || ENV['SMTP_USERNAME'],
+    password: ENV['BREVO_SMTP_PASS'] || ENV['SMTP_PASSWORD'],
+    authentication: ENV.fetch('SMTP_AUTHENTICATION', 'login'),
     enable_starttls_auto: ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'true') == 'true',
     open_timeout: 5,
     read_timeout: 5

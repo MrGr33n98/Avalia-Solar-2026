@@ -80,6 +80,11 @@ Rails.application.configure do
   # Não faz dump do schema após migrations em produção
   config.active_record.dump_schema_after_migration = false
 
+  # --- CONFIGURAÇÃO DE E-MAIL (ACTION MAILER) ---
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+
   # --- LIBERAÇÃO DE HOSTS ---
   # Impede o erro de "Blocked Host" ao acessar via api.avaliasolar.com.br
   config.hosts.clear 
