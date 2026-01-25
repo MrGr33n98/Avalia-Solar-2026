@@ -559,10 +559,10 @@ module Api
         return nil if raw_id.blank?
 
         candidate_id = raw_id.to_s[/\A\d+/]
-        company = Company.find_by(id: candidate_id) if candidate_id.present?
+        company = ::Company.find_by(id: candidate_id) if candidate_id.present?
 
-        if company.nil? && Company.column_names.include?('slug')
-          company = Company.find_by(slug: raw_id)
+        if company.nil? && ::Company.column_names.include?('slug')
+          company = ::Company.find_by(slug: raw_id)
         end
 
         company
