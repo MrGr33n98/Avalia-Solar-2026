@@ -360,6 +360,11 @@ class Company < ApplicationRecord
     featured? || verified? || has_paid_plan?
   end
 
+  # Expose without question mark for serializers expecting an attribute-style method
+  def media_upload_allowed
+    media_upload_allowed?
+  end
+
   def resolved_plan_features
     return @resolved_plan_features if defined?(@resolved_plan_features)
 

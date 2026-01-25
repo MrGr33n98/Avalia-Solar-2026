@@ -12,7 +12,7 @@ class CompanySerializer < ActiveModel::Serializer
              :instagram, :facebook, :linkedin,
              :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
-             :effect,
+             :effect, :media_upload_allowed,
              :faqs,
              :financing_enabled,
              :financing_feature_allowed,
@@ -52,6 +52,16 @@ class CompanySerializer < ActiveModel::Serializer
 
   def financing_enabled
     object.respond_to?(:financing_enabled) ? !!object.financing_enabled : false
+  end
+
+  def media_upload_allowed
+    if object.respond_to?(:media_upload_allowed?)
+      object.media_upload_allowed?
+    elsif object.respond_to?(:media_upload_allowed)
+      !!object.media_upload_allowed
+    else
+      false
+    end
   end
 
   def financing_feature_allowed
