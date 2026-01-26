@@ -67,6 +67,11 @@ class User < ApplicationRecord
     role == 'user'
   end
 
+  # Force Devise to send emails synchronously to avoid Sidekiq/Redis issues in this environment
+  def send_devise_notification(notification, *args)
+    devise_mailer.send(notification, self, *args).deliver_now
+  end
+
   def self.ransackable_attributes(_auth_object = nil)
     %w[name email role status company_id] # Allow searching by name, email, role, status and company_id
   end

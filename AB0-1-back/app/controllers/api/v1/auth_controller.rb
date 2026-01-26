@@ -151,6 +151,9 @@ module Api
         user = User.find_by(email: email)
         if user
           user.send_reset_password_instructions
+          Rails.logger.info("[Auth] Reset password instructions triggered for #{email}")
+        else
+          Rails.logger.info("[Auth] Skip forgot_password for #{email}: User not found")
         end
         render json: { message: 'Se o e-mail existir, você receberá instruções para redefinir a senha.' }, status: :ok
       end
