@@ -629,30 +629,6 @@ export default function CategoryClientComponent({
     return Array.from(values).sort();
   }, [companies, filters.state]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-4 py-8">
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-red-50">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-            </div>
-            <h1 className="mb-3 text-xl font-bold text-gray-900">Categoria não encontrada</h1>
-            <p className="mb-4 text-sm text-gray-600">A categoria não existe ou foi removida.</p>
-            <div className="space-x-2">
-              <Button onClick={() => window.history.back()} size="sm">
-                Voltar
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => (window.location.href = '/categories')}>
-                Ver categorias
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen bg-gray-50/50">
       <BreadcrumbJsonLd items={jsonLdItems} />
