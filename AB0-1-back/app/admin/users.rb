@@ -23,7 +23,15 @@ ActiveAdmin.register User do
 
   member_action :approve, method: :put do
     resource.update(status: :active, approved_by_admin: true)
-    UserMailer.approval_email(resource).deliver_now
+
+    unless ENV.fetch('SKIP_EMAILS_IN_ADMIN_APPROVE', 'false') == 'true'
+      begin
+        UserMailer.approval_email(resource).deliver_later
+      rescue StandardError => e
+        Rails.logger.error("[Admin::Users] approval_email failed user_id=#{resource.id} error=#{e.class} #{e.message}")
+        flash[:alert] = 'Usuario aprovado, mas nao foi possivel enfileirar o email de aprovacao.'
+      end
+    end
     redirect_to resource_path, notice: "Usuário aprovado com sucesso!"
   end
 
@@ -33,7 +41,15 @@ ActiveAdmin.register User do
       return
     end
     resource.update(status: :rejected, rejection_reason: params[:rejection_reason])
-    UserMailer.rejection_email(resource).deliver_now
+
+    unless ENV.fetch('SKIP_EMAILS_IN_ADMIN_APPROVE', 'false') == 'true'
+      begin
+        UserMailer.rejection_email(resource).deliver_later
+      rescue StandardError => e
+        Rails.logger.error("[Admin::Users] rejection_email failed user_id=#{resource.id} error=#{e.class} #{e.message}")
+        flash[:alert] = 'Usuario rejeitado, mas nao foi possivel enfileirar o email de rejeicao.'
+      end
+    end
     redirect_to resource_path, notice: "Usuário rejeitado."
   end
 

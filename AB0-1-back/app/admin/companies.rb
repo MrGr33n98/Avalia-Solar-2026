@@ -29,16 +29,6 @@ ActiveAdmin.register Company do
     link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
   end
 
-  member_action :approve, method: :put do
-    resource.approve!(current_admin_user)
-    redirect_to resource_path, notice: "Company approved!"
-  end
-
-  member_action :reject, method: :put do
-    resource.update(moderation_status: :rejected, rejected_reason: "Rejected by admin") # Simple rejection for now
-    redirect_to resource_path, notice: "Company rejected!"
-  end
-
   member_action :suspend, method: :put do
     resource.update(moderation_status: :suspended)
     redirect_to resource_path, notice: "Company suspended!"
@@ -428,8 +418,19 @@ end
   scope('Pendentes') { |scope| scope.where(status: 'pending') }
 
   member_action :approve, method: :put do
-    resource.update!(status: 'active')
-    CompanyMailer.registration_approved(resource).deliver_later
+    resource.transaction do
+      unless resource.approve!(current_admin_user)
+        raise ActiveRecord::RecordInvalid.new(resource)
+      end
+      resource.update!(status: 'active')
+    end
+
+    begin
+      CompanyMailer.registration_approved(resource).deliver_later
+    rescue StandardError => e
+      Rails.logger.error("[Admin::Companies] registration_approved failed company_id=#{resource.id} error=#{e.class} #{e.message}")
+      flash[:alert] = 'Empresa aprovada, mas nao foi possivel enfileirar o email.'
+    end
     redirect_to resource_path(resource), notice: "Empresa aprovada com sucesso! E-mail enviado."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to resource_path(resource), alert: "Não foi possível aprovar: #{e.record.errors.full_messages.join(', ')}"
@@ -450,8 +451,19 @@ end
     # Let's try to grab a reason if passed, otherwise default.
     
     reason = params[:reason].presence || "Informações inconsistentes"
-    resource.update!(status: 'blocked') # or inactive
-    CompanyMailer.registration_rejected(resource, reason).deliver_later
+    resource.transaction do
+      unless resource.reject!(current_admin_user, reason)
+        raise ActiveRecord::RecordInvalid.new(resource)
+      end
+      resource.update!(status: 'blocked') # or inactive
+    end
+
+    begin
+      CompanyMailer.registration_rejected(resource, reason).deliver_later
+    rescue StandardError => e
+      Rails.logger.error("[Admin::Companies] registration_rejected failed company_id=#{resource.id} error=#{e.class} #{e.message}")
+      flash[:alert] = 'Empresa reprovada, mas nao foi possivel enfileirar o email.'
+    end
     redirect_to resource_path(resource), notice: "Empresa reprovada. E-mail enviado."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to resource_path(resource), alert: "Não foi possível reprovar: #{e.record.errors.full_messages.join(', ')}"

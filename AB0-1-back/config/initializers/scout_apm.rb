@@ -44,7 +44,11 @@ if defined?(ScoutApm)
     ScoutApm::Context.add(context_data)
   end
   
-  Rails.logger.info "[SCOUT APM] Initialized with key: #{ENV['SCOUT_KEY']&.present? ? 'configured' : 'missing'}"
+  if ENV['SCOUT_KEY'].to_s.strip.empty?
+    Rails.logger.info '[SCOUT APM] Disabled (SCOUT_KEY missing)'
+  else
+    Rails.logger.info '[SCOUT APM] Initialized'
+  end
 end
 
 # ActiveSupport instrumentation

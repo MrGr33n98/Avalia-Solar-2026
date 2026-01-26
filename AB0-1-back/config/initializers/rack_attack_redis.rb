@@ -4,7 +4,8 @@
 # This should be loaded after rack_attack.rb and redis.rb
 
 if defined?(Rack::Attack)
-  redis_enabled = ENV.fetch('REDIS_ENABLED', 'true') == 'true'
+  Rails.application.config.after_initialize do
+    redis_enabled = ENV.fetch('REDIS_ENABLED', 'true') == 'true'
   
   if redis_enabled && defined?(REDIS)
     begin
@@ -31,5 +32,6 @@ if defined?(Rack::Attack)
   else
     Rails.logger.warn "⚠️  Rack::Attack using MemoryStore (Redis disabled)"
     Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+  end
   end
 end

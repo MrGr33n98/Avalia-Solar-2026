@@ -24,13 +24,9 @@ Sentry.init do |config|
                                  1.0 # 100% in development
                                end
   
-  # Sample rate for profiling (requires traces to be enabled)
-  config.profiles_sample_rate = case Rails.env
-                                 when 'production'
-                                   0.1
-                                 else
-                                   1.0
-                                 end
+  # Profiling requires extra dependencies (e.g. stackprof). Keep disabled by default.
+  profiles_rate_env = ENV['SENTRY_PROFILES_SAMPLE_RATE']
+  config.profiles_sample_rate = profiles_rate_env.to_s.strip.empty? ? 0.0 : profiles_rate_env.to_f
   
   # Filter sensitive data
   config.send_default_pii = false # Don't send personally identifiable information

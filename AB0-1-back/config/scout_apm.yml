@@ -8,8 +8,8 @@ common: &defaults
   # Your organization key from Scout (required in production)
   key: <%= ENV['SCOUT_KEY'] %>
   
-  # Monitor background jobs
-  monitor: true
+  # Enable only when a key is configured (and can be overridden via SCOUT_MONITOR)
+  monitor: <%= ENV['SCOUT_MONITOR'] != 'false' && ENV['SCOUT_KEY'].to_s.strip != '' %>
   
   # Log level for Scout agent (debug, info, warn, error)
   log_level: info
@@ -55,7 +55,7 @@ common: &defaults
 development:
   <<: *defaults
   # Disable in development to avoid noise
-  monitor: true
+  monitor: <%= ENV['SCOUT_MONITOR'] == 'true' && ENV['SCOUT_KEY'].to_s.strip != '' %>
 
 test:
   <<: *defaults
@@ -64,13 +64,13 @@ test:
 
 staging:
   <<: *defaults
-  monitor: true
+  monitor: <%= ENV['SCOUT_MONITOR'] != 'false' && ENV['SCOUT_KEY'].to_s.strip != '' %>
   # Sample rate for staging (lower than production)
   sample_rate: 0.5  # 50% of requests
 
 production:
   <<: *defaults
-  monitor: true
+  monitor: <%= ENV['SCOUT_MONITOR'] != 'false' && ENV['SCOUT_KEY'].to_s.strip != '' %>
   # Sample rate for production
   sample_rate: 1.0  # 100% of requests
   

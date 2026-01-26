@@ -16,6 +16,9 @@ Rails.application.configure do
     smtp_password = ENV['BREVO_SMTP_PASS'] || ENV['SMTP_PASSWORD']
 
     if smtp_username.present? && smtp_password.present?
+      open_timeout = ENV.fetch('SMTP_OPEN_TIMEOUT', 15).to_i
+      read_timeout = ENV.fetch('SMTP_READ_TIMEOUT', 15).to_i
+
       # Production: Use SMTP (e.g., Brevo, SendGrid, Mailgun)
       config.action_mailer.delivery_method = :smtp
       config.action_mailer.smtp_settings = {
@@ -25,11 +28,13 @@ Rails.application.configure do
         user_name: smtp_username,
         password: smtp_password,
         authentication: :plain,
-        enable_starttls_auto: true
+        enable_starttls_auto: true,
+        open_timeout: open_timeout,
+        read_timeout: read_timeout
       }
 
       # Raise errors if email fails
-      config.action_mailer.raise_delivery_errors = true
+      config.action_mailer.raise_delivery_errors = ENV.fetch('SMTP_RAISE_DELIVERY_ERRORS', 'false') == 'true'
     else
       Rails.logger.warn '⚠️  SMTP credentials not configured. Email delivery disabled.'
       config.action_mailer.delivery_method = :test

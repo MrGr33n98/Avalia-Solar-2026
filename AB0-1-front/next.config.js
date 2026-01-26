@@ -63,6 +63,11 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          },
+          {
+            // Helps debug deployment mismatches (e.g. Server Actions manifest)
+            key: 'X-Release',
+            value: process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'unknown'
           }
         ],
       },
