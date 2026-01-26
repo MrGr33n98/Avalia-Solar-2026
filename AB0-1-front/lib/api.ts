@@ -145,6 +145,11 @@ export interface Company {
   cta_whatsapp_url?: string | null;
   whatsapp_button_style_json?: Record<string, any> | null;
   plan_status?: 'active' | 'inactive' | 'trial' | 'expired';
+  category_info?: {
+    id: number;
+    name: string;
+    seo_url: string;
+  };
   plan_id?: number | null;
   has_paid_plan?: boolean;
   plan_features?: Record<string, any>;

@@ -20,7 +20,19 @@ class CompanySerializer < ActiveModel::Serializer
              :financing_tab_visible,
              :financing_profile,
              :financing_partners,
-             :financing_offers
+             :financing_offers,
+             :category_info
+
+  def category_info
+    category = object.categories.first
+    return nil unless category
+
+    {
+      id: category.id,
+      name: category.name,
+      seo_url: category.seo_url
+    }
+  end
 
 
 

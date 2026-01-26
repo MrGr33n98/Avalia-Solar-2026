@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import SidebarFilter from '@/components/SidebarFilter';
 import { Category, Company, Banner } from '@/lib/api';
+// ... Lucide icons ...
 import {
   AlertCircle,
   Filter,
@@ -29,11 +31,20 @@ import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
 import SponsorCarousel from '@/components/ui/sponsorcarousel';
 import { Badge } from '@/components/ui/badge';
+import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { ItemListJsonLd } from '@/components/ItemListJsonLd';
 
 interface CategoryClientProps {
   initialCategory: Category;
   initialCompanies: Company[];
   initialBanners?: Banner[];
+  paginationMeta?: {
+    total_count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  } | null;
 }
 
 // ==============================
@@ -499,72 +510,105 @@ export default function CategoryClientComponent({
   initialCategory,
   initialCompanies,
   initialBanners = [],
+  paginationMeta,
 }: CategoryClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [category] = useState<Category>(initialCategory);
-  const [companies] = useState<Company[]>(initialCompanies);
-  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>(initialCompanies);
-  const [loadingCompanies] = useState(false);
-  const [error] = useState<string | null>(null);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [banners] = useState<Banner[]>(initialBanners);
-
-  const [filters, setFilters] = useState({
-    searchTerm: '',
-    state: '',
-    city: '',
-    rating: 0,
-    verified: false,
-  });
-
+  
+  // Sincroniza o estado de loading quando a rota muda
   useEffect(() => {
-    let filtered = [...companies];
+    setLoadingCompanies(false);
+  }, [initialCompanies]);
 
-    if (filters.searchTerm) {
-      const needle = filters.searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (company) =>
-          (company.name || '').toLowerCase().includes(needle) ||
-          (company.description || '').toLowerCase().includes(needle),
-      );
-    }
+  const filters = useMemo(() => ({
+    searchTerm: searchParams.get('searchTerm') || '',
+    state: searchParams.get('state') || '',
+    city: searchParams.get('city') || '',
+    rating: Number(searchParams.get('rating')) || 0,
+    verified: searchParams.get('verified') === 'true',
+    page: Number(searchParams.get('page')) || 1,
+  }), [searchParams]);
 
-    if (filters.state) {
-      filtered = filtered.filter((company) => company.state?.toLowerCase() === filters.state.toLowerCase());
-    }
+  const createQueryString = useCallback(
+    (params: Record<string, string | number | boolean | null>) => {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === null || value === '' || value === 0 || value === false) {
+          newSearchParams.delete(key);
+        } else {
+          newSearchParams.set(key, String(value));
+        }
+      });
+      
+      // Reset page when filters change (unless explicitly changing page)
+      if (!params.hasOwnProperty('page')) {
+        newSearchParams.delete('page');
+      }
 
-    if (filters.city) {
-      filtered = filtered.filter((company) => company.city?.toLowerCase() === filters.city.toLowerCase());
-    }
-
-    if (filters.rating > 0) {
-      filtered = filtered.filter((company) => (company.rating_avg || 0) >= filters.rating);
-    }
-
-    if (filters.verified) {
-      filtered = filtered.filter((company) => company.status === 'active');
-    }
-
-    setFilteredCompanies(filtered);
-  }, [filters, companies]);
+      return newSearchParams.toString();
+    },
+    [searchParams]
+  );
 
   const handleFilterChange = (filterType: string, value: any) => {
+    setLoadingCompanies(true);
+    
     if (filterType === 'clearAll') {
-      setFilters({
-        searchTerm: '',
-        state: '',
-        city: '',
-        rating: 0,
-        verified: false,
-      });
+      router.push(pathname, { scroll: false });
       return;
     }
 
-    setFilters((prev) => ({
-      ...prev,
+    const updates: Record<string, any> = {
       [filterType]: value,
-      ...(filterType === 'state' && { city: '' }),
-    }));
+    };
+
+    if (filterType === 'state') {
+      updates.city = null; // Clear city when state changes
+    }
+
+    const queryString = createQueryString(updates);
+    router.push(`${pathname}?${queryString}`, { scroll: false });
   };
+
+  const filteredCompanies = initialCompanies;
+  const companies = initialCompanies;
+
+  const handleLoadMore = () => {
+    if (paginationMeta?.total_pages && filters.page < paginationMeta.total_pages) {
+      setLoadingCompanies(true);
+      const queryString = createQueryString({ page: filters.page + 1 });
+      router.push(`${pathname}?${queryString}`, { scroll: false });
+    }
+  };
+
+  const hasMore = paginationMeta?.total_pages ? filters.page < paginationMeta.total_pages : false;
+  const banners = initialBanners;
+
+  const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => [
+    { label: 'Categorias', href: '/categories' },
+    { label: category.name, active: true },
+  ], [category]);
+
+  const jsonLdItems = useMemo(() => [
+    { name: 'Home', item: '/' },
+    { name: 'Categorias', item: '/categories' },
+    { name: category.name, item: `/categories/${category.seo_url}` },
+  ], [category]);
+
+  const itemListItems = useMemo(() => {
+    return companies.map((comp, index) => ({
+      name: comp.name,
+      url: `/companies/${comp.slug}`,
+      image: comp.logo_url || undefined,
+      position: index + 1,
+    }));
+  }, [companies]);
 
   const mobileStates = useMemo(() => {
     const values = new Set<string>();
@@ -611,10 +655,14 @@ export default function CategoryClientComponent({
 
   return (
     <div className="relative min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd items={jsonLdItems} />
+      <ItemListJsonLd items={itemListItems} />
+      
       {/* MOBILE */}
       <div className="md:hidden">
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
           <div className="px-4 py-2.5">
+            <AppBreadcrumb items={breadcrumbItems} className="mb-2" />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <Input
@@ -748,6 +796,7 @@ export default function CategoryClientComponent({
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="container mx-auto px-4 py-8">
+          <AppBreadcrumb items={breadcrumbItems} className="mb-6" />
           <CategoryHeader
             category={category}
             companiesCount={companies.length}
@@ -854,6 +903,19 @@ export default function CategoryClientComponent({
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {hasMore && !loadingCompanies && (
+                  <div className="flex justify-center mt-12 mb-8">
+                    <Button
+                      onClick={handleLoadMore}
+                      size="lg"
+                      className="bg-[#14b8a6] hover:bg-[#0d9488] text-white px-12 h-14 rounded-xl shadow-lg shadow-teal-500/20 font-bold text-lg transition-all hover:scale-105"
+                    >
+                      Carregar Mais Empresas
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </main>
           </div>

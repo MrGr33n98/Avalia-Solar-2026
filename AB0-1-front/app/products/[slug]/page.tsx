@@ -1,97 +1,83 @@
-'use client';
+// app/products/[slug]/page.tsx
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import ProductDetailClient from './ProductDetailClient';
+import { productsApiSafe } from '@/lib/api-client';
 
-import { useParams } from 'next/navigation';
-import { useProduct } from '@/hooks/useProduct';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { buildCompanyPath } from '@/lib/slug';
+interface Props {
+  params: { slug: string };
+}
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+function getProductIdFromSlug(slug: string): number | null {
+  const idPart = slug.split('-')[0];
+  const parsed = parseInt(idPart, 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const productId = getProductIdFromSlug(params.slug);
   
-  const { product, loading, error } = useProduct(slug);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-4 space-y-4">
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-6 w-1/3" />
-        <Skeleton className="h-6 w-1/4" />
-      </div>
-    );
+  if (!productId) {
+    return {
+      title: 'Produto não encontrado | Avalia Solar',
+    };
   }
 
-  if (error || !product) {
-    return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Error</h1>
-        <p>{error || 'Product not found'}</p>
-        <Link href="/products">
-          <Button className="mt-4" variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
-          </Button>
-        </Link>
-      </div>
-    );
+  try {
+    const product = await productsApiSafe.getById(productId);
+
+    if (!product) {
+      return {
+        title: 'Produto não encontrado | Avalia Solar',
+      };
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br';
+    const canonicalUrl = `${siteUrl}/products/${params.slug}`;
+
+    return {
+      title: `${product.name} | Avalia Solar`,
+      description: `${product.description || ''} - Categoria: ${product.category?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
+      openGraph: {
+        title: `${product.name} - Produto de Energia Solar`,
+        description: `${product.description || ''} - Categoria: ${product.category?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
+        url: canonicalUrl,
+        type: 'website',
+        // Add images if product has them, for now using a default or company logo if available
+        images: product.company?.logo_url ? [{ url: product.company.logo_url }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${product.name} | Avalia Solar`,
+        description: product.description || '',
+      },
+      alternates: {
+        canonical: canonicalUrl,
+      },
+    };
+  } catch (error) {
+    console.error('Erro no generateMetadata de produtos:', error);
+    return {
+      title: 'Produto não encontrado | Avalia Solar',
+    };
+  }
+}
+
+// Force dynamic if needed, or revalidate
+export const revalidate = 3600; // 1 hour
+
+export default async function ProductDetailPage({ params }: Props) {
+  const productId = getProductIdFromSlug(params.slug);
+
+  if (!productId) {
+    notFound();
   }
 
-  const companyPath = product.company?.id
-    ? buildCompanyPath(product.company.slug, product.company?.name, product.company.id)
-    : '/companies';
+  const product = await productsApiSafe.getById(productId);
 
-  return (
-    <div className="container mx-auto p-4">
-      <Link href="/products">
-        <Button className="mb-6" variant="outline">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
-        </Button>
-      </Link>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-          <div className="flex items-center gap-2 mb-4">
-            <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
-              {product.status === 'active' ? 'Available' : 'Unavailable'}
-            </Badge>
-            <span className="text-muted-foreground">
-              Category: {product.category?.name}
-            </span>
-          </div>
-          
-          <div className="text-2xl font-bold mb-6">
-            ${typeof product.price === 'number' 
-              ? product.price.toFixed(2) 
-              : parseFloat(String(product.price)).toFixed(2)}
-          </div>
-          
-          <div className="prose max-w-none">
-            <h3>Description</h3>
-            <p>{product.description}</p>
-          </div>
-        </div>
-        
-        <div>
-          <div className="border rounded-lg p-4 mb-4">
-            <h3 className="text-lg font-semibold mb-2">Seller Information</h3>
-            <p className="font-medium">{product.company?.name}</p>
-            {product.company?.description && (
-              <p className="text-sm text-muted-foreground mt-2">{product.company.description}</p>
-            )}
-            <Link href={companyPath}>
-              <Button className="mt-4" variant="outline" size="sm">
-                View Seller Profile
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  if (!product) {
+    notFound();
+  }
+
+  return <ProductDetailClient product={product} />;
 }

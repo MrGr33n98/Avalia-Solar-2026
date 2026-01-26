@@ -1,9 +1,48 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
+import { Metadata } from 'next';
+import { redirect, notFound } from 'next/navigation';
 import CategoryPageServer from './CategoryPageServer';
+import { categoriesApi } from '@/lib/api';
 
 interface CategorySlugPageProps {
   params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export async function generateMetadata({ params }: CategorySlugPageProps): Promise<Metadata> {
+  try {
+    const category = await categoriesApi.getBySlug(params.slug);
+    
+    if (!category) {
+      return {
+        title: 'Categoria não encontrada | Avalia Solar',
+      };
+    }
+
+    const title = category.seo_title || `${category.name} | Avalia Solar`;
+    const description = category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`;
+    
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        images: category.banner_url ? [category.banner_url] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: category.banner_url ? [category.banner_url] : [],
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Avalia Solar',
+    };
+  }
 }
 
 /**
@@ -43,7 +82,7 @@ function CategoryLoadingFallback() {
   );
 }
 
-export default function CategorySlugPage({ params }: CategorySlugPageProps) {
+export default function CategorySlugPage({ params, searchParams }: CategorySlugPageProps) {
   // mesma lógica: se slug for “especial”, redireciona
   if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
 
@@ -51,7 +90,7 @@ export default function CategorySlugPage({ params }: CategorySlugPageProps) {
     <Suspense fallback={<CategoryLoadingFallback />}>
       {/* Mantive wrapper simples; z-index 800 costuma ser desnecessário aqui */}
       <div className="relative">
-        <CategoryPageServer params={params} />
+        <CategoryPageServer params={params} searchParams={searchParams} />
       </div>
     </Suspense>
   );

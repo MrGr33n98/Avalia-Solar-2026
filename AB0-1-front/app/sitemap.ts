@@ -25,7 +25,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const res = await fetch(buildApiUrl('articles?per_page=100'), { next: { revalidate: 3600 } });
     if (res.ok) {
-      const { data } = await res.json();
+      const json = await res.json();
+      const data = json.data || json;
       blogRoutes = data.map((post: any) => ({
         url: `${baseUrl}/blog/${post.slug}`,
         lastModified: post.updated_at || new Date().toISOString(),
@@ -37,5 +38,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate blog sitemap:', error);
   }
 
-  return [...routes, ...blogRoutes];
+  // Dynamic Categories
+  let categoryRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch(buildApiUrl('categories?per_page=100'), { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const json = await res.json();
+      const data = json.data || json;
+      categoryRoutes = data.map((cat: any) => ({
+        url: `${baseUrl}/categories/${cat.seo_url}`,
+        lastModified: cat.updated_at || new Date().toISOString(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to generate categories sitemap:', error);
+  }
+
+  // Dynamic Companies
+  let companyRoutes: MetadataRoute.Sitemap = [];
+  try {
+    // Fetch active companies. We might need to handle pagination if there are many.
+    const res = await fetch(buildApiUrl('companies?status=active&per_page=100'), { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const json = await res.json();
+      const data = json.data || json;
+      companyRoutes = data.map((company: any) => ({
+        url: `${baseUrl}/companies/${company.slug}`,
+        lastModified: company.updated_at || new Date().toISOString(),
+        changeFrequency: 'daily' as const,
+        priority: 0.9,
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to generate companies sitemap:', error);
+  }
+
+  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyRoutes];
 }

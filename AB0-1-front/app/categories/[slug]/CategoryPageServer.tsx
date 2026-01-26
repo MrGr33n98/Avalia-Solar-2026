@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 
 interface CategorySlugPageProps {
   params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 const REDIRECT_SLUGS = new Set([
@@ -118,7 +119,7 @@ function CategoryErrorState({
   );
 }
 
-export default async function CategoryPageServer({ params }: CategorySlugPageProps) {
+export default async function CategoryPageServer({ params, searchParams }: CategorySlugPageProps) {
   if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
 
   const totalLabel = `[CategoryPage] total ${params.slug}`;
@@ -134,10 +135,32 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
 
     timeStart(parallelLabel);
 
-    const [companies, rawBanners] = await Promise.all([
-      categoriesApi.getCompanies(category.id, { status: 'active' }),
+    // Normalize filters for the API
+    const filters = {
+      status: 'active',
+      searchTerm: (searchParams.searchTerm as string) || undefined,
+      state: (searchParams.state as string) || undefined,
+      city: (searchParams.city as string) || undefined,
+      rating: (searchParams.rating as string) || undefined,
+      verified: searchParams.verified === 'true' ? true : undefined,
+      page: (searchParams.page as string) || undefined,
+    };
+
+    const [companiesResponse, rawBanners] = await Promise.all([
+      categoriesApi.getCompanies(category.id, filters),
       categoriesApi.getBanners(category.id, { limit: 10 }).catch(() => []),
     ]);
+
+    // Handle different response formats (paginated vs non-paginated)
+    let companies: any[] = [];
+    let paginationMeta = null;
+
+    if (Array.isArray(companiesResponse)) {
+      companies = companiesResponse;
+    } else if (companiesResponse && (companiesResponse as any).companies) {
+      companies = (companiesResponse as any).companies;
+      paginationMeta = (companiesResponse as any).meta;
+    }
 
     const now = new Date();
 
@@ -174,6 +197,7 @@ export default async function CategoryPageServer({ params }: CategorySlugPagePro
           initialCategory={category}
           initialCompanies={companies || []}
           initialBanners={banners || []}
+          paginationMeta={paginationMeta}
         />
       </div>
     );

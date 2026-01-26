@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -46,6 +46,8 @@ import CompanyReviews from "./components/CompanyReviews";
 import CompanyFinancing from "./components/CompanyFinancing";
 import MediaGallery from "@/app/dashboard/components/MediaGallery";
 import FaqSection from "./components/FaqSection";
+import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -98,6 +100,41 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [logoError, setLogoError] = useState<boolean>(false);
 
   const [activeTab, setActiveTab] = useState<string>("overview");
+
+  // Breadcrumb
+  const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
+    const items: BreadcrumbItemData[] = [
+      { label: 'Empresas', href: '/companies' }
+    ];
+
+    if (company.category_info) {
+      items.push({ 
+        label: company.category_info.name, 
+        href: `/categories/${company.category_info.seo_url}` 
+      });
+    }
+
+    items.push({ label: company.name, active: true });
+    return items;
+  }, [company]);
+
+  const jsonLdItems = useMemo(() => {
+    const items = [
+      { name: 'Home', item: '/' },
+      { name: 'Empresas', item: '/companies' }
+    ];
+
+    if (company.category_info) {
+      items.push({ 
+        name: company.category_info.name, 
+        item: `/categories/${company.category_info.seo_url}` 
+      });
+    }
+
+    items.push({ name: company.name, item: `/companies/${company.slug}` });
+    return items;
+  }, [company]);
+
   const [timeRange, setTimeRange] = useState<number>(30);
 
   const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
@@ -264,9 +301,21 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
   return (
     <div className="min-h-screen bg-slate-50/50">
+      <BreadcrumbJsonLd items={jsonLdItems} />
+      
       {/* HERO (ALINHADO COM AS ABAS) */}
       <div className="w-full bg-white border-b">
         <div className="container mx-auto px-4 py-2 md:py-4">
+          {/* Breadcrumb Desktop */}
+          <div className="hidden md:block mb-4">
+            <AppBreadcrumb items={breadcrumbItems} />
+          </div>
+
+          {/* Breadcrumb Mobile */}
+          <div className="md:hidden mb-2">
+            <AppBreadcrumb items={breadcrumbItems} />
+          </div>
+
           {/* Mantém dimensões do banner; o CompanyCard (logo+infos) foi reduzido no CompanyHero.tsx */}
           <div className="relative rounded-2xl overflow-visible">
             <CompanyHero

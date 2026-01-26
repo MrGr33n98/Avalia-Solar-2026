@@ -85,20 +85,66 @@ module Api
 
         companies_scope = @category.companies
 
+        # Filtros de Status
         if params[:status].present? && ::Company.column_names.include?('status')
           companies_scope = companies_scope.where(status: params[:status])
         end
 
-        # Log count before limit
+        # Filtro de Busca (Search Term)
+        if params[:searchTerm].present?
+          term = "%#{params[:searchTerm].downcase}%"
+          companies_scope = companies_scope.where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", term, term)
+        end
+
+        # Filtro de Estado
+        if params[:state].present?
+          companies_scope = companies_scope.where(state: params[:state])
+        end
+
+        # Filtro de Cidade
+        if params[:city].present?
+          companies_scope = companies_scope.where(city: params[:city])
+        end
+
+        # Filtro de Avaliação (Rating)
+        if params[:rating].present? && params[:rating].to_f > 0
+          # Assumindo que temos rating_avg ou similar. Se não tiver, ignoramos por enquanto.
+          if ::Company.column_names.include?('rating_avg')
+            companies_scope = companies_scope.where("rating_avg >= ?", params[:rating].to_f)
+          elsif ::Company.column_names.include?('average_rating')
+            companies_scope = companies_scope.where("average_rating >= ?", params[:rating].to_f)
+          end
+        end
+
+        # Filtro de Verificadas
+        if params[:verified] == 'true' && ::Company.column_names.include?('verified')
+          companies_scope = companies_scope.where(verified: true)
+        end
+
+        # Log count before limit/pagination
         total_count = companies_scope.count
-        Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit)")
+        Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit/pagination)")
 
-        companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
-
-        # Optimization: Eager load associations
-        companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
-
-        render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
+        # Paginação
+        if params[:page].present?
+          companies_scope = paginate(companies_scope)
+          set_pagination_headers(companies_scope)
+          
+          # Optimization: Eager load associations
+          companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
+          
+          render json: {
+            companies: companies_scope.map { |c| ::CompanySerializer.new(c).as_json },
+            meta: pagination_metadata(companies_scope)
+          }, status: :ok
+        else
+          companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
+          
+          # Optimization: Eager load associations
+          companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
+          
+          render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
+        end
       end
 
       # =========================
