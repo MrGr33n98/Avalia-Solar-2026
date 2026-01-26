@@ -143,24 +143,18 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
       city: (searchParams.city as string) || undefined,
       rating: (searchParams.rating as string) || undefined,
       verified: searchParams.verified === 'true' ? true : undefined,
-      page: (searchParams.page as string) || undefined,
+      // Always request paginated data (page/per_page) so the client can "load more" without SSR navigation.
+      page: Number((searchParams.page as string) || 1),
+      per_page: 20,
     };
 
     const [companiesResponse, rawBanners] = await Promise.all([
-      categoriesApi.getCompanies(category.id, filters),
+      categoriesApi.getCompaniesPaginated(category.id, filters),
       categoriesApi.getBanners(category.id, { limit: 10 }).catch(() => []),
     ]);
 
-    // Handle different response formats (paginated vs non-paginated)
-    let companies: any[] = [];
-    let paginationMeta = null;
-
-    if (Array.isArray(companiesResponse)) {
-      companies = companiesResponse;
-    } else if (companiesResponse && (companiesResponse as any).companies) {
-      companies = (companiesResponse as any).companies;
-      paginationMeta = (companiesResponse as any).meta;
-    }
+    const companies = companiesResponse?.companies || [];
+    const paginationMeta = companiesResponse?.meta || null;
 
     const now = new Date();
 

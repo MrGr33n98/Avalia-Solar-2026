@@ -800,6 +800,27 @@ export const categoriesApi = {
       return [];
     }
   },
+  getCompaniesPaginated: async (
+    id: number,
+    params?: any
+  ): Promise<{ companies: Company[]; meta: any | null }> => {
+    try {
+      const response = await fetchApi<any>(`/categories/${id}/companies`, { params });
+
+      if (Array.isArray(response)) {
+        return { companies: response as Company[], meta: null };
+      }
+
+      const companies: Company[] = Array.isArray(response?.companies) ? response.companies : [];
+
+      // Some endpoints return { meta: { pagination: ... } }, others return meta directly.
+      const meta = response?.meta?.pagination || response?.meta || null;
+      return { companies, meta };
+    } catch (error) {
+      console.error('Error fetching category companies (paginated):', error);
+      return { companies: [], meta: null };
+    }
+  },
   getBanners: async (id: number, params?: any): Promise<Banner[]> => {
     try {
       const response = await fetchApi<any>(`/categories/${id}/banners`, { params });

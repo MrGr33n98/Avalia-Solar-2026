@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import SidebarFilter from '@/components/SidebarFilter';
-import { Category, Company, Banner } from '@/lib/api';
+import { Category, Company, Banner, categoriesApi } from '@/lib/api';
 // ... Lucide icons ...
 import {
   AlertCircle,
@@ -40,10 +40,11 @@ interface CategoryClientProps {
   initialCompanies: Company[];
   initialBanners?: Banner[];
   paginationMeta?: {
-    total_count?: number;
     page?: number;
     per_page?: number;
+    total?: number;
     total_pages?: number;
+    next_page?: number | null;
   } | null;
 }
 
@@ -518,12 +519,20 @@ export default function CategoryClientComponent({
 
   const [category] = useState<Category>(initialCategory);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>(initialCompanies || []);
+  const [meta, setMeta] = useState<CategoryClientProps['paginationMeta']>(paginationMeta || null);
+  const [currentPage, setCurrentPage] = useState<number>(paginationMeta?.page || 1);
   
-  // Sincroniza o estado de loading quando a rota muda
+  // Sincroniza lista/meta quando os props mudam (ex.: filtros via URL / SSR)
   useEffect(() => {
+    setCompanies(initialCompanies || []);
+    setMeta(paginationMeta || null);
+    setCurrentPage(paginationMeta?.page || 1);
     setLoadingCompanies(false);
-  }, [initialCompanies]);
+    setLoadingMore(false);
+  }, [initialCompanies, paginationMeta]);
 
   const filters = useMemo(() => ({
     searchTerm: searchParams.get('searchTerm') || '',
@@ -531,7 +540,6 @@ export default function CategoryClientComponent({
     city: searchParams.get('city') || '',
     rating: Number(searchParams.get('rating')) || 0,
     verified: searchParams.get('verified') === 'true',
-    page: Number(searchParams.get('page')) || 1,
   }), [searchParams]);
 
   const createQueryString = useCallback(
@@ -546,10 +554,8 @@ export default function CategoryClientComponent({
         }
       });
       
-      // Reset page when filters change (unless explicitly changing page)
-      if (!params.hasOwnProperty('page')) {
-        newSearchParams.delete('page');
-      }
+      // This page uses client-side "load more"; keep `page` out of the URL to avoid SSR refetch + duplicate URLs.
+      newSearchParams.delete('page');
 
       return newSearchParams.toString();
     },
@@ -576,18 +582,52 @@ export default function CategoryClientComponent({
     router.push(`${pathname}?${queryString}`, { scroll: false });
   };
 
-  const filteredCompanies = initialCompanies;
-  const companies = initialCompanies;
+  const filteredCompanies = companies;
 
-  const handleLoadMore = () => {
-    if (paginationMeta?.total_pages && filters.page < paginationMeta.total_pages) {
-      setLoadingCompanies(true);
-      const queryString = createQueryString({ page: filters.page + 1 });
-      router.push(`${pathname}?${queryString}`, { scroll: false });
+  const handleLoadMore = async () => {
+    if (loadingCompanies || loadingMore) return;
+    if (!meta?.total_pages) return;
+    if (currentPage >= meta.total_pages) return;
+
+    const nextPage = currentPage + 1;
+    setLoadingMore(true);
+
+    try {
+      const resp = await categoriesApi.getCompaniesPaginated(category.id, {
+        status: 'active',
+        per_page: 20,
+        page: nextPage,
+        searchTerm: filters.searchTerm || undefined,
+        state: filters.state || undefined,
+        city: filters.city || undefined,
+        rating: filters.rating > 0 ? String(filters.rating) : undefined,
+        verified: filters.verified ? true : undefined,
+      });
+
+      const nextCompanies = resp.companies || [];
+
+      setCompanies((prev) => {
+        const seen = new Set<number>();
+        const merged: Company[] = [];
+        for (const c of [...prev, ...nextCompanies]) {
+          if (!c?.id) continue;
+          if (seen.has(c.id)) continue;
+          seen.add(c.id);
+          merged.push(c);
+        }
+        return merged;
+      });
+
+      setMeta(resp.meta || meta);
+      setCurrentPage(resp.meta?.page || nextPage);
+    } catch (e) {
+      console.error('Error loading more companies:', e);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
-  const hasMore = paginationMeta?.total_pages ? filters.page < paginationMeta.total_pages : false;
+  const hasMore = meta?.total_pages ? currentPage < meta.total_pages : false;
   const banners = initialBanners;
 
   const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => [
@@ -884,6 +924,7 @@ export default function CategoryClientComponent({
                   <div className="flex justify-center mt-12 mb-8">
                     <Button
                       onClick={handleLoadMore}
+                      disabled={loadingMore}
                       size="lg"
                       className="bg-[#14b8a6] hover:bg-[#0d9488] text-white px-12 h-14 rounded-xl shadow-lg shadow-teal-500/20 font-bold text-lg transition-all hover:scale-105"
                     >
