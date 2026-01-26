@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   authors: [{ name: 'Avalia Solar' }],
   creator: 'Avalia Solar',
   publisher: 'Avalia Solar',
+  icons: {
+    icon: '/favicon.ico',
+  },
   metadataBase: new URL('https://www.avaliasolar.com.br'),
   alternates: {
     canonical: '/',
