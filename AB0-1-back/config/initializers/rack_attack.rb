@@ -60,6 +60,22 @@ class Rack::Attack
     end
   end
 
+  # Limitar requests de recuperação de senha por IP
+  # Evita abuso/spam de e-mail
+  throttle('forgot_password/ip', limit: 5, period: 10.minutes) do |req|
+    if req.path == '/api/v1/auth/forgot_password' && req.post?
+      req.ip
+    end
+  end
+
+  # Limitar requests de reenvio de confirmação por IP
+  # Evita spam de confirmação e abuso de endpoint
+  throttle('resend_confirmation/ip', limit: 5, period: 10.minutes) do |req|
+    if req.path == '/api/v1/auth/resend_confirmation' && req.post?
+      req.ip
+    end
+  end
+
   # Limitar requests gerais por IP
   # Protege contra DDoS e scraping agressivo
   throttle('req/ip', limit: 300, period: 5.minutes) do |req|
