@@ -10,11 +10,12 @@ interface CompanyReviewsProps {
   reviews?: Review[];
   loading?: boolean;
   companyId: number;
+  companySlug?: string;
   companyName?: string | null;
 }
 
-export default function CompanyReviews({ reviews = [], loading = false, companyId, companyName }: CompanyReviewsProps) {
-  const reviewPath = buildCompanySubPath(companyId, companyName, 'review');
+export default function CompanyReviews({ reviews = [], loading = false, companyId, companySlug, companyName }: CompanyReviewsProps) {
+  const reviewPath = buildCompanySubPath(companySlug, companyName, 'review', companyId);
   
   if (loading) {
     return (

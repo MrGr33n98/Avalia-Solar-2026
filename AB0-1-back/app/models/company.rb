@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   include Moderation
@@ -105,6 +107,7 @@ class Company < ApplicationRecord
   validates :maximum_ticket,
             numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
+  validates :slug, presence: true, uniqueness: true
   
   # Validate that minimum_ticket is less than maximum_ticket if both are present
   def validate_ticket_range
@@ -147,6 +150,10 @@ class Company < ApplicationRecord
 
   def to_s
     name
+  end
+  
+  def to_param
+    slug.presence || super
   end
   
   def validate_ready_for_activation
@@ -297,6 +304,7 @@ class Company < ApplicationRecord
 
   before_validation :normalize_company_fields
   before_validation :normalize_multiselects
+  before_validation :ensure_slug
   validate :validate_project_types, :validate_services_offered
 
   # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
@@ -412,6 +420,23 @@ class Company < ApplicationRecord
   end
 
   private
+
+  def ensure_slug
+    base = slug.presence || name.to_s
+    base = base.parameterize
+    base = "company-#{id || SecureRandom.hex(4)}" if base.blank?
+    self.slug = generate_unique_slug(base)
+  end
+
+  def generate_unique_slug(base)
+    candidate = base
+    counter = 2
+    while self.class.where.not(id: id).exists?(slug: candidate)
+      candidate = "#{base}-#{counter}"
+      counter += 1
+    end
+    candidate
+  end
 
   def parse_features(raw_features)
     case raw_features

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Star, ArrowLeft } from 'lucide-react';
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
 import { reviewsApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { buildCompanyPath, parseIdFromSlug } from '@/lib/slug';
+import { buildCompanyPath } from '@/lib/slug';
 
 import {
   Dialog,
@@ -219,12 +219,11 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
 
 export default function CompanyReviewPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const parsedId = parseIdFromSlug(params.id);
-  const companyId = parsedId || 0;
-  const { company, loading, error } = useCompanySafe(companyId);
-  const companyPath = buildCompanyPath(companyId, company?.name);
+  const slug = params.id;
+  const { company, loading, error } = useCompanySafe(slug);
+  const companyPath = buildCompanyPath(company?.slug, company?.name, company?.id);
 
-  if (parsedId === null) {
+  if (!slug) {
     return (
       <div className="container mx-auto py-8">
         <div className="max-w-2xl mx-auto">
@@ -293,7 +292,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
           </p>
         </div>
         
-        <ReviewForm companyId={companyId} companyPath={companyPath} />
+        <ReviewForm companyId={company.id} companyPath={companyPath} />
       </div>
     </div>
   );

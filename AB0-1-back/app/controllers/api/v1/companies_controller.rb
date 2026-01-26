@@ -144,6 +144,7 @@ module Api
 
           company_json = {
             id: @company.id,
+            slug: @company.slug,
             name: @company.name,
             description: @company.description,
             website: @company.website,
@@ -166,6 +167,7 @@ module Api
         if @company.update(company_params)
           company_json = {
             id: @company.id,
+            slug: @company.slug,
             name: @company.name,
             description: @company.description,
             website: @company.website,
@@ -222,6 +224,7 @@ module Api
       def company_json_attributes(company)
         {
           id: company.id,
+          slug: company.slug,
           name: company.name,
           description: company.description,
           website: company.website,

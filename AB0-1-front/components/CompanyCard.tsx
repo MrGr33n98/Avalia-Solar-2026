@@ -65,8 +65,8 @@ export default function CompanyCard({
 
   const rating = average_rating?.toFixed(1) ?? '0.0';
   const totalReviews = rating_count || 0;
-  const companyPath = buildCompanyPath(id, name);
-  const companyReviewPath = buildCompanySubPath(id, name, 'review');
+  const companyPath = buildCompanyPath(company.slug, name, id);
+  const companyReviewPath = buildCompanySubPath(company.slug, name, 'review', id);
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 

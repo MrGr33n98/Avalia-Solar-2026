@@ -3,37 +3,27 @@ import { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
 import { companiesApiSafe } from '@/lib/api-client';
-import { buildCompanyPath, parseIdFromSlug } from '@/lib/slug';
+import { buildCompanyPath } from '@/lib/slug';
 
 interface Props {
-  params: { id: string }; // ✅ Corrigido: objeto direto
+  params: { id: string }; // slug da empresa
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     // Log the ID being requested
-    console.log('Fetching company with ID:', params.id);
-    const companyId = parseIdFromSlug(params.id);
-    
-    // Check if the ID is valid
-    if (!companyId) {
-      console.error('Invalid company ID:', params.id);
-      return {
-        title: 'Empresa não encontrada | Avalia Solar',
-      };
-    }
-
-    const company = await companiesApiSafe.getById(companyId);
+    console.log('Fetching company with slug:', params.id);
+    const company = await companiesApiSafe.getById(params.id);
 
     if (!company) {
-      console.log('Company not found for ID:', companyId);
+      console.log('Company not found for slug:', params.id);
       return {
         title: 'Empresa não encontrada | Avalia Solar',
       };
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const canonicalPath = buildCompanyPath(company.id, company.name);
+    const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
     const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
     return {
@@ -68,26 +58,17 @@ export const revalidate = 0;
 
 export default async function CompanyDetailPage({ params }: Props) {
   // Log the ID being requested
-  console.log('[CompanyDetailPage] Loading company with ID:', params.id);
-  const companyId = parseIdFromSlug(params.id);
-  
-  // Check if the ID is valid
-  if (!companyId) {
-    console.error('[CompanyDetailPage] Invalid company ID:', params.id);
-    notFound();
-  }
+  console.log('[CompanyDetailPage] Loading company with slug:', params.id);
 
   console.log('[CompanyDetailPage] Fetching company from API...');
-  
-  // ✅ NÃO usar try/catch com notFound() ou redirect()
-  const company = await companiesApiSafe.getById(companyId);
+  const company = await companiesApiSafe.getById(params.id);
 
   if (!company) {
-    console.log('[CompanyDetailPage] Company not found for ID:', companyId);
+    console.log('[CompanyDetailPage] Company not found for slug:', params.id);
     notFound();
   }
 
-  const canonicalPath = buildCompanyPath(company.id, company.name);
+  const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
   const canonicalSegment = canonicalPath.split('/').pop();
   if (canonicalSegment && params.id !== canonicalSegment) {
     permanentRedirect(canonicalPath);

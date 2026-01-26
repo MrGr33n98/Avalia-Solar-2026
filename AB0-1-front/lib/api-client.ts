@@ -157,7 +157,7 @@ export const companiesApiSafe = {
   },
 
   // 🔥 Corrigido para desembrulhar o objeto { company: { ... } }
-  getById: async (id: number): Promise<Company | null> => {
+  getById: async (id: number | string): Promise<Company | null> => {
     try {
       const response = await fetchApiSafe<any>(`companies/${id}`);
       console.log('[companiesApiSafe.getById] Raw response:', response);

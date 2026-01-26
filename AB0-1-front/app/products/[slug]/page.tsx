@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
   }
 
   const companyPath = product.company?.id
-    ? buildCompanyPath(product.company.id, product.company?.name)
+    ? buildCompanyPath(product.company.slug, product.company?.name, product.company.id)
     : '/companies';
 
   return (

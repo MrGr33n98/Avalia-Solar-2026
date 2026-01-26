@@ -76,6 +76,7 @@ export interface CompanyFinancingOffer {
 
 export interface Company {
   id: number;
+  slug?: string;
   name: string;
   description: string;         // Corrigido de 'about' para 'description'
   about?: string;              // Legacy field - some APIs might still use this
@@ -674,12 +675,12 @@ export const companiesApi = {
       return [];
     }
   },
-  getById: async (id: number): Promise<Company | null> => {
-    try {
-      const response = await fetchApi<{ company: Company }>(`/companies/${id}`);
-      return response?.company || null;
-    } catch (error) {
-      console.error(`Error fetching company with ID ${id}:`, error);
+    getById: async (id: number | string): Promise<Company | null> => {
+      try {
+        const response = await fetchApi<{ company: Company }>(`/companies/${id}`);
+        return response?.company || null;
+      } catch (error) {
+        console.error(`Error fetching company with ID ${id}:`, error);
       // Return null on error to prevent breaking the UI
       return null;
     }

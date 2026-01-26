@@ -1,14 +1,13 @@
 import { companiesApiSafe } from '@/lib/api-client';
 import QuoteForm from '@/components/QuoteForm';
 import { notFound } from 'next/navigation';
-import { parseIdFromSlug } from '@/lib/slug';
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const companyId = parseIdFromSlug(params.id);
-  if (!companyId) {
+  const company = await companiesApiSafe.getById(params.id);
+
+  if (!company) {
     notFound();
   }
-  const company = await companiesApiSafe.getById(companyId);
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -17,7 +16,7 @@ export default async function Page({ params }: { params: { id: string } }) {
         <p className="text-muted-foreground mb-6">
           Preencha o formulário abaixo para solicitar um orçamento da empresa {company?.name}.
         </p>
-        <QuoteForm companyName={company?.name || ''} companyId={companyId} />
+        <QuoteForm companyName={company?.name || ''} companyId={company.id} />
       </div>
     </div>
   );

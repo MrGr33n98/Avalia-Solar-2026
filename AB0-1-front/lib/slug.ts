@@ -7,27 +7,31 @@ export const slugify = (value: string): string => {
     .replace(/^-+|-+$/g, '');
 };
 
-export const buildCompanySlug = (id: number | string, name?: string | null): string => {
-  const base = name ? slugify(name) : '';
-  return base ? `${id}-${base}` : String(id);
+export const buildCompanySlug = (
+  slug?: string | null,
+  name?: string | null,
+  fallbackId?: number | string
+): string => {
+  const base = slugify(slug || name || '');
+  if (base) return base;
+  return fallbackId ? String(fallbackId) : '';
 };
 
-export const buildCompanyPath = (id: number | string, name?: string | null): string => {
-  return `/companies/${buildCompanySlug(id, name)}`;
+export const buildCompanyPath = (
+  slug?: string | null,
+  name?: string | null,
+  fallbackId?: number | string
+): string => {
+  return `/companies/${buildCompanySlug(slug, name, fallbackId)}`;
 };
 
 export const buildCompanySubPath = (
-  id: number | string,
+  slug?: string | null,
   name: string | null | undefined,
-  suffix: string
+  suffix: string,
+  fallbackId?: number | string
 ): string => {
-  return `${buildCompanyPath(id, name)}/${suffix}`;
-};
-
-export const parseIdFromSlug = (value: string): number | null => {
-  const idPart = value.split('-')[0];
-  const parsed = parseInt(idPart, 10);
-  return Number.isNaN(parsed) ? null : parsed;
+  return `${buildCompanyPath(slug, name, fallbackId)}/${suffix}`;
 };
 
 export const buildCategoryPath = (seo?: string | null, id?: number | string): string => {

@@ -90,7 +90,7 @@ export function usePartnerLogos() {
 }
 
 // Hook para empresa única
-export function useCompanySafe(id: number) {
+export function useCompanySafe(id: number | string) {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export function useCompanySafe(id: number) {
     }
   }, [id]);
 
-  const fetchCompany = async (companyId: number) => {
+  const fetchCompany = async (companyId: number | string) => {
     try {
       setLoading(true);
       setError(null);

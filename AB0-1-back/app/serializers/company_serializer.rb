@@ -2,6 +2,7 @@ class CompanySerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
 
   attributes :id, :name, :description, :website,
+             :slug,
              :state, :city, :address, :phone, :whatsapp,
              :email_public, :featured, :verified,
              :media_upload_allowed,

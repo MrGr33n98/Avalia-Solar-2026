@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_24_210000) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_26_000000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -399,13 +399,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_24_210000) do
     t.integer "approved_by_admin_user_id"
     t.text "rejected_reason"
     t.boolean "financing_enabled", default: false, null: false
+    t.string "slug", null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
+    t.index ["slug"], name: "index_companies_on_slug", unique: true
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 

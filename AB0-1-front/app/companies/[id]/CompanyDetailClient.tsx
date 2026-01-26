@@ -337,6 +337,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                       reviews={reviews}
                       loading={reviewsLoading}
                       companyId={companyId}
+                      companySlug={currentCompany?.slug}
                       companyName={currentCompany?.name}
                     />
                   </TabsContent>
