@@ -14,6 +14,7 @@ interface AuthContextType {
   signInWithLinkedIn: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string, passwordConfirmation?: string) => Promise<void>;
+  resendConfirmation: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       forgotPassword: (email: string) => authApi.forgotPassword(email),
       resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
         authApi.resetPassword(token, password, passwordConfirmation),
+      resendConfirmation: (email: string) => authApi.resendConfirmation(email),
     }}>
       {children}
     </AuthContext.Provider>

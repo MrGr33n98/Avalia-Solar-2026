@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 export default function LoginTab() {
-  const { login, signInWithLinkedIn } = useAuth();
+  const { login, signInWithLinkedIn, resendConfirmation } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -19,6 +19,9 @@ export default function LoginTab() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   const rawReturnTo = searchParams.get('return_to') || searchParams.get('redirect');
   const safeReturnTo =
@@ -28,14 +31,41 @@ export default function LoginTab() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setNeedsConfirmation(false);
+    setResendMessage(null);
     try {
       await login(email, password);
       const redirect = safeReturnTo || '/dashboard';
       await new Promise((resolve) => setTimeout(resolve, 300));
       window.location.href = redirect;
     } catch (err) {
-      setError((err as any)?.message || 'Falha ao fazer login. Verifique suas credenciais.');
+      const code = (err as any)?.context?.details?.code;
+      if (code === 'EMAIL_NOT_CONFIRMED') {
+        setNeedsConfirmation(true);
+        setError('Seu e-mail ainda nao foi confirmado. Verifique sua caixa de entrada ou reenvie o link.');
+      } else {
+        setError((err as any)?.message || 'Falha ao fazer login. Verifique suas credenciais.');
+      }
       setIsLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setIsResending(true);
+    setResendMessage(null);
+    try {
+      await resendConfirmation(email);
+      setResendMessage('Se o e-mail existir, enviaremos um novo link de confirmacao.');
+    } catch (err: any) {
+      const status = err?.context?.status;
+      const message = err?.message || 'Nao foi possivel reenviar agora.';
+      if (status === 429 || `${message}`.includes('[429]')) {
+        setResendMessage('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+      } else {
+        setResendMessage('Nao foi possivel reenviar agora. Tente novamente em alguns minutos.');
+      }
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -84,6 +114,32 @@ export default function LoginTab() {
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {needsConfirmation && (
+        <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-900">
+          <AlertCircle className="h-4 w-4 text-amber-700" />
+          <AlertDescription className="flex flex-col gap-3">
+            <span>Confirme seu e-mail para liberar o acesso.</span>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-amber-300 bg-white hover:bg-amber-100 text-amber-900"
+              onClick={handleResendConfirmation}
+              disabled={isResending || !email}
+            >
+              {isResending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Reenviando...
+                </>
+              ) : (
+                'Reenviar confirmacao'
+              )}
+            </Button>
+            {resendMessage && <span className="text-sm">{resendMessage}</span>}
+          </AlertDescription>
         </Alert>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">

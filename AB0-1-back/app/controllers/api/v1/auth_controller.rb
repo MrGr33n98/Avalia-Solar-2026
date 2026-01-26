@@ -15,6 +15,13 @@ module Api
 
         user = User.find_by(email: email)
         if user&.valid_password?(password)
+          if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
+            return render json: {
+              error: 'Email not confirmed',
+              message: 'Please confirm your email before logging in.',
+              code: 'EMAIL_NOT_CONFIRMED'
+            }, status: :forbidden
+          end
           return render json: payload_for(user), status: :ok
         end
 
@@ -132,6 +139,33 @@ module Api
         render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
       end
 
+      def resend_confirmation
+        email = params[:email]
+        return render json: { error: 'Invalid email' }, status: :unprocessable_entity if email.blank?
+
+        user = User.find_by(email: email)
+        begin
+          user.send_confirmation_instructions if user && user.respond_to?(:confirmed?) && !user.confirmed?
+        rescue StandardError => e
+          Rails.logger.error("[Auth] resend_confirmation failure: #{e.class}: #{e.message}")
+        end
+
+        # Anti-enumeration: do not reveal whether the email exists.
+        render json: { message: 'Se o e-mail existir, voce recebera instrucoes para confirmar sua conta.' }, status: :ok
+      end
+
+      def confirm_email
+        token = params[:token]
+        return render json: { error: 'Token invalido' }, status: :unprocessable_entity if token.blank?
+
+        user = User.confirm_by_token(token)
+        if user.errors.empty?
+          return render json: { message: 'Email confirmado com sucesso.' }, status: :ok
+        end
+
+        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+      end
+
       private
 
       def user_params
@@ -162,7 +196,7 @@ module Api
       
       def skip_token_check?
         # Skip revocation check for login, register, signup
-        %w[login register signup forgot_password reset_password confirm_email].include?(action_name)
+        %w[login register signup forgot_password reset_password resend_confirmation confirm_email].include?(action_name)
       end
 
       def development_fallback(action, error)
@@ -193,15 +227,6 @@ module Api
           company = Company.first
         end
         user.update(company: company) if company
-      end
-      def confirm_email
-        token = params[:token]
-        return render json: { error: 'Token inválido' }, status: :unprocessable_entity if token.blank?
-        user = User.confirm_by_token(token)
-        if user.errors.empty?
-          return render json: { message: 'E-mail confirmado com sucesso.' }, status: :ok
-        end
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
       end
     end
   end

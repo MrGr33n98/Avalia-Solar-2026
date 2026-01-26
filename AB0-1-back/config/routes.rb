@@ -191,6 +191,7 @@ Rails.application.routes.draw do
         get :me
         post :forgot_password
         post :reset_password
+        post :resend_confirmation
         post :confirm_email
       end
 

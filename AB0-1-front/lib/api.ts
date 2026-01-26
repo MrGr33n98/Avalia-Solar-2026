@@ -625,14 +625,20 @@ export async function fetchApi<T = any>(
     }
 
     if (error?.response) {
-      throw new Error(
+      const msg =
         error.response.data?.error ||
-          `Erro na API (${error.response.status}): ${error.message}`
-      );
+        `Erro na API (${error.response.status}): ${error.message}`;
+      const enhancedError = new Error(msg);
+      (enhancedError as any).status = error.response.status;
+      (enhancedError as any).context = errorContext;
+      throw enhancedError;
     }
 
     const detailedMessage = error?.message || error?.toString?.() || 'Erro desconhecido na API';
-    throw new Error(`${detailedMessage} (Endpoint: ${endpoint})`);
+    const enhancedError = new Error(`${detailedMessage} (Endpoint: ${endpoint})`);
+    (enhancedError as any).status = errorContext?.status;
+    (enhancedError as any).context = errorContext;
+    throw enhancedError;
   }
 }
 
@@ -947,6 +953,11 @@ export const authApi = {
         password,
         password_confirmation: password_confirmation || password,
       }),
+    }),
+  resendConfirmation: (email: string) =>
+    fetchApi('/auth/resend_confirmation', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
     }),
   logout: async () => {
     if (typeof window !== 'undefined') {
