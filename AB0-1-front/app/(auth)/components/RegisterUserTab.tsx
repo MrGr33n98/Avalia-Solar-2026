@@ -108,7 +108,6 @@ export default function RegisterUserTab() {
       if (data.state) formData.append('user[state]', data.state);
       if (data.phone) formData.append('user[phone]', data.phone);
       formData.append('terms_accepted', data.termsAccepted ? 'true' : 'false');
-      formData.append('user[terms_accepted]', data.termsAccepted ? 'true' : 'false');
       if (avatarFile) formData.append('user[avatar]', avatarFile);
 
       await fetchApi('/auth/register', {
@@ -130,8 +129,11 @@ export default function RegisterUserTab() {
     } catch (err: any) {
       const status = err?.context?.status;
       const message = err?.message || 'Ocorreu um erro ao processar o cadastro.';
-      if (status === 422 || `${message}`.includes('[422]')) {
-        setSubmitError('Você deve aceitar os termos e corrigir os campos destacados.');
+      const apiErrors = err?.context?.details?.errors;
+      if (Array.isArray(apiErrors) && apiErrors.length) {
+        setSubmitError(apiErrors.join(' | '));
+      } else if (status === 422 || `${message}`.includes('[422]')) {
+        setSubmitError('Verifique os campos e tente novamente.');
       } else {
         setSubmitError(message);
       }
@@ -262,7 +264,22 @@ export default function RegisterUserTab() {
 
         <div className="space-y-2">
           <Label htmlFor="password">Senha *</Label>
-          <Input id="password" type="password" {...register('password', { required: 'Senha é obrigatória', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })} className={errors.password ? 'border-red-500' : ''} />
+          <Input
+            id="password"
+            type="password"
+            {...register('password', {
+              required: 'Senha é obrigatória',
+              validate: (val) => {
+                if (!val) return 'Senha é obrigatória';
+                if (val.length < 8) return 'Mínimo 8 caracteres';
+                if (!/[A-Z]/.test(val)) return 'Inclua ao menos 1 letra maiúscula';
+                if (!/[a-z]/.test(val)) return 'Inclua ao menos 1 letra minúscula';
+                if (!/\d/.test(val)) return 'Inclua ao menos 1 número';
+                return true;
+              },
+            })}
+            className={errors.password ? 'border-red-500' : ''}
+          />
           {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
         </div>
 

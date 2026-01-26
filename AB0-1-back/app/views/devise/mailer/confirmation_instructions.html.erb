@@ -1,5 +1,8 @@
-<p>Welcome <%= @email %>!</p>
+<% frontend_origin = ENV.fetch('FRONTEND_ORIGIN', 'https://avaliasolar.com.br').to_s.chomp('/') %>
+<% confirm_url = "#{frontend_origin}/confirm-email/#{ERB::Util.url_encode(@token)}" %>
 
-<p>You can confirm your account email through the link below:</p>
+<p>Ola <%= @email %>!</p>
 
-<p><%= link_to 'Confirm my account', confirmation_url(@resource, confirmation_token: @token) %></p>
+<p>Voce pode confirmar seu e-mail clicando no link abaixo:</p>
+
+<p><%= link_to 'Confirmar meu e-mail', confirm_url %></p>

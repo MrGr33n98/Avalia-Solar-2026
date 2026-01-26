@@ -51,7 +51,6 @@ module Api
         user.skip_confirmation_notification!
         if user.save
           user.send_confirmation_instructions
-          EmailConfirmationJob.perform_later(user.id, user.confirmation_token)
           return render json: payload_for(user), status: :created
         end
 
@@ -136,7 +135,17 @@ module Api
       private
 
       def user_params
-        params.require(:user).permit(:name, :email, :password, :password_confirmation, :date_of_birth)
+        params.require(:user).permit(
+          :name,
+          :email,
+          :password,
+          :password_confirmation,
+          :date_of_birth,
+          :city,
+          :state,
+          :phone,
+          :avatar
+        )
       end
 
       def payload_for(user)
