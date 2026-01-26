@@ -4,7 +4,8 @@ class CategorySerializer < ActiveModel::Serializer
   attributes :id, :name, :seo_url, :seo_title,
              :short_description, :description,
              :parent_id, :kind, :status, :featured,
-             :created_at, :updated_at, :banner_url, :icon_url
+             :created_at, :updated_at, :banner_url, :icon_url,
+             :parent, :subcategories
              # :banner_sponsored, :banners  # Temporarily commented out
 
   has_many :companies
@@ -21,6 +22,28 @@ class CategorySerializer < ActiveModel::Serializer
     return unless object.icon.attached?
 
     Rails.application.routes.url_helpers.rails_blob_url(object.icon, only_path: false)
+  end
+
+  def parent
+    return nil unless object.parent
+
+    {
+      id: object.parent.id,
+      name: object.parent.name,
+      seo_url: object.parent.seo_url
+    }
+  end
+
+  def subcategories
+    object.children.order(:name).map do |child|
+      {
+        id: child.id,
+        name: child.name,
+        seo_url: child.seo_url,
+        featured: child.featured,
+        status: child.status
+      }
+    end
   end
 
   # Temporarily commented out to fix the search issue

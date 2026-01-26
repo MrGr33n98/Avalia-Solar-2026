@@ -262,6 +262,7 @@ export interface Category {
   short_description?: string;
   description?: string;
   parent_id?: number | null;
+  parent?: { id: number; name: string; seo_url: string } | null;
   companies_count?: number;
   products_count?: number;
   subcategories?: Category[];

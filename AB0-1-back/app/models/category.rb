@@ -1,3 +1,5 @@
+require 'set'
+
 class Category < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   
@@ -26,6 +28,7 @@ class Category < ApplicationRecord
   # =========================
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
+  validate :validate_parent_constraints
   validate :validate_banner_technical_requirements
 
   # =========================
@@ -65,7 +68,7 @@ class Category < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[companies products banner_attachment banner_blob]
+    %w[companies products banner_attachment banner_blob parent children]
   end
 
   # =========================
@@ -108,6 +111,22 @@ class Category < ApplicationRecord
     companies.joins(:reviews).count
   end
 
+  def depth
+    current = parent
+    seen_ids = Set.new([id].compact)
+    depth = 0
+
+    while current
+      break if seen_ids.include?(current.id)
+
+      seen_ids.add(current.id)
+      depth += 1
+      current = current.parent
+    end
+
+    depth
+  end
+
   def update_metrics!
     active_companies = companies.where(status: 'active').count
     active_products = products.where(status: 'active')
@@ -121,6 +140,28 @@ class Category < ApplicationRecord
   end
 
   private
+
+  def validate_parent_constraints
+    return if parent_id.blank?
+
+    if parent_id == id
+      errors.add(:parent_id, 'nÃ£o pode ser a prÃ³pria categoria')
+      return
+    end
+
+    seen_ids = Set.new([id].compact)
+    current = parent
+
+    while current
+      if seen_ids.include?(current.id)
+        errors.add(:parent_id, 'gera um ciclo na hierarquia')
+        break
+      end
+
+      seen_ids.add(current.id)
+      current = current.parent
+    end
+  end
 
   def update_metrics_on_change(_record)
     update_metrics!

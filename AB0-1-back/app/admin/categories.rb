@@ -1,7 +1,7 @@
 require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
-  permit_params :name, :seo_url, :seo_title, :short_description, :description, :kind, :status, :featured,
+  permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
                 :banner, :icon, company_ids: [], product_ids: [],
                 badges_attributes: [:id, :name, :description, :year, :badge_image, :_destroy]
 
@@ -56,6 +56,7 @@ ActiveAdmin.register Category, namespace: :admin do
 
   # Define filters
   filter :name
+  filter :parent
   filter :kind
   filter :featured
   filter :status
@@ -79,6 +80,11 @@ ActiveAdmin.register Category, namespace: :admin do
     f.inputs 'Settings' do
       f.input :status, as: :select, collection: [['Active', 'active'], ['Inactive', 'inactive']]
       f.input :kind, as: :select, collection: [['Main Category', 'main'], ['Sub Category', 'sub']]
+      f.input :parent,
+              as: :select,
+              collection: Category.where.not(id: f.object.id).order(:name),
+              include_blank: true,
+              hint: 'Selecione a categoria pai para criar uma subcategoria (opcional).'
       f.input :featured, hint: 'Display in featured categories section'
     end
 
@@ -151,6 +157,11 @@ ActiveAdmin.register Category, namespace: :admin do
   show do
     attributes_table do
       row :name
+      row :parent do |category|
+        next unless category.parent
+
+        link_to category.parent.name, admin_category_path(category.parent)
+      end
       row :short_description
       row :description do |category|
         raw category.description
@@ -175,6 +186,21 @@ ActiveAdmin.register Category, namespace: :admin do
       row :views_count
       row :created_at
       row :updated_at
+    end
+
+    if category.children.any?
+      panel 'Subcategorias' do
+        table_for category.children.order(:name) do
+          column :name do |child|
+            link_to child.name, admin_category_path(child)
+          end
+          column :seo_url
+          column :status do |child|
+            status_tag child.status
+          end
+          column :featured
+        end
+      end
     end
 
     panel 'Assets' do

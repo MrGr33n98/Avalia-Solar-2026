@@ -630,16 +630,37 @@ export default function CategoryClientComponent({
   const hasMore = meta?.total_pages ? currentPage < meta.total_pages : false;
   const banners = initialBanners;
 
-  const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => [
-    { label: 'Categorias', href: '/categories' },
-    { label: category.name, active: true },
-  ], [category]);
+  const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
+    if (category.parent?.seo_url) {
+      return [
+        { label: 'Categorias', href: '/categories' },
+        { label: category.parent.name, href: `/categories/${category.parent.seo_url}` },
+        { label: category.name, active: true },
+      ];
+    }
 
-  const jsonLdItems = useMemo(() => [
-    { name: 'Home', item: '/' },
-    { name: 'Categorias', item: '/categories' },
-    { name: category.name, item: `/categories/${category.seo_url}` },
-  ], [category]);
+    return [
+      { label: 'Categorias', href: '/categories' },
+      { label: category.name, active: true },
+    ];
+  }, [category]);
+
+  const jsonLdItems = useMemo(() => {
+    if (category.parent?.seo_url) {
+      return [
+        { name: 'Home', item: '/' },
+        { name: 'Categorias', item: '/categories' },
+        { name: category.parent.name, item: `/categories/${category.parent.seo_url}` },
+        { name: category.name, item: `/categories/${category.seo_url}` },
+      ];
+    }
+
+    return [
+      { name: 'Home', item: '/' },
+      { name: 'Categorias', item: '/categories' },
+      { name: category.name, item: `/categories/${category.seo_url}` },
+    ];
+  }, [category]);
 
   const itemListItems = useMemo(() => {
     return companies.map((comp, index) => ({

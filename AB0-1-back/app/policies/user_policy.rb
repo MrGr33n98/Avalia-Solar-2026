@@ -18,4 +18,12 @@ class UserPolicy < ApplicationPolicy
   def destroy?
     admin?
   end
+
+  def approve?
+    admin?
+  end
+
+  def reject?
+    admin?
+  end
 end

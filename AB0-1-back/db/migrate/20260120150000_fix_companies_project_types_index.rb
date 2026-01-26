@@ -100,7 +100,7 @@ class FixCompaniesProjectTypesIndex < ActiveRecord::Migration[7.0]
   # HELPERS
   # -------------------------
   def remove_index_if_exists(table, name:)
-    return unless index_exists?(table, name: name)
+    return unless index_exists?(table, nil, name: name)
     remove_index table, name: name
   end
 
