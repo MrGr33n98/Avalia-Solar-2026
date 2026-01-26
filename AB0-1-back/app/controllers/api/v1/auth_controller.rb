@@ -10,11 +10,35 @@ module Api
       # skip_before_action :verify_authenticity_token aqui.
 
       def login
-        email = params[:email]
-        password = params[:password]
+        email, password, source = extract_credentials
+
+        if email.blank? || password.blank?
+          return render_error_response(
+            error: 'Unprocessable Entity',
+            message: 'Email e senha são obrigatórios.',
+            status: :unprocessable_entity,
+            code: 'MISSING_CREDENTIALS'
+          )
+        end
 
         user = User.find_by(email: email)
         if user&.valid_password?(password)
+          if user.respond_to?(:active?) && !user.active?
+            status_code =
+              case user.status
+              when 'pending' then 'USER_NOT_APPROVED'
+              when 'rejected' then 'USER_REJECTED'
+              when 'blocked' then 'USER_BLOCKED'
+              else 'USER_INACTIVE'
+              end
+            return render_error_response(
+              error: 'Forbidden',
+              message: 'Usuário não está ativo.',
+              status: :forbidden,
+              code: status_code
+            )
+          end
+
           if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
             return render json: {
               error: 'Email not confirmed',
@@ -39,7 +63,12 @@ module Api
           return render json: payload_for(mock_user).merge(mocked: true), status: :ok
         end
 
-        render json: { error: 'Invalid email or password' }, status: :unauthorized
+        render_error_response(
+          error: 'Unauthorized',
+          message: 'Credenciais inválidas.',
+          status: :unauthorized,
+          code: 'INVALID_CREDENTIALS'
+        )
       rescue StandardError => e
         Rails.logger.error("[Auth] login failure: #{e.class}: #{e.message}")
         development_fallback('login', e)
@@ -168,8 +197,26 @@ module Api
 
       private
 
+      def extract_credentials
+        email = params[:email] || params.dig(:auth, :email) || params.dig(:user, :email)
+        password = params[:password] || params.dig(:auth, :password) || params.dig(:user, :password)
+        source =
+          if params[:email] || params[:password]
+            'root'
+          elsif params[:auth]
+            'auth'
+          elsif params[:user]
+            'user'
+          else
+            'unknown'
+          end
+
+        return [email, password, source]
+      end
+
       def user_params
-        params.require(:user).permit(
+        target = params[:user].present? ? params.require(:user) : params
+        target.permit(
           :name,
           :email,
           :password,
