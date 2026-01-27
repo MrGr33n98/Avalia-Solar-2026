@@ -14,7 +14,6 @@ module Api
 
         if email.blank? || password.blank?
           return render_error_response(
-            error: 'Unprocessable Entity',
             message: 'Email e senha são obrigatórios.',
             status: :unprocessable_entity,
             code: 'MISSING_CREDENTIALS'
@@ -32,7 +31,6 @@ module Api
               else 'USER_INACTIVE'
               end
             return render_error_response(
-              error: 'Forbidden',
               message: 'Usuário não está ativo.',
               status: :forbidden,
               code: status_code
@@ -42,11 +40,11 @@ module Api
           # Verificação de e-mail confirmado (Obrigatória conforme solicitado)
           if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
             Rails.logger.warn("[Auth] Login blocked for unconfirmed user: #{email}")
-            return render json: {
-              error: 'Email not confirmed',
+            return render_error_response(
               message: 'Por favor, confirme seu e-mail antes de fazer login.',
+              status: :forbidden,
               code: 'EMAIL_NOT_CONFIRMED'
-            }, status: :forbidden
+            )
           end
 
           return render json: payload_for(user), status: :ok
@@ -67,7 +65,6 @@ module Api
         end
 
         render_error_response(
-          error: 'Unauthorized',
           message: 'Credenciais inválidas.',
           status: :unauthorized,
           code: 'INVALID_CREDENTIALS'
@@ -79,8 +76,13 @@ module Api
 
       def register
         attrs = user_params
-        unless ActiveModel::Type::Boolean.new.cast(params[:terms_accepted])
-          return render json: { errors: ['Você deve aceitar os Termos e a Política de Privacidade'] }, status: :unprocessable_entity
+        terms_accepted = params[:terms_accepted] || (params[:user] && params[:user][:terms_accepted])
+        unless ActiveModel::Type::Boolean.new.cast(terms_accepted)
+          return render_error_response(
+            message: 'Você deve aceitar os Termos e a Política de Privacidade',
+            status: :unprocessable_entity,
+            code: 'TERMS_NOT_ACCEPTED'
+          )
         end
 
         user = User.new(attrs.merge(
@@ -93,7 +95,12 @@ module Api
           return render json: payload_for(user), status: :created
         end
 
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+        render_error_response(
+          message: 'Erro ao criar conta',
+          status: :unprocessable_entity,
+          code: 'REGISTRATION_ERROR',
+          details: user.errors.full_messages
+        )
       rescue StandardError => e
         Rails.logger.error("[Auth] register failure: #{e.class}: #{e.message}")
         development_fallback('register', e)
@@ -144,13 +151,23 @@ module Api
           end
           render json: { user: user }, status: :ok
         else
-          render json: { error: 'Not authenticated' }, status: :unauthorized
+          render_error_response(
+            message: 'Not authenticated',
+            status: :unauthorized,
+            code: 'NOT_AUTHENTICATED'
+          )
         end
       end
 
       def forgot_password
         email = params[:email]
-        return render json: { error: 'Email inválido' }, status: :unprocessable_entity if email.blank?
+        if email.blank?
+          return render_error_response(
+            message: 'Email inválido',
+            status: :unprocessable_entity,
+            code: 'INVALID_EMAIL'
+          )
+        end
         user = User.find_by(email: email)
         if user
           user.send_reset_password_instructions
@@ -165,18 +182,36 @@ module Api
         token = params[:token]
         password = params[:password]
         password_confirmation = params[:password_confirmation]
-        return render json: { error: 'Dados inválidos' }, status: :unprocessable_entity if token.blank? || password.blank? || password_confirmation.blank?
+        if token.blank? || password.blank? || password_confirmation.blank?
+          return render_error_response(
+            message: 'Dados inválidos',
+            status: :unprocessable_entity,
+            code: 'INVALID_DATA'
+          )
+        end
 
         user = User.reset_password_by_token({ reset_password_token: token, password: password, password_confirmation: password_confirmation })
         if user.errors.empty?
           return render json: { message: 'Senha redefinida com sucesso.' }, status: :ok
         end
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+        
+        render_error_response(
+          message: 'Erro ao redefinir senha',
+          status: :unprocessable_entity,
+          code: 'RESET_PASSWORD_ERROR',
+          details: user.errors.full_messages
+        )
       end
 
       def resend_confirmation
         email = params[:email]
-        return render json: { error: 'Invalid email' }, status: :unprocessable_entity if email.blank?
+        if email.blank?
+          return render_error_response(
+            message: 'Email inválido',
+            status: :unprocessable_entity,
+            code: 'INVALID_EMAIL'
+          )
+        end
 
         user = User.find_by(email: email)
         if user && user.respond_to?(:confirmed?) && !user.confirmed?
@@ -196,14 +231,25 @@ module Api
 
       def confirm_email
         token = params[:token]
-        return render json: { error: 'Token invalido' }, status: :unprocessable_entity if token.blank?
+        if token.blank?
+          return render_error_response(
+            message: 'Token inválido',
+            status: :unprocessable_entity,
+            code: 'INVALID_TOKEN'
+          )
+        end
 
         user = User.confirm_by_token(token)
         if user.errors.empty?
           return render json: { message: 'Email confirmado com sucesso.' }, status: :ok
         end
 
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+        render_error_response(
+          message: 'Erro ao confirmar e-mail',
+          status: :unprocessable_entity,
+          code: 'CONFIRMATION_ERROR',
+          details: user.errors.full_messages
+        )
       end
 
       private
@@ -236,7 +282,9 @@ module Api
           :city,
           :state,
           :phone,
-          :avatar
+          :avatar,
+          :terms_accepted,
+          :company_id
         )
       end
 
@@ -253,7 +301,11 @@ module Api
 
       def development_fallback(action, error)
         unless Rails.env.development?
-          return render json: { error: 'Authentication failed' }, status: :internal_server_error
+          return render_error_response(
+            message: 'Erro interno na autenticação',
+            status: :internal_server_error,
+            code: 'AUTH_INTERNAL_ERROR'
+          )
         end
 
         target_email = params[:email].presence || 'demo@example.com'

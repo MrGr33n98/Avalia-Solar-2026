@@ -24,19 +24,24 @@ RSpec.describe 'Authentication Flow', type: :request do
 
   describe 'User Registration' do
     it 'creates a pending user by default' do
-      post '/api/v1/auth', params: {
+      post '/api/v1/auth/signup', params: {
         user: {
           name: 'New User',
           email: 'new@solartech.com',
           password: 'Password123!',
           password_confirmation: 'Password123!',
           date_of_birth: '1990-01-01',
+          city: 'Florianópolis',
+          state: 'SC',
           terms_accepted: true,
           company_id: company.id
         }
       }
       
-      expect(response).to have_http_status(:success) # Or whatever your auth controller returns
+      if response.status == 422
+        puts "Validation Errors: #{JSON.parse(response.body)['details']}"
+      end
+      expect(response).to have_http_status(:success)
       user = User.find_by(email: 'new@solartech.com')
       expect(user).to be_present
       expect(user.status).to eq('pending')
@@ -58,6 +63,7 @@ RSpec.describe 'Authentication Flow', type: :request do
     }
 
     it 'allows login after approval' do
+      user.confirm # Ensure the user is confirmed, otherwise Devise blocks them anyway
       expect(user.active_for_authentication?).to be false
       
       user.update(status: :active)

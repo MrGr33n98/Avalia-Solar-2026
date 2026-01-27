@@ -22,7 +22,6 @@ module Api
         unless current_user && roles.include?(current_user.role)
           Rails.logger.warn("[AccessDenied] user=#{current_user&.id || 'guest'} role=#{current_user&.role || 'none'} path=#{request.path} action=#{params[:action]}")
           return render_error_response(
-            error: 'Forbidden',
             message: 'Not authorized to perform this action',
             status: :forbidden,
             code: 'FORBIDDEN'
@@ -42,7 +41,6 @@ module Api
         return if current_user
 
         render_error_response(
-          error: 'Unauthorized',
           message: 'Authentication required',
           status: :unauthorized,
           code: 'UNAUTHORIZED'
@@ -75,17 +73,15 @@ module Api
         jwt_decode(token)
       end
 
-      def render_error(message, status = :unprocessable_entity)
-        error_label = status.to_s.tr('_', ' ').titleize
-        render_error_response(error: error_label, message: message, status: status)
+      def render_error(message, status = :unprocessable_entity, code: nil)
+        code ||= status.to_s.upcase
+        render_error_response(message: message, status: status, code: code)
       end
 
-      def render_error_response(error:, message:, status:, code: nil, details: nil, retry_after: nil)
-        error_value = error.to_s
+      def render_error_response(message:, status:, code:, details: nil, retry_after: nil)
         payload = {
-          error: error_value,
-          message: message,
-          code: code || error_value.gsub(/\s+/, '_').upcase
+          code: code.to_s.upcase,
+          message: message
         }
         payload[:details] = details if details.present?
 
@@ -97,7 +93,6 @@ module Api
 
       def not_found(exception)
         render_error_response(
-          error: 'Not Found',
           message: exception.message,
           status: :not_found,
           code: 'NOT_FOUND'
@@ -106,7 +101,6 @@ module Api
       
       def unprocessable_entity(exception)
         render_error_response(
-          error: 'Unprocessable Entity',
           message: exception.message,
           status: :unprocessable_entity,
           code: 'UNPROCESSABLE_ENTITY',
@@ -116,7 +110,6 @@ module Api
       
       def bad_request(exception)
         render_error_response(
-          error: 'Bad Request',
           message: exception.message,
           status: :bad_request,
           code: 'BAD_REQUEST'

@@ -115,14 +115,14 @@ class Rack::Attack
   ### Customizar Response ###
   # Retornar JSON com informação útil ao cliente
   self.throttled_responder = lambda do |env|
-    match_data = env['rack.attack.match_data']
-    now = match_data[:epoch_time]
+    match_data = env['rack.attack.match_data'] || {}
+    now = match_data[:epoch_time] || Time.now.to_i
 
     headers = {
       'Content-Type' => 'application/json',
       'X-RateLimit-Limit' => match_data[:limit].to_s,
       'X-RateLimit-Remaining' => '0',
-      'X-RateLimit-Reset' => (now + match_data[:period]).to_s
+      'X-RateLimit-Reset' => (now + (match_data[:period] || 60)).to_s
     }
 
     # Adicionar Retry-After header
@@ -131,11 +131,13 @@ class Rack::Attack
     end
 
     body = {
-      error: 'Rate limit exceeded. Please try again later.',
-      message: 'Too many requests',
-      retry_after_seconds: match_data[:period],
-      limit: match_data[:limit],
-      period: match_data[:period]
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Muitas solicitações. Por favor, tente novamente mais tarde.',
+      details: {
+        retry_after_seconds: match_data[:period],
+        limit: match_data[:limit],
+        period: match_data[:period]
+      }
     }
 
     [429, headers, [body.to_json]]
