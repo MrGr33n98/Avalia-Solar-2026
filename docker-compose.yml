@@ -87,7 +87,7 @@ services:
     networks:
       - ab0-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD-SHELL", "curl -fsS -H 'Host: api.avaliasolar.com.br' http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -142,3 +142,4 @@ volumes:
 networks:
   ab0-network:
     driver: bridge
+

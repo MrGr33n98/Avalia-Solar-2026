@@ -154,7 +154,7 @@ jobs:
                 break
               fi
               if [ $((i % 20)) -eq 0 ] && [ -n "$be_cid" ]; then
-                docker exec -t "$be_cid" sh -lc "curl -fsS http://localhost:3001/health" && echo "?? health endpoint OK" && break || true
+                docker exec -t "$be_cid" sh -lc "curl -fsS -H 'Host: api.avaliasolar.com.br' http://localhost:3001/health" && echo "?? health endpoint OK" && break || true
               fi
               printf 'backend=%s (tentativa %s/240)\n' "$be_status" "$i"
               sleep 3
@@ -265,3 +265,4 @@ jobs:
             docker system prune -f --volumes || true
 
             echo "? Deploy finalizado com sucesso!"
+
