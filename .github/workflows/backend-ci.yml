@@ -152,16 +152,33 @@ jobs:
           working-directory: ./AB0-1-back
 
       - name: Run Brakeman
-        run: |
-          bundle exec brakeman --no-pager --format json --output tmp/brakeman-report.json || true
-          bundle exec brakeman --no-pager
+        continue-on-error: true
+        run: bundle exec brakeman --no-pager
 
       - name: Upload Brakeman report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: brakeman-report
-          path: AB0-1-back/tmp/brakeman-report.json
+          path: |
+            AB0-1-back/tmp/brakeman-report.json
+            AB0-1-back/tmp/brakeman-report.html
+            AB0-1-back/tmp/brakeman-report.txt
+
+      - name: Publish Brakeman summary
+        if: always()
+        run: |
+          if [ -f "tmp/brakeman-report.txt" ]; then
+            {
+              echo "## Brakeman Report"
+              echo ""
+              tail -n 200 "tmp/brakeman-report.txt"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Brakeman Report" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No report found." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   deploy-staging:
     name: Deploy Staging
