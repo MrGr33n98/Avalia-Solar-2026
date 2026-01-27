@@ -32,28 +32,21 @@ echo "✅ Postgres disponível!"
 
 # === CONFIGURAÇÃO DO BANCO DE DADOS ===
 
-echo "🔧 Verificando banco de dados..."
-db_exists=$(psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DEFAULT_DB" -tAc "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'" | tr -d ' \n' || true)
-if [ "$db_exists" != "1" ]; then
-  echo "📦 Banco '${POSTGRES_DB}' não encontrado. Criando..."
-  psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DEFAULT_DB" -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"${POSTGRES_DB}\";"
-else
-  echo "✅ Banco '${POSTGRES_DB}' já existe. Pulando criação."
-fi
+# Configurar ambiente Rails
+echo "🔧 Configurando ambiente Rails..."
+bundle exec rails db:environment:set RAILS_ENV=production || true
+
+# Usar db:prepare que é idempotente e cuida de tudo:
+# - Cria o banco se não existir
+# - Carrega o schema se o banco estiver vazio
+# - Executa migrações pendentes se o banco já tiver schema
+echo "🔧 Preparando banco de dados (db:prepare)..."
+bundle exec rails db:prepare
 
 # Tentar criar extensões necessárias (requer superuser, pode falhar mas o deploy continua)
 echo "🔧 Tentando criar extensões PostgreSQL..."
 psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" > /dev/null 2>&1 || true
 psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" > /dev/null 2>&1 || true
-
-# Configurar ambiente Rails
-echo "🔧 Configurando ambiente Rails..."
-bundle exec rails db:environment:set RAILS_ENV=production || true
-
-  # Se o banco existe mas está "vazio" (sem tabelas), o rails db:prepare já cuida disso
-  # sem precisar de db:reset ou db:drop que são perigosos em produção.
-  echo "Banco de dados já existe. Verificando migrações..."
-  bundle exec rails db:migrate
 
 # === INÍCIO DA APLICAÇÃO ===
 
