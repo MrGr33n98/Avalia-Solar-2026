@@ -182,12 +182,12 @@ Rails.application.routes.draw do
       get 'search/suggest', to: 'search#suggest'
 
       # Authentication routes
-      namespace :auth do
+      scope :auth, controller: 'auth' do
         post :login
         post :signup
         post :register
         post :logout
-        post :logout_all  # New: logout from all devices
+        post :logout_all
         get :me
         post :forgot_password
         post :reset_password

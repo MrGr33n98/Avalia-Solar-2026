@@ -74,6 +74,20 @@ module JwtAuthenticatable
     # Extract token from "Bearer <token>" format
     header.split(' ').last if header.start_with?('Bearer ')
   end
+
+  # Set the JWT token as an httpOnly cookie
+  # @param token [String]
+  def set_jwt_cookie(token)
+    cookie_opts = {
+      value: token,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :lax,
+      expires: 24.hours.from_now,
+      path: "/"
+    }
+    cookies.signed[:jwt_token] = cookie_opts
+  end
   
   # Check if token was issued before a given timestamp
   # Used to validate against user-wide token revocation
@@ -136,5 +150,16 @@ module JwtAuthenticatable
     end
     
     success
+  end
+
+  # Encode a new JWT token
+  # @param payload [Hash]
+  # @param exp [ActiveSupport::Duration]
+  # @return [String]
+  def jwt_encode(payload, exp = 24.hours.from_now)
+    payload[:exp] = exp.to_i
+    payload[:iat] = Time.current.to_i
+    payload[:jti] = SecureRandom.uuid
+    JWT.encode(payload, Rails.application.secret_key_base)
   end
 end

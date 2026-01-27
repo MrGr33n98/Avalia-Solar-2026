@@ -242,16 +242,10 @@ module Api
 
       def payload_for(user)
         token = jwt_encode(user_id: user.id)
+        set_jwt_cookie(token)
         { token: token, user: user }
       end
 
-      def jwt_encode(payload, exp = 24.hours.from_now)
-        payload[:exp] = exp.to_i
-        payload[:iat] = Time.current.to_i  # Issued at
-        payload[:jti] = SecureRandom.uuid  # JWT ID for revocation
-        JWT.encode(payload, Rails.application.secret_key_base)
-      end
-      
       def skip_token_check?
         # Skip revocation check for login, register, signup
         %w[login register signup forgot_password reset_password resend_confirmation confirm_email].include?(action_name)
