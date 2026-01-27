@@ -90,8 +90,7 @@ class Rack::Attack
       # Extrair user_id do JWT token
       begin
         token = req.env['HTTP_AUTHORIZATION'].split(' ').last
-        secret = ENV['JWT_SECRET'].presence || Rails.application.secret_key_base
-        decoded = JWT.decode(token, secret, true, algorithm: 'HS256')
+        decoded = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256')
         decoded[0]['user_id']
       rescue JWT::DecodeError, JWT::ExpiredSignature
         nil

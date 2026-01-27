@@ -126,11 +126,17 @@ class JwtBlacklistService
     # @param token [String] The JWT token
     # @return [String, nil] The JTI or nil if token is invalid
     def extract_jti(token)
-      payload = JWT.decode(token, nil, false).first
+      payload = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first
       payload['jti'] || payload[:jti] || generate_jti_from_token(token)
     rescue JWT::DecodeError => e
-      Rails.logger.warn("[JWT:Blacklist] Invalid token format: #{e.message}")
-      nil
+      # Fallback to insecure decode if signature fails (just to extract JTI for blacklist check)
+      begin
+        payload = JWT.decode(token, nil, false).first
+        payload['jti'] || payload[:jti] || generate_jti_from_token(token)
+      rescue StandardError
+        Rails.logger.warn("[JWT:Blacklist] Invalid token format: #{e.message}")
+        nil
+      end
     end
     
     # Generate a deterministic JTI from token hash
@@ -150,7 +156,12 @@ class JwtBlacklistService
         return [exp_time - Time.current.to_i, 0].max
       end
       
-      payload = JWT.decode(token, nil, false).first
+      begin
+        payload = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first
+      rescue JWT::DecodeError
+        payload = JWT.decode(token, nil, false).first
+      end
+
       exp_claim = payload['exp'] || payload[:exp]
       
       if exp_claim
@@ -159,8 +170,8 @@ class JwtBlacklistService
         # Default to 24 hours if no expiration found
         24.hours.to_i
       end
-    rescue JWT::DecodeError
-      # If we can't decode, use default TTL
+    rescue StandardError
+      # If we can't decode at all, use default TTL
       24.hours.to_i
     end
   end

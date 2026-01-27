@@ -21,12 +21,18 @@ module Api
           if token.blank?
             nil
           else
-            payload = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first
-            User.find_by(id: payload['user_id'])
+            payload = jwt_decode(token)
+            User.find_by(id: payload['user_id']) if payload
           end
-        rescue JWT::DecodeError
+        rescue StandardError
           nil
         end
+      end
+
+      def jwt_decode(token)
+        JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
+      rescue JWT::DecodeError
+        nil
       end
 
       def ensure_approved_user
