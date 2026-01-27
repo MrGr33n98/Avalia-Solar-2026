@@ -42,8 +42,8 @@ Sentry.init do |config|
   # Set release version from Git SHA or environment
   config.release = ENV['GIT_SHA'] || `git rev-parse --short HEAD`.strip.presence rescue 'unknown'
   
-  # Only send errors in staging and production
-  config.enabled_environments = %w[staging production]
+  # Only send errors in staging and production (and development if DSN is present for testing)
+  config.enabled_environments = %w[staging production development]
   
   # Better error grouping
   config.before_send = lambda do |event, hint|

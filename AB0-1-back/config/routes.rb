@@ -36,6 +36,8 @@ Rails.application.routes.draw do
   get '/health/readiness', to: 'health#readiness'
   get '/health/liveness', to: 'health#liveness'
   get '/health/details', to: 'health#details'
+  get '/health/test_error', to: 'health#test_error'
+  get '/health/test_scout', to: 'health#test_scout'
 
   # TASK-009: Metrics endpoint
   mount Yabeda::Prometheus::Exporter, at: '/metrics'

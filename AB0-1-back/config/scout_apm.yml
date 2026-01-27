@@ -54,8 +54,8 @@ common: &defaults
 
 development:
   <<: *defaults
-  # Disable in development to avoid noise
-  monitor: <%= ENV['SCOUT_MONITOR'] == 'true' && ENV['SCOUT_KEY'].to_s.strip != '' %>
+  # Enable in development for testing purposes if SCOUT_KEY is present
+  monitor: <%= ENV['SCOUT_KEY'].to_s.strip != '' %>
 
 test:
   <<: *defaults

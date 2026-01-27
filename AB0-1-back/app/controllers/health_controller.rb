@@ -72,6 +72,19 @@ class HealthController < ApplicationController
     }, status: :internal_server_error
   end
 
+  # GET /health/test_error - Test Sentry error capture
+  def test_error
+    raise "Sentry Test Error from HealthController at #{Time.current}"
+  end
+
+  # GET /health/test_scout - Test Scout APM transaction
+  def test_scout
+    ScoutApm::Transaction.start_layer(ScoutApm::Layer.new('Custom', 'Health/TestScout'))
+    sleep 0.1 # Simulate some work
+    ScoutApm::Transaction.stop_layer
+    render json: { status: 'ok', message: 'Scout transaction recorded' }
+  end
+
   private
 
   # Check database connectivity and basic statistics
