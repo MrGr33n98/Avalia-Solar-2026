@@ -9,7 +9,7 @@ class EmailConfirmationJob < ApplicationJob
 
   def perform(user_id, confirmation_token)
     user = User.find(user_id)
-    UserMailer.email_confirmation(user, confirmation_token).deliver_now
+    UserMailer.email_confirmation(user, confirmation_token).deliver_later
     Rails.logger.info "✅ Email confirmation sent to user #{user.id}"
   end
 end

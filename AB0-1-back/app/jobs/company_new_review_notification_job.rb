@@ -14,7 +14,7 @@ class CompanyNewReviewNotificationJob < ApplicationJob
     # Check if company wants review notifications
     return unless company.email_notifications_enabled?
     
-    CompanyMailer.new_review(company, review).deliver_now
+    CompanyMailer.new_review(company, review).deliver_later
     
     Rails.logger.info "✅ New review notification sent to company #{company.id}"
   rescue StandardError => e

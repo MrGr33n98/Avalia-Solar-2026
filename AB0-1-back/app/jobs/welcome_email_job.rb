@@ -19,7 +19,7 @@ class WelcomeEmailJob < ApplicationJob
     return if user.welcome_email_sent_at.present?
     
     # Send email
-    UserMailer.welcome(user).deliver_now
+    UserMailer.welcome(user).deliver_later
     
     # Mark as sent (add this column to users table)
     # user.update_column(:welcome_email_sent_at, Time.current)

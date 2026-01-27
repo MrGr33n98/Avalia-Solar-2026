@@ -25,12 +25,7 @@ ActiveAdmin.register User do
     resource.update(status: :active, approved_by_admin: true)
 
     unless ENV.fetch('SKIP_EMAILS_IN_ADMIN_APPROVE', 'false') == 'true'
-      begin
-        UserMailer.approval_email(resource).deliver_now
-      rescue StandardError => e
-        Rails.logger.error("[Admin::Users] approval_email failed user_id=#{resource.id} error=#{e.class} #{e.message}")
-        flash[:alert] = 'Usuario aprovado, mas nao foi possivel enviar o email de aprovacao.'
-      end
+      UserMailer.approval_email(resource).deliver_later
     end
     redirect_to resource_path, notice: "Usuário aprovado com sucesso!"
   end
@@ -43,12 +38,7 @@ ActiveAdmin.register User do
     resource.update(status: :rejected, rejection_reason: params[:rejection_reason])
 
     unless ENV.fetch('SKIP_EMAILS_IN_ADMIN_APPROVE', 'false') == 'true'
-      begin
-        UserMailer.rejection_email(resource).deliver_now
-      rescue StandardError => e
-        Rails.logger.error("[Admin::Users] rejection_email failed user_id=#{resource.id} error=#{e.class} #{e.message}")
-        flash[:alert] = 'Usuario rejeitado, mas nao foi possivel enviar o email de rejeicao.'
-      end
+      UserMailer.rejection_email(resource).deliver_later
     end
     redirect_to resource_path, notice: "Usuário rejeitado."
   end
@@ -129,7 +119,7 @@ ActiveAdmin.register User do
     
     # Send approval emails
     users.each do |user|
-      UserMailer.approval_email(user).deliver_now if user.respond_to?(:approval_email) || UserMailer.respond_to?(:approval_email)
+      UserMailer.approval_email(user).deliver_later if UserMailer.respond_to?(:approval_email)
     end
     
     redirect_to collection_path, notice: 'Usuários aprovados com sucesso.'

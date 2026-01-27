@@ -9,7 +9,7 @@ class PasswordResetEmailJob < ApplicationJob
 
   def perform(user_id, reset_token)
     user = User.find(user_id)
-    UserMailer.password_reset(user, reset_token).deliver_now
+    UserMailer.password_reset(user, reset_token).deliver_later
     Rails.logger.info "✅ Password reset email sent to user #{user.id}"
   end
 end

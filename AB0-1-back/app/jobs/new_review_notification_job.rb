@@ -12,7 +12,7 @@ class NewReviewNotificationJob < ApplicationJob
     company = review.company
     
     # Send email to company
-    CompanyMailer.new_review(company, review).deliver_now
+    CompanyMailer.new_review(company, review).deliver_later
     
     # TODO: Create in-app notification when TASK-019 is implemented
     

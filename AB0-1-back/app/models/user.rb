@@ -73,9 +73,9 @@ class User < ApplicationRecord
     role == 'user'
   end
 
-  # Força o Devise a enviar e-mails de forma síncrona para evitar erros 502/Sidekiq
+  # Envia notificações do Devise de forma assíncrona (TASK-014)
   def send_devise_notification(notification, *args)
-    devise_mailer.send(notification, self, *args).deliver_now
+    devise_mailer.send(notification, self, *args).deliver_later
   end
 
   def self.ransackable_attributes(_auth_object = nil)

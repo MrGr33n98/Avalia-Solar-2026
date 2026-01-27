@@ -8,7 +8,7 @@ class AdminAlertEmailJob < ApplicationJob
   retry_on StandardError, wait: 10.seconds, attempts: 3
 
   def perform(admin_email, alert_type, details)
-    NotificationMailer.admin_alert(admin_email, alert_type, details).deliver_now
+    NotificationMailer.admin_alert(admin_email, alert_type, details).deliver_later
     
     Rails.logger.info "✅ Admin alert sent: #{alert_type}"
   rescue StandardError => e

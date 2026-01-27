@@ -27,7 +27,7 @@ class MonthlyDigestJob < ApplicationJob
     # Only send if there are reviews
     return if reviews.empty?
     
-    CompanyMailer.monthly_digest(company, reviews).deliver_now
+    CompanyMailer.monthly_digest(company, reviews).deliver_later
     Rails.logger.info "✅ Monthly digest sent to company #{company.id}"
   rescue ActiveRecord::RecordNotFound
     Rails.logger.warn "Company #{company_id} not found, skipping digest"

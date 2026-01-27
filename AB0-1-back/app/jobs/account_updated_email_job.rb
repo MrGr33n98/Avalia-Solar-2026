@@ -14,7 +14,7 @@ class AccountUpdatedEmailJob < ApplicationJob
     important_changes = filter_important_changes(changes)
     return if important_changes.empty?
     
-    UserMailer.account_updated(user, important_changes).deliver_now
+    UserMailer.account_updated(user, important_changes).deliver_later
     
     Rails.logger.info "✅ Account update email sent to user #{user.id}"
   rescue StandardError => e
