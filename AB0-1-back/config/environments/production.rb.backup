@@ -81,6 +81,10 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   # --- LIBERAÇÃO DE HOSTS ---
-  # Impede o erro de "Blocked Host" ao acessar via api.avaliasolar.com.br
-  config.hosts.clear 
+  # Whitelist mínima de hosts (evitar liberar todos com config.hosts.clear)
+  allowed_hosts = []
+  allowed_hosts << host if host.present?
+  extra_hosts = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
+  allowed_hosts.concat(extra_hosts)
+  config.hosts.concat(allowed_hosts) if allowed_hosts.any?
 end
