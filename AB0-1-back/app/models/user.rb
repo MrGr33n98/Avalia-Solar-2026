@@ -4,6 +4,12 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [:google_oauth2]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :forum_answers, dependent: :destroy
+  has_many :forum_questions, dependent: :destroy
+  has_many :pending_changes, dependent: :destroy
+  has_many :product_accesses, dependent: :destroy
+  has_many :reviews, dependent: :destroy
+  has_many :analytics_events, dependent: :destroy
   # By implementing this feature, users will be able to conveniently
   # associate and access all notifications directed towards them.
   has_many :notifications, as: :recipient, dependent: :destroy, class_name: 'Noticed::Notification'
@@ -67,7 +73,7 @@ class User < ApplicationRecord
     role == 'user'
   end
 
-  # Force Devise to send emails synchronously to avoid Sidekiq/Redis issues in this environment
+  # Força o Devise a enviar e-mails de forma síncrona para evitar erros 502/Sidekiq
   def send_devise_notification(notification, *args)
     devise_mailer.send(notification, self, *args).deliver_now
   end

@@ -26,6 +26,10 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       [
         'https://staging.avaliasolar.com.br',
         'https://staging-api.avaliasolar.com.br',
+        'https://ab0-1.com',
+        'https://www.ab0-1.com',
+        'http://ab0-1.com',
+        'http://www.ab0-1.com',
         ENV.fetch("FRONTEND_ORIGIN", "https://staging.avaliasolar.com.br"),
         ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
       ].flatten.compact

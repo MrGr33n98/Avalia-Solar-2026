@@ -39,13 +39,16 @@ module Api
             )
           end
 
+          # Verificação de e-mail confirmado (Obrigatória conforme solicitado)
           if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
+            Rails.logger.warn("[Auth] Login blocked for unconfirmed user: #{email}")
             return render json: {
               error: 'Email not confirmed',
-              message: 'Please confirm your email before logging in.',
+              message: 'Por favor, confirme seu e-mail antes de fazer login.',
               code: 'EMAIL_NOT_CONFIRMED'
             }, status: :forbidden
           end
+
           return render json: payload_for(user), status: :ok
         end
 
@@ -176,14 +179,19 @@ module Api
         return render json: { error: 'Invalid email' }, status: :unprocessable_entity if email.blank?
 
         user = User.find_by(email: email)
-        begin
-          user.send_confirmation_instructions if user && user.respond_to?(:confirmed?) && !user.confirmed?
-        rescue StandardError => e
-          Rails.logger.error("[Auth] resend_confirmation failure: #{e.class}: #{e.message}")
+        if user && user.respond_to?(:confirmed?) && !user.confirmed?
+          begin
+            user.send_confirmation_instructions
+            Rails.logger.info("[Auth] Confirmation instructions resent to #{email}")
+          rescue StandardError => e
+            Rails.logger.error("[Auth] resend_confirmation failure for #{email}: #{e.class}: #{e.message}")
+          end
+        else
+          Rails.logger.info("[Auth] Skip resend_confirmation for #{email}: User not found, already confirmed or not supported")
         end
 
         # Anti-enumeration: do not reveal whether the email exists.
-        render json: { message: 'Se o e-mail existir, voce recebera instrucoes para confirmar sua conta.' }, status: :ok
+        render json: { message: 'Se o e-mail existir, você receberá instruções para confirmar sua conta.' }, status: :ok
       end
 
       def confirm_email

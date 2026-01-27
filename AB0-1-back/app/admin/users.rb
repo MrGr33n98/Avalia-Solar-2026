@@ -129,7 +129,7 @@ ActiveAdmin.register User do
     
     # Send approval emails
     users.each do |user|
-      UserMailer.approval_email(user).deliver_later if user.respond_to?(:approval_email) || UserMailer.respond_to?(:approval_email)
+      UserMailer.approval_email(user).deliver_now if user.respond_to?(:approval_email) || UserMailer.respond_to?(:approval_email)
     end
     
     redirect_to collection_path, notice: 'Usuários aprovados com sucesso.'
