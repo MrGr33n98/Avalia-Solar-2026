@@ -180,6 +180,8 @@ Copie o arquivo de exemplo e configure suas variáveis:
 
 ```bash
 cp .env.secrets.example .env.secrets
+# Staging (opcional)
+cp .env.staging.example .env.staging
 ```
 
 Edite `.env.secrets` com suas credenciais:
@@ -198,6 +200,10 @@ SECRET_KEY_BASE=generate_with_rails_secret
 
 # JWT Authentication
 JWT_SECRET=your_jwt_secret_here
+
+# Host Authorization (production/staging)
+ALLOWED_HOSTS=api.avaliasolar.com.br
+# ALLOWED_HOSTS=staging-api.avaliasolar.com.br
 
 # Redis
 REDIS_URL=redis://localhost:6379/0
@@ -486,6 +492,16 @@ rails app:doctor
 
 # Verificar secrets
 rails credentials:show
+```
+
+### Health check (staging)
+
+```bash
+# Linux/macOS
+bash scripts/check_staging_health.sh https://staging-api.avaliasolar.com.br
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File scripts/check_staging_health.ps1 -BaseUrl https://staging-api.avaliasolar.com.br
 ```
 
 ### Heroku

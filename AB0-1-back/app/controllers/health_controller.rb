@@ -6,8 +6,9 @@
 # - Redis/Sidekiq connectivity
 # - Disk space
 # - Memory usage
-class HealthController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:show, :readiness, :liveness]
+class HealthController < ActionController::API
+  # Health checks should be public and not require CSRF or auth tokens
+  # No skip_before_action needed as ActionController::API is minimal
 
   # GET /health - Basic health check
   def show
