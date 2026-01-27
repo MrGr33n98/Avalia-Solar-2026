@@ -69,8 +69,8 @@ Rails.application.configure do
     config.cache_store = :memory_store
   end
 
-  # Fila de processamento (Usando :async para garantir envio imediato sem Sidekiq)
-  config.active_job.queue_adapter = :async
+  # Fila de processamento (Usando :sidekiq para processamento em background)
+  config.active_job.queue_adapter = :sidekiq
 
   # Localização e Fallbacks
   config.i18n.fallbacks = true

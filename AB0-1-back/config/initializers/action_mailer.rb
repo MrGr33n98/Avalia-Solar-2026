@@ -76,7 +76,7 @@ Rails.application.configure do
     config.action_mailer.delivery_job = 'ActionMailer::MailDeliveryJob'
     
     # Error handling
-    config.action_mailer.raise_delivery_errors = false # Don't raise in production
+    config.action_mailer.raise_delivery_errors = true # Ativado para depuração no Brevo
     
     # Asset host for images in emails
     if ENV['ASSET_HOST'].present?
