@@ -248,7 +248,7 @@ jobs:
                 fe_status=$(docker inspect -f '{{.State.Status}}' "$fe_cid" 2>/dev/null || echo "starting")
                 if [ "$fe_status" = "running" ]; then
                   # Testar se o Next.js está respondendo
-                  if docker exec "$fe_cid" wget -q -O- http://localhost:3000 >/dev/null 2>&1; then
+                  if docker exec "$fe_cid" curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
                     echo "? Frontend healthy e respondendo!"
                     break
                   fi
