@@ -101,10 +101,9 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
-        LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
-        GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-        GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+        NEXT_PUBLIC_LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}
     container_name: ab0-frontend
     restart: unless-stopped
     depends_on:

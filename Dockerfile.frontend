@@ -1,49 +1,38 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-# Instala bash para ter um shell mais robusto que o sh padrão do Alpine
-RUN apk add --no-cache bash
-
-# Usa bash como shell padrão para todos os comandos RUN, COPY, etc.
-# Isso garante que `set -euo pipefail` funcione de forma confiável.
-SHELL ["bash", "-c"]
-
+# Stage 1: Install dependencies
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# --- Variáveis de Ambiente para o Build ---
-# Define ARGs que podem ser passados pelo `docker build --build-arg`.
-# Fornece valores padrão seguros para o caso de não serem passados.
-ARG NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
-ARG NEXT_PUBLIC_API_BASE_URL="http://localhost:3001"
-ARG NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-ARG NEXT_PUBLIC_ENABLE_ANALYTICS="true"
-ARG NEXT_PUBLIC_GTM_ID="GTM-5RV76ZKR"
-ARG NEXT_PUBLIC_BETTER_AUTH_URL="http://localhost:3000"
-ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
-ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID=""
-ARG NEXT_PUBLIC_BETTER_AUTH_SECRET_PLACEHOLDER="placeholder" # kept only to avoid breaking builds; real secret must come from runtime env
-
-# Copia os manifestos de dependência primeiro para aproveitar o cache do Docker
+# Install dependencies based on the preferred package manager
 COPY AB0-1-front/package.json AB0-1-front/package-lock.json ./
-
-# Instala dependências de forma limpa e otimizada para CI/CD
-# `npm ci` é mais rápido e seguro que `npm install` para builds.
 RUN --mount=type=cache,target=/root/.npm \
-    npm config set registry https://registry.npmjs.org/ && \
     npm ci --legacy-peer-deps --no-audit
 
-# Copia o restante do código da aplicação
+# Stage 2: Rebuild the source code only when needed
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY AB0-1-front/ .
 
-# Limpa builds anteriores para garantir um build limpo
-RUN rm -rf .next
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# --- Configurações de Build ---
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-# Aumenta a memória disponível para o processo de build do Next.js para 4GB
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-# Expose build-time environment variables to Next.js
+# --- Variáveis de Ambiente para o Build ---
+ARG NEXT_PUBLIC_API_URL="https://api.avaliasolar.com.br/api/v1"
+ARG NEXT_PUBLIC_API_BASE_URL="https://api.avaliasolar.com.br"
+ARG NEXT_PUBLIC_SITE_URL="https://avaliasolar.com.br"
+ARG NEXT_PUBLIC_ENABLE_ANALYTICS="true"
+ARG NEXT_PUBLIC_GTM_ID="GTM-5RV76ZKR"
+ARG NEXT_PUBLIC_BETTER_AUTH_URL="https://avaliasolar.com.br"
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
+ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID=""
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go"
+ARG SENTRY_AUTH_TOKEN=""
+ARG SENTRY_ORG=""
+ARG SENTRY_PROJECT=""
+
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
@@ -52,86 +41,41 @@ ENV NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}
 ENV NEXT_PUBLIC_BETTER_AUTH_URL=${NEXT_PUBLIC_BETTER_AUTH_URL}
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${NEXT_PUBLIC_LINKEDIN_CLIENT_ID}
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+ENV SENTRY_ORG=${SENTRY_ORG}
+ENV SENTRY_PROJECT=${SENTRY_PROJECT}
+ENV NODE_ENV=production
 
-# --- Build da Aplicação ---
-RUN set -euo pipefail; \
-    # Provide sane fallbacks if build args were passed as empty strings in CI \
-    if [ -z "${NEXT_PUBLIC_API_URL}" ]; then \
-      NEXT_PUBLIC_API_URL="https://api.avaliasolar.com.br/api/v1"; \
-      echo "⚠️  NEXT_PUBLIC_API_URL not provided, using default: ${NEXT_PUBLIC_API_URL}"; \
-    fi; \
-    if [ -z "${NEXT_PUBLIC_SITE_URL}" ]; then \
-      NEXT_PUBLIC_SITE_URL="https://avaliasolar.com.br"; \
-      echo "⚠️  NEXT_PUBLIC_SITE_URL not provided, using default: ${NEXT_PUBLIC_SITE_URL}"; \
-    fi; \
-    # Ensure server actions key is present (use safe default if not provided) \
-    if [ -z "${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}" ]; then \
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go"; \
-      echo "⚠️  NEXT_SERVER_ACTIONS_ENCRYPTION_KEY not provided, using fallback for build-time only."; \
-    fi; \
-    export NEXT_PUBLIC_API_URL NEXT_PUBLIC_SITE_URL NEXT_SERVER_ACTIONS_ENCRYPTION_KEY; \
-    echo "========================================"; \
-    echo "📦 Building Next.js app..."; \
-    echo "========================================"; \
-    echo "Node version: $(node -v)"; \
-    echo "NPM version: $(npm -v)"; \
-    echo ""; \
-    echo "Environment Variables (with values):"; \
-    echo "  NEXT_PUBLIC_API_URL='$NEXT_PUBLIC_API_URL'"; \
-    echo "  NEXT_PUBLIC_API_BASE_URL='$NEXT_PUBLIC_API_BASE_URL'"; \
-    echo "  NEXT_PUBLIC_SITE_URL='$NEXT_PUBLIC_SITE_URL'"; \
-    echo "  NEXT_PUBLIC_ENABLE_ANALYTICS='$NEXT_PUBLIC_ENABLE_ANALYTICS'"; \
-    echo "  NEXT_PUBLIC_GTM_ID='$NEXT_PUBLIC_GTM_ID'"; \
-    echo "  NEXT_PUBLIC_BETTER_AUTH_URL='$NEXT_PUBLIC_BETTER_AUTH_URL'"; \
-    echo "  NODE_ENV='$NODE_ENV'"; \
-    echo ""; \
-    echo "Validation of required variables..."; \
-    if [ -z "$NEXT_PUBLIC_API_URL" ] || [ -z "$NEXT_PUBLIC_SITE_URL" ]; then \
-        echo "⚠️  Warning: required public envs were empty, defaults applied. Verify build-args in CI."; \
-    else \
-        echo "✅ All required variables present"; \
-    fi; \
-    echo ""; \
-    echo "========================================"; \
-    echo "🔨 Starting Next.js build..."; \
-    echo "========================================"; \
-    npm run build 2>&1 | tee /tmp/build.log; \
-    BUILD_EXIT_CODE=${PIPESTATUS[0]}; \
-    echo ""; \
-    echo "Build process exit code: $BUILD_EXIT_CODE"; \
-    if [ $BUILD_EXIT_CODE -ne 0 ]; then \
-        echo "" >&2; \
-        echo "========================================" >&2; \
-        echo "❌ BUILD FAILED - Exit Code: $BUILD_EXIT_CODE" >&2; \
-        echo "========================================" >&2; \
-        echo "" >&2; \
-        echo "📋 Full build log:" >&2; \
-        cat /tmp/build.log >&2; \
-        echo "" >&2; \
-        echo "========================================" >&2; \
-        exit $BUILD_EXIT_CODE; \
-    fi; \
-    echo ""; \
-    echo "✅ Build completed successfully"
+RUN npm run build
 
-# Production stage
-FROM node:20-alpine
-
+# Stage 3: Production image, copy all the files and run next
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# --- Variáveis de Ambiente de Runtime ---
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-# Secrets must be injected at runtime by the orchestrator (never baked into the image)
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copia os artefatos de build da etapa anterior
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
 COPY --from=builder /app/public ./public
-# Copia TODA a pasta .next para garantir que nada falte
-COPY --from=builder /app/.next ./.next
-# Copia a aplicação standalone gerada pelo `output: 'standalone'` no next.config.js
-COPY --from=builder /app/.next/standalone ./
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
 
 EXPOSE 3000
+
+ENV PORT 3000
+# set hostname to localhost
+ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]

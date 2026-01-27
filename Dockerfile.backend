@@ -18,9 +18,14 @@ WORKDIR /app
 
 # 2. Instalação de Gems
 COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
-RUN gem install bundler:2.4.22 && \
+RUN --mount=type=cache,target=/usr/local/bundle \
+    gem install bundler:2.4.22 && \
     bundle config set --local without 'development test' && \
-    bundle install --jobs 4 --retry 3
+    bundle install --jobs 4 --retry 3 && \
+    cp -ar /usr/local/bundle /usr/local/bundle_backup
+
+# Use o backup para o estágio final
+RUN rm -rf /usr/local/bundle && mv /usr/local/bundle_backup /usr/local/bundle
 
 # 3. Cópia do código fonte
 COPY AB0-1-back/ ./
@@ -55,9 +60,19 @@ ENV RAILS_ENV=production \
     RAILS_SERVE_STATIC_FILES=true \
     PORT=3001
 
-# Copia artefatos do builder
+# Copia apenas o necessário do builder para reduzir tamanho da imagem
 COPY --from=builder /usr/local/bundle /usr/local/bundle
-COPY --from=builder /app /app
+COPY --from=builder /app/app /app/app
+COPY --from=builder /app/bin /app/bin
+COPY --from=builder /app/config /app/config
+COPY --from=builder /app/db /app/db
+COPY --from=builder /app/lib /app/lib
+COPY --from=builder /app/public /app/public
+COPY --from=builder /app/vendor /app/vendor
+COPY --from=builder /app/Gemfile /app/Gemfile
+COPY --from=builder /app/Gemfile.lock /app/Gemfile.lock
+COPY --from=builder /app/config.ru /app/config.ru
+COPY --from=builder /app/Rakefile /app/Rakefile
 
 # Script de entrada
 COPY AB0-1-back/entrypoint.sh /usr/bin/entrypoint.sh
