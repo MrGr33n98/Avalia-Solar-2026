@@ -20,7 +20,7 @@ on:
       - 'AB0-1-back/**'
 
 env:
-  RUBY_VERSION: '3.2.0'
+  RUBY_VERSION: '3.2.9'
   POSTGRES_VERSION: '14'
 
 jobs:
@@ -72,11 +72,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpq-dev imagemagick libvips42
 
+      - name: Set RAILS_MASTER_KEY (fallback to repo key)
+        run: |
+          if [ -n "${{ secrets.RAILS_MASTER_KEY }}" ]; then
+            echo "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}" >> $GITHUB_ENV
+          elif [ -f config/master.key ]; then
+            echo "RAILS_MASTER_KEY=$(cat config/master.key)" >> $GITHUB_ENV
+          else
+            echo "RAILS_MASTER_KEY is missing and config/master.key not found" >&2
+            exit 1
+          fi
+
       - name: Setup database
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
-          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
         run: |
           bundle exec rails db:create
           bundle exec rails db:schema:load
@@ -85,7 +95,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
-          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
         run: bundle exec rails db:migrate
 
       - name: Run RSpec
@@ -93,20 +102,12 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           REDIS_URL: redis://localhost:6379/1
           RAILS_ENV: test
-          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           COVERAGE: true
-        run: bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/rspec-results.xml
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: rspec-results
-          path: AB0-1-back/tmp/rspec-results.xml
+        run: bundle exec rspec --format progress
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && hashFiles('AB0-1-back/coverage/**') != ''
         with:
           name: coverage
           path: AB0-1-back/coverage/
