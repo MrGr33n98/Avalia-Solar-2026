@@ -97,5 +97,8 @@ Rails.application.configure do
   allowed_hosts << host if host.present?
   extra_hosts = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
   allowed_hosts.concat(extra_hosts)
+  if ENV['DOCKER'] == 'true'
+    allowed_hosts.concat(%w[backend backend:3001])
+  end
   config.hosts.concat(allowed_hosts) if allowed_hosts.any?
 end
