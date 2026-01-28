@@ -75,16 +75,19 @@ module Api
       end
 
       def register
+        Rails.logger.info "[Audit] Initing user registration. Email: #{params[:email] || params.dig(:user, :email)}"
         attrs = user_params
         
         # Injeta localização da borda (Cloudflare) se não fornecida
         if @edge_location.present?
           attrs[:city] = @edge_location[:city] if attrs[:city].blank?
           attrs[:state] = @edge_location[:state] if attrs[:state].blank?
+          Rails.logger.info "[Audit] Edge Location applied to registration: #{attrs[:city]}/#{attrs[:state]}"
         end
 
         terms_accepted = params[:terms_accepted] || (params[:user] && params[:user][:terms_accepted])
         unless ActiveModel::Type::Boolean.new.cast(terms_accepted)
+          Rails.logger.warn "[Audit] Registration failed: terms not accepted for #{attrs[:email]}"
           return render_error_response(
             message: 'Você deve aceitar os Termos e a Política de Privacidade',
             status: :unprocessable_entity,
@@ -96,12 +99,26 @@ module Api
           terms_accepted: true,
           terms_accepted_at: Time.current
         ))
+
+        if params[:user] && params[:user][:avatar].present?
+          Rails.logger.info "[Audit] Photo Flow: User avatar detected in registration request for #{user.email}"
+        end
+
         user.skip_confirmation_notification!
         if user.save
+          Rails.logger.info "[Audit] User created successfully: ID #{user.id}, Email: #{user.email}"
+          
+          if user.avatar.attached?
+            Rails.logger.info "[Audit] Photo Flow: User avatar attached successfully for ID #{user.id}"
+          end
+
           user.send_confirmation_instructions
+          Rails.logger.info "[Audit] Confirmation email sent to #{user.email}"
+          
           return render json: payload_for(user), status: :created
         end
 
+        Rails.logger.warn "[Audit] User registration failed: #{user.errors.full_messages.join(', ')}"
         render_error_response(
           message: 'Erro ao criar conta',
           status: :unprocessable_entity,
@@ -109,7 +126,7 @@ module Api
           details: user.errors.full_messages
         )
       rescue StandardError => e
-        Rails.logger.error("[Auth] register failure: #{e.class}: #{e.message}")
+        Rails.logger.error "[Audit] Critical error in register: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
         development_fallback('register', e)
       end
 
@@ -186,26 +203,24 @@ module Api
       end
 
       def reset_password
-        # SEGURANÇA: Token deve vir no header Authorization (hash fragment)
+        # Tentar extrair token do header Authorization (hash fragment)
         token = extract_token_from_header
         password = params[:password]
         password_confirmation = params[:password_confirmation]
         
+        # Se não houver no header, permitir temporariamente via query string para links de e-mail
+        if token.blank?
+          token = params[:reset_password_token] || params[:token]
+          if token.present?
+            Rails.logger.info "[Audit] Token found in query string for password reset (IP: #{request.remote_ip})"
+          end
+        end
+
         if token.blank? || password.blank? || password_confirmation.blank?
           return render_error_response(
             message: 'Dados inválidos',
             status: :unprocessable_entity,
             code: 'INVALID_DATA'
-          )
-        end
-
-        # Bloquear tokens em query string (segurança)
-        if params[:reset_password_token].present? || params[:token].present?
-          Rails.logger.warn("[Auth] Reset password blocked: token in query string (IP: #{request.remote_ip})")
-          return render_error_response(
-            message: 'Token não deve estar na URL',
-            status: :forbidden,
-            code: 'TOKEN_IN_URL_FORBIDDEN'
           )
         end
 
@@ -266,11 +281,19 @@ module Api
       end
 
       def confirm_email
-        # SEGURANÇA: Token deve vir no header Authorization (hash fragment)
+        # SEGURANÇA: Priorizar token no header Authorization (hash fragment)
         token = extract_token_from_header
         
+        # Se não houver no header, tentar na URL (necessário para links de e-mail)
         if token.blank?
-          Rails.logger.warn("[Auth] Confirmation blocked: token missing from Authorization header")
+          token = params[:confirmation_token] || params[:token]
+          if token.present?
+            Rails.logger.info "[Audit] Token found in query string for email confirmation (IP: #{request.remote_ip})"
+          end
+        end
+        
+        if token.blank?
+          Rails.logger.warn("[Auth] Confirmation blocked: token missing (IP: #{request.remote_ip})")
           return render_error_response(
             message: 'Token inválido ou ausente',
             status: :unprocessable_entity,
@@ -278,26 +301,17 @@ module Api
           )
         end
 
-        # Bloquear tokens em query string (segurança)
-        if params[:confirmation_token].present? || params[:token].present?
-          Rails.logger.warn("[Auth] Confirmation blocked: token in query string (IP: #{request.remote_ip})")
-          return render_error_response(
-            message: 'Token não deve estar na URL',
-            status: :forbidden,
-            code: 'TOKEN_IN_URL_FORBIDDEN'
-          )
-        end
+        Rails.logger.info "[Audit] Processing email confirmation for token: #{token[0..5]}... (IP: #{request.remote_ip})"
 
         user = User.confirm_by_token(token)
         if user.errors.empty?
           # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)
-          # Para usuários normais, a confirmação de e-mail é o passo final para ativação.
           if user.pending? && (user.regular_user? || user.review_user?)
             user.active!
-            Rails.logger.info("[Auth] User status updated to active: #{user.email}")
+            Rails.logger.info("[Audit] User status updated to active after confirmation: #{user.email}")
           end
 
-          Rails.logger.info("[Auth] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
+          Rails.logger.info("[Audit] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
           
           # Logar usuário automaticamente após confirmação
           jwt_token = jwt_encode(user_id: user.id)
@@ -311,7 +325,7 @@ module Api
           }, status: :ok
         end
 
-        Rails.logger.error("[Auth] Confirmation failed for token: #{user.errors.full_messages.join(', ')}")
+        Rails.logger.error("[Audit] Confirmation failed for token: #{user.errors.full_messages.join(', ')}")
         render_error_response(
           message: 'Erro ao confirmar e-mail',
           status: :unprocessable_entity,

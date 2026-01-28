@@ -16,8 +16,13 @@ class UserMailer < Devise::Mailer
     @user = user
     @token = token
     # Use the frontend URL for confirmation
-    frontend_url = ENV.fetch('FRONTEND_URL', 'http://localhost:3000')
-    @confirmation_url = "#{frontend_url}/confirm-email/#{token}"
+    frontend_url = ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br')
+    
+    # SEGURANÇA: O frontend espera o token no hash fragment (#token=...)
+    # para evitar que o token vaze em logs de servidor ou analytics.
+    @confirmation_url = "#{frontend_url}/confirm-email#token=#{token}"
+    
+    Rails.logger.info "[Audit] Generating confirmation email for #{user.email}. URL: #{@confirmation_url}"
     
     mail(to: @user.email, subject: 'Confirme seu e-mail', template_name: 'email_confirmation')
   end

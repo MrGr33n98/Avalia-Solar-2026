@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Loader2, AlertCircle, CheckCircle, ArrowRight, RefreshCcw } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, ArrowRight, RefreshCcw, Building, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import Image from 'next/image';
 import {
   Select,
   SelectContent,
@@ -44,6 +45,9 @@ export default function RegisterCompanyTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const {
@@ -62,6 +66,34 @@ export default function RegisterCompanyTab() {
 
   const description = watch('description', '');
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setSubmitError('O logo deve ter no máximo 2MB');
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.type)) {
+        setSubmitError('Formato inválido. Use JPG, PNG ou SVG.');
+        return;
+      }
+
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setSubmitError(null);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (logoFileInputRef.current) logoFileInputRef.current.value = '';
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     setSubmitError(null);
@@ -74,23 +106,26 @@ export default function RegisterCompanyTab() {
     }
 
     try {
+      const formData = new FormData();
+      formData.append('company[name]', data.name);
+      formData.append('company[description]', data.description);
+      formData.append('company[email_public]', data.emailPublic);
+      formData.append('company[phone]', data.phone);
+      formData.append('company[address]', data.address);
+      formData.append('company[state]', data.state);
+      formData.append('company[city]', data.city);
+      formData.append('company[cnpj]', data.cnpj.replace(/\D/g, ''));
+      formData.append('company[status]', 'pending');
+      formData.append('company[terms_accepted]', String(data.termsAccepted));
+      formData.append('company[newsletter_opt_in]', String(data.newsletter));
+      
+      if (logoFile) {
+        formData.append('company[logo]', logoFile);
+      }
+
       await fetchApi('/companies', {
         method: 'POST',
-        body: JSON.stringify({
-          company: {
-            name: data.name,
-            description: data.description,
-            email_public: data.emailPublic,
-            phone: data.phone,
-            address: data.address,
-            state: data.state,
-            city: data.city,
-            cnpj: data.cnpj.replace(/\D/g, ''), // Enviar apenas números
-            status: 'pending',
-            terms_accepted: data.termsAccepted,
-            newsletter_opt_in: data.newsletter
-          }
-        })
+        body: formData
       });
       setIsSuccess(true);
     } catch (err: any) {
@@ -185,6 +220,38 @@ export default function RegisterCompanyTab() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900">Cadastro de Empresa</h2>
         <p className="text-slate-600">Preencha os dados abaixo para cadastrar sua empresa.</p>
+      </div>
+
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="relative group cursor-pointer" onClick={() => logoFileInputRef.current?.click()}>
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center border-2 border-dashed ${logoPreview ? 'border-emerald-500' : 'border-slate-300'} overflow-hidden bg-slate-50 hover:bg-slate-100 transition-colors`}>
+            {logoPreview ? (
+              <Image src={logoPreview} alt="Logo Preview" width={96} height={96} className="object-cover w-full h-full" />
+            ) : (
+              <Building className="w-8 h-8 text-slate-400" />
+            )}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-full transition-opacity">
+            <Upload className="w-6 h-6 text-white" />
+          </div>
+          <input
+            type="file"
+            ref={logoFileInputRef}
+            className="hidden"
+            accept="image/png, image/jpeg, image/svg+xml"
+            onChange={handleLogoChange}
+          />
+          {logoPreview && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); removeLogo(); }}
+              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-2">Logo da Empresa (opcional, máx 2MB)</p>
       </div>
 
       <AnimatePresence>

@@ -116,6 +116,7 @@ module Api
 
       # POST /api/v1/companies
       def create
+        Rails.logger.info "[Audit] Initing company creation. Params: #{company_params.except(:logo).inspect}"
         @company = ::Company.new(company_params)
         
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada
@@ -125,21 +126,32 @@ module Api
           
           # Log para auditoria se a localização foi injetada pela borda
           if @edge_verified
-            Rails.logger.info "Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
+            Rails.logger.info "[Audit] Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
           end
         end
 
         @company.status = 'pending' if @company.status.blank?
 
+        if params[:company][:logo].present?
+          Rails.logger.info "[Audit] Company logo detected in request for new company: #{@company.name}"
+        end
+
         begin
           ::Company.transaction do
             if @company.save
+              Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
+              
+              if @company.logo.attached?
+                Rails.logger.info "[Audit] Photo Flow: Company logo attached successfully for ID #{@company.id}"
+              end
+
               # FIX #2: Criar CompanyMember owner automaticamente no companies#create com transação
               if current_user
                 @company.company_members.create!(
                   user: current_user,
                   role: :owner
                 )
+                Rails.logger.info "[Audit] User ID #{current_user.id} assigned as owner of Company ID #{@company.id}"
               end
 
               PendingChange.create!(
@@ -162,7 +174,7 @@ module Api
                 # Send confirmation email to company
                 ::CompanyMailer.registration_received(@company).deliver_later
               rescue => e
-                Rails.logger.warn "Falha ao notificar: #{e.message}"
+                Rails.logger.warn "[Audit] Notification failure: #{e.message}"
               end
 
               company_json = {
@@ -181,20 +193,32 @@ module Api
               }
               render json: { company: company_json }, status: :created
             else
+              Rails.logger.warn "[Audit] Company creation failed: #{@company.errors.full_messages.join(', ')}"
               render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
             end
           end
         rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "[Audit] RecordInvalid during company creation: #{e.message}"
           render json: { errors: [e.message] }, status: :unprocessable_entity
         rescue => e
-          Rails.logger.error "Erro ao criar empresa: #{e.message}"
+          Rails.logger.error "[Audit] Critical error creating company: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
           render json: { error: 'Internal Server Error' }, status: :internal_server_error
         end
       end
 
       # PATCH/PUT /api/v1/companies/:id
       def update
+        Rails.logger.info "[Audit] Updating company ID #{@company.id}. User: #{current_user&.id}"
+        
+        if params[:company][:logo].present?
+          Rails.logger.info "[Audit] Photo Flow: New logo upload detected for Company ID #{@company.id}"
+        end
+
         if @company.update(company_params)
+          if @company.logo.attached? && params[:company][:logo].present?
+            Rails.logger.info "[Audit] Photo Flow: Company logo updated successfully for ID #{@company.id}"
+          end
+          
           company_json = {
             id: @company.id,
             slug: @company.slug,
@@ -211,6 +235,7 @@ module Api
           }
           render json: { company: company_json }, status: :ok
         else
+          Rails.logger.warn "[Audit] Company update failed for ID #{@company.id}: #{@company.errors.full_messages.join(', ')}"
           render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
         end
       end
@@ -302,6 +327,7 @@ module Api
           :cnpj, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications,
           :cta_whatsapp_enabled, :cta_whatsapp_url,
+          :logo,
           whatsapp_button_style_json: [
             :variant, :bg_color, :text_color, :border_color,
             :hover_bg_color, :icon_color, :rounded_px

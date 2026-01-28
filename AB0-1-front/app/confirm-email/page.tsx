@@ -71,15 +71,21 @@ function ConfirmEmailContent() {
           // Se backend retornou token de sessão, armazenar
           if (data.auto_login && data.token) {
             setAutoLoginToken(data.token);
-            // Armazenar no localStorage (ou cookie se backend configurou)
+            // Armazenar no localStorage no formato esperado pelo api.ts e AuthContext
             if (typeof window !== 'undefined') {
+              const authData = {
+                token: data.token,
+                user: data.user
+              };
+              localStorage.setItem('auth', JSON.stringify(authData));
+              // Também manter compatibilidade se outros lugares usarem jwt_token
               localStorage.setItem('jwt_token', data.token);
               localStorage.setItem('user', JSON.stringify(data.user));
             }
 
             // Redirecionar para dashboard após 2 segundos
             setTimeout(() => {
-              router.push('/dashboard');
+              window.location.href = '/dashboard';
             }, 2000);
           } else {
             // Redirecionar para login após 3 segundos
