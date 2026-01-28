@@ -179,9 +179,11 @@ module Api
       end
 
       def reset_password
-        token = params[:token]
+        # SEGURANÇA: Token deve vir no header Authorization (hash fragment)
+        token = extract_token_from_header
         password = params[:password]
         password_confirmation = params[:password_confirmation]
+        
         if token.blank? || password.blank? || password_confirmation.blank?
           return render_error_response(
             message: 'Dados inválidos',
@@ -190,11 +192,38 @@ module Api
           )
         end
 
-        user = User.reset_password_by_token({ reset_password_token: token, password: password, password_confirmation: password_confirmation })
+        # Bloquear tokens em query string (segurança)
+        if params[:reset_password_token].present? || params[:token].present?
+          Rails.logger.warn("[Auth] Reset password blocked: token in query string (IP: #{request.remote_ip})")
+          return render_error_response(
+            message: 'Token não deve estar na URL',
+            status: :forbidden,
+            code: 'TOKEN_IN_URL_FORBIDDEN'
+          )
+        end
+
+        user = User.reset_password_by_token({ 
+          reset_password_token: token, 
+          password: password, 
+          password_confirmation: password_confirmation 
+        })
+        
         if user.errors.empty?
-          return render json: { message: 'Senha redefinida com sucesso.' }, status: :ok
+          Rails.logger.info("[Auth] Password reset successfully: #{user.email} (IP: #{request.remote_ip})")
+          
+          # Logar usuário automaticamente após reset
+          jwt_token = jwt_encode(user_id: user.id)
+          set_jwt_cookie(jwt_token)
+          
+          return render json: { 
+            message: 'Senha redefinida com sucesso.',
+            token: jwt_token,
+            user: user,
+            auto_login: true
+          }, status: :ok
         end
         
+        Rails.logger.error("[Auth] Password reset failed: #{user.errors.full_messages.join(', ')}")
         render_error_response(
           message: 'Erro ao redefinir senha',
           status: :unprocessable_entity,
@@ -230,20 +259,45 @@ module Api
       end
 
       def confirm_email
-        token = params[:token]
+        # SEGURANÇA: Token deve vir no header Authorization (hash fragment)
+        token = extract_token_from_header
+        
         if token.blank?
+          Rails.logger.warn("[Auth] Confirmation blocked: token missing from Authorization header")
           return render_error_response(
-            message: 'Token inválido',
+            message: 'Token inválido ou ausente',
             status: :unprocessable_entity,
             code: 'INVALID_TOKEN'
           )
         end
 
-        user = User.confirm_by_token(token)
-        if user.errors.empty?
-          return render json: { message: 'Email confirmado com sucesso.' }, status: :ok
+        # Bloquear tokens em query string (segurança)
+        if params[:confirmation_token].present? || params[:token].present?
+          Rails.logger.warn("[Auth] Confirmation blocked: token in query string (IP: #{request.remote_ip})")
+          return render_error_response(
+            message: 'Token não deve estar na URL',
+            status: :forbidden,
+            code: 'TOKEN_IN_URL_FORBIDDEN'
+          )
         end
 
+        user = User.confirm_by_token(token)
+        if user.errors.empty?
+          Rails.logger.info("[Auth] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
+          
+          # Logar usuário automaticamente após confirmação
+          jwt_token = jwt_encode(user_id: user.id)
+          set_jwt_cookie(jwt_token)
+          
+          return render json: { 
+            message: 'Email confirmado com sucesso.',
+            token: jwt_token,
+            user: user,
+            auto_login: true
+          }, status: :ok
+        end
+
+        Rails.logger.error("[Auth] Confirmation failed for token: #{user.errors.full_messages.join(', ')}")
         render_error_response(
           message: 'Erro ao confirmar e-mail',
           status: :unprocessable_entity,
@@ -253,6 +307,14 @@ module Api
       end
 
       private
+
+      def extract_token_from_header
+        # Extrai token do header Authorization: Bearer TOKEN
+        auth_header = request.headers['Authorization']
+        return nil if auth_header.blank?
+        
+        auth_header.split(' ').last
+      end
 
       def extract_credentials
         email = params[:email] || params.dig(:auth, :email) || params.dig(:user, :email)

@@ -11,6 +11,7 @@ Bundler.require(*Rails.groups)
 
 # Ensure custom middleware is loaded before referencing it in config.middleware.use
 require_relative "../lib/idempotency_middleware"
+require_relative "../lib/block_tokens_in_url_middleware"
 
 module RailsBlogDemo
   class Application < Rails::Application
@@ -34,5 +35,7 @@ module RailsBlogDemo
     config.middleware.use Rack::Attack
     # Idempotency for critical endpoints
     config.middleware.use IdempotencyMiddleware
+    # Security: Block tokens in URL query strings
+    config.middleware.use BlockTokensInUrlMiddleware
   end
 end
