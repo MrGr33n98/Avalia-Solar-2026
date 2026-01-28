@@ -40,6 +40,7 @@ services:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     container_name: ab0-backend
     restart: unless-stopped
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
@@ -47,23 +48,17 @@ services:
         condition: service_healthy
     environment:
       RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
       REDIS_URL: redis://ab0-redis:6379/1
-      REDIS_ENABLED: "true"
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      JWT_SECRET: ${JWT_SECRET}
       POSTGRES_HOST: db
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      APP_HOST: "https://api.avaliasolar.com.br"
-      SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
-      SMTP_PORT: ${SMTP_PORT:-2525}
-      SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
-      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
-      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
-      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
+      # As chaves de SPACES virão do .env via env_file
+      # Fallbacks para o SDK da AWS (Active Storage)
+      AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
+      AWS_REGION: ${SPACES_REGION:-nyc3}
+      AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
+      AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
     ports:
       - "3001:3001"
     networks:
@@ -72,16 +67,17 @@ services:
       - storage_data:/app/storage
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 120s
 
   worker:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     container_name: ab0-worker
     restart: unless-stopped
     command: bundle exec sidekiq
+    env_file: .env
     depends_on:
       backend:
         condition: service_healthy
@@ -89,23 +85,16 @@ services:
         condition: service_healthy
     environment:
       RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
       REDIS_URL: redis://ab0-redis:6379/1
-      REDIS_ENABLED: "true"
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      JWT_SECRET: ${JWT_SECRET}
       POSTGRES_HOST: db
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      APP_HOST: "https://api.avaliasolar.com.br"
-      SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
-      SMTP_PORT: ${SMTP_PORT:-2525}
-      SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
-      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
-      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
-      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
+      # Fallbacks para o worker também processar imagens
+      AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
+      AWS_REGION: ${SPACES_REGION:-nyc3}
+      AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
+      AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
     networks:
       - ab0-network
     volumes:
@@ -122,7 +111,7 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
-      API_URL_INTERNAL: "http://backend:3001/api/v1"
+      API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
