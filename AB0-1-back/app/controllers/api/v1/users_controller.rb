@@ -8,6 +8,30 @@ class Api::V1::UsersController < Api::V1::BaseController
     render json: user_with_avatar(current_user)
   end
 
+  # FIX #3: Implementar endpoint GET /api/v1/users/me_companies
+  def me_companies
+    @companies = current_user.member_companies
+    render json: { companies: @companies }
+  end
+
+  # FIX #4: Implementar endpoint POST /api/v1/users/switch_company
+  def switch_company
+    company_id = params[:company_id]
+    if current_user.member_companies.exists?(id: company_id)
+      if current_user.update(company_id: company_id)
+        render json: { 
+          message: 'Empresa alterada com sucesso', 
+          company_id: company_id,
+          user: user_with_avatar(current_user)
+        }
+      else
+        render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      render json: { error: 'Você não tem permissão para acessar esta empresa ou empresa inexistente' }, status: :forbidden
+    end
+  end
+
   def index
     @users = User.all
     render json: @users.map { |u| user_with_avatar(u) }

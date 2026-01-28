@@ -77,4 +77,37 @@ RSpec.describe 'Authentication Flow', type: :request do
       expect(user.inactive_message).to eq(:rejected)
     end
   end
+
+  describe 'Email Confirmation Flow' do
+    let(:user) { 
+      User.create!(
+        name: 'Unconfirmed User',
+        email: 'unconfirmed@solartech.com',
+        password: 'Password123!',
+        role: 'user',
+        terms_accepted: true,
+        status: :pending,
+        city: 'Florianópolis'
+      ) 
+    }
+
+    it 'activates the user and allows login after confirmation' do
+      # Gera o token de confirmação
+      raw_token = user.instance_variable_get(:@raw_confirmation_token)
+      if raw_token.nil?
+        # Se não estiver na instância (ex: carregado do banco), geramos um novo
+        raw_token, enc_token = Devise.token_generator.generate(User, :confirmation_token)
+        user.update(confirmation_token: enc_token, confirmation_sent_at: Time.now)
+      end
+
+      # Tenta confirmar via API
+      post '/api/v1/auth/confirm_email', headers: { 'Authorization' => "Bearer #{raw_token}" }
+      
+      expect(response).to have_http_status(:success)
+      user.reload
+      expect(user.confirmed?).to be true
+      expect(user.status).to eq('active')
+      expect(user.active_for_authentication?).to be true
+    end
+  end
 end

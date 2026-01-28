@@ -1,4 +1,4 @@
-﻿require 'csv'
+require 'csv'
 
 brazil_states = Locations::BrLocations.states.map do |state|
   [state['name'], state['acronym']]
@@ -423,6 +423,18 @@ end
         raise ActiveRecord::RecordInvalid.new(resource)
       end
       resource.update!(status: 'active')
+
+      # FIX #5: Unificar aprovação de empresa e usuário criador no ActiveAdmin
+      owner_member = resource.company_members.find_by(role: 'owner')
+      if owner_member&.user
+        user = owner_member.user
+        user.update!(
+          status: 'active',
+          approved_by_admin: true
+        )
+        # Se o usuário ainda não foi confirmado, envia as instruções agora que foi aprovado
+        user.send_confirmation_instructions unless user.confirmed?
+      end
     end
 
     begin

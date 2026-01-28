@@ -283,6 +283,13 @@ module Api
 
         user = User.confirm_by_token(token)
         if user.errors.empty?
+          # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)
+          # Para usuários normais, a confirmação de e-mail é o passo final para ativação.
+          if user.pending? && (user.regular_user? || user.review_user?)
+            user.active!
+            Rails.logger.info("[Auth] User status updated to active: #{user.email}")
+          end
+
           Rails.logger.info("[Auth] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
           
           # Logar usuário automaticamente após confirmação
@@ -357,8 +364,9 @@ module Api
       end
 
       def skip_token_check?
-        # Skip revocation check for login, register, signup
-        %w[login register signup forgot_password reset_password resend_confirmation confirm_email].include?(action_name)
+        # Pular verificação de revogação para ações que não usam JWT ou onde o token é de outro tipo
+        # (como token de confirmação ou reset de senha enviado no header Authorization)
+        %w[login register signup forgot_password reset_password confirm_email resend_confirmation].include?(action_name)
       end
 
       def development_fallback(action, error)
