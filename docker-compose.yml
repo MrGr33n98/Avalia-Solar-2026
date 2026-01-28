@@ -38,11 +38,6 @@ services:
 
   backend:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-      args:
-        RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     container_name: ab0-backend
     restart: unless-stopped
     depends_on:
@@ -58,53 +53,66 @@ services:
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       JWT_SECRET: ${JWT_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       POSTGRES_HOST: db
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      CORS_ORIGINS: "https://avaliasolar.com.br,https://www.avaliasolar.com.br"
-      ADDITIONAL_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
-      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       APP_HOST: "https://api.avaliasolar.com.br"
-      # DigitalOcean Spaces (S3) para persistência de imagens
-      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-spaces}
-      SPACES_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
-      SPACES_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
-      SPACES_REGION: ${SPACES_REGION:-nyc3}
-      SPACES_BUCKET: ${SPACES_BUCKET:-avalia-backups}
-      SPACES_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
-      # Brevo SMTP Configuration
-      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
-      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
       SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
       SMTP_PORT: ${SMTP_PORT:-2525}
       SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
+      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
     ports:
       - "3001:3001"
     networks:
       - ab0-network
+    volumes:
+      - storage_data:/app/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -H 'Host: api.avaliasolar.com.br' http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 60s
+
+  worker:
+    image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
+    container_name: ab0-worker
+    restart: unless-stopped
+    command: bundle exec sidekiq
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      DOCKER: "true"
+      REDIS_URL: redis://ab0-redis:6379/1
+      REDIS_ENABLED: "true"
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET: ${JWT_SECRET}
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      APP_HOST: "https://api.avaliasolar.com.br"
+      SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
+      SMTP_PORT: ${SMTP_PORT:-2525}
+      SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
+      BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
+    networks:
+      - ab0-network
     volumes:
       - storage_data:/app/storage
 
   frontend:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      args:
-        NEXT_PUBLIC_LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
-        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}
     container_name: ab0-frontend
     restart: unless-stopped
     depends_on:
@@ -112,17 +120,9 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-G-9SD4S6S434}
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
-      NEXT_PUBLIC_API_BASE_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
       API_URL_INTERNAL: "http://backend:3001/api/v1"
-      # Next.js Server Actions: keep key stable across deployments (self-host)
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
@@ -131,9 +131,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000/healthz || exit 1"]
       interval: 30s
-      timeout: 20s        # Aumentei de 10s para 20s
-      retries: 10         # Aumentei de 5 para 10
-      start_period: 180s  # Aumentei de 40s para 180s (3 min para iniciar)
+      timeout: 20s
+      retries: 10
+      start_period: 180s
 
 volumes:
   db_data:
@@ -143,4 +143,3 @@ volumes:
 networks:
   ab0-network:
     driver: bridge
-
