@@ -1,37 +1,99 @@
-<% logo_url = "https://avaliasolar.com.br/images/logo.png" %>
-<% avatar_url = "https://media.licdn.com/dms/image/v2/D4D03AQFo5HuelMtsgA/profile-displayphoto-scale_200_200/B4DZwC2IkNG4AY-/0/1769574271819?e=1771459200&v=beta&t=TGfON4BVrQVGMoiaSIQES8u0s4LCUa9LJ7EqDDtjYMg" %>
-<% frontend_origin = ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br').to_s.chomp('/') %>
-<% confirm_url = "#{frontend_origin}/confirm-email#token=#{ERB::Util.url_encode(@token)}" %>
+<% 
+  logo_url = "https://avaliasolar.com.br/images/logo.png"
+  avatar_url = "https://media.licdn.com/dms/image/v2/D4D03AQFo5HuelMtsgA/profile-displayphoto-scale_200_200/B4DZwC2IkNG4AY-/0/1769574271819?e=1771459200&v=beta&t=TGfON4BVrQVGMoiaSIQES8u0s4LCUa9LJ7EqDDtjYMg"
+  frontend_origin = ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br').to_s.chomp('/')
+  confirm_url = "#{frontend_origin}/confirm-email#token=#{ERB::Util.url_encode(@token)}"
+%>
 
-<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1f2937;">
-  <div style="text-align: center; padding: 16px 0;">
-    <img src="<%= logo_url %>" alt="Avalia Solar" style="height: 48px;">
-  </div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; width: 100%; background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
 
-  <h1 style="margin: 0 0 8px; font-size: 22px; color: #0A66C2;">Confirme seu e-mail</h1>
-  <p style="margin: 0 0 16px;">Olá <strong><%= @email %></strong>,</p>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f6f9fc; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <!-- Content Container -->
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.05), 0 3px 6px 0 rgba(0, 0, 0, 0.05); overflow: hidden;">
+                    
+                    <!-- Header / Logo -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px;">
+                            <img src="<%= logo_url %>" alt="Avalia Solar" style="height: 32px; width: auto; display: block;">
+                        </td>
+                    </tr>
 
-  <p style="margin: 0 0 16px;">
-    Falta só um passo para ativar sua conta e começar a receber avaliações e novos clientes.
-    Confirme seu e-mail para liberar o acesso.
-  </p>
+                    <!-- Main Body -->
+                    <tr>
+                        <td style="padding: 20px 40px;">
+                            <h1 style="margin: 0 0 20px; font-size: 24px; font-weight: 700; color: #1a1f36; letter-spacing: -0.02em;">
+                                Confirme o seu endereço de e-mail
+                            </h1>
+                            
+                            <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #4f566b;">
+                                Olá <strong><%= @email %></strong>,
+                            </p>
 
-  <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
-    <img src="<%= avatar_url %>" alt="Felipe — CEO" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;">
-    <div>
-      <div style="font-weight: 600;">Felipe — CEO Avalia Solar</div>
-      <div style="color: #6b7280; font-size: 14px;">Estamos prontos para ajudar sua empresa a crescer.</div>
-    </div>
-  </div>
+                            <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4f566b;">
+                                Falta apenas um passo para ativar a sua conta na **Avalia Solar**. Confirme o seu e-mail para começar a receber avaliações e impulsionar o crescimento da sua empresa.
+                            </p>
 
-  <p style="text-align: center; margin: 0 0 24px;">
-    <a href="<%= confirm_url %>" style="background:#0A66C2;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-weight:600;">
-      Confirmar meu e-mail
-    </a>
-  </p>
+                            <!-- Stripe Style Action Button -->
+                            <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 32px;">
+                                <tr>
+                                    <td align="left" style="border-radius: 4px;" bgcolor="#635bff">
+                                        <a href="<%= confirm_url %>" target="_blank" style="font-size: 16px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 5px; border: 1px solid #635bff; display: inline-block; font-weight: 600;">
+                                            Confirmar e-mail
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
 
-  <p style="color:#6b7280;font-size:12px;margin:0;">
-    Se você não solicitou, pode ignorar esta mensagem. 
-    O link é seguro e expira em 24 horas.
-  </p>
-</div>
+                            <p style="margin: 0 0 32px; font-size: 14px; line-height: 1.6; color: #4f566b;">
+                                Se não solicitou este e-mail, pode ignorá-lo com segurança.
+                            </p>
+
+                            <!-- CEO Signature Block -->
+                            <table border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid #e3e8ee; padding-top: 24px; width: 100%;">
+                                <tr>
+                                    <td width="48" style="vertical-align: top; padding-right: 12px;">
+                                        <img src="<%= avatar_url %>" 
+                                             alt="Felipe" 
+                                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div style="font-size: 14px; font-weight: 600; color: #1a1f36;">Felipe</div>
+                                        <div style="font-size: 13px; color: #8792a2;">CEO, Avalia Solar</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Card Footer -->
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8fafc; border-top: 1px solid #e3e8ee;">
+                            <p style="margin: 0; font-size: 12px; color: #697386; line-height: 1.5;">
+                                Este link de segurança é válido por 24 horas. Recebeu esta mensagem porque se registou na plataforma Avalia Solar.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- External Footer -->
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; margin-top: 20px;">
+                    <tr>
+                        <td align="center" style="font-size: 12px; color: #aab7c4;">
+                            <p style="margin: 0;">&copy; <%= Time.now.year %> Avalia Solar. Todos os direitos reservados.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
