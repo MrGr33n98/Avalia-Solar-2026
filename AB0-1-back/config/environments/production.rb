@@ -93,12 +93,13 @@ Rails.application.configure do
 
   # --- LIBERAÇÃO DE HOSTS ---
   # Whitelist mínima de hosts (evitar liberar todos com config.hosts.clear)
-  allowed_hosts = []
+  # Inclui localhost para healthchecks internos
+  allowed_hosts = %w[localhost 127.0.0.1]
   allowed_hosts << host if host.present?
   extra_hosts = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
   allowed_hosts.concat(extra_hosts)
   if ENV['DOCKER'] == 'true'
-    allowed_hosts.concat(%w[backend backend:3001])
+    allowed_hosts.concat(%w[backend backend:3001 ab0-backend ab0-backend:3001])
   end
   config.hosts.concat(allowed_hosts) if allowed_hosts.any?
 end
