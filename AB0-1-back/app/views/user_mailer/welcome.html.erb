@@ -1,24 +1,73 @@
-<h2>Olá <%= @user.name || @user.email %>! 👋</h2>
-
-<p>Seja bem-vindo(a) ao <strong>AB0-1</strong>!</p>
-
-<p>Estamos muito felizes em ter você conosco. Nossa plataforma foi criada para ajudar você a encontrar e avaliar empresas de forma transparente e confiável.</p>
-
-<h3>O que você pode fazer:</h3>
-<ul>
-  <li>🔍 Pesquisar e descobrir empresas</li>
-  <li>⭐ Avaliar empresas que você conhece</li>
-  <li>📝 Ler avaliações de outros usuários</li>
-  <li>💬 Comentar e interagir com a comunidade</li>
-</ul>
-
-<p style="text-align: center;">
-  <a href="<%= @login_url %>" class="button">Começar agora</a>
-</p>
-
-<p>Se você tiver alguma dúvida, não hesite em nos contatar.</p>
-
-<p>
-  Atenciosamente,<br>
-  <strong>Equipe AB0-1</strong>
-</p>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bem-vindo à Avalia Solar</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f6f8fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <% logo_url = ENV['MAILER_LOGO_URL'].presence || "https://avaliasolar.com.br/images/logo.png" %>
+    <% avatar_url = ENV['MAILER_AVATAR_URL'].presence || "https://media.licdn.com/dms/image/v2/D4D03AQFo5HuelMtsgA/profile-displayphoto-scale_200_200/B4DZwC2IkNG4AY-/0/1769574271819?e=1771459200&v=beta&t=TGfON4BVrQVGMoiaSIQES8u0s4LCUa9LJ7EqDDtjYMg" %>
+    <% login_url = @login_url.presence || ENV['FRONTEND_LOGIN_URL'].presence || "https://www.avaliasolar.com.br/login" %>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fb;padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.08);overflow:hidden;">
+            <tr>
+              <td align="center" style="padding:24px 24px 8px;">
+                <img src="<%= logo_url %>" alt="Avalia Solar" width="160" style="display:block;border:0;outline:none;" />
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:8px 24px 0;">
+                <img src="<%= avatar_url %>" alt="Felipe - CEO Avalia Solar" width="72" height="72" style="border-radius:50%;display:block;border:2px solid #e5e7eb;" />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 8px;text-align:center;">
+                <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;color:#111827;">Bem-vindo à Avalia Solar!</h1>
+                <p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;">
+                  Olá <strong><%= @user&.name || "!" %></strong>, é um prazer ter você com a gente.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 40px 0;">
+                <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#4b5563;">
+                  A Avalia Solar conecta consumidores e empresas de energia solar. Aqui você vai:
+                </p>
+                <ul style="margin:0 0 12px;padding-left:18px;font-size:14px;line-height:1.6;color:#4b5563;">
+                  <li>Encontrar empresas confiáveis e bem avaliadas;</li>
+                  <li>Comparar propostas e economizar tempo;</li>
+                  <li>Construir sua reputação com avaliações reais.</li>
+                </ul>
+                <p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;">
+                  Clique abaixo para acessar sua conta e começar agora.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:20px 32px;">
+                <a href="<%= login_url %>" style="background:#16a34a;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;display:inline-block;">
+                  Acessar minha conta
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 24px;text-align:center;">
+                <p style="margin:0;font-size:12px;line-height:1.6;color:#9ca3af;">
+                  Se precisar de ajuda, responda este e-mail. Estamos prontos para ajudar.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f3f4f6;padding:12px 24px;text-align:center;font-size:11px;color:#9ca3af;">
+                © <%= Time.now.year %> Avalia Solar. Todos os direitos reservados.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

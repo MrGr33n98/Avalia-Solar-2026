@@ -1,18 +1,12 @@
-Olá <%= @user.name || @user.email %>!
+Olá <%= @user&.name || @user&.email || "" %>,
 
-Seja bem-vindo(a) ao AB0-1!
+Bem-vindo à Avalia Solar!
 
-Estamos muito felizes em ter você conosco. Nossa plataforma foi criada para ajudar você a encontrar e avaliar empresas de forma transparente e confiável.
+A Avalia Solar conecta consumidores e empresas de energia solar. Aqui você vai:
+- Encontrar empresas confiáveis e bem avaliadas;
+- Comparar propostas e economizar tempo;
+- Construir sua reputação com avaliações reais.
 
-O que você pode fazer:
-- Pesquisar e descobrir empresas
-- Avaliar empresas que você conhece
-- Ler avaliações de outros usuários
-- Comentar e interagir com a comunidade
+Acesse sua conta: <%= @login_url || ENV['FRONTEND_LOGIN_URL'] || "https://www.avaliasolar.com.br/login" %>
 
-Começar agora: <%= @login_url %>
-
-Se você tiver alguma dúvida, não hesite em nos contatar.
-
-Atenciosamente,
-Equipe AB0-1
+Se precisar de ajuda, responda este e-mail.
