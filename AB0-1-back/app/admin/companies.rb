@@ -511,6 +511,22 @@ end
     end
 
     def update
+      # Handle banner upload
+      if params[:company][:banner].present?
+        resource.banner.attach(params[:company][:banner])
+      end
+      
+      # Handle logo upload
+      if params[:company][:logo].present?
+        resource.logo.attach(params[:company][:logo])
+      end
+      
+      # Handle media_assets (multiple files)
+      if params[:company][:media_assets].present?
+        params[:company][:media_assets].each do |file|
+          resource.media_assets.attach(file)
+        end
+      end
 
       super
     end
