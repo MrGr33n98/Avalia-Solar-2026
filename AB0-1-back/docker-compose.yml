@@ -40,6 +40,7 @@ services:
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     container_name: ab0-backend
     restart: unless-stopped
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
@@ -73,7 +74,7 @@ services:
       SPACES_REGION: ${SPACES_REGION:-nyc3}
       SPACES_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       SPACES_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
-      # AWS Fallbacks (needed by some gems)
+      # AWS Fallbacks (necessários para Active Storage/AWS SDK)
       AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
       AWS_REGION: ${SPACES_REGION:-nyc3}
