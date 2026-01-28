@@ -63,20 +63,22 @@ begin
   }
   
   # Error handler - called on each retry
-  config.error_handlers << lambda { |ex, ctx_hash|
-    Rails.logger.error "❌ Sidekiq error in #{ctx_hash[:job]['class']}: #{ex.message}"
-    Rails.logger.error "Retry: #{ctx_hash[:job]['retry_count']}/#{ctx_hash[:job]['retry']}"
+  config.error_handlers << lambda { |ex, ctx_hash, _config|
+    job = (ctx_hash && ctx_hash[:job]) || {}
+    Rails.logger.error "❌ Sidekiq error in #{job['class']}: #{ex.message}"
+    Rails.logger.error "Retry: #{job['retry_count']}/#{job['retry']}"
     
     # Track failed job metrics
     if defined?(Yabeda)
       Yabeda.sidekiq.job_errors.increment(
-        { queue: ctx_hash[:job]['queue'], class: ctx_hash[:job]['class'] },
+        { queue: job['queue'], class: job['class'] },
         by: 1
       )
     end
   }
 
   # Lifecycle callbacks
+  # NOTE: lifecycle_events that executed rake commands were removed (no task defined).
   config.on(:startup) do
     Rails.logger.info "🚀 Sidekiq server started"
   end

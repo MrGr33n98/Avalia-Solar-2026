@@ -80,7 +80,7 @@ services:
       BREVO_SMTP_USER: ${BREVO_SMTP_USER}
       BREVO_SMTP_PASS: ${BREVO_SMTP_PASS}
       SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp-relay.brevo.com}
-      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_PORT: ${SMTP_PORT:-2525}
       SMTP_DOMAIN: ${SMTP_DOMAIN:-avaliasolar.com.br}
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-felipe@avaliasolar.com.br}
     ports:

@@ -33,15 +33,6 @@
 # How long to keep dead jobs (in seconds, default is 180 days)
 :dead_timeout_in_seconds: 15552000
 
-# Lifecycle events
-:lifecycle_events:
-  startup:
-    - ['bundle', 'exec', 'rake', 'sidekiq:startup']
-  quiet:
-    - ['bundle', 'exec', 'rake', 'sidekiq:quiet']
-  shutdown:
-    - ['bundle', 'exec', 'rake', 'sidekiq:shutdown']
-
 # Environment-specific settings
 production:
   :concurrency: 10
