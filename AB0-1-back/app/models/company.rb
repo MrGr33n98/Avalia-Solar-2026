@@ -156,6 +156,16 @@ class Company < ApplicationRecord
     slug.presence || super
   end
   
+  def ready_for_activation?
+    return false if name.blank? || name.length < 5
+    return false if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+    return false unless Locations::BrLocations.valid_state?(state)
+    return false unless Locations::BrLocations.valid_city?(state, city)
+    return false unless categories.any?
+    return false unless phone.present? || whatsapp.present? || email_public.present?
+    true
+  end
+
   def validate_ready_for_activation
     if name.blank? || name.length < 5
       errors.add(:name, 'é obrigatório para ativação')
