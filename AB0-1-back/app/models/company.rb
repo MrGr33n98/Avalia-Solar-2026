@@ -293,8 +293,12 @@ class Company < ApplicationRecord
   end
 
   def validate_attachments
-    validate_logo_attachment
-    validate_banner_attachment
+    # Só valida se houver novos uploads anexados
+    validate_logo_attachment if logo.attached? && logo.attachment.present?
+    validate_banner_attachment if banner.attached? && banner.attachment.present?
+  rescue => e
+    Rails.logger.error "Erro na validação de attachments: #{e.message}"
+    # Não bloqueia salvamento se houver erro nas validações de arquivo
   end
 
   def validate_logo_attachment

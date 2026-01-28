@@ -511,7 +511,37 @@ end
     end
 
     def update
+      # Verificar se há upload de arquivos
+      has_file_uploads = params[:company] && (
+        params[:company][:banner].present? || 
+        params[:company][:logo].present? || 
+        params[:company][:media_assets].present?
+      )
+      
+      if has_file_uploads
+        # Verificar se storage está configurado corretamente
+        begin
+          service = ActiveStorage::Blob.service
+          # Tenta acessar o serviço para garantir que está configurado
+          service.class.name
+        rescue ArgumentError => e
+          if e.message.include?("missing keyword")
+            flash[:error] = "Credenciais do storage não configuradas. Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY no .env ou use ACTIVE_STORAGE_SERVICE=local"
+            redirect_to edit_admin_company_path(resource) and return
+          end
+          raise
+        end
+      end
+
       super
+    rescue ArgumentError => e
+      if e.message.include?("unable to sign request") || e.message.include?("missing keyword") || e.message.include?("credentials")
+        Rails.logger.error "[Upload Error] Missing storage credentials: #{e.message}"
+        flash[:error] = "Erro de credenciais: Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY ou use storage local"
+        redirect_to edit_admin_company_path(resource)
+      else
+        raise
+      end
     rescue => e
       Rails.logger.error "[Company Update Error] #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
