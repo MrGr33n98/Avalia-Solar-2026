@@ -68,7 +68,8 @@ class Company < ApplicationRecord
   validate :validate_featured_requires_active
   validate :validate_verified_requires_cnpj
   validate :validate_category_ids_format
-
+  validate :validate_attachments
+  
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
@@ -291,34 +292,53 @@ class Company < ApplicationRecord
     end
   end
 
+  def validate_attachments
+    validate_logo_attachment
+    validate_banner_attachment
+  end
+
   def validate_logo_attachment
     return unless logo.attached?
-    if !logo.blob.content_type.in?(%w[image/png image/jpeg])
-      errors.add(:logo, 'deve ser PNG ou JPG')
-    end
-    if logo.blob.byte_size > 2.megabytes
-      errors.add(:logo, 'tamanho máximo é 2MB')
+    
+    begin
+      content_type = logo.blob.content_type
+      if !content_type.in?(%w[image/png image/jpeg image/jpg image/svg+xml image/webp])
+        errors.add(:logo, 'deve ser PNG, JPG, SVG ou WebP')
+      end
+      
+      if logo.blob.byte_size > 5.megabytes
+        errors.add(:logo, 'tamanho máximo é 5MB')
+      end
+    rescue => e
+      Rails.logger.error "Erro ao validar logo: #{e.message}"
+      # Não bloqueia o upload em caso de erro de validação
     end
   end
 
   def validate_banner_attachment
     return unless banner.attached?
-    if !banner.blob.content_type.in?(%w[image/png image/jpeg image/webp])
-      errors.add(:banner, 'deve ser PNG, JPG ou WebP')
-    end
-    if banner.blob.byte_size > 5.megabytes
-      errors.add(:banner, 'tamanho máximo é 5MB')
-    end
+    
     begin
+      content_type = banner.blob.content_type
+      if !content_type.in?(%w[image/png image/jpeg image/jpg image/webp])
+        errors.add(:banner, 'deve ser PNG, JPG ou WebP')
+      end
+      
+      if banner.blob.byte_size > 10.megabytes
+        errors.add(:banner, 'tamanho máximo é 10MB')
+      end
+      
+      # Análise de dimensões como warning, não erro
       banner.blob.analyze unless banner.blob.analyzed?
       meta = banner.blob.metadata || {}
       w = meta['width']
       h = meta['height']
-      if w && h && (w < 1920 || h < 600)
-        errors.add(:banner, 'dimensões mínimas recomendadas: 1920x600px')
+      if w && h && (w < 1200 || h < 400)
+        Rails.logger.warn "Banner com dimensões abaixo do recomendado: #{w}x#{h}px"
       end
     rescue => e
-      Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
+      Rails.logger.warn "Falha ao analisar banner: #{e.message}"
+      # Não bloqueia o upload em caso de erro de validação
     end
   end
   

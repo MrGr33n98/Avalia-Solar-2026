@@ -33,6 +33,7 @@ class User < ApplicationRecord
   validates :state, length: { is: 2 }, allow_blank: true
   validate :password_complexity
   validate :adult_birthdate
+  validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
   validate :corporate_email_domain, if: -> { company_user? && company.present? && company.website.present? }
 
@@ -182,6 +183,16 @@ class User < ApplicationRecord
   def mark_terms_accepted_at
     if terms_accepted_changed? && terms_accepted
       self.terms_accepted_at ||= Time.current
+    end
+  end
+
+  def validate_attachments
+    return unless avatar.attached?
+    if !avatar.blob.content_type.in?(%w[image/png image/jpeg image/webp])
+      errors.add(:avatar, 'deve ser PNG, JPG ou WebP')
+    end
+    if avatar.blob.byte_size > 2.megabytes
+      errors.add(:avatar, 'tamanho máximo é 2MB')
     end
   end
 end
