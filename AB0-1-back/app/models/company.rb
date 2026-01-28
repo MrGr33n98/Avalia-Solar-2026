@@ -92,7 +92,7 @@ class Company < ApplicationRecord
                       message: 'must be a valid email' },
             allow_blank: true
                       
-  validate :validate_corporate_email
+  validate :validate_corporate_email, if: -> { status == 'active' }
 
   validates :whatsapp_url,
             presence: true,
@@ -429,6 +429,20 @@ class Company < ApplicationRecord
     generate_attachment_url(logo)
   end
 
+  def calculate_historical_stats(days)
+    end_date = Date.current
+    start_date = end_date - days.days
+    
+    stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
+    
+    {
+      dates: stats.map { |s| s.day.strftime('%d/%m') },
+      views: stats.map(&:profile_views),
+      leads: stats.map(&:leads),
+      clicks: stats.map(&:cta_clicks)
+    }
+  end
+
   private
 
   def ensure_slug
@@ -498,22 +512,4 @@ class Company < ApplicationRecord
       category.touch
     end
   end
-
-  def calculate_historical_stats(days)
-    end_date = Date.current
-    start_date = end_date - days.days
-    
-    stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
-    
-    {
-      dates: stats.map { |s| s.day.strftime('%d/%m') },
-      views: stats.map(&:profile_views),
-      leads: stats.map(&:leads),
-      clicks: stats.map(&:cta_clicks)
-    }
-  end
-  # Metodo para validar ativacao 
-  def ready_for_activation? 
-    name.present? && email.present? && (cnpj.present? || website.present?) 
-  end 
 end
