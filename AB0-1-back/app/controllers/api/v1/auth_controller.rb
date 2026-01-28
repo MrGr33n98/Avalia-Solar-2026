@@ -76,6 +76,13 @@ module Api
 
       def register
         attrs = user_params
+        
+        # Injeta localização da borda (Cloudflare) se não fornecida
+        if @edge_location.present?
+          attrs[:city] = @edge_location[:city] if attrs[:city].blank?
+          attrs[:state] = @edge_location[:state] if attrs[:state].blank?
+        end
+
         terms_accepted = params[:terms_accepted] || (params[:user] && params[:user][:terms_accepted])
         unless ActiveModel::Type::Boolean.new.cast(terms_accepted)
           return render_error_response(

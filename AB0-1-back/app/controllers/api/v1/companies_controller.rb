@@ -117,6 +117,18 @@ module Api
       # POST /api/v1/companies
       def create
         @company = ::Company.new(company_params)
+        
+        # Injeta localização da borda (Cloudflare) se não fornecida e verificada
+        if @edge_location.present?
+          @company.city = @edge_location[:city] if @company.city.blank?
+          @company.state = @edge_location[:state] if @company.state.blank?
+          
+          # Log para auditoria se a localização foi injetada pela borda
+          if @edge_verified
+            Rails.logger.info "Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
+          end
+        end
+
         @company.status = 'pending' if @company.status.blank?
 
         begin

@@ -9,6 +9,9 @@ module Api
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token
       
+      # Capture Edge Geolocation data from Cloudflare Worker
+      before_action :capture_edge_location
+
       # JSON responses by default
       respond_to :json
       # Error handling
@@ -89,6 +92,33 @@ module Api
         response_headers['Retry-After'] = retry_after.to_s if retry_after
 
         render json: payload, status: status, headers: response_headers
+      end
+
+      def capture_edge_location
+        @edge_location = {
+          city: request.headers['X-User-City'],
+          state: request.headers['X-User-State'],
+          country: request.headers['X-User-Country'],
+          request_id: request.headers['X-Request-ID'],
+          signature: request.headers['X-Edge-Signature'],
+          time: request.headers['X-Edge-Time']
+        }.compact
+
+        # Verify signature if SHARED_SECRET is present
+        @edge_verified = verify_edge_signature if @edge_location[:signature].present?
+      end
+
+      def verify_edge_signature
+        secret = ENV['SHARED_SECRET']
+        return false if secret.blank?
+
+        data = "#{@edge_location[:time]}#{@edge_location[:request_id]}#{@edge_location[:city]}#{@edge_location[:state]}"
+        expected_signature = OpenSSL::HMAC.hexdigest('SHA256', secret, data)
+        
+        ActiveSupport::SecurityUtils.secure_compare(expected_signature, @edge_location[:signature])
+      rescue => e
+        Rails.logger.warn "Edge Signature Verification Failed: #{e.message}"
+        false
       end
 
       def not_found(exception)

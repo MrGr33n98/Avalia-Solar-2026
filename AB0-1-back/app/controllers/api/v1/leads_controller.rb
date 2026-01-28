@@ -55,6 +55,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def create
     @lead = ::Lead.new(lead_params)
+    
+    # Injeta localização da borda (Cloudflare) se não fornecida
+    if @edge_location.present?
+      @lead.city = @edge_location[:city] if @lead.respond_to?(:city) && @lead.city.blank?
+      @lead.state = @edge_location[:state] if @lead.respond_to?(:state) && @lead.state.blank?
+    end
+
     if ::Lead.column_names.include?('company') && params[:lead].is_a?(ActionController::Parameters) && params[:lead][:company].present?
       @lead[:company] = params[:lead][:company]
     end
@@ -74,6 +81,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def wizard_create
     payload = wizard_lead_params
     lead = ::Lead.new(payload.except(:full_name, :consent))
+    
+    # Injeta localização da borda (Cloudflare) se não fornecida
+    if @edge_location.present?
+      lead.city = @edge_location[:city] if lead.respond_to?(:city) && lead.city.blank?
+      lead.state = @edge_location[:state] if lead.respond_to?(:state) && lead.state.blank?
+    end
+
     lead.name = payload[:full_name] if lead.name.blank? && payload[:full_name].present?
     lead.wizard_status = 'pending_otp'
     lead.consent_at = Time.current if truthy?(payload[:consent])
