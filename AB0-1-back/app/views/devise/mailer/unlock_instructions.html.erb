@@ -1,7 +1,103 @@
-<p>Hello <%= @resource.email %>!</p>
+<% 
+  logo_url = "https://avaliasolar.com.br/images/logo.png"
+  avatar_url = "https://media.licdn.com/dms/image/v2/D4D03AQFo5HuelMtsgA/profile-displayphoto-scale_200_200/B4DZwC2IkNG4AY-/0/1769574271819?e=1771459200&v=beta&t=TGfON4BVrQVGMoiaSIQES8u0s4LCUa9LJ7EqDDtjYMg"
+  # O link de desbloqueio geralmente é gerado pelo helper do Devise no Rails
+  unlock_link = unlock_url(@resource, unlock_token: @token)
+%>
 
-<p>Your account has been locked due to an excessive number of unsuccessful sign in attempts.</p>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; width: 100%; background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
 
-<p>Click the link below to unlock your account:</p>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f6f9fc; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <!-- Container de Conteúdo -->
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.05), 0 3px 6px 0 rgba(0, 0, 0, 0.05); overflow: hidden;">
+                    
+                    <!-- Cabeçalho / Logo -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px;">
+                            <img src="<%= logo_url %>" alt="Avalia Solar" style="height: 32px; width: auto; display: block;">
+                        </td>
+                    </tr>
 
-<p><%= link_to 'Unlock my account', unlock_url(@resource, unlock_token: @token) %></p>
+                    <!-- Corpo Principal -->
+                    <tr>
+                        <td style="padding: 20px 40px;">
+                            <h1 style="margin: 0 0 20px; font-size: 24px; font-weight: 700; color: #1a1f36; letter-spacing: -0.02em;">
+                                Desbloquear sua conta
+                            </h1>
+                            
+                            <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #4f566b;">
+                                Olá <strong><%= @resource.email %></strong>,
+                            </p>
+
+                            <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4f566b;">
+                                Sua conta foi bloqueada devido a um número excessivo de tentativas de login malsucedidas. Para sua segurança, restringimos o acesso temporariamente.
+                            </p>
+
+                            <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4f566b;">
+                                Clique no botão abaixo para desbloquear sua conta e retomar o acesso:
+                            </p>
+
+                            <!-- Botão de Ação Estilo Stripe -->
+                            <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 32px;">
+                                <tr>
+                                    <td align="left" style="border-radius: 4px;" bgcolor="#635bff">
+                                        <a href="<%= unlock_link %>" target="_blank" style="font-size: 16px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 5px; border: 1px solid #635bff; display: inline-block; font-weight: 600;">
+                                            Desbloquear minha conta
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 0 0 32px; font-size: 14px; line-height: 1.6; color: #4f566b;">
+                                Se você não tentou acessar sua conta recentemente, recomendamos que altere sua senha após o desbloqueio para garantir a segurança dos seus dados.
+                            </p>
+
+                            <!-- Assinatura -->
+                            <table border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid #e3e8ee; padding-top: 24px; width: 100%;">
+                                <tr>
+                                    <td width="48" style="vertical-align: top; padding-right: 12px;">
+                                        <img src="<%= avatar_url %>" 
+                                             alt="Felipe" 
+                                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div style="font-size: 14px; font-weight: 600; color: #1a1f36;">Felipe</div>
+                                        <div style="font-size: 13px; color: #8792a2;">CEO, Avalia Solar</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Rodapé do Card -->
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8fafc; border-top: 1px solid #e3e8ee;">
+                            <p style="margin: 0; font-size: 12px; color: #697386; line-height: 1.5;">
+                                Esta é uma notificação de segurança automática. Se precisar de ajuda, entre em contato com nosso suporte.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Rodapé Externo -->
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; margin-top: 20px;">
+                    <tr>
+                        <td align="center" style="font-size: 12px; color: #aab7c4;">
+                            <p style="margin: 0;">&copy; <%= Time.now.year %> Avalia Solar. Todos os direitos reservados.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

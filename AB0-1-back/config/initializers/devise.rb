@@ -277,6 +277,12 @@ Devise.setup do |config|
                   scope: 'email,profile',
                   prompt: 'select_account'
 
+  config.omniauth :linkedin,
+                  ENV.fetch('LINKEDIN_CLIENT_ID', nil),
+                  ENV.fetch('LINKEDIN_CLIENT_SECRET', nil),
+                  scope: 'openid profile email',
+                  fields: ['id', 'email-address', 'first-name', 'last-name']
+
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or
   # change the failure app, you can configure them inside the config.warden block.

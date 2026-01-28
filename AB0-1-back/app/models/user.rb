@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
-         :omniauthable, omniauth_providers: [:google_oauth2]
+         :omniauthable, omniauth_providers: [:google_oauth2, :linkedin]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :forum_answers, dependent: :destroy
@@ -78,6 +78,19 @@ class User < ApplicationRecord
     devise_mailer.send(notification, self, *args).deliver_later
   end
 
+  # Override: Prevent confirmation email before admin approval for company users
+  def send_confirmation_instructions
+    return false if company_user? && !approved_by_admin?
+    super
+  end
+
+  # Override: Skip confirmation notification for OAuth users
+  def send_on_create_confirmation_instructions
+    return if provider.present? # Skip for OAuth users
+    return false if company_user? && !approved_by_admin?
+    super
+  end
+
   def self.ransackable_attributes(_auth_object = nil)
     %w[name email role status company_id] # Allow searching by name, email, role, status and company_id
   end
@@ -93,7 +106,17 @@ class User < ApplicationRecord
     email = (info.respond_to?(:email) ? info.email : info['email']).to_s.downcase
     name_value = info.respond_to?(:name) ? info.name : info['name']
     candidate_name = name_value.presence || email.split('@').first.to_s.tr('_', ' ').strip
-    name = candidate_name.length >= 3 ? candidate_name : 'Usuario Google'
+    
+    # Fallback name based on provider
+    default_name = case provider
+                   when 'google_oauth2'
+                     'Usuario Google'
+                   when 'linkedin'
+                     'Usuario LinkedIn'
+                   else
+                     'Usuario Social'
+                   end
+    name = candidate_name.length >= 3 ? candidate_name : default_name
 
     user = find_or_initialize_by(provider: provider, uid: uid)
     user.email = email if user.email.blank?
@@ -103,7 +126,13 @@ class User < ApplicationRecord
       user.password = "Aa1#{SecureRandom.base64(18)}"
       user.terms_accepted = true
       user.terms_accepted_at ||= Time.current
+      
+      # OAuth users with verified email from provider can skip email confirmation
+      # But company users still need admin approval before accessing dashboard
       user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+      
+      # Set status to pending if user is company role
+      user.status = user.company_user? ? :pending : :active
     end
 
     user.save
