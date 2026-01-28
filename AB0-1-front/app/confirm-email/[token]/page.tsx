@@ -6,8 +6,12 @@ import { useParams } from 'next/navigation';
 import { CheckCircle2, AlertCircle, Loader2, MailCheck } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 function ConfirmEmailContent() {
+  const router = useRouter();
+  const { refreshAuth, user, isAuthenticated } = useAuth();
   const params = useParams<{ token: string }>();
   const token = useMemo(() => {
     const t: unknown = params?.token;
@@ -35,10 +39,26 @@ function ConfirmEmailContent() {
       try {
         await fetchApi('/auth/confirm_email', {
           method: 'POST',
-          body: { token },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
+        
         if (cancelled) return;
+
+        // Tenta atualizar o estado de autenticação automaticamente
+        const authRefreshed = await refreshAuth();
+        
+        if (cancelled) return;
+        
         setIsSuccess(true);
+        
+        // Se estiver autenticado, redireciona para o dashboard após um breve delay
+        if (authRefreshed) {
+          setTimeout(() => {
+            if (!cancelled) router.push('/dashboard');
+          }, 3000);
+        }
       } catch (err: any) {
         if (cancelled) return;
         const status = err?.context?.status;
@@ -58,7 +78,7 @@ function ConfirmEmailContent() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, refreshAuth, router]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
@@ -86,7 +106,9 @@ function ConfirmEmailContent() {
             <div>
               <p className="text-sm font-semibold text-emerald-700">E-mail confirmado</p>
               <p className="text-sm text-emerald-700/80">
-                Sua conta foi confirmada com sucesso. Voce ja pode fazer login.
+                {isAuthenticated 
+                  ? `Olá, ${user?.name || 'Usuário'}. Sua conta foi confirmada e você já está logado. Redirecionando...`
+                  : 'Sua conta foi confirmada com sucesso. Você já pode fazer login.'}
               </p>
             </div>
           </div>
@@ -96,16 +118,22 @@ function ConfirmEmailContent() {
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-700">Nao foi possivel confirmar</p>
+              <p className="text-sm font-semibold text-red-700">Não foi possível confirmar</p>
               <p className="text-sm text-red-700/80">{error}</p>
             </div>
           </div>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button asChild className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white">
-            <Link href="/login">Ir para o login</Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button asChild className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Link href="/dashboard">Ir para o Dashboard</Link>
+            </Button>
+          ) : (
+            <Button asChild className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Link href="/login">Ir para o login</Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="w-full h-11">
             <Link href="/forgot-password">Recuperar senha</Link>
           </Button>

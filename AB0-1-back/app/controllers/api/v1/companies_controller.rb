@@ -118,47 +118,65 @@ module Api
       def create
         @company = ::Company.new(company_params)
         @company.status = 'pending' if @company.status.blank?
-        if @company.save
-          PendingChange.create!(
-            company: @company,
-            user_id: current_user&.id,
-            change_type: 'company_create',
-            data: { requested_at: Time.current },
-            status: 'pending'
-          )
 
-          begin
-            AdminUser.find_each do |admin|
-              NotificationMailer.admin_alert(
-                admin.email,
-                'Nova empresa cadastrada',
-                "Empresa #{@company.name} criada com status pendente em #{Time.current}"
-              ).deliver_later
+        begin
+          ::Company.transaction do
+            if @company.save
+              # FIX #2: Criar CompanyMember owner automaticamente no companies#create com transação
+              if current_user
+                @company.company_members.create!(
+                  user: current_user,
+                  role: :owner
+                )
+              end
+
+              PendingChange.create!(
+                company: @company,
+                user_id: current_user&.id,
+                change_type: 'company_create',
+                data: { requested_at: Time.current },
+                status: 'pending'
+              )
+
+              begin
+                AdminUser.find_each do |admin|
+                  NotificationMailer.admin_alert(
+                    admin.email,
+                    'Nova empresa cadastrada',
+                    "Empresa #{@company.name} criada com status pendente em #{Time.current}"
+                  ).deliver_later
+                end
+                
+                # Send confirmation email to company
+                ::CompanyMailer.registration_received(@company).deliver_later
+              rescue => e
+                Rails.logger.warn "Falha ao notificar: #{e.message}"
+              end
+
+              company_json = {
+                id: @company.id,
+                slug: @company.slug,
+                name: @company.name,
+                description: @company.description,
+                website: @company.website,
+                phone: @company.phone,
+                address: @company.address,
+                state: @company.state,
+                city: @company.city,
+                status: @company.status,
+                featured: @company.featured,
+                verified: @company.verified
+              }
+              render json: { company: company_json }, status: :created
+            else
+              render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
             end
-            
-            # Send confirmation email to company
-            ::CompanyMailer.registration_received(@company).deliver_later
-          rescue => e
-            Rails.logger.warn "Falha ao notificar: #{e.message}"
           end
-
-          company_json = {
-            id: @company.id,
-            slug: @company.slug,
-            name: @company.name,
-            description: @company.description,
-            website: @company.website,
-            phone: @company.phone,
-            address: @company.address,
-            state: @company.state,
-            city: @company.city,
-            status: @company.status,
-            featured: @company.featured,
-            verified: @company.verified
-          }
-          render json: { company: company_json }, status: :created
-        else
-          render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
+        rescue ActiveRecord::RecordInvalid => e
+          render json: { errors: [e.message] }, status: :unprocessable_entity
+        rescue => e
+          Rails.logger.error "Erro ao criar empresa: #{e.message}"
+          render json: { error: 'Internal Server Error' }, status: :internal_server_error
         end
       end
 

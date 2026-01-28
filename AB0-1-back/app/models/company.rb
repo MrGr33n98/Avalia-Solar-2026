@@ -67,6 +67,7 @@ class Company < ApplicationRecord
   validate :validate_ready_for_activation, if: -> { status == 'active' }
   validate :validate_featured_requires_active
   validate :validate_verified_requires_cnpj
+  validate :validate_category_ids_format
 
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
@@ -92,7 +93,7 @@ class Company < ApplicationRecord
                       message: 'must be a valid email' },
             allow_blank: true
                       
-  validate :validate_corporate_email
+  validate :validate_corporate_email, if: -> { status == 'active' }
 
   validates :whatsapp_url,
             presence: true,
@@ -205,6 +206,25 @@ class Company < ApplicationRecord
     digits = cnpj.to_s.gsub(/\D/, '')
     if digits.length < 14 || (defined?(CNPJ) && !CNPJ.valid?(cnpj))
       errors.add(:verified, 'exige um CNPJ válido')
+    end
+  end
+
+  # FIX #6: Adicionar validação robusta de category_ids format em Company
+  def validate_category_ids_format
+    # We use raw category_ids if available, or just check the association
+    # Active Record's category_ids usually returns an array.
+    # But when receiving from API, it might be anything.
+
+    # If it's nil, it's fine (might be handled by presence validation elsewhere)
+    return if category_ids.nil?
+
+    unless category_ids.is_a?(Array)
+      errors.add(:category_ids, 'formato inválido: deve ser um array')
+      return
+    end
+
+    if category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
+      errors.add(:category_ids, 'contém identificadores inválidos')
     end
   end
 
@@ -429,6 +449,20 @@ class Company < ApplicationRecord
     generate_attachment_url(logo)
   end
 
+  def calculate_historical_stats(days)
+    end_date = Date.current
+    start_date = end_date - days.days
+    
+    stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
+    
+    {
+      dates: stats.map { |s| s.day.strftime('%d/%m') },
+      views: stats.map(&:profile_views),
+      leads: stats.map(&:leads),
+      clicks: stats.map(&:cta_clicks)
+    }
+  end
+
   private
 
   def ensure_slug
@@ -498,22 +532,4 @@ class Company < ApplicationRecord
       category.touch
     end
   end
-
-  def calculate_historical_stats(days)
-    end_date = Date.current
-    start_date = end_date - days.days
-    
-    stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
-    
-    {
-      dates: stats.map { |s| s.day.strftime('%d/%m') },
-      views: stats.map(&:profile_views),
-      leads: stats.map(&:leads),
-      clicks: stats.map(&:cta_clicks)
-    }
-  end
-  # Metodo para validar ativacao 
-  def ready_for_activation? 
-    name.present? && email.present? && (cnpj.present? || website.present?) 
-  end 
 end

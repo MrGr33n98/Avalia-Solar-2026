@@ -176,7 +176,12 @@ Rails.application.routes.draw do
       end
 
       # Users routes
-      resources :users, only: [:show, :update, :create]
+      resources :users, only: [:show, :update, :create] do
+        collection do
+          get :me_companies
+          post :switch_company
+        end
+      end
 
       # Search routes
       get 'search', to: 'search#index'

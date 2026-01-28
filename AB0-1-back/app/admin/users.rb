@@ -26,6 +26,9 @@ ActiveAdmin.register User do
 
     unless ENV.fetch('SKIP_EMAILS_IN_ADMIN_APPROVE', 'false') == 'true'
       UserMailer.approval_email(resource).deliver_later
+      # Envia instruções de confirmação se o usuário ainda não confirmou o e-mail
+      # Isso é importante para usuários do tipo 'company' que têm o e-mail pulado no cadastro
+      resource.send_confirmation_instructions if resource.respond_to?(:send_confirmation_instructions) && !resource.confirmed?
     end
     redirect_to resource_path, notice: "Usuário aprovado com sucesso!"
   end

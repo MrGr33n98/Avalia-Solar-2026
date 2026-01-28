@@ -15,6 +15,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string, passwordConfirmation?: string) => Promise<void>;
   resendConfirmation: (email: string) => Promise<void>;
+  refreshAuth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,14 +30,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  async function checkAuth() {
+  async function checkAuth(): Promise<boolean> {
     try {
       // Try to fetch user data without checking localStorage
       const userData = await authApi.me();
       setUser(userData || null);
+      return !!userData;
     } catch (error) {
       console.error('[Auth] Failed to fetch user data:', error);
       setUser(null);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -54,8 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Try to fetch current user after login (if login endpoint sets session cookie)
       try {
-        const me = await authApi.me();
-        setUser(me || null);
+        await checkAuth();
         return;
       } catch (e) {
         throw e;
@@ -85,6 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // No need to clear localStorage anymore
   };
 
+  const refreshAuth = async (): Promise<boolean> => {
+    setLoading(true);
+    return await checkAuth();
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -98,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
         authApi.resetPassword(token, password, passwordConfirmation),
       resendConfirmation: (email: string) => authApi.resendConfirmation(email),
+      refreshAuth,
     }}>
       {children}
     </AuthContext.Provider>
