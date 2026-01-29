@@ -320,8 +320,8 @@ GEM
     parser (3.3.9.0)
       ast (~> 2.4.1)
       racc
-    pg (1.5.3)
-    pg (1.5.3-x64-mingw-ucrt)
+    pg (1.6.2-x64-mingw-ucrt)
+    pg (1.6.2-x86_64-linux)
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
@@ -752,8 +752,8 @@ CHECKSUMS
   paper_trail (16.0.0) sha256=e9b9f0fb1b8b590c8231cfa931b282ba92f90e066e393930a5e1c61ae4c5019d
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.9.0) sha256=94d6929354b1a6e3e1f89d79d4d302cc8f5aa814431a6c9c7e0623335d7687f2
-  pg (1.5.3) sha256=6b9ee5e2d5aee975588232c41f8203e766157cf71dba54ee85b343a45ced9bfd
-  pg (1.5.3-x64-mingw-ucrt) sha256=1f2a6b2afaf0ccb8afe8b6a00131bce8151fbd6e8826b2d944288f6f2b615389
+  pg (1.6.2-x64-mingw-ucrt) sha256=6952fb74f2289630da5bf2d5454d51195d40862675c5017db02b1c0ac9e92e09
+  pg (1.6.2-x86_64-linux) sha256=525f438137f2d1411a1ebcc4208ec35cb526b5a3b285a629355c73208506a8ea
   pg_search (2.3.7) sha256=27868941844961e593526b835da20e48995e9b846515e91856084c5bd9ab4f35
   prism (1.5.1) sha256=b40c1b76ccb9fcccc3d1553967cda6e79fa7274d8bfea0d98b15d27a6d187134
   prometheus-client (4.2.5) sha256=807bebc3e92ccd9f4d814d90be15e85338f3708d227badf80924ef3f6e7d5225
