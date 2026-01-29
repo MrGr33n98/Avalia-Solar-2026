@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildApiUrl } from '@/lib/api-config';
 
 type LogoutStatus = 'logging_out' | 'success' | 'error';
 
@@ -14,7 +15,8 @@ export default function LogoutPage() {
     async function performLogout() {
       try {
         // Call logout API
-        const response = await fetch('/api/v1/auth/logout', {
+        const url = buildApiUrl('auth/logout');
+        const response = await fetch(url, {
           method: 'POST',
           credentials: 'include',
           headers: {

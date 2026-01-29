@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { buildApiUrl } from '@/lib/api-config';
 
 function ConfirmEmailContent() {
   const router = useRouter();
@@ -51,8 +52,8 @@ function ConfirmEmailContent() {
         window.history.replaceState({}, document.title, '/confirm-email');
 
         // Enviar token para backend via Authorization header
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
-        const response = await fetch(`${apiUrl}/api/v1/auth/confirm_email`, {
+        const url = buildApiUrl('auth/confirm_email');
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

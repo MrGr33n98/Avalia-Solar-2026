@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
+import { buildApiUrl } from '@/lib/api-config';
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -82,8 +83,8 @@ function ResetPasswordContent() {
     setMessage('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
-      const response = await fetch(`${apiUrl}/api/v1/auth/reset_password`, {
+      const url = buildApiUrl('auth/reset_password');
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
