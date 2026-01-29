@@ -3,6 +3,16 @@ ActiveAdmin.register CompanyMember do
 
   actions :all, except: [:destroy]
 
+  member_action :rollback, method: :post do
+    version = PaperTrail::Version.find(params[:version_id])
+    if version.reify
+      version.reify.save!
+      redirect_to resource_path, notice: "Vínculo restaurado para a versão de #{version.created_at}"
+    else
+      redirect_to resource_path, alert: "Não foi possível restaurar esta versão."
+    end
+  end
+
   permit_params :company_id, :user_id, :role
 
   index do
@@ -36,6 +46,9 @@ ActiveAdmin.register CompanyMember do
         column :created_at
         column :changes do |version|
           version.changeset.map { |k, v| "#{k}: #{v[0]} -> #{v[1]}" }.join(", ")
+        end
+        column :actions do |version|
+          link_to "Rollback", rollback_admin_company_member_path(resource, version_id: version.id), method: :post, data: { confirm: "Tem certeza que deseja restaurar esta versão?" } if version.event == "update"
         end
       end
     end

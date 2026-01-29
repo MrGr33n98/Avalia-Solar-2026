@@ -12,12 +12,9 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLocationData } from '@/hooks/useLocationData';
+import { track } from '@/lib/analytics';
 
 interface LocationSearchProps {
   className?: string;
@@ -60,6 +57,14 @@ export default function LocationSearch({ className, onLocationSelect }: Location
       setValue(currentValue);
       setSelectedLabel(`${currentValue} - ${selectedState}`);
       setOpen(false);
+
+      // Track location selection
+      track('location_selected', {
+        state: selectedState,
+        city: currentValue,
+        location_label: `${currentValue} - ${selectedState}`
+      });
+
       if (onLocationSelect && selectedState) {
         onLocationSelect({ state: selectedState, city: currentValue });
       }

@@ -29,41 +29,42 @@ export default function LandingCategoryCard({ category, className }: LandingCate
   const ratingLabel = typeof avgRating === 'number' ? avgRating.toFixed(1) : null;
 
   return (
-    <Card className={cn('overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow', className)}>
-      <Link href={href} className="block outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
-        <div className="relative aspect-[3/2] bg-gray-100">
+    <Card className={cn('overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow h-auto max-h-[320px]', className)}>
+      <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
+        <div className="relative aspect-[3/1] bg-gray-100 overflow-hidden">
           <Image
             src={resolveCategoryImage(category)}
             alt={category?.name || 'Categoria'}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover object-center"
+            className="object-cover object-center transition-transform duration-500 hover:scale-105"
           />
         </div>
 
-        <div className="p-4">
-          <h3 className="text-base md:text-lg font-semibold text-slate-900 leading-tight line-clamp-2">
-            {category?.name || 'Categoria'}
-          </h3>
+        <div className="p-3 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm md:text-base font-semibold text-slate-900 leading-tight line-clamp-1">
+              {category?.name || 'Categoria'}
+            </h3>
 
-          <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-            {category?.short_description || 'Empresas verificadas e confiáveis'}
-          </p>
+            <p className="mt-0.5 text-xs text-slate-600 line-clamp-1">
+              {category?.short_description || 'Empresas verificadas e confiáveis'}
+            </p>
+          </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-xs text-slate-600">
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[10px] text-slate-600">
               {companiesCount > 0 ? (
                 <span className="inline-flex items-center gap-1">
-                  <Building2 className="h-4 w-4 text-blue-600" />
+                  <Building2 className="h-3.5 w-3.5 text-blue-600" />
                   {companiesCount}
                 </span>
               ) : null}
 
               {reviewsCount > 0 ? (
                 <span className="inline-flex items-center gap-1">
-                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                   {ratingLabel ? <span className="font-medium">{ratingLabel}</span> : null}
-                  <span className="text-slate-400">{ratingLabel ? `(${reviewsCount})` : reviewsCount}</span>
                 </span>
               ) : null}
             </div>
@@ -72,10 +73,10 @@ export default function LandingCategoryCard({ category, className }: LandingCate
               asChild
               size="sm"
               variant="outline"
-              className="rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="h-7 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 px-2 text-[10px]"
             >
               <span>
-                Explorar <ArrowRight className="ml-1 h-4 w-4" />
+                Explorar <ArrowRight className="ml-1 h-3 w-3" />
               </span>
             </Button>
           </div>

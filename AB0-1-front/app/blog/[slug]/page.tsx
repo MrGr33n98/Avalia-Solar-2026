@@ -5,6 +5,7 @@ import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { getFullImageUrl } from '@/utils/image';
 import { Article } from '@/types/article';
 import { ReadingProgress } from '@/components/blog/ReadingProgress';
+import { BlogTimeTracker } from '@/components/blog/BlogTimeTracker';
 import { PostHeader } from '@/components/blog/PostHeader';
 import { PostSidebar } from '@/components/blog/PostSidebar';
 import { AuthorCardWithStats } from '@/components/blog/AuthorCardWithStats';
@@ -115,14 +116,44 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     }
   };
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://avaliasolar.com.br'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Blog',
+        item: 'https://avaliasolar.com.br/blog'
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: article.title,
+        item: `https://avaliasolar.com.br/blog/${article.slug}`
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       
       <ReadingProgress />
+      <BlogTimeTracker />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

@@ -111,12 +111,11 @@ const iconOptions = [
 ];
 
 const colorPresets = [
-  { name: 'Primário', bg: '#3b82f6', text: '#ffffff', hover: '#2563eb' },
-  { name: 'Sucesso', bg: '#22c55e', text: '#ffffff', hover: '#16a34a' },
-  { name: 'Aviso', bg: '#f59e0b', text: '#ffffff', hover: '#d97706' },
-  { name: 'Perigo', bg: '#ef4444', text: '#ffffff', hover: '#dc2626' },
+  { name: 'Navy Avalia', bg: '#004996', text: '#ffffff', hover: '#003366' },
+  { name: 'Ciano Avalia', bg: '#00AFEF', text: '#1A1A1A', hover: '#0090c4' },
+  { name: 'Verde Avalia', bg: '#8DC63F', text: '#1A1A1A', hover: '#7bb134' },
+  { name: 'Amarelo Avalia', bg: '#FCEE21', text: '#1A1A1A', hover: '#e5d81e' },
   { name: 'Escuro', bg: '#1f2937', text: '#ffffff', hover: '#111827' },
-  { name: 'Laranja Solar', bg: '#ea580c', text: '#ffffff', hover: '#c2410c' },
 ];
 
 export default function BacklinksButtonManager({ companyId }: BacklinksButtonManagerProps) {
@@ -146,9 +145,9 @@ export default function BacklinksButtonManager({ companyId }: BacklinksButtonMan
       icon: 'arrow-right',
       iconPosition: 'right',
       colors: {
-        bg: '#ea580c',
+        bg: '#004996',
         text: '#ffffff',
-        hover: '#c2410c',
+        hover: '#003366',
       },
       animation: 'glow',
       link: '/quote',

@@ -281,7 +281,7 @@ export default function CategoriesClient() {
   const quickActions = [
     { label: 'Empresas', href: '/companies', icon: Home, styles: 'bg-yellow-100 text-yellow-700' },
     { label: 'Produtos', href: '/products', icon: Grid, styles: 'bg-green-100 text-green-700' },
-    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-orange-100 text-orange-700' },
+    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-cyan-100 text-cyan-700' },
     { label: 'Favoritos', href: '/profile?tab=favorites', icon: Heart, styles: 'bg-blue-100 text-blue-700' },
     { label: 'Blog', href: '/blog', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
   ];
@@ -538,7 +538,7 @@ export default function CategoriesClient() {
                       {Object.entries(filters).map(([key, value]) => {
                         if (!value) return null;
                         return (
-                          <Badge key={key} variant="default" className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer" onClick={() => handleFilterChange(key, null)}>
+                          <Badge key={key} variant="default" className="bg-cyan-600 text-white hover:bg-cyan-700 cursor-pointer" onClick={() => handleFilterChange(key, null)}>
                             {getFilterLabel(key, value)} <X className="ml-2 h-3 w-3" />
                           </Badge>
                         );

@@ -429,7 +429,7 @@ export default function PremiumBannerManagement({ companyId }: PremiumBannerMana
                   <p className="text-xs text-muted-foreground">CTR Médio</p>
                   <p className="text-2xl font-bold">{stats.avgCTR.toFixed(2)}%</p>
                 </div>
-                <Target className="h-8 w-8 text-orange-500" />
+                <Target className="h-8 w-8 text-cyan-600" />
               </div>
             </CardContent>
           </Card>
@@ -612,7 +612,7 @@ export default function PremiumBannerManagement({ companyId }: PremiumBannerMana
                         </div>
                         {banner.sponsored && (
                           <div className="absolute top-2 left-2">
-                            <Badge variant="default" className="bg-orange-500 backdrop-blur-sm">
+                            <Badge variant="default" className="bg-cyan-600 backdrop-blur-sm">
                               <Sparkles className="h-3 w-3 mr-1" />
                               Patrocinado
                             </Badge>

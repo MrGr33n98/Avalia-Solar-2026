@@ -3,6 +3,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
   before_action :authenticate_api_user, only: %i[index show update destroy]
   before_action :ensure_leads_access!, only: %i[index]
   before_action :ensure_lead_access!, only: %i[show update destroy]
+  before_action :check_honeypot, only: %i[create wizard_create]
 
   def index
     @leads = scoped_leads
@@ -325,7 +326,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     optional_keys << :location if columns.include?('location')
     allow_company_assignment = action_name == 'create' || current_user&.admin?
     optional_keys << :company_id if columns.include?('company_id') && allow_company_assignment
-    params.require(:lead).permit(*(base_keys + optional_keys))
+    params.require(:lead).permit(*(base_keys + optional_keys), :nickname)
   end
 
   def wizard_lead_params
@@ -344,7 +345,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
       :full_name,
       :email,
       :phone,
-      :consent
+      :consent,
+      :nickname
+    )
+  end
+
+  def check_honeypot
+    return if params.dig(:lead, :nickname).blank?
+
+    render_error_response(
+      error: 'Unprocessable Entity',
+      message: 'Spam detected',
+      status: :unprocessable_entity,
+      code: 'SPAM_DETECTED'
     )
   end
 

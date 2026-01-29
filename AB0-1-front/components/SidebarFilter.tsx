@@ -147,8 +147,8 @@ const RatingButton = ({
     className={`w-full text-left flex items-center gap-2.5 text-sm py-2.5 px-3 rounded-lg 
               transition-all duration-200 group font-medium ${
       active
-        ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-white shadow-md'
-        : 'text-gray-700 hover:bg-yellow-50 hover:text-orange-800'
+        ? 'bg-gradient-to-r from-cyan-400 to-blue-400 text-white shadow-md'
+        : 'text-gray-700 hover:bg-cyan-50 hover:text-cyan-800'
     }`}
   >
     <div className="flex items-center gap-1">
@@ -159,10 +159,10 @@ const RatingButton = ({
             i < rating 
               ? active 
                 ? 'text-white fill-white' 
-                : 'text-yellow-400 fill-yellow-400 group-hover:text-orange-500 group-hover:fill-orange-500'
+                : 'text-cyan-400 fill-cyan-400 group-hover:text-cyan-500 group-hover:fill-cyan-500'
               : active
                 ? 'text-white/40'
-                : 'text-gray-300 group-hover:text-orange-200'
+                : 'text-gray-300 group-hover:text-cyan-200'
           }`} 
         />
       ))}

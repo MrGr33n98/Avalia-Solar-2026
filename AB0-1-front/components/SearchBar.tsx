@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { debounce } from 'lodash';
+import { track } from '@/lib/analytics';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -98,7 +99,13 @@ export default function SearchBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
+    const searchTerm = query.trim();
+    if (searchTerm) {
+      // Track search submission
+      track('search_submitted', {
+        search_term: searchTerm,
+        results_count: flatItems.length
+      });
       pushToSearchPage();
     }
   };
@@ -125,9 +132,25 @@ export default function SearchBar({
     }
   };
 
-  const handleItemClick = (type: string, id: number, slug?: string) => {
+  const handleItemClick = (type: string, id: number, slug?: string, name?: string) => {
     setShowResults(false);
     setActiveIndex(-1);
+    
+    // Track selection from search
+    if (type === 'companies') {
+      track('company_card_click', {
+        company_id: id,
+        company_name: name,
+        source: 'search_results'
+      });
+    } else if (type === 'categories') {
+      track('category_selected', {
+        category_id: id,
+        category_name: name,
+        category_slug: slug,
+        source: 'search_results'
+      });
+    }
     
     // Use slug for categories, id for others
     if (type === 'categories' && slug) {
@@ -397,7 +420,7 @@ export default function SearchBar({
                         key={company.id}
                         company={company}
                         active={activeIndex === flatIndex}
-                        onClick={() => handleItemClick('companies', company.id)}
+                        onClick={() => handleItemClick('companies', company.id, undefined, company.name)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
                       />
                     );
@@ -428,7 +451,7 @@ export default function SearchBar({
                         key={product.id}
                         product={product}
                         active={activeIndex === flatIndex}
-                        onClick={() => handleItemClick('products', product.id)}
+                        onClick={() => handleItemClick('products', product.id, undefined, product.name)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
                       />
                     );
@@ -459,7 +482,7 @@ export default function SearchBar({
                         key={category.id}
                         category={category}
                         active={activeIndex === flatIndex}
-                        onClick={() => handleItemClick('categories', category.id, category.seo_url)}
+                        onClick={() => handleItemClick('categories', category.id, category.seo_url, category.name)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
                       />
                     );
@@ -490,7 +513,7 @@ export default function SearchBar({
                         key={article.id}
                         article={article}
                         active={activeIndex === flatIndex}
-                        onClick={() => handleItemClick('articles', article.id)}
+                        onClick={() => handleItemClick('articles', article.id, undefined, article.title)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
                       />
                     );
@@ -547,7 +570,7 @@ function ResultSection({
     'Empresas': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
     'Produtos': { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
     'Categorias': { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' },
-    'Artigos': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+    'Artigos': { bg: 'bg-brand-cyan/10', text: 'text-brand-cyan-dark', border: 'border-brand-cyan/20' },
   };
   
   const colors = colorMap[title as keyof typeof colorMap] || colorMap['Empresas'];
@@ -804,7 +827,7 @@ function ArticleResultItem({
         mx-2 px-4 py-3 rounded-xl cursor-pointer 
         transition-all duration-200 group
         ${active 
-          ? 'bg-orange-50 border border-orange-200/50 shadow-md' 
+          ? 'bg-brand-cyan/10 border border-brand-cyan/20 shadow-md' 
           : 'hover:bg-gray-50 border border-transparent'
         }
       `}
@@ -812,14 +835,14 @@ function ArticleResultItem({
       <div className="flex items-start gap-3">
         <div className={`
           flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
-          ${active ? 'bg-orange-100' : 'bg-gray-100 group-hover:bg-gray-200'}
+          ${active ? 'bg-brand-cyan/20' : 'bg-gray-100 group-hover:bg-gray-200'}
           transition-colors
         `}>
-          <FileText className={`h-5 w-5 ${active ? 'text-orange-600' : 'text-gray-600'}`} />
+          <FileText className={`h-5 w-5 ${active ? 'text-brand-cyan-dark' : 'text-gray-600'}`} />
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900 truncate text-sm mb-1 group-hover:text-orange-900">
+          <h4 className="font-semibold text-gray-900 truncate text-sm mb-1 group-hover:text-brand-cyan-dark">
             {article.title}
           </h4>
           
@@ -837,7 +860,7 @@ function ArticleResultItem({
         
         <ChevronRight className={`
           h-4 w-4 text-gray-400 transition-all duration-200
-          ${active ? 'text-orange-500 translate-x-1' : 'group-hover:translate-x-0.5'}
+          ${active ? 'text-brand-cyan translate-x-1' : 'group-hover:translate-x-0.5'}
         `} />
       </div>
     </div>

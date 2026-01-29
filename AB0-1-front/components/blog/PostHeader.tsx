@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
+import { track } from '@/lib/analytics';
 import ShareButtons from './ShareButtons';
 
 interface PostHeaderProps {
@@ -32,6 +33,19 @@ export function PostHeader({ article }: PostHeaderProps) {
   // Calculate read time based on word count (avg 200 wpm)
   const wordCount = article.content ? article.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
   const readTime = Math.ceil(wordCount / 200);
+
+  React.useEffect(() => {
+    track('blog_post_view', {
+      post_id: article.id,
+      post_title: article.title,
+      post_slug: article.slug,
+      category_name: article.category?.name,
+      category_id: article.category?.id,
+      author_name: authorName,
+      word_count: wordCount,
+      read_time_minutes: readTime
+    });
+  }, [article.id, article.title, article.slug, article.category?.name, article.category?.id, authorName, wordCount, readTime]);
 
   return (
     <div className="space-y-6 mb-8">

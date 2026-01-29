@@ -48,10 +48,25 @@ export default function MetricCard({
       icon: 'text-purple-600 dark:text-purple-400',
       gradient: 'from-purple-500/20 to-purple-500/5'
     },
-    orange: {
-      bg: 'bg-orange-100 dark:bg-orange-950',
-      icon: 'text-orange-600 dark:text-orange-400',
-      gradient: 'from-orange-500/20 to-orange-500/5'
+    'brand-cyan': {
+      bg: 'bg-brand-cyan/10 dark:bg-brand-cyan/5',
+      icon: 'text-brand-cyan',
+      gradient: 'from-brand-cyan/20 to-brand-cyan/5'
+    },
+    'brand-yellow': {
+      bg: 'bg-brand-yellow/10 dark:bg-brand-yellow/5',
+      icon: 'text-brand-yellow',
+      gradient: 'from-brand-yellow/20 to-brand-yellow/5'
+    },
+    'brand-blue': {
+      bg: 'bg-brand-blue/10 dark:bg-brand-blue/5',
+      icon: 'text-brand-blue',
+      gradient: 'from-brand-blue/20 to-brand-blue/5'
+    },
+    'brand-green': {
+      bg: 'bg-brand-green/10 dark:bg-brand-green/5',
+      icon: 'text-brand-green',
+      gradient: 'from-brand-green/20 to-brand-green/5'
     },
     yellow: {
       bg: 'bg-yellow-100 dark:bg-yellow-950',

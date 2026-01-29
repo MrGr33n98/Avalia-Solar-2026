@@ -9,8 +9,12 @@ import CompanyCard from '@/components/CompanyCard';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
-import LandingHeroBanner from '@/components/landing/LandingHeroBanner';
+import LandingHero from '@/components/landing/LandingHero';
+import HowItWorks from '@/components/landing/HowItWorks';
+import SavingsCalculator from '@/components/landing/SavingsCalculator';
 import LandingTrustBanner from '@/components/landing/LandingTrustBanner';
+import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import { TrustRow } from '@/components/ui/TrustRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -77,13 +81,12 @@ function ErrorState({ message }: { message: string }) {
 function SkeletonCategoryCard() {
   return (
     <Card className="overflow-hidden">
-      <div className="relative aspect-[16/9] bg-gray-100">
+      <div className="relative aspect-[3/1] bg-gray-100">
         <Skeleton className="w-full h-full" />
       </div>
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-5/6" />
+      <div className="p-3 space-y-2">
+        <Skeleton className="h-3.5 w-2/3" />
+        <Skeleton className="h-2.5 w-full" />
       </div>
     </Card>
   );
@@ -173,20 +176,23 @@ function HomePageContent() {
 
   return (
     <main className="flex-grow">
-      <div className="bg-gradient-to-b from-blue-50/70 via-white to-white">
-        <LandingHeroBanner />
-        <div className="pt-4 pb-8">
-          <LandingCategoryChips categories={featuredCategories} />
-        </div>
+      <LandingHero />
+      
+      <div className="py-8 bg-slate-50 border-y border-slate-100">
+        <LandingCategoryChips categories={featuredCategories} />
       </div>
 
-      <LandingTrustBanner />
+      <HowItWorks />
+
+      <SavingsCalculator />
+
+      <TrustRow />
 
       <SectionShell zebra>
         <BannerByLocation location="categories_top" className="mb-8" />
 
         <SectionHeader
-          title="Explore Nossas Categorias"
+          title="Soluções por Categoria"
           subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
         />
 
@@ -209,7 +215,7 @@ function HomePageContent() {
         )}
 
         <div className="mt-8 md:mt-10 text-center">
-          <Button asChild>
+          <Button asChild variant="outline" className="rounded-full">
             <Link href="/categories" className="group">
               Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
@@ -221,10 +227,10 @@ function HomePageContent() {
         <BannerByLocation location="companies_top" className="mb-8" />
 
         <SectionHeader
-          title="Empresas Parceiras"
-          subtitle="Conheça as empresas mais bem avaliadas e verificadas pelos nossos usuários."
+          title="Empresas em Destaque"
+          subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
           right={
-            <Button asChild>
+            <Button asChild variant="ghost" className="text-brand-blue font-bold">
               <Link href="/companies" className="group">
                 Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
@@ -233,48 +239,54 @@ function HomePageContent() {
         />
 
         {loadingCompanies ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <SkeletonCompanyCard key={i} />
             ))}
           </div>
         ) : errorCompanies ? (
           <ErrorState message={errorCompanies} />
-        ) : (
-          <div className="px-2 md:px-0 max-w-screen-xl mx-auto">
-            <Carousel opts={{ align: 'start', loop: true }} className="w-full">
-              <CarouselContent className="-ml-4">
-                {companies.map((company) => (
-                  <CarouselItem
-                    key={company.id}
-                    className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-                  >
-                    <CompanyCard company={company} compact />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
-            <div className="mt-3 md:hidden flex items-center justify-center text-xs text-gray-500">
-              <span>Arraste para ver mais</span>
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </div>
+        ) : companies.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {companies.slice(0, 8).map((company) => (
+              <CompanyCard key={company.id} company={company} compact={true} />
+            ))}
           </div>
+        ) : (
+          <EmptyState message="Nenhuma empresa em destaque encontrada." />
         )}
 
-        <div className="mt-8 md:mt-10 text-center md:hidden">
-          <Button asChild>
-            <Link href="/companies" className="group">
-              Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
+        <div className="mt-12 text-center">
+          <Link href="/companies">
+            <CTAPrimaryButton label="Explorar todas as empresas" className="md:w-auto w-full" />
+          </Link>
         </div>
       </SectionShell>
 
-      <div className="pb-10">
-        <LandingCategoryChips categories={featuredCategories} />
-      </div>
+      {/* Conversion Banner */}
+      <section className="py-20 bg-slate-900 text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-brand-blue/10 skew-x-12 translate-x-1/2" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">
+              Pronto para economizar na conta de luz?
+            </h2>
+            <p className="text-xl text-slate-400 mb-10">
+              Junte-se a milhares de brasileiros que já reduziram seus custos em até 95%. Peça seu orçamento gratuito hoje.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <CTAPrimaryButton label="Fazer Orçamento Grátis" className="h-14 px-10 text-lg" />
+              <CTAPrimaryButton 
+                label="Ler nosso blog" 
+                variant="outline"
+                href="/blog"
+                ctaType="blog_view"
+                className="h-14 px-10 text-lg border-white text-white hover:bg-white hover:text-slate-900 transition-all" 
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       <FloatingWhatsApp />
     </main>

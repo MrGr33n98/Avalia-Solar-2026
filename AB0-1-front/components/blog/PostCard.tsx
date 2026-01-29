@@ -11,6 +11,7 @@ import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { track } from '@/lib/analytics';
 
 interface PostCardProps {
   post: Article;
@@ -22,7 +23,20 @@ export function PostCard({ post }: PostCardProps) {
   const readTime = Math.ceil(wordCount / 200) || 5;
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group block h-full">
+    <Link 
+      href={`/blog/${post.slug}`} 
+      className="group block h-full"
+      onClick={() => {
+        track('blog_list_item_click', {
+          post_id: post.id,
+          post_title: post.title,
+          post_slug: post.slug,
+          category_name: post.category?.name,
+          element_type: 'card',
+          action_type: 'click'
+        });
+      }}
+    >
       <Card className="h-full flex flex-col border-none shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden bg-white ring-1 ring-slate-100 group-hover:ring-primary/20">
         <div className="relative h-52 w-full overflow-hidden bg-slate-100">
           {post.cover_image_url || post.image_url ? (

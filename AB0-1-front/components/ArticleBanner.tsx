@@ -37,7 +37,7 @@ const ArticleBanner: React.FC<ArticleBannerProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-slate-900/30" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-blue-900 opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-900 opacity-20" />
       )}
 
       {/* Content Container */}
@@ -45,14 +45,14 @@ const ArticleBanner: React.FC<ArticleBannerProps> = ({
         {/* Brand Element - Top Right (Optional) */}
         <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-2 rounded-full border border-white/20">
-            <div className="w-8 h-8 bg-orange-500 rounded-full" />
+            <div className="w-8 h-8 bg-cyan-600 rounded-full" />
             <span className="text-white font-semibold text-sm sm:text-base tracking-tight">Avalia Solar</span>
           </div>
         </div>
 
         {/* Category Badge */}
         <div className="mb-6">
-          <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-none text-sm sm:text-base px-3 sm:px-4 py-1.5 uppercase tracking-wide font-semibold shadow-lg">
+          <Badge className="bg-cyan-600 hover:bg-cyan-700 text-white border-none text-sm sm:text-base px-3 sm:px-4 py-1.5 uppercase tracking-wide font-semibold shadow-lg">
             {category}
           </Badge>
         </div>
@@ -68,7 +68,7 @@ const ArticleBanner: React.FC<ArticleBannerProps> = ({
         </h1>
 
         {/* Decorative Element */}
-        <div className="w-20 sm:w-24 h-1.5 bg-orange-500 mt-6 sm:mt-8 rounded-full" />
+        <div className="w-20 sm:w-24 h-1.5 bg-cyan-600 mt-6 sm:mt-8 rounded-full" />
       </div>
     </div>
   );

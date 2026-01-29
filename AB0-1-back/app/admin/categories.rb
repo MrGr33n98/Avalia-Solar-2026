@@ -2,8 +2,13 @@ require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, company_ids: [], product_ids: [],
+                :banner, :icon, :permissions_config, company_ids: [], product_ids: [],
                 badges_attributes: [:id, :name, :description, :year, :badge_image, :_destroy]
+
+  # Custom action to clear cache after update
+  after_save do |category|
+    category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
+  end
 
   # Add CSV import action
   action_item :import_csv, only: :index do
@@ -113,9 +118,20 @@ ActiveAdmin.register Category, namespace: :admin do
       end
     end
 
-    f.inputs 'Associations' do
+    f.inputs 'Associações' do
       f.input :companies, as: :check_boxes, 
-              collection: Company.order(:name).map { |c| [c.name, c.id] }
+              collection: Company.order(:name).map { |c| [c.name, c.id] },
+              label: 'Empresas nesta Categoria'
+    end
+
+    f.inputs 'Configurações de Permissões' do
+      f.input :permissions_config, as: :text, 
+              label: 'Configurações de Permissões (JSON)',
+              hint: "Formato JSON: { \"can_see_leads\": true, \"can_manage_products\": true }. Essas configurações definem o que empresas nesta categoria podem acessar.",
+              input_html: { 
+                value: f.object.permissions_config.present? ? f.object.permissions_config.to_json : {}.to_json,
+                rows: 5
+              }
     end
 
     f.actions

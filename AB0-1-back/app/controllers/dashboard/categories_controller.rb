@@ -22,6 +22,13 @@ module Dashboard
         data: { action: "request", name: name }
       )
 
+      Analytics::TrackEventService.call(
+        company_id: company.id,
+        event_type: 'category_request_created',
+        user: current_user,
+        metadata: { category_name: name }
+      )
+
       redirect_to dashboard_categories_path, notice: "Solicitacao enviada."
     end
   end

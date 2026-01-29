@@ -9,6 +9,8 @@ import { BlogPromoBanner } from './BlogPromoBanner';
 import { CategoryWithCount } from '@/lib/api/blog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
+
 interface BlogFiltersBarProps {
   categories: CategoryWithCount[];
 }
@@ -31,17 +33,40 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
       for (const [key, value] of Object.entries(next)) {
         if (!value || value === 'all') params.delete(key);
         else params.set(key, value);
+        
+        // Track filter changes
+        if (key === 'category') {
+          const catName = categories.find(c => String(c.id) === value)?.name || 'Tudo';
+          track('blog_filter_change', {
+            filter_type: 'category',
+            filter_value: catName,
+            category_id: value
+          });
+        }
+        if (key === 'sort') {
+          track('blog_filter_change', {
+            filter_type: 'sort',
+            filter_value: value
+          });
+        }
       }
       const qs = params.toString();
       router.push(qs ? `${pathname}?${qs}` : pathname);
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams, categories]
   );
   // Debounce search
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (search === currentQ) return;
       pushParams({ q: search || null });
+      
+      if (search) {
+        track('blog_search', {
+          search_term: search,
+          results_count: 0 // We don't have results count here easily
+        });
+      }
     }, 450);
     return () => clearTimeout(timer);
   }, [search, currentQ, pushParams]);

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Autoplay from 'embla-carousel-autoplay';
-import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +18,7 @@ import { useBanners } from '@/hooks/useBanners';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
+import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 
 type LandingHeroBannerProps = {
   position?: string;
@@ -169,12 +169,14 @@ export default function LandingHeroBanner({
                                 {subtitle}
                               </p>
                               <div className="mt-4 flex items-center gap-3">
-                                <Button
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                                <CTAPrimaryButton
+                                  label={ctaLabel}
+                                  ctaType="quote_request"
+                                  ctaDestination="quote_wizard"
+                                  trackProps={{ source: ctaSource }}
                                   onClick={() => openQuoteWizard({ source: ctaSource })}
-                                >
-                                  {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md h-11 px-6"
+                                />
                               </div>
                             </div>
                           </div>
@@ -192,12 +194,14 @@ export default function LandingHeroBanner({
                           </p>
 
                           <div className="mt-3">
-                            <Button
-                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                            <CTAPrimaryButton
+                              label={ctaLabel}
+                              ctaType="quote_request"
+                              ctaDestination="quote_wizard"
+                              trackProps={{ source: ctaSource }}
                               onClick={() => openQuoteWizard({ source: ctaSource })}
-                            >
-                              {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md h-12"
+                            />
                           </div>
                         </div>
                       </div>

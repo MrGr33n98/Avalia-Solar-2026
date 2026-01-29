@@ -117,17 +117,17 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
     if (metric === 'rating') {
       if (value >= 4.5) return isDark ? 'text-emerald-400' : 'text-emerald-600';
       if (value >= 4.0) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-orange-400' : 'text-orange-600';
+      return isDark ? 'text-cyan-400' : 'text-cyan-600';
     }
     if (metric === 'responseRate') {
       if (value >= 85) return isDark ? 'text-emerald-400' : 'text-emerald-600';
       if (value >= 70) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-orange-400' : 'text-orange-600';
+      return isDark ? 'text-cyan-400' : 'text-cyan-600';
     }
     if (metric === 'reviews') {
       if (value >= 300) return isDark ? 'text-emerald-400' : 'text-emerald-600';
       if (value >= 200) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-orange-400' : 'text-orange-600';
+      return isDark ? 'text-cyan-400' : 'text-cyan-600';
     }
     return isDark ? 'text-slate-400' : 'text-muted-foreground';
   };
@@ -223,7 +223,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                       <div className={`text-2xl font-bold ${
                         index === 0 ? 'text-yellow-500' :
                         index === 1 ? 'text-gray-400' :
-                        index === 2 ? 'text-orange-600' :
+                        index === 2 ? 'text-cyan-600' :
                         isDark ? 'text-slate-400' : 'text-gray-600'
                       }`}>
                         #{index + 1}
@@ -351,7 +351,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                 <p className={`text-2xl font-bold mb-1 ${
                   yourCompany.rating >= allCompanies[0].rating
                     ? 'text-emerald-600'
-                    : isDark ? 'text-orange-400' : 'text-orange-600'
+                    : isDark ? 'text-cyan-400' : 'text-cyan-600'
                 }`}>
                   {yourCompany.rating >= allCompanies[0].rating ? '=' : '-'}
                   {Math.abs(yourCompany.rating - allCompanies[0].rating).toFixed(1)}

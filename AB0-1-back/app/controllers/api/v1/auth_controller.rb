@@ -22,6 +22,14 @@ module Api
 
         user = User.find_by(email: email)
         if user&.valid_password?(password)
+          # Se o usuário não tem role ou é apenas 'user', ele pode logar
+          # Se ele tem role 'company', verificamos se ele tem vínculos ativos
+          if user.company_user? && user.member_companies.empty? && !user.admin?
+             # Se for um usuário que deveria ser company mas não tem empresa vinculada,
+             # talvez ele tenha acabado de se cadastrar ou o vínculo foi removido.
+             # Permitimos o login, mas o frontend redirecionará para o fluxo de "vincular empresa"
+          end
+
           if user.respond_to?(:active?) && !user.active?
             status_code =
               case user.status
@@ -50,11 +58,25 @@ module Api
           Analytics::TrackEventService.call(
             event_type: 'login_completed',
             user: user,
-            company_id: user.company_id,
-            metadata: request_metadata.merge(method: 'email')
+            company_id: user.company_id || user.member_companies.first&.id,
+            metadata: request_metadata.merge(
+              method: 'email',
+              companies_count: user.member_companies.count,
+              primary_role: user.role
+            )
           )
 
-          return render json: payload_for(user), status: :ok
+          payload = payload_for(user)
+          if user.company_user?
+            payload[:redirect_to] = user.member_companies.any? ? '/dashboard' : '/select-company'
+            payload[:companies] = user.member_companies.select(:id, :name, :slug)
+          elsif user.admin?
+            payload[:redirect_to] = '/admin'
+          else
+            payload[:redirect_to] = '/'
+          end
+
+          return render json: payload, status: :ok
         end
 
         if Rails.env.development?
@@ -104,7 +126,9 @@ module Api
 
         user = User.new(attrs.merge(
           terms_accepted: true,
-          terms_accepted_at: Time.current
+          terms_accepted_at: Time.current,
+          role: 'user', # Força role 'user' no cadastro inicial
+          status: :active # Usuários comuns começam ativos após confirmação de email
         ))
 
         if params[:user] && params[:user][:avatar].present?

@@ -43,6 +43,7 @@ class Company < ApplicationRecord
   has_many :company_videos, dependent: :destroy
   belongs_to :plan, optional: true
   has_many :company_members, dependent: :destroy
+  accepts_nested_attributes_for :company_members, allow_destroy: true
   has_many :members, through: :company_members, source: :user
 
   # =========================
@@ -157,6 +158,10 @@ class Company < ApplicationRecord
   def to_param
     slug.presence || super
   end
+
+  def self.find_by_slug_or_id!(id_or_slug)
+    find_by(id: id_or_slug) || find_by!(slug: id_or_slug)
+  end
   
   def ready_for_activation?
     return false if name.blank? || name.length < 5
@@ -230,14 +235,22 @@ class Company < ApplicationRecord
   end
 
   def validate_corporate_email
-    return if email_public.blank?
+    return if email.blank?
     
-    # List of common public email providers to block
-    public_domains = %w[gmail.com yahoo.com hotmail.com outlook.com uol.com.br bol.com.br terra.com.br live.com icloud.com]
-    domain = email_public.split('@').last.downcase
+    # Se a empresa não tem website, não validamos domínio corporativo
+    return if website.blank?
+
+    domain = begin
+      URI.parse(website).host&.sub(/\Awww\./, '')
+    rescue
+      nil
+    end
     
-    if public_domains.include?(domain)
-      errors.add(:email_public, 'deve ser um e-mail corporativo')
+    return if domain.blank?
+
+    # Permite emails que contenham o domínio ou subdomínios
+    unless email.downcase.include?(domain.downcase)
+      errors.add(:email, "deve ser um e-mail corporativo (domínio #{domain})")
     end
   end
 

@@ -129,10 +129,19 @@ export function shouldTrackEvent(
 }
 
 /**
- * Generate unique event ID for critical events
+ * Generate unique event ID (UUID v4)
  */
 export function generateEventId(): string {
-  return `evt_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 /**

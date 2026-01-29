@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { track } from '@/lib/analytics';
 
 export interface Banner {
   id: number;
@@ -67,11 +68,34 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full h-full"
+                  onClick={() => {
+                    track('banner_click', {
+                      banner_id: banner.id,
+                      banner_title: banner.title,
+                      banner_position: banner.position || 'categories_hero',
+                      element_type: 'banner',
+                      action_type: 'click',
+                      destination_url: banner.link_url
+                    });
+                  }}
                 >
                   <BannerImage banner={banner} />
                 </a>
               ) : (
-                <BannerImage banner={banner} />
+                <div 
+                  className="w-full h-full"
+                  onMouseEnter={() => {
+                    track('banner_hover', {
+                      banner_id: banner.id,
+                      banner_title: banner.title,
+                      banner_position: banner.position || 'categories_hero',
+                      element_type: 'banner',
+                      action_type: 'hover'
+                    });
+                  }}
+                >
+                  <BannerImage banner={banner} />
+                </div>
               )}
             </div>
           </CarouselItem>

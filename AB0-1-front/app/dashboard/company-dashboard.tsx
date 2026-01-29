@@ -238,8 +238,8 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
       title: 'Leads',
       value: stats?.leadsReceived || 0,
       icon: Target,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-brand-cyan-dark',
+      bgColor: 'bg-brand-cyan/10',
       change: '+23.1%',
       changeType: 'positive' as const
     },
@@ -629,7 +629,7 @@ function OverviewTab({ company, stats }: { company: any; stats: DashboardStats |
                 <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
                   <div className="flex items-center gap-3">
                     {item.urgent ? (
-                      <AlertCircle className="h-4 w-4 text-orange-500" />
+                      <AlertCircle className="h-4 w-4 text-brand-cyan" />
                     ) : (
                       <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     )}

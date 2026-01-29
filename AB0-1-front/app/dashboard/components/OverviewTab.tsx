@@ -167,7 +167,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             <MetricCard title="Visualizações" value={stats?.profileViews || 0} icon={Eye} color="blue" />
             <MetricCard title="Cliques em CTAs" value={stats?.ctaClicks || 0} icon={Zap} color="purple" />
             <MetricCard title="WhatsApp" value={stats?.whatsappClicks || 0} icon={MessageSquare} color="green" />
-            <MetricCard title="Leads" value={stats?.leadsReceived || 0} icon={Target} color="orange" />
+            <MetricCard title="Leads" value={stats?.leadsReceived || 0} icon={Target} color="brand-cyan" />
           </>
         )}
       </div>

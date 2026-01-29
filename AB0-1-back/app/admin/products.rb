@@ -1,5 +1,5 @@
 ActiveAdmin.register Product do
-  belongs_to :company, optional: true
+  belongs_to :company, optional: true, finder: :find_by_slug_or_id!
 
   # Your existing permit_params
   permit_params :name, :description, :price, :image_url, :company_id, category_ids: []
@@ -16,13 +16,28 @@ ActiveAdmin.register Product do
   controller do
     def scoped_collection
       scope = super.includes(:company)
-      params[:company_id] ? scope.where(company_id: params[:company_id]) : scope
+      # If we're in a nested route, super already filtered by parent
+      return scope if nested_belongs_to?
+      
+      if params[:company_id]
+        company = Company.find_by_slug_or_id!(params[:company_id])
+        scope.where(company_id: company.id)
+      else
+        scope
+      end
     end
 
     def build_new_resource
       super.tap do |product|
-        company_param = params[:company_id] || params.dig(:product, :company_id)
-        product.company_id ||= company_param if company_param.present?
+        if nested_belongs_to?
+          product.company = parent
+        else
+          company_param = params[:company_id] || params.dig(:product, :company_id)
+          if company_param.present?
+            company = Company.find_by_slug_or_id!(company_param)
+            product.company_id ||= company.id
+          end
+        end
       end
     end
   end

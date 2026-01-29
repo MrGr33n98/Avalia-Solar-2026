@@ -19,6 +19,14 @@ class Api::V1::UsersController < Api::V1::BaseController
     company_id = params[:company_id]
     if current_user.member_companies.exists?(id: company_id)
       if current_user.update(company_id: company_id)
+        Analytics::TrackEventService.call(
+          event_type: 'company_switched',
+          user: current_user,
+          company_id: company_id,
+          metadata: {
+            previous_company_id: current_user.company_id_before_last_save
+          }
+        )
         render json: { 
           message: 'Empresa alterada com sucesso', 
           company_id: company_id,
@@ -54,6 +62,14 @@ class Api::V1::UsersController < Api::V1::BaseController
     @user.role = 'user' # Ensure it's a regular user
 
     if @user.save
+      Analytics::TrackEventService.call(
+        event_type: 'user_registered',
+        user: @user,
+        metadata: {
+          role: @user.role,
+          registration_method: 'email'
+        }
+      )
       render json: user_with_avatar(@user), status: :created
     else
       render_error_response(

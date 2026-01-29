@@ -6,7 +6,9 @@ const nextConfig = {
   // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
   swcMinify: false,
   
-  experimental: {},
+  experimental: {
+    webpackBuildWorker: true,
+  },
 
   // TASK-023: Enable TypeScript and ESLint checks
   eslint: {

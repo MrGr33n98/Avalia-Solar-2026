@@ -2,14 +2,17 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Star, BadgeCheck, Share2, ArrowLeft } from 'lucide-react';
+import { MessageCircle, Star, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { openQuoteWizard } from '@/lib/quote-wizard';
+import { openLeadModal } from '@/lib/lead-engine';
+import { track } from '@/lib/analytics';
+import { useComparison } from '@/hooks/useComparison';
 
 interface CompanyHeroProps {
   company: Company;
@@ -41,8 +44,16 @@ export default function CompanyHero({
 }: CompanyHeroProps) {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
+  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
+  const inComp = isInComparison(company.id);
 
   const handleShare = async () => {
+    track('company_share_click', {
+      company_id: company.id,
+      company_name: company.name,
+      element_type: 'button',
+      action_type: 'click'
+    });
     setIsSharing(true);
     try {
       if (navigator.share) {
@@ -69,7 +80,15 @@ export default function CompanyHero({
         <Button
           variant="outline"
           className="group text-muted-foreground hover:text-foreground border-border hover:bg-muted transition-colors"
-          onClick={() => router.back()}
+          onClick={() => {
+            track('company_back_click', {
+              company_id: company.id,
+              company_name: company.name,
+              element_type: 'button',
+              action_type: 'click'
+            });
+            router.back();
+          }}
         >
           <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Voltar
@@ -132,15 +151,6 @@ export default function CompanyHero({
               <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate max-w-[250px] sm:max-w-xs" title={company.name}>
                 {company.name}
               </h1>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full h-7 w-7 text-muted-foreground hover:text-foreground"
-                onClick={handleShare}
-                title="Compartilhar perfil"
-              >
-                <Share2 className="h-3.5 w-3.5" />
-              </Button>
             </div>
             
             <p className="text-sm text-muted-foreground line-clamp-1 max-w-md mb-2">
@@ -173,6 +183,39 @@ export default function CompanyHero({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-3 md:mt-0">
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none border-border hover:bg-muted"
+            onClick={handleShare}
+            disabled={isSharing}
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Compartilhar
+          </Button>
+
+          <Button
+            variant="outline"
+            className={cn(
+              "flex-1 sm:flex-none border-border hover:bg-muted",
+              inComp && "text-primary border-primary/20 bg-primary/5"
+            )}
+            onClick={() => {
+              if (inComp) {
+                removeFromComparison(company.id);
+              } else {
+                addToComparison(company);
+              }
+              track('company_hero_comparison_toggle', {
+                company_id: company.id,
+                company_name: company.name,
+                status: !inComp ? 'added' : 'removed'
+              });
+            }}
+          >
+            <Scale className={cn("h-4 w-4 mr-2", inComp && "fill-current")} />
+            {inComp ? 'Comparando' : 'Comparar'}
+          </Button>
+
           {company.buttons && company.buttons.length > 0 ? (
             company.buttons.map((btn, idx) => {
               if (btn.button_type === 'whatsapp') {
@@ -203,6 +246,15 @@ export default function CompanyHero({
                       : 'bg-background hover:bg-muted text-foreground border-input'
                   }`}
                   onClick={() => {
+                     track('company_custom_button_click', {
+                       company_id: company.id,
+                       company_name: company.name,
+                       button_label: btn.label,
+                       button_type: btn.button_type,
+                       element_type: 'button',
+                       action_type: 'click',
+                       destination_url: btn.url
+                     });
                      if (btn.url.startsWith('/')) {
                        router.push(btn.url);
                      } else {
@@ -220,7 +272,16 @@ export default function CompanyHero({
               <Button
                 size="default"
                 className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-primary-foreground gap-1.5 font-medium text-sm"
-                onClick={() => openQuoteWizard({ preferredCompanyId: company.id, source: 'company-hero' })}
+                onClick={() => {
+                  track('company_quote_click', {
+                    company_id: company.id,
+                    company_name: company.name,
+                    source: 'company-hero',
+                    element_type: 'button',
+                    action_type: 'click'
+                  });
+                  openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' });
+                }}
               >
                 <MessageCircle className="h-4 w-4" />
                 Orcamento

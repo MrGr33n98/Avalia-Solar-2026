@@ -8,6 +8,22 @@ class CompanyMember < ApplicationRecord
   validates :role, inclusion: { in: roles.keys }
   validates :user_id, uniqueness: { scope: :company_id }
 
+  after_create :track_member_assignment
+
+  private
+
+  def track_member_assignment
+    Analytics::TrackEventService.call(
+      company_id: company_id,
+      event_type: 'member_assigned',
+      user: user,
+      metadata: {
+        role: role,
+        assigned_by: PaperTrail.request.whodunnit
+      }
+    )
+  end
+
   def self.ransackable_associations(auth_object = nil)
     ["company", "user", "versions"]
   end

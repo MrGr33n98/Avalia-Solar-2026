@@ -33,8 +33,50 @@ export default async function BlogIndexPage({
   const featuredPosts = await blogApi.fetchFeatured();
   const verifiedCompanies = await blogApi.fetchVerifiedCompanies();
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'Blog Avalia Solar',
+    description: 'Confira os melhores artigos, notícias e guias sobre energia solar fotovoltaica.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Avalia Solar',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://avaliasolar.com.br/logo.png'
+      }
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://avaliasolar.com.br'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Blog',
+        item: 'https://avaliasolar.com.br/blog'
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {/* Hero Section - Full Width */}
       <div className="bg-white pb-8 pt-6 border-b border-slate-100">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

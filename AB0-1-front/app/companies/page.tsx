@@ -8,6 +8,8 @@ import { LocationFilter } from '@/components/LocationFilter';
 import { companiesApiSafe, categoriesApiSafe, type Company, type Category } from '@/lib/api-client';
 import { buildCategoryPath } from '@/lib/slug';
 import { useLocationData } from '@/hooks/useLocationData';
+import { useAutoLocalization } from '@/hooks/useAutoLocalization';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BannerByLocation from '@/components/BannerByLocation';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -56,10 +59,30 @@ export default function CompaniesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [stateFilter, setStateFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('');
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { states, cities, loadingStates, loadingCities, error: statesError, citiesError, fetchCities } = useLocationData();
+  const { detectedLocation, loading: loadingAutoLoc, detectLocation } = useAutoLocalization();
+  const { favorites } = useFavorites();
+
+  // Auto-localization on mount if no filters are set
+  useEffect(() => {
+    const autoLocate = async () => {
+      // Only auto-locate if filters are default
+      if (stateFilter === 'all' && !cityFilter) {
+        const loc = await detectLocation();
+        if (loc) {
+          setStateFilter(loc.state);
+          // We wait for cities to load before setting city filter if we want, 
+          // but state is already a big improvement.
+          setCityFilter(loc.city);
+        }
+      }
+    };
+    autoLocate();
+  }, [detectLocation]); // Run once on mount
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -90,7 +113,9 @@ export default function CompaniesPage() {
           !cityFilter ||
           ((company.city || '').toLowerCase() === cityFilter.toLowerCase());
 
-        return matchesSearch && matchesState && matchesCity;
+        const matchesFavorites = !onlyFavorites || favorites.includes(company.id);
+
+        return matchesSearch && matchesState && matchesCity && matchesFavorites;
       })
       .sort((a, b) => {
         switch (sortBy) {
@@ -123,6 +148,7 @@ export default function CompaniesPage() {
     setSearchTerm('');
     setStateFilter('all');
     setCityFilter('');
+    setOnlyFavorites(false);
     setSortBy('name');
   };
 
@@ -140,10 +166,10 @@ export default function CompaniesPage() {
       ];
 
   const quickActions = [
-    { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-yellow-100 text-yellow-700' },
-    { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-green-100 text-green-700' },
-    { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-blue-100 text-blue-700' },
-    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-orange-100 text-orange-700' },
+    { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
+    { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
+    { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
+    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
     { label: 'Destaques', href: '/companies', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
   ];
 
@@ -158,6 +184,7 @@ export default function CompaniesPage() {
     if (searchTerm) chips.push({ key: 'search', label: `Busca: "${searchTerm}"`, onClear: () => { setSearchInput(''); setSearchTerm(''); } });
     if (stateFilter !== 'all') chips.push({ key: 'state', label: `Estado: ${stateFilter}`, onClear: () => setStateFilter('all') });
     if (cityFilter) chips.push({ key: 'city', label: `Cidade: ${cityFilter}`, onClear: () => setCityFilter('') });
+    if (onlyFavorites) chips.push({ key: 'favorites', label: 'Apenas Favoritos', onClear: () => setOnlyFavorites(false) });
     if (sortBy !== 'name') chips.push({
       key: 'sort',
       label: `Ordenar: ${sortBy === 'rating' ? 'Melhor avaliada' : 'Estado'}`,
@@ -213,6 +240,17 @@ export default function CompaniesPage() {
               >
                 Tudo
               </Link>
+              <button
+                type="button"
+                onClick={() => setOnlyFavorites(!onlyFavorites)}
+                className={cn(
+                  "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm flex items-center gap-1 transition-colors",
+                  onlyFavorites ? "bg-red-500 text-white" : "bg-white text-gray-700"
+                )}
+              >
+                <Heart className={cn("h-3 w-3", onlyFavorites && "fill-current")} />
+                Favoritos
+              </button>
               {categoryChips.map((chip) => (
                 <Link
                   key={chip.label}
@@ -255,6 +293,18 @@ export default function CompaniesPage() {
               <AccordionItem value="states">
                 <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</AccordionTrigger>
                 <AccordionContent>
+                  <div className="mt-2 flex items-center gap-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => detectLocation(true)}
+                      disabled={loadingAutoLoc}
+                      className="h-9 rounded-full border-blue-200 bg-blue-50/50 px-4 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      <MapPin className={cn("mr-2 h-3.5 w-3.5", loadingAutoLoc ? "animate-pulse" : "")} />
+                      {loadingAutoLoc ? 'Detectando...' : 'Minha Localização'}
+                    </Button>
+                  </div>
                   <div className="mt-2 flex gap-2 overflow-x-auto">
                   <button
                     type="button"
@@ -505,6 +555,33 @@ export default function CompaniesPage() {
                           initialCity={cityFilter}
                           className="mt-3"
                         />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => detectLocation(true)}
+                          disabled={loadingAutoLoc}
+                          className="mt-3 w-full h-10 rounded-xl border-blue-200 bg-blue-50/50 text-xs font-semibold text-blue-700"
+                        >
+                          <MapPin className={cn("mr-2 h-3.5 w-3.5", loadingAutoLoc ? "animate-pulse" : "")} />
+                          {loadingAutoLoc ? 'Detectar minha localização' : 'Usar minha localização'}
+                        </Button>
+                      </div>
+
+                      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros Rápidos</p>
+                        <div className="mt-3">
+                          <Button
+                            variant={onlyFavorites ? "default" : "outline"}
+                            className={cn(
+                              "w-full justify-start gap-2 h-10 rounded-xl",
+                              onlyFavorites && "bg-red-500 hover:bg-red-600 text-white"
+                            )}
+                            onClick={() => setOnlyFavorites(!onlyFavorites)}
+                          >
+                            <Heart className={cn("h-4 w-4", onlyFavorites && "fill-current")} />
+                            Apenas Favoritos ({favorites.length})
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -616,6 +693,38 @@ export default function CompaniesPage() {
                       initialState={stateFilter}
                       initialCity={cityFilter}
                     />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => detectLocation()}
+                      disabled={loadingAutoLoc}
+                      className="w-full h-10 rounded-xl border-gray-200 bg-white px-4 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      <MapPin className={`mr-2 h-3.5 w-3.5 ${loadingAutoLoc ? "animate-pulse text-blue-500" : "text-gray-400"}`} />
+                      {loadingAutoLoc ? 'Detectando...' : 'Minha Localização'}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros Rápidos</p>
+                  <div className="mt-3">
+                    <Button
+                      variant={onlyFavorites ? "default" : "outline"}
+                      className={cn(
+                        "w-full justify-start gap-2 h-10 rounded-xl transition-all",
+                        onlyFavorites ? "bg-red-500 hover:bg-red-600 text-white border-red-500" : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                      )}
+                      onClick={() => setOnlyFavorites(!onlyFavorites)}
+                    >
+                      <Heart className={cn("h-4 w-4", onlyFavorites && "fill-current")} />
+                      Apenas Favoritos
+                      {favorites.length > 0 && (
+                        <Badge variant="secondary" className="ml-auto bg-gray-100 text-gray-600 border-none px-1.5 py-0">
+                          {favorites.length}
+                        </Badge>
+                      )}
+                    </Button>
                   </div>
                 </div>
 

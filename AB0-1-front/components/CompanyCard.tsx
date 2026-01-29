@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, MessageCircle, Building2 } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Building2, Heart, Share2, Check, Scale } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,12 @@ import { Avatar } from '@/components/ui/avatar';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
-import { openQuoteWizard } from '@/lib/quote-wizard';
-import WhatsappButton from '@/components/WhatsappButton';
+import { openLeadModal } from '@/lib/lead-engine';
+import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
+import { track } from '@/lib/analytics';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useComparison } from '@/hooks/useComparison';
 
 interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
@@ -62,6 +66,58 @@ export default function CompanyCard({
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [selected, setSelected] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isFav = isFavorite(id);
+
+  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
+  const inComp = isInComparison(id);
+
+  // Track impression
+  useEffect(() => {
+    if (id) {
+      track('company_card_impression', {
+        company_id: id,
+        company_name: name,
+        company_slug: company.slug
+      });
+    }
+  }, [id, name, company.slug]);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = typeof window !== 'undefined' ? window.location.origin + companyPath : '';
+    const shareData = {
+      title: name,
+      text: description || `Confira ${name} no Avalia Solar`,
+      url,
+    };
+
+    track('company_share_click', {
+      company_id: id,
+      company_name: name
+    });
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // Share might be cancelled by user, don't show error
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Error sharing', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {
+        console.error('Error copying to clipboard', err);
+      }
+    }
+  };
 
   const rating = average_rating?.toFixed(1) ?? '0.0';
   const totalReviews = rating_count || 0;
@@ -144,8 +200,8 @@ export default function CompanyCard({
   }
 
   // Banner ratio: keep cards more compact in carousels/lists.
-  const bannerRatio = compact ? 4 : 3;
-  const avatarSize = compact ? 52 : 60;
+  const bannerRatio = compact ? 5 : 3;
+  const avatarSize = compact ? 44 : 60;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -185,6 +241,62 @@ export default function CompanyCard({
       )}
 
       <div className="relative">
+        <div className="absolute top-2 right-2 flex flex-col gap-2 z-10 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+          <Button
+            size="icon"
+            variant="secondary"
+            className={cn(
+              "h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all border-none",
+              isFav ? "text-red-500" : "text-gray-600"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(id);
+              track('company_favorite_toggle', {
+                company_id: id,
+                company_name: name,
+                status: !isFav ? 'added' : 'removed'
+              });
+            }}
+            title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          >
+            <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+          </Button>
+          <Button
+            size="icon"
+            variant="secondary"
+            className={cn(
+              "h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all border-none",
+              inComp ? "text-primary" : "text-gray-600"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (inComp) {
+                removeFromComparison(id);
+              } else {
+                addToComparison(company);
+              }
+              track('company_comparison_toggle', {
+                company_id: id,
+                company_name: name,
+                status: !inComp ? 'added' : 'removed'
+              });
+            }}
+            title={inComp ? "Remover da comparação" : "Adicionar à comparação"}
+          >
+            <Scale className={cn("h-4 w-4", inComp && "fill-current")} />
+          </Button>
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all text-gray-600 border-none"
+            onClick={handleShare}
+            title="Compartilhar"
+          >
+            {shared ? <Check className="h-4 w-4 text-emerald-500" /> : <Share2 className="h-4 w-4" />}
+          </Button>
+        </div>
+
         <AspectRatio ratio={bannerRatio} className={cn('w-full')}>
           <div className={cn('relative w-full h-full')}>
             {bannerUrl && !bannerError ? (
@@ -239,85 +351,83 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn('pt-8', compact ? 'px-4 pb-4' : 'px-5 pb-5')}>
-        <div className="flex justify-between items-start mb-2">
+      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-5 pb-5')}>
+        <div className="flex justify-between items-start mb-1">
           <div className="flex-1 min-w-0">
             <Link href={companyPath} onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('text-base font-semibold leading-tight line-clamp-1')}>{name}</h3>
+              <h3 className={cn('text-sm font-semibold leading-tight line-clamp-1', compact ? 'text-sm' : 'text-base')}>{name}</h3>
             </Link>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-0.5 flex items-center gap-1.5">
               {company.verified && (
-                <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1.5 py-0 rounded-md font-semibold">
+                <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1 py-0 rounded-md font-semibold">
                   {text.verified}
                 </Badge>
               )}
               {category_name && (
-                <span className="text-[11px] text-gray-600 font-medium bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-[160px]">
+                <span className="text-[10px] text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
                   {category_name}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col items-end ml-3">
+          <div className="flex flex-col items-end ml-2">
             {parseFloat(rating) > 0 && (
-              <div className="inline-flex items-center rounded-md bg-amber-50 text-amber-700 px-2 py-1 text-xs font-semibold">
+              <div className="inline-flex items-center rounded-md bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">
                 <span>{rating}</span>
-                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 ml-1" />
+                <Star className="w-3 h-3 fill-amber-500 text-amber-500 ml-0.5" />
               </div>
             )}
-            <span className="text-[10px] text-gray-400 mt-1">
-              {totalReviews > 0 ? `${totalReviews} ${text.reviews}` : 'Novo'}
-            </span>
           </div>
         </div>
 
         {(city || state) && (
-          <div className="mt-1 flex items-center gap-1 text-xs text-gray-600 truncate">
-            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-600 truncate">
+            <MapPin className="w-3 h-3 text-gray-400" />
             <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
           </div>
         )}
 
-        <p className={cn('mt-2 text-sm text-gray-700', compact ? 'line-clamp-1' : 'line-clamp-2')}>
-          {description || (
-            <span className="text-gray-400 italic font-light">
-              Visite o perfil para saber mais sobre nossos serviços.
-            </span>
-          )}
-        </p>
+        {!compact && (
+          <p className={cn('mt-2 text-sm text-gray-700', compact ? 'line-clamp-1' : 'line-clamp-2')}>
+            {description || (
+              <span className="text-gray-400 italic font-light">
+                Visite o perfil para saber mais sobre nossos serviços.
+              </span>
+            )}
+          </p>
+        )}
 
-        <div className="h-px bg-gray-100 w-full my-4" />
+        <div className={cn('w-full my-3', compact ? 'hidden' : 'h-px bg-gray-100')} />
 
-        <div className={cn(compact ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1 gap-3', 'print:hidden')}>
+        <div className={cn(compact ? 'flex gap-2' : 'grid grid-cols-1 gap-3', 'print:hidden')}>
           {hasWhatsapp && whatsappEnabled ? (
-            <WhatsappButton
-              enabled
-              href={whatsappLinkRaw}
+            <WhatsAppCTAButton
+              phone={whatsappLinkRaw}
+              companyId={id.toString()}
+              companySlug={company.slug}
               label={text.whatsapp}
-              className={cn('w-full shadow-sm font-medium', compact ? 'h-9 text-sm' : 'h-10')}
-              onClick={() => { emit('cta_whatsapp_click'); }}
+              className={cn('w-full shadow-sm font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
             />
           ) : (
-            <Button
-              type="button"
-              className={cn('w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-medium focus-visible:ring-2 focus-visible:ring-primary/40', compact ? 'h-9 text-sm' : 'h-10')}
-              aria-label="Solicitar orçamento com a empresa"
-              data-testid="company-card-budget-btn"
-              onClick={(e) => { e.stopPropagation(); openQuoteWizard({ preferredCompanyId: id, source: 'company-card' }); }}
-            >
-              <MessageCircle className={cn('mr-2', compact ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
-              {text.budget}
-            </Button>
+            <CTAPrimaryButton
+              label={text.budget}
+              companyId={id.toString()}
+              companySlug={company.slug}
+              ctaType="quote_request"
+              ctaDestination="quote_wizard"
+              onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
+              className={cn('w-full shadow-sm font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
+            />
           )}
 
           <Button
             variant="outline"
-            className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-9 text-sm' : 'h-10')}
+            className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
             asChild
           >
             <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-              <Star className={cn('mr-2 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
+              <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3 h-3' : 'w-4 h-4')} />
               {text.review}
             </Link>
           </Button>

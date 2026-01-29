@@ -25,6 +25,12 @@ ActiveAdmin.register Company do
     link_to 'Suspend', suspend_admin_company_path(resource), method: :put, class: 'member_link'
   end
 
+  controller do
+    def find_resource
+      scoped_collection.find_by_slug_or_id!(params[:id])
+    end
+  end
+
   action_item :add_product, only: :show do
     link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
   end
@@ -57,7 +63,8 @@ ActiveAdmin.register Company do
     project_types: [], services_offered: [], category_ids: [], media_assets: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
-    company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]
+    company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
+    company_members_attributes: [:id, :user_id, :role, :_destroy]
   ]
   permitted << :effect if Company.column_names.include?('effect')
   permitted << :plan_id if Company.column_names.include?('plan_id')
@@ -248,10 +255,22 @@ end
       f.has_many :company_faqs, allow_destroy: true, new_record: 'Adicionar FAQ' do |cf|
         cf.input :question
         cf.input :answer
-        cf.input :status, as: :select, collection: CompanyFaq.statuses.keys
+        cf.input :status, as: :select, collection: %w[active inactive]
         cf.input :position
       end
     end
+
+    f.inputs 'Membros da Empresa' do
+      f.has_many :company_members, allow_destroy: true, heading: false, new_record: 'Adicionar Membro' do |m|
+        if m.object.nil?
+          m.template.concat "Erro: Objeto do membro está nulo"
+        else
+          m.input :user, collection: User.where(role: 'company').order(:name)
+          m.input :role, as: :select, collection: CompanyMember.roles.keys
+        end
+      end
+    end
+
     f.inputs 'Categories' do
       f.input :categories, as: :check_boxes
     end
@@ -387,6 +406,36 @@ end
       div class: 'mt-2' do
         link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id), class: 'button'
       end
+    end
+
+    panel 'Histórico de Alterações' do
+      table_for resource.versions.reorder(created_at: :desc).limit(10) do
+        column :event
+        column :whodunnit do |v|
+          if v.whodunnit
+            user = User.find_by(id: v.whodunnit)
+            user ? link_to(user.name, admin_user_path(user)) : v.whodunnit
+          end
+        end
+        column :created_at
+        column :changes do |v|
+          v.changeset.map { |k, val| "#{k}: #{val[0]} -> #{val[1]}" }.join('<br>').html_safe if v.changeset
+        end
+        column :actions do |v|
+          link_to 'Rollback', rollback_admin_company_path(resource, version_id: v.id), method: :put, data: { confirm: 'Deseja reverter para esta versão?' } if v.event == 'update'
+        end
+      end
+    end
+
+    active_admin_comments
+  end
+
+  member_action :rollback, method: :put do
+    version = PaperTrail::Version.find(params[:version_id])
+    if version.reify.save
+      redirect_to resource_path, notice: "Empresa revertida para a versão de #{version.created_at}"
+    else
+      redirect_to resource_path, alert: "Falha ao reverter versão."
     end
   end
 

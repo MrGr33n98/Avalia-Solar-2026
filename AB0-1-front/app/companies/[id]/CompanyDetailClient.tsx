@@ -14,16 +14,20 @@ import {
   ShieldCheck,
   HelpCircle,
   AlertCircle,
+  Scale,
 } from "lucide-react";
+import { useComparison } from "@/hooks/useComparison";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 import { Company, Product, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { productsApiSafe, reviewsApiSafe } from "@/lib/api-client";
+import { openLeadModal } from "@/lib/lead-engine";
 
 // GTM Tracking
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -46,8 +50,11 @@ import CompanyReviews from "./components/CompanyReviews";
 import CompanyFinancing from "./components/CompanyFinancing";
 import MediaGallery from "@/app/dashboard/components/MediaGallery";
 import FaqSection from "./components/FaqSection";
+import SocialProof from "./components/SocialProof";
+import StickyCTA from "./components/StickyCTA";
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
+import { track } from "@/lib/analytics";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -62,6 +69,8 @@ interface ExtendedCompany extends Company {
 
 export default function CompanyDetailClient({ company }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
+  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
+  const inComp = isInComparison(company.id);
 
   // GTM Page Tracking
   usePageTracking({
@@ -299,6 +308,19 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     );
   }
 
+  const handleTabChange = (value: string) => {
+    const tab = tabs.find(t => t.id === value);
+    track('company_tab_change', {
+      company_id: companyId,
+      company_name: company.name,
+      tab_id: value,
+      tab_label: tab?.label || value,
+      element_type: 'tab',
+      action_type: 'click'
+    });
+    setActiveTab(value);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       <BreadcrumbJsonLd items={jsonLdItems} />
@@ -339,7 +361,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* ESQUERDA */}
           <div className="lg:col-span-8 space-y-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               {/* Abas */}
               <div className="sticky top-4 z-30 mb-6">
                 <ScrollArea className="w-full rounded-xl border bg-white/80 backdrop-blur-md shadow-sm p-1">
@@ -373,8 +395,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+                  <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-8">
                     <CompanyOverview company={currentCompany} />
+                    <SocialProof companyName={currentCompany.name} />
                   </TabsContent>
 
                   <TabsContent value="products" className="mt-0 focus-visible:outline-none">
@@ -447,20 +470,54 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           <aside className="lg:col-span-4 space-y-6">
             <CompanySidebar company={currentCompany} />
 
-            <Card className="rounded-2xl shadow-sm border-none bg-blue-50/50">
+            <Card className="rounded-2xl shadow-sm border-none bg-blue-50/50 overflow-hidden">
+              <div className="bg-blue-600 h-1 w-full" />
               <CardHeader>
                 <CardTitle className="text-md flex items-center gap-2 text-blue-800">
                   <ShieldCheck className="w-5 h-5 text-blue-600" />
-                  Verificação AB0-1
+                  Selo de Confiança AB0-1
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-blue-700/80 leading-relaxed">
-                Empresa auditada e certificada pela plataforma AB0-1 para serviços de energia solar.
+              <CardContent className="space-y-4">
+                <p className="text-sm text-blue-700/80 leading-relaxed">
+                  Esta empresa passou pelo nosso rigoroso processo de curadoria técnica e documental.
+                </p>
+                
+                <ul className="space-y-2">
+                  {[
+                    "Documentação em dia",
+                    "Histórico de instalações",
+                    "Qualidade técnica validada",
+                    "Suporte pós-venda garantido"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2 text-xs text-blue-800/70 font-medium">
+                      <div className="h-1 w-1 rounded-full bg-blue-400" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-transparent">
+              <CardContent className="p-6 text-center">
+                <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <h4 className="font-bold text-slate-900 mb-1">Precisa de ajuda?</h4>
+                <p className="text-xs text-slate-500 mb-4">Nossos especialistas podem te ajudar a escolher a melhor empresa.</p>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
+                  Falar com especialista
+                </Button>
               </CardContent>
             </Card>
           </aside>
         </div>
       </main>
+
+      <StickyCTA 
+        company={currentCompany} 
+        ctaEnabled={ctaEnabled} 
+        ctaUrl={ctaUrl} 
+      />
     </div>
   );
 }

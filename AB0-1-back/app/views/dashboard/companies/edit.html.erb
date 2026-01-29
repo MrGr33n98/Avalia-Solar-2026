@@ -3,29 +3,95 @@
   <p class="text-slate-600">Atualize as informacoes principais da sua empresa.</p>
 </div>
 
-<%= form_with model: @company, url: dashboard_company_path, method: :patch, class: "space-y-6" do |form| %>
+<%= form_with model: @company, url: dashboard_company_path, method: :patch, class: "space-y-6", multipart: true do |form| %>
+  <% if @company.errors.any? %>
+    <div class="rounded-lg bg-red-50 p-4 text-red-700">
+      <h2 class="text-sm font-medium">Ops! Encontramos alguns erros:</h2>
+      <ul class="mt-2 list-inside list-disc text-xs">
+        <% @company.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
   <div class="grid gap-6 md:grid-cols-2">
     <div>
-      <%= form.label :name, "Nome", class: "block text-sm font-medium text-slate-700" %>
-      <%= form.text_field :name, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+      <%= form.label :name, "Nome da Empresa", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :name, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+    </div>
+    <div>
+      <%= form.label :email, "Email Corporativo", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.email_field :email, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+    </div>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :phone, "Telefone", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :phone, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
     </div>
     <div>
       <%= form.label :whatsapp, "WhatsApp", class: "block text-sm font-medium text-slate-700" %>
-      <%= form.text_field :whatsapp, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+      <%= form.text_field :whatsapp, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+    </div>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :website, "Website", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :website, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+    </div>
+    <div>
+      <%= form.label :email_public, "Email Público (Exibido no Perfil)", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.email_field :email_public, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+    </div>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :state, "Estado (UF)", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :state, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900", placeholder: "Ex: SP" %>
+    </div>
+    <div>
+      <%= form.label :city, "Cidade", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :city, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
     </div>
   </div>
 
   <div>
-    <%= form.label :description, "Descricao", class: "block text-sm font-medium text-slate-700" %>
-    <%= form.text_area :description, rows: 6, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" %>
+    <%= form.label :description, "Descrição da Empresa", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.text_area :description, rows: 4, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-slate-900 focus:ring-slate-900" %>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :logo, "Logo", class: "block text-sm font-medium text-slate-700" %>
+      <% if @company.logo.attached? %>
+        <div class="mt-2 mb-2">
+          <%= image_tag url_for(@company.logo), class: "h-20 w-20 rounded-lg object-cover border" %>
+        </div>
+      <% end %>
+      <%= form.file_field :logo, class: "mt-2 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100" %>
+    </div>
+    <div>
+      <%= form.label :banner, "Banner", class: "block text-sm font-medium text-slate-700" %>
+      <% if @company.banner.attached? %>
+        <div class="mt-2 mb-2">
+          <%= image_tag url_for(@company.banner), class: "h-20 w-40 rounded-lg object-cover border" %>
+        </div>
+      <% end %>
+      <%= form.file_field :banner, class: "mt-2 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100" %>
+    </div>
   </div>
 
   <div>
-    <%= form.label :social_media, "Social media (JSON)", class: "block text-sm font-medium text-slate-700" %>
-    <%= form.text_area :social_media, value: @company.social_media.to_json, rows: 5, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm" %>
+    <%= form.label :social_media, "Redes Sociais (JSON)", class: "block text-sm font-medium text-slate-700" %>
+    <p class="text-xs text-slate-500 mt-1">Ex: {"instagram": "perfil", "linkedin": "empresa"}</p>
+    <%= form.text_area :social_media, value: @company.social_media.to_json, rows: 3, class: "mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm focus:border-slate-900 focus:ring-slate-900" %>
   </div>
 
-  <div>
-    <%= form.submit "Salvar", class: "rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800" %>
+  <div class="pt-4 border-t">
+    <%= form.submit "Salvar Alterações", class: "w-full md:w-auto px-6 py-3 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors cursor-pointer" %>
   </div>
 <% end %>

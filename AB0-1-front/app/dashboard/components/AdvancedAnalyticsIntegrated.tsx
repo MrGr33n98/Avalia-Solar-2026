@@ -119,7 +119,7 @@ export default function AdvancedAnalyticsIntegrated({ themeMode, companyId }: Ad
       value: stats?.cta_clicks || 0,
       change: 8.3,
       icon: <MousePointer className="h-5 w-5" />,
-      color: 'purple'
+      color: 'cyan'
     },
     {
       title: 'Leads',
@@ -133,23 +133,23 @@ export default function AdvancedAnalyticsIntegrated({ themeMode, companyId }: Ad
       value: `${stats?.conversion_rate.toFixed(1)}%`,
       change: -2.4,
       icon: <Target className="h-5 w-5" />,
-      color: 'orange'
+      color: 'yellow'
     }
   ];
 
   const colorMap: Record<string, string> = {
-    blue: '#3b82f6',
-    purple: '#8b5cf6',
-    green: '#10b981',
-    orange: '#f59e0b'
+    blue: '#004996',
+    cyan: '#00AFEF',
+    green: '#8DC63F',
+    yellow: '#FCEE21'
   };
 
   // Chart colors based on theme
   const chartColors = {
-    primary: isDark ? '#60a5fa' : '#3b82f6',
-    secondary: isDark ? '#a78bfa' : '#8b5cf6',
-    success: isDark ? '#34d399' : '#10b981',
-    warning: isDark ? '#fbbf24' : '#f59e0b',
+    primary: isDark ? '#3b82f6' : '#004996',
+    secondary: isDark ? '#22d3ee' : '#00AFEF',
+    success: isDark ? '#a3e635' : '#8DC63F',
+    warning: isDark ? '#fef08a' : '#FCEE21',
     grid: isDark ? '#374151' : '#e5e7eb',
     text: isDark ? '#9ca3af' : '#6b7280'
   };

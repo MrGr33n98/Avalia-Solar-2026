@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Facebook, Linkedin, Twitter, Share2, Link as LinkIcon, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics';
 
 interface ShareButtonsProps {
   title: string;
@@ -24,9 +25,25 @@ export default function ShareButtons({ title, slug }: ShareButtonsProps) {
     whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(title + ' ' + url)}`
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(url);
-    toast.success('Link copiado para a área de transferência!');
+  const handleShare = (platform: string) => {
+    track('blog_share_click', {
+      post_id: slug,
+      post_title: title,
+      platform: platform,
+      element_type: 'button',
+      action_type: 'click'
+    });
+
+    if (platform === 'copy') {
+      navigator.clipboard.writeText(url);
+      toast.success('Link copiado para a área de transferência!');
+      return;
+    }
+
+    const shareUrl = shareLinks[platform as keyof typeof shareLinks];
+    if (shareUrl) {
+      window.open(shareUrl, '_blank');
+    }
   };
 
   return (
@@ -36,27 +53,27 @@ export default function ShareButtons({ title, slug }: ShareButtonsProps) {
         Compartilhar:
       </span>
       
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#0077b5] hover:border-[#0077b5]" onClick={() => window.open(shareLinks.linkedin, '_blank')}>
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#0077b5] hover:border-[#0077b5]" onClick={() => handleShare('linkedin')}>
         <Linkedin className="h-4 w-4" />
         <span className="sr-only">LinkedIn</span>
       </Button>
 
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1877f2] hover:border-[#1877f2]" onClick={() => window.open(shareLinks.facebook, '_blank')}>
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1877f2] hover:border-[#1877f2]" onClick={() => handleShare('facebook')}>
         <Facebook className="h-4 w-4" />
         <span className="sr-only">Facebook</span>
       </Button>
 
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1da1f2] hover:border-[#1da1f2]" onClick={() => window.open(shareLinks.twitter, '_blank')}>
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1da1f2] hover:border-[#1da1f2]" onClick={() => handleShare('twitter')}>
         <Twitter className="h-4 w-4" />
         <span className="sr-only">Twitter</span>
       </Button>
 
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#25d366] hover:border-[#25d366]" onClick={() => window.open(shareLinks.whatsapp, '_blank')}>
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#25d366] hover:border-[#25d366]" onClick={() => handleShare('whatsapp')}>
         <MessageCircle className="h-4 w-4" />
         <span className="sr-only">WhatsApp</span>
       </Button>
 
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-100" onClick={copyToClipboard}>
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-100" onClick={() => handleShare('copy')}>
         <LinkIcon className="h-4 w-4" />
         <span className="sr-only">Copiar Link</span>
       </Button>

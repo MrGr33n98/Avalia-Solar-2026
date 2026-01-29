@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { buildCategoryPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
 
 const MotionDiv = motion.div;
 
@@ -51,10 +52,30 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
       transition={{ duration: 0.3 }}
       className={cn("h-full", className)}
     >
-      <Link href={displayData.seo_url} className="block h-full group outline-none">
+      <Link 
+        href={displayData.seo_url} 
+        className="block h-full group outline-none"
+        onClick={() => {
+          track('category_card_click', {
+            category_id: displayData.id,
+            category_name: displayData.name,
+            element_type: 'card',
+            action_type: 'click',
+            destination_url: displayData.seo_url
+          });
+        }}
+      >
         <Card 
           className="h-full overflow-hidden border-border/40 bg-card hover:bg-accent/5 transition-all duration-300 hover:shadow-xl hover:border-primary/20 group-hover:-translate-y-1 flex flex-col"
-          onMouseEnter={() => setIsHovered(true)}
+          onMouseEnter={() => {
+            setIsHovered(true);
+            track('category_card_hover', {
+              category_id: displayData.id,
+              category_name: displayData.name,
+              element_type: 'card',
+              action_type: 'hover'
+            });
+          }}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Image Header */}

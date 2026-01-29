@@ -36,7 +36,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand & Contact Info */}
           <div className="flex flex-col items-start space-y-4">
-            <Link href="/" className="font-bold text-2xl mb-2 hover:text-orange-400 transition-colors">
+            <Link href="/" className="font-bold text-2xl mb-2 hover:text-cyan-400 transition-colors">
               Avalia Solar
             </Link>
             <p className="text-gray-200 text-sm leading-snug max-w-xs">
@@ -64,7 +64,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {companyLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
                   </Link>
                 </li>
@@ -78,7 +78,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
                   </Link>
                 </li>
@@ -92,7 +92,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {legalLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-orange-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
                   </Link>
                 </li>

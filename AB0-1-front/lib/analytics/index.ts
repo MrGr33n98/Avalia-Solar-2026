@@ -121,6 +121,21 @@ export function getAnalyticsContext(): AnalyticsContext {
   
   const utms = getCurrentUTMs();
   
+  // Determine traffic source
+  let source = 'direct';
+  if (utms.utm_source) {
+    source = utms.utm_source;
+  } else if (document.referrer) {
+    try {
+      const refUrl = new URL(document.referrer);
+      if (refUrl.hostname.includes('google')) source = 'organic';
+      else if (refUrl.hostname.includes('facebook') || refUrl.hostname.includes('instagram')) source = 'social';
+      else if (!refUrl.hostname.includes(window.location.hostname)) source = 'referral';
+    } catch (e) {
+      source = 'referral';
+    }
+  }
+  
   return {
     environment: process.env.NODE_ENV || 'production',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
@@ -130,6 +145,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     session_id: getSessionId(),
     is_logged_in: !!currentUserId,
     user_id: currentUserId || undefined,
+    source,
     ...utms,
     ...currentContext
   };
@@ -150,12 +166,11 @@ export function track(
   
   if (!initialized) {
     console.warn('[Analytics] Not initialized, queueing event:', eventName);
-    // Could implement event queue here
     return;
   }
   
-  // Generate event ID for critical events
-  const eventId = options.critical ? (options.eventId || generateEventId()) : undefined;
+  // ALWAYS generate event ID for EVERY interaction
+  const eventId = options.eventId || generateEventId();
   
   // Dedupe check
   if (!shouldTrackEvent(eventName, eventId, options.critical)) {
@@ -173,7 +188,7 @@ export function track(
   
   // Remove PII
   const sanitized = sanitizeProperties(eventProps);
-  
+
   // Determine destinations
   const sendToMixpanel = options.sendTo?.mixpanel !== false;
   const sendToGA4 = options.sendTo?.ga4 !== false;
@@ -198,10 +213,51 @@ export function track(
     try {
       const { name, params } = mapToGA4Event(eventName, sanitized);
       gtagEvent(name, params);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[GA4] Event:', name, params);
+      }
     } catch (e) {
       console.error('[Analytics] GA4 track failed:', e);
     }
   }
+}
+
+/**
+ * Sanitize properties to remove PII and normalize data
+ */
+function sanitizeProperties(properties: Record<string, any>): Record<string, any> {
+  const sanitized = { ...properties };
+  
+  // List of keys that might contain PII
+  const piiKeys = [
+    'email', 'phone', 'name', 'first_name', 'last_name', 
+    'address', 'zipcode', 'cnpj', 'cpf', 'password',
+    'address_full', 'full_address'
+  ];
+  
+  piiKeys.forEach(key => {
+    if (key in sanitized) {
+      delete sanitized[key];
+    }
+  });
+  
+  // Also check nested metadata if present
+  if (sanitized.metadata && typeof sanitized.metadata === 'object') {
+    sanitized.metadata = sanitizeProperties(sanitized.metadata);
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Convert snake_case or spinal-case to Title Case for Mixpanel
+ */
+function toTitleCase(str: string): string {
+  return str
+    .split(/[_-]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 /**
@@ -215,10 +271,13 @@ export function page(
   if (!initialized) return;
   
   const context = getAnalyticsContext();
+  const eventId = generateEventId();
+  
   const pageProps = {
     ...context,
     ...properties,
     page_name: pageName || context.pathname,
+    event_id: eventId,
     timestamp: new Date().toISOString()
   };
   
@@ -344,39 +403,6 @@ export function reset(): void {
   } catch (e) {
     console.error('[Analytics] GA4 reset failed:', e);
   }
-}
-
-/**
- * Sanitize properties (remove PII)
- */
-function sanitizeProperties(props: Record<string, any>): Record<string, any> {
-  const sanitized = { ...props };
-  
-  // Remove PII fields
-  const piiFields = ['email', 'phone', 'cpf', 'cnpj', 'password', 'token', 'credit_card'];
-  
-  for (const field of piiFields) {
-    if (field in sanitized) {
-      delete sanitized[field];
-    }
-  }
-  
-  // Mask phone if present (shouldn't be, but safety)
-  if (sanitized.phone_masked) {
-    // Keep masked phone
-  }
-  
-  return sanitized;
-}
-
-/**
- * Convert to Title Case
- */
-function toTitleCase(str: string): string {
-  return str
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
 }
 
 /**

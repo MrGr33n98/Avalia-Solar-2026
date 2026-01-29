@@ -1,6 +1,7 @@
 ActiveAdmin.register User do
   permit_params do
-    permitted = [:email, :password, :password_confirmation, :name, :role, :company_id, :status, :rejection_reason, :terms_accepted]
+    permitted = [:email, :password, :password_confirmation, :name, :role, :company_id, :status, :rejection_reason, :terms_accepted,
+                company_members_attributes: [:id, :company_id, :role, :_destroy]]
     permitted << :approved_by_admin if User.column_names.include?('approved_by_admin')
     permitted
   end
@@ -61,6 +62,32 @@ ActiveAdmin.register User do
     end
   end
 
+  show do
+    attributes_table do
+      row :id
+      row :name
+      row :email
+      row :role
+      row :status do |user|
+        status_tag user.status
+      end
+      row :approved_by_admin
+      row :company
+      row :created_at
+      row :updated_at
+    end
+
+    panel "Empresas Vinculadas" do
+      table_for user.company_members do
+        column :company
+        column :role
+        column :created_at
+      end
+    end
+    
+    active_admin_comments
+  end
+
   sidebar "Ações de Aprovação", only: :show, if: proc { !resource.approved_by_admin? } do
     div do
       button_to "Aprovar Usuário", approve_admin_user_path(resource), method: :put, class: "button"
@@ -93,26 +120,27 @@ ActiveAdmin.register User do
 
   form do |f|
     f.semantic_errors
-    f.inputs do
+    f.inputs "Informações Básicas" do
       f.input :email
       f.input :name
       f.input :role, as: :select, collection: ['user', 'admin', 'company']
-      
-      companies = begin
-        Company.all.collect { |c| [c.name, c.id] }
-      rescue
-        []
-      end
-      f.input :company_id, as: :select, collection: companies, include_blank: true
-      
       f.input :status, as: :select, collection: User.statuses.keys
-      f.input :terms_accepted, as: :boolean, label: "Termos aceitos (Obrigatório para criação)"
+      f.input :approved_by_admin if User.column_names.include?('approved_by_admin')
+      f.input :terms_accepted, as: :boolean, label: "Termos aceitos"
       
       if f.object.new_record?
         f.input :password
         f.input :password_confirmation
       end
     end
+
+    f.inputs "Vínculos com Empresas" do
+      f.has_many :company_members, allow_destroy: true, heading: false do |m|
+        m.input :company, collection: Company.order(:name)
+        m.input :role, as: :select, collection: CompanyMember.roles.keys
+      end
+    end
+    
     f.actions
   end
 

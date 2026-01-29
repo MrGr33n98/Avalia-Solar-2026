@@ -39,6 +39,7 @@ type WizardFormState = {
   email: string;
   phone: string;
   consent: boolean;
+  nickname: string;
 };
 
 const TOTAL_STEPS = 8;
@@ -54,7 +55,8 @@ const INITIAL_FORM: WizardFormState = {
   fullName: '',
   email: '',
   phone: '',
-  consent: false
+  consent: false,
+  nickname: ''
 };
 
 export default function QuoteWizardModal() {
@@ -182,7 +184,8 @@ export default function QuoteWizardModal() {
             full_name: form.fullName,
             email: form.email,
             phone: form.phone,
-            consent: form.consent
+            consent: form.consent,
+            nickname: form.nickname
           },
           preferred_company_id: preferredCompanyId
         };
@@ -448,6 +451,15 @@ export default function QuoteWizardModal() {
                 <p className="text-sm text-muted-foreground">Precisamos de alguns dados para contato.</p>
               </div>
               <div className="grid grid-cols-1 gap-3">
+                {/* Honeypot field */}
+                <div className="hidden" aria-hidden="true">
+                  <Input
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={form.nickname}
+                    onChange={(e) => updateForm({ nickname: e.target.value })}
+                  />
+                </div>
                 <div>
                   <Label htmlFor="fullName">Nome completo</Label>
                   <Input

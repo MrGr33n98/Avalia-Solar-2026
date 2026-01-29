@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, Sun, Wrench, Banknote } from 'lucide-react';
+import { track } from '@/lib/analytics';
 
 const HIGHLIGHTS = [
   {
@@ -44,7 +45,16 @@ export function CategoryHighlights() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 my-12">
       {HIGHLIGHTS.map((item) => (
-        <Link key={item.id} href={item.href} className="group">
+        <Link 
+          key={item.id} 
+          href={item.href} 
+          className="group"
+          onClick={() => track('blog_category_click', {
+            category_id: item.id,
+            category_name: item.title,
+            element_type: 'highlight_card'
+          })}
+        >
           <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white group-hover:-translate-y-1">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-3">
               <span className="font-bold text-slate-700 group-hover:text-primary transition-colors text-lg">

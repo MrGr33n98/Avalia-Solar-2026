@@ -43,7 +43,7 @@ export default function BannerStudio() {
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Banner Studio</h1>
-        <Button onClick={handleDownload} size="lg" className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={handleDownload} size="lg" className="bg-cyan-600 hover:bg-cyan-700">
           Baixar PNG (1200x630)
         </Button>
       </div>

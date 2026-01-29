@@ -4,11 +4,11 @@ class CompanyPolicy < ApplicationPolicy
   end
 
   def show?
-    admin? || (user.respond_to?(:company_user?) && user.company_user? && record.id == user.company_id)
+    admin? || (user.respond_to?(:company_user?) && user.company_user? && (record.id == user.company_id || user.member_companies.include?(record)))
   end
 
   def update?
-    admin? || (user.respond_to?(:company_user?) && user.company_user? && record.id == user.company_id)
+    admin? || (user.respond_to?(:company_user?) && user.company_user? && (record.id == user.company_id || user.member_companies.include?(record)))
   end
 
   def edit?
@@ -40,7 +40,7 @@ class CompanyPolicy < ApplicationPolicy
       if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
         scope.all
       elsif user.respond_to?(:company_user?) && user.company_user?
-        scope.where(id: user.company_id)
+        scope.where(id: [user.company_id, *user.member_company_ids].compact.uniq)
       else
         scope.none
       end

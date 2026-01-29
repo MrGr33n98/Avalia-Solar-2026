@@ -100,13 +100,24 @@ export function mapToGA4Event(
 ): { name: string; params: Record<string, any> } {
   // Map common events to GA4 recommended events
   const eventMap: Record<string, string> = {
+    'page_view': 'page_view',
+    'search_submitted': 'search',
+    'location_selected': 'select_content',
+    'category_selected': 'select_content',
+    'company_card_impression': 'view_item_list',
+    'company_card_click': 'select_item',
+    'cta_click': 'select_content',
+    'whatsapp_click': 'contact',
+    'lead_started': 'begin_checkout',
+    'lead_submitted': 'generate_lead',
+    'lead_verified': 'purchase', // Using purchase as a proxy for high-intent verification
     'Page Viewed': 'page_view',
     'Company Viewed': 'view_item',
     'Search Performed': 'search',
     'Lead Submitted': 'generate_lead',
     'Sign Up Completed': 'sign_up',
     'Login Completed': 'login',
-    'Review Submitted': 'generate_lead', // Also considered a lead
+    'Review Submitted': 'generate_lead',
     'Product Viewed': 'view_item',
     'CTA Clicked': 'select_content'
   };

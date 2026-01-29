@@ -3,7 +3,8 @@ require 'set'
 class Category < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   
-  # =========================
+  # permissions_config is a native JSON column, no need to serialize manually in Rails 7+
+  # serialize :permissions_config, JSON
   # Associations
   # =========================
   belongs_to :parent, class_name: 'Category', optional: true

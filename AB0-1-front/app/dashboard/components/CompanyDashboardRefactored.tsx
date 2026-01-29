@@ -184,7 +184,7 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
       title: 'Leads',
       value: stats?.leadsReceived || 0,
       icon: Target,
-      color: 'orange',
+      color: 'brand-cyan',
       change: '+23.1%',
       changeType: 'positive' as const,
       trend: [20, 40, 35, 50, 60, 70, 90]
@@ -211,7 +211,7 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
       title: 'Pendentes',
       value: stats?.pendingApprovals || 0,
       icon: Clock,
-      color: 'orange',
+      color: 'brand-blue',
       change: '-2',
       changeType: (stats?.pendingApprovals ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
       trend: [80, 70, 60, 50, 40, 30, 20]

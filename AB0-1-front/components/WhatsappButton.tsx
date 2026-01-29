@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { track } from '@/lib/analytics';
 
 type Styles = {
   variant?: 'solid' | 'outline';
@@ -86,6 +87,12 @@ export default function WhatsappButton({
   );
 
   const handleClick = () => {
+    track('whatsapp_button_click', {
+      button_label: label || 'WhatsApp',
+      destination_url: href,
+      element_type: 'button',
+      action_type: 'click'
+    });
     let link = (href || '').trim();
     if (link && !/^https?:\/\//i.test(link)) {
       const digitsRaw = link.replace(/\D/g, '');

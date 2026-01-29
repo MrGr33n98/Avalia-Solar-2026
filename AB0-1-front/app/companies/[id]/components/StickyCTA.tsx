@@ -1,0 +1,99 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageCircle, Phone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Company } from '@/lib/api';
+import { openLeadModal } from '@/lib/lead-engine';
+import { track } from '@/lib/analytics';
+import WhatsappButton from '@/components/WhatsappButton';
+import { cn } from '@/lib/utils';
+
+interface StickyCTAProps {
+  company: Company;
+  ctaEnabled: boolean;
+  ctaUrl: string | null;
+}
+
+export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show sticky CTA after scrolling down 400px
+      if (window.scrollY > 400) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleQuoteClick = () => {
+    track('company_sticky_quote_click', {
+      company_id: company.id,
+      company_name: company.name,
+      source: 'sticky-cta',
+      element_type: 'button',
+      action_type: 'click'
+    });
+    openLeadModal({ preferredCompanyId: company.id, source: 'sticky-cta', type: 'quick' });
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-200 shadow-lg p-4 md:py-3"
+        >
+          <div className="container mx-auto flex items-center justify-between gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                {company.logo_url ? (
+                  <img src={company.logo_url} alt={company.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="text-slate-400 font-bold text-xs">{company.name.substring(0, 2).toUpperCase()}</div>
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-slate-900 leading-none">{company.name}</p>
+                <p className="text-xs text-slate-500 mt-1">Solicite um orçamento agora</p>
+              </div>
+            </div>
+
+            <div className="flex flex-1 md:flex-none items-center gap-2 md:gap-3">
+              <Button
+                onClick={handleQuoteClick}
+                className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold h-11 md:h-10 px-6 shadow-sm"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Pedir Orçamento
+              </Button>
+
+              {ctaEnabled && ctaUrl && (
+                <div className="flex-1 md:flex-none">
+                  <WhatsappButton
+                    size="default"
+                    enabled
+                    href={ctaUrl}
+                    styles={{ variant: 'solid' }}
+                    preset="brandSolid"
+                    className="w-full h-11 md:h-10 text-foreground font-bold px-6 shadow-sm"
+                    label="WhatsApp"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

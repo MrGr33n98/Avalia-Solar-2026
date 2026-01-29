@@ -44,9 +44,9 @@ export default function EnterpriseMetricCard({
       border: 'border-purple-500/20'
     },
     orange: {
-      bg: 'bg-orange-500/10',
-      icon: 'text-orange-600 dark:text-orange-400',
-      border: 'border-orange-500/20'
+      bg: 'bg-cyan-500/10',
+      icon: 'text-cyan-600 dark:text-cyan-400',
+      border: 'border-cyan-500/20'
     },
     yellow: {
       bg: 'bg-yellow-500/10',

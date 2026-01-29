@@ -22,6 +22,7 @@ class User < ApplicationRecord
   belongs_to :company, optional: true
   has_many :company_members, dependent: :destroy
   has_many :member_companies, through: :company_members, source: :company
+  accepts_nested_attributes_for :company_members, allow_destroy: true
 
   # Role validation
   ROLES = %w[user admin company review].freeze
@@ -35,7 +36,7 @@ class User < ApplicationRecord
   validate :adult_birthdate
   validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
-  validate :corporate_email_domain, if: -> { company_user? && company.present? && company.website.present? }
+  validate :corporate_email_domain, if: -> { company_user? && member_companies.any? }
 
   def active_for_authentication?
     super && active?
@@ -48,12 +49,27 @@ class User < ApplicationRecord
   def approved_for_dashboard?
     approved_by_admin?
   end
+
+  def company
+    super || member_companies.first
+  end
+
+  def current_company
+    company
+  end
+
+  def active?
+    active_status? && (admin? || !company_user? || member_companies.any?)
+  end
+
+  def active_status?
+    status == 'active'
+  end
   
   # Set default role
   after_initialize :set_default_role, if: :new_record?
   before_validation :mark_terms_accepted_at
   
-  # Role helper methods
   def admin?
     role == 'admin'
   end
@@ -92,8 +108,16 @@ class User < ApplicationRecord
     super
   end
 
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    active? ? super : status.to_sym
+  end
+
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name email role status company_id] # Allow searching by name, email, role, status and company_id
+    %w[name email role status company_id approved_by_admin] # Allow searching by name, email, role, status, company_id and approved_by_admin
   end
 
   def self.ransackable_associations(_auth_object = nil)
@@ -164,21 +188,23 @@ class User < ApplicationRecord
   end
 
   def corporate_email_domain
-    return unless email.present?
-
-    # Extract domain from website (e.g., "http://example.com" -> "example.com")
-    website_url = company.website.match?(/\Ahttp/) ? company.website : "http://#{company.website}"
-    website_domain = URI.parse(website_url).host&.sub(/^www\./, '')
+    return if email.blank?
     
-    return unless website_domain
+    # Se o usuário está vinculado a empresas, validamos contra os domínios delas
+    # No novo fluxo, o usuário pode não ter empresa no cadastro inicial
+    companies_with_website = member_companies.where.not(website: [nil, ''])
+    return if companies_with_website.empty?
 
-    email_domain = email.split('@').last
-    
-    unless email_domain.casecmp(website_domain).zero?
-      errors.add(:email, "must be from company domain (#{website_domain})")
+    valid_domains = companies_with_website.map do |c|
+      website_url = c.website.match?(/\Ahttp/) ? c.website : "http://#{c.website}"
+      URI.parse(website_url).host&.sub(/\Awww\./, '') rescue nil
+    end.compact
+
+    return if valid_domains.empty?
+
+    unless valid_domains.any? { |domain| email.downcase.include?(domain.downcase) }
+      errors.add(:email, "must be from one of your companies domains (#{valid_domains.join(', ')})")
     end
-  rescue URI::InvalidURIError
-    # Ignore if website is invalid
   end
 
   def password_complexity

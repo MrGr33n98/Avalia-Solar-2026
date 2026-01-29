@@ -201,8 +201,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
-                <ArrowUpRight className={`h-6 w-6 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
+              <div className={`p-3 rounded-xl ${isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'}`}>
+                <ArrowUpRight className={`h-6 w-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
               </div>
             </div>
             <div>
@@ -247,13 +247,13 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                         cta.type === 'whatsapp' ? isDark ? 'bg-green-900/20' : 'bg-green-50' :
                         cta.type === 'email' ? isDark ? 'bg-blue-900/20' : 'bg-blue-50' :
                         cta.type === 'phone' ? isDark ? 'bg-purple-900/20' : 'bg-purple-50' :
-                        isDark ? 'bg-orange-900/20' : 'bg-orange-50'
+                        isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'
                       }`}>
                         <Icon className={`h-4 w-4 ${
                           cta.type === 'whatsapp' ? 'text-green-600' :
                           cta.type === 'email' ? 'text-blue-600' :
                           cta.type === 'phone' ? 'text-purple-600' :
-                          'text-orange-600'
+                          'text-cyan-600'
                         }`} />
                       </div>
                       <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
@@ -275,7 +275,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                         cta.type === 'whatsapp' ? 'bg-green-500' :
                         cta.type === 'email' ? 'bg-blue-500' :
                         cta.type === 'phone' ? 'bg-purple-500' :
-                        'bg-orange-500'
+                        'bg-cyan-500'
                       }`}
                       style={{ width: `${percentage}%` }}
                     />
@@ -302,7 +302,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                 { bg: isDark ? 'bg-blue-900/20' : 'bg-blue-50', text: 'text-blue-600', bar: 'bg-blue-500' },
                 { bg: isDark ? 'bg-purple-900/20' : 'bg-purple-50', text: 'text-purple-600', bar: 'bg-purple-500' },
                 { bg: isDark ? 'bg-emerald-900/20' : 'bg-emerald-50', text: 'text-emerald-600', bar: 'bg-emerald-500' },
-                { bg: isDark ? 'bg-orange-900/20' : 'bg-orange-50', text: 'text-orange-600', bar: 'bg-orange-500' },
+                { bg: isDark ? 'bg-cyan-900/20' : 'bg-cyan-50', text: 'text-cyan-600', bar: 'bg-cyan-500' },
               ];
               const color = colors[index];
 

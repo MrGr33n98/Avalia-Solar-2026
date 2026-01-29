@@ -210,7 +210,7 @@ export default function DashboardSidebar({
                 {!collapsed && (item as any).badge && (
                   <Badge 
                     variant="secondary" 
-                    className="ml-auto h-5 px-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0"
+                    className="ml-auto h-5 px-2 text-xs bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0"
                   >
                     {(item as any).badge}
                   </Badge>
@@ -242,7 +242,7 @@ export default function DashboardSidebar({
                     <div className="text-sm font-medium flex items-center gap-2">
                       {item.label}
                       {(item as any).badge && (
-                        <Badge variant="secondary" className="h-4 px-1.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                        <Badge variant="secondary" className="h-4 px-1.5 text-xs bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0">
                           {(item as any).badge}
                         </Badge>
                       )}

@@ -11,6 +11,7 @@ import { leadsApiSafe } from '@/lib/api-client';
 import { getFullImageUrl } from '@/utils/image';
 import Link from 'next/link';
 import { Sun, Wallet, Leaf, ShieldCheck, MessageSquare, PhoneCall } from 'lucide-react';
+import { track } from '@/lib/analytics';
 
 export default function ArticleConversionSection({ article }: { article: any }) {
   const { banners } = useBanners();
@@ -27,6 +28,14 @@ export default function ArticleConversionSection({ article }: { article: any }) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+    
+    track('blog_lead_form_submit', {
+      post_id: article?.id,
+      post_title: article?.title,
+      post_slug: article?.slug,
+      category_name: article?.category?.name
+    });
+
     try {
       await leadsApiSafe.create({
         name: lead.name,
@@ -69,12 +78,30 @@ export default function ArticleConversionSection({ article }: { article: any }) 
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href={article?.category?.slug ? `/categories/${article.category.slug}` : '/categories'} className="flex-1">
+            <Link 
+              href={article?.category?.slug ? `/categories/${article.category.slug}` : '/categories'} 
+              className="flex-1"
+              onClick={() => track('blog_cta_click', {
+                post_id: article?.id,
+                post_title: article?.title,
+                cta_text: 'Pedir orçamento',
+                cta_target: 'categories'
+              })}
+            >
               <Button className="w-full" variant="default">
                 <Sun className="w-4 h-4 mr-2" /> Pedir orçamento
               </Button>
             </Link>
-            <Link href="/simulador" className="flex-1">
+            <Link 
+              href="/simulador" 
+              className="flex-1"
+              onClick={() => track('blog_cta_click', {
+                post_id: article?.id,
+                post_title: article?.title,
+                cta_text: 'Simular economia',
+                cta_target: 'simulador'
+              })}
+            >
               <Button className="w-full" variant="outline">
                 <Wallet className="w-4 h-4 mr-2" /> Simular economia
               </Button>
