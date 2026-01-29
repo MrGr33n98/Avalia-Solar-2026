@@ -108,6 +108,16 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
 
     if lead.save
+      Analytics::TrackEventService.call(
+        event_type: 'lead_initiated',
+        company_id: lead.company_id,
+        metadata: request_metadata.merge(
+          lead_id: lead.id,
+          product_vertical: lead.product_vertical,
+          bill_value: lead.bill_value
+        )
+      )
+
       otp_code = lead.generate_otp!
       log_otp_code(lead, otp_code)
       render json: { lead_id: lead.id, otp_sent_at: lead.otp_sent_at }, status: :created
@@ -174,9 +184,28 @@ class Api::V1::LeadsController < Api::V1::BaseController
     companies = []
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
+      
+      Analytics::TrackEventService.call(
+        event_type: 'lead_verified',
+        company_id: @lead.company_id,
+        metadata: request_metadata.merge(
+          lead_id: @lead.id
+        )
+      )
+
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
       @lead.update!(wizard_status: 'distributed')
+
+      Analytics::TrackEventService.call(
+        event_type: 'lead_distributed',
+        company_id: @lead.company_id,
+        metadata: request_metadata.merge(
+          lead_id: @lead.id,
+          distributed_to_count: companies.count,
+          company_ids: companies.map(&:id)
+        )
+      )
     end
 
     render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok

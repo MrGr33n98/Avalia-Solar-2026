@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { User, authApi } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
+import { identify, track } from '@/lib/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +31,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // Track identity when user changes
+  useEffect(() => {
+    if (user?.id) {
+      identify(String(user.id), {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        company_id: user.company_id
+      });
+    }
+  }, [user]);
+
   async function checkAuth(): Promise<boolean> {
     try {
       // Try to fetch user data without checking localStorage
@@ -52,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Normal case: API returns user
       if (response?.user) {
         setUser(response.user);
+        track('Login Completed', { method: 'email' });
         return;
       }
 
@@ -82,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    track('Logout Performed');
     await authApi.logout();
     setUser(null);
     // No need to clear localStorage anymore

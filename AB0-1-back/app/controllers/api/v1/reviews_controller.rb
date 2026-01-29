@@ -52,6 +52,17 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     @review = Review.new(review_params.merge(user_id: current_user.id))
 
     if @review.save
+      # Track event
+      Analytics::TrackEventService.call(
+        company_id: @review.company_id,
+        user: current_user,
+        event_type: 'review_created',
+        metadata: request_metadata.merge(
+          rating: @review.rating,
+          comment_length: @review.comment&.length
+        )
+      )
+
       # Notify company owners
       owners = @review.company.company_members.owner.includes(:user).map(&:user)
       ReviewNotifier.with(review: @review, type: :new_review).deliver(owners) if owners.any?

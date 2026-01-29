@@ -1,4 +1,4 @@
-﻿# app/controllers/api/v1/company_dashboard_controller.rb
+# app/controllers/api/v1/company_dashboard_controller.rb
 module Api
   module V1
     class CompanyDashboardController < BaseController
@@ -70,16 +70,26 @@ module Api
         end
 
         pending_change = @company.pending_changes.create!(
-          change_type: 'company_info',
-          data: {
-            attributes: company_params,
-            previous_values: @company.attributes.slice(*company_params.keys)
-          },
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'company_info',
+      data: {
+        attributes: company_params,
+        previous_values: @company.attributes.slice(*company_params.keys)
+      },
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: {
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'company_info',
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: {
           message: direct_update_attrs.present? ? 'AlteraÃ§Ãµes aplicadas e enviadas para aprovaÃ§Ã£o' : 'AlteraÃ§Ãµes enviadas para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
@@ -88,16 +98,28 @@ module Api
       # POST /api/v1/company_dashboard/add_categories
       def add_categories
         pending_change = @company.pending_changes.create!(
-          change_type: 'categories',
-          data: {
-            action: 'add',
-            category_ids: params[:category_ids]
-          },
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'categories',
+      data: {
+        action: 'add',
+        category_ids: params[:category_ids]
+      },
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: {
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'categories',
+        action: 'add',
+        category_ids: params[:category_ids],
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: {
           message: 'SolicitaÃ§Ã£o de categorias enviada para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
@@ -106,16 +128,28 @@ module Api
       # POST /api/v1/company_dashboard/remove_category
       def remove_category
         pending_change = @company.pending_changes.create!(
-          change_type: 'categories',
-          data: {
-            action: 'remove',
-            category_ids: [params[:category_id]]
-          },
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'categories',
+      data: {
+        action: 'remove',
+        category_ids: [params[:category_id]]
+      },
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: {
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'categories',
+        action: 'remove',
+        category_id: params[:category_id],
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: {
           message: 'SolicitaÃ§Ã£o de remoÃ§Ã£o enviada para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
@@ -124,13 +158,23 @@ module Api
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
         pending_change = @company.pending_changes.create!(
-          change_type: 'cta_config',
-          data: cta_params,
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'cta_config',
+      data: cta_params,
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: {
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'cta_config',
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: {
           message: 'ConfiguraÃ§Ãµes de CTAs enviadas para aprovaÃ§Ã£o',
           pending_change: pending_change
         }, status: :created
@@ -151,13 +195,23 @@ module Api
         blob = ActiveStorage::Blob.create_and_upload!(io: file, filename: file.original_filename, content_type: file.content_type)
 
         pending_change = @company.pending_changes.create!(
-          change_type: 'logo',
-          data: { signed_id: blob.signed_id },
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'logo',
+      data: { signed_id: blob.signed_id },
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: { message: 'Logo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'logo',
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: { message: 'Logo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # POST /api/v1/company_dashboard/update_banner
@@ -185,13 +239,23 @@ module Api
         end
 
         pending_change = @company.pending_changes.create!(
-          change_type: 'banner',
-          data: { signed_id: blob.signed_id },
-          user_id: current_user&.id,
-          status: 'pending'
-        )
+      change_type: 'banner',
+      data: { signed_id: blob.signed_id },
+      user_id: current_user&.id,
+      status: 'pending'
+    )
 
-        render json: { message: 'Banner enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+    Analytics::TrackEventService.call(
+      company_id: @company.id,
+      event_type: 'dashboard_update_requested',
+      user: current_user,
+      metadata: request_metadata.merge(
+        change_type: 'banner',
+        pending_change_id: pending_change.id
+      )
+    )
+
+    render json: { message: 'Banner enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
       # GET /api/v1/company_dashboard/pending_changes

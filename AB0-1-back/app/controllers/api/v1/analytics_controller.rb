@@ -79,13 +79,4 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       raw.to_s
     end
   end
-
-  def request_metadata
-    {
-      ip: request.remote_ip.to_s,
-      referrer: request.referer.to_s,
-      user_agent: request.user_agent.to_s,
-      path: request.fullpath.to_s
-    }.compact
-  end
 end

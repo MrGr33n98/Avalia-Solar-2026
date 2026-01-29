@@ -265,6 +265,7 @@ GEM
     mini_magick (4.12.0)
     mini_mime (1.1.5)
     minitest (5.27.0)
+    mixpanel-ruby (2.3.0)
     msgpack (1.7.1)
     multi_xml (0.7.2)
       bigdecimal (~> 3.1)
@@ -589,6 +590,7 @@ DEPENDENCIES
   kaminari
   logger
   lograge
+  mixpanel-ruby (~> 2.3)
   noticed (= 2.2)
   omniauth-google-oauth2
   omniauth-linkedin-oauth2 (~> 1.0)
@@ -731,6 +733,7 @@ CHECKSUMS
   mini_magick (4.12.0) sha256=67302fa84e63f1002b71416a8466968ed0f33d22f5d42962a0c09a9f1c3a906a
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
+  mixpanel-ruby (2.3.0) sha256=2aba251a02f62d778533bd9308db0f16ba034f3966c8f68261f9406e21cc4689
   msgpack (1.7.1) sha256=4f337a2cfd8e78850cb515812a2fc17ba114e92a33f82e12e46ae4be4d29c71a
   multi_xml (0.7.2) sha256=307a96dc48613badb7b2fc174fd4e62d7c7b619bc36ea33bfd0c49f64f5787ce
   net-http (0.9.1) sha256=25ba0b67c63e89df626ed8fac771d0ad24ad151a858af2cc8e6a716ca4336996

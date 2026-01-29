@@ -58,7 +58,24 @@ class Product < ApplicationRecord
     ))
   end
 
+  after_create :track_creation_event
+
   private
+
+  def track_creation_event
+    Analytics::TrackEventService.call(
+      company_id: company_id,
+      event_type: 'product_created',
+      metadata: {
+        product_id: id,
+        name: name,
+        price: price,
+        status: status
+      }
+    )
+  rescue => e
+    Rails.logger.error("[Analytics] Failed to track product creation: #{e.message}")
+  end
 
   # Impede retorno direto de disabled -> active para forçar ciclo de revisão
   def blocked_transition_guard

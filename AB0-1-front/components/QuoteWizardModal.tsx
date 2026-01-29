@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
+import { track, DashboardEvents } from '@/lib/analytics';
 
 type WizardCompany = {
   id: number;
@@ -79,6 +80,10 @@ export default function QuoteWizardModal() {
       setPreferredCompanyId(detail.preferredCompanyId);
       resetWizard();
       setOpen(true);
+      track('Wizard Opened', {
+        preferred_company_id: detail.preferredCompanyId,
+        source: 'external_trigger'
+      });
     };
     window.addEventListener('open-quote-wizard', handler as EventListener);
     return () => window.removeEventListener('open-quote-wizard', handler as EventListener);
@@ -194,7 +199,15 @@ export default function QuoteWizardModal() {
       return;
     }
 
-    setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+    setStep((prev) => {
+      const nextStep = Math.min(prev + 1, TOTAL_STEPS);
+      track('Wizard Step Completed', {
+        step: prev,
+        next_step: nextStep,
+        form_data: { ...form, email: undefined, phone: undefined, fullName: undefined } // Privacy
+      });
+      return nextStep;
+    });
   };
 
   const handleBack = () => {
@@ -215,10 +228,14 @@ export default function QuoteWizardModal() {
 
     setSubmitting(true);
     try {
-      const response = await leadsWizardApi.verifyOtp(leadId, otpCode);
-      if (response && response.companies) {
-        setCompanies(response.companies);
-        setStep(9);
+        const response = await leadsWizardApi.verifyOtp(leadId, otpCode);
+        if (response && response.companies) {
+          track('Wizard Conversion', {
+            lead_id: leadId,
+            companies_count: response.companies.length
+          });
+          setCompanies(response.companies);
+          setStep(9);
       } else {
         throw new Error('Resposta inválida do servidor.');
       }

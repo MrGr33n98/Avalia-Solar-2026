@@ -38,6 +38,18 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     # Increment view count (async ideally, but simple here)
     @article.increment!(:views_count)
 
+    # Track article view event
+    Analytics::TrackEventService.call(
+      event_type: 'article_view',
+      company_id: nil,
+      user: current_user,
+      metadata: request_metadata.merge(
+        article_id: @article.id,
+        article_title: @article.title,
+        category_id: @article.category_id
+      )
+    )
+
     cache_key = "articles/show/#{@article.id}/#{@article.updated_at.to_i}"
     
     cached_json(cache_key, expires_in: 1.hour) do

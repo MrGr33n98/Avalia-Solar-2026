@@ -98,4 +98,7 @@ dashboard-sumario-*.md
 tasks-v1.md
 agentes/
 
+# Backups
+backup_limpeza_*/
+
 # Duplicate env entries removed – already covered above

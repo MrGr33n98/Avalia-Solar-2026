@@ -34,6 +34,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { track } from '@/lib/analytics';
 
 interface Notification {
   id: string;
@@ -67,6 +68,13 @@ export default function EnterpriseHeader({
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleExportCSV = () => {
+    // Track using unified analytics
+    track('Report Exported', {
+      export_type: 'csv',
+      company_id: company?.id,
+      user_id: user?.id
+    });
+
     // Basic implementation for demonstration
     // In a real app, this would fetch the full data or use the existing state
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -176,7 +184,14 @@ export default function EnterpriseHeader({
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 <span>Exportar como CSV</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.print()}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                track('Report Exported', {
+                  export_type: 'pdf',
+                  company_id: company?.id,
+                  user_id: user?.id
+                });
+                window.print();
+              }}>
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Imprimir Página (PDF)</span>
               </DropdownMenuItem>

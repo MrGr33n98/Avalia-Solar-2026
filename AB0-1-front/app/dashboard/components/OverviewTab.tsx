@@ -33,6 +33,8 @@ type DashboardStats = {
   pendingApprovals: number;
   activeCampaigns: number;
   conversionRate: number;
+  averageResponseTime?: number; // em horas
+  profileCompletion?: number;   // em percentual
 };
 
 type OverviewTabProps = {
@@ -42,8 +44,27 @@ type OverviewTabProps = {
   onNavigateToReviews?: () => void;
 };
 
-const mapStats = (raw: any): DashboardStats => {
+const mapStats = (raw: any, company?: any): DashboardStats => {
   const s = raw?.stats || raw || {};
+  
+  // Cálculo de Completude do Perfil (Exemplo de lógica determinística)
+  const profileFields = [
+    company?.name,
+    company?.description,
+    company?.logo_url,
+    company?.city,
+    company?.state,
+    company?.website_url,
+    company?.phone
+  ];
+  const filledFields = profileFields.filter(Boolean).length;
+  const profileCompletion = Math.round((filledFields / profileFields.length) * 100);
+
+  // Cálculo de Conversão de Avaliações
+  const conversionRate = s.profile_views > 0 
+    ? ((s.reviews_count || 0) / s.profile_views) * 100 
+    : 0;
+
   return {
     profileViews: s.profile_views ?? 0,
     ctaClicks: s.cta_clicks ?? 0,
@@ -53,7 +74,9 @@ const mapStats = (raw: any): DashboardStats => {
     averageRating: s.average_rating ?? 0,
     pendingApprovals: s.pending_approvals ?? 0,
     activeCampaigns: s.active_campaigns ?? 0,
-    conversionRate: s.conversion_rate ?? 0,
+    conversionRate: s.conversion_rate || conversionRate,
+    averageResponseTime: s.average_response_time || 0,
+    profileCompletion: s.profile_completion || profileCompletion,
   };
 };
 
@@ -69,7 +92,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
     queryKey: ['company-dashboard-stats', companyId],
     queryFn: async () => {
       const data = await fetchApi<{ stats: any }>('/company_dashboard/stats', { params: { company_id: companyId } });
-      return mapStats(data);
+      return mapStats(data, company);
     },
     enabled: Boolean(companyId),
   });
@@ -157,7 +180,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Tempo Médio de Resposta</p>
-              <h4 className="text-lg font-bold text-foreground">2.4 horas</h4>
+              <h4 className="text-lg font-bold text-foreground">{stats?.averageResponseTime || 0} horas</h4>
               <p className="text-[10px] text-green-600 flex items-center gap-0.5 mt-0.5">
                 <TrendingUp className="h-3 w-3" />
                 15% mais rápido que o mês anterior
@@ -173,9 +196,9 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Completude do Perfil</p>
-              <h4 className="text-lg font-bold text-foreground">92%</h4>
+              <h4 className="text-lg font-bold text-foreground">{stats?.profileCompletion || 0}%</h4>
               <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2">
-                <div className="bg-green-500 h-full rounded-full" style={{ width: '92%' }} />
+                <div className="bg-green-500 h-full rounded-full" style={{ width: `${stats?.profileCompletion || 0}%` }} />
               </div>
             </div>
           </CardContent>
@@ -188,7 +211,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Taxa de Conversão de Avaliações</p>
-              <h4 className="text-lg font-bold text-foreground">12.5%</h4>
+              <h4 className="text-lg font-bold text-foreground">{stats?.conversionRate?.toFixed(1) || 0}%</h4>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Visitantes que deixaram avaliação
               </p>

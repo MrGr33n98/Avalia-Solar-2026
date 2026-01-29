@@ -13,6 +13,20 @@ module Api
 
         results = ::SearchService.new(query, state: state, city: city, category_id: category_id).call
 
+        # Track search event
+        Analytics::TrackEventService.call(
+          event_type: 'search_performed',
+          company_id: nil, # Global search
+          user: current_user,
+          metadata: request_metadata.merge(
+            query: query,
+            state: state,
+            city: city,
+            category_id: category_id,
+            results_count: results[:companies].count + results[:products].count
+          )
+        )
+
         # ordenação simples sem quebrar nada
         case sort
         when 'name'

@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
+import { track } from '@/lib/analytics';
 
 // Components
 import ThemeToggle from './ThemeToggle';
@@ -79,6 +80,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    
+    // Track using unified analytics
+    track('Dashboard Tab Viewed', {
+      tab_name: tab,
+      company_id: companyId,
+      user_id: user?.id
+    });
+
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
     router.push(`${pathname}?${params.toString()}`);
@@ -94,6 +103,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
+    
+    // Track using unified analytics
+    track('Theme Changed', {
+      theme_mode: theme,
+      company_id: companyId,
+      user_id: user?.id
+    });
+
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

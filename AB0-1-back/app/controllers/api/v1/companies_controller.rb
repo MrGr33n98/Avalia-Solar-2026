@@ -139,6 +139,18 @@ module Api
         begin
           ::Company.transaction do
             if @company.save
+              # Track event
+              Analytics::TrackEventService.call(
+                company_id: @company.id,
+                user: current_user,
+                event_type: 'company_created',
+                metadata: request_metadata.merge(
+                  status: @company.status,
+                  city: @company.city,
+                  state: @company.state
+                )
+              )
+
               Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
               
               if @company.logo.attached?

@@ -47,6 +47,13 @@ module Api
             )
           end
 
+          Analytics::TrackEventService.call(
+            event_type: 'login_completed',
+            user: user,
+            company_id: user.company_id,
+            metadata: request_metadata.merge(method: 'email')
+          )
+
           return render json: payload_for(user), status: :ok
         end
 
@@ -115,6 +122,16 @@ module Api
           user.send_confirmation_instructions
           Rails.logger.info "[Audit] Confirmation email sent to #{user.email}"
           
+          Analytics::TrackEventService.call(
+            event_type: 'registration_completed',
+            user: user,
+            company_id: user.company_id,
+            metadata: request_metadata.merge(
+              city: attrs[:city], 
+              state: attrs[:state]
+            )
+          )
+
           return render json: payload_for(user), status: :created
         end
 
@@ -137,8 +154,18 @@ module Api
       def logout
         # Revoke the current JWT token
         if current_token
+          user_id = current_user&.id
+          company_id = current_user&.company_id
+          
           revoke_current_token
-          Rails.logger.info("[Auth] User logged out: user_id=#{current_user&.id} ip=#{request.remote_ip}")
+          Rails.logger.info("[Auth] User logged out: user_id=#{user_id} ip=#{request.remote_ip}")
+          
+          Analytics::TrackEventService.call(
+            event_type: 'logout_performed',
+            user: current_user,
+            company_id: company_id,
+            metadata: request_metadata
+          )
         end
         
         # Clear cookie
@@ -305,6 +332,14 @@ module Api
 
         user = User.confirm_by_token(token)
         if user.errors.empty?
+          # Track event
+          Analytics::TrackEventService.call(
+            user: user,
+            company_id: user.company_id,
+            event_type: 'email_confirmed',
+            metadata: { ip: request.remote_ip }
+          )
+
           # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)
           if user.pending? && (user.regular_user? || user.review_user?)
             user.active!

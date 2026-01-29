@@ -8,9 +8,9 @@ module CompanyDashboard
       return default_stats unless @company
 
       {
-        profile_views: safe_count(:profile_views_count),
-        cta_clicks: safe_count(:cta_clicks_count),
-        whatsapp_clicks: safe_count(:whatsapp_clicks_count),
+        profile_views: safe_count(:profile_views_count) + analytics_count('view'),
+        cta_clicks: safe_count(:cta_clicks_count) + analytics_count('click'),
+        whatsapp_clicks: safe_count(:whatsapp_clicks_count) + analytics_count('whatsapp_click'),
         leads_received: @company.leads.count,
         reviews_count: reviews_count,
         average_rating: safe_count(:rating_avg),
@@ -21,6 +21,11 @@ module CompanyDashboard
     end
 
     private
+
+    def analytics_count(event_type)
+      return 0 unless @company&.id
+      AnalyticsEvent.where(company_id: @company.id, event_type: event_type).count
+    end
 
     def safe_count(method)
       @company.respond_to?(method) ? (@company.send(method) || 0) : 0
@@ -47,7 +52,7 @@ module CompanyDashboard
     end
 
     def calculate_conversion_rate
-      views = safe_count(:profile_views_count)
+      views = safe_count(:profile_views_count) + analytics_count('view')
       leads = @company.leads.count
       return 0 if views.zero?
       

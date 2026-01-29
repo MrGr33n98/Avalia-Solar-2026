@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { productsApi } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import type { Product } from '../types';
 
 export function useProducts(companyId: string) {
@@ -44,6 +45,13 @@ export function useProducts(companyId: string) {
       });
       const formatted = { ...created, id: String(created.id) } as Product;
       setProducts(prev => [...prev, formatted]);
+      
+      track('Product Action', {
+        action: 'create',
+        product_id: formatted.id,
+        company_id: companyId
+      });
+
       toast({ title: 'Produto adicionado!', description: 'Produto criado com sucesso.' });
       return formatted;
     } catch (error) {
@@ -67,6 +75,13 @@ export function useProducts(companyId: string) {
       });
       const formatted = { ...updated, id: String(updated.id) } as Product;
       setProducts(prev => prev.map(p => p.id === productId ? formatted : p));
+      
+      track('Product Action', {
+        action: 'update',
+        product_id: productId,
+        company_id: companyId
+      });
+
       toast({ title: 'Produto atualizado!', description: 'Atualização realizada.' });
       return formatted;
     } catch (error) {
@@ -86,6 +101,13 @@ export function useProducts(companyId: string) {
       setLoading(true);
       await productsApi.delete(Number(productId));
       setProducts(prev => prev.filter(p => p.id !== productId));
+      
+      track('Product Action', {
+        action: 'delete',
+        product_id: productId,
+        company_id: companyId
+      });
+
       toast({ title: 'Produto removido!', description: 'O produto foi excluído com sucesso.' });
     } catch (error) {
       toast({
