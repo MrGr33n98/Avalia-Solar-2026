@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Plus, CheckCircle2, XCircle, Clock, Star, Trash2 } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -17,67 +18,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { fetchApi, categoriesApi } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
+import { useCategories } from '../hooks/useCategories';
 
 interface CategoriesManagementProps {
   companyId: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  status: 'active' | 'pending' | 'rejected';
-  featured: boolean;
-  seo_url: string;
-}
-
 export default function CategoriesManagement({ companyId }: CategoriesManagementProps) {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  const { 
+    loading, 
+    categories, 
+    availableCategories, 
+    addCategories, 
+    removeCategory 
+  } = useCategories(companyId);
+  
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      setLoading(true);
-      const resp = await fetchApi<{ categories: Category[] }>(`/companies/${companyId}/categories`);
-      setCategories((resp?.categories || []).map(c => ({
-        id: String(c.id),
-        name: c.name,
-        status: (c.status as any) || 'active',
-        featured: !!c.featured,
-        seo_url: c.seo_url
-      })));
-    } catch (e) {
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [companyId]);
-
-  const fetchAvailableCategories = useCallback(async () => {
-    try {
-      const all = await categoriesApi.getAll();
-      const currentIds = new Set(categories.map(c => c.id));
-      setAvailableCategories((all || []).map(c => ({
-        id: String(c.id),
-        name: c.name,
-        status: (c.status as any) || 'active',
-        featured: !!c.featured,
-        seo_url: c.seo_url
-      })).filter(c => !currentIds.has(c.id)));
-    } catch (e) {
-      setAvailableCategories([]);
-    }
-  }, [categories]);
-
-  useEffect(() => {
-    fetchCategories();
-    fetchAvailableCategories();
-  }, [companyId, fetchCategories, fetchAvailableCategories]);
 
   const handleAddCategories = async () => {
     if (selectedCategories.length === 0) {
@@ -85,23 +42,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       return;
     }
     try {
-      await fetchApi('/company_dashboard/add_categories', {
-        method: 'POST',
-        body: JSON.stringify({ category_ids: selectedCategories })
-      });
-      toast({
-        title: 'Sucesso',
-        description: 'Categorias enviadas para aprovação.'
-      });
-      await fetchCategories();
-      await fetchAvailableCategories();
-    } catch (error: any) {
-      console.error('[CategoriesManagement] Add error:', error);
-      toast({
-        title: 'Erro ao adicionar categorias',
-        description: error.message || 'Não foi possível adicionar as categorias.',
-        variant: 'destructive'
-      });
+      await addCategories(selectedCategories);
     } finally {
       setSelectedCategories([]);
       setShowAddDialog(false);
@@ -110,26 +51,44 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
 
   const handleRemoveCategory = async (categoryId: string) => {
     if (!confirm('Tem certeza que deseja remover esta categoria?')) return;
-    try {
-      await fetchApi('/company_dashboard/remove_category', {
-        method: 'POST',
-        body: JSON.stringify({ category_id: categoryId })
-      });
-      toast({
-        title: 'Sucesso',
-        description: 'Categoria removida.'
-      });
-      await fetchCategories();
-      await fetchAvailableCategories();
-    } catch (error: any) {
-      console.error('[CategoriesManagement] Remove error:', error);
-      toast({
-        title: 'Erro ao remover categoria',
-        description: error.message || 'Não foi possível remover a categoria.',
-        variant: 'destructive'
-      });
-    }
+    await removeCategory(categoryId);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-10 w-44" />
+        </div>
+
+        <Skeleton className="h-16 w-full" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

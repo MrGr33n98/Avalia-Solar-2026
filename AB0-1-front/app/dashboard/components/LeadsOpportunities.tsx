@@ -7,9 +7,43 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 interface LeadsOpportunitiesProps {
   companyId: string;
   companyName?: string;
+}
+
+function LeadsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i}>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-36" />
+                </div>
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-32" />
+              <Skeleton className="h-9 w-28" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
 export default function LeadsOpportunities({ companyId, companyName }: LeadsOpportunitiesProps) {
@@ -56,7 +90,9 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {(() => {
+        {loading ? (
+          [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+        ) : (() => {
           const total = leads.length;
           const byStatus = {
             new: leads.filter((l) => l.status === 'new').length,
@@ -83,13 +119,7 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
       </div>
 
       <div className="space-y-4">
-        {loading && (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Carregando leads...</p>
-            </CardContent>
-          </Card>
-        )}
+        {loading && <LeadsSkeleton />}
         {error && (
           <Card>
             <CardContent className="p-6">

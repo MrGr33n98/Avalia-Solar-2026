@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
@@ -9,62 +10,71 @@ import EnterpriseHeader from './EnterpriseHeader';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Feature Components
-import CompanyInfo from './CompanyInfo';
-import CategoriesManagement from './CategoriesManagement';
-import BannersSponsorship from './BannersSponsorship';
-import ProductsManagement from './ProductsManagement';
-import ReviewsManagement from './ReviewsManagement';
-import MediaGallery from './MediaGallery';
-import LeadsOpportunities from './LeadsOpportunities';
-import CampaignsMarketing from './CampaignsMarketing';
-import CompanySettings from './CompanySettings';
-import OverviewTab from './OverviewTab';
-
-// New Modern Analytics Components
-import ReviewsAnalytics from './ReviewsAnalytics';
-import PerformanceMetrics from './PerformanceMetrics';
-import CompetitorBenchmark from './CompetitorBenchmark';
-import ThemeToggle from './ThemeToggle';
-import StyleAnalysis from './StyleAnalysis';
-import { fetchApi, companiesApi } from '@/lib/api';
-import { subscribeCompanyDashboard } from '@/lib/cable';
+// Hooks
+import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Components
+import ThemeToggle from './ThemeToggle';
+import ApprovalsPanel from './ApprovalsPanel';
+
+// Lazy Loaded Feature Components for Performance
+const CompanyInfo = dynamic(() => import('./CompanyInfo'), { loading: () => <DashboardTabSkeleton /> });
+const CategoriesManagement = dynamic(() => import('./CategoriesManagement'), { loading: () => <DashboardTabSkeleton /> });
+const BannersSponsorship = dynamic(() => import('./BannersSponsorship'), { loading: () => <DashboardTabSkeleton /> });
+const ProductsManagement = dynamic(() => import('./ProductsManagement'), { loading: () => <DashboardTabSkeleton /> });
+const ReviewsManagement = dynamic(() => import('./ReviewsManagement'), { loading: () => <DashboardTabSkeleton /> });
+const MediaGallery = dynamic(() => import('./MediaGallery'), { loading: () => <DashboardTabSkeleton /> });
+const LeadsOpportunities = dynamic(() => import('./LeadsOpportunities'), { loading: () => <DashboardTabSkeleton /> });
+const CampaignsMarketing = dynamic(() => import('./CampaignsMarketing'), { loading: () => <DashboardTabSkeleton /> });
+const CompanySettings = dynamic(() => import('./CompanySettings'), { loading: () => <DashboardTabSkeleton /> });
+const OverviewTab = dynamic(() => import('./OverviewTab'), { loading: () => <DashboardTabSkeleton /> });
+const ReviewsAnalytics = dynamic(() => import('./ReviewsAnalytics'), { loading: () => <DashboardTabSkeleton /> });
+const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), { loading: () => <DashboardTabSkeleton /> });
+const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), { loading: () => <DashboardTabSkeleton /> });
+const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => <DashboardTabSkeleton /> });
+
+function DashboardTabSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-[250px]" />
+        <Skeleton className="h-4 w-[400px]" />
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-[200px] rounded-xl" />
+        <Skeleton className="h-[200px] rounded-xl" />
+        <Skeleton className="h-[200px] rounded-xl" />
+      </div>
+      <Skeleton className="h-[400px] w-full rounded-xl" />
+    </div>
+  );
+}
 
 interface CompanyDashboardProps {
   companyId: string;
-}
-
-interface DashboardStats {
-  profileViews: number;
-  ctaClicks: number;
-  whatsappClicks: number;
-  leadsReceived: number;
-  reviewsCount: number;
-  averageRating: number;
-  pendingApprovals: number;
-  activeCampaigns: number;
-  conversionRate: number;
-}
-
-interface Notification {
-  id: string;
-  type: 'approval' | 'review' | 'lead' | 'warning';
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
 }
 
 export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { user } = useAuth();
   
+  const { 
+    loading, 
+    company, 
+    companyError, 
+    stats, 
+    notifications, 
+    markNotificationAsRead 
+  } = useCompanyDashboardData(companyId);
+
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
 
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
@@ -75,18 +85,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   };
 
   // Sync URL changes back to state (e.g. back button)
-   useEffect(() => {
-     const tab = searchParams.get('tab');
-     if (tab && tab !== activeTab) {
-       setActiveTab(tab);
-     }
-   }, [searchParams, activeTab]);
-  const [company, setCompany] = useState<any>(null);
-  const [companyError, setCompanyError] = useState<string | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
-  const { user } = useAuth();
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
@@ -96,67 +100,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       document.documentElement.classList.remove('dark');
     }
   };
-
-  const fetchCompanyData = useCallback(async () => {
-    try {
-      const data = await companiesApi.getById(Number(companyId));
-      if (!data) {
-        setCompanyError('Empresa não encontrada ou não associada à sua conta.');
-      } else {
-        setCompany(data);
-      }
-    } catch (error) {
-      console.error('Error fetching company:', error);
-      setCompanyError('Falha ao carregar dados da empresa.');
-    } finally {
-      setLoading(false);
-    }
-  }, [companyId]);
-
-  const fetchDashboardStats = useCallback(async () => {
-    try {
-      const data = await fetchApi<{ stats: any }>(
-        '/company_dashboard/stats',
-        { params: { company_id: companyId } }
-      );
-      const s = data?.stats || {};
-      setStats({
-        profileViews: s.profile_views ?? 0,
-        ctaClicks: s.cta_clicks ?? 0,
-        whatsappClicks: s.whatsapp_clicks ?? 0,
-        leadsReceived: s.leads_received ?? 0,
-        reviewsCount: s.reviews_count ?? 0,
-        averageRating: s.average_rating ?? 0,
-        pendingApprovals: s.pending_approvals ?? 0,
-        activeCampaigns: s.active_campaigns ?? 0,
-        conversionRate: s.conversion_rate ?? 0,
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-    }
-  }, [companyId]);
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const data = await fetchApi<{ notifications: any[] }>(
-        '/company_dashboard/notifications',
-        { params: { company_id: companyId } }
-      );
-      const list = data?.notifications || [];
-      setNotifications(
-        list.map((n, idx) => ({
-          id: `${n.type}-${n.timestamp ?? idx}-${idx}`,
-          type: n.type,
-          title: n.title,
-          message: n.message,
-          timestamp: new Date(n.timestamp),
-          read: !!n.read,
-        }))
-      );
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  }, [companyId]);
 
   useEffect(() => {
     // Load theme from localStorage or default to dark
@@ -169,25 +112,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     } else {
       document.documentElement.classList.remove('dark');
     }
-
-    fetchCompanyData();
-    fetchDashboardStats();
-    fetchNotifications();
-
-    const unsubscribe = subscribeCompanyDashboard(companyId, () => {
-      // Keep it simple: refetch on any realtime event
-      fetchDashboardStats();
-      fetchNotifications();
-    });
-
-    return unsubscribe;
-  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
-
-  const handleNotificationClick = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -239,7 +164,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         <EnterpriseHeader
           company={company}
           notifications={notifications}
-          onNotificationClick={handleNotificationClick}
+          onNotificationClick={markNotificationAsRead}
           onMenuClick={() => setSidebarOpen(true)}
           onTabChange={handleTabChange}
           themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
@@ -604,64 +529,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           </div>
         </main>
       </div>
-    </div>
-  );
-}
-
-function ApprovalsPanel({ companyId }: { companyId: string }) {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchApi<{ pending_changes: any[] }>(
-          '/company_dashboard/pending_changes',
-          { params: { company_id: companyId } }
-        );
-        setItems(data?.pending_changes || []);
-      } catch (e: any) {
-        setError(e?.message || 'Falha ao carregar pendências');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [companyId]);
-
-  if (loading) {
-    return <p className="text-sm text-muted-foreground">Carregando pendências...</p>;
-  }
-  if (error) {
-    return <p className="text-sm text-destructive">{error}</p>;
-  }
-
-  if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhuma alteração pendente.</p>;
-  }
-
-  return (
-    <div className="space-y-4">
-      {items.map((pc) => (
-        <Card key={pc.id} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">{String(pc.change_type).replace(/_/g,' ').toUpperCase()}</p>
-              <p className="text-xs text-muted-foreground">Criado em {new Date(pc.created_at).toLocaleString()}</p>
-            </div>
-            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
-              Pendente
-            </Badge>
-          </CardContent>
-          {pc.rejection_reason && (
-            <div className="px-4 pb-4">
-              <p className="text-xs text-destructive">Motivo da rejeição: {pc.rejection_reason}</p>
-            </div>
-          )}
-        </Card>
-      ))}
     </div>
   );
 }

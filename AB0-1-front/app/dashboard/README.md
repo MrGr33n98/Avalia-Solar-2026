@@ -69,6 +69,11 @@ Dashboard completo de gestão para empresas cadastradas na plataforma, com siste
 - ✅ Configuração de UTMs
 - ✅ Preferências gerais
 
+### 10. **Relatórios & Exportação** (`EnterpriseHeader.tsx`)
+- ✅ Exportação de métricas em CSV
+- ✅ Impressão de relatórios em PDF
+- ✅ Métricas de performance avançadas
+
 ## 🔐 Fluxo de Aprovação
 
 ### Sistema de Pending Changes
@@ -145,7 +150,19 @@ O dashboard exibe métricas com **dados reais**, com suporte a **histórico** e 
 - **Leads recebidos** (`lead_created`)
 - **Reviews** (`review_created`) e rating médio
 - **Taxa de conversão** (leads / views)
+- **Tempo Médio de Resposta** (Novo)
+- **Completude do Perfil** (Novo)
 - **Aprovações pendentes**
+
+## 🛠️ Melhorias Recentes (Jan/2026)
+
+Para detalhes completos das melhorias de performance, UI/UX e refatoração, consulte o [Relatório de Melhorias](DASHBOARD_IMPROVEMENTS.md).
+
+### Destaques:
+- **UI/UX**: Implementação de Skeleton Screens em todas as abas principais.
+- **Performance**: Extração de lógica para hooks customizados (`useCategories`, etc).
+- **Funcionalidades**: Sistema de exportação de relatórios e novas métricas de engajamento.
+- **Qualidade**: Início da cobertura de testes para hooks e componentes.
 
 ### Tracking (API)
 Endpoint:

@@ -74,9 +74,8 @@ import { Switch } from '@/components/ui/switch';
 // Types
 import type { Product } from '../types';
 
-// Utils
+import { useProducts } from '../hooks/useProducts';
 import { cn, formatCurrency } from '../utils';
-import { productsApi } from '@/lib/api';
 
 // Validation schema
 const productSchema = z.object({
@@ -99,11 +98,10 @@ interface ProductsManagementProps {
 }
 
 export default function ProductsManagement({ companyId }: ProductsManagementProps) {
-  const { toast } = useToast();
+  // Hook
+  const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts(companyId);
 
   // State
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -168,55 +166,26 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
-      setLoading(true);
       if (selectedProduct) {
-        const updated = await productsApi.update(Number(selectedProduct.id), {
-          ...data,
-          company_id: Number(companyId)
-        } as any);
-        setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...updated, price: updated.price } : p));
-        toast({ title: 'Produto atualizado!', description: 'Atualização realizada.' });
+        await updateProduct(selectedProduct.id, data);
       } else {
-        const created = await productsApi.create({
-          ...data,
-          company_id: Number(companyId)
-        } as any);
-        setProducts([...products, { ...created, id: String(created.id), price: created.price }]);
-        toast({ title: 'Produto adicionado!', description: 'Produto criado com sucesso.' });
+        await addProduct(data);
       }
-
       setShowDialog(false);
       form.reset();
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o produto.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+      // Error is handled in hook
     }
   };
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
-
     try {
-      setLoading(true);
-      await productsApi.delete(Number(selectedProduct.id));
-      setProducts(products.filter(p => p.id !== selectedProduct.id));
-      toast({ title: 'Produto removido!', description: 'O produto foi excluído com sucesso.' });
-
+      await deleteProduct(selectedProduct.id);
       setShowDeleteDialog(false);
       setSelectedProduct(null);
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível remover o produto.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+      // Error is handled in hook
     }
   };
 
@@ -258,7 +227,33 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       </Card>
 
       {/* Products Grid */}
-      {filteredProducts.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <Skeleton className="aspect-video w-full" />
+              <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              </CardContent>
+              <CardFooter className="p-4 pt-0 flex gap-2">
+                <Skeleton className="h-9 flex-1" />
+                <Skeleton className="h-9 w-10" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />

@@ -14,7 +14,10 @@ import {
   Menu,
   X,
   Search,
-  HelpCircle
+  HelpCircle,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
@@ -62,6 +65,26 @@ export default function EnterpriseHeader({
   const [showNotifications, setShowNotifications] = useState(false);
   
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleExportCSV = () => {
+    // Basic implementation for demonstration
+    // In a real app, this would fetch the full data or use the existing state
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Métrica,Valor\n"
+      + `Nome da Empresa,${company?.name || 'N/A'}\n`
+      + `Visualizações de Perfil,${company?.stats?.profile_views || 0}\n`
+      + `Cliques em CTA,${company?.stats?.cta_clicks || 0}\n`
+      + `Leads Recebidos,${company?.stats?.leads_received || 0}\n`
+      + `Média de Avaliações,${company?.stats?.average_rating || 0}`;
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `relatorio_dashboard_${company?.id || 'empresa'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -134,6 +157,38 @@ export default function EnterpriseHeader({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Export Reports */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex items-center gap-2 bg-muted/30 border-border/50 hover:bg-muted/60"
+              >
+                <Download className="h-4 w-4" />
+                <span>Relatórios</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Exportar Dados</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={handleExportCSV}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                <span>Exportar como CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.print()}>
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Imprimir Página (PDF)</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">Relatórios Agendados</DropdownMenuLabel>
+              <DropdownMenuItem disabled>
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Receber semanalmente</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Theme Toggle */}
           {themeToggle}
 

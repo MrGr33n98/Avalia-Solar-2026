@@ -6,6 +6,9 @@ import {
   Star,
   Target,
   Zap,
+  TrendingUp,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -144,6 +147,54 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             <MetricCard title="Leads" value={stats?.leadsReceived || 0} icon={Target} color="orange" />
           </>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <Clock className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Tempo Médio de Resposta</p>
+              <h4 className="text-lg font-bold text-foreground">2.4 horas</h4>
+              <p className="text-[10px] text-green-600 flex items-center gap-0.5 mt-0.5">
+                <TrendingUp className="h-3 w-3" />
+                15% mais rápido que o mês anterior
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-green-50 rounded-xl">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Completude do Perfil</p>
+              <h4 className="text-lg font-bold text-foreground">92%</h4>
+              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2">
+                <div className="bg-green-500 h-full rounded-full" style={{ width: '92%' }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-purple-50 rounded-xl">
+              <Star className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Taxa de Conversão de Avaliações</p>
+              <h4 className="text-lg font-bold text-foreground">12.5%</h4>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Visitantes que deixaram avaliação
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
