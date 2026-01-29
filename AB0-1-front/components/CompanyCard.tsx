@@ -221,8 +221,9 @@ export default function CompanyCard({
   return (
     <Card
       className={cn(
-        'relative flex flex-col bg-white rounded-2xl border border-gray-200 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+        'relative flex flex-col bg-white border border-gray-200 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden',
+        compact ? 'rounded-2xl h-[280px] md:h-auto' : 'rounded-2xl',
         className
       )}
       onClick={handleCardClick}
@@ -241,12 +242,16 @@ export default function CompanyCard({
       )}
 
       <div className="relative">
-        <div className="absolute top-2 right-2 flex flex-col gap-2 z-10 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+        <div className={cn(
+          "absolute right-2 flex flex-col gap-2 z-10 transition-all duration-200",
+          compact ? "top-2" : "top-2",
+          "sm:opacity-0 sm:group-hover:opacity-100"
+        )}>
           <Button
             size="icon"
             variant="secondary"
             className={cn(
-              "h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all border-none",
+              "h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all border border-gray-100",
               isFav ? "text-red-500" : "text-gray-600"
             )}
             onClick={(e) => {
@@ -260,13 +265,13 @@ export default function CompanyCard({
             }}
             title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           >
-            <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+            <Heart className={cn("h-4 w-4 md:h-4 md:w-4", isFav && "fill-current")} />
           </Button>
           <Button
             size="icon"
             variant="secondary"
             className={cn(
-              "h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all border-none",
+              "h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all border border-gray-100",
               inComp ? "text-primary" : "text-gray-600"
             )}
             onClick={(e) => {
@@ -284,16 +289,16 @@ export default function CompanyCard({
             }}
             title={inComp ? "Remover da comparação" : "Adicionar à comparação"}
           >
-            <Scale className={cn("h-4 w-4", inComp && "fill-current")} />
+            <Scale className={cn("h-4 w-4 md:h-4 md:w-4", inComp && "fill-current")} />
           </Button>
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 rounded-full shadow-md bg-white/90 hover:bg-white backdrop-blur-sm transition-all text-gray-600 border-none"
+            className="h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all text-gray-600 border border-gray-100"
             onClick={handleShare}
             title="Compartilhar"
           >
-            {shared ? <Check className="h-4 w-4 text-emerald-500" /> : <Share2 className="h-4 w-4" />}
+            {shared ? <Check className="h-4 w-4 text-emerald-500" /> : <Share2 className="h-4 w-4 md:h-4 md:w-4" />}
           </Button>
         </div>
 
@@ -400,37 +405,51 @@ export default function CompanyCard({
 
         <div className={cn('w-full my-3', compact ? 'hidden' : 'h-px bg-gray-100')} />
 
-        <div className={cn(compact ? 'flex gap-2' : 'grid grid-cols-1 gap-3', 'print:hidden')}>
-          {hasWhatsapp && whatsappEnabled ? (
-            <WhatsAppCTAButton
-              phone={whatsappLinkRaw}
-              companyId={id.toString()}
-              companySlug={company.slug}
-              label={text.whatsapp}
-              className={cn('w-full shadow-sm font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
-            />
-          ) : (
-            <CTAPrimaryButton
-              label={text.budget}
-              companyId={id.toString()}
-              companySlug={company.slug}
-              ctaType="quote_request"
-              ctaDestination="quote_wizard"
-              onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
-              className={cn('w-full shadow-sm font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
-            />
-          )}
+        {/* Footer Actions */}
+        <div className={cn(
+          "mt-auto print:hidden",
+          compact ? "flex items-end gap-2" : "grid grid-cols-1 gap-3"
+        )}>
+          <div className={cn(compact ? "flex-1" : "w-full")}>
+            {hasWhatsapp && whatsappEnabled ? (
+              <WhatsAppCTAButton
+                phone={whatsappLinkRaw}
+                companyId={id.toString()}
+                companySlug={company.slug}
+                label={text.whatsapp}
+                className={cn(
+                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                )}
+              />
+            ) : (
+              <CTAPrimaryButton
+                label={text.budget}
+                companyId={id.toString()}
+                companySlug={company.slug}
+                ctaType="quote_request"
+                ctaDestination="quote_wizard"
+                onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
+                className={cn(
+                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                )}
+              />
+            )}
+          </div>
 
-          <Button
-            variant="outline"
-            className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
-            asChild
-          >
-            <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-              <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3.5 h-3.5 lg:w-3 lg:h-3' : 'w-4 h-4')} />
-              {text.review}
-            </Link>
-          </Button>
+          {!compact && (
+            <Button
+              variant="outline"
+              className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
+              asChild
+            >
+              <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
+                <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3.5 h-3.5 lg:w-3 lg:h-3' : 'w-4 h-4')} />
+                {text.review}
+              </Link>
+            </Button>
+          )}
         </div>
 
         <div className="hidden print:block">
