@@ -332,6 +332,9 @@ module Api
           code: 'CONFIRMATION_ERROR',
           details: user.errors.full_messages
         )
+      rescue StandardError => e
+        Rails.logger.error "[Audit] Critical error in confirm_email: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+        development_fallback('confirm_email', e)
       end
 
       private

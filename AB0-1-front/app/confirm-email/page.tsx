@@ -61,7 +61,17 @@ function ConfirmEmailContent() {
           credentials: 'include', // Cookies httpOnly
         });
 
-        const data = await response.json();
+        // Capturar resposta bruta para debug se não for OK ou se não for JSON
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          console.error('[ConfirmEmail] Non-JSON response received:', text);
+          throw new Error(`Resposta do servidor inválida (${response.status}). Por favor, contate o suporte.`);
+        }
 
         if (response.ok) {
           console.log('[ConfirmEmail] Email confirmed successfully');
@@ -98,10 +108,10 @@ function ConfirmEmailContent() {
           setStatus('error');
           setMessage(data.message || 'Erro ao confirmar email. O link pode ter expirado.');
         }
-      } catch (error) {
-        console.error('[ConfirmEmail] Error:', error);
+      } catch (error: any) {
+        console.error('[ConfirmEmail] Unexpected error:', error);
         setStatus('error');
-        setMessage('Erro ao confirmar email. Por favor, tente novamente.');
+        setMessage(error.message || 'Erro inesperado ao confirmar email. Tente novamente mais tarde.');
       }
     };
 
