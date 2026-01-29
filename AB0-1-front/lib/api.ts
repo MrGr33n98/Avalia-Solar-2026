@@ -1,7 +1,7 @@
 // =======================
 // Imports
 // =======================
-import { getApiBaseUrl, getApiRequestHeaders } from './api-config';
+import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
 
 // =======================
 // API Response Types
