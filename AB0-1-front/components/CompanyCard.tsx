@@ -407,7 +407,7 @@ export default function CompanyCard({
               companyId={id.toString()}
               companySlug={company.slug}
               label={text.whatsapp}
-              className={cn('w-full shadow-sm font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
+              className={cn('w-full shadow-sm font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
             />
           ) : (
             <CTAPrimaryButton
@@ -417,17 +417,17 @@ export default function CompanyCard({
               ctaType="quote_request"
               ctaDestination="quote_wizard"
               onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
-              className={cn('w-full shadow-sm font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
+              className={cn('w-full shadow-sm font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
             />
           )}
 
           <Button
             variant="outline"
-            className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-8 text-[11px]' : 'h-10')}
+            className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
             asChild
           >
             <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-              <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3 h-3' : 'w-4 h-4')} />
+              <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3.5 h-3.5 lg:w-3 lg:h-3' : 'w-4 h-4')} />
               {text.review}
             </Link>
           </Button>

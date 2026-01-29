@@ -179,11 +179,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Footer Section - CTAs */}
           <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2 mt-auto">
-            <Button asChild variant="outline" size="sm" className="w-full text-xs h-9 border-slate-200">
+            <Button asChild variant="outline" size="sm" className="w-full text-xs h-11 lg:h-9 border-slate-200">
               <Link href={friendlyUrl}>Detalhes</Link>
             </Button>
-            <Button size="sm" className="w-full text-xs h-9 gap-1 shadow-sm bg-primary hover:bg-primary/90">
-               <MessageSquare className="w-3.5 h-3.5" />
+            <Button size="sm" className="w-full text-xs h-11 lg:h-9 gap-1 shadow-sm bg-primary hover:bg-primary/90">
+               <MessageSquare className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                Orçamento
             </Button>
           </CardFooter>

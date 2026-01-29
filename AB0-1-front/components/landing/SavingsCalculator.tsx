@@ -110,7 +110,7 @@ export default function SavingsCalculator() {
                   <div className="mt-6">
                     <Button 
                       onClick={handleConsultation}
-                      className="w-full h-10 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 group"
+                      className="w-full h-11 lg:h-10 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 group"
                     >
                       Solicitar Estudo Personalizado
                       <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />

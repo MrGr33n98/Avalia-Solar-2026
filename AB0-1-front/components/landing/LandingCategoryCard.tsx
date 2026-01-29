@@ -73,10 +73,10 @@ export default function LandingCategoryCard({ category, className }: LandingCate
               asChild
               size="sm"
               variant="outline"
-              className="h-7 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 px-2 text-[10px]"
+              className="h-11 lg:h-7 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 px-3 lg:px-2 text-xs lg:text-[10px]"
             >
               <span>
-                Explorar <ArrowRight className="ml-1 h-3 w-3" />
+                Explorar <ArrowRight className="ml-1 h-3.5 w-3.5 lg:h-3 lg:w-3" />
               </span>
             </Button>
           </div>
