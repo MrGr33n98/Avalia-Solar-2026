@@ -14,7 +14,13 @@ const normalizeOrigin = (rawBase: string) => {
   if (!trimmed) {
     return '';
   }
-  return trimmed.replace(/\/api\/v1\/?$/i, '');
+  // Remove /api/v1 from the end of the string, recursively if necessary
+  let result = trimmed;
+  while (result.toLowerCase().endsWith('/api/v1')) {
+    result = result.substring(0, result.length - 7);
+    result = stripTrailingSlash(result);
+  }
+  return result;
 };
 
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
@@ -42,8 +48,16 @@ export const getApiOrigin = () => getApiRuntimeConfig().origin;
 
 export const buildApiUrl = (endpoint: string) => {
   const baseUrl = stripTrailingSlash(getApiBaseUrl());
-  const cleanEndpoint = endpoint.replace(/^\/+/, '');
-  return `${baseUrl}/${cleanEndpoint}`;
+  let cleanEndpoint = endpoint.replace(/^\/+/, '');
+  
+  // Se o endpoint já começar com api/v1, removemos para evitar duplicação
+  if (cleanEndpoint.toLowerCase().startsWith('api/v1/')) {
+    cleanEndpoint = cleanEndpoint.substring(7);
+  } else if (cleanEndpoint.toLowerCase() === 'api/v1') {
+    cleanEndpoint = '';
+  }
+  
+  return cleanEndpoint ? `${baseUrl}/${cleanEndpoint}` : baseUrl;
 };
 
 export const getApiRequestHeaders = (extraHeaders: Record<string, string> = {}) => {

@@ -421,10 +421,8 @@ export const api = {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       let url = '';
       try {
-        // Fix URL construction to prevent double slashes
-        const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
-        const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
-        url = `${basePath}/${endpoint}`;
+        // Use buildApiUrl to ensure consistent and normalized URL construction
+        url = buildApiUrl(config.url);
         
         // Handle query parameters
         if (config.params) {
@@ -570,21 +568,11 @@ export async function fetchApi<T = any>(
   endpoint: string,
   options: any = {}
 ): Promise<T> {
-  const cleanEndpoint = endpoint.replace(/^\/+/, '');
-  const url = `${API_BASE_URL}/${cleanEndpoint}`;
+  const url = buildApiUrl(endpoint);
 
   try {
-    if (options.debug) {
-      console.log('[API] Debug Fetching:', {
-        url,
-        method: options.method || 'GET',
-        params: options.params,
-        body: options.body
-      });
-    }
-
     const response = await api.request<T>({
-      url: cleanEndpoint,
+      url: endpoint,
       method: options.method || 'GET',
       data: options.body
         ? options.body instanceof FormData
