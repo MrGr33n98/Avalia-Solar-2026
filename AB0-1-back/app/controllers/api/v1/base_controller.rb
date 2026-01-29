@@ -108,6 +108,23 @@ module Api
         @edge_verified = verify_edge_signature if @edge_location[:signature].present?
       end
 
+      def request_metadata
+    meta = {
+      ip: request.remote_ip.to_s,
+      referrer: request.referer.to_s,
+      user_agent: request.user_agent.to_s,
+      path: request.fullpath.to_s,
+      city: @edge_location&.dig(:city),
+      state: @edge_location&.dig(:state)
+    }
+
+    # Extract UTMs from params if present
+    utm_params = params.permit(:utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content).to_h
+    meta.merge!(utm_params) if utm_params.present?
+
+    meta.compact
+  end
+
       def verify_edge_signature
         secret = ENV['SHARED_SECRET']
         return false if secret.blank?

@@ -487,7 +487,39 @@ class Company < ApplicationRecord
     }
   end
 
+  after_update :track_activation_event, if: :saved_change_to_status?
+  after_update :track_plan_change_event, if: :saved_change_to_plan_id?
+
   private
+
+  def track_plan_change_event
+    Analytics::TrackEventService.call(
+      company_id: id,
+      event_type: 'plan_changed',
+      metadata: {
+        previous_plan_id: plan_id_before_last_save,
+        new_plan_id: plan_id,
+        status: plan_status
+      }
+    )
+  rescue => e
+    Rails.logger.error("[Analytics] Failed to track plan change: #{e.message}")
+  end
+
+  def track_activation_event
+    return unless status == 'active' && status_before_last_save != 'active'
+
+    Analytics::TrackEventService.call(
+      company_id: id,
+      event_type: 'company_activated',
+      metadata: {
+        previous_status: status_before_last_save,
+        activation_time: Time.current
+      }
+    )
+  rescue => e
+    Rails.logger.error("[Analytics] Failed to track company activation: #{e.message}")
+  end
 
   def ensure_slug
     base = slug.presence || name.to_s

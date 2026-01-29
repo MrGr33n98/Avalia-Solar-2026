@@ -139,7 +139,24 @@ class User < ApplicationRecord
     user.save
     user
   end
-  
+
+  protected
+
+  def after_confirmation
+    super
+    Analytics::TrackEventService.call(
+      event_type: 'email_confirmed',
+      user: self,
+      company_id: company_id,
+      metadata: {
+        method: provider.present? ? provider : 'email',
+        confirmed_at: confirmed_at
+      }
+    )
+  rescue => e
+    Rails.logger.error("[Analytics] Failed to track email confirmation: #{e.message}")
+  end
+
   private
   
   def set_default_role
