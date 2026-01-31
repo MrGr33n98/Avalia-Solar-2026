@@ -239,7 +239,7 @@ function HomePageContent() {
         />
 
         {loadingCompanies ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <SkeletonCompanyCard key={i} />
             ))}
@@ -247,7 +247,7 @@ function HomePageContent() {
         ) : errorCompanies ? (
           <ErrorState message={errorCompanies} />
         ) : companies.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
             {companies.slice(0, 8).map((company) => (
               <CompanyCard key={company.id} company={company} compact={true} />
             ))}

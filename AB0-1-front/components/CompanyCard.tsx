@@ -200,7 +200,7 @@ export default function CompanyCard({
   }
 
   // Banner ratio: keep cards more compact in carousels/lists.
-  const bannerRatio = compact ? 5 : 3;
+  const bannerRatio = compact ? 4 : 3;
   const avatarSize = compact ? 44 : 60;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -223,7 +223,7 @@ export default function CompanyCard({
       className={cn(
         'relative flex flex-col bg-white border border-gray-200 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden',
-        compact ? 'rounded-2xl h-[280px] md:h-auto' : 'rounded-2xl',
+        compact ? 'rounded-2xl h-[240px] md:h-auto' : 'rounded-2xl',
         className
       )}
       onClick={handleCardClick}
@@ -418,8 +418,8 @@ export default function CompanyCard({
                 companySlug={company.slug}
                 label={text.whatsapp}
                 className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all px-4',
-                  compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  compact ? 'h-11 lg:h-8 text-[12px] lg:text-[11px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
                 )}
               />
             ) : (
@@ -431,8 +431,8 @@ export default function CompanyCard({
                 ctaDestination="quote_wizard"
                 onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
                 className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all px-4',
-                  compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  compact ? 'h-11 lg:h-8 text-[12px] lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
                 )}
               />
             )}
