@@ -58,7 +58,7 @@ export const WhatsAppCTAButton = React.forwardRef<HTMLButtonElement, WhatsAppCTA
         ref={ref}
         variant="outline"
         className={cn(
-          "border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-semibold py-6 px-8 rounded-xl transition-all flex items-center justify-center gap-2",
+          "border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2",
           className
         )}
         onClick={handleClick}

@@ -418,7 +418,7 @@ export default function CompanyCard({
                 companySlug={company.slug}
                 label={text.whatsapp}
                 className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  'w-full shadow-sm font-bold rounded-xl transition-all px-4',
                   compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
                 )}
               />
@@ -431,7 +431,7 @@ export default function CompanyCard({
                 ctaDestination="quote_wizard"
                 onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
                 className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all',
+                  'w-full shadow-sm font-bold rounded-xl transition-all px-4',
                   compact ? 'h-11 lg:h-8 text-sm lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
                 )}
               />
