@@ -148,7 +148,17 @@ class Company < ApplicationRecord
   end
 
   def rating_count
-    reviews.count
+    self[:rating_count] || 0
+  end
+
+  def recalculate_rating_cache!
+    new_rating = reviews.approved.average(:rating).to_f.round(2)
+    new_count = reviews.approved.count
+    
+    update_columns(rating_avg: new_rating, rating_count: new_count)
+    
+    # Update associated categories metrics
+    categories.each(&:update_metrics!)
   end
 
   def to_s

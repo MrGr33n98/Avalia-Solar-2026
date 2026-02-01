@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Star, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
+import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
+import { RatingStars } from '@/components/RatingStars';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -158,26 +159,13 @@ export default function CompanyHero({
             </p>
             
             <div className="flex items-center space-x-3">
-              <div className="flex items-center">
-                <div className="flex items-center mr-1.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3.5 h-3.5 ${
-                        i < Math.round(companyStats.rating)
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-200 fill-gray-200'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-bold text-foreground">
-                  {companyStats.rating.toFixed(1)}
-                </span>
-                <span className="text-muted-foreground ml-1 text-xs">
-                  ({companyStats.reviewCount})
-                </span>
-              </div>
+              <RatingStars 
+                 rating={companyStats.rating} 
+                 count={companyStats.reviewCount} 
+                 showRatingValue={true}
+                 starClassName="w-4 h-4"
+                 countClassName="text-sm"
+               />
             </div>
           </div>
         </div>

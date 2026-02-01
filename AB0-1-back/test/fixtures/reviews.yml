@@ -1,13 +1,15 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  rating: 1
-  comment: MyText
+  rating: 5
+  comment: "Ótima empresa, serviço de qualidade."
   user: one
-  product: one
+  company: one
+  status: approved
 
 two:
-  rating: 1
-  comment: MyText
+  rating: 4
+  comment: "Bom atendimento e preço justo."
   user: two
-  product: two
+  company: two
+  status: approved

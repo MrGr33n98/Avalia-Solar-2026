@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Building2, Star } from 'lucide-react';
+import { ArrowRight, Building2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { RatingStars } from '@/components/RatingStars';
 import type { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
@@ -24,9 +25,9 @@ function resolveCategoryImage(category: Category): string {
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {
   const href = buildCategoryPath(category?.seo_url, category?.id);
   const companiesCount = category?.companies_count ?? category?.companies?.length ?? 0;
-  const reviewsCount = (category as any)?.reviews_count ?? 0;
-  const avgRating = (category as any)?.average_rating ?? (category as any)?.rating ?? null;
-  const ratingLabel = typeof avgRating === 'number' ? avgRating.toFixed(1) : null;
+  const reviewsCount = Number(category?.reviews_count ?? 0);
+  const avgRating = parseFloat((category?.average_rating ?? 0).toString());
+  const ratingLabel = avgRating > 0 ? avgRating.toFixed(1) : null;
 
   return (
     <Card className={cn('overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow h-auto max-h-[320px]', className)}>
@@ -62,10 +63,12 @@ export default function LandingCategoryCard({ category, className }: LandingCate
               ) : null}
 
               {reviewsCount > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                  {ratingLabel ? <span className="font-medium">{ratingLabel}</span> : null}
-                </span>
+                <RatingStars 
+                  rating={avgRating || 0} 
+                  count={reviewsCount} 
+                  showCount={false}
+                  starClassName="w-3.5 h-3.5"
+                />
               ) : null}
             </div>
 

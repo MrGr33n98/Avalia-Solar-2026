@@ -1,7 +1,7 @@
 class Review < ApplicationRecord
   include ReviewCallbacks
 
-  belongs_to :company, counter_cache: :rating_count
+  belongs_to :company
   belongs_to :user
 
   enum status: { pending: 0, approved: 1, rejected: 2 }

@@ -4,6 +4,8 @@ class CategorySerializer < ActiveModel::Serializer
   attributes :id, :name, :seo_url, :seo_title,
              :short_description, :description,
              :parent_id, :kind, :status, :featured,
+             :average_rating, :reviews_count,
+             :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url,
              :parent, :subcategories
              # :banner_sponsored, :banners  # Temporarily commented out
@@ -11,6 +13,10 @@ class CategorySerializer < ActiveModel::Serializer
   has_many :companies
   has_many :products
   # has_many :banners, serializer: BannerSerializer  # Commented out - BannerSerializer not found
+
+  def reviews_count
+    object.total_reviews_count
+  end
 
   def banner_url
     return unless object.banner.attached?

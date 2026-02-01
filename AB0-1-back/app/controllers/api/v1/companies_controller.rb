@@ -16,7 +16,28 @@ module Api
         retries = 0
         begin
           @companies = ::Company.includes(:categories, :reviews)
-                              .order(created_at: :desc)
+
+          # Ordenação (Classificação)
+          if params[:sort].present?
+            valid_sorts = %w[rating rating_avg name created_at]
+            if valid_sorts.include?(params[:sort])
+              case params[:sort]
+              when 'rating', 'rating_avg'
+                @companies = @companies.reorder(rating_avg: :desc, rating_count: :desc)
+              when 'name'
+                @companies = @companies.reorder(name: :asc)
+              when 'created_at'
+                @companies = @companies.reorder(created_at: :desc)
+              end
+            else
+              Rails.logger.warn "[Classification] Invalid sort parameter: #{params[:sort]}"
+              # Se o parâmetro for inválido, usamos o padrão (melhores primeiro)
+              @companies = @companies.reorder(rating_avg: :desc, rating_count: :desc, created_at: :desc)
+            end
+          else
+            # Padrão: Melhores avaliadas primeiro (Ranking)
+            @companies = @companies.order(rating_avg: :desc, rating_count: :desc, created_at: :desc)
+          end
 
           # Filtra por empresas do usuário autenticado
           if ActiveModel::Type::Boolean.new.cast(params[:mine])

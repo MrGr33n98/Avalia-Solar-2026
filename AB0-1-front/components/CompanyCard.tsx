@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, MessageCircle, Building2, Heart, Share2, Check, Scale } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Building2, Share2, Check, Scale, MessageSquare, StarHalf } from 'lucide-react';
+
+import { RatingStars } from '@/components/RatingStars';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +64,9 @@ export default function CompanyCard({
 }: Props) {
   const router = useRouter();
   const company = rawCompany as ExtendedCompany;
-  const { id, name, city, state, description, rating_count, average_rating, category_name, website } = company;
+  const { id, name, city, state, description, website, category_name } = company;
+  const rating_count = Number((company as any).rating_count ?? (company as any).total_reviews ?? (company as any).reviews_count ?? 0);
+  const average_rating = parseFloat((company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0);
 
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -84,6 +89,11 @@ export default function CompanyCard({
       });
     }
   }, [id, name, company.slug]);
+
+  const rating = average_rating?.toFixed(1) ?? '0.0';
+  const totalReviews = rating_count || 0;
+  const companyPath = buildCompanyPath(company.slug, name, id);
+  const companyReviewPath = buildCompanySubPath(company.slug, name, 'review', id);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,11 +128,6 @@ export default function CompanyCard({
       }
     }
   };
-
-  const rating = average_rating?.toFixed(1) ?? '0.0';
-  const totalReviews = rating_count || 0;
-  const companyPath = buildCompanyPath(company.slug, name, id);
-  const companyReviewPath = buildCompanySubPath(company.slug, name, 'review', id);
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
@@ -201,7 +206,7 @@ export default function CompanyCard({
 
   // Banner ratio: keep cards more compact in carousels/lists.
   const bannerRatio = compact ? 4 : 3;
-  const avatarSize = compact ? 44 : 60;
+  const avatarSize = compact ? 44 : 64;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -252,26 +257,6 @@ export default function CompanyCard({
             variant="secondary"
             className={cn(
               "h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all border border-gray-100",
-              isFav ? "text-red-500" : "text-gray-600"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(id);
-              track('company_favorite_toggle', {
-                company_id: id,
-                company_name: name,
-                status: !isFav ? 'added' : 'removed'
-              });
-            }}
-            title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-          >
-            <Heart className={cn("h-4 w-4 md:h-4 md:w-4", isFav && "fill-current")} />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className={cn(
-              "h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all border border-gray-100",
               inComp ? "text-primary" : "text-gray-600"
             )}
             onClick={(e) => {
@@ -303,7 +288,7 @@ export default function CompanyCard({
         </div>
 
         <AspectRatio ratio={bannerRatio} className={cn('w-full')}>
-          <div className={cn('relative w-full h-full')}>
+        <div className={cn('relative w-full h-full')}>
             {bannerUrl && !bannerError ? (
               <Image
                 src={bannerUrl}
@@ -356,45 +341,47 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-5 pb-5')}>
-        <div className="flex justify-between items-start mb-1">
-          <div className="flex-1 min-w-0">
-            <Link href={companyPath} onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('text-sm font-semibold leading-tight line-clamp-1', compact ? 'text-sm' : 'text-base')}>{name}</h3>
+      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-5 pb-5 pt-7')}>
+        <div className="flex flex-col gap-1 mb-2">
+          <div className="flex items-center gap-1.5 flex-wrap min-h-[20px]">
+            <Link href={companyPath} className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
+              <h3 className={cn('font-bold leading-tight line-clamp-1 text-slate-900', compact ? 'text-xs' : 'text-base')}>
+                {name}
+                {totalReviews > 0 && (
+                  <span className="ml-1 text-gray-400 font-bold">
+                    ({totalReviews})
+                  </span>
+                )}
+              </h3>
             </Link>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              {company.verified && (
-                <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1 py-0 rounded-md font-semibold">
-                  {text.verified}
-                </Badge>
-              )}
-              {category_name && (
-                <span className="text-[10px] text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
-                  {category_name}
-                </span>
-              )}
+            <div className="flex-shrink-0">
+              <RatingStars rating={average_rating} count={rating_count} showCount={false} lang={lang} />
             </div>
           </div>
 
-          <div className="flex flex-col items-end ml-2">
-            {parseFloat(rating) > 0 && (
-              <div className="inline-flex items-center rounded-md bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">
-                <span>{rating}</span>
-                <Star className="w-3 h-3 fill-amber-500 text-amber-500 ml-0.5" />
-              </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {company.verified && (
+              <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1 py-0 rounded-md font-semibold">
+                {text.verified}
+              </Badge>
+            )}
+            {category_name && (
+              <span className="text-[10px] text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
+                {category_name}
+              </span>
             )}
           </div>
         </div>
 
-        {(city || state) && (
-          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-600 truncate">
+        {(!compact || (city || state)) && (
+          <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-500 truncate">
             <MapPin className="w-3 h-3 text-gray-400" />
             <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
           </div>
         )}
 
         {!compact && (
-          <p className={cn('mt-2 text-sm text-gray-700', compact ? 'line-clamp-1' : 'line-clamp-2')}>
+          <p className="mt-2 text-xs text-slate-600 leading-relaxed line-clamp-2 min-h-[2.5rem]">
             {description || (
               <span className="text-gray-400 italic font-light">
                 Visite o perfil para saber mais sobre nossos serviços.
@@ -408,9 +395,9 @@ export default function CompanyCard({
         {/* Footer Actions */}
         <div className={cn(
           "mt-auto print:hidden",
-          compact ? "flex items-end gap-2" : "grid grid-cols-1 gap-3"
+          compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
         )}>
-          <div className={cn(compact ? "flex-1" : "w-full")}>
+          <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
             {hasWhatsapp && whatsappEnabled ? (
               <WhatsAppCTAButton
                 phone={whatsappLinkRaw}
@@ -419,7 +406,7 @@ export default function CompanyCard({
                 label={text.whatsapp}
                 className={cn(
                   'w-full shadow-sm font-bold rounded-xl transition-all',
-                  compact ? 'h-11 lg:h-8 text-[12px] lg:text-[11px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
+                  compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
                 )}
               />
             ) : (
@@ -432,24 +419,25 @@ export default function CompanyCard({
                 onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
                 className={cn(
                   'w-full shadow-sm font-bold rounded-xl transition-all',
-                  compact ? 'h-11 lg:h-8 text-[12px] lg:text-[11px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                  compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
                 )}
               />
             )}
           </div>
 
-          {!compact && (
-            <Button
-              variant="outline"
-              className={cn('w-full border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium', compact ? 'h-11 lg:h-8 text-xs lg:text-[11px]' : 'h-11 lg:h-10')}
-              asChild
-            >
-              <Link href={companyReviewPath} aria-label="Avaliar empresa" onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-                <Star className={cn('mr-1 text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-3.5 h-3.5 lg:w-3 lg:h-3' : 'w-4 h-4')} />
-                {text.review}
-              </Link>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className={cn(
+              'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium transition-all',
+              compact ? 'h-11 w-11 p-0 flex-shrink-0 lg:h-9 lg:w-9' : 'w-full h-11 lg:h-10'
+            )}
+            asChild
+          >
+          <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
+            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-5 h-5 lg:w-4 h-4' : 'w-4 h-4 mr-1')} />
+            {!compact && text.review}
+          </Link>
+          </Button>
         </div>
 
         <div className="hidden print:block">

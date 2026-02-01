@@ -212,7 +212,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
   const companyStats = useMemo(() => {
     const avgRating =
-      reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : 0;
+      reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : (company.average_rating || 0);
 
     const createdYear = company.created_at
       ? new Date(company.created_at).getFullYear()
@@ -222,14 +222,14 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
     return {
       rating: reviewAnalytics?.average_rating ?? avgRating,
-      reviewCount: reviewAnalytics?.total_reviews ?? reviews.length,
+      reviewCount: reviewAnalytics?.total_reviews ?? (company.rating_count || reviews.length),
       productCount: products.length,
       completedProjects: products.length * 10,
       yearsInBusiness,
       responseRate: "92%",
       satisfaction: "95%",
     };
-  }, [reviews, reviewAnalytics, products, company.created_at]);
+  }, [reviews, reviewAnalytics, products, company.created_at, company.average_rating, company.rating_count]);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {

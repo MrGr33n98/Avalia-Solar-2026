@@ -128,7 +128,12 @@ function HomePageContent() {
     const fetchCategories = async () => {
       try {
         if (process.env.NODE_ENV !== 'production') console.log('[Home] Fetching categories...');
-        const response = await categoriesApiSafe.getAll({ featured: true, status: 'active', limit: 8 });
+        const response = await categoriesApiSafe.getAll({ 
+          featured: true, 
+          status: 'active', 
+          limit: 8,
+          include: 'average_rating,reviews_count'
+        } as any);
         if (process.env.NODE_ENV !== 'production') console.log('[Home] Categories response:', response);
         setFeaturedCategories(response);
       } catch {
@@ -144,7 +149,7 @@ function HomePageContent() {
           status: 'active',
           featured: true,
           limit: 12,
-          include: 'logo_url,banner_url',
+          include: 'logo_url,banner_url,average_rating,rating_count',
         });
         if (process.env.NODE_ENV !== 'production') {
           const withBanner = (response || []).filter((c) => !!c.banner_url);
