@@ -21,7 +21,7 @@ interface GTMProps {
 export function GoogleTagManager({ gtmId }: GTMProps) {
   return (
     <>
-      {/* GTM Script - Head */}
+      {/* Google Tag Manager */}
       <Script
         id="gtm-script"
         strategy="afterInteractive"
@@ -41,6 +41,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
 
 export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
   return (
+    /* Google Tag Manager (noscript) */
     <noscript>
       <iframe
         src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
