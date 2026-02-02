@@ -72,7 +72,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-6 ml-auto">
             {/* Mega Menu Trigger */}
             <div 
-              className="relative" 
+              className="static" 
               ref={megaMenuRef}
               onMouseEnter={() => setIsMegaMenuOpen(true)}
               onMouseLeave={() => setIsMegaMenuOpen(false)}
@@ -87,7 +87,7 @@ export default function Navbar() {
                 Categorias
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
-              
+
               <CategoriesMegaMenu 
                 isOpen={isMegaMenuOpen} 
                 onClose={() => setIsMegaMenuOpen(false)} 

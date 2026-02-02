@@ -138,7 +138,7 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
     // Normalize filters for the API
     const filters = {
       status: 'active',
-      searchTerm: (searchParams.searchTerm as string) || undefined,
+      searchTerm: (searchParams.search as string) || (searchParams.searchTerm as string) || undefined,
       state: (searchParams.state as string) || undefined,
       city: (searchParams.city as string) || undefined,
       rating: (searchParams.rating as string) || undefined,

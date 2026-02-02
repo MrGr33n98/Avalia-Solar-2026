@@ -17,6 +17,12 @@ export function initializeGTag(measurementId: string): void {
   if (typeof window === 'undefined') return;
   if (window.gtag) return; // Already initialized
   
+  // Load script
+  const script = document.createElement('script');
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+  script.async = true;
+  document.head.appendChild(script);
+
   window.dataLayer = window.dataLayer || [];
   window.gtag = function gtag(...args: any[]) {
     window.dataLayer!.push(args);

@@ -28,6 +28,10 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
 
   const activeChips: { key: keyof CompanyFilters; value: any; label: string }[] = [];
 
+  if (filters.search) {
+    activeChips.push({ key: 'search', value: filters.search, label: `Busca: "${filters.search}"` });
+  }
+
   filters.state.forEach(s => activeChips.push({ key: 'state', value: s, label: s }));
   filters.city.forEach(c => activeChips.push({ key: 'city', value: c, label: c }));
   filters.category_ids.forEach(id => activeChips.push({ key: 'category_ids', value: id, label: getCategoryName(id) }));

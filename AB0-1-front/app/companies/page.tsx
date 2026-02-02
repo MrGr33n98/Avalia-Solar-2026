@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { Search, Grid, List, MapPin, Heart, Building2, Package, Folder, Star, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -13,11 +13,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import BannerByLocation from '@/components/BannerByLocation';
 import { cn } from '@/lib/utils';
-import FilterSidebar from '@/components/filters/FilterSidebar';
-import { parseQueryParams } from '@/components/filters/query';
+import { FilterSidebar } from '@/components/filters/FilterSidebar';
+import { parseQueryParams, stringifyQueryParams } from '@/components/filters/query';
+import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary';
+import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
 
 function CompaniesContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +35,28 @@ function CompaniesContent() {
   const filters = useMemo(() => parseQueryParams(searchParams), [searchParams]);
 
   const [searchInput, setSearchInput] = useState(filters.search || '');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = { ...filters, search: searchInput, page: 1 };
+    const queryString = stringifyQueryParams(updated);
+    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  };
+
+  const removeFilter = (key: keyof CompanyFilters, value?: any) => {
+    let updated: any;
+    if (Array.isArray(filters[key])) {
+      const currentArray = filters[key] as any[];
+      updated = { ...filters, [key]: currentArray.filter(v => v !== value), page: 1 };
+    } else if (typeof filters[key] === 'boolean') {
+      updated = { ...filters, [key]: false, page: 1 };
+    } else {
+      updated = { ...filters, [key]: DEFAULT_FILTERS[key], page: 1 };
+    }
+    
+    const queryString = stringifyQueryParams(updated);
+    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  };
 
   // Sincronizar searchInput quando os filtros mudam via URL (ex: reset)
   useEffect(() => {
@@ -69,34 +95,30 @@ function CompaniesContent() {
         }
 
         // Filtro de Estados
-        if (filters.states && filters.states.length > 0) {
-          if (!company.state || !filters.states.includes(company.state.toUpperCase())) {
+        if (filters.state && filters.state.length > 0) {
+          if (!company.state || !filters.state.includes(company.state.toUpperCase())) {
             return false;
           }
         }
 
         // Filtro de Cidades
-        if (filters.cities && filters.cities.length > 0) {
-          if (!company.city || !filters.cities.includes(company.city)) {
+        if (filters.city && filters.city.length > 0) {
+          if (!company.city || !filters.city.includes(company.city)) {
             return false;
           }
         }
 
         // Filtro de Categorias
-        if (filters.categories && filters.categories.length > 0) {
-          // Nota: Assumindo que company tem um array de category ids ou slugs
-          // Como o backend atual pode não retornar isso de forma limpa, 
-          // idealmente isso seria filtrado via API. 
-          // Por enquanto, faremos uma verificação básica se a company tiver category_id
-          if (company.category_id && !filters.categories.includes(String(company.category_id))) {
+        if (filters.category_ids && filters.category_ids.length > 0) {
+          if (company.category_id && !filters.category_ids.includes(Number(company.category_id))) {
             return false;
           }
         }
 
         // Filtro de Avaliação Mínima
-        if (filters.minRating) {
+        if (filters.min_rating) {
           const rating = Number(company.average_rating) || 0;
-          if (rating < filters.minRating) return false;
+          if (rating < filters.min_rating) return false;
         }
 
         // Filtros de Qualidade
@@ -104,8 +126,8 @@ function CompaniesContent() {
         if (filters.featured && !company.featured) return false;
         
         // Mock de filtros que o backend pode não ter ainda, mas a UI suporta
-        if (filters.financing && !company.has_financing) return false;
-        if (filters.whatsapp && !company.whatsapp) return false;
+          if (filters.financing_enabled && !company.financing_enabled) return false;
+          if (filters.whatsapp_enabled && !company.whatsapp) return false;
 
         return true;
       })
@@ -172,7 +194,7 @@ function CompaniesContent() {
   return (
     <div className="min-h-screen bg-slate-50/50">
       <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
-        <div className="relative">
+        <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar empresas..."
@@ -180,7 +202,7 @@ function CompaniesContent() {
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
           />
-        </div>
+        </form>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -190,6 +212,8 @@ function CompaniesContent() {
           </aside>
 
           <div className="flex-1 space-y-6">
+            <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
+
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Empresas de Energia Solar</h1>
@@ -250,7 +274,9 @@ function CompaniesContent() {
                 </div>
               ) : visibleCompanies.length > 0 ? (
                 <>
-                  <div className={cn(
+                  <div 
+                    data-testid="companies-grid"
+                    className={cn(
                     "grid gap-4",
                     viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
                   )}>
@@ -258,7 +284,7 @@ function CompaniesContent() {
                       <CompanyCard 
                         key={company.id} 
                         company={company} 
-                        variant={viewMode === 'list' ? 'list' : 'grid'}
+                        compact={viewMode === 'list'}
                       />
                     ))}
                   </div>
@@ -288,10 +314,7 @@ function CompaniesContent() {
                     variant="link" 
                     className="mt-4 text-blue-600"
                     onClick={() => {
-                      const url = new URL(window.location.href);
-                      url.search = '';
-                      window.history.replaceState({}, '', url.pathname);
-                      window.location.reload();
+                      router.replace(pathname, { scroll: false });
                     }}
                   >
                     Limpar todos os filtros

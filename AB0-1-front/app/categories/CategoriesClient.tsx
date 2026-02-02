@@ -81,9 +81,9 @@ export default function CategoriesClient() {
         }
 
         // Filtro de Estado
-        if (filters.states.length > 0) {
+        if (filters.state.length > 0) {
           const { state } = parseAddress(company.address);
-          if (!state || !filters.states.includes(state)) return false;
+          if (!state || !filters.state.includes(state)) return false;
         }
 
         // Filtro de Avaliação

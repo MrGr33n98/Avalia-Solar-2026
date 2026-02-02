@@ -56,6 +56,8 @@ export function initializeAnalytics(): void {
     onConsentChange((consent) => {
       if (consent.analytics && !initialized) {
         initializeSDKs();
+        // Track the current page immediately after consent
+        setTimeout(() => page(), 500);
       }
     });
     

@@ -30,6 +30,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
 import SponsorCarousel from '@/components/ui/sponsorcarousel';
+import { useLocationData } from '@/hooks/useLocationData';
 import { Badge } from '@/components/ui/badge';
 import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
@@ -535,7 +536,7 @@ export default function CategoryClientComponent({
   }, [initialCompanies, paginationMeta]);
 
   const filters = useMemo(() => ({
-    searchTerm: searchParams.get('searchTerm') || '',
+    search: searchParams.get('search') || searchParams.get('searchTerm') || '',
     state: searchParams.get('state') || '',
     city: searchParams.get('city') || '',
     rating: Number(searchParams.get('rating')) || 0,
@@ -562,25 +563,32 @@ export default function CategoryClientComponent({
     [searchParams]
   );
 
-  const handleFilterChange = (filterType: string, value: any) => {
+  const handleFilterChange = useCallback((type: string, value: any) => {
     setLoadingCompanies(true);
-    
-    if (filterType === 'clearAll') {
+
+    if (type === 'clearAll') {
       router.push(pathname, { scroll: false });
       return;
     }
 
-    const updates: Record<string, any> = {
-      [filterType]: value,
+    // Map legacy or UI names to standard filter names if needed
+    const filterKeyMap: Record<string, string> = {
+      'searchTerm': 'search',
+      'minRating': 'rating',
     };
 
-    if (filterType === 'state') {
+    const key = filterKeyMap[type] || type;
+    const updates: Record<string, any> = {
+      [key]: value,
+    };
+
+    if (key === 'state') {
       updates.city = null; // Clear city when state changes
     }
 
     const queryString = createQueryString(updates);
     router.push(`${pathname}?${queryString}`, { scroll: false });
-  };
+  }, [pathname, router, createQueryString]);
 
   const filteredCompanies = companies;
 
@@ -597,7 +605,7 @@ export default function CategoryClientComponent({
         status: 'active',
         per_page: 20,
         page: nextPage,
-        searchTerm: filters.searchTerm || undefined,
+        searchTerm: filters.search || undefined,
         state: filters.state || undefined,
         city: filters.city || undefined,
         rating: filters.rating > 0 ? String(filters.rating) : undefined,
@@ -671,7 +679,7 @@ export default function CategoryClientComponent({
     }));
   }, [companies]);
 
-  const mobileStates = useMemo(() => {
+  const mobileStatesFromCompanies = useMemo(() => {
     const values = new Set<string>();
     companies.forEach((company) => {
       if (company.state) values.add(company.state);
@@ -679,7 +687,20 @@ export default function CategoryClientComponent({
     return Array.from(values).sort();
   }, [companies]);
 
-  const mobileCities = useMemo(() => {
+  const { states: allStates, cities: allCities, fetchCities } = useLocationData();
+
+  useEffect(() => {
+    if (filters.state) {
+      fetchCities(filters.state);
+    }
+  }, [filters.state, fetchCities]);
+
+  const mobileStates = useMemo(() => {
+    if (allStates.length > 0) return allStates;
+    return mobileStatesFromCompanies;
+  }, [allStates, mobileStatesFromCompanies]);
+
+  const mobileCitiesFromCompanies = useMemo(() => {
     if (!filters.state) return [] as string[];
     const values = new Set<string>();
     companies.forEach((company) => {
@@ -689,6 +710,11 @@ export default function CategoryClientComponent({
     });
     return Array.from(values).sort();
   }, [companies, filters.state]);
+
+  const mobileCities = useMemo(() => {
+    if (allCities.length > 0) return allCities;
+    return mobileCitiesFromCompanies;
+  }, [allCities, mobileCitiesFromCompanies]);
 
   return (
     <div className="relative min-h-screen bg-gray-50/50">
@@ -705,8 +731,8 @@ export default function CategoryClientComponent({
               <Input
                 type="search"
                 placeholder={`Buscar em ${category.name}...`}
-                value={filters.searchTerm}
-                onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="h-10 rounded-lg bg-gray-100 pl-9 pr-3 text-sm placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-primary/30 transition-all duration-300"
               />
             </div>

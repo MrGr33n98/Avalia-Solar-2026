@@ -18,6 +18,7 @@ export interface CityOption {
 }
 
 export interface CompanyFilters {
+  search: string;
   state: string[];
   city: string[];
   category_ids: number[];
@@ -31,6 +32,7 @@ export interface CompanyFilters {
 }
 
 export const DEFAULT_FILTERS: CompanyFilters = {
+  search: '',
   state: [],
   city: [],
   category_ids: [],
