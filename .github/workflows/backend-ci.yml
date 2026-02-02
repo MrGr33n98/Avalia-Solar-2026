@@ -19,6 +19,10 @@ on:
     paths:
       - 'AB0-1-back/**'
 
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   RUBY_VERSION: '3.2.9'
   POSTGRES_VERSION: '14'
