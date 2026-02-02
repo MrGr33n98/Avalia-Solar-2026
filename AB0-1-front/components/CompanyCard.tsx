@@ -4,17 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, MessageCircle, Building2, Share2, Check, Scale, MessageSquare, StarHalf } from 'lucide-react';
+import { Star, MapPin, Building2, Share2, Check, Scale } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
-import { motion, AnimatePresence } from 'framer-motion';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Avatar } from '@/components/ui/avatar';
 
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
@@ -25,6 +23,7 @@ import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useComparison } from '@/hooks/useComparison';
+import { cn } from '@/lib/utils';
 
 interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
@@ -49,8 +48,6 @@ const DICTIONARY = {
   'en-US': { whatsapp: 'WhatsApp', budget: 'Get Quote', review: 'Review', verified: 'Verified', reviews: 'reviews' },
   'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones' },
 } as const;
-
-const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');
 
 export default function CompanyCard({
   company: rawCompany,
@@ -238,7 +235,6 @@ export default function CompanyCard({
       role="link"
       tabIndex={0}
       aria-label={`Visitar perfil ${name}`}
-      aria-selected={selected}
       data-selected={selected}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
     >
@@ -355,7 +351,7 @@ export default function CompanyCard({
               </h3>
             </Link>
             <div className="flex-shrink-0">
-              <RatingStars rating={average_rating} count={rating_count} showCount={false} lang={lang} />
+              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={false} lang={lang} />}
             </div>
           </div>
 
@@ -399,29 +395,33 @@ export default function CompanyCard({
         )}>
           <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
             {hasWhatsapp && whatsappEnabled ? (
-              <WhatsAppCTAButton
-                phone={whatsappLinkRaw}
-                companyId={id.toString()}
-                companySlug={company.slug}
-                label={text.whatsapp}
-                className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all',
-                  compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
-                )}
-              />
+              WhatsAppCTAButton && (
+                <WhatsAppCTAButton
+                  phone={whatsappLinkRaw}
+                  companyId={id.toString()}
+                  companySlug={company.slug}
+                  label={text.whatsapp}
+                  className={cn(
+                    'w-full shadow-sm font-bold rounded-xl transition-all',
+                    compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
+                  )}
+                />
+              )
             ) : (
-              <CTAPrimaryButton
-                label={text.budget}
-                companyId={id.toString()}
-                companySlug={company.slug}
-                ctaType="quote_request"
-                ctaDestination="quote_wizard"
-                onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
-                className={cn(
-                  'w-full shadow-sm font-bold rounded-xl transition-all',
-                  compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
-                )}
-              />
+              CTAPrimaryButton && (
+                <CTAPrimaryButton
+                  label={text.budget}
+                  companyId={id.toString()}
+                  companySlug={company.slug}
+                  ctaType="quote_request"
+                  ctaDestination="quote_wizard"
+                  onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
+                  className={cn(
+                    'w-full shadow-sm font-bold rounded-xl transition-all',
+                    compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                  )}
+                />
+              )
             )}
           </div>
 

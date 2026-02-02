@@ -53,7 +53,7 @@ export function CookieConsent() {
                 <h3 className="text-lg font-semibold mb-2">Cookies & Privacidade</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Utilizamos cookies para melhorar sua experiência e analisar o tráfego do site. 
-                  Ao clicar em "Aceitar", você concorda com o uso de cookies conforme nossa{' '}
+                  Ao clicar em &quot;Aceitar&quot;, você concorda com o uso de cookies conforme nossa{' '}
                   <Link href="/privacy" className="text-primary hover:underline">
                     Política de Privacidade
                   </Link>.

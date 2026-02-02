@@ -247,6 +247,7 @@ function CompaniesContent() {
             <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {quickActions.map((action) => {
                 const Icon = action.icon;
+                if (!Icon) return null;
                 return (
                   <Link
                     key={action.label}
