@@ -23,11 +23,11 @@ export const MegaMenuCategories: React.FC<MegaMenuCategoriesProps> = ({ isOpen }
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="absolute top-full left-0 w-full bg-white shadow-2xl border-t border-slate-100 z-50 overflow-hidden rounded-b-3xl"
+          className="absolute top-[calc(100%-1px)] left-0 w-full bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-t border-slate-100 z-50 overflow-hidden rounded-b-3xl"
         >
-          <div className="container mx-auto py-10 px-6">
+          <div className="container mx-auto py-8 px-8">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-12 gap-y-10">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="space-y-4">
                     <Skeleton className="h-6 w-32" />
@@ -40,7 +40,7 @@ export const MegaMenuCategories: React.FC<MegaMenuCategoriesProps> = ({ isOpen }
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-12 gap-y-10">
                 {categories.map((category) => (
                   <CategoryColumn key={category.id} category={category} />
                 ))}
