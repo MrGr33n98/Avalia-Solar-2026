@@ -4,7 +4,7 @@ import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
 
-type BannerLocation = 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
+type BannerLocation = 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top' | 'companies_footer';
 type BannerContainerBanners = Parameters<typeof BannerContainer>[0]['banners'];
 type BannerData = BannerContainerBanners[number];
 

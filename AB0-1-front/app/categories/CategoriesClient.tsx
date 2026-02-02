@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Filter, Folder, Grid, Heart, Home, Search, Star, User, X, Zap } from 'lucide-react';
+import { Building2, Filter, Folder, Grid, Heart, Home, Package, Search, Star, User, X, Zap } from 'lucide-react';
 
 // Hooks & Utils
 import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
@@ -57,6 +57,14 @@ export default function CategoriesClient() {
   });
 
   const [sort, setSort] = useState<string>('name_asc');
+
+  const quickActions = [
+    { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
+    { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
+    { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
+    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
+    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
+  ];
 
   // Sincroniza estado interno com a URL
   useEffect(() => {
@@ -161,7 +169,7 @@ export default function CategoriesClient() {
           
           <div className="bg-[#f7f7f7] px-4 pb-24 pt-4 space-y-4">
             <section className="grid grid-cols-5 gap-3">
-              {quickActions.map((action) => {
+              {quickActions.map((action: any) => {
                 const Icon = action.icon;
                 return (
                   <Link key={action.label} href={action.href} className="flex flex-col items-center gap-1 text-center">
@@ -254,7 +262,7 @@ export default function CategoriesClient() {
               {selectedCategory && selectedCategory.banner_url && (
                 <div className="relative w-full h-48 bg-gray-300 rounded-lg overflow-hidden mb-8 group">
                   <Image
-                    src={buildUrl(selectedCategory.banner_url)}
+                    src={getFullImageUrl(selectedCategory.banner_url)}
                     alt={`Banner ${selectedCategory.name}`}
                     className="brightness-75 object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
