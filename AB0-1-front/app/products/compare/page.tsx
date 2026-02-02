@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { productsApiSafe } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-export default function ProductsComparePage() {
+function CompareContent() {
   const searchParams = useSearchParams();
   const initialIds = searchParams.get('ids')?.split(',').map((v) => parseInt(v, 10)).filter(Boolean) || [];
   const [ids, setIds] = useState<number[]>(initialIds);
@@ -68,5 +68,13 @@ export default function ProductsComparePage() {
         <p className="text-sm text-muted-foreground">Selecione pelo menos um produto para comparar.</p>
       )}
     </div>
+  );
+}
+
+export default function ProductsComparePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Carregando comparador...</div>}>
+      <CompareContent />
+    </Suspense>
   );
 }
