@@ -17,7 +17,7 @@ ActiveAdmin.register Product do
     def scoped_collection
       scope = super.includes(:company)
       # If we're in a nested route, super already filtered by parent
-      return scope if nested_belongs_to?
+      return scope if parent?
       
       if params[:company_id]
         company = Company.find_by_slug_or_id!(params[:company_id])
@@ -29,7 +29,7 @@ ActiveAdmin.register Product do
 
     def build_new_resource
       super.tap do |product|
-        if nested_belongs_to?
+        if parent?
           product.company = parent
         else
           company_param = params[:company_id] || params.dig(:product, :company_id)

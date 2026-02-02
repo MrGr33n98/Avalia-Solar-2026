@@ -245,6 +245,22 @@ module Api
         end
       end
 
+      # =========================
+      # GET /categories/tree
+      # =========================
+      def tree
+        cache_key = "categories/tree/#{::Category.where(status: 'active').maximum(:updated_at).to_i}"
+
+        cached_json(cache_key, expires_in: 1.hour) do
+          # Busca apenas categorias raízes (parent_id: nil) e inclui os filhos e ícones
+          roots = ::Category.where(status: 'active', parent_id: nil)
+                           .order(:name)
+                           .includes(:icon_attachment, children: :icon_attachment)
+
+          roots.map { |root| category_tree_json(root) }
+        end
+      end
+
       private
 
       # -------------------------
@@ -263,6 +279,19 @@ module Api
       # -------------------------
       # Finders / Params
       # -------------------------
+
+      def category_tree_json(category)
+        {
+          id: category.id,
+          name: category.name,
+          slug: category.seo_url,
+          icon_url: category.icon_url,
+          children: category.children.select { |c| c.status == 'active' }
+                                     .sort_by(&:name)
+                                     .map { |child| category_tree_json(child) }
+        }
+      end
+
       def set_category
         @category = ::Category.find(params[:id])
       end

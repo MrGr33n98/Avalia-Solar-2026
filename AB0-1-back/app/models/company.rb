@@ -174,7 +174,7 @@ class Company < ApplicationRecord
   end
   
   def ready_for_activation?
-    return false if name.blank? || name.length < 5
+    return false if name.blank? || name.length < 2
     return false if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
     return false unless Locations::BrLocations.valid_state?(state)
     return false unless Locations::BrLocations.valid_city?(state, city)
@@ -184,8 +184,8 @@ class Company < ApplicationRecord
   end
 
   def validate_ready_for_activation
-    if name.blank? || name.length < 5
-      errors.add(:name, 'é obrigatório para ativação')
+    if name.blank? || name.length < 2
+      errors.add(:name, 'é obrigatório para ativação (mínimo 2 caracteres)')
     end
 
     if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)

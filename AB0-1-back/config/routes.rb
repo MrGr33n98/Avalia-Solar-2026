@@ -140,6 +140,7 @@ Rails.application.routes.draw do
         end
 
         collection do
+          get :tree
           get :featured
           get 'by_slug/:slug', to: 'categories#show_by_slug'
         end
@@ -155,6 +156,11 @@ Rails.application.routes.draw do
       resources :products, only: [:index, :show] do
         member do
           get :reviews
+        end
+
+        collection do
+          get :filters
+          get :compare
         end
       end
 

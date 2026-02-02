@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_01_123000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -388,7 +388,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.json "project_types", default: [], null: false
+    t.json "project_types"
     t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
@@ -406,12 +406,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
     t.string "slug", null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
     t.index ["slug"], name: "index_companies_on_slug", unique: true
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 
@@ -789,6 +789,33 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
     t.index ["user_id"], name: "index_product_accesses_on_user_id"
   end
 
+  create_table "product_price_histories", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.decimal "price", precision: 12, scale: 2, null: false
+    t.datetime "recorded_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.json "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "recorded_at"], name: "idx_product_price_histories_product_time"
+    t.index ["product_id"], name: "index_product_price_histories_on_product_id"
+  end
+
+  create_table "product_specifications", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.integer "spec_template_id", null: false
+    t.string "value_string"
+    t.decimal "value_number", precision: 20, scale: 6
+    t.boolean "value_boolean"
+    t.json "value_json"
+    t.string "value_unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "spec_template_id"], name: "idx_product_specifications_product_template", unique: true
+    t.index ["product_id"], name: "index_product_specifications_on_product_id"
+    t.index ["spec_template_id"], name: "index_product_specifications_on_spec_template_id"
+    t.index ["value_number"], name: "idx_product_specifications_value_number"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -797,7 +824,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "short_description"
-    t.string "sku"
+    t.string "sku", null: false
     t.integer "stock"
     t.string "status"
     t.boolean "featured", default: false
@@ -823,6 +850,25 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
     t.index ["user_id"], name: "index_reviews_on_user_id"
+  end
+
+  create_table "spec_templates", force: :cascade do |t|
+    t.string "product_type", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.string "value_type", null: false
+    t.string "unit"
+    t.json "enum_values", default: [], null: false
+    t.boolean "filterable", default: false, null: false
+    t.boolean "sortable", default: false, null: false
+    t.boolean "comparable", default: false, null: false
+    t.integer "seo_weight", default: 0, null: false
+    t.boolean "required", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["comparable"], name: "index_spec_templates_on_comparable"
+    t.index ["filterable"], name: "index_spec_templates_on_filterable"
+    t.index ["product_type", "key"], name: "idx_spec_templates_product_type_key", unique: true
   end
 
   create_table "sponsored_plans", force: :cascade do |t|
@@ -955,6 +1001,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_172115) do
   add_foreign_key "pricings", "products"
   add_foreign_key "product_accesses", "products"
   add_foreign_key "product_accesses", "users"
+  add_foreign_key "product_price_histories", "products"
+  add_foreign_key "product_specifications", "products"
+  add_foreign_key "product_specifications", "spec_templates"
   add_foreign_key "products", "companies"
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "users"

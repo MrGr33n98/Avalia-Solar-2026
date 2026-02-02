@@ -4,10 +4,14 @@ class Product < ApplicationRecord
   belongs_to :company, optional: true
   has_and_belongs_to_many :categories
   has_one_attached :image
+  has_many :product_specifications, dependent: :destroy
+  has_many :spec_templates, through: :product_specifications
+  has_many :product_price_histories, dependent: :destroy
 
   attr_accessor :category_ids_for_metrics_update
   before_save :capture_category_ids_for_metrics, prepend: true
   after_save :update_associated_categories_metrics
+  after_save :track_price_history
   # after_commit :update_associated_categories_metrics, on: [:create, :update, :destroy]
 
   enum status: {
@@ -18,8 +22,9 @@ class Product < ApplicationRecord
   }, _suffix: true
 
   # Validations
-  validates :name, :price, presence: true
+  validates :name, :price, :sku, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
+  validates :sku, uniqueness: true
   validate :blocked_transition_guard
 
   # Method to get image URL (prefers DB column, falls back to ActiveStorage)
@@ -48,6 +53,8 @@ class Product < ApplicationRecord
   scope :visible, -> { active_status.where(featured: [true, nil]) }
 
   def as_json(options = {})
+    specs_payload = options[:include_specs] ? serialized_specs : nil
+
     super(options.merge(
       include: {
         categories: { only: %i[id name] },
@@ -55,7 +62,7 @@ class Product < ApplicationRecord
       },
       methods: [:image_url],
       except: %i[created_at updated_at]
-    ))
+    )).merge(specs: specs_payload).compact
   end
 
   after_create :track_creation_event
@@ -77,11 +84,24 @@ class Product < ApplicationRecord
     Rails.logger.error("[Analytics] Failed to track product creation: #{e.message}")
   end
 
-  # Impede retorno direto de disabled -> active para forçar ciclo de revisão
+  def track_price_history
+    return unless saved_change_to_price?
+    return unless ProductPriceHistory.table_exists?
+
+    product_price_histories.create!(
+      price: price,
+      recorded_at: Time.current,
+      metadata: { source: 'model_callback' }
+    )
+  rescue => e
+    Rails.logger.error("[PriceHistory] Failed to track price history for product #{id}: #{e.message}")
+  end
+
+  # Impede retorno direto de disabled -> active para forcar ciclo de revisao
   def blocked_transition_guard
     return unless status_was.present? && status.present?
     if status_was == 'disabled' && status == 'active'
-      errors.add(:status, 'não pode voltar de disabled direto para active (use draft -> active)')
+      errors.add(:status, 'nao pode voltar de disabled direto para active (use draft -> active)')
     end
   end
 
@@ -96,7 +116,7 @@ class Product < ApplicationRecord
       categories.reload
       ids_to_update = categories.pluck(:id)
     end
-    
+
     if ids_to_update.present?
       Category.where(id: ids_to_update).find_each do |cat|
         cat.update_metrics!
@@ -104,5 +124,26 @@ class Product < ApplicationRecord
     end
   rescue => e
     Rails.logger.error("Failed to update categories metrics for product #{id}: #{e.message}")
+  end
+
+  def serialized_specs
+    product_specifications.includes(:spec_template).map do |spec|
+      tmpl = spec.spec_template
+      {
+        key: tmpl.key,
+        label: tmpl.label,
+        type: tmpl.value_type,
+        unit: tmpl.unit,
+        filterable: tmpl.filterable,
+        sortable: tmpl.sortable,
+        comparable: tmpl.comparable,
+        seo_weight: tmpl.seo_weight,
+        value: spec.value
+      }
+    end
+  end
+
+  def spec_value_for(template_key)
+    product_specifications.joins(:spec_template).find_by(spec_templates: { key: template_key })&.value
   end
 end
