@@ -1,51 +1,52 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Filter, Grid, List, Search, Home, Heart, User, Zap, Building2, Package, Star, Folder, SlidersHorizontal, X, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { Search, Grid, List, MapPin, Heart, Building2, Package, Folder, Star, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
-import { LocationFilter } from '@/components/LocationFilter';
-import { companiesApiSafe, categoriesApiSafe, type Company, type Category } from '@/lib/api-client';
-import { buildCategoryPath } from '@/lib/slug';
-import { useLocationData } from '@/hooks/useLocationData';
-import { useAutoLocalization } from '@/hooks/useAutoLocalization';
+import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import BannerByLocation from '@/components/BannerByLocation';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
+import FilterSidebar from '@/components/filters/FilterSidebar';
+import { parseQueryParams } from '@/components/filters/query';
 
-export default function CompaniesPage() {
+function CompaniesContent() {
+  const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [visibleCount, setVisibleCount] = useState(12);
   const PAGE_SIZE = 12;
+
+  const { favorites } = useFavorites();
+
+  // URL-driven filters
+  const filters = useMemo(() => parseQueryParams(searchParams), [searchParams]);
+
+  const [searchInput, setSearchInput] = useState(filters.search || '');
+
+  // Sincronizar searchInput quando os filtros mudam via URL (ex: reset)
+  useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        if (process.env.NODE_ENV !== 'production') console.log('[CompaniesPage] Fetching companies and categories...');
-        const [companiesData, categoriesData] = await Promise.all([
-          companiesApiSafe.getAll({ include: 'logo_url' }), // Incluir logo_url para fallback
-          categoriesApiSafe.getAll()
-        ]);
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[CompaniesPage] Received companies:', companiesData);
-          console.log('[CompaniesPage] Received categories:', categoriesData);
-        }
-
-        setCompanies(companiesData || []);
-        setCategories(categoriesData || []);
+        const data = await companiesApiSafe.getAll({ 
+          include: 'logo_url',
+          featured: filters.featured || undefined,
+        });
+        setCompanies(data || []);
       } catch (err) {
-        if (process.env.NODE_ENV !== 'production') console.error('[CompaniesPage] Error loading data:', err);
         setError((err as any)?.message || 'Erro ao carregar dados');
       } finally {
         setLoading(false);
@@ -53,86 +54,88 @@ export default function CompaniesPage() {
     };
 
     fetchData();
-  }, []);
+  }, [filters]);
 
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stateFilter, setStateFilter] = useState('all');
-  const [cityFilter, setCityFilter] = useState('');
-  const [onlyFavorites, setOnlyFavorites] = useState(false);
-  const [sortBy, setSortBy] = useState('name');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const { states, cities, loadingStates, loadingCities, error: statesError, citiesError, fetchCities } = useLocationData();
-  const { detectedLocation, loading: loadingAutoLoc, detectLocation } = useAutoLocalization();
-  const { favorites } = useFavorites();
-
-  // Auto-localization on mount if no filters are set
-  useEffect(() => {
-    const autoLocate = async () => {
-      // Only auto-locate if filters are default
-      if (stateFilter === 'all' && !cityFilter) {
-        const loc = await detectLocation();
-        if (loc) {
-          setStateFilter(loc.state);
-          // We wait for cities to load before setting city filter if we want, 
-          // but state is already a big improvement.
-          setCityFilter(loc.city);
-        }
-      }
-    };
-    autoLocate();
-  }, [detectLocation]); // Run once on mount
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
-      setVisibleCount(PAGE_SIZE);
-    }, 250);
-    return () => clearTimeout(handler);
-  }, [searchInput]);
-
-  useEffect(() => {
-    fetchCities(stateFilter);
-  }, [stateFilter, fetchCities]);
-
-  // Filter and sort companies
   const filteredCompanies = useMemo(() => {
     return companies
       .filter(company => {
-        const matchesSearch =
-          !searchTerm ||
-          (company.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-          (company.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+        // Busca por texto
+        if (filters.search) {
+          const search = filters.search.toLowerCase();
+          const matchesSearch = 
+            company.name?.toLowerCase().includes(search) ||
+            company.description?.toLowerCase().includes(search);
+          if (!matchesSearch) return false;
+        }
 
-        const matchesState =
-          stateFilter === 'all' ||
-          ((company.state || '').toUpperCase() === stateFilter.toUpperCase());
+        // Filtro de Estados
+        if (filters.states && filters.states.length > 0) {
+          if (!company.state || !filters.states.includes(company.state.toUpperCase())) {
+            return false;
+          }
+        }
 
-        const matchesCity =
-          !cityFilter ||
-          ((company.city || '').toLowerCase() === cityFilter.toLowerCase());
+        // Filtro de Cidades
+        if (filters.cities && filters.cities.length > 0) {
+          if (!company.city || !filters.cities.includes(company.city)) {
+            return false;
+          }
+        }
 
-        const matchesFavorites = !onlyFavorites || favorites.includes(company.id);
+        // Filtro de Categorias
+        if (filters.categories && filters.categories.length > 0) {
+          // Nota: Assumindo que company tem um array de category ids ou slugs
+          // Como o backend atual pode não retornar isso de forma limpa, 
+          // idealmente isso seria filtrado via API. 
+          // Por enquanto, faremos uma verificação básica se a company tiver category_id
+          if (company.category_id && !filters.categories.includes(String(company.category_id))) {
+            return false;
+          }
+        }
 
-        return matchesSearch && matchesState && matchesCity && matchesFavorites;
+        // Filtro de Avaliação Mínima
+        if (filters.minRating) {
+          const rating = Number(company.average_rating) || 0;
+          if (rating < filters.minRating) return false;
+        }
+
+        // Filtros de Qualidade
+        if (filters.verified && !company.verified) return false;
+        if (filters.featured && !company.featured) return false;
+        
+        // Mock de filtros que o backend pode não ter ainda, mas a UI suporta
+        if (filters.financing && !company.has_financing) return false;
+        if (filters.whatsapp && !company.whatsapp) return false;
+
+        return true;
       })
       .sort((a, b) => {
-        switch (sortBy) {
-          case 'name':
-            return (a.name || '').localeCompare(b.name || '');
-          case 'location':
-            return (a.state || '').localeCompare(b.state || '');
-          case 'rating': {
+        switch (filters.sort) {
+          case 'rating_desc': {
             const ra = Number(a.average_rating) || 0;
             const rb = Number(b.average_rating) || 0;
             return rb - ra;
           }
-          default:
-            return 0;
+          case 'reviews_desc': {
+            const ra = a.reviews_count || 0;
+            const rb = b.reviews_count || 0;
+            return rb - ra;
+          }
+          case 'newest':
+            return (b.id || 0) - (a.id || 0);
+          case 'name_asc':
+            return (a.name || '').localeCompare(b.name || '');
+          case 'name_desc':
+            return (b.name || '').localeCompare(a.name || '');
+          default: // recommended (featured first, then rating)
+            if (a.featured && !b.featured) return -1;
+            if (!a.featured && b.featured) return 1;
+            const ra = Number(a.average_rating) || 0;
+            const rb = Number(b.average_rating) || 0;
+            return rb - ra;
         }
       });
-  }, [companies, cityFilter, searchTerm, sortBy, stateFilter]);
+  }, [companies, filters]);
 
   const visibleCompanies = useMemo(
     () => filteredCompanies.slice(0, visibleCount),
@@ -141,60 +144,15 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [searchTerm, stateFilter, cityFilter, sortBy]);
-
-  const handleClearFilters = () => {
-    setSearchInput('');
-    setSearchTerm('');
-    setStateFilter('all');
-    setCityFilter('');
-    setOnlyFavorites(false);
-    setSortBy('name');
-  };
-
-  const categoryChips = categories.length > 0
-    ? categories.slice(0, 8).map((category) => ({
-        label: category.name || 'Categoria',
-        href: buildCategoryPath(category.seo_url, category.id)
-      }))
-    : [
-        { label: 'Instalacao', href: '/categories' },
-        { label: 'Equipamentos', href: '/categories' },
-        { label: 'Projetos', href: '/categories' },
-        { label: 'Manutencao', href: '/categories' },
-        { label: 'Financiamento', href: '/categories' }
-      ];
+  }, [filters]);
 
   const quickActions = [
     { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
     { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
-    { label: 'Destaques', href: '/companies', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
+    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
   ];
-
-  const ratingChips = [
-    { label: 'Melhor avaliadas', value: 'rating' },
-    { label: 'A-Z', value: 'name' },
-    { label: 'Estado', value: 'location' }
-  ];
-
-  const activeFilters = useMemo(() => {
-    const chips: { key: string; label: string; onClear: () => void }[] = [];
-    if (searchTerm) chips.push({ key: 'search', label: `Busca: "${searchTerm}"`, onClear: () => { setSearchInput(''); setSearchTerm(''); } });
-    if (stateFilter !== 'all') chips.push({ key: 'state', label: `Estado: ${stateFilter}`, onClear: () => setStateFilter('all') });
-    if (cityFilter) chips.push({ key: 'city', label: `Cidade: ${cityFilter}`, onClear: () => setCityFilter('') });
-    if (onlyFavorites) chips.push({ key: 'favorites', label: 'Apenas Favoritos', onClear: () => setOnlyFavorites(false) });
-    if (sortBy !== 'name') chips.push({
-      key: 'sort',
-      label: `Ordenar: ${sortBy === 'rating' ? 'Melhor avaliada' : 'Estado'}`,
-      onClear: () => setSortBy('name')
-    });
-    return chips;
-  }, [cityFilter, searchTerm, sortBy, stateFilter]);
-
-  const visibleStates = states.slice(0, 8);
-  const visibleCities = cities.slice(0, 8);
 
   if (error) {
     return (
@@ -202,11 +160,7 @@ export default function CompaniesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
             <p className="text-destructive">Erro ao carregar empresas: {error}</p>
-            <Button
-              className="mt-4"
-              onClick={() => window.location.reload()}
-              variant="outline"
-            >
+            <Button className="mt-4" onClick={() => window.location.reload()} variant="outline">
               Tentar Novamente
             </Button>
           </div>
@@ -216,647 +170,228 @@ export default function CompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="md:hidden">
-        <div className="bg-gradient-to-r from-primary to-accent shadow-sm">
-          <div className="px-4 pt-2 pb-1">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-              <Input
-                type="search"
-                placeholder="Buscar empresas..."
-                aria-label="Buscar empresas"
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                className="h-10 rounded-full bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/40"
-              />
-            </div>
-          </div>
-          <div className="border-t border-white/20 px-4 pb-1">
-            <div className="flex items-center gap-2 overflow-x-auto py-2 whitespace-nowrap snap-x snap-mandatory">
-              <Link
-                href="/categories"
-                className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary shadow-sm"
-              >
-                Tudo
-              </Link>
-              <button
-                type="button"
-                onClick={() => setOnlyFavorites(!onlyFavorites)}
-                className={cn(
-                  "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm flex items-center gap-1 transition-colors",
-                  onlyFavorites ? "bg-red-500 text-white" : "bg-white text-gray-700"
-                )}
-              >
-                <Heart className={cn("h-3 w-3", onlyFavorites && "fill-current")} />
-                Favoritos
-              </button>
-              {categoryChips.map((chip) => (
-                <Link
-                  key={chip.label}
-                  href={chip.href}
-                  className="whitespace-nowrap rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-primary shadow-sm snap-start"
-                >
-                  {chip.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+    <div className="min-h-screen bg-slate-50/50">
+      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar empresas..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
+          />
         </div>
-
-        <div className="bg-[#f7f7f7] px-4 pb-24 pt-4 space-y-4">
-          <section className="grid grid-cols-5 gap-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className="flex flex-col items-center gap-1 text-center"
-                  aria-label={action.label}
-                >
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-[10px] font-medium text-gray-700">{action.label}</span>
-                </Link>
-              );
-            })}
-          </section>
-
-          <section>
-            <BannerByLocation location="navbar" />
-          </section>
-
-          <section className="space-y-3">
-            <Accordion type="multiple" className="w-full" defaultValue={[]}>
-              <AccordionItem value="states">
-                <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Estados</AccordionTrigger>
-                <AccordionContent>
-                  <div className="mt-2 flex items-center gap-2 mb-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => detectLocation(true)}
-                      disabled={loadingAutoLoc}
-                      className="h-9 rounded-full border-blue-200 bg-blue-50/50 px-4 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                    >
-                      <MapPin className={cn("mr-2 h-3.5 w-3.5", loadingAutoLoc ? "animate-pulse" : "")} />
-                      {loadingAutoLoc ? 'Detectando...' : 'Minha Localização'}
-                    </Button>
-                  </div>
-                  <div className="mt-2 flex gap-2 overflow-x-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStateFilter('all');
-                      setCityFilter('');
-                    }}
-                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      stateFilter === 'all'
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                    aria-pressed={stateFilter === 'all'}
-                  >
-                    Todos
-                  </button>
-                  {loadingStates ? (
-                    <span className="text-xs text-gray-500">Carregando...</span>
-                  ) : (
-                    visibleStates.map((state) => (
-                      <button
-                        key={state}
-                        type="button"
-                        onClick={() => {
-                          setStateFilter(state);
-                          setCityFilter('');
-                        }}
-                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                          stateFilter === state
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 bg-white text-gray-700'
-                        }`}
-                        aria-pressed={stateFilter === state}
-                      >
-                        {state}
-                      </button>
-                    ))
-                  )}
-                  </div>
-                  {statesError && (
-                    <p className="mt-2 text-[11px] text-destructive">
-                      {statesError}
-                    </p>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-
-            {stateFilter !== 'all' && (loadingCities || visibleCities.length > 0 || citiesError) && (
-              <AccordionItem value="cities">
-                <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Cidades</AccordionTrigger>
-                <AccordionContent>
-                  <div className="mt-2 flex gap-2 overflow-x-auto">
-                  <button
-                    type="button"
-                    onClick={() => setCityFilter('')}
-                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      !cityFilter
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                    aria-pressed={!cityFilter}
-                  >
-                    Todas
-                  </button>
-                  {loadingCities ? (
-                    <span className="text-xs text-gray-500">Carregando...</span>
-                  ) : (
-                    visibleCities.map((city) => (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => setCityFilter(city)}
-                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                          cityFilter === city
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 bg-white text-gray-700'
-                        }`}
-                        aria-pressed={cityFilter === city}
-                      >
-                        {city}
-                      </button>
-                    ))
-                  )}
-                  </div>
-                  {citiesError && (
-                    <p className="mt-2 text-[11px] text-destructive">
-                      {citiesError}
-                    </p>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            <AccordionItem value="ratings">
-              <AccordionTrigger className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Avaliacoes</AccordionTrigger>
-              <AccordionContent>
-                <div className="mt-2 flex gap-2 overflow-x-auto">
-                {ratingChips.map((chip) => (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    onClick={() => setSortBy(chip.value)}
-                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      sortBy === chip.value
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                    aria-pressed={sortBy === chip.value}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            </Accordion>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">Empresas</h2>
-              <span className="text-xs text-gray-600">
-                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
-              </span>
-            </div>
-
-            {loading ? (
-              <div className="grid grid-cols-2 gap-3">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-40 rounded-xl bg-white" />
-                ))}
-              </div>
-            ) : filteredCompanies.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {filteredCompanies.map((company) => (
-                  <CompanyCard key={company.id} company={company} compact />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-                  <Filter className="h-5 w-5 text-yellow-700" />
-                </div>
-                <h3 className="text-sm font-semibold text-gray-900">Nenhuma empresa encontrada</h3>
-                <p className="mt-1 text-xs text-gray-600">
-                  Ajuste os filtros ou termos de busca.
-                </p>
-                <Button
-                  onClick={handleClearFilters}
-                  variant="outline"
-                  className="mt-3 border-gray-200 text-gray-700"
-                >
-                  Limpar filtros
-                </Button>
-              </div>
-            )}
-          </section>
-        </div>
-
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
-          <div className="mx-auto flex max-w-md items-center justify-around py-2">
-            <Link href="/" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-              <Home className="h-5 w-5" />
-              Inicio
-            </Link>
-            <Link href="/categories" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-              <Grid className="h-5 w-5" />
-              Categorias
-            </Link>
-            <Link
-              href="/profile?tab=favorites"
-              className="flex flex-col items-center gap-1 text-[10px] text-gray-600"
-            >
-              <Heart className="h-5 w-5" />
-              Favoritos
-            </Link>
-            <Link href="/profile" className="flex flex-col items-center gap-1 text-[10px] text-gray-600">
-              <User className="h-5 w-5" />
-              Perfil
-            </Link>
-          </div>
-        </nav>
       </div>
 
-      <div className="hidden md:block">
-        <header className="bg-gradient-to-br from-white via-[#f8fbff] to-white border-b border-gray-200">
-          <div className="mx-auto max-w-7xl px-6 pt-8 pb-6 flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
-                <Zap className="h-4 w-4" /> Empresas solares curadas
-              </div>
-              <div className="flex flex-wrap items-baseline gap-2">
-                <h1 className="text-2xl font-bold text-gray-900">Encontre instaladoras e distribuidores confiáveis</h1>
-                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                  {filteredCompanies.length} resultados
-                </Badge>
-              </div>
-              <p className="text-sm text-gray-600 max-w-3xl">
-                Use os filtros para refinar por localização, categoria e avaliação. Links e eventos existentes permanecem intactos.
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <aside className="lg:w-[300px] shrink-0">
+            <FilterSidebar />
+          </aside>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[260px]">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="search"
-                  placeholder="Buscar empresas no Avalia Solar..."
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                  className="h-11 rounded-full border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500/20"
-                />
+          <div className="flex-1 space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Empresas de Energia Solar</h1>
+                <p className="text-slate-500 text-sm mt-1">
+                  Encontramos {filteredCompanies.length} empresas que atendem aos seus critérios
+                </p>
               </div>
-              <div className="hidden lg:flex items-center gap-2">
-                {categoryChips.map((chip) => (
-                  <Link
-                    key={chip.label}
-                    href={chip.href}
-                    className="whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+
+              <div className="flex items-center gap-2 self-start sm:self-center">
+                <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("h-8 w-8", viewMode === 'grid' && "bg-slate-100 text-slate-900")}
+                    onClick={() => setViewMode('grid')}
                   >
-                    {chip.label}
-                  </Link>
-                ))}
-              </div>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filtros
+                    <Grid className="h-4 w-4" />
                   </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:max-w-lg">
-                  <SheetHeader>
-                    <SheetTitle>Filtros</SheetTitle>
-                  </SheetHeader>
-                  <ScrollArea className="mt-4 h-[85vh] pr-4">
-                    <div className="space-y-4">
-                      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Localização</p>
-                        <LocationFilter
-                          onStateChange={setStateFilter}
-                          onCityChange={setCityFilter}
-                          onClear={() => {
-                            setStateFilter('all');
-                            setCityFilter('');
-                          }}
-                          initialState={stateFilter}
-                          initialCity={cityFilter}
-                          className="mt-3"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => detectLocation(true)}
-                          disabled={loadingAutoLoc}
-                          className="mt-3 w-full h-10 rounded-xl border-blue-200 bg-blue-50/50 text-xs font-semibold text-blue-700"
-                        >
-                          <MapPin className={cn("mr-2 h-3.5 w-3.5", loadingAutoLoc ? "animate-pulse" : "")} />
-                          {loadingAutoLoc ? 'Detectar minha localização' : 'Usar minha localização'}
-                        </Button>
-                      </div>
-
-                      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros Rápidos</p>
-                        <div className="mt-3">
-                          <Button
-                            variant={onlyFavorites ? "default" : "outline"}
-                            className={cn(
-                              "w-full justify-start gap-2 h-10 rounded-xl",
-                              onlyFavorites && "bg-red-500 hover:bg-red-600 text-white"
-                            )}
-                            onClick={() => setOnlyFavorites(!onlyFavorites)}
-                          >
-                            <Heart className={cn("h-4 w-4", onlyFavorites && "fill-current")} />
-                            Apenas Favoritos ({favorites.length})
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Ordenar</p>
-                        <Select value={sortBy} onValueChange={(val) => { setSortBy(val); }}>
-                          <SelectTrigger className="mt-3 w-full border-gray-200 bg-white text-sm">
-                            <SelectValue placeholder="Ordenar por" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white">
-                            <SelectItem value="name">Nome A-Z</SelectItem>
-                            <SelectItem value="location">Estado</SelectItem>
-                            <SelectItem value="rating">Melhor avaliada</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Tags rápidas</p>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {ratingChips.map((chip) => (
-                            <Button
-                              key={chip.value}
-                              type="button"
-                              variant={sortBy === chip.value ? 'default' : 'outline'}
-                              onClick={() => setSortBy(chip.value)}
-                              className="justify-start"
-                            >
-                              {chip.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {activeFilters.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {activeFilters.map((filter) => (
-                            <Badge key={filter.key} variant="secondary" className="flex items-center gap-1">
-                              {filter.label}
-                              <button aria-label="Remover filtro" onClick={filter.onClear}>
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                            Limpar tudo
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("h-8 w-8", viewMode === 'list' && "bg-slate-100 text-slate-900")}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </header>
 
-        <main className="bg-gray-50 pb-16">
-          <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
-            <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 return (
                   <Link
                     key={action.label}
                     href={action.href}
-                    className="flex flex-col items-center gap-2 rounded-xl bg-white p-4 text-center border border-gray-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+                    className="flex flex-col items-center gap-2 rounded-xl bg-white p-3 text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
                   >
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-full ${action.styles}`}>
+                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-full transition-colors", action.styles)}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="text-xs font-semibold text-gray-700">{action.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900">{action.label}</span>
                   </Link>
                 );
               })}
-              <div className="col-span-2 row-span-2">
-                <BannerByLocation location="navbar" />
-              </div>
             </section>
 
-            {activeFilters.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {activeFilters.map((filter) => (
-                  <Badge key={filter.key} variant="outline" className="bg-white border-gray-200 text-gray-800 flex items-center gap-1">
-                    {filter.label}
-                    <button aria-label="Remover filtro" onClick={filter.onClear}>
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-                <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-sm text-blue-700 hover:text-blue-800">
-                  Limpar tudo
-                </Button>
-              </div>
-            )}
-
-            <section className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
-              <aside className="space-y-4 lg:sticky lg:top-24">
-                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Localização</p>
-                  <div className="mt-3 space-y-3">
-                    <LocationFilter
-                      className="w-full flex-col sm:flex-col gap-3"
-                      onStateChange={setStateFilter}
-                      onCityChange={setCityFilter}
-                      onClear={() => {
-                        setStateFilter('all');
-                        setCityFilter('');
-                      }}
-                      initialState={stateFilter}
-                      initialCity={cityFilter}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => detectLocation()}
-                      disabled={loadingAutoLoc}
-                      className="w-full h-10 rounded-xl border-gray-200 bg-white px-4 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      <MapPin className={`mr-2 h-3.5 w-3.5 ${loadingAutoLoc ? "animate-pulse text-blue-500" : "text-gray-400"}`} />
-                      {loadingAutoLoc ? 'Detectando...' : 'Minha Localização'}
-                    </Button>
-                  </div>
+            <div className="space-y-4">
+              {loading ? (
+                <div className={cn(
+                  "grid gap-4",
+                  viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
+                )}>
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-64 rounded-xl bg-white" />
+                  ))}
                 </div>
-
-                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros Rápidos</p>
-                  <div className="mt-3">
-                    <Button
-                      variant={onlyFavorites ? "default" : "outline"}
-                      className={cn(
-                        "w-full justify-start gap-2 h-10 rounded-xl transition-all",
-                        onlyFavorites ? "bg-red-500 hover:bg-red-600 text-white border-red-500" : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                      )}
-                      onClick={() => setOnlyFavorites(!onlyFavorites)}
-                    >
-                      <Heart className={cn("h-4 w-4", onlyFavorites && "fill-current")} />
-                      Apenas Favoritos
-                      {favorites.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto bg-gray-100 text-gray-600 border-none px-1.5 py-0">
-                          {favorites.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Ordenar</p>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="mt-3 w-full border-gray-200 bg-white text-sm">
-                      <SelectValue placeholder="Ordenar por" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="name">Nome A-Z</SelectItem>
-                      <SelectItem value="location">Estado</SelectItem>
-                      <SelectItem value="rating">Melhor avaliada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="rounded-xl bg-white border border-gray-100 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Filtros</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {ratingChips.map((chip) => (
-                      <button
-                        key={chip.value}
-                        type="button"
-                        onClick={() => setSortBy(chip.value)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          sortBy === chip.value
-                            ? 'border-blue-600 bg-blue-600 text-white'
-                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                        aria-pressed={sortBy === chip.value}
-                      >
-                        {chip.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </aside>
-
-              <section>
-                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      Resultado da busca
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-900">Empresas recomendadas</h2>
-                    <p className="text-xs text-gray-600">
-                      {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-full bg-white p-1 shadow-sm border border-gray-100 self-start">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`rounded-full p-2 ${viewMode === 'grid' ? 'bg-gray-900 text-white' : 'text-gray-500'}`}
-                      aria-label="Visualizacao em grade"
-                    >
-                      <Grid className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`rounded-full p-2 ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-500'}`}
-                      aria-label="Visualizacao em lista"
-                    >
-                      <List className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {loading ? (
-                  <div
-                    className={`grid gap-4 ${
-                      viewMode === 'grid'
-                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
-                        : 'grid-cols-1'
-                    }`}
-                    data-testid="companies-grid"
-                  >
-                    {[...Array(viewMode === 'grid' ? 8 : 4)].map((_, i) => (
-                      <CompanyCard key={i} company={{} as Company} isLoading />
-                    ))}
-                  </div>
-                ) : visibleCompanies.length > 0 ? (
-                  <div
-                    className={`grid gap-4 ${
-                      viewMode === 'grid'
-                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
-                        : 'grid-cols-1'
-                    }`}
-                    data-testid="companies-grid"
-                  >
+              ) : visibleCompanies.length > 0 ? (
+                <>
+                  <div className={cn(
+                    "grid gap-4",
+                    viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
+                  )}>
                     {visibleCompanies.map((company) => (
-                      <div key={company.id} className={viewMode === 'list' ? 'col-span-full' : ''}>
-                        <CompanyCard company={company} />
-                      </div>
+                      <CompanyCard 
+                        key={company.id} 
+                        company={company} 
+                        variant={viewMode === 'list' ? 'list' : 'grid'}
+                      />
                     ))}
                   </div>
-                ) : (
-                  <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-                      <Filter className="h-6 w-6 text-yellow-700" />
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900">Nenhuma empresa encontrada</h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Ajuste os filtros ou termos de busca.
-                    </p>
-                    <Button
-                      onClick={handleClearFilters}
-                      variant="outline"
-                      className="mt-4 border-gray-200 text-gray-700"
-                    >
-                      Limpar filtros
-                    </Button>
-                  </div>
-                )}
 
-                {visibleCompanies.length < filteredCompanies.length && (
-                  <div className="mt-6 flex justify-center">
-                    <Button
-                      variant="outline"
-                      className="border-gray-200 text-gray-800"
-                      onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-                    >
-                      Carregar mais empresas
-                    </Button>
+                  {visibleCompanies.length < filteredCompanies.length && (
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        variant="outline"
+                        className="rounded-full px-8 border-slate-200 text-slate-600 hover:text-slate-900"
+                        onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                      >
+                        Carregar mais empresas
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-center">
+                  <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <Search className="h-8 w-8 text-slate-300" />
                   </div>
-                )}
-              </section>
+                  <h3 className="text-lg font-semibold text-slate-900">Nenhuma empresa encontrada</h3>
+                  <p className="text-slate-500 max-w-xs mt-1">
+                    Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="mt-4 text-blue-600"
+                    onClick={() => {
+                      const url = new URL(window.location.href);
+                      url.search = '';
+                      window.history.replaceState({}, '', url.pathname);
+                      window.location.reload();
+                    }}
+                  >
+                    Limpar todos os filtros
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <section className="pt-4">
+              <BannerByLocation location="companies_footer" />
             </section>
           </div>
-        </main>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
+        </div>
+      </div>
+    }>
+      <CompaniesContent />
+    </Suspense>
+  );
+}
+
+                    {visibleCompanies.map((company) => (
+                      <CompanyCard 
+                        key={company.id} 
+                        company={company} 
+                        variant={viewMode === 'list' ? 'list' : 'grid'}
+                      />
+                    ))}
+                  </div>
+
+                  {visibleCompanies.length < filteredCompanies.length && (
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        variant="outline"
+                        className="rounded-full px-8 border-slate-200 text-slate-600 hover:text-slate-900"
+                        onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                      >
+                        Carregar mais empresas
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-center">
+                  <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <Search className="h-8 w-8 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">Nenhuma empresa encontrada</h3>
+                  <p className="text-slate-500 max-w-xs mt-1">
+                    Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="mt-4 text-blue-600"
+                    onClick={() => {
+                      const url = new URL(window.location.href);
+                      url.search = '';
+                      window.history.replaceState({}, '', url.pathname);
+                      window.location.reload();
+                    }}
+                  >
+                    Limpar todos os filtros
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <section className="pt-4">
+              <BannerByLocation location="companies_footer" />
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
+        </div>
+      </div>
+    }>
+      <CompaniesContent />
+    </Suspense>
   );
 }

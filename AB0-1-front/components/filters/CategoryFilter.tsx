@@ -41,7 +41,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
           </div>
           <span className="text-sm font-semibold text-slate-700">Categorias</span>
           {selectedIds.length > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50">
+            <Badge variant="secondary" className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50 rounded-full px-2 py-0.5 text-xs">
               {selectedIds.length}
             </Badge>
           )}
@@ -62,15 +62,20 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
             {categories.map((root) => (
               <div key={root.id} className="space-y-2">
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     {root.name}
                   </span>
+                  {root.companies_count > 0 && (
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {root.companies_count}
+                    </span>
+                  )}
                 </div>
-                <div className="grid gap-2 pl-1">
+                <div className="grid gap-1.5 pl-1">
                   {root.children.map((child) => (
                     <div
                       key={child.id}
-                      className="flex items-center justify-between group cursor-pointer"
+                      className="flex items-center justify-between group cursor-pointer px-1 py-1 rounded-md hover:bg-slate-50"
                       onClick={() => handleToggle(child.id)}
                     >
                       <div className="flex items-center gap-2">
@@ -88,7 +93,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                         </label>
                       </div>
                       {child.companies_count > 0 && (
-                        <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
                           {child.companies_count}
                         </span>
                       )}

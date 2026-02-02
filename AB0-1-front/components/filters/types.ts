@@ -11,16 +11,34 @@ export interface StateOption {
   count: number;
 }
 
+export interface CityOption {
+  city: string;
+  state: string;
+  count: number;
+}
+
 export interface CompanyFilters {
+  state: string[];
+  city: string[];
   category_ids: number[];
-  states: string[];
-  min_rating: number | null;
+  min_rating: number | null; // 3|4|5
   verified: boolean;
+  featured: boolean;
+  financing_enabled: boolean;
+  whatsapp_enabled: boolean;
+  sort: string;
+  page: number;
 }
 
 export const DEFAULT_FILTERS: CompanyFilters = {
+  state: [],
+  city: [],
   category_ids: [],
-  states: [],
   min_rating: null,
   verified: false,
+  featured: false,
+  financing_enabled: false,
+  whatsapp_enabled: false,
+  sort: 'recommended',
+  page: 1,
 };

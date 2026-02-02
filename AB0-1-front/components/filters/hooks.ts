@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CategoryTreeNode, StateOption } from './types';
+import { CategoryTreeNode, StateOption, CityOption } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1';
 
@@ -36,13 +36,10 @@ export function useStatesOptions() {
   useEffect(() => {
     async function fetchStates() {
       try {
-        // Usando o endpoint global de estados que já existe no backend
-        const response = await fetch(`${API_BASE_URL}/states`);
+        const response = await fetch(`${API_BASE_URL}/filters/states`);
         if (!response.ok) throw new Error('Falha ao buscar estados');
         const data = await response.json();
         
-        // O backend retorna um array simples de strings ou objetos dependendo do endpoint
-        // Vamos normalizar para StateOption[]
         const normalizedData: StateOption[] = Array.isArray(data) 
           ? data.map((item: any) => typeof item === 'string' ? { state: item, count: 0 } : { state: item.state, count: item.count || 0 })
           : [];
@@ -59,4 +56,42 @@ export function useStatesOptions() {
   }, []);
 
   return { states, loading, error };
+}
+
+export function useCitiesOptions(selectedStates: string[]) {
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (selectedStates.length === 0) {
+      setCities([]);
+      return;
+    }
+
+    async function fetchCities() {
+      setLoading(true);
+      try {
+        const statesParam = selectedStates.join(',');
+        const response = await fetch(`${API_BASE_URL}/filters/cities?states=${statesParam}`);
+        if (!response.ok) throw new Error('Falha ao buscar cidades');
+        const data = await response.json();
+        
+        const normalizedData: CityOption[] = Array.isArray(data) 
+          ? data.map((item: any) => ({ city: item.city, state: item.state, count: item.count || 0 }))
+          : [];
+          
+        setCities(normalizedData.sort((a, b) => a.city.localeCompare(b.city)));
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Erro desconhecido'));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    const timer = setTimeout(fetchCities, 300); // Debounce
+    return () => clearTimeout(timer);
+  }, [selectedStates]);
+
+  return { cities, loading, error };
 }
