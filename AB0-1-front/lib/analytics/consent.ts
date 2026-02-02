@@ -44,6 +44,16 @@ export function setConsent(consent: Partial<ConsentState>): void {
   
   localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(updated));
   
+  // Update Google Consent Mode if available
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('consent', 'update', {
+      'ad_storage': updated.marketing ? 'granted' : 'denied',
+      'analytics_storage': updated.analytics ? 'granted' : 'denied',
+      'ad_user_data': updated.marketing ? 'granted' : 'denied',
+      'ad_personalization': updated.marketing ? 'granted' : 'denied'
+    });
+  }
+  
   // Emit event for listeners
   window.dispatchEvent(new CustomEvent('consent-changed', { detail: updated }));
 }

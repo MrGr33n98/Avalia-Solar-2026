@@ -48,23 +48,18 @@ export function initializeAnalytics(): void {
   // Initialize UTMs
   initializeUTMs();
   
-  // Only initialize if consent granted
-  if (!hasAnalyticsConsent()) {
-    console.log('[Analytics] Waiting for consent');
-    
-    // Listen for consent change
-    onConsentChange((consent) => {
-      if (consent.analytics && !initialized) {
-        initializeSDKs();
-        // Track the current page immediately after consent
-        setTimeout(() => page(), 500);
-      }
-    });
-    
-    return;
-  }
-  
+  // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
   initializeSDKs();
+
+  // Listen for consent change to re-initialize or update SDKs
+  onConsentChange((consent) => {
+    if (consent.analytics) {
+      // Se ganhou consentimento, garantimos que o Mixpanel seja iniciado
+      initializeSDKs();
+      // Track the current page immediately after consent
+      setTimeout(() => page(), 500);
+    }
+  });
 }
 
 /**
@@ -73,9 +68,10 @@ export function initializeAnalytics(): void {
 function initializeSDKs(): void {
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
   const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const hasConsent = hasAnalyticsConsent();
   
-  // Mixpanel
-  if (mixpanelToken) {
+  // Mixpanel - APENAS com consentimento
+  if (mixpanelToken && hasConsent) {
     try {
       mixpanel.init(mixpanelToken, {
         debug: process.env.NODE_ENV === 'development',

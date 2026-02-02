@@ -16,11 +16,59 @@ import Script from 'next/script';
 
 interface GTMProps {
   gtmId: string;
+  gaId?: string;
 }
 
-export function GoogleTagManager({ gtmId }: GTMProps) {
+export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
   return (
     <>
+      {/* Google Consent Mode v2 - Default state */}
+      <Script
+        id="google-consent-mode"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+              'ad_storage': 'denied',
+              'analytics_storage': 'denied',
+              'ad_user_data': 'denied',
+              'ad_personalization': 'denied',
+              'wait_for_update': 500
+            });
+            gtag('js', new Date());
+          `,
+        }}
+      />
+
+      {/* Google Tag (gtag.js) - GA4 */}
+      {gaId && (
+        <Script
+          id="google-tag-ga4"
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+        />
+      )}
+      
+      {gaId && (
+        <Script
+          id="ga4-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${gaId}', {
+                page_path: window.location.pathname,
+                send_page_view: true
+              });
+            `,
+          }}
+        />
+      )}
+
       {/* Google Tag Manager */}
       <Script
         id="gtm-script"
@@ -55,5 +103,6 @@ export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
 
 // Exportações prontas para uso
 export const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-5RV76ZKR';
+export const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-9SD4S6S434';
 
 export default GoogleTagManager;

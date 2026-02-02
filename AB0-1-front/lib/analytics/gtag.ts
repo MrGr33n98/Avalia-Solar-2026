@@ -15,23 +15,19 @@ declare global {
  */
 export function initializeGTag(measurementId: string): void {
   if (typeof window === 'undefined') return;
-  if (window.gtag) return; // Already initialized
   
-  // Load script
-  const script = document.createElement('script');
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  script.async = true;
-  document.head.appendChild(script);
-
+  // O script agora é carregado via Next.js Script no layout.tsx
+  // Apenas garantimos que o dataLayer e gtag funcionem corretamente
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: any[]) {
-    window.dataLayer.push(args);
-  };
   
-  window.gtag('js', new Date());
-  window.gtag('config', measurementId, {
-    send_page_view: false // Manual page view tracking
-  });
+  if (!window.gtag) {
+    window.gtag = function gtag(...args: any[]) {
+      window.dataLayer.push(args);
+    };
+  }
+
+  // Não chamamos 'js' e 'config' aqui novamente se já estiver no componente
+  // Mas garantimos que o tracking básico esteja pronto
 }
 
 /**
