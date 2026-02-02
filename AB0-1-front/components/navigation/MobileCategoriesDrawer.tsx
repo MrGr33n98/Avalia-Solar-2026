@@ -53,18 +53,25 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
               {categories.map((category) => (
                 <AccordionItem key={category.id} value={`item-${category.id}`} className="border-slate-100">
                   <AccordionTrigger className="text-base font-semibold text-slate-800 hover:text-primary transition-colors py-4">
-                    <div className="flex items-center gap-3">
-                      {category.icon_url && (
-                        <div className="w-6 h-6 relative shrink-0">
-                          <Image
-                            src={category.icon_url}
-                            alt={category.name}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-3">
+                        {category.icon_url && (
+                          <div className="w-6 h-6 relative shrink-0">
+                            <Image
+                              src={category.icon_url}
+                              alt={category.name}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        )}
+                        <span>{category.name}</span>
+                      </div>
+                      {category.companies_count > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
+                          {category.companies_count}
+                        </span>
                       )}
-                      <span>{category.name}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -72,18 +79,23 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                       <Link
                         href={`/categories/${category.slug}`}
                         onClick={onClose}
-                        className="text-sm font-medium text-primary py-2"
+                        className="text-sm font-medium text-primary py-2 flex items-center justify-between"
                       >
-                        Ver tudo em {category.name}
+                        <span>Ver tudo em {category.name}</span>
                       </Link>
                       {category.children.map((child) => (
                         <Link
                           key={child.id}
                           href={`/categories/${child.slug}`}
                           onClick={onClose}
-                          className="text-sm text-slate-600 hover:text-primary py-2 transition-colors"
+                          className="text-sm text-slate-600 hover:text-primary py-2 transition-colors flex items-center justify-between"
                         >
-                          {child.name}
+                          <span>{child.name}</span>
+                          {child.companies_count > 0 && (
+                            <span className="text-[10px] text-slate-400">
+                              {child.companies_count}
+                            </span>
+                          )}
                         </Link>
                       ))}
                     </div>

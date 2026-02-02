@@ -12,7 +12,7 @@ import SearchBar from './SearchBar';
 import NavbarSearch from './NavbarSearch';
 import LocationSearch from './LocationSearch';
 
-import { MegaMenuCategories } from './navigation/MegaMenuCategories';
+import { CategoriesMegaMenu } from './categories/CategoriesMegaMenu';
 import { MobileCategoriesDrawer } from './navigation/MobileCategoriesDrawer';
 
 export default function Navbar() {
@@ -71,22 +71,27 @@ export default function Navbar() {
 
           <div className="flex items-center space-x-6 ml-auto">
             {/* Mega Menu Trigger */}
-            <div className="" ref={megaMenuRef}>
+            <div 
+              className="relative" 
+              ref={megaMenuRef}
+              onMouseEnter={() => setIsMegaMenuOpen(true)}
+              onMouseLeave={() => setIsMegaMenuOpen(false)}
+            >
               <Button
                 variant="ghost"
                 className={`flex items-center gap-1 font-medium transition-colors ${
                   isMegaMenuOpen ? 'text-primary bg-slate-50' : 'text-gray-700 hover:text-primary'
                 }`}
                 onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-                onMouseEnter={() => setIsMegaMenuOpen(true)}
               >
                 Categorias
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
               
-              <div onMouseLeave={() => setIsMegaMenuOpen(false)}>
-                <MegaMenuCategories isOpen={isMegaMenuOpen} />
-              </div>
+              <CategoriesMegaMenu 
+                isOpen={isMegaMenuOpen} 
+                onClose={() => setIsMegaMenuOpen(false)} 
+              />
             </div>
 
             <Link href="/companies" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
