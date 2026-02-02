@@ -12,6 +12,20 @@ export interface Category {
   status?: string;
   featured?: boolean;
   subcategories?: Category[];
+  companies_count?: number;
+  products_count?: number;
+}
+
+export interface CategoryTreeNode {
+  id: number;
+  name: string;
+  slug: string;
+  seo_url?: string;
+  parent_id: number | null;
+  companies_count: number;
+  products_count: number;
+  icon_url?: string;
+  children: CategoryTreeNode[];
 }
 
 export interface Product {

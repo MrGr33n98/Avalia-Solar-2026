@@ -2,18 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApiSafe } from '@/lib/api-client';
-
-export interface CategoryTreeNode {
-  id: number;
-  name: string;
-  slug: string;
-  seo_url?: string;
-  parent_id: number | null;
-  companies_count: number;
-  products_count: number;
-  icon_url?: string;
-  children: CategoryTreeNode[];
-}
+import { CategoryTreeNode } from '@/types';
 
 export function useCategoriesTree() {
   const [categories, setCategories] = useState<CategoryTreeNode[]>([]);

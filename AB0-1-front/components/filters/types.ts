@@ -1,10 +1,4 @@
-export interface CategoryTreeNode {
-  id: number;
-  name: string;
-  slug: string;
-  companies_count: number;
-  children: CategoryTreeNode[];
-}
+import { CategoryTreeNode } from '@/types';
 
 export interface StateOption {
   state: string;

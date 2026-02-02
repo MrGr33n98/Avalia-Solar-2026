@@ -1,32 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CategoryTreeNode, StateOption, CityOption } from './types';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1';
-
-export function useCategoriesTree() {
-  const [categories, setCategories] = useState<CategoryTreeNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/categories/tree`);
-        if (!response.ok) throw new Error('Falha ao buscar categorias');
-        const data = await response.json();
-        setCategories(data);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Erro desconhecido'));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, []);
-
-  return { categories, loading, error };
-}
+import { StateOption, CityOption } from './types';
+import { fetchApiSafe } from '@/lib/api-client';
 
 export function useStatesOptions() {
   const [states, setStates] = useState<StateOption[]>([]);
@@ -36,9 +10,7 @@ export function useStatesOptions() {
   useEffect(() => {
     async function fetchStates() {
       try {
-        const response = await fetch(`${API_BASE_URL}/filters/states`);
-        if (!response.ok) throw new Error('Falha ao buscar estados');
-        const data = await response.json();
+        const data = await fetchApiSafe<any[]>('/filters/states');
         
         const normalizedData: StateOption[] = Array.isArray(data) 
           ? data.map((item: any) => typeof item === 'string' ? { state: item, count: 0 } : { state: item.state, count: item.count || 0 })
@@ -73,9 +45,7 @@ export function useCitiesOptions(selectedStates: string[]) {
       setLoading(true);
       try {
         const statesParam = selectedStates.join(',');
-        const response = await fetch(`${API_BASE_URL}/filters/cities?states=${statesParam}`);
-        if (!response.ok) throw new Error('Falha ao buscar cidades');
-        const data = await response.json();
+        const data = await fetchApiSafe<any[]>(`/filters/cities?states=${statesParam}`);
         
         const normalizedData: CityOption[] = Array.isArray(data) 
           ? data.map((item: any) => ({ city: item.city, state: item.state, count: item.count || 0 }))

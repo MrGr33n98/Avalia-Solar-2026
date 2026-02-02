@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { useCategoriesTree } from './hooks';
+import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategoryFilterProps {

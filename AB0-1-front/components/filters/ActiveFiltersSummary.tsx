@@ -4,7 +4,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { CompanyFilters } from './types';
 import { Badge } from '@/components/ui/badge';
-import { useCategoriesTree } from './hooks';
+import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 
 interface ActiveFiltersSummaryProps {
   filters: CompanyFilters;

@@ -49,39 +49,33 @@ jest.mock('@/hooks/useCategories', () => ({
   useCategories: jest.fn(),
 }));
 
-// Mock the CategoryDropdownItem component
-jest.mock('@/components/CategoryDropdownItem', () => {
-  return {
-    __esModule: true,
-    default: ({ category, onSelect }: { category: any; onSelect: () => void }) => (
-      <a href={`/categories/${category.seo_url || category.id}`} onClick={onSelect}>
-        {category.name}
-      </a>
-    ),
-  };
-});
+// Mock CategoriesMegaMenu
+jest.mock('@/components/categories/CategoriesMegaMenu', () => ({
+  CategoriesMegaMenu: ({ isOpen }: { isOpen: boolean }) => 
+    isOpen ? <div data-testid="categories-mega-menu">Mega Menu</div> : null,
+}));
+
+// Mock MobileCategoriesDrawer
+jest.mock('@/components/navigation/MobileCategoriesDrawer', () => ({
+  MobileCategoriesDrawer: ({ isOpen }: { isOpen: boolean }) => 
+    isOpen ? <div data-testid="mobile-categories-drawer">Mobile Drawer</div> : null,
+}));
 
 // Mock LocationSearch
-jest.mock('@/components/LocationSearch', () => {
-  return {
-    __esModule: true,
-    default: ({ onLocationSelect }: any) => (
-      <div data-testid="location-search">
-        <button onClick={() => onLocationSelect({ state: 'SP', city: 'São Paulo' })}>
-          Select Location
-        </button>
-      </div>
-    ),
-  };
-});
+jest.mock('@/components/LocationSearch', () => (props: any) => (
+  <div data-testid="location-search" className={props.className}>
+    <button onClick={() => props.onLocationSelect({ state: 'SP', city: 'São Paulo' })}>
+      Select Location
+    </button>
+  </div>
+));
 
-// Mock CategoryDropdown
-jest.mock('@/components/CategoryDropdown', () => {
-  return {
-    __esModule: true,
-    default: () => <div data-testid="category-dropdown">Categorias Dropdown</div>,
-  };
-});
+// Mock NavbarSearch
+jest.mock('@/components/NavbarSearch', () => (props: any) => (
+  <div data-testid="navbar-search" className={props.className}>
+    <input placeholder={props.placeholder} />
+  </div>
+));
 
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
@@ -153,8 +147,9 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
     
     // Check for new components
+    expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
     expect(screen.getByTestId('location-search')).toBeInTheDocument();
-    expect(screen.getByTestId('category-dropdown')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
   });
 
   it('renders login and register buttons', () => {
