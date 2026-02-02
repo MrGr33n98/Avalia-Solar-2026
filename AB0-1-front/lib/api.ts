@@ -221,6 +221,17 @@ export interface Product {
   image_url?: string;
   company?: any;  // Associated company data
   category?: any; // Associated category data
+  specs?: Array<{
+    key: string;
+    label: string;
+    type: string;
+    unit?: string;
+    value: any;
+    filterable?: boolean;
+    sortable?: boolean;
+    comparable?: boolean;
+    seo_weight?: number;
+  }>;
 }
 
 export interface Lead {

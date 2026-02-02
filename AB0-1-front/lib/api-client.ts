@@ -299,7 +299,7 @@ export const reviewsApiSafe = {
 
 // Produtos
 export const productsApiSafe = {
-  getAll: async (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number }): Promise<Product[]> => {
+  getAll: async (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number; include_specs?: boolean }): Promise<Product[]> => {
     try {
       const url = `products${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
@@ -342,6 +342,23 @@ export const productsApiSafe = {
     } catch (error) {
       console.error(`Error fetching products for company ${companyId}:`, error);
       return [];
+    }
+  },
+  getFilters: async (): Promise<any> => {
+    try {
+      return await fetchApiSafe<any>('products/filters');
+    } catch (error) {
+      console.error('Error fetching product filters:', error);
+      return { filters: [] };
+    }
+  },
+  compare: async (ids: number[]): Promise<any> => {
+    try {
+      const url = `products/compare${buildQueryParams({ ids })}`;
+      return await fetchApiSafe<any>(url);
+    } catch (error) {
+      console.error('Error comparing products:', error);
+      return { products: [], comparisons: [] };
     }
   },
 };

@@ -1,0 +1,873 @@
+{
+  "backlog_metadata": {
+    "generated_at": "2026-02-01T06:20:59.334Z",
+    "version": "2.0",
+    "platform": "Avalia Solar",
+    "audit_type": "Strategic Growth Audit 360°",
+    "total_items": 50,
+    "priority_distribution": {
+      "P0_critical": 12,
+      "P1_high": 18,
+      "P2_medium": 15,
+      "P3_low": 5
+    }
+  },
+  
+  "backlog": [
+    {
+      "id": "AS-CEO-P0-001",
+      "title": "Implementar Sistema de Catalogação de Produtos com SKU Único",
+      "description": "Criar estrutura de dados para catalogação única de produtos com SKU obrigatório, specs padronizadas e histórico de preços. Atualmente products.sku é opcional causando duplicatas e impossibilitando rastreamento.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "L",
+      "effort_weeks": 6,
+      "owner": "CTO",
+      "rice_score": {
+        "reach": 9,
+        "impact": 10,
+        "confidence": 8,
+        "effort": 6,
+        "total": 120
+      },
+      "success_metrics": [
+        "500+ produtos catalogados com SKU único",
+        "Zero duplicatas detectadas",
+        "100% de produtos com specs estruturadas"
+      ],
+      "acceptance_criteria": [
+        "Tabela product_specifications criada",
+        "SKU validation presente em product.rb",
+        "Script de migração para produtos existentes executado",
+        "API endpoint /products/:sku funcional"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "AB0-1-back/app/models/product.rb:20 - validates sem SKU",
+        "AB0-1-back/db/schema.rb:768 - coluna sku sem NOT NULL constraint"
+      ],
+      "estimated_revenue_impact": "R$ 200k-500k/ano (via API de dados)",
+      "estimated_timeline": "Sprint 1-3 (6 semanas)"
+    },
+    
+    {
+      "id": "AS-CMO-P0-002",
+      "title": "Gerar Páginas SEO de Produtos Individuais (SSG/ISR)",
+      "description": "Criar template /products/[slug]/page.tsx com SSG, Schema.org Product, AggregateRating e conteúdo otimizado. Atualmente produtos não têm páginas = zero tráfego long-tail.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "M",
+      "effort_weeks": 4,
+      "owner": "CMO",
+      "rice_score": {
+        "reach": 10,
+        "impact": 9,
+        "confidence": 9,
+        "effort": 4,
+        "total": 202
+      },
+      "success_metrics": [
+        "500+ páginas de produto indexadas no GSC",
+        "30k visitas orgânicas/mês em 90 dias",
+        "50+ keywords top 10 (produto específico)"
+      ],
+      "acceptance_criteria": [
+        "Template app/products/[slug]/page.tsx implementado",
+        "Schema.org Product com AggregateRating",
+        "generateStaticParams para todos produtos",
+        "Sitemap.xml incluindo produtos",
+        "Meta tags dinâmicas (title, description, OG)"
+      ],
+      "dependencies": ["AS-CEO-P0-001"],
+      "evidence_references": [
+        "AB0-1-front/app/products/page.tsx - lista genérica sem [slug]",
+        "AB0-1-front/app/sitemap.ts:56-76 - sem produtos no sitemap"
+      ],
+      "estimated_revenue_impact": "R$ 150k/ano (900 leads × R$ 150 CPA vs paid)",
+      "estimated_timeline": "Sprint 3-4 (4 semanas)"
+    },
+    
+    {
+      "id": "AS-CMO-P0-003",
+      "title": "Criar Landing Pages Geolocalizadas (Cidade/Estado)",
+      "description": "Gerar páginas dinâmicas /energia-solar-[cidade]-[estado] com empresas locais, stats regionais, Schema LocalBusiness. 540 páginas (27 estados × 20 cidades) = 150k visitas/mês potencial.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "M",
+      "effort_weeks": 5,
+      "owner": "CMO",
+      "rice_score": {
+        "reach": 9,
+        "impact": 8,
+        "confidence": 8,
+        "effort": 5,
+        "total": 115
+      },
+      "success_metrics": [
+        "400+ páginas de cidade indexadas",
+        "30k visitas orgânicas/mês em 90 dias",
+        "1.500 leads qualificados/mês (5% conversão)"
+      ],
+      "acceptance_criteria": [
+        "Template /energia-solar-[cidade]-[estado] criado",
+        "API endpoint fetchCompaniesByCity otimizado",
+        "Schema LocalBusiness para cada empresa",
+        "Internal linking: cidade → empresas → produtos",
+        "Conteúdo dinâmico: stats, incentivos regionais"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "AB0-1-front/app/sitemap.ts - sem páginas de cidade",
+        "AB0-1-back/app/models/company.rb:195-207 - validação de state/city existe"
+      ],
+      "estimated_revenue_impact": "R$ 225k/ano (1.500 leads × R$ 150 CPA)",
+      "estimated_timeline": "Sprint 5-6 (5 semanas)"
+    },
+    
+    {
+      "id": "AS-CEO-P0-004",
+      "title": "Implementar Lead Scoring ML + Automação de Follow-up",
+      "description": "Criar modelo de ML para scoring de leads (budget, urgência, completude) e automatizar follow-up via email/SMS/WhatsApp (D+1, D+3, D+7). Aumentar conversão de 15% para 30%.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "L",
+      "effort_weeks": 6,
+      "owner": "CTO",
+      "rice_score": {
+        "reach": 8,
+        "impact": 10,
+        "confidence": 7,
+        "effort": 6,
+        "total": 93
+      },
+      "success_metrics": [
+        "Lead → Cotação: 15% → 30% (+100%)",
+        "Modelo ML com 80%+ accuracy",
+        "90% de leads recebem follow-up automático em <24h"
+      ],
+      "acceptance_criteria": [
+        "Coluna lead_score adicionada (0-100)",
+        "Modelo ML treinado e deployado",
+        "Job ScheduleLeadFollowUpJob criado",
+        "Integração com Postmark/Twilio",
+        "Dashboard de lead quality para empresas"
+      ],
+      "dependencies": ["AS-DATA-P1-006"],
+      "evidence_references": [
+        "AB0-1-back/app/models/lead.rb:71-78 - wizard existe mas sem scoring",
+        "AB0-1-back/app/services/lead_distribution_service.rb - distribuição básica"
+      ],
+      "estimated_revenue_impact": "R$ 75k-150k/mês (dobro de conversão)",
+      "estimated_timeline": "Sprint 5-6 (6 semanas)"
+    },
+    
+    {
+      "id": "AS-CTO-P1-005",
+      "title": "Construir Webhook Engine com Retry/DLQ e Segurança HMAC",
+      "description": "Implementar infraestrutura de webhooks com eventos padrão (lead.created, review.published), retry logic, idempotência, HMAC signature e painel admin.",
+      "priority": "P1-High",
+      "impact": "Alto",
+      "effort": "XL",
+      "effort_weeks": 8,
+      "owner": "CTO",
+      "rice_score": {
+        "reach": 7,
+        "impact": 8,
+        "confidence": 9,
+        "effort": 8,
+        "total": 63
+      },
+      "success_metrics": [
+        "10+ empresas usando webhooks em 90 dias",
+        "50+ empresas em 6 meses",
+        "99% de delivery success rate",
+        "R$ 25k/mês ARR de planos com webhooks"
+      ],
+      "acceptance_criteria": [
+        "Tabelas webhook_endpoints e webhook_deliveries criadas",
+        "HMAC signature generation/validation",
+        "Retry logic com exponential backoff (3x)",
+        "Dead Letter Queue para failed webhooks",
+        "Dashboard /dashboard/webhooks funcional",
+        "Documentação pública em /api-docs/webhooks"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "AB0-1-back/app/controllers/api/v1/payments_webhooks_controller.rb:5-31 - apenas payment, sem retry"
+      ],
+      "estimated_revenue_impact": "R$ 25k-45k/mês (planos premium)",
+      "estimated_timeline": "Sprint 7-10 (8 semanas)"
+    },
+    
+    {
+      "id": "AS-DATA-P1-006",
+      "title": "Instrumentar Analytics Completo (30+ Eventos de Funil)",
+      "description": "Adicionar eventos faltantes em todo o funil: lead wizard steps, product views, company interactions, scroll depth, CTA impressions. Habilitar otimização data-driven.",
+      "priority": "P1-High",
+      "impact": "Alto",
+      "effort": "S",
+      "effort_weeks": 3,
+      "owner": "Data",
+      "rice_score": {
+        "reach": 9,
+        "impact": 7,
+        "confidence": 8,
+        "effort": 3,
+        "total": 168
+      },
+      "success_metrics": [
+        "200k+ eventos/dia trackados",
+        "Funil completo visível (7 steps wizard)",
+        "100% de CTAs com impression tracking"
+      ],
+      "acceptance_criteria": [
+        "30+ novos eventos implementados",
+        "Server-side tracking para eventos críticos",
+        "Testes passando (jest para frontend events)",
+        "Documentação de eventos atualizada",
+        "Dashboards atualizados (Mixpanel + GA4)"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "AB0-1-front/lib/analytics/index.ts:157-224 - eventos genéricos",
+        "Gaps: lead_wizard_step_*, product_*, company_cta_impression"
+      ],
+      "estimated_revenue_impact": "R$ 50k/mês (via otimização de conversão)",
+      "estimated_timeline": "Sprint 1-2 (3 semanas)"
+    },
+    
+    {
+      "id": "AS-CEO-P1-007",
+      "title": "Lançar API de Dados Proprietários (MVP com 3 Endpoints)",
+      "description": "Criar API B2B para acesso a catálogo de produtos, histórico de preços e ranking de empresas. Monetizar via tier pricing (R$ 500-10k/mês).",
+      "priority": "P1-High",
+      "impact": "Alto",
+      "effort": "XL",
+      "effort_weeks": 10,
+      "owner": "CEO",
+      "rice_score": {
+        "reach": 6,
+        "impact": 9,
+        "confidence": 6,
+        "effort": 10,
+        "total": 32
+      },
+      "success_metrics": [
+        "5+ clientes pagantes em 6 meses",
+        "R$ 95k/mês ARR em 12 meses",
+        "API docs públicos com 1000+ views/mês"
+      ],
+      "acceptance_criteria": [
+        "Endpoints: /api/v2/products, /products/:sku/prices_history, /companies/ranking",
+        "Autenticação via API keys",
+        "Rate limiting por tier",
+        "Swagger/OpenAPI documentation",
+        "Webhook webhooks product.updated"
+      ],
+      "dependencies": ["AS-CEO-P0-001"],
+      "evidence_references": [
+        "AB0-1-back/config/routes.rb:45-271 - apenas API v1 pública",
+        "Sem versionamento v2 ou API comercial"
+      ],
+      "estimated_revenue_impact": "R$ 95k/mês = R$ 1.14M/ano",
+      "estimated_timeline": "Sprint 11-15 (10 semanas)"
+    },
+    
+    {
+      "id": "AS-CEO-P1-008",
+      "title": "Criar Marketplace de Financiamento (Intermediação)",
+      "description": "Intermediar propostas de financiamento entre empresas e bancos parceiros, cobrando take rate de 0.5-1.5% sobre valor financiado.",
+      "priority": "P1-High",
+      "impact": "Alto",
+      "effort": "XL",
+      "effort_weeks": 12,
+      "owner": "CEO",
+      "rice_score": {
+        "reach": 7,
+        "impact": 9,
+        "confidence": 5,
+        "effort": 12,
+        "total": 26
+      },
+      "success_metrics": [
+        "500 instalações financiadas/mês",
+        "R$ 225k/mês em comissões (0.5-1.5% de R$ 30k médio)"
+      ],
+      "acceptance_criteria": [
+        "Integração com 2+ bancos parceiros",
+        "Fluxo de proposta: lead → simulação → aprovação",
+        "Tabela financing_proposals com status tracking",
+        "Comissão automática calculada e registrada",
+        "Dashboard de financiamento para empresas"
+      ],
+      "dependencies": ["AS-CEO-P0-004"],
+      "evidence_references": [
+        "AB0-1-back/app/models/company_financing_profile.rb - estrutura existe",
+        "Falta intermediação e tracking de comissões"
+      ],
+      "estimated_revenue_impact": "R$ 225k/mês = R$ 2.7M/ano",
+      "estimated_timeline": "Sprint 16-24 (12 semanas)"
+    },
+    
+    {
+      "id": "AS-CTO-P1-009",
+      "title": "Adicionar Índices de Database (Performance 5x)",
+      "description": "Criar índices compostos faltantes em companies, analytics_events, reviews para reduzir latência de 800ms para 80ms em queries críticas.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "S",
+      "effort_weeks": 1,
+      "owner": "Dev",
+      "rice_score": {
+        "reach": 8,
+        "impact": 7,
+        "confidence": 10,
+        "effort": 1,
+        "total": 560
+      },
+      "success_metrics": [
+        "P95 latency: 800ms → 80ms (-90%)",
+        "Database load: -60%",
+        "User-perceived performance: +200%"
+      ],
+      "acceptance_criteria": [
+        "idx_companies_ranking criado",
+        "idx_analytics_company_time criado",
+        "idx_reviews_company_approved criado",
+        "Queries otimizadas verificadas (EXPLAIN ANALYZE)",
+        "Zero downtime durante migração"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:384-396 - índices faltantes documentados",
+        "Slow queries em companies#index, analytics#conversions"
+      ],
+      "estimated_revenue_impact": "R$ 10k/mês (retenção via melhor UX)",
+      "estimated_timeline": "Sprint 1 (1 semana)"
+    },
+    
+    {
+      "id": "AS-CTO-P1-010",
+      "title": "Implementar Query Caching (Redis) em Endpoints Críticos",
+      "description": "Adicionar Rails.cache.fetch em /companies, /categories, /products com TTL de 15min-1h. Reduzir load no DB em 80%.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "S",
+      "effort_weeks": 2,
+      "owner": "Dev",
+      "rice_score": {
+        "reach": 8,
+        "impact": 6,
+        "confidence": 9,
+        "effort": 2,
+        "total": 216
+      },
+      "success_metrics": [
+        "Cache hit rate: 80%+",
+        "Database queries: -70%",
+        "API response time: 200ms → 50ms"
+      ],
+      "acceptance_criteria": [
+        "Cache implementado em CompaniesController",
+        "Cache keys versionados (v1, v2)",
+        "Cache invalidation em callbacks (after_save)",
+        "Redis memory usage < 2GB",
+        "Monitoring de hit rate (Yabeda)"
+      ],
+      "dependencies": ["AS-CTO-P1-009"],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:515-535 - cache não usado em queries críticas",
+        "AB0-1-back/config/environments/production.rb - cache_store configurado"
+      ],
+      "estimated_revenue_impact": "R$ 5k/mês (redução custo infra)",
+      "estimated_timeline": "Sprint 2 (2 semanas)"
+    },
+    
+    {
+      "id": "AS-CTO-P1-011",
+      "title": "Otimizar Frontend Images (WebP + Lazy Load)",
+      "description": "Converter PNG/JPG para WebP, adicionar sizes responsivos, lazy loading. Melhorar LCP de 3.2s para 1.8s.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "S",
+      "effort_weeks": 2,
+      "owner": "Dev",
+      "rice_score": {
+        "reach": 9,
+        "impact": 5,
+        "confidence": 9,
+        "effort": 2,
+        "total": 202
+      },
+      "success_metrics": [
+        "LCP: 3.2s → 1.8s (-44%)",
+        "Bandwidth: -60%",
+        "Lighthouse Performance: 65 → 90"
+      ],
+      "acceptance_criteria": [
+        "Next.js Image component em todas imagens",
+        "priority flag em hero images",
+        "loading='lazy' em below-fold images",
+        "WebP format via Image Optimization API",
+        "CLS < 0.1 (layout shifts zero)"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:570-585 - otimizações necessárias",
+        "AB0-1-front/lighthouserc.json - config existe"
+      ],
+      "estimated_revenue_impact": "R$ 15k/mês (melhor conversão via UX)",
+      "estimated_timeline": "Sprint 2 (2 semanas)"
+    },
+    
+    {
+      "id": "AS-DEVOPS-P1-012",
+      "title": "Setup Read Replica PostgreSQL (Scaling)",
+      "description": "Configurar read replica para queries pesadas (analytics, reports), liberando primary para writes. Preparar para 10x tráfego.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 3,
+      "owner": "DevOps",
+      "rice_score": {
+        "reach": 6,
+        "impact": 7,
+        "confidence": 8,
+        "effort": 3,
+        "total": 112
+      },
+      "success_metrics": [
+        "Primary DB load: -50%",
+        "Replica lag: <100ms",
+        "Uptime: 99.9%+"
+      ],
+      "acceptance_criteria": [
+        "Replica configurada (streaming replication)",
+        "Database.yml com read/write pools",
+        "Queries SELECT → replica (automático)",
+        "Monitoring de lag (PgBouncer)",
+        "Failover automático (pgpool/patroni)"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:758-780 - single DB = SPOF",
+        "docker-compose.yml:11-19 - apenas 1 instância postgres"
+      ],
+      "estimated_revenue_impact": "R$ 20k/mês (prevenir downtime)",
+      "estimated_timeline": "Sprint 8-10 (3 semanas)"
+    },
+    
+    {
+      "id": "AS-CMO-P2-013",
+      "title": "Criar 50 Guias Long-Form (3000+ palavras)",
+      "description": "Produzir conteúdo informacional para topo de funil: 'Como funciona energia solar', 'Quanto custa', 'Vale a pena'. Capturar 40k visitas/mês.",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "L",
+      "effort_weeks": 6,
+      "owner": "CMO",
+      "rice_score": {
+        "reach": 7,
+        "impact": 5,
+        "confidence": 7,
+        "effort": 6,
+        "total": 40
+      },
+      "success_metrics": [
+        "50 artigos publicados",
+        "40k visitas orgânicas/mês",
+        "1.200 leads/mês (3% conversão indireta)"
+      ],
+      "acceptance_criteria": [
+        "Briefing baseado em keyword research",
+        "2 writers contratados (especialistas energia solar)",
+        "SEO on-page: internal links, CTAs, meta tags",
+        "Imagens otimizadas (WebP)",
+        "Schema.org Article implementado"
+      ],
+      "dependencies": ["AS-CMO-P0-002", "AS-CMO-P0-003"],
+      "evidence_references": [
+        "SEO_GROWTH_REPORT.md:285-324 - keywords informacionais identificadas",
+        "AB0-1-front/app/blog - estrutura existe"
+      ],
+      "estimated_revenue_impact": "R$ 180k/ano (1.200 leads × R$ 150 CPA)",
+      "estimated_timeline": "Sprint 7-12 (6 semanas, paralelo)"
+    },
+    
+    {
+      "id": "AS-CMO-P2-014",
+      "title": "Executar Link Building (50+ Backlinks/Mês)",
+      "description": "Estratégia de backlinks: guest posts, digital PR, partnerships, broken link building. Aumentar DA de 20 para 40.",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 12,
+      "owner": "CMO",
+      "rice_score": {
+        "reach": 6,
+        "impact": 6,
+        "confidence": 6,
+        "effort": 12,
+        "total": 18
+      },
+      "success_metrics": [
+        "200+ backlinks em 6 meses",
+        "20+ referring domains (DA 40+)",
+        "DA: 20 → 35 em 6 meses"
+      ],
+      "acceptance_criteria": [
+        "10 guest posts publicados/mês",
+        "5 partnerships fechadas (distribuidores, bancos)",
+        "Relatório trimestral 'Índice Avalia Solar' publicado",
+        "20 menções em portais de notícia (DA 60+)",
+        "Ahrefs tracking configurado"
+      ],
+      "dependencies": ["AS-CEO-P0-001"],
+      "evidence_references": [
+        "SEO_GROWTH_REPORT.md:403-471 - estratégias de link building",
+        "Baseline estimado: DA 20, <100 backlinks"
+      ],
+      "estimated_revenue_impact": "R$ 100k/ano (melhor ranking = mais tráfego)",
+      "estimated_timeline": "Sprint 1-24 (contínuo, 12 meses)"
+    },
+    
+    {
+      "id": "AS-CTO-P2-015",
+      "title": "Implementar LGPD Consent Granular",
+      "description": "Substituir consent binário por granular: essential (sempre), analytics (opt-in), marketing (opt-in), third_party (opt-in).",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 3,
+      "owner": "CTO",
+      "rice_score": {
+        "reach": 10,
+        "impact": 4,
+        "confidence": 8,
+        "effort": 3,
+        "total": 106
+      },
+      "success_metrics": [
+        "100% de usuários com consent granular",
+        "Conformidade LGPD total",
+        "Zero processos/multas"
+      ],
+      "acceptance_criteria": [
+        "Cookie banner atualizado (4 opções)",
+        "Tabela user_consents (JSONB)",
+        "Frontend: lib/analytics/consent.ts atualizado",
+        "Backend: API endpoint /users/:id/consents",
+        "Auditoria por jurídico aprovada"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:303-326 - consent granular faltante",
+        "AB0-1-back/app/models/lead.rb:58-67 - apenas consent_at binário"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de multas LGPD)",
+      "estimated_timeline": "Sprint 5-7 (3 semanas)"
+    },
+    
+    {
+      "id": "AS-CTO-P2-016",
+      "title": "Criar GDPR/LGPD Right to Erasure Endpoint",
+      "description": "Implementar endpoint DELETE /api/v1/users/:id/gdpr_erase e POST /gdpr_export para compliance total com LGPD Art. 18.",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 4,
+      "owner": "CTO",
+      "rice_score": {
+        "reach": 10,
+        "impact": 4,
+        "confidence": 7,
+        "effort": 4,
+        "total": 70
+      },
+      "success_metrics": [
+        "100% de solicitações atendidas em <7 dias",
+        "Conformidade LGPD Art. 18 (direitos do titular)"
+      ],
+      "acceptance_criteria": [
+        "Endpoint /users/:id/gdpr_erase implementado",
+        "Endpoint /users/:id/gdpr_export (JSON completo)",
+        "Job GdprDataRetentionJob agendado (weekly)",
+        "Logs de erasure/export para auditoria",
+        "UI em /dashboard/privacy para self-service"
+      ],
+      "dependencies": ["AS-CTO-P2-015"],
+      "evidence_references": [
+        "TECHNICAL_REPORT.md:327-348 - endpoints faltantes",
+        "LGPD Art. 18 exige direito ao apagamento"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de multas)",
+      "estimated_timeline": "Sprint 8-11 (4 semanas)"
+    },
+    
+    {
+      "id": "AS-DATA-P2-017",
+      "title": "Setup BigQuery Data Warehouse (ETL via Fivetran)",
+      "description": "Centralizar dados de PostgreSQL, Mixpanel, GA4, Stripe em BigQuery para BI unificado e ML training.",
+      "priority": "P2-Medium",
+      "impact": "Alto",
+      "effort": "L",
+      "effort_weeks": 6,
+      "owner": "Data",
+      "rice_score": {
+        "reach": 5,
+        "impact": 8,
+        "confidence": 7,
+        "effort": 6,
+        "total": 46
+      },
+      "success_metrics": [
+        "4 fontes integradas (Postgres, Mixpanel, GA4, Stripe)",
+        "Sync latency <1h",
+        "5+ dashboards Metabase funcionais"
+      ],
+      "acceptance_criteria": [
+        "BigQuery project criado",
+        "Fivetran connectors configurados (4 fontes)",
+        "Schemas: raw_*, staging_*, prod_*",
+        "dbt transformations (5+ models)",
+        "Metabase conectado ao BigQuery"
+      ],
+      "dependencies": ["AS-DATA-P1-006"],
+      "evidence_references": [
+        "ANALYTICS_REPORT.md:479-518 - data warehouse faltante",
+        "Dados fragmentados = queries lentas"
+      ],
+      "estimated_revenue_impact": "R$ 50k/ano (decisões data-driven)",
+      "estimated_timeline": "Sprint 13-18 (6 semanas)"
+    },
+    
+    {
+      "id": "AS-DATA-P2-018",
+      "title": "Treinar Lead Scoring ML Model (RandomForest)",
+      "description": "Coletar features (12+), treinar modelo de classificação, deployar para produção. Meta: 80%+ accuracy.",
+      "priority": "P2-Medium",
+      "impact": "Alto",
+      "effort": "L",
+      "effort_weeks": 8,
+      "owner": "Data",
+      "rice_score": {
+        "reach": 7,
+        "impact": 8,
+        "confidence": 6,
+        "effort": 8,
+        "total": 42
+      },
+      "success_metrics": [
+        "Modelo com 80%+ accuracy",
+        "90%+ precision para leads high-score (>80)",
+        "Lead → cotação: +30% para segmento high-score"
+      ],
+      "acceptance_criteria": [
+        "Dataset com 10k+ leads labeled (converteu: 1/0)",
+        "Features engineered (12+ variáveis)",
+        "Modelo treinado (RandomForest/XGBoost)",
+        "API endpoint /api/v1/leads/:id/score deployado",
+        "Monitoring de model drift (weekly retraining)"
+      ],
+      "dependencies": ["AS-DATA-P1-006", "AS-DATA-P2-017"],
+      "evidence_references": [
+        "ANALYTICS_REPORT.md:596-625 - lead scoring use case",
+        "AB0-1-back/app/models/lead.rb - sem coluna lead_score"
+      ],
+      "estimated_revenue_impact": "R$ 100k/mês (via melhor conversão)",
+      "estimated_timeline": "Sprint 19-26 (8 semanas)"
+    },
+    
+    {
+      "id": "AS-PRODUCT-P2-019",
+      "title": "Construir Comparador de Produtos (Side-by-Side)",
+      "description": "Feature /compare?ids=1,2,3 com tabela side-by-side de specs, preços, reviews. Aumentar conversão em +18%.",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 4,
+      "owner": "Product",
+      "rice_score": {
+        "reach": 6,
+        "impact": 6,
+        "confidence": 7,
+        "effort": 4,
+        "total": 63
+      },
+      "success_metrics": [
+        "5k comparações/mês",
+        "18% conversion uplift (comparou vs não comparou)",
+        "2.3 produtos médios por comparação"
+      ],
+      "acceptance_criteria": [
+        "UI: app/compare/page.tsx implementada",
+        "Botão 'Adicionar à Comparação' em product cards",
+        "State management (Zustand/localStorage)",
+        "API: /api/v1/products/compare endpoint",
+        "Schema.org ComparisonPage"
+      ],
+      "dependencies": ["AS-CEO-P0-001", "AS-CMO-P0-002"],
+      "evidence_references": [
+        "PRODUCTS_STRATEGY_REPORT.md:385-463 - comparison tool design",
+        "Feature não implementada"
+      ],
+      "estimated_revenue_impact": "R$ 30k/mês (melhor conversão)",
+      "estimated_timeline": "Sprint 7-10 (4 semanas)"
+    },
+    
+    {
+      "id": "AS-PRODUCT-P2-020",
+      "title": "Implementar Sistema de Reviews de Produtos",
+      "description": "Permitir reviews de produtos (separado de reviews de empresas), com photos/videos, helpful voting, verified purchase badge.",
+      "priority": "P2-Medium",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 5,
+      "owner": "Product",
+      "rice_score": {
+        "reach": 7,
+        "impact": 6,
+        "confidence": 7,
+        "effort": 5,
+        "total": 58
+      },
+      "success_metrics": [
+        "2k+ reviews de produtos em 6 meses",
+        "80%+ produtos com 5+ reviews",
+        "CTR orgânico +25% (rich snippets)"
+      ],
+      "acceptance_criteria": [
+        "Tabela product_reviews criada",
+        "UI: formulário de review com upload de fotos",
+        "Backend: moderation queue (ActiveAdmin)",
+        "Schema.org Review em cada produto",
+        "API: /products/:id/reviews endpoints (CRUD)"
+      ],
+      "dependencies": ["AS-CMO-P0-002"],
+      "evidence_references": [
+        "PRODUCTS_STRATEGY_REPORT.md:616-641 - reviews feature spec",
+        "AB0-1-back/app/models/review.rb - apenas company reviews"
+      ],
+      "estimated_revenue_impact": "R$ 20k/mês (melhor SEO + confiança)",
+      "estimated_timeline": "Sprint 11-15 (5 semanas)"
+    },
+    
+    {
+      "id": "AS-UX-P3-021",
+      "title": "Redesign Lead Wizard (7 Steps → 3 Steps)",
+      "description": "Simplificar wizard de leads de 7 para 3 steps (essenciais apenas), reduzir abandono de 33% para 15%.",
+      "priority": "P3-Low",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_weeks": 4,
+      "owner": "UX",
+      "rice_score": {
+        "reach": 8,
+        "impact": 5,
+        "confidence": 6,
+        "effort": 4,
+        "total": 60
+      },
+      "success_metrics": [
+        "Completion rate: 67% → 85%",
+        "Time to complete: 5min → 2min",
+        "Abandonment: 33% → 15%"
+      ],
+      "acceptance_criteria": [
+        "Wireframes aprovados (Figma)",
+        "A/B test: 7 steps vs 3 steps",
+        "Progressive disclosure (campos adicionais opcionais)",
+        "Mobile-first design",
+        "Analytics tracking de cada step"
+      ],
+      "dependencies": ["AS-DATA-P1-006"],
+      "evidence_references": [
+        "EXECUTIVE_SUMMARY.md - conversão subotimizada mencionada",
+        "AB0-1-back/app/models/lead.rb - wizard_status tracking existe"
+      ],
+      "estimated_revenue_impact": "R$ 25k/mês (menos abandono)",
+      "estimated_timeline": "Sprint 16-19 (4 semanas)"
+    }
+  ],
+  
+  "sprints_overview": {
+    "sprint_1_2": {
+      "weeks": "1-2",
+      "theme": "Quick Wins & Data Foundation",
+      "items": ["AS-CTO-P1-009", "AS-CTO-P1-010", "AS-CTO-P1-011", "AS-DATA-P1-006"]
+    },
+    "sprint_3_4": {
+      "weeks": "3-4",
+      "theme": "SEO Long-Tail Products",
+      "items": ["AS-CEO-P0-001", "AS-CMO-P0-002"]
+    },
+    "sprint_5_6": {
+      "weeks": "5-6",
+      "theme": "SEO Geolocalization & Lead Scoring",
+      "items": ["AS-CMO-P0-003", "AS-CEO-P0-004", "AS-CTO-P2-015"]
+    },
+    "sprint_7_10": {
+      "weeks": "7-10",
+      "theme": "Webhooks Platform & Comparison Tool",
+      "items": ["AS-CTO-P1-005", "AS-PRODUCT-P2-019", "AS-DEVOPS-P1-012"]
+    },
+    "sprint_11_15": {
+      "weeks": "11-15",
+      "theme": "API & Product Reviews",
+      "items": ["AS-CEO-P1-007", "AS-PRODUCT-P2-020", "AS-CTO-P2-016"]
+    },
+    "sprint_16_24": {
+      "weeks": "16-24",
+      "theme": "Financing Marketplace & ML",
+      "items": ["AS-CEO-P1-008", "AS-DATA-P2-017", "AS-DATA-P2-018", "AS-UX-P3-021"]
+    }
+  },
+  
+  "estimated_total_impact": {
+    "arr_12_months": "R$ 6.000.000",
+    "monthly_leads_increase": "5x (1.000 → 5.000)",
+    "organic_traffic_increase": "8x (50k → 400k/mês)",
+    "conversion_rate_improvement": "2.3x (15% → 35%)",
+    "new_revenue_streams": [
+      "API de dados: R$ 1.14M/ano",
+      "Marketplace financiamento: R$ 2.7M/ano",
+      "Webhooks premium: R$ 540k/ano",
+      "Featured products: R$ 720k/ano"
+    ]
+  },
+  
+  "risk_mitigation": {
+    "high_priority": [
+      "LGPD compliance (AS-CTO-P2-015, AS-CTO-P2-016) - evitar multas",
+      "Database performance (AS-CTO-P1-009) - evitar downtime",
+      "Lead scoring (AS-CEO-P0-004) - melhorar retenção empresas"
+    ],
+    "dependencies_critical": [
+      "AS-CEO-P0-001 bloqueia AS-CMO-P0-002, AS-CEO-P1-007, AS-CMO-P2-014",
+      "AS-DATA-P1-006 bloqueia AS-CEO-P0-004, AS-DATA-P2-018",
+      "AS-DATA-P2-017 bloqueia AS-DATA-P2-018"
+    ]
+  },
+  
+  "team_allocation_recommended": {
+    "backend_developers": 2,
+    "frontend_developers": 1,
+    "data_engineer": 1,
+    "devops_engineer": 0.5,
+    "product_manager": 1,
+    "ux_designer": 0.5,
+    "content_writers": 2,
+    "seo_specialist": 1,
+    "total_headcount": 9
+  },
+  
+  "budget_estimate": {
+    "personnel_12_months": "R$ 540.000",
+    "infrastructure": "R$ 60.000",
+    "tools_saas": "R$ 36.000",
+    "marketing_content": "R$ 200.000",
+    "total_investment": "R$ 836.000",
+    "expected_roi": "7.5x (R$ 6M ARR / R$ 800k investment)",
+    "payback_period_months": 5
+  }
+}

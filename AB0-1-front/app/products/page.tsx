@@ -20,7 +20,7 @@ function ProductsPageContent() {
     title: 'Produtos - Avalia Solar',
   });
 
-  const { products, loading, error } = useProducts();
+  const { products, filtersMeta, loading, error } = useProducts();
   
   // Pagination State (Prepared for future backend integration)
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +32,8 @@ function ProductsPageContent() {
     category: 'all',
     company: 'all',
     priceRange: [0, 50000] as [number, number],
-    sort: 'relevance'
+    sort: 'relevance',
+    specs: {} as Record<string, any>
   });
 
   // Derived Data for Filters & Featured Companies
@@ -116,6 +117,34 @@ function ProductsPageContent() {
       // Price
       if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
 
+      // Dynamic spec filters
+      const activeSpecFilters = Object.entries(filters.specs || {}).filter(
+        ([, value]) => value !== undefined && value !== null && value !== '' && value !== 'all'
+      );
+
+      if (activeSpecFilters.length > 0) {
+        const specMap: Record<string, any> = {};
+        if ((product as any).specs && Array.isArray((product as any).specs)) {
+          (product as any).specs.forEach((s: any) => {
+            specMap[s.key] = s.value;
+          });
+        }
+
+        for (const [key, selected] of activeSpecFilters) {
+          const current = specMap[key];
+          if (current === undefined) return false;
+
+          if (Array.isArray(selected) && selected.length === 2 && typeof selected[0] === 'number') {
+            const numeric = typeof current === 'number' ? current : parseFloat(current || '0');
+            if (numeric < selected[0] || numeric > selected[1]) return false;
+          } else if (typeof selected === 'boolean') {
+            if (!!current !== selected) return false;
+          } else {
+            if (String(current).toLowerCase() !== String(selected).toLowerCase()) return false;
+          }
+        }
+      }
+
       return true;
     }).sort((a, b) => {
       const priceA = typeof a.price === 'number' ? a.price : parseFloat(a.price || '0');
@@ -147,7 +176,8 @@ function ProductsPageContent() {
       category: 'all',
       company: 'all',
       priceRange: [0, maxPrice],
-      sort: 'relevance'
+      sort: 'relevance',
+      specs: {}
     });
     setSearchQuery('');
     setCurrentPage(1);
@@ -191,6 +221,9 @@ function ProductsPageContent() {
                   <ProductsFilters 
                     filters={filters}
                     onFilterChange={handleFilterChange}
+                    activeSpecFilters={filters.specs}
+                    onSpecFilterChange={(key, value) => handleFilterChange('specs', { ...filters.specs, [key]: value })}
+                    specFiltersMeta={filtersMeta}
                     categories={categories}
                     companies={companies}
                     maxPrice={maxPrice}
@@ -207,6 +240,9 @@ function ProductsPageContent() {
               <ProductsFilters 
                 filters={filters}
                 onFilterChange={handleFilterChange}
+                activeSpecFilters={filters.specs}
+                onSpecFilterChange={(key, value) => handleFilterChange('specs', { ...filters.specs, [key]: value })}
+                specFiltersMeta={filtersMeta}
                 categories={categories}
                 companies={companies}
                 maxPrice={maxPrice}

@@ -47,6 +47,22 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <h3 className="text-lg font-semibold">Descrição</h3>
             <p className="text-muted-foreground whitespace-pre-wrap">{product.description}</p>
           </div>
+
+          {product.specs && product.specs.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-3">Especificações Técnicas</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {product.specs.sort((a: any, b: any) => (b.seo_weight || 0) - (a.seo_weight || 0)).map((spec: any) => (
+                  <div key={spec.key} className="p-3 bg-slate-50 border rounded-lg">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{spec.label}</p>
+                    <p className="text-sm font-semibold">
+                      {spec.value} {spec.unit}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
         <div>
@@ -66,6 +82,32 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </div>
         </div>
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            description: product.description,
+            sku: product.sku,
+            brand: product.company?.name,
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'BRL',
+              price: product.price,
+              availability: 'https://schema.org/InStock'
+            },
+            additionalProperty: (product.specs || []).map((spec: any) => ({
+              '@type': 'PropertyValue',
+              name: spec.label,
+              value: spec.value,
+              unitCode: spec.unit
+            }))
+          })
+        }}
+      />
     </div>
   );
 }

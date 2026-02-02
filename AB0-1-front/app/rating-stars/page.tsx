@@ -92,8 +92,8 @@ export default function RatingStarsPage() {
             <div className="space-y-4">
               {topCompanies.map((company, index) => {
                 const rank = index + 1;
-                const rating = parseFloat((company as any).rating_avg ?? (company as any).average_rating ?? 0);
-                const count = Number((company as any).rating_count ?? 0);
+                const rating = company.rating_avg ?? company.average_rating ?? 0;
+                const count = company.rating_count ?? 0;
                 const path = buildCompanyPath(company.slug, company.name, company.id);
 
                 return (

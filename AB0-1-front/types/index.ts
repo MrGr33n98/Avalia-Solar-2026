@@ -28,4 +28,17 @@ export interface Product {
   company: Company;
   image_url?: string;
   sku?: string;
+  specs?: ProductSpec[];
+}
+
+export interface ProductSpec {
+  key: string;
+  label: string;
+  type: string;
+  unit?: string;
+  filterable?: boolean;
+  sortable?: boolean;
+  comparable?: boolean;
+  seo_weight?: number;
+  value: any;
 }

@@ -11,23 +11,30 @@ interface FilterState {
   company: string
   priceRange: [number, number]
   sort: string
+  specs?: Record<string, any>
 }
 
 interface ProductsFiltersProps {
   filters: FilterState
   onFilterChange: (key: keyof FilterState, value: any) => void
+  onSpecFilterChange?: (key: string, value: any) => void
   categories: string[]
   companies: string[]
   maxPrice: number
+  specFiltersMeta?: any[]
+  activeSpecFilters?: Record<string, any>
   onClearFilters: () => void
 }
 
 export function ProductsFilters({
   filters,
   onFilterChange,
+  onSpecFilterChange,
   categories,
   companies,
   maxPrice,
+  specFiltersMeta = [],
+  activeSpecFilters = {},
   onClearFilters
 }: ProductsFiltersProps) {
   
@@ -35,7 +42,8 @@ export function ProductsFilters({
     filters.category !== 'all' || 
     filters.company !== 'all' || 
     filters.priceRange[0] > 0 || 
-    (maxPrice > 0 && filters.priceRange[1] < maxPrice);
+    (maxPrice > 0 && filters.priceRange[1] < maxPrice) ||
+    Object.values(activeSpecFilters || {}).some(v => v !== undefined && v !== null && v !== '' && v !== 'all');
 
   return (
     <div className="space-y-6">
@@ -66,6 +74,13 @@ export function ProductsFilters({
                     R$ {filters.priceRange[0]} - {filters.priceRange[1]} <X className="w-3 h-3 hover:text-red-500" />
                 </Badge>
             )}
+            {Object.entries(activeSpecFilters || {}).map(([key, value]) => (
+              value !== undefined && value !== null && value !== '' && value !== 'all' ? (
+                <Badge key={key} variant="secondary" className="gap-1 pr-1 cursor-pointer" onClick={() => onSpecFilterChange && onSpecFilterChange(key, null)}>
+                  {key}: {Array.isArray(value) ? `${value[0]} - ${value[1]}` : String(value)} <X className="w-3 h-3 hover:text-red-500" />
+                </Badge>
+              ) : null
+            ))}
         </div>
       )}
       
@@ -142,6 +157,85 @@ export function ProductsFilters({
           onValueChange={(val) => onFilterChange('priceRange', val as [number, number])}
         />
       </div>
+
+      {/* Dynamic Spec Filters */}
+      {specFiltersMeta.length > 0 && (
+        <div className="space-y-6">
+          <Separator />
+          <h4 className="font-semibold text-sm text-slate-900">Especificações</h4>
+          {specFiltersMeta.map((spec) => {
+            const current = activeSpecFilters[spec.key];
+            const label = spec.label || spec.key;
+
+            if (spec.type === 'boolean') {
+              const isActive = current === true;
+              return (
+                <div key={spec.key} className="flex items-center justify-between">
+                  <Label>{label}</Label>
+                  <Button
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onSpecFilterChange && onSpecFilterChange(spec.key, isActive ? null : true)}
+                    className="h-8 px-3"
+                  >
+                    {isActive ? 'Sim' : 'Ativar'}
+                    <Check className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              );
+            }
+
+            if (spec.type === 'enum' || spec.type === 'string') {
+              return (
+                <div key={spec.key} className="space-y-2">
+                  <Label>{label}</Label>
+                  <Select
+                    value={current || 'all'}
+                    onValueChange={(val) => onSpecFilterChange && onSpecFilterChange(spec.key, val === 'all' ? null : val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Qualquer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Qualquer</SelectItem>
+                      {(spec.options || []).map((opt: any) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            }
+
+            if (spec.type === 'decimal' || spec.type === 'integer') {
+              const min = spec.options?.min ?? 0;
+              const max = spec.options?.max ?? 100;
+              const currentRange = Array.isArray(current) ? current : [min, max];
+
+              return (
+                <div key={spec.key} className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Label>{label}{spec.unit ? ` (${spec.unit})` : ''}</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {currentRange[0]} - {currentRange[1]}
+                    </span>
+                  </div>
+                  <Slider
+                    value={currentRange as [number, number]}
+                    min={min}
+                    max={max}
+                    step={1}
+                    minStepsBetweenThumbs={1}
+                    onValueChange={(val) => onSpecFilterChange && onSpecFilterChange(spec.key, val as [number, number])}
+                  />
+                </div>
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      )}
     </div>
   )
 }
