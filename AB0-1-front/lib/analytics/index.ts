@@ -117,7 +117,8 @@ export function getAnalyticsContext(): AnalyticsContext {
       pathname: '',
       referrer: '',
       session_id: '',
-      is_logged_in: false
+      is_logged_in: false,
+      source: 'server'
     };
   }
   

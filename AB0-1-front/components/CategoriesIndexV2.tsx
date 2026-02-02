@@ -50,19 +50,18 @@ export default function CategoriesIndex() {
     refetch: refetchCategories 
   } = useAllCategoriesQuery();
   
-  const allCategories = allData?.data || [];
-
   // Filtro client-side memoizado
   const filteredCategories = useMemo(() => {
-    if (!searchTerm.trim()) return allCategories;
-    if (!Array.isArray(allCategories)) return [];
+    const categories = allData?.data || [];
+    if (!searchTerm.trim()) return categories;
+    if (!Array.isArray(categories)) return [];
     
     const term = searchTerm.toLowerCase();
-    return allCategories.filter(cat =>
+    return categories.filter(cat =>
       cat.name.toLowerCase().includes(term) ||
       cat.short_description?.toLowerCase().includes(term)
     );
-  }, [searchTerm, allCategories]);
+  }, [searchTerm, allData?.data]);
 
   // Estados derivados
   const isLoading = bannersLoading || featuredLoading || allLoading;

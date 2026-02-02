@@ -6,7 +6,7 @@
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
-    dataLayer?: any[];
+    dataLayer: any[];
   }
 }
 
@@ -25,7 +25,7 @@ export function initializeGTag(measurementId: string): void {
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = function gtag(...args: any[]) {
-    window.dataLayer!.push(args);
+    window.dataLayer.push(args);
   };
   
   window.gtag('js', new Date());

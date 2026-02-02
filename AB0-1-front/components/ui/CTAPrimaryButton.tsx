@@ -10,7 +10,7 @@ interface CTAPrimaryButtonProps extends ButtonProps {
   label?: string;
   companyId?: string;
   companySlug?: string;
-  ctaType?: 'budget' | 'lead' | 'contact' | 'external';
+  ctaType?: 'budget' | 'lead' | 'contact' | 'external' | 'quote_request';
   ctaDestination?: string;
   loading?: boolean;
   trackProps?: Record<string, any>;

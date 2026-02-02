@@ -32,6 +32,7 @@ export interface AnalyticsContext {
   session_id: string;
   
   // UTM Parameters
+  source?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;

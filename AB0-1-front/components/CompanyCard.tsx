@@ -434,7 +434,7 @@ export default function CompanyCard({
             asChild
           >
           <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-5 h-5 lg:w-4 h-4' : 'w-4 h-4 mr-1')} />
+            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-5 h-5 lg:w-4 lg:h-4' : 'w-4 h-4 mr-1')} />
             {!compact && text.review}
           </Link>
           </Button>

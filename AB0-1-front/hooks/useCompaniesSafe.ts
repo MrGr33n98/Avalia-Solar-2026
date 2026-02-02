@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { companiesApiSafe, Company } from '@/lib/api-client';
 
 interface UseCompaniesSafeParams {
@@ -16,16 +16,7 @@ export function useCompaniesSafe(params?: UseCompaniesSafeParams) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCompanies();
-  }, [
-    params?.status,
-    params?.featured,
-    params?.category_id,
-    params?.limit
-  ]);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -45,7 +36,11 @@ export function useCompaniesSafe(params?: UseCompaniesSafeParams) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params?.status, params?.featured, params?.limit, params?.category_id]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   return { companies, loading, error, refetch: fetchCompanies };
 }
@@ -95,13 +90,7 @@ export function useCompanySafe(id: number | string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchCompany(id);
-    }
-  }, [id]);
-
-  const fetchCompany = async (companyId: number | string) => {
+  const fetchCompany = useCallback(async (companyId: number | string) => {
     try {
       setLoading(true);
       setError(null);
@@ -116,7 +105,13 @@ export function useCompanySafe(id: number | string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchCompany(id);
+    }
+  }, [id, fetchCompany]);
 
   return { company, loading, error, refetch: () => fetchCompany(id) };
 }

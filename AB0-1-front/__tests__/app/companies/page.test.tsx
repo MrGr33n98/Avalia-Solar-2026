@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import CompaniesPage from '@/app/companies/page';
+import CompaniesPage from '../../../app/companies/page';
 
 const mockRouter = {
   push: jest.fn(),

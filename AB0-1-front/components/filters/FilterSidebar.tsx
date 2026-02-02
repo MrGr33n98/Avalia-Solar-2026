@@ -153,7 +153,7 @@ export const FilterSidebar: React.FC = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-[300px] sticky top-[88px] h-[calc(100vh-120px)] bg-white border border-slate-200 rounded-xl p-3 overflow-hidden flex flex-col shadow-sm">
+      <aside className="hidden lg:flex w-[300px] sticky top-[88px] h-[calc(100vh-120px)] bg-white border border-slate-200 rounded-xl p-3 overflow-hidden flex-col shadow-sm">
         <FilterContent />
       </aside>
 
