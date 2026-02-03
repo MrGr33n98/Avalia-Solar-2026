@@ -134,7 +134,7 @@ jobs:
           script_stop: true
           envs: DOCKER_USER,DOCKER_TOKEN
           script: |
-            set -e
+            set -ex
             cd ~/Avalia-Solar-2026
 
             echo "?? Atualizando codigo local..."
@@ -175,38 +175,23 @@ jobs:
             docker compose exec -T backend bundle exec rails db:migrate
 
             echo "?? Verificando se ha dados no banco..."
-            # Captura robusta: ignora logs do Rails/Scout e pega apenas o ultimo numero da saída
-            HAS_DATA=$(docker compose exec -T backend bundle exec rails runner "puts Company.count" 2>/dev/null | tail -n 1 | tr -cd '0-9')
+            # Captura robusta com marcador para evitar confusao com logs
+            HAS_DATA=$(docker compose exec -T backend bundle exec rails runner "puts \"MARKER_COUNT:#{Company.count}\"" 2>/dev/null | grep "MARKER_COUNT:" | tail -n 1 | tr -cd '0-9')
             HAS_DATA="${HAS_DATA:-0}"
             
             echo "?? Empresas encontradas: $HAS_DATA"
+            echo "DEBUG: Comparando '$HAS_DATA' com '0'"
 
-            if [ "$HAS_DATA" -eq "0" ]; then
+            if [ "$HAS_DATA" = "0" ]; then
               echo "?? Banco vazio, executando seeds e restauracao..."
-              docker compose exec -T backend bundle exec rails runner "
-                require 'json'
-                f = Rails.root.join('companies.json')
-                if File.exist?(f)
-                  data = JSON.parse(File.read(f))
-                  data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }
-                  puts 'Restaurado'
-                end
-              " || echo "?? Falha na restauracao, continuando..."
-              docker compose exec -T backend bundle exec rails db:seed || true
+              docker compose exec -T backend bundle exec rails runner "require 'json'; f = Rails.root.join('companies.json'); if File.exist?(f); data = JSON.parse(File.read(f)); data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }; puts 'Restaurado'; end" || echo "?? Falha na restauracao"
+              docker compose exec -T backend bundle exec rails db:seed || echo "?? Falha no seed"
             else
               echo "?? Banco ja possui dados. Ignorando seeds/restauracao."
             fi
 
             echo "?? Verificacao final de tabelas..."
-            docker compose exec -T backend bundle exec rails runner "
-              essential = %w[companies users]
-              missing = essential.reject { |t| ActiveRecord::Base.connection.table_exists?(t) }
-              if missing.any?
-                puts \"ERRO: Tabelas faltando: #{missing.join(', ')}\"
-                exit 1
-              end
-              puts 'Tabelas OK'
-            "
+            docker compose exec -T backend bundle exec rails runner "essential = %w[companies users]; missing = essential.reject { |t| ActiveRecord::Base.connection.table_exists?(t) }; if missing.any?; puts \"ERRO: Tabelas faltando: #{missing.join(', ')}\"; exit 1; end; puts 'Tabelas OK'"
 
             echo "?? Deploy finalizado com sucesso!"
             exit 0
