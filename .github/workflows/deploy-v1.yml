@@ -118,19 +118,22 @@ jobs:
           command_timeout: 10m
           script_stop: true
           script: |
-            set -euo pipefail
+            # Usa bash explicitamente para garantir compatibilidade com set -eo pipefail e traps
+            export SHELL=/bin/bash
+            set -e
             cd ~/Avalia-Solar-2026
 
-            on_error() {
+            cleanup() {
               code=$?
-              echo -e "\n? Deploy falhou (exit=${code}). Dumping estado do Docker..." >&2
-              docker compose ps || true
-              docker compose logs --tail 200 db redis backend frontend || true
-              exit ${code}
+              if [ $code -ne 0 ] && [ $code -ne 130 ]; then
+                echo -e "\n!! Erro detectado (code=$code). coletando logs..." >&2
+                docker compose ps || true
+                docker compose logs --tail 100 backend db || true
+              fi
             }
-            trap on_error ERR
+            trap cleanup EXIT
 
-            echo "?? Atualizando c�digo local..."
+            echo "?? Atualizando codigo local..."
             git fetch origin main
             git reset --hard origin/main
 
@@ -140,10 +143,10 @@ jobs:
             echo "?? Pulling novas imagens..."
             docker compose pull backend frontend
 
-            echo "?? Garantindo depend�ncias (db/redis) ativas..."
+            echo "?? Garantindo dependencias (db/redis) ativas..."
             docker compose up -d db redis
 
-            echo "? Aguardando db/redis ficarem healthy..."
+            echo "?? Aguardando db/redis ficarem healthy..."
             for i in $(seq 1 200); do
               db_cid=$(docker compose ps -q db 2>/dev/null || true)
               redis_cid=$(docker compose ps -q redis 2>/dev/null || true)
@@ -152,14 +155,14 @@ jobs:
               redis_status=$( [ -n "$redis_cid" ] && docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$redis_cid" 2>/dev/null || echo starting )
 
               if [ "$db_status" = "healthy" ] && [ "$redis_status" = "healthy" ]; then
-                echo "? db/redis healthy"
+                echo "?? db/redis healthy"
                 break
               fi
               printf 'db=%s redis=%s (tentativa %s/200)\n' "$db_status" "$redis_status" "$i"
               sleep 3
             done
             if [ "${db_status:-starting}" != "healthy" ] || [ "${redis_status:-starting}" != "healthy" ]; then
-              echo "? db/redis n�o ficaram healthy a tempo" >&2
+              echo "!! db/redis nao ficaram healthy a tempo" >&2
               docker compose ps || true
               docker compose logs --tail 200 db redis || true
               exit 1
@@ -168,12 +171,12 @@ jobs:
             echo "?? Reiniciando apenas o que mudou..."
             docker compose up -d --no-deps backend frontend
 
-            echo "? Aguardando backend ficar healthy..."
+            echo "?? Aguardando backend ficar healthy..."
             for i in $(seq 1 240); do
               be_cid=$(docker compose ps -q backend 2>/dev/null || true)
               be_status=$( [ -n "$be_cid" ] && docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$be_cid" 2>/dev/null || echo starting )
               if [ "$be_status" = "healthy" ]; then
-                echo "? backend healthy"
+                echo "?? backend healthy"
                 break
               fi
               if [ $((i % 20)) -eq 0 ] && [ -n "$be_cid" ]; then
@@ -183,28 +186,28 @@ jobs:
               sleep 3
             done
             if [ "${be_status:-starting}" != "healthy" ]; then
-              echo "? backend n�o ficou healthy a tempo" >&2
+              echo "!! backend nao ficou healthy a tempo" >&2
               docker compose logs --tail 200 backend || true
               exit 1
             fi
 
-            echo "??? Migra��es de banco..."
+            echo "?? Migracoes de banco..."
 
-            echo "?? Criando extens�o PostgreSQL btree_gin..."
+            echo "?? Criando extensao PostgreSQL btree_gin..."
             docker compose exec -T db psql -U postgres -d ab0 -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" 2>/dev/null || true
 
             echo "?? Configurando ambiente Rails..."
             docker compose exec -T backend bundle exec rails db:environment:set RAILS_ENV=production
 
-            echo "?? Executando migra��es..."
+            echo "?? Executando migracoes..."
             if ! docker compose exec -T backend bundle exec rails db:migrate; then
-              echo "?? Migrate falhou, mas N�O vamos recriar o banco (preservar dados)"
-              echo "?? Tentando criar banco se n�o existir..."
+              echo "?? Migrate falhou, mas NAO vamos recriar o banco (preservar dados)"
+              echo "?? Tentando criar banco se nao existir..."
               docker compose exec -T backend bundle exec rails db:create || true
               docker compose exec -T backend bundle exec rails db:migrate || true
             fi
             
-            echo "?? Verificando se h� dados no banco..."
+            echo "?? Verificando se ha dados no banco..."
             # Desativa temporariamente exit-on-error para evitar que falhas de logs ou pipes matem o deploy
             set +e
             HAS_DATA_RAW=$(docker compose exec -T backend bundle exec rails runner "puts \"DATA_COUNT:#{Company.count}\"" 2>/dev/null)
@@ -214,7 +217,7 @@ jobs:
             
             echo "?? Empresas encontradas: $HAS_DATA"
 
-            if [ "$HAS_DATA" -eq 0 ]; then
+            if [ "$HAS_DATA" -eq "0" ]; then
               echo "?? Banco vazio, restaurando dados do backup..."
               
               # Importar empresas do backup
@@ -224,7 +227,7 @@ jobs:
                 # Ler arquivo JSON com empresas
                 backup_file = Rails.root.join('companies.json')
                 if File.exist?(backup_file)
-                  puts '📦 Carregando empresas do backup...'
+                  puts 'Carregando empresas do backup...'
                   companies_data = JSON.parse(File.read(backup_file))
                   
                   companies_data.each do |company_data|
@@ -246,19 +249,19 @@ jobs:
                     company.save
                   end
                   
-                  puts \"✅ #{Company.count} empresas restauradas do backup\"
+                  puts \"#{Company.count} empresas restauradas do backup\"
                 else
-                  puts '⚠️  Arquivo de backup n�o encontrado, populando com seeds...'
+                  puts 'Arquivo de backup nao encontrado, populando com seeds...'
                 end
               " || echo "Falha ao restaurar backup, continuando..."
               
               # Seeds padrão se não houver backup
               docker compose exec -T backend bundle exec rails db:seed || true
             else
-              echo "✅ Banco j� cont�m dados ($HAS_DATA empresas), pulando restaura��o"
+              echo "?? Banco ja contem dados ($HAS_DATA empresas), pulando restauracao"
             fi
 
-            echo "? Verifica��o essencial..."
+            echo "?? Verificacao essencial..."
             docker compose exec -T backend bundle exec rails runner "
               tables = ActiveRecord::Base.connection.tables
               essential = %w[schema_migrations categories companies users]
@@ -269,17 +272,17 @@ jobs:
               else
                 puts 'Banco OK. Total de tabelas: ' + tables.count.to_s
               end
-            "
+            " || { echo "?? Falha na verificacao essencial do banco"; exit 1; }
             
-            echo "? Aguardando frontend inicializar..."
+            echo "?? Aguardando frontend inicializar..."
             for i in $(seq 1 60); do
               fe_cid=$(docker compose ps -q frontend 2>/dev/null || true)
               if [ -n "$fe_cid" ]; then
                 fe_status=$(docker inspect -f '{{.State.Status}}' "$fe_cid" 2>/dev/null || echo "starting")
                 if [ "$fe_status" = "running" ]; then
-                  # Testar se o Next.js está respondendo
+                  # Testar se o Next.js esta respondendo
                   if docker exec "$fe_cid" curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
-                    echo "? Frontend healthy e respondendo!"
+                    echo "?? Frontend healthy e respondendo!"
                     break
                   fi
                 fi
@@ -288,11 +291,11 @@ jobs:
               sleep 2
             done
             
-            echo "? Frontend inicializado!"
+            echo "?? Frontend inicializado!"
             
-            echo "?? Limpeza e Finaliza��o..."
+            echo "?? Limpeza e Finalizacao..."
             docker image prune -f
             docker system prune -f --volumes || true
 
-            echo "? Deploy finalizado com sucesso!"
+            echo "?? Deploy finalizado com sucesso!"
 
