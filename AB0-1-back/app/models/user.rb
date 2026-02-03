@@ -42,6 +42,7 @@ class User < ApplicationRecord
   validate :corporate_email_domain, if: -> { company_user? && active_member_companies.any? }
 
   def approved_for_dashboard?
+    return true if review_user?
     approved_by_admin?
   end
 

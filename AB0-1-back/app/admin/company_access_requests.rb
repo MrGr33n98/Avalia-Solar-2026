@@ -15,12 +15,13 @@ ActiveAdmin.register CompanyAccessRequest do
   scope :rejected
 
   action_item :approve, only: :show, if: proc { resource.pending? } do
-    link_to 'Approve', approve_admin_company_access_request_path(resource), method: :put, class: 'member_link'
+    link_to 'Approve', '#', class: 'member_link',
+            onclick: "const note = prompt('Nota opcional para aprovação:'); window.location.href = '#{approve_admin_company_access_request_path(resource)}?note=' + encodeURIComponent(note || ''); return false;"
   end
 
   action_item :reject, only: :show, if: proc { resource.pending? } do
-    link_to 'Reject', reject_admin_company_access_request_path(resource), method: :put, class: 'member_link',
-            data: { prompt: 'Motivo da rejeição:' }
+    link_to 'Reject', '#', class: 'member_link',
+            onclick: "const reason = prompt('Motivo da rejeição (obrigatório):'); if(reason) { window.location.href = '#{reject_admin_company_access_request_path(resource)}?reason=' + encodeURIComponent(reason); } return false;"
   end
 
   member_action :approve, method: :put do
@@ -31,6 +32,7 @@ ActiveAdmin.register CompanyAccessRequest do
     resource.transaction do
       resource.update!(
         status: 'approved',
+        admin_note: params[:note].presence,
         reviewed_at: Time.current,
         reviewed_by_admin_user_id: current_admin_user.id
       )
@@ -45,7 +47,7 @@ ActiveAdmin.register CompanyAccessRequest do
     redirect_to resource_path, notice: 'Acesso aprovado e email enviado.'
   rescue StandardError => e
     Rails.logger.error("[Admin::CompanyAccessRequest] approve failed id=#{resource.id} error=#{e.class} #{e.message}")
-    redirect_to resource_path, alert: 'Falha ao aprovar solicitaÃ§Ã£o.'
+    redirect_to resource_path, alert: 'Falha ao aprovar solicitação.'
   end
 
   member_action :reject, method: :put do

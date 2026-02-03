@@ -1,17 +1,26 @@
-﻿module Api
+module Api
   module V1
     class CompanyAccessRequestsController < BaseController
       before_action :authenticate_api_user
-      before_action :require_company_user
       before_action :set_request, only: %i[destroy]
 
       def create
+        # Permite que usuários review também solicitem acesso, mas a role final será 'company' após aprovação?
+        # Na verdade, se um review quer gerenciar uma empresa, ele deve mudar para 'company' ou o sistema deve permitir.
+        # Conforme solicitado, usuários review podem solicitar administração.
+        # Mas o controller exige :require_company_user. Vamos remover ou ajustar.
+        unless current_user.role.in?(%w[company review])
+          return render_error_response(message: 'Não autorizado', status: :forbidden, code: 'FORBIDDEN')
+        end
+
         company = Company.find_by(id: params[:company_id])
-        return render_error_response(message: 'Empresa nÃ£o encontrada', status: :not_found, code: 'COMPANY_NOT_FOUND') unless company
+        unless company
+          return render_error_response(message: 'Empresa não encontrada', status: :not_found, code: 'COMPANY_NOT_FOUND')
+        end
 
         if company.blocked_status? || company.pending_status? || company.inactive_status?
           return render_error_response(
-            message: 'Empresa indisponÃ­vel para solicitaÃ§Ã£o de acesso',
+            message: 'Empresa indisponível para solicitação de acesso',
             status: :unprocessable_entity,
             code: 'COMPANY_NOT_AVAILABLE'
           )

@@ -92,11 +92,12 @@ jobs:
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://avaliasolar.com.br' }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' }}
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
+            SENTRY_ORG=${{ secrets.SENTRY_ORG || '' }}
+            SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT || '' }}
+          secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN || '' }}
-            SENTRY_ORG=${{ secrets.SENTRY_ORG || '' }}
-            SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT || '' }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend

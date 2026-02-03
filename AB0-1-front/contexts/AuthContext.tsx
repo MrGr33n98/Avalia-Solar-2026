@@ -61,9 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const routeAfterLogin = async (nextUser: User) => {
+    console.log('[Auth] Routing user after login:', { id: nextUser.id, role: nextUser.role });
     if (!nextUser) return;
 
     if (nextUser.role === 'review') {
+      console.log('[Auth] Review user detected, redirecting to /review-dashboard');
       router.push('/review-dashboard');
       return;
     }

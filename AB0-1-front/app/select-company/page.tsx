@@ -51,14 +51,17 @@ export default function SelectCompanyPage() {
 
   useEffect(() => {
     if (!authLoading && user?.role === 'review') {
-      router.push('/review-dashboard');
-      return;
+      // Usuários review agora podem acessar esta página para solicitar administração de empresas se desejarem
+      // Mas por padrão eles vão para o review-dashboard.
+      // Vamos manter o redirecionamento se eles não tiverem intenção explícita?
+      // O requisito diz: "crie interface para usuário solicitar administração de empresas específicas após aprovação"
+      // Se ele já está aprovado como review, ele pode querer administrar uma empresa.
+      // Então não devemos redirecionar obrigatoriamente se ele acessou /select-company.
     }
   }, [authLoading, user, router]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (user?.role === 'review') return;
     loadContext();
   }, [authLoading, user]);
 

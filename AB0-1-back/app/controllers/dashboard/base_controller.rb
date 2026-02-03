@@ -8,6 +8,7 @@ module Dashboard
     private
 
     def ensure_dashboard_access
+      return if current_user.review_user?
       company = current_user.company
       return if current_user.approved_by_admin? && company&.status == "active"
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,11 @@ export default function ReviewDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[ReviewDashboard] Page mounted, auth status:', { 
+      authLoading, 
+      userRole: user?.role, 
+      userId: user?.id 
+    });
     if (!authLoading && user?.role === 'company') {
       router.push('/company-dashboard');
     }

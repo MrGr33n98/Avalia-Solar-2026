@@ -46,6 +46,7 @@ module Api
         end
 
         def ensure_approved_user
+          return if current_user&.review_user?
           return if current_user&.approved_for_dashboard?
 
           render_error_response(
@@ -56,6 +57,7 @@ module Api
         end
 
         def ensure_company
+          return if current_user&.review_user?
           return if current_company.present?
 
           render_error_response(
