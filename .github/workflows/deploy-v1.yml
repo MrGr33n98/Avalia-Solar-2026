@@ -208,53 +208,31 @@ jobs:
             fi
             
             echo "?? Verificando se ha dados no banco..."
-            # Desativa temporariamente exit-on-error para evitar que falhas de logs ou pipes matem o deploy
-            set +e
-            HAS_DATA_RAW=$(docker compose exec -T backend bundle exec rails runner "puts \"DATA_COUNT:#{Company.count}\"" 2>/dev/null)
+            # Força captura segura sem quebrar o script
+            HAS_DATA_RAW=$(docker compose exec -T backend bundle exec rails runner "puts \"DATA_COUNT:#{Company.count}\"" 2>/dev/null || echo "DATA_COUNT:0")
             HAS_DATA=$(echo "$HAS_DATA_RAW" | grep "DATA_COUNT:" | tail -n 1 | cut -d: -f2 | tr -cd '0-9')
             HAS_DATA="${HAS_DATA:-0}"
-            set -e
             
             echo "?? Empresas encontradas: $HAS_DATA"
 
-            if [ "$HAS_DATA" -eq "0" ]; then
-              echo "?? Banco vazio, restaurando dados do backup..."
+            # Logica de restauracao simplificada para evitar erros de sintaxe bash
+            if [ "$HAS_DATA" = "0" ]; then
+              echo "?? Banco vazio, tentando restaurar..."
               docker compose exec -T backend bundle exec rails runner "
                 require 'json'
-                backup_file = Rails.root.join('companies.json')
-                if File.exist?(backup_file)
-                  puts 'Carregando empresas do backup...'
-                  companies_data = JSON.parse(File.read(backup_file))
-                  companies_data.each do |company_data|
-                    company = Company.find_or_initialize_by(id: company_data['id'])
-                    company.assign_attributes(
-                      name: company_data['name'],
-                      description: company_data['description'],
-                      website: company_data['website'],
-                      phone: company_data['phone'],
-                      address: company_data['address'],
-                      state: company_data['state'],
-                      city: company_data['city'],
-                      rating_avg: company_data['rating_avg'],
-                      rating_count: company_data['rating_count'],
-                      status: company_data['status'],
-                      featured: company_data['featured'],
-                      verified: company_data['verified']
-                    )
-                    company.save
-                  end
-                  puts \"#{Company.count} empresas restauradas\"
-                else
-                  puts 'Backup nao encontrado'
+                f = Rails.root.join('companies.json')
+                if File.exist?(f)
+                  data = JSON.parse(File.read(f))
+                  data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }
+                  puts 'Restaurado'
                 end
-              " || echo "?? Falha ao restaurar backup, continuando..."
-              
+              " || echo "?? Pulando restauracao"
               docker compose exec -T backend bundle exec rails db:seed || true
             else
-              echo "?? Banco ja contem dados ($HAS_DATA empresas), pulando restauracao"
+              echo "?? Banco ja populado, seguindo..."
             fi
 
-            echo "?? Verificacao essencial de tabelas..."
+            echo "?? Verificacao final de tabelas..."
             docker compose exec -T backend bundle exec rails runner "
               tables = ActiveRecord::Base.connection.tables
               essential = %w[schema_migrations categories companies users]
