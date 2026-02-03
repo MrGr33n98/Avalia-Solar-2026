@@ -219,17 +219,12 @@ jobs:
 
             if [ "$HAS_DATA" -eq "0" ]; then
               echo "?? Banco vazio, restaurando dados do backup..."
-              
-              # Importar empresas do backup
               docker compose exec -T backend bundle exec rails runner "
                 require 'json'
-                
-                # Ler arquivo JSON com empresas
                 backup_file = Rails.root.join('companies.json')
                 if File.exist?(backup_file)
                   puts 'Carregando empresas do backup...'
                   companies_data = JSON.parse(File.read(backup_file))
-                  
                   companies_data.each do |company_data|
                     company = Company.find_or_initialize_by(id: company_data['id'])
                     company.assign_attributes(
@@ -248,20 +243,18 @@ jobs:
                     )
                     company.save
                   end
-                  
-                  puts \"#{Company.count} empresas restauradas do backup\"
+                  puts \"#{Company.count} empresas restauradas\"
                 else
-                  puts 'Arquivo de backup nao encontrado, populando com seeds...'
+                  puts 'Backup nao encontrado'
                 end
-              " || echo "Falha ao restaurar backup, continuando..."
+              " || echo "?? Falha ao restaurar backup, continuando..."
               
-              # Seeds padrão se não houver backup
               docker compose exec -T backend bundle exec rails db:seed || true
             else
               echo "?? Banco ja contem dados ($HAS_DATA empresas), pulando restauracao"
             fi
 
-            echo "?? Verificacao essencial..."
+            echo "?? Verificacao essencial de tabelas..."
             docker compose exec -T backend bundle exec rails runner "
               tables = ActiveRecord::Base.connection.tables
               essential = %w[schema_migrations categories companies users]
