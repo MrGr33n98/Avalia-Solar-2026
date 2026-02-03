@@ -205,10 +205,18 @@ jobs:
             fi
             
             echo "?? Verificando se h� dados no banco..."
-            HAS_DATA=$(docker compose exec -T backend bundle exec rails runner "puts Company.count" 2>/dev/null || echo "0")
+            # Captura apenas o último número da saída para evitar contaminação por logs do Rails (Scout, Sentry, etc)
+            HAS_DATA_RAW=$(docker compose exec -T backend bundle exec rails runner "puts Company.count" 2>/dev/null || echo "0")
+            HAS_DATA=$(echo "$HAS_DATA_RAW" | tr -d '\r' | grep -oE '[0-9]+' | tail -n 1)
+            HAS_DATA="${HAS_DATA:-0}"
             
-            if [ "$HAS_DATA" -eq "0" ] || [ -z "$HAS_DATA" ]; then
-              echo "?? Banco vazio, restaurando dados do backup..."
+            # Validação para garantir que HAS_DATA seja numérico para evitar erro de 'integer expression expected'
+            if ! [[ "$HAS_DATA" =~ ^[0-9]+$ ]]; then
+              HAS_DATA=0
+            fi
+
+            if [ "$HAS_DATA" -eq 0 ]; then
+              echo "?? Banco vazio (count: $HAS_DATA), restaurando dados do backup..."
               
               # Importar empresas do backup
               docker compose exec -T backend bundle exec rails runner "
