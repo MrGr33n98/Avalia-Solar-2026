@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -82,7 +82,6 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [formData, setFormData] = useState<CompanyData | null>(null);
   const [pendingApproval, setPendingApproval] = useState(false);
   const { updateCompany } = useCompany(companyId);
-};
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -94,7 +93,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       }
       const data = await response.json();
       if (!data?.company) {
-        setLoadError('Empresa não encontrada ou não associada à sua conta.');
+        setLoadError('Empresa nÃ£o encontrada ou nÃ£o associada Ã  sua conta.');
       } else {
         setCompany(data.company);
         setFormData(data.company);
@@ -141,7 +140,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/png','image/jpeg'].includes(file.type)) {
-      alert('Formato inválido. Use PNG ou JPG');
+      alert('Formato invÃ¡lido. Use PNG ou JPG');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -175,7 +174,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/png','image/jpeg'].includes(file.type)) {
-      alert('Formato inválido. Use PNG ou JPG');
+      alert('Formato invÃ¡lido. Use PNG ou JPG');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -229,9 +228,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           <Alert className="border-amber-200 bg-amber-50">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Alterações enviadas para aprovação!</strong>
+              <strong>AlteraÃ§Ãµes enviadas para aprovaÃ§Ã£o!</strong>
               <br />
-              Suas mudanças estão sendo revisadas pela equipe do ActiveAdmin e serão publicadas após aprovação.
+              Suas mudanÃ§as estÃ£o sendo revisadas pela equipe do ActiveAdmin e serÃ£o publicadas apÃ³s aprovaÃ§Ã£o.
             </AlertDescription>
           </Alert>
         </motion.div>
@@ -240,15 +239,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Informações da Empresa</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-2">InformaÃ§Ãµes da Empresa</h2>
           <p className="text-muted-foreground">
-            Gerencie as informações básicas e detalhes da sua empresa
+            Gerencie as informaÃ§Ãµes bÃ¡sicas e detalhes da sua empresa
           </p>
         </div>
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)}>
             <Pencil className="h-4 w-4 mr-2" />
-            Editar Informações
+            Editar InformaÃ§Ãµes
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -258,7 +257,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Salvando...' : 'Salvar Alterações'}
+              {saving ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
             </Button>
           </div>
         )}
@@ -300,7 +299,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                       </Button>
                     </Label>
                     <p className="text-xs text-muted-foreground mt-2">
-                      PNG ou JPG, até 2MB
+                      PNG ou JPG, atÃ© 2MB
                     </p>
                   </div>
                 )}
@@ -338,7 +337,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                       </Button>
                     </Label>
                     <p className="text-xs text-muted-foreground mt-2">
-                      PNG ou JPG, até 5MB. Recomendado: 1920x600px
+                      PNG ou JPG, atÃ© 5MB. Recomendado: 1920x600px
                     </p>
                   </div>
                 )}
@@ -353,7 +352,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
-            Informações Básicas
+            InformaÃ§Ãµes BÃ¡sicas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -388,13 +387,13 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição *</Label>
+            <Label htmlFor="description">DescriÃ§Ã£o *</Label>
             {isEditing ? (
               <Textarea
                 id="description"
                 value={formData?.description || ''}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Descreva sua empresa, produtos e serviços..."
+                placeholder="Descreva sua empresa, produtos e serviÃ§os..."
                 rows={4}
               />
             ) : (
@@ -406,7 +405,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="founded_year">Ano de Fundação</Label>
+              <Label htmlFor="founded_year">Ano de FundaÃ§Ã£o</Label>
               {isEditing ? (
                 <Input
                   id="founded_year"
@@ -424,7 +423,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="employees_count">Número de Funcionários</Label>
+              <Label htmlFor="employees_count">NÃºmero de FuncionÃ¡rios</Label>
               {isEditing ? (
                 <Input
                   id="employees_count"
@@ -448,7 +447,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Tipos de Projetos e Serviços
+            Tipos de Projetos e ServiÃ§os
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -482,15 +481,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
 
             <div className="space-y-3">
-              <Label>Serviços Oferecidos</Label>
+              <Label>ServiÃ§os Oferecidos</Label>
               {isEditing ? (
                 <div className="grid grid-cols-1 gap-2">
                   {[
-                    'Instalação Residencial',
-                    'Instalação Comercial',
-                    'Instalação Industrial',
-                    'Manutenção e Suporte',
-                    'Consultoria Energética',
+                    'InstalaÃ§Ã£o Residencial',
+                    'InstalaÃ§Ã£o Comercial',
+                    'InstalaÃ§Ã£o Industrial',
+                    'ManutenÃ§Ã£o e Suporte',
+                    'Consultoria EnergÃ©tica',
                   ].map((svc) => (
                     <label key={svc} className="flex items-center gap-2">
                       <input
@@ -523,7 +522,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5 text-primary" />
-            Informações de Contato
+            InformaÃ§Ãµes de Contato
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -577,7 +576,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email_public">E-mail Público</Label>
+              <Label htmlFor="email_public">E-mail PÃºblico</Label>
               {isEditing ? (
                 <Input
                   id="email_public"
@@ -621,18 +620,18 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Localização
+            LocalizaÃ§Ã£o
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="address">Endereço Completo</Label>
+            <Label htmlFor="address">EndereÃ§o Completo</Label>
             {isEditing ? (
               <Textarea
                 id="address"
                 value={formData?.address || ''}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Rua, número, complemento, bairro"
+                placeholder="Rua, nÃºmero, complemento, bairro"
                 rows={2}
               />
             ) : (
@@ -648,7 +647,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   id="city"
                   value={formData?.city || ''}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="São Paulo"
+                  placeholder="SÃ£o Paulo"
                 />
               ) : (
                 <p className="text-sm">{company?.city || '-'}</p>
@@ -708,17 +707,17 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Additional Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Informações Adicionais</CardTitle>
+          <CardTitle>InformaÃ§Ãµes Adicionais</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="working_hours">Horário de Funcionamento</Label>
+            <Label htmlFor="working_hours">HorÃ¡rio de Funcionamento</Label>
             {isEditing ? (
               <Textarea
                 id="working_hours"
                 value={formData?.working_hours || ''}
                 onChange={(e) => handleInputChange('working_hours', e.target.value)}
-                placeholder="Seg-Sex: 9h-18h, Sáb: 9h-13h"
+                placeholder="Seg-Sex: 9h-18h, SÃ¡b: 9h-13h"
                 rows={2}
               />
             ) : (
@@ -730,13 +729,13 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="payment_methods">Métodos de Pagamento</Label>
+            <Label htmlFor="payment_methods">MÃ©todos de Pagamento</Label>
             {isEditing ? (
               <Input
                 id="payment_methods"
                 value={formData?.payment_methods || ''}
                 onChange={(e) => handleInputChange('payment_methods', e.target.value)}
-                placeholder="Dinheiro, Cartão, Pix, Boleto"
+                placeholder="Dinheiro, CartÃ£o, Pix, Boleto"
               />
             ) : (
               <p className="text-sm flex items-center gap-2">
@@ -747,7 +746,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="certifications">Certificações</Label>
+            <Label htmlFor="certifications">CertificaÃ§Ãµes</Label>
             {isEditing ? (
               <Textarea
                 id="certifications"
@@ -765,13 +764,13 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="awards">Prêmios e Reconhecimentos</Label>
+            <Label htmlFor="awards">PrÃªmios e Reconhecimentos</Label>
             {isEditing ? (
               <Textarea
                 id="awards"
                 value={formData?.awards || ''}
                 onChange={(e) => handleInputChange('awards', e.target.value)}
-                placeholder="Lista de prêmios e reconhecimentos"
+                placeholder="Lista de prÃªmios e reconhecimentos"
                 rows={2}
               />
             ) : (
@@ -786,7 +785,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 id="languages"
                 value={formData?.languages || ''}
                 onChange={(e) => handleInputChange('languages', e.target.value)}
-                placeholder="Português, Inglês, Espanhol"
+                placeholder="PortuguÃªs, InglÃªs, Espanhol"
               />
             ) : (
               <p className="text-sm">{company?.languages || '-'}</p>
@@ -864,3 +863,4 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     </div>
   );
 }
+
