@@ -106,19 +106,6 @@ export default function DashboardPage() {
     },
   ];
 
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const raw = localStorage.getItem('auth');
-        if (raw) {
-          const data = JSON.parse(raw);
-          const cid = data?.user?.company_id ?? data?.company_id;
-          if (cid && Number(cid) > 0) setCompanyId(Number(cid));
-        }
-      }
-    } catch {}
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

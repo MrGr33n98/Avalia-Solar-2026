@@ -265,6 +265,35 @@ export interface Review {
   helpful_count?: number;
 }
 
+export interface CompanyAccessMembership {
+  company_id: number;
+  company_name: string;
+  company_slug?: string;
+  member_role?: string | number;
+  member_status?: string;
+}
+
+export interface CompanyAccessPendingRequest {
+  id: number;
+  company_id: number;
+  company_name: string;
+  status: string;
+  requested_at?: string;
+}
+
+export interface CompanyAccessSuggestedCompany {
+  company_id: number;
+  company_name: string;
+  company_slug?: string;
+  match_reason?: string;
+}
+
+export interface CompanyAccessContext {
+  active_memberships: CompanyAccessMembership[];
+  pending_requests: CompanyAccessPendingRequest[];
+  suggested_companies: CompanyAccessSuggestedCompany[];
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -380,7 +409,7 @@ export interface User {
   email: string;
   phone?: string;
   avatar_url?: string;
-  role: 'user' | 'admin' | 'company';
+  role: 'review' | 'company' | 'admin';
   company_id?: number | null;
   approved_by_admin?: boolean;
   created_at: string;
@@ -420,6 +449,21 @@ const TIMEOUT = 60000; // Aumentado para 60s para evitar timeouts em conexões l
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const attemptRefresh = async (): Promise<boolean> => {
+  try {
+    const url = buildApiUrl('/auth/refresh');
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getApiRequestHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn('[API] Refresh failed:', error);
+    return false;
+  }
+};
+
 export const api = {
   baseUrl: API_BASE_URL,
   
@@ -456,22 +500,6 @@ export const api = {
           isFormData ? {} : { 'Content-Type': 'application/json' }
         );
 
-        // Add Authorization header from localStorage if available
-        if (typeof window !== 'undefined') {
-          try {
-            const authData = localStorage.getItem('auth');
-            if (authData) {
-              const parsed = JSON.parse(authData);
-              const token = parsed?.token;
-              if (token) {
-                baseHeaders['Authorization'] = `Bearer ${token}`;
-              }
-            }
-          } catch (e) {
-            console.warn('[API] Failed to parse auth data from localStorage', e);
-          }
-        }
-
         // Add timeout support using AbortController
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
@@ -502,6 +530,13 @@ export const api = {
           clearTimeout(timeoutId);
 
           if (!response.ok) {
+            if (response.status === 401 && !config._retry && !String(config.url).includes('/auth/refresh')) {
+              const refreshed = await attemptRefresh();
+              if (refreshed) {
+                return await api.request({ ...config, _retry: true });
+              }
+            }
+
             let details: any = null;
             try {
               details = await response.json();
@@ -652,26 +687,17 @@ export async function fetchApi<T = any>(
 // =======================
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
-    if (typeof window !== 'undefined') {
-      try {
-        const authStr = localStorage.getItem('auth');
-        const auth = authStr ? JSON.parse(authStr) : null;
-        const role = auth?.user?.role;
-        if (role === 'admin') {
-          return await fetchApi('/dashboard/stats');
-        }
-        return await fetchApi('/company_dashboard/stats');
-      } catch (error) {
-        console.warn('[dashboardApi.getStats] Falling back to default stats due to error:', error);
-        return await fetchApi('/company_dashboard/stats');
-      }
+    try {
+      return await fetchApi('/dashboard/stats');
+    } catch (error) {
+      console.warn('[dashboardApi.getStats] Falling back to company stats due to error:', error);
+      return await fetchApi('/company_dashboard/stats');
     }
-    return await fetchApi('/dashboard/stats');
   },
 };
 
 export const companiesApi = {
-  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; mine?: boolean; } = {}): Promise<Company[]> => {
+  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; mine?: boolean; q?: string; } = {}): Promise<Company[]> => {
     try {
       const response = await fetchApi<any>('/companies', { params });
       if (Array.isArray(response)) {
@@ -886,6 +912,22 @@ export const reviewsApi = {
   delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
 };
 
+export const companyAccessApi = {
+  context: () => fetchApi<CompanyAccessContext>('/company_access/context'),
+  createRequest: (company_id: number, message?: string) =>
+    fetchApi('/company_access_requests', {
+      method: 'POST',
+      body: JSON.stringify({ company_id, message }),
+    }),
+  cancelRequest: (id: number) =>
+    fetchApi(`/company_access_requests/${id}`, { method: 'DELETE' }),
+  selectActiveCompany: (company_id: number) =>
+    fetchApi('/company_access/select_active_company', {
+      method: 'POST',
+      body: JSON.stringify({ company_id }),
+    }),
+};
+
 export const plansApi = {
   getAll: () => fetchApi('/plans'),
   getById: (id: number) => fetchApi(`/plans/${id}`),
@@ -974,8 +1016,10 @@ export const authApi = {
   resetPassword: (token: string, password: string, password_confirmation?: string) =>
     fetchApi('/auth/reset_password', {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({
-        token,
         password,
         password_confirmation: password_confirmation || password,
       }),
@@ -986,9 +1030,6 @@ export const authApi = {
       body: JSON.stringify({ email }),
     }),
   logout: async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-    }
     try {
       await fetchApi('/auth/logout', { method: 'POST' });
     } catch (error) {
@@ -996,17 +1037,6 @@ export const authApi = {
     }
   },
   me: async (): Promise<User | null> => {
-    // Só chama se tiver algum token em disco (evita 401 ruidosos)
-    if (typeof window !== 'undefined') {
-      const authData = localStorage.getItem('auth');
-      const token = localStorage.getItem('auth_token');
-
-      if (!authData && !token) {
-        console.log('[authApi.me] No auth data found, skipping /auth/me');
-        return null;
-      }
-    }
-
     try {
       const resp = await fetchApi<{ user: User }>('/auth/me');
       return resp.user;

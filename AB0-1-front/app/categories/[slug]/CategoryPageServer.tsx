@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 
 import CategoryClientComponent from './CategoryClientComponent';
 import { fetchCategoryBySlug, categoriesApi, api, Banner } from '@/lib/api';
@@ -187,12 +188,14 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
 
     return (
       <div className="relative">
-        <CategoryClientComponent
-          initialCategory={category}
-          initialCompanies={companies || []}
-          initialBanners={banners || []}
-          paginationMeta={paginationMeta}
-        />
+        <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Carregando categoria...</div>}>
+          <CategoryClientComponent
+            initialCategory={category}
+            initialCompanies={companies || []}
+            initialBanners={banners || []}
+            paginationMeta={paginationMeta}
+          />
+        </Suspense>
       </div>
     );
   } catch (error) {

@@ -165,7 +165,11 @@ Rails.application.routes.draw do
       end
 
       # Reviews routes
-      resources :reviews, only: [:index, :show, :create, :update, :destroy]
+      resources :reviews, only: [:index, :show, :create, :update, :destroy] do
+        collection do
+          get :mine
+        end
+      end
 
       # Leads routes
       resources :leads, only: [:create, :index, :show] do
@@ -189,6 +193,11 @@ Rails.application.routes.draw do
         end
       end
 
+      # Company access routes
+      get 'company_access/context', to: 'company_access#context'
+      post 'company_access/select_active_company', to: 'company_access#select_active_company'
+      resources :company_access_requests, only: [:create, :destroy]
+
       # Search routes
       get 'search', to: 'search#index'
       get 'search/all', to: 'search#all'
@@ -201,6 +210,7 @@ Rails.application.routes.draw do
         post :register
         post :logout
         post :logout_all
+        post :refresh
         get :me
         post :forgot_password
         post :reset_password

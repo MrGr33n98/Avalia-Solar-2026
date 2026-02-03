@@ -1,5 +1,6 @@
 // app/companies/[id]/page.tsx
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -131,7 +132,9 @@ export default async function CompanyDetailPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <CompanyDetailClient company={company} />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando detalhes da empresa...</div>}>
+        <CompanyDetailClient company={company} />
+      </Suspense>
     </>
   );
 }

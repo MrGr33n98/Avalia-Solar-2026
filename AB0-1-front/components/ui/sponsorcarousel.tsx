@@ -17,6 +17,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { Banner, fetchApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 
@@ -118,22 +119,13 @@ export default function SponsorCarousel({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [snapCount, setSnapCount] = useState(0);
 
-  const [canUpload, setCanUpload] = useState(false);
+  const { user } = useAuth();
+  const canUpload = Boolean(user?.role === 'admin' || user?.role === 'company');
+
   const [gifFile, setGifFile] = useState<File | null>(null);
   const [gifPreview, setGifPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('auth') : null;
-      const auth = raw ? JSON.parse(raw) : null;
-      const role = auth?.user?.role;
-      setCanUpload(Boolean(role === 'admin' || role === 'company'));
-    } catch {
-      setCanUpload(false);
-    }
-  }, []);
 
   const handleSelectGif = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null);

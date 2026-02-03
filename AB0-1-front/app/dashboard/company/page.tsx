@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import EnterpriseDashboard from '../components/EnterpriseDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,5 +43,9 @@ export default function CompanyDashboardPage() {
     );
   }
 
-  return <EnterpriseDashboard companyId={companyId} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel...</div>}>
+      <EnterpriseDashboard companyId={companyId} />
+    </Suspense>
+  );
 }

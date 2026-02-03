@@ -53,6 +53,16 @@ module Api
             @companies = @companies.where(status: ::Company.statuses[:active])
           end
 
+          if params[:q].present?
+            term = params[:q].to_s.strip
+            if term.present?
+              @companies = @companies.where(
+                'companies.name ILIKE :q OR companies.slug ILIKE :q OR companies.cnpj ILIKE :q',
+                q: "%#{term}%"
+              )
+            end
+          end
+
           if params[:featured].present?
             featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
             @companies = @companies.where(featured: featured_value)

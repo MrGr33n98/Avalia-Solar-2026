@@ -95,9 +95,6 @@ export default function RegisterUserPage() {
         date_of_birth: dateOfBirth,
         terms_accepted: true,
       });
-      if (resp?.token && resp?.user && typeof window !== 'undefined') {
-        localStorage.setItem('auth', JSON.stringify({ token: resp.token, user: resp.user }));
-      }
       setSubmitted(true);
       if (safeReturnTo) {
         setTimeout(() => {

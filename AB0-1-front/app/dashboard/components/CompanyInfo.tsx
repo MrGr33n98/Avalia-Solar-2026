@@ -82,15 +82,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [formData, setFormData] = useState<CompanyData | null>(null);
   const [pendingApproval, setPendingApproval] = useState(false);
   const { updateCompany } = useCompany(companyId);
-
-  const getAuthToken = () => {
-    try {
-      const raw = localStorage.getItem('auth');
-      return raw ? JSON.parse(raw).token : null;
-    } catch {
-      return null;
-    }
-  };
+};
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -159,16 +151,12 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
       const res = await fetch(buildApiUrl('company_dashboard/update_logo'), {
         method: 'POST',
         headers: {
           ...getApiRequestHeaders(),
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: fd
       });
       if (!res.ok) {
@@ -197,16 +185,12 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
       const res = await fetch(buildApiUrl('company_dashboard/update_banner'), {
         method: 'POST',
         headers: {
           ...getApiRequestHeaders(),
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: fd
       });
       if (!res.ok) {

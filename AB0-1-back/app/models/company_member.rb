@@ -4,8 +4,10 @@ class CompanyMember < ApplicationRecord
   belongs_to :company
   belongs_to :user
   enum role: { owner: 0, manager: 1, editor: 2 }, _default: :editor
+  enum status: { pending: 'pending', active: 'active', rejected: 'rejected', revoked: 'revoked' }, _default: :active
   validates :company_id, :user_id, presence: true
   validates :role, inclusion: { in: roles.keys }
+  validates :status, inclusion: { in: statuses.keys }
   validates :user_id, uniqueness: { scope: :company_id }
 
   after_create :track_member_assignment
@@ -29,6 +31,6 @@ class CompanyMember < ApplicationRecord
   end
 
   def self.ransackable_attributes(auth_object = nil)
-    ["company_id", "created_at", "id", "role", "updated_at", "user_id"]
+    ["company_id", "created_at", "id", "role", "status", "updated_at", "user_id"]
   end
 end

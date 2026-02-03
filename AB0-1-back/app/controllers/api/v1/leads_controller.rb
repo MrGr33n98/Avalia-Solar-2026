@@ -71,6 +71,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
       @lead[:company] = params[:lead][:company]
     end
 
+    # Captura UTM e Atribuição
+    utm_data = extract_utm_payload
+    attribution = sanitize_attribution_payload(params[:attribution] || params.dig(:lead, :attribution))
+    apply_utm_to_lead(@lead, utm_data, attribution)
+
     if @lead.save
       render json: @lead, status: :created
     else

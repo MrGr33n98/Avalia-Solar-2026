@@ -13,7 +13,7 @@ import ProductCard from '@/components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
 
-function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
@@ -252,7 +252,7 @@ function SearchPage() {
 export default function Page() {
   return (
     <Suspense fallback={<div className="p-10 text-center">Carregando busca...</div>}>
-      <SearchPage />
+      <SearchContent />
     </Suspense>
   );
 }

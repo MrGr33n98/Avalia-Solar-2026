@@ -24,13 +24,13 @@ module Api
         if user&.valid_password?(password)
           # Se o usuário não tem role ou é apenas 'user', ele pode logar
           # Se ele tem role 'company', verificamos se ele tem vínculos ativos
-          if user.company_user? && user.member_companies.empty? && !user.admin?
+          if user.company_user? && user.active_member_companies.empty?
              # Se for um usuário que deveria ser company mas não tem empresa vinculada,
              # talvez ele tenha acabado de se cadastrar ou o vínculo foi removido.
              # Permitimos o login, mas o frontend redirecionará para o fluxo de "vincular empresa"
           end
 
-          if user.respond_to?(:active?) && !user.active?
+          if user.respond_to?(:active_status?) && !user.active_status?
             status_code =
               case user.status
               when 'pending' then 'USER_NOT_APPROVED'
@@ -58,39 +58,31 @@ module Api
           Analytics::TrackEventService.call(
             event_type: 'login_completed',
             user: user,
-            company_id: user.company_id || user.member_companies.first&.id,
+            company_id: user.company_id || user.active_member_companies.first&.id,
             metadata: request_metadata.merge(
               method: 'email',
-              companies_count: user.member_companies.count,
+              companies_count: user.active_member_companies.count,
               primary_role: user.role
             )
           )
 
           payload = payload_for(user)
           if user.company_user?
-            payload[:redirect_to] = user.member_companies.any? ? '/dashboard' : '/select-company'
-            payload[:companies] = user.member_companies.select(:id, :name, :slug)
-          elsif user.admin?
-            payload[:redirect_to] = '/admin'
+            active_companies = user.active_member_companies.select(:id, :name, :slug)
+            payload[:companies] = active_companies
+            if active_companies.any?
+              payload[:active_company_id] = active_companies.first.id
+              payload[:redirect_to] = "/company-dashboard?company_id=#{active_companies.first.id}"
+            else
+              payload[:redirect_to] = '/select-company'
+            end
+          elsif user.review_user?
+            payload[:redirect_to] = '/review-dashboard'
           else
             payload[:redirect_to] = '/'
           end
 
           return render json: payload, status: :ok
-        end
-
-        if Rails.env.development?
-          target_email = email.presence || 'demo@example.com'
-          mock_user = user || User.find_by(email: target_email)
-          unless mock_user
-            mock_user = User.create!(
-              name: 'Usuário Demo',
-              email: target_email,
-              password: SecureRandom.hex(8)
-            )
-          end
-          assign_company_for_demo(mock_user, email)
-          return render json: payload_for(mock_user).merge(mocked: true), status: :ok
         end
 
         render_error_response(
@@ -127,7 +119,7 @@ module Api
         user = User.new(attrs.merge(
           terms_accepted: true,
           terms_accepted_at: Time.current,
-          role: 'user', # Força role 'user' no cadastro inicial
+          role: 'review', # Força role 'review' no cadastro inicial
           status: :active # Usuários comuns começam ativos após confirmação de email
         ))
 
@@ -192,8 +184,11 @@ module Api
           )
         end
         
+        revoke_refresh_token
+
         # Clear cookie
         cookies.delete(:jwt_token, path: "/")
+        cookies.delete(:refresh_token, path: "/")
         
         render json: { 
           message: 'Logout successful',
@@ -208,8 +203,11 @@ module Api
           Rails.logger.info("[Auth] User logged out from all devices: user_id=#{current_user.id} ip=#{request.remote_ip}")
         end
         
+        revoke_refresh_token
+
         # Clear cookie
         cookies.delete(:jwt_token, path: "/")
+        cookies.delete(:refresh_token, path: "/")
         
         render json: { 
           message: 'Logged out from all devices successfully',
@@ -217,13 +215,56 @@ module Api
         }, status: :ok
       end
 
+      def refresh
+        refresh_token = extract_refresh_token
+        if refresh_token.blank?
+          return render_error_response(
+            message: 'Refresh token ausente',
+            status: :unauthorized,
+            code: 'REFRESH_TOKEN_MISSING'
+          )
+        end
+
+        payload = jwt_decode(refresh_token)
+        unless payload && payload['typ'] == 'refresh'
+          return render_error_response(
+            message: 'Refresh token invÃ¡lido',
+            status: :unauthorized,
+            code: 'INVALID_REFRESH_TOKEN'
+          )
+        end
+
+        if JwtBlacklistService.revoked?(refresh_token)
+          return render_error_response(
+            message: 'Refresh token revogado',
+            status: :unauthorized,
+            code: 'REFRESH_TOKEN_REVOKED'
+          )
+        end
+
+        user = User.find_by(id: payload['user_id'])
+        if user.nil? || (user.respond_to?(:active_status?) && !user.active_status?)
+          return render_error_response(
+            message: 'UsuÃ¡rio nÃ£o estÃ¡ ativo',
+            status: :forbidden,
+            code: 'USER_INACTIVE'
+          )
+        end
+
+        tokens = issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: refresh_token)
+        render json: { token: tokens[:access_token], user: user }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[Auth] refresh failure: #{e.class}: #{e.message}")
+        render_error_response(
+          message: 'Erro ao atualizar sessÃ£o',
+          status: :internal_server_error,
+          code: 'REFRESH_FAILED'
+        )
+      end
+
       def me
         user = current_user
         if user
-          if Rails.env.development? && user.company.nil?
-            assign_company_for_demo(user, user.email)
-            user.reload
-          end
           render json: { user: user }, status: :ok
         else
           render_error_response(
@@ -259,12 +300,18 @@ module Api
         password = params[:password]
         password_confirmation = params[:password_confirmation]
         
-        # Se não houver no header, permitir temporariamente via query string para links de e-mail
+        # Se n?o houver no header, validar se token veio via query string (bloqueado)
         if token.blank?
-          token = params[:reset_password_token] || params[:token]
-          if token.present?
-            Rails.logger.info "[Audit] Token found in query string for password reset (IP: #{request.remote_ip})"
+          query_token = request.query_parameters['reset_password_token'] || request.query_parameters['token']
+          if query_token.present?
+            Rails.logger.warn "[Security] Password reset token rejected from query string (IP: #{request.remote_ip})"
+            return render_error_response(
+              message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
+              status: :unprocessable_entity,
+              code: 'TOKEN_IN_QUERY'
+            )
           end
+          token = params[:reset_password_token] || params[:token]
         end
 
         if token.blank? || password.blank? || password_confirmation.blank?
@@ -285,12 +332,11 @@ module Api
           Rails.logger.info("[Auth] Password reset successfully: #{user.email} (IP: #{request.remote_ip})")
           
           # Logar usuário automaticamente após reset
-          jwt_token = jwt_encode(user_id: user.id)
-          set_jwt_cookie(jwt_token)
-          
-          return render json: { 
+          tokens = issue_tokens_for(user)
+
+          return render json: {
             message: 'Senha redefinida com sucesso.',
-            token: jwt_token,
+            token: tokens[:access_token],
             user: user,
             auto_login: true
           }, status: :ok
@@ -334,13 +380,18 @@ module Api
       def confirm_email
         # SEGURANÇA: Priorizar token no header Authorization (hash fragment)
         token = extract_token_from_header
-        
-        # Se não houver no header, tentar na URL (necessário para links de e-mail)
+        # Se n?o houver no header, validar se token veio via query string (bloqueado)
         if token.blank?
-          token = params[:confirmation_token] || params[:token]
-          if token.present?
-            Rails.logger.info "[Audit] Token found in query string for email confirmation (IP: #{request.remote_ip})"
+          query_token = request.query_parameters['confirmation_token'] || request.query_parameters['token']
+          if query_token.present?
+            Rails.logger.warn "[Security] Confirmation token rejected from query string (IP: #{request.remote_ip})"
+            return render_error_response(
+              message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
+              status: :unprocessable_entity,
+              code: 'TOKEN_IN_QUERY'
+            )
           end
+          token = params[:confirmation_token] || params[:token]
         end
         
         if token.blank?
@@ -373,12 +424,11 @@ module Api
           Rails.logger.info("[Audit] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
           
           # Logar usuário automaticamente após confirmação
-          jwt_token = jwt_encode(user_id: user.id)
-          set_jwt_cookie(jwt_token)
-          
+          tokens = issue_tokens_for(user)
+
           return render json: { 
             message: 'Email confirmado com sucesso.',
-            token: jwt_token,
+            token: tokens[:access_token],
             user: user,
             auto_login: true
           }, status: :ok
@@ -441,51 +491,65 @@ module Api
       end
 
       def payload_for(user)
-        token = jwt_encode(user_id: user.id)
-        set_jwt_cookie(token)
-        { token: token, user: user }
+        tokens = issue_tokens_for(user)
+        { token: tokens[:access_token], user: user }
+      end
+
+      def issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: nil)
+        access_exp = access_token_expires_at
+        refresh_exp = refresh_token_expires_at
+
+        access_token = jwt_encode({ user_id: user.id, typ: 'access' }, access_exp)
+        set_jwt_cookie(access_token, expires: access_exp)
+
+        refresh_token = previous_refresh_token
+        if rotate_refresh || refresh_token.blank?
+          refresh_token = jwt_encode({ user_id: user.id, typ: 'refresh' }, refresh_exp)
+          set_refresh_cookie(refresh_token, expires: refresh_exp)
+          revoke_token(previous_refresh_token) if previous_refresh_token.present?
+        else
+          set_refresh_cookie(refresh_token, expires: refresh_exp)
+        end
+
+        { access_token: access_token, refresh_token: refresh_token }
+      end
+
+      def access_token_expires_at
+        15.minutes.from_now
+      end
+
+      def refresh_token_expires_at
+        30.days.from_now
+      end
+
+      def extract_refresh_token
+        cookies.signed[:refresh_token].presence || extract_token_from_header
+      end
+
+      def revoke_refresh_token
+        token = extract_refresh_token
+        return unless token.present?
+        revoke_token(token)
+      end
+
+      def revoke_token(token)
+        JwtBlacklistService.revoke_token(token)
       end
 
       def skip_token_check?
         # Pular verificação de revogação para ações que não usam JWT ou onde o token é de outro tipo
         # (como token de confirmação ou reset de senha enviado no header Authorization)
-        %w[login register signup forgot_password reset_password confirm_email resend_confirmation].include?(action_name)
+        %w[login register signup forgot_password reset_password confirm_email resend_confirmation refresh].include?(action_name)
       end
 
       def development_fallback(action, error)
-        unless Rails.env.development?
-          return render_error_response(
-            message: 'Erro interno na autenticação',
-            status: :internal_server_error,
-            code: 'AUTH_INTERNAL_ERROR'
-          )
-        end
-
-        target_email = params[:email].presence || 'demo@example.com'
-        mock_user = User.find_by(email: target_email)
-        unless mock_user
-          mock_user = User.create!(
-            name: 'Usuário Demo',
-            email: target_email,
-            password: SecureRandom.hex(8)
-          )
-        end
-        assign_company_for_demo(mock_user, params[:email])
-        render json: payload_for(mock_user).merge(mocked: true, warning: error.message), status: :ok
+        render_error_response(
+          message: 'Erro interno na autenticação',
+          status: :internal_server_error,
+          code: 'AUTH_INTERNAL_ERROR'
+        )
       end
 
-      def assign_company_for_demo(user, email)
-        return if user.company.present?
-        company = nil
-        if email.to_s.downcase.include?('bsol')
-          company = Company.find_by(name: 'BSol')
-          company ||= Company.create!(name: 'BSol', description: 'Demo BSol')
-        else
-          company = Company.first
-        end
-        user.update(company: company) if company
-      end
     end
   end
 end
-

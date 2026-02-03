@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_01_123000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -691,7 +691,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_01_123000) do
     t.string "otp_code_digest"
     t.integer "otp_attempts", default: 0
     t.string "wizard_status", default: "draft"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.string "utm_content"
+    t.string "utm_term"
+    t.string "gclid"
+    t.string "fbclid"
+    t.string "msclkid"
+    t.string "landing_path"
+    t.string "referrer_host"
+    t.json "attribution_json", default: {}
+    t.index ["company_id", "utm_campaign"], name: "index_leads_on_company_id_and_utm_campaign"
     t.index ["company_id"], name: "index_leads_on_company_id"
+    t.index ["created_at"], name: "index_leads_on_created_at"
+    t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
+    t.index ["utm_source"], name: "index_leads_on_utm_source"
   end
 
   create_table "noticed_events", force: :cascade do |t|

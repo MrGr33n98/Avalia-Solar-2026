@@ -10,14 +10,14 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   # FIX #3: Implementar endpoint GET /api/v1/users/me_companies
   def me_companies
-    @companies = current_user.member_companies
+    @companies = current_user.active_member_companies
     render json: { companies: @companies }
   end
 
   # FIX #4: Implementar endpoint POST /api/v1/users/switch_company
   def switch_company
     company_id = params[:company_id]
-    if current_user.member_companies.exists?(id: company_id)
+    if current_user.active_member_companies.exists?(id: company_id)
       if current_user.update(company_id: company_id)
         Analytics::TrackEventService.call(
           event_type: 'company_switched',
@@ -59,7 +59,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def create
     @user = User.new(user_params)
-    @user.role = 'user' # Ensure it's a regular user
+    @user.role = 'review' # Ensure it's a review user
 
     if @user.save
       Analytics::TrackEventService.call(

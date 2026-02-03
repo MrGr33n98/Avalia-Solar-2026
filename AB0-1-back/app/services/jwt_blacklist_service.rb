@@ -66,7 +66,7 @@ class JwtBlacklistService
       timestamp = Time.current.to_i
       
       RedisHelper.with_redis do |redis|
-        redis.setex("#{USER_PREFIX}#{user_id}", 24.hours.to_i, timestamp.to_s)
+        redis.setex("#{USER_PREFIX}#{user_id}", 30.days.to_i, timestamp.to_s)
       end
       
       Rails.logger.info("[JWT:Blacklist] All tokens revoked for user_id=#{user_id} at=#{timestamp}")

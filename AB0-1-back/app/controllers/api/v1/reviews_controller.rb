@@ -1,8 +1,8 @@
 # app/controllers/api/v1/reviews_controller.rb
 class Api::V1::ReviewsController < Api::V1::BaseController
   before_action :set_review, only: %i[show update destroy]
-  before_action :authenticate_api_user, only: %i[create update destroy]
-  before_action :require_regular_user, only: %i[create update destroy]
+  before_action :authenticate_api_user, only: %i[create update destroy mine]
+  before_action :require_review_user, only: %i[create destroy mine]
   before_action :ensure_owner, only: %i[destroy]
 
   def index
@@ -48,6 +48,13 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     }
   end
 
+  def mine
+    @reviews = current_user.reviews.includes(:company).order(created_at: :desc)
+    render json: @reviews, include: {
+      company: { only: %i[id name logo_url slug] }
+    }
+  end
+
   def create
     @review = Review.new(review_params.merge(user_id: current_user.id))
 
@@ -81,7 +88,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       else
         render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
       end
-    elsif current_user.company_user? && current_user.company_id == @review.company_id
+    elsif current_user.company_user? && current_user.active_membership_for?(@review.company_id)
       # Company replying to a review
       if @review.update(reply_params.merge(replied_at: Time.current))
         # Notify review author
@@ -115,13 +122,11 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     params.require(:review).permit(:reply, :status)
   end
 
-  def require_regular_user
-    # Allow if role is 'user' OR if user is a company admin (often needed for testing or self-review in dev)
-    # In production, you might want to strict this, but for local dev/demo:
-    allowed_roles = ['user', 'company_admin', 'admin']
-    
+  def require_review_user
+    allowed_roles = ['review']
+
     unless allowed_roles.include?(current_user&.role)
-      Rails.logger.warn("[AccessDenied] non-user tried reviews action user=#{current_user&.id} role=#{current_user&.role} path=#{request.path} action=#{params[:action]}")
+      Rails.logger.warn("[AccessDenied] non-review tried reviews action user=#{current_user&.id} role=#{current_user&.role} path=#{request.path} action=#{params[:action]}")
       return render json: { error: 'Forbidden' }, status: :forbidden
     end
   end

@@ -60,7 +60,7 @@ class Rack::Attack
     end
   end
 
-  # Limitar requests de recuperação de senha por IP
+  # Limitar requests de recupera??o de senha por IP
   # Evita abuso/spam de e-mail
   throttle('forgot_password/ip', limit: 5, period: 10.minutes) do |req|
     if req.path == '/api/v1/auth/forgot_password' && req.post?
@@ -68,11 +68,25 @@ class Rack::Attack
     end
   end
 
-  # Limitar requests de reenvio de confirmação por IP
-  # Evita spam de confirmação e abuso de endpoint
+  # Limitar requests de recupera??o de senha por email
+  throttle('forgot_password/email', limit: 5, period: 10.minutes) do |req|
+    if req.path == '/api/v1/auth/forgot_password' && req.post?
+      req.params['email'].to_s.downcase.gsub(/\s+/, '')
+    end
+  end
+
+  # Limitar requests de reenvio de confirma??o por IP
+  # Evita spam de confirma??o e abuso de endpoint
   throttle('resend_confirmation/ip', limit: 5, period: 10.minutes) do |req|
     if req.path == '/api/v1/auth/resend_confirmation' && req.post?
       req.ip
+    end
+  end
+
+  # Limitar requests de reenvio de confirma??o por email
+  throttle('resend_confirmation/email', limit: 5, period: 10.minutes) do |req|
+    if req.path == '/api/v1/auth/resend_confirmation' && req.post?
+      req.params['email'].to_s.downcase.gsub(/\s+/, '')
     end
   end
 

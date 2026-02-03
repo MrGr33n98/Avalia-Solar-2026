@@ -52,6 +52,7 @@ jobs:
         NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
         NEXT_PUBLIC_BETTER_AUTH_URL: "http://localhost:3000"
         NEXT_PUBLIC_GTM_ID: "GTM-5RV76ZKR"
+        BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
         NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
       run: |
         if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then

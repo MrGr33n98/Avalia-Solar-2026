@@ -7,6 +7,7 @@ class Review < ApplicationRecord
   enum status: { pending: 0, approved: 1, rejected: 2 }
 
   after_commit :track_analytics_event, on: :create
+  after_update_commit :notify_user_of_reply, if: :saved_change_to_reply?
 
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
   validates :comment, presence: true, length: { minimum: 10 }
@@ -35,5 +36,12 @@ class Review < ApplicationRecord
     )
   rescue StandardError => e
     Rails.logger.warn("[Analytics] review tracking failed: #{e.message}")
+  end
+
+  def notify_user_of_reply
+    return if reply.blank?
+    ReviewMailer.new_reply(self).deliver_later
+  rescue StandardError => e
+    Rails.logger.error("[ReviewMailer] Failed to enqueue reply email: #{e.message}")
   end
 end

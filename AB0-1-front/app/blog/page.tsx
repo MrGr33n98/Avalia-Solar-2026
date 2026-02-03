@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { blogApi } from '@/lib/api/blog';
 import { BlogHero } from '@/components/blog/BlogHero';
 import { CategoryHighlights } from '@/components/blog/CategoryHighlights';
@@ -97,12 +98,10 @@ export default async function BlogIndexPage({
           <main className="lg:col-span-8">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-slate-900 mb-2">Últimos Artigos</h2>
-              <p className="text-slate-500 text-lg">
-                Explore nosso conteúdo educativo sobre energia solar.
-              </p>
+              <Suspense fallback={<div className="h-20 w-full animate-pulse bg-slate-100 rounded-xl" />}>
+                <BlogFiltersBar categories={categories} />
+              </Suspense>
             </div>
-
-            <BlogFiltersBar categories={categories} />
 
             {posts.length > 0 ? (
               <div className="space-y-10">

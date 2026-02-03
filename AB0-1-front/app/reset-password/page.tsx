@@ -20,6 +20,7 @@ function ResetPasswordContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [autoLoginToken, setAutoLoginToken] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     // SEGURANÇA: Extrair token do hash fragment (não da query string)
@@ -107,15 +108,11 @@ function ResetPasswordContent() {
         // Se backend retornou token de sessão, armazenar
         if (data.auto_login && data.token) {
           setAutoLoginToken(data.token);
-          // Armazenar no localStorage (ou cookie se backend configurou)
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('jwt_token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
+          setUserRole(data.user?.role || null);
 
           // Redirecionar para dashboard após 2 segundos
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push(data.user?.role === 'review' ? '/review-dashboard' : '/select-company');
           }, 2000);
         } else {
           // Redirecionar para login após 3 segundos
@@ -151,7 +148,7 @@ function ResetPasswordContent() {
             </div>
             <p className="text-center text-sm text-gray-600">{message}</p>
             <Button
-              onClick={() => router.push(autoLoginToken ? '/dashboard' : '/login')}
+              onClick={() => router.push(autoLoginToken ? (userRole === 'review' ? '/review-dashboard' : '/select-company') : '/login')}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {autoLoginToken ? 'Ir para Dashboard' : 'Fazer Login'}

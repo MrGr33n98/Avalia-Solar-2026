@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { User, authApi } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { User, authApi, companyAccessApi } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
 import { identify, track } from '@/lib/analytics';
 
@@ -22,6 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,38 +45,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  async function checkAuth(): Promise<boolean> {
+  async function checkAuth(): Promise<User | null> {
     try {
       // Try to fetch user data without checking localStorage
       const userData = await authApi.me();
       setUser(userData || null);
-      return !!userData;
+      return userData || null;
     } catch (error) {
       console.error('[Auth] Failed to fetch user data:', error);
       setUser(null);
-      return false;
+      return null;
     } finally {
       setLoading(false);
     }
   }
 
+  const routeAfterLogin = async (nextUser: User) => {
+    if (!nextUser) return;
+
+    if (nextUser.role === 'review') {
+      router.push('/review-dashboard');
+      return;
+    }
+
+    if (nextUser.role === 'company') {
+      try {
+        const context = await companyAccessApi.context();
+        const active = context?.active_memberships || [];
+        if (active.length > 0) {
+          const companyId = active[0].company_id;
+          try {
+            await companyAccessApi.selectActiveCompany(companyId);
+          } catch (error) {
+            console.warn('[Auth] Failed to persist active company selection', error);
+          }
+          setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
+          router.push(`/company-dashboard?company_id=${companyId}`);
+        } else {
+          router.push('/select-company');
+        }
+        return;
+      } catch (error) {
+        console.error('[Auth] Failed to load company access context:', error);
+        router.push('/select-company');
+        return;
+      }
+    }
+
+    router.push('/');
+  };
+
   const login = async (email: string, password: string) => {
     try {
       const response: any = await authApi.login(email, password);
 
-      // Normal case: API returns user
-      if (response?.user) {
-        setUser(response.user);
+      const nextUser: User | null = response?.user || (await checkAuth());
+      if (nextUser) {
+        setUser(nextUser);
         track('Login Completed', { method: 'email' });
-        return;
-      }
-
-      // Try to fetch current user after login (if login endpoint sets session cookie)
-      try {
-        await checkAuth();
-        return;
-      } catch (e) {
-        throw e;
+        await routeAfterLogin(nextUser);
       }
     } catch (error) {
       console.error('[Auth] Login failed', error);
@@ -87,7 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await authClient.signIn.social({ provider: 'linkedin' });
       // After successful social login, the user is redirected back.
       // The checkAuth function will be triggered on page load to fetch user data.
-      await checkAuth();
+      const nextUser = await checkAuth();
+      if (nextUser) {
+        await routeAfterLogin(nextUser);
+      }
     } catch (error) {
       console.error('[Auth] LinkedIn sign-in failed', error);
       setError('LinkedIn sign-in failed');
@@ -104,7 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAuth = async (): Promise<boolean> => {
     setLoading(true);
-    return await checkAuth();
+    const nextUser = await checkAuth();
+    return !!nextUser;
   };
 
   return (

@@ -118,20 +118,6 @@ export function useDashboardStats(companyId: string) {
       setLoading(true);
       setError(null);
 
-      let hasToken = false;
-      try {
-        const authData = typeof window !== 'undefined' ? localStorage.getItem('auth') : null;
-        if (authData) {
-          const parsed = JSON.parse(authData);
-          hasToken = Boolean(parsed?.token);
-        }
-      } catch {}
-      if (!hasToken) {
-        setError('Autenticação necessária');
-        setLoading(false);
-        return;
-      }
-
       const data = await fetchApi(
         '/company_dashboard/stats',
         { params: { company_id: companyId } }

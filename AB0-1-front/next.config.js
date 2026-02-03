@@ -76,11 +76,24 @@ const nextConfig = {
     ]
   },
 
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.watchOptions = {
       poll: 1000,
       aggregateTimeout: 300,
     }
+
+    // Fix for OpenTelemetry/require-in-the-middle warnings
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        "require-in-the-middle": false,
+        "import-in-the-middle": false,
+        "module": false,
+        "async_hooks": false,
+        "perf_hooks": false,
+      };
+    }
+
     return config
   },
 

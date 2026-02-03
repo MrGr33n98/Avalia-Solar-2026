@@ -39,19 +39,6 @@ export async function fetchApiSafe<T>(
     'Content-Type': 'application/json',
   });
 
-  if (typeof window !== 'undefined') {
-    const authData = localStorage.getItem('auth');
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        const token = parsed?.token;
-        if (token) {
-          defaultHeaders['Authorization'] = `Bearer ${token}`;
-        }
-      } catch {}
-    }
-  }
-
   // Injeta UTM/attribution apenas em endpoints permitidos
   const normalizedEndpoint = endpoint.replace(/^\//, '');
   const method = (requestOptions.method || 'GET').toString().toUpperCase();

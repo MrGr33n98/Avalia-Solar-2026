@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // This middleware runs on the edge
 export function middleware(request: NextRequest) {
-  // Get the token from cookies OR from Authorization header
-  const token = request.cookies.get('auth_token')?.value || 
-                request.headers.get('authorization')?.replace('Bearer ', '');
-  
+  // Get the token from httpOnly cookie
+  const token = request.cookies.get('jwt_token')?.value;
+
   // Define protected routes
   const protectedPaths = [
     '/dashboard',
     '/profile',
-    '/companies/[id]/review',
-    '/admin',
+    '/company-dashboard',
+    '/review-dashboard',
+    '/select-company',
   ];
   
   // Check if the current path is protected
@@ -19,13 +19,13 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path.replace('[id]', ''))
   );
   
-  // For protected routes, we can't check localStorage in middleware (runs on edge)
-  // So we'll allow the request and let client-side handle auth check
-  // The middleware will only block if there's explicitly no cookie/header token
   if (isProtectedRoute) {
-    // Don't block - let client-side AuthContext handle it
-    // This allows localStorage token to work
-    return NextResponse.next();
+    if (!token) {
+      const loginUrl = new URL('/login', request.url);
+      const redirectTo = request.nextUrl.pathname + request.nextUrl.search;
+      loginUrl.searchParams.set('redirect', redirectTo);
+      return NextResponse.redirect(loginUrl);
+    }
   }
   
   // Continue with the request

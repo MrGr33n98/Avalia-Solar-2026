@@ -77,16 +77,28 @@ module JwtAuthenticatable
 
   # Set the JWT token as an httpOnly cookie
   # @param token [String]
-  def set_jwt_cookie(token)
+  def set_jwt_cookie(token, expires: 24.hours.from_now)
     cookie_opts = {
       value: token,
       httponly: true,
       secure: Rails.env.production?,
       same_site: :lax,
-      expires: 24.hours.from_now,
+      expires: expires,
       path: "/"
     }
     cookies.signed[:jwt_token] = cookie_opts
+  end
+
+  def set_refresh_cookie(token, expires: 30.days.from_now)
+    cookie_opts = {
+      value: token,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :lax,
+      expires: expires,
+      path: "/"
+    }
+    cookies.signed[:refresh_token] = cookie_opts
   end
   
   # Check if token was issued before a given timestamp

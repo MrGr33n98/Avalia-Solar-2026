@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Star, ArrowLeft } from 'lucide-react';
@@ -292,7 +292,9 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
           </p>
         </div>
         
-        <ReviewForm companyId={company.id} companyPath={companyPath} />
+        <Suspense fallback={<div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">Carregando formulário...</div>}>
+          <ReviewForm companyId={company.id} companyPath={companyPath} />
+        </Suspense>
       </div>
     </div>
   );

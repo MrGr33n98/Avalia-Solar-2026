@@ -43,6 +43,13 @@ FactoryBot.define do
     association :user
     role { :editor }
   end
+
+  factory :company_access_request do
+    association :user
+    association :company
+    status { 'pending' }
+    requested_at { Time.current }
+  end
   
   factory :lead do
     name { Faker::Name.name }

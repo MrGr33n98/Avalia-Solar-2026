@@ -30,4 +30,13 @@ class UserMailer < Devise::Mailer
   def confirmation_instructions(user, token, opts = {})
     email_confirmation(user, token)
   end
+
+  def reset_password_instructions(user, token, opts = {})
+    @user = user
+    @token = token
+    frontend_url = ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br')
+    @reset_password_url = "#{frontend_url}/reset-password#token=#{token}"
+
+    mail(to: @user.email, subject: 'Redefinição de senha')
+  end
 end

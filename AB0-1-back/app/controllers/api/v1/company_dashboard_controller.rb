@@ -420,7 +420,12 @@ module Api
           if current_user&.admin?
             Company.find_by(id: params[:company_id] || params[:id] || params.dig(:company, :id))
           else
-            current_user&.company
+            selected_company_id = cookies.signed[:active_company_id] || current_user&.company_id
+            if selected_company_id.present? && current_user&.active_membership_for?(selected_company_id)
+              Company.find_by(id: selected_company_id)
+            else
+              current_user&.active_member_companies&.first
+            end
           end
 
         unless @company
@@ -434,7 +439,7 @@ module Api
       end
 
       def authenticate_company_user!
-        unless current_user&.company
+        unless current_user&.active_member_companies&.any?
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
         unless current_user&.active?

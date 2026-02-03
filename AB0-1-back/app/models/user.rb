@@ -21,11 +21,14 @@ class User < ApplicationRecord
 
   belongs_to :company, optional: true
   has_many :company_members, dependent: :destroy
+  has_many :company_access_requests, dependent: :destroy
+  has_many :active_company_members, -> { where(status: 'active') }, class_name: 'CompanyMember'
   has_many :member_companies, through: :company_members, source: :company
+  has_many :active_member_companies, through: :active_company_members, source: :company
   accepts_nested_attributes_for :company_members, allow_destroy: true
 
   # Role validation
-  ROLES = %w[user admin company review].freeze
+  ROLES = %w[company review].freeze
   enum status: { pending: 0, active: 1, rejected: 2, blocked: 3 }, _default: :pending
 
   validates :role, inclusion: { in: ROLES }, allow_nil: true
@@ -36,22 +39,16 @@ class User < ApplicationRecord
   validate :adult_birthdate
   validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
-  validate :corporate_email_domain, if: -> { company_user? && member_companies.any? }
-
-  def active_for_authentication?
-    super && active?
-  end
-
-  def inactive_message
-    active? ? super : (rejected? ? :rejected : :not_approved)
-  end
+  validate :corporate_email_domain, if: -> { company_user? && active_member_companies.any? }
 
   def approved_for_dashboard?
     approved_by_admin?
   end
 
   def company
-    super || member_companies.first
+    selected = super
+    return selected if selected && active_membership_for?(selected.id)
+    active_member_companies.first
   end
 
   def current_company
@@ -59,7 +56,9 @@ class User < ApplicationRecord
   end
 
   def active?
-    active_status? && (admin? || !company_user? || member_companies.any?)
+    return false unless active_status?
+    return true if review_user?
+    company_user? && active_company_members.exists?
   end
 
   def active_status?
@@ -68,6 +67,7 @@ class User < ApplicationRecord
   
   # Set default role
   after_initialize :set_default_role, if: :new_record?
+  before_validation :normalize_role
   before_validation :mark_terms_accepted_at
   
   def admin?
@@ -87,7 +87,12 @@ class User < ApplicationRecord
   end
   
   def regular_user?
-    role == 'user'
+    review_user?
+  end
+
+  def active_membership_for?(company_id)
+    return false if company_id.blank?
+    active_company_members.exists?(company_id: company_id)
   end
 
   # Envia notificações do Devise de forma assíncrona (TASK-014)
@@ -184,7 +189,13 @@ class User < ApplicationRecord
   private
   
   def set_default_role
-    self.role ||= company_id.present? ? 'company' : 'user'
+    self.role ||= company_id.present? ? 'company' : 'review'
+  end
+
+  def normalize_role
+    return if role.blank?
+    return if ROLES.include?(role)
+    self.role = 'review'
   end
 
   def corporate_email_domain
@@ -192,7 +203,7 @@ class User < ApplicationRecord
     
     # Se o usuário está vinculado a empresas, validamos contra os domínios delas
     # No novo fluxo, o usuário pode não ter empresa no cadastro inicial
-    companies_with_website = member_companies.where.not(website: [nil, ''])
+    companies_with_website = active_member_companies.where.not(website: [nil, ''])
     return if companies_with_website.empty?
 
     valid_domains = companies_with_website.map do |c|

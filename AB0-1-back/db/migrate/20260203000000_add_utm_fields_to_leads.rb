@@ -11,7 +11,7 @@ class AddUtmFieldsToLeads < ActiveRecord::Migration[7.0]
       t.string :msclkid
       t.string :landing_path
       t.string :referrer_host
-      t.jsonb :attribution_json, default: {}
+      t.json :attribution_json, default: {}
     end
 
     add_index :leads, :utm_campaign

@@ -13,6 +13,7 @@ function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const [autoLoginToken, setAutoLoginToken] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -82,21 +83,11 @@ function ConfirmEmailContent() {
           // Se backend retornou token de sessão, armazenar
           if (data.auto_login && data.token) {
             setAutoLoginToken(data.token);
-            // Armazenar no localStorage no formato esperado pelo api.ts e AuthContext
-            if (typeof window !== 'undefined') {
-              const authData = {
-                token: data.token,
-                user: data.user
-              };
-              localStorage.setItem('auth', JSON.stringify(authData));
-              // Também manter compatibilidade se outros lugares usarem jwt_token
-              localStorage.setItem('jwt_token', data.token);
-              localStorage.setItem('user', JSON.stringify(data.user));
-            }
+            setUserRole(data.user?.role || null);
 
             // Redirecionar para dashboard após 2 segundos
             setTimeout(() => {
-              window.location.href = '/dashboard';
+              window.location.href = data.user?.role === 'review' ? '/review-dashboard' : '/select-company';
             }, 2000);
           } else {
             // Redirecionar para login após 3 segundos
@@ -172,7 +163,7 @@ function ConfirmEmailContent() {
           {status === 'success' && (
             <div className="pt-4">
               <Button
-                onClick={() => router.push(autoLoginToken ? '/dashboard' : '/login')}
+                onClick={() => router.push(autoLoginToken ? (userRole === 'review' ? '/review-dashboard' : '/select-company') : '/login')}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 {autoLoginToken ? 'Ir para Dashboard' : 'Fazer Login'}
