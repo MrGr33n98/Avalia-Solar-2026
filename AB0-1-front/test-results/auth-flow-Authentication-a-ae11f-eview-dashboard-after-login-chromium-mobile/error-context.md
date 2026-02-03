@@ -1,0 +1,146 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Home Avalia Solar" [ref=e4]:
+        - /url: /
+        - img "Avalia Solar Logo" [ref=e5]
+      - button "Menu" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+  - generic [ref=e11]:
+    - button [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - generic [ref=e17]: Avalia Solar
+    - generic [ref=e19]:
+      - tablist [ref=e21]:
+        - tab "Entrar" [selected] [ref=e22] [cursor=pointer]
+        - tab "Criar conta" [ref=e23] [cursor=pointer]
+      - tabpanel "Entrar" [ref=e25]:
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - heading "Entrar" [level=2] [ref=e29]
+            - paragraph [ref=e30]: Bem-vindo de volta! Acesse sua conta.
+          - generic [ref=e31]:
+            - button "Continuar com Google" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+              - text: Continuar com Google
+            - button "Continuar com LinkedIn" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+              - text: Continuar com LinkedIn
+          - generic [ref=e45]: ou
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - text: Email
+              - textbox "Email" [ref=e48]:
+                - /placeholder: seu@email.com
+            - generic [ref=e49]:
+              - generic [ref=e50]:
+                - generic [ref=e51]: Senha
+                - link "Esqueceu sua senha?" [ref=e52]:
+                  - /url: /forgot-password
+              - generic [ref=e53]:
+                - textbox "Senha" [ref=e54]:
+                  - /placeholder: ••••••••
+                - button [ref=e55] [cursor=pointer]:
+                  - img [ref=e56]
+            - generic [ref=e59]:
+              - checkbox "Lembrar-me" [ref=e60] [cursor=pointer]
+              - checkbox
+              - generic [ref=e61]: Lembrar-me
+            - button "Entrar" [ref=e62] [cursor=pointer]
+  - contentinfo [ref=e63]:
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - link "Avalia Solar" [ref=e67]:
+            - /url: /
+          - paragraph [ref=e68]: O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - img [ref=e71]
+              - generic [ref=e74]: contato@avaliasolar.com.br
+            - generic [ref=e75]:
+              - img [ref=e76]
+              - generic [ref=e78]: (65) 99242-3309
+            - generic [ref=e79]:
+              - img [ref=e80]
+              - generic [ref=e83]: Florianópolis, SC
+        - generic [ref=e84]:
+          - heading "Empresa" [level=3] [ref=e85]
+          - list [ref=e86]:
+            - listitem [ref=e87]:
+              - link "Sobre Nós" [ref=e88]:
+                - /url: /about
+            - listitem [ref=e89]:
+              - link "Carreiras" [ref=e90]:
+                - /url: /careers
+            - listitem [ref=e91]:
+              - link "Imprensa" [ref=e92]:
+                - /url: /press
+            - listitem [ref=e93]:
+              - link "Blog" [ref=e94]:
+                - /url: /blog
+        - generic [ref=e95]:
+          - heading "Suporte" [level=3] [ref=e96]
+          - list [ref=e97]:
+            - listitem [ref=e98]:
+              - link "Centro de Ajuda" [ref=e99]:
+                - /url: /help
+            - listitem [ref=e100]:
+              - link "Contato" [ref=e101]:
+                - /url: /contact
+            - listitem [ref=e102]:
+              - link "API Docs" [ref=e103]:
+                - /url: /api-docs
+            - listitem [ref=e104]:
+              - link "Status" [ref=e105]:
+                - /url: /status
+        - generic [ref=e106]:
+          - heading "Legal" [level=3] [ref=e107]
+          - list [ref=e108]:
+            - listitem [ref=e109]:
+              - link "Termos de Uso" [ref=e110]:
+                - /url: /terms
+            - listitem [ref=e111]:
+              - link "Política de Privacidade" [ref=e112]:
+                - /url: /privacy
+            - listitem [ref=e113]:
+              - link "Política de Cookies" [ref=e114]:
+                - /url: /cookies
+            - listitem [ref=e115]:
+              - link "DMCA" [ref=e116]:
+                - /url: /dmca
+      - generic [ref=e118]:
+        - generic [ref=e119]: © 2025 Avalia Solar. Todos os direitos reservados.
+        - generic [ref=e120]:
+          - link "Facebook" [ref=e121]:
+            - /url: https://facebook.com
+            - img [ref=e122]
+          - link "Twitter" [ref=e124]:
+            - /url: https://twitter.com
+            - img [ref=e125]
+          - link "Instagram" [ref=e127]:
+            - /url: https://instagram.com
+            - img [ref=e128]
+          - link "LinkedIn" [ref=e131]:
+            - /url: https://linkedin.com
+            - img [ref=e132]
+  - region "Notifications alt+T"
+  - alert [ref=e136]
+  - generic [ref=e139]:
+    - img [ref=e141]
+    - generic [ref=e143]:
+      - heading "Cookies & Privacidade" [level=3] [ref=e144]
+      - paragraph [ref=e145]:
+        - text: Utilizamos cookies para melhorar sua experiência e analisar o tráfego do site. Ao clicar em "Aceitar", você concorda com o uso de cookies conforme nossa
+        - link "Política de Privacidade" [ref=e146]:
+          - /url: /privacy
+        - text: .
+      - generic [ref=e147]:
+        - button "Aceitar Tudo" [ref=e148] [cursor=pointer]
+        - button "Recusar" [ref=e149] [cursor=pointer]
+    - button [ref=e150] [cursor=pointer]:
+      - img [ref=e151]
+```

@@ -4,7 +4,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
 
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
-  before_action :authenticate_api_user, only: %i[index show update destroy]
+  before_action :authenticate_api_user, only: %i[index show update destroy mine]
   before_action :ensure_leads_access!, only: %i[index]
   before_action :ensure_lead_access!, only: %i[show update destroy]
   before_action :check_honeypot, only: %i[create wizard_create]
@@ -44,6 +44,23 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(
       error: 'Internal Server Error',
       message: 'Erro ao listar leads',
+      status: :internal_server_error,
+      code: 'INTERNAL_ERROR'
+    )
+  end
+
+  def mine
+    # Ensure current_user is present (authenticate_api_user should handle this, but let's be safe)
+    return render json: { error: 'Authentication required' }, status: :unauthorized if current_user.nil?
+
+    # For review users, list leads matching their email
+    @leads = ::Lead.where(email: current_user.email).order(created_at: :desc)
+    render json: @leads
+  rescue StandardError => e
+    Rails.logger.error("Leads mine error: #{e.message}")
+    render_error_response(
+      error: 'Internal Server Error',
+      message: 'Erro ao listar seus orçamentos',
       status: :internal_server_error,
       code: 'INTERNAL_ERROR'
     )

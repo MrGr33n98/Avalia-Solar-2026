@@ -189,9 +189,8 @@ module Api
         
         revoke_refresh_token
 
-        # Clear cookie
-        cookies.delete(:jwt_token, path: "/")
-        cookies.delete(:refresh_token, path: "/")
+        # Clear cookies using unified helper to ensure domain consistency
+        clear_auth_cookies
         
         render json: { 
           message: 'Logout successful',
@@ -208,9 +207,8 @@ module Api
         
         revoke_refresh_token
 
-        # Clear cookie
-        cookies.delete(:jwt_token, path: "/")
-        cookies.delete(:refresh_token, path: "/")
+        # Clear cookies using unified helper to ensure domain consistency
+        clear_auth_cookies
         
         render json: { 
           message: 'Logged out from all devices successfully',

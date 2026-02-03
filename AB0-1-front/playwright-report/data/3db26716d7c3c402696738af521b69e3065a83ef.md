@@ -1,0 +1,195 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Home Avalia Solar" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "Avalia Solar Logo" [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - search "Buscar" [ref=e8]:
+            - generic [ref=e9]:
+              - img [ref=e10]
+              - textbox "Buscar produtos, serviços..." [ref=e13]
+          - combobox [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]:
+              - img [ref=e16]
+              - generic [ref=e19]: Localização
+            - img [ref=e20]
+        - generic [ref=e23]:
+          - button "Categorias" [ref=e25] [cursor=pointer]:
+            - text: Categorias
+            - img [ref=e26]
+          - link "Empresas" [ref=e28] [cursor=pointer]:
+            - /url: /companies
+          - link "Produtos" [ref=e29] [cursor=pointer]:
+            - /url: /products
+          - link "Blog" [ref=e30] [cursor=pointer]:
+            - /url: /blog
+          - generic [ref=e31]:
+            - link "Login" [ref=e32] [cursor=pointer]:
+              - /url: /login
+            - link "Cadastre sua empresa" [ref=e33] [cursor=pointer]:
+              - /url: /register
+  - generic [ref=e36]:
+    - button [ref=e37] [cursor=pointer]:
+      - img [ref=e38]
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - img "Avalia Solar Logo" [ref=e46]
+          - generic [ref=e47]:
+            - heading "Bem-vindo de volta ao Avalia Solar" [level=1] [ref=e48]
+            - paragraph [ref=e49]: Acesse sua conta para gerenciar avaliações e configurações.
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - img [ref=e54]
+            - generic [ref=e57]:
+              - heading "Acesso Seguro" [level=3] [ref=e58]
+              - paragraph [ref=e59]: Seus dados e avaliações protegidos com segurança de ponta a ponta.
+          - generic [ref=e60]:
+            - img [ref=e62]
+            - generic [ref=e64]:
+              - heading "Gerencie suas Avaliações" [level=3] [ref=e65]
+              - paragraph [ref=e66]: Acompanhe o feedback dos seus clientes e melhore sua reputação.
+          - generic [ref=e67]:
+            - img [ref=e69]
+            - generic [ref=e73]:
+              - heading "Perfil Personalizado" [level=3] [ref=e74]
+              - paragraph [ref=e75]: Mantenha suas informações atualizadas e destaque-se no mercado.
+      - generic [ref=e77]:
+        - img [ref=e78]
+        - generic [ref=e81]: Login seguro e criptografado
+    - generic [ref=e83]:
+      - tablist [ref=e85]:
+        - tab "Entrar" [selected] [ref=e86] [cursor=pointer]
+        - tab "Criar conta" [ref=e87] [cursor=pointer]
+      - tabpanel "Entrar" [ref=e89]:
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - heading "Entrar" [level=2] [ref=e93]
+            - paragraph [ref=e94]: Bem-vindo de volta! Acesse sua conta.
+          - generic [ref=e95]:
+            - button "Continuar com Google" [ref=e96] [cursor=pointer]:
+              - img [ref=e97]
+              - text: Continuar com Google
+            - button "Continuar com LinkedIn" [ref=e102] [cursor=pointer]:
+              - img [ref=e103]
+              - text: Continuar com LinkedIn
+          - generic [ref=e109]: ou
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - text: Email
+              - textbox "Email" [ref=e112]:
+                - /placeholder: seu@email.com
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - generic [ref=e115]: Senha
+                - link "Esqueceu sua senha?" [ref=e116] [cursor=pointer]:
+                  - /url: /forgot-password
+              - generic [ref=e117]:
+                - textbox "Senha" [ref=e118]:
+                  - /placeholder: ••••••••
+                - button [ref=e119] [cursor=pointer]:
+                  - img [ref=e120]
+            - generic [ref=e123]:
+              - checkbox "Lembrar-me" [ref=e124] [cursor=pointer]
+              - checkbox
+              - generic [ref=e125]: Lembrar-me
+            - button "Entrar" [ref=e126] [cursor=pointer]
+  - contentinfo [ref=e127]:
+    - generic [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - link "Avalia Solar" [ref=e131] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e132]: O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - img [ref=e135]
+              - generic [ref=e138]: contato@avaliasolar.com.br
+            - generic [ref=e139]:
+              - img [ref=e140]
+              - generic [ref=e142]: (65) 99242-3309
+            - generic [ref=e143]:
+              - img [ref=e144]
+              - generic [ref=e147]: Florianópolis, SC
+        - generic [ref=e148]:
+          - heading "Empresa" [level=3] [ref=e149]
+          - list [ref=e150]:
+            - listitem [ref=e151]:
+              - link "Sobre Nós" [ref=e152] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e153]:
+              - link "Carreiras" [ref=e154] [cursor=pointer]:
+                - /url: /careers
+            - listitem [ref=e155]:
+              - link "Imprensa" [ref=e156] [cursor=pointer]:
+                - /url: /press
+            - listitem [ref=e157]:
+              - link "Blog" [ref=e158] [cursor=pointer]:
+                - /url: /blog
+        - generic [ref=e159]:
+          - heading "Suporte" [level=3] [ref=e160]
+          - list [ref=e161]:
+            - listitem [ref=e162]:
+              - link "Centro de Ajuda" [ref=e163] [cursor=pointer]:
+                - /url: /help
+            - listitem [ref=e164]:
+              - link "Contato" [ref=e165] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e166]:
+              - link "API Docs" [ref=e167] [cursor=pointer]:
+                - /url: /api-docs
+            - listitem [ref=e168]:
+              - link "Status" [ref=e169] [cursor=pointer]:
+                - /url: /status
+        - generic [ref=e170]:
+          - heading "Legal" [level=3] [ref=e171]
+          - list [ref=e172]:
+            - listitem [ref=e173]:
+              - link "Termos de Uso" [ref=e174] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e175]:
+              - link "Política de Privacidade" [ref=e176] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e177]:
+              - link "Política de Cookies" [ref=e178] [cursor=pointer]:
+                - /url: /cookies
+            - listitem [ref=e179]:
+              - link "DMCA" [ref=e180] [cursor=pointer]:
+                - /url: /dmca
+      - generic [ref=e182]:
+        - generic [ref=e183]: © 2025 Avalia Solar. Todos os direitos reservados.
+        - generic [ref=e184]:
+          - link "Facebook" [ref=e185] [cursor=pointer]:
+            - /url: https://facebook.com
+            - img [ref=e186]
+          - link "Twitter" [ref=e188] [cursor=pointer]:
+            - /url: https://twitter.com
+            - img [ref=e189]
+          - link "Instagram" [ref=e191] [cursor=pointer]:
+            - /url: https://instagram.com
+            - img [ref=e192]
+          - link "LinkedIn" [ref=e195] [cursor=pointer]:
+            - /url: https://linkedin.com
+            - img [ref=e196]
+  - region "Notifications alt+T"
+  - alert [ref=e200]
+  - generic [ref=e203]:
+    - img [ref=e205]
+    - generic [ref=e207]:
+      - heading "Cookies & Privacidade" [level=3] [ref=e208]
+      - paragraph [ref=e209]:
+        - text: Utilizamos cookies para melhorar sua experiência e analisar o tráfego do site. Ao clicar em "Aceitar", você concorda com o uso de cookies conforme nossa
+        - link "Política de Privacidade" [ref=e210] [cursor=pointer]:
+          - /url: /privacy
+        - text: .
+      - generic [ref=e211]:
+        - button "Aceitar Tudo" [ref=e212] [cursor=pointer]
+        - button "Recusar" [ref=e213] [cursor=pointer]
+    - button [ref=e214] [cursor=pointer]:
+      - img [ref=e215]
+```

@@ -123,7 +123,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def require_review_user
-    allowed_roles = ['review']
+    allowed_roles = ['review', 'admin']
 
     unless allowed_roles.include?(current_user&.role)
       Rails.logger.warn("[AccessDenied] non-review tried reviews action user=#{current_user&.id} role=#{current_user&.role} path=#{request.path} action=#{params[:action]}")

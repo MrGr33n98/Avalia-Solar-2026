@@ -81,11 +81,19 @@ module JwtAuthenticatable
     cookie_opts = {
       value: token,
       httponly: true,
-      secure: Rails.env.production?,
+      secure: Rails.env.production? || ENV['FORCE_SECURE_COOKIES'] == 'true',
       same_site: :lax,
       expires: expires,
       path: "/"
     }
+    
+    # Enable cross-subdomain cookies in production or if COOKIE_DOMAIN is set
+    if ENV['COOKIE_DOMAIN'].present?
+      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
+    elsif Rails.env.production?
+      cookie_opts[:domain] = :all
+    end
+
     cookies.signed[:jwt_token] = cookie_opts
   end
 
@@ -93,12 +101,35 @@ module JwtAuthenticatable
     cookie_opts = {
       value: token,
       httponly: true,
-      secure: Rails.env.production?,
+      secure: Rails.env.production? || ENV['FORCE_SECURE_COOKIES'] == 'true',
       same_site: :lax,
       expires: expires,
       path: "/"
     }
+
+    if ENV['COOKIE_DOMAIN'].present?
+      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
+    elsif Rails.env.production?
+      cookie_opts[:domain] = :all
+    end
+
     cookies.signed[:refresh_token] = cookie_opts
+  end
+
+  # Clear all authentication cookies with correct domain and path
+  def clear_auth_cookies
+    cookie_opts = { path: "/" }
+    
+    if ENV['COOKIE_DOMAIN'].present?
+      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
+    elsif Rails.env.production?
+      cookie_opts[:domain] = :all
+    end
+    
+    cookies.delete(:jwt_token, cookie_opts)
+    cookies.delete(:refresh_token, cookie_opts)
+    
+    Rails.logger.info("[Auth] Authentication cookies cleared (domain: #{cookie_opts[:domain] || 'default'})")
   end
   
   # Check if token was issued before a given timestamp

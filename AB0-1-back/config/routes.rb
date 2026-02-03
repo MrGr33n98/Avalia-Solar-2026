@@ -175,6 +175,7 @@ Rails.application.routes.draw do
       resources :leads, only: [:create, :index, :show] do
         collection do
           post :wizard_create
+          get :mine
         end
 
         member do

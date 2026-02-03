@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,16 @@ export default function LoginTab() {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
+  // Check for error codes in URL
+  useEffect(() => {
+    const errorCode = searchParams.get('error');
+    if (errorCode === 'session_expired') {
+      setError('Sua sessao expirou. Por favor, faca login novamente.');
+    } else if (errorCode === 'unauthorized') {
+      setError('Voce nao tem permissao para acessar esta pagina.');
+    }
+  }, [searchParams]);
+
   const rawReturnTo = searchParams.get('return_to') || searchParams.get('redirect');
   const safeReturnTo =
     rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : null;
@@ -34,17 +44,36 @@ export default function LoginTab() {
     setNeedsConfirmation(false);
     setResendMessage(null);
     try {
+      console.log('[LoginTab] Starting login for:', email);
       await login(email, password);
+      
       const redirect = safeReturnTo || '/dashboard';
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      window.location.href = redirect;
-    } catch (err) {
-      const code = (err as any)?.context?.details?.code;
-      if (code === 'EMAIL_NOT_CONFIRMED') {
+      console.log('[LoginTab] Login successful, redirecting to:', redirect);
+      
+      // Delay briefly to allow cookies and context state to settle
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      
+      // Use router.push for a smoother SPA transition if it's an internal route,
+      // but fallback to window.location.href if the loop persists.
+      try {
+        router.push(redirect);
+      } catch (e) {
+        console.warn('[LoginTab] router.push failed, falling back to window.location.href');
+        window.location.href = redirect;
+      }
+    } catch (err: any) {
+      console.error('[LoginTab] Login error:', err);
+      const code = err?.context?.details?.code || err?.status || 'UNKNOWN';
+      
+      if (code === 'EMAIL_NOT_CONFIRMED' || (err?.message && err.message.includes('confirm seu e-mail'))) {
         setNeedsConfirmation(true);
         setError('Seu e-mail ainda nao foi confirmado. Verifique sua caixa de entrada ou reenvie o link.');
+      } else if (code === 401 || code === 'INVALID_CREDENTIALS') {
+        setError('E-mail ou senha invalidos. Por favor, tente novamente.');
+      } else if (code === 403) {
+        setError('Sua conta esta bloqueada ou inativa. Entre em contato com o suporte.');
       } else {
-        setError((err as any)?.message || 'Falha ao fazer login. Verifique suas credenciais.');
+        setError(err?.message || `Falha ao fazer login (Erro: ${code}). Verifique suas credenciais.`);
       }
       setIsLoading(false);
     }

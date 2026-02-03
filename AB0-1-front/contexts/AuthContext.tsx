@@ -46,13 +46,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   async function checkAuth(): Promise<User | null> {
+    setLoading(true);
+    console.log('[AuthContext] Checking authentication...');
     try {
-      // Try to fetch user data without checking localStorage
+      // Try to fetch user data
       const userData = await authApi.me();
+      console.log('[AuthContext] Auth check result:', userData ? `User found (ID: ${userData.id}, Role: ${userData.role})` : 'No user found');
       setUser(userData || null);
       return userData || null;
     } catch (error) {
-      console.error('[Auth] Failed to fetch user data:', error);
+      console.error('[AuthContext] Error checking auth:', error);
       setUser(null);
       return null;
     } finally {
@@ -61,11 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const routeAfterLogin = async (nextUser: User) => {
-    console.log('[Auth] Routing user after login:', { id: nextUser.id, role: nextUser.role });
-    if (!nextUser) return;
+    console.log('[AuthContext] Routing user after login:', { id: nextUser.id, role: nextUser.role });
+    if (!nextUser) {
+      console.error('[AuthContext] routeAfterLogin called with null user');
+      return;
+    }
 
     if (nextUser.role === 'review') {
-      console.log('[Auth] Review user detected, redirecting to /review-dashboard');
+      console.log('[AuthContext] Review user detected, redirecting to /review-dashboard');
       router.push('/review-dashboard');
       return;
     }
@@ -99,16 +105,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('[AuthContext] Attempting login for:', email);
       const response: any = await authApi.login(email, password);
 
+      // Explicitly check for user in response or fetch it
       const nextUser: User | null = response?.user || (await checkAuth());
+      
       if (nextUser) {
+        console.log('[AuthContext] Login successful, user:', { id: nextUser.id, role: nextUser.role });
         setUser(nextUser);
         track('Login Completed', { method: 'email' });
+        
+        // Wait for state update and cookies to settle
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         await routeAfterLogin(nextUser);
+      } else {
+        console.error('[AuthContext] Login succeeded but no user data found');
+        throw new Error('Falha ao obter dados do usuário após login.');
       }
     } catch (error) {
-      console.error('[Auth] Login failed', error);
+      console.error('[AuthContext] Login failed:', error);
       throw error;
     }
   };

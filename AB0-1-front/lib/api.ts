@@ -882,6 +882,7 @@ export const categoriesApi = {
 
 export const leadsApi = {
   getAll: () => fetchApi('/leads'),
+  mine: () => fetchApi<Lead[]>('/leads/mine'),
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
@@ -1042,12 +1043,15 @@ export const authApi = {
       const resp = await fetchApi<{ user: User }>('/auth/me');
       return resp.user;
     } catch (error: any) {
-      // Silencia 401 / Not authenticated e retorna null
+      const status = error?.status || error?.context?.status;
       const msg = error?.message || '';
-      if (msg.includes('[401]') || msg.toLowerCase().includes('not authenticated')) {
-        console.warn('[authApi.me] Not authenticated, returning null');
+      
+      if (status === 401 || msg.includes('[401]') || msg.toLowerCase().includes('not authenticated')) {
+        console.warn('[authApi.me] Not authenticated or session expired');
         return null;
       }
+      
+      console.error('[authApi.me] Unexpected error:', error);
       throw error;
     }
   },

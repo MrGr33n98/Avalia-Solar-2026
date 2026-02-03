@@ -22,6 +22,17 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
+  const handleMinhaContaClick = (e: React.MouseEvent) => {
+    if (user?.role === 'review') {
+      e.preventDefault();
+      console.log('[Navbar] Redirecting review user to dashboard');
+      // Adicionamos um pequeno delay para garantir que o estado e os cookies estejam sincronizados
+      setTimeout(() => {
+        router.push('/review-dashboard');
+      }, 50);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     router.push('/login');
@@ -118,7 +129,10 @@ export default function Navbar() {
               ) : (
                 <>
                   <Button asChild variant="ghost" size="sm">
-                    <Link href={user?.role === 'review' ? '/review-dashboard' : '/profile'}>
+                    <Link 
+                      href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
+                      onClick={handleMinhaContaClick}
+                    >
                       Minha conta
                     </Link>
                   </Button>

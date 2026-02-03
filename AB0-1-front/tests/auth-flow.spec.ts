@@ -20,20 +20,29 @@ test.describe('Authentication and Navigation Flow', () => {
       });
     });
 
-    // Mock the validate-token API response
-    await page.route('**/api/v1/auth/validate-token', async (route) => {
+    // Mock the validate-token API response (using auth/me as it is used in AuthContext)
+    await page.route('**/api/v1/auth/me', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          id: 1,
-          email: 'review@example.com',
-          name: 'Review User',
-          role: 'review',
-          status: 'active',
-          company_members: []
+          user: {
+            id: 1,
+            email: 'review@example.com',
+            name: 'Review User',
+            role: 'review',
+            status: 'active'
+          }
         }),
       });
+    });
+
+    // Mock dashboard data
+    await page.route('**/api/v1/reviews/mine', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+    await page.route('**/api/v1/leads/mine', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     });
 
     await page.goto('/login');
@@ -44,28 +53,27 @@ test.describe('Authentication and Navigation Flow', () => {
 
     // Check if redirected to review-dashboard
     await expect(page).toHaveURL(/\/review-dashboard/);
-    await expect(page.locator('h1')).toContainText('Dashboard de Reviewer');
+    await expect(page.locator('h1')).toContainText('Meu Painel');
 
     // Test redirection for "Minha conta" link in navbar
-    await page.click('button:has-text("Minha Conta"), a:has-text("Minha Conta")');
-    // For review users, it should stay on review-dashboard or go to profile? 
-    // The requirement said: "garantindo que, ao usuário 'review' clicar em 'minha conta' após login, seja redirecionado automaticamente para o dashboard correto"
+    await page.click('a:has-text("Minha conta")');
     await expect(page).toHaveURL(/\/review-dashboard/);
   });
 
   test('review user can access select-company to request company administration', async ({ page }) => {
-    // Mock the validate-token API response for a review user
-    await page.route('**/api/v1/auth/validate-token', async (route) => {
+    // Mock the auth/me API response for a review user
+    await page.route('**/api/v1/auth/me', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          id: 1,
-          email: 'review@example.com',
-          name: 'Review User',
-          role: 'review',
-          status: 'active',
-          company_members: []
+          user: {
+            id: 1,
+            email: 'review@example.com',
+            name: 'Review User',
+            role: 'review',
+            status: 'active'
+          }
         }),
       });
     });
