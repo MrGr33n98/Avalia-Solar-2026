@@ -7,7 +7,7 @@ const nextConfig = {
   swcMinify: false,
   
   experimental: {
-    webpackBuildWorker: true,
+    // webpackBuildWorker: true,
   },
 
   // TASK-023: Enable TypeScript and ESLint checks
