@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID, GA_ID } from '@/components/GoogleTagManager';
+import UtmProvider from '@/components/UtmProvider';
 
 
 export const metadata: Metadata = {
@@ -84,11 +85,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClientBody>
-            <Navbar />
-            {children}
-            <Footer />
-          </ClientBody>
+          <UtmProvider>
+            <ClientBody>
+              <Navbar />
+              {children}
+              <Footer />
+            </ClientBody>
+          </UtmProvider>
         </ThemeProvider>
       </body>
     </html>

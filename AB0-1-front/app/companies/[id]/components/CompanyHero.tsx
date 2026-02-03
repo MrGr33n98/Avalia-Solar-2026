@@ -217,6 +217,7 @@ export default function CompanyHero({
                       preset="brandSolid"
                       className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
                       label={btn.label}
+                      companyId={company.id}
                     />
                   </div>
                 );
@@ -284,6 +285,7 @@ export default function CompanyHero({
                     preset="brandSolid"
                     className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
                     label="WhatsApp"
+                    companyId={company.id}
                   />
                 </div>
               )}

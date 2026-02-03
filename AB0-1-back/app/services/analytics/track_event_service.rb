@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'uri'
+
 module Analytics
   class TrackEventService
     Result = Struct.new(:ok, :event, :error, keyword_init: true)
@@ -18,6 +20,8 @@ module Analytics
       'whatsapp_click' => :whatsapp_clicks_count
     }.freeze
 
+    GLOBAL_EVENTS = %w[page_view search landing_view].freeze
+
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
     end
@@ -34,8 +38,13 @@ module Analytics
     def call
       return Result.new(ok: false, error: 'event_type missing') if @event_type.blank?
 
-      company = Company.find(@company_id)
-      authorize!(company)
+      company = Company.find(@company_id) if @company_id.present?
+
+      if @company_id.blank? && !GLOBAL_EVENTS.include?(@event_type)
+        return Result.new(ok: false, error: 'company_id missing for event')
+      end
+
+      authorize!(company) if company
 
       # Check for duplicate event_id (dedupe)
       if AnalyticsEvent.exists?(event_id: @event_id)
@@ -54,7 +63,7 @@ module Analytics
         )
 
         increment_daily_stat!(event)
-        increment_company_counters(company)
+        increment_company_counters(company) if company
         increment_yabeda_metrics(event)
         broadcast!(event)
         
@@ -72,25 +81,89 @@ module Analytics
 
     WHITELIST_KEYS = %w[
       utm_source utm_medium utm_campaign utm_term utm_content
-      referrer path item_id ip user_agent viewport source placement
+      gclid fbclid msclkid landing_path referrer_host attribution
+      referrer path page_path item_id ip user_agent viewport source placement
       variant button_variant rating lead_id product_id status city state
       activation_time previous_status method distributed_to_count company_ids
-      query results_count category_id
+      query results_count category_id banner_id company_id
+    ].freeze
+
+    ALLOWED_UTM_KEYS = %w[
+      utm_source utm_medium utm_campaign utm_term utm_content gclid fbclid msclkid
     ].freeze
 
     def sanitize_metadata(meta)
       return {} unless meta.is_a?(Hash)
-      
-      # Convert all keys to string for consistency
+
       meta = meta.stringify_keys
-      
-      # Extract UTM parameters if they are nested
-      if meta['utm'].is_a?(Hash)
-        meta.merge!(meta['utm'].stringify_keys)
+      meta.merge!(meta['utm'].stringify_keys) if meta['utm'].is_a?(Hash)
+      meta.merge!(meta['metadata'].stringify_keys) if meta['metadata'].is_a?(Hash)
+
+      sanitized = meta.slice(*WHITELIST_KEYS).compact
+      sanitized.merge!(sanitize_utm_hash(sanitized))
+
+      if sanitized['attribution'].present?
+        sanitized['attribution'] = sanitize_attribution(sanitized['attribution'])
       end
 
-      # Slice by whitelist
-      meta.slice(*WHITELIST_KEYS).compact
+      sanitized['landing_path'] = strip_path(sanitized['landing_path'])
+      sanitized['referrer_host'] = strip_host(sanitized['referrer_host'])
+
+      sanitized.compact
+    end
+
+    def sanitize_attribution(raw)
+      return nil unless raw.is_a?(Hash)
+
+      touches = {}
+      %w[first_touch last_touch].each do |touch_key|
+        touch = raw[touch_key] || raw[touch_key.to_sym]
+        next unless touch.is_a?(Hash)
+
+        values = sanitize_utm_hash(touch['values'] || touch[:values] || touch)
+        touch_payload = {
+          values: values,
+          landing_path: strip_path(touch['landing_path'] || touch[:landing_path]),
+          referrer_host: strip_host(touch['referrer_host'] || touch[:referrer_host]),
+          ts: touch['ts'] || touch[:ts]
+        }.compact
+
+        touches[touch_key] = touch_payload if touch_payload.present?
+      end
+
+      ttl = raw['ttl_days'] || raw[:ttl_days]
+      touches['ttl_days'] = ttl if ttl
+
+      touches.presence
+    end
+
+    def sanitize_utm_hash(hash)
+      return {} unless hash.is_a?(Hash)
+
+      utm_values = {}
+      hash.stringify_keys.slice(*ALLOWED_UTM_KEYS).each do |key, value|
+        norm = normalize_value(value)
+        utm_values[key] = norm if norm.present?
+      end
+      utm_values
+    end
+
+    def strip_path(value)
+      return nil if value.blank?
+      uri = URI.parse(value) rescue nil
+      return value if uri.nil?
+      uri.path.presence || '/'
+    end
+
+    def strip_host(value)
+      return nil if value.blank?
+      uri = URI.parse(value) rescue nil
+      return value.to_s if uri.nil?
+      uri.host
+    end
+
+    def normalize_value(value)
+      value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
     end
 
     def authorize!(company)
@@ -110,6 +183,7 @@ module Analytics
     end
 
     def increment_daily_stat!(event)
+      return if event.company_id.blank?
       col = EVENT_TO_DAILY_COLUMN[event.event_type]
       return unless col
 

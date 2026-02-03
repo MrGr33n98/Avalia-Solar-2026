@@ -2,24 +2,29 @@
 
 class Api::V1::AnalyticsController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[track conversions]
+  ALLOW_ANONYMOUS_EVENTS = %w[page_view search].freeze
 
   # POST /api/v1/analytics/track
   # Body: { company_id, event_type, metadata }
   def track
     raw_type = params[:event_type].presence || params[:event].presence
     company_id = params[:company_id].presence || params.dig(:company, :id)
+    event_id = params[:event_id].presence
     metadata = params[:metadata].is_a?(Hash) ? params[:metadata] : (params[:data].is_a?(Hash) ? params[:data] : {})
 
-    return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request if company_id.blank?
     return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request if raw_type.blank?
 
     event_type = map_event_type(raw_type)
+    if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
+      return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request
+    end
 
     Analytics::TrackEventService.call(
       company_id: company_id,
       event_type: event_type,
       metadata: metadata.merge(request_metadata),
-      user: current_user
+      user: current_user,
+      event_id: event_id
     )
 
     render json: { status: 'success' }

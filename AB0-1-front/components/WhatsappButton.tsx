@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
+import { appendUtm } from '@/lib/analytics/utm';
 
 type Styles = {
   variant?: 'solid' | 'outline';
@@ -18,11 +19,15 @@ interface Props {
   href?: string;
   onClick?: () => void;
   styles?: Styles | null | undefined;
-  size?: 'sm' | 'lg';
+  size?: 'sm' | 'lg' | 'default';
   className?: string;
   labelSuffix?: string;
   label?: string;
   preset?: 'neutralOutline' | 'brandSolid';
+  companyId?: number;
+  categoryId?: number;
+  bannerId?: number;
+  pagePath?: string;
 }
 
 export default function WhatsappButton({
@@ -35,6 +40,10 @@ export default function WhatsappButton({
   labelSuffix,
   label,
   preset,
+  companyId,
+  categoryId,
+  bannerId,
+  pagePath,
 }: Props) {
   if (!enabled) return null;
 
@@ -87,12 +96,7 @@ export default function WhatsappButton({
   );
 
   const handleClick = () => {
-    track('whatsapp_button_click', {
-      button_label: label || 'WhatsApp',
-      destination_url: href,
-      element_type: 'button',
-      action_type: 'click'
-    });
+    const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : undefined);
     let link = (href || '').trim();
     if (link && !/^https?:\/\//i.test(link)) {
       const digitsRaw = link.replace(/\D/g, '');
@@ -102,6 +106,26 @@ export default function WhatsappButton({
       }
       link = digits ? `https://wa.me/${digits}` : '';
     }
+    track('whatsapp_click', {
+      button_label: label || 'WhatsApp',
+      destination_url: link,
+      element_type: 'button',
+      action_type: 'click',
+      company_id: companyId,
+      category_id: categoryId,
+      banner_id: bannerId,
+      page_path: path
+    });
+
+    // Opcional: anexar UTMs quando o link for http/https
+    if (link) {
+      try {
+        link = appendUtm(link);
+      } catch (err) {
+        console.warn('[WhatsappButton] appendUtm failed', err);
+      }
+    }
+
     if (link) {
       try {
         const opened = window.open(link, '_blank');

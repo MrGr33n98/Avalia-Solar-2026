@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'uri'
+
 module Api
   module V1
     class BaseController < ApplicationController
@@ -109,21 +111,34 @@ module Api
       end
 
       def request_metadata
-    meta = {
-      ip: request.remote_ip.to_s,
-      referrer: request.referer.to_s,
-      user_agent: request.user_agent.to_s,
-      path: request.fullpath.to_s,
-      city: @edge_location&.dig(:city),
-      state: @edge_location&.dig(:state)
-    }
+        ref = sanitized_referrer
+        meta = {
+          ip: request.remote_ip.to_s,
+          referrer_host: ref[:host],
+          referrer_path: ref[:path],
+          user_agent: request.user_agent.to_s,
+          path: request.path.to_s,
+          city: @edge_location&.dig(:city),
+          state: @edge_location&.dig(:state)
+        }
 
-    # Extract UTMs from params if present
-    utm_params = params.permit(:utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content).to_h
-    meta.merge!(utm_params) if utm_params.present?
+        utm_params = params.permit(:utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content, :gclid, :fbclid, :msclkid).to_h
+        utm_clean = utm_params.transform_values { |v| normalize_utm(v) }.compact
+        meta.merge!(utm_clean) if utm_clean.present?
 
-    meta.compact
-  end
+        meta.compact
+      end
+
+      def sanitized_referrer
+        return { host: nil, path: nil } if request.referer.blank?
+        uri = URI.parse(request.referer) rescue nil
+        { host: uri&.host, path: uri&.path }
+      end
+
+      def normalize_utm(value)
+        return nil if value.blank?
+        value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
+      end
 
       def verify_edge_signature
         secret = ENV['SHARED_SECRET']

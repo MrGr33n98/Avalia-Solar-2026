@@ -4,6 +4,7 @@
 
 import { Category, Company, Review, Product, FinancingOption } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
+import { getAttribution, getCurrentUTMs } from './analytics/utm';
 
 // Re-export types so they can be imported from api-client
 export type { Category, Company, Review, Product, FinancingOption };
@@ -32,6 +33,7 @@ export async function fetchApiSafe<T>(
   options: any = {}
 ): Promise<T> {
   const url = buildApiUrl(endpoint);
+  const requestOptions: any = { ...options };
 
   const defaultHeaders: Record<string, string> = getApiRequestHeaders({
     'Content-Type': 'application/json',
@@ -50,15 +52,53 @@ export async function fetchApiSafe<T>(
     }
   }
 
+  // Injeta UTM/attribution apenas em endpoints permitidos
+  const normalizedEndpoint = endpoint.replace(/^\//, '');
+  const method = (requestOptions.method || 'GET').toString().toUpperCase();
+  const shouldAttachUtm =
+    method !== 'GET' &&
+    (normalizedEndpoint.startsWith('leads/wizard_create') ||
+      normalizedEndpoint.startsWith('analytics') ||
+      normalizedEndpoint.startsWith('banner_events'));
+
+  if (shouldAttachUtm && typeof window !== 'undefined') {
+    const utm = getCurrentUTMs();
+    const attribution = getAttribution();
+
+    let bodyPayload: any = requestOptions.body;
+    if (typeof bodyPayload === 'string') {
+      try {
+        bodyPayload = JSON.parse(bodyPayload);
+      } catch {
+        bodyPayload = {};
+      }
+    }
+
+    if (bodyPayload === null || bodyPayload === undefined) {
+      bodyPayload = {};
+    }
+
+    if (typeof bodyPayload === 'object') {
+      if (Object.keys(utm).length > 0 && !bodyPayload.utm) {
+        bodyPayload.utm = utm;
+      }
+      if (attribution && !bodyPayload.attribution) {
+        bodyPayload.attribution = attribution;
+      }
+    }
+
+    requestOptions.body = JSON.stringify(bodyPayload);
+  }
+
   try {
-    console.log('[API] Request ->', options.method || 'GET', url);
+    console.log('[API] Request ->', requestOptions.method || 'GET', url);
     
     const response = await fetch(url, {
-      ...options,
+      ...requestOptions,
       credentials: 'include', // Important for JWT cookies
       headers: {
         ...defaultHeaders,
-        ...options.headers,
+        ...requestOptions.headers,
       },
     });
 

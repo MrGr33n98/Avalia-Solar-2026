@@ -87,6 +87,8 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
                     preset="brandSolid"
                     className="w-full h-11 md:h-10 text-foreground font-bold px-6 shadow-sm"
                     label="WhatsApp"
+                    companyId={company.id}
+                    pagePath={typeof window !== 'undefined' ? window.location.pathname : undefined}
                   />
                 </div>
               )}

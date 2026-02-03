@@ -5,6 +5,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Deploy to Server
@@ -12,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Docker image (with SHA and latest tags)
         run: |
@@ -31,43 +34,74 @@ jobs:
           target: "~/images"
 
       - name: SSH Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
+          script_stop: true
+          command_timeout: 15m
           script: |
+            set -euo pipefail
+            
             export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
             export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
             export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
             export RAILS_MASTER_KEY="$(echo "${{ secrets.RAILS_MASTER_KEY }}" | tr -d '\n\r')"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            
+            echo "Loading new image..."
             docker load -i ~/images/ab0-backend.tar
-            docker rm -f ab0-backend || true
+            
+            echo "Ensuring network exists..."
             docker network create ab0-network || true
-            if ! docker ps | grep -q ab0-postgres; then
-              if docker ps -a | grep -q ab0-postgres; then
+            
+            echo "Checking Database container..."
+            if ! docker ps --format '{{.Names}}' | grep -q "^ab0-postgres$"; then
+              if docker ps -a --format '{{.Names}}' | grep -q "^ab0-postgres$"; then
+                echo "Starting existing database container..."
                 docker start ab0-postgres
               else
+                echo "Creating new database container..."
                 docker run -d \
                   --name ab0-postgres \
                   --network ab0-network \
-                  -e "POSTGRES_USER=$POSTGRES_USER" \
+                  --restart always \
+                  -e "POSTGRES_USER=postgres" \
                   -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
-                  -e "POSTGRES_DB=$POSTGRES_DB" \
-                  -e "POSTGRES_HOST_AUTH_METHOD=md5" \
+                  -e "POSTGRES_DB=postgres" \
                   -p 5432:5432 \
                   postgres:14
+                
+                echo "Waiting for database to be ready..."
+                for i in {1..30}; do
+                  if docker exec ab0-postgres pg_isready -U postgres; then
+                    break
+                  fi
+                  sleep 1
+                done
+                
+                echo "Setting up application user and database..."
+                # Use a separate user for the application (not superuser)
+                docker exec ab0-postgres psql -U postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '$POSTGRES_USER') THEN CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD'; END IF; END \$\$;"
+                docker exec ab0-postgres psql -U postgres -c "SELECT 'CREATE DATABASE $POSTGRES_DB' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$POSTGRES_DB')\gexec"
+                docker exec ab0-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO $POSTGRES_USER;"
               fi
-              sleep 10
-              docker exec ab0-postgres psql -U postgres -c "DROP DATABASE IF EXISTS $POSTGRES_DB;" || true
-              docker exec ab0-postgres psql -U postgres -c "DROP USER IF EXISTS $POSTGRES_USER;" || true
-              docker exec ab0-postgres psql -U postgres -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD' SUPERUSER;" || true
-              docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;" || true
             fi
+
+            echo "Stopping old application container..."
+            docker stop ab0-backend || true
+            docker rm ab0-backend || true
+
+            echo "Starting new application container..."
             docker run -d \
               --name ab0-backend \
               --network ab0-network \
+              --restart always \
+              --health-cmd "curl -f http://localhost:3001/health || exit 1" \
+              --health-interval 30s \
+              --health-retries 3 \
+              --health-timeout 5s \
               -e RAILS_ENV=production \
               -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
               -e "RAILS_MASTER_KEY=$RAILS_MASTER_KEY" \
@@ -76,18 +110,14 @@ jobs:
               -e "POSTGRES_USER=$POSTGRES_USER" \
               -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
               -e "POSTGRES_DB=$POSTGRES_DB" \
-              -e "CORS_ORIGINS=http://64.225.59.107:3000" \
+              -e "CORS_ORIGINS=*" \
               -p 3001:3001 \
               ab0-backend:latest
-            echo "Network Settings:"
-            docker inspect ab0-backend | grep -A 20 "NetworkSettings"
-            echo "Process Listening:"
-            docker exec ab0-backend netstat -tulpn | grep 3001 || true
-            echo "Container Status:"
+
+            echo "Waiting for health check..."
+            sleep 10
             docker ps | grep ab0-backend
-            echo "Container Logs:"
-            docker logs --tail=50 ab0-backend
-            echo "Network Check:"
-            docker network inspect ab0-network | grep ab0-backend || true
-            echo "Port Check:"
-            ss -tulpn | grep 3001 || true
+            
+            echo "Cleaning up..."
+            docker image prune -f
+            rm -f ~/images/ab0-backend.tar

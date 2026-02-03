@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,10 +22,10 @@ jobs:
         node-version: [18.x]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -49,5 +52,10 @@ jobs:
         NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
         NEXT_PUBLIC_BETTER_AUTH_URL: "http://localhost:3000"
         NEXT_PUBLIC_GTM_ID: "GTM-5RV76ZKR"
-        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go"
-      run: npm run build
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+      run: |
+        if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then
+          echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is required but not set."
+          exit 1
+        fi
+        npm run build

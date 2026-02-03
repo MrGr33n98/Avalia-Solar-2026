@@ -13,7 +13,7 @@
 import mixpanel from 'mixpanel-browser';
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
-import { getCurrentUTMs, initializeUTMs } from './utm';
+import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId, isNewSession } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
 import { 
@@ -29,6 +29,8 @@ import {
 let initialized = false;
 let currentUserId: string | null = null;
 let currentContext: Partial<AnalyticsContext> = {};
+const BACKEND_ENDPOINT = '/api/v1/analytics/track';
+const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 
 /**
  * Initialize analytics SDKs
@@ -45,8 +47,8 @@ export function initializeAnalytics(): void {
     return;
   }
   
-  // Initialize UTMs
-  initializeUTMs();
+  // Inicializa attribution UTM (first/last touch) com a URL atual
+  updateAttribution();
   
   // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
   initializeSDKs();
@@ -112,6 +114,7 @@ export function getAnalyticsContext(): AnalyticsContext {
       platform: 'web',
       pathname: '',
       referrer: '',
+      referrer_host: undefined,
       session_id: '',
       is_logged_in: false,
       source: 'server'
@@ -119,6 +122,7 @@ export function getAnalyticsContext(): AnalyticsContext {
   }
   
   const utms = getCurrentUTMs();
+  const attribution = getAttribution();
   
   // Determine traffic source
   let source = 'direct';
@@ -134,6 +138,13 @@ export function getAnalyticsContext(): AnalyticsContext {
       source = 'referral';
     }
   }
+
+  let referrer_host: string | undefined = undefined;
+  try {
+    referrer_host = document.referrer ? new URL(document.referrer).hostname : undefined;
+  } catch {
+    referrer_host = undefined;
+  }
   
   return {
     environment: process.env.NODE_ENV || 'production',
@@ -141,10 +152,13 @@ export function getAnalyticsContext(): AnalyticsContext {
     platform: 'web',
     pathname: window.location.pathname,
     referrer: document.referrer,
+    referrer_host,
     session_id: getSessionId(),
     is_logged_in: !!currentUserId,
     user_id: currentUserId || undefined,
     source,
+    landing_path: attribution?.last_touch?.landing_path || attribution?.first_touch?.landing_path,
+    attribution,
     ...utms,
     ...currentContext
   };
@@ -185,6 +199,15 @@ export function track(
     timestamp: new Date().toISOString()
   };
   
+  // Envia para backend (fire-and-forget) com payload mínimo
+  sendToBackend(eventName, eventId, context, {
+    ...properties,
+    company_id: properties.company_id ?? context.company_id,
+    banner_id: properties.banner_id,
+    category_id: properties.category_id,
+    timestamp: eventProps.timestamp
+  });
+
   // Remove PII
   const sanitized = sanitizeProperties(eventProps);
 
@@ -249,6 +272,63 @@ function sanitizeProperties(properties: Record<string, any>): Record<string, any
   return sanitized;
 }
 
+function compact(obj: Record<string, any>): Record<string, any> {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined && value !== null));
+}
+
+/**
+ * Envia o evento também para o backend (fire-and-forget)
+ */
+function sendToBackend(
+  eventName: string,
+  eventId: string,
+  context: AnalyticsContext,
+  properties: Record<string, any>
+): void {
+  if (typeof window === 'undefined') return;
+
+  const companyId = properties.company_id ?? context.company_id ?? null;
+  if (!companyId && !GLOBAL_EVENTS.has(eventName)) return;
+
+  const utm = getCurrentUTMs();
+  const attribution = getAttribution();
+
+  const metadata = compact({
+    ...properties,
+    utm_source: utm.utm_source,
+    utm_medium: utm.utm_medium,
+    utm_campaign: utm.utm_campaign,
+    utm_content: utm.utm_content,
+    utm_term: utm.utm_term,
+    gclid: utm.gclid,
+    fbclid: utm.fbclid,
+    msclkid: utm.msclkid,
+    attribution,
+    path: context.pathname,
+    landing_path: attribution?.last_touch?.landing_path || attribution?.first_touch?.landing_path || context.pathname,
+    referrer_host: context.referrer_host,
+  });
+
+  const body = {
+    event_id: eventId,
+    event_type: eventName,
+    company_id: companyId,
+    tracked_at: properties.timestamp || new Date().toISOString(),
+    metadata,
+  };
+
+  try {
+    void fetch(BACKEND_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.warn('[Analytics] Failed to send to backend', err);
+  }
+}
+
 /**
  * Convert snake_case or spinal-case to Title Case for Mixpanel
  */
@@ -281,6 +361,13 @@ export function page(
   };
   
   const sanitized = sanitizeProperties(pageProps);
+
+  sendToBackend('page_view', eventId, context, {
+    ...properties,
+    page_name: pageProps.page_name,
+    company_id: properties.company_id ?? context.company_id,
+    timestamp: pageProps.timestamp
+  });
   
   // Mixpanel
   try {

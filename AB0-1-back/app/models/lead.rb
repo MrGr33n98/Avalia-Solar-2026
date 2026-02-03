@@ -56,7 +56,8 @@ class Lead < ApplicationRecord
       decision_timeline email estimated_budget id location message monthly_kwh
       name otp_attempts otp_sent_at otp_verified_at phone product_vertical
       project_profile project_type quote_type state system_size_band updated_at
-      wizard_status zipcode
+      wizard_status zipcode utm_source utm_medium utm_campaign utm_content utm_term
+      gclid fbclid msclkid landing_path referrer_host attribution_json
     ]
   end
 

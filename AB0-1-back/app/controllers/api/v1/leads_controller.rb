@@ -1,4 +1,8 @@
+require 'uri'
+
 class Api::V1::LeadsController < Api::V1::BaseController
+  ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
+
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
   before_action :authenticate_api_user, only: %i[index show update destroy]
   before_action :ensure_leads_access!, only: %i[index]
@@ -82,6 +86,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def wizard_create
     payload = wizard_lead_params
     lead = ::Lead.new(payload.except(:full_name, :consent))
+    utm_data = extract_utm_payload
+    attribution = sanitize_attribution_payload(params[:attribution] || params.dig(:lead, :attribution))
     
     # Injeta localização da borda (Cloudflare) se não fornecida
     if @edge_location.present?
@@ -102,6 +108,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
       lead.bill_value,
       lead.monthly_kwh
     )
+
+    apply_utm_to_lead(lead, utm_data, attribution)
 
     preferred_company_id = params[:preferred_company_id].presence&.to_i
     if preferred_company_id.present? && ::Lead.column_names.include?('company_id')
@@ -346,7 +354,9 @@ class Api::V1::LeadsController < Api::V1::BaseController
       :email,
       :phone,
       :consent,
-      :nickname
+      :nickname,
+      utm: {},
+      attribution: {}
     )
   end
 
@@ -405,6 +415,80 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return nil if cleaned.blank?
 
     cleaned.to_f
+  end
+
+  def extract_utm_payload
+    raw = params[:utm]
+    raw ||= params.dig(:lead, :utm)
+    return {} unless raw.is_a?(Hash) || raw.is_a?(ActionController::Parameters)
+
+    raw.to_unsafe_h.stringify_keys.slice(*ALLOWED_UTM_KEYS).transform_values { |v| sanitize_utm_value(v) }.compact
+  end
+
+  def sanitize_attribution_payload(raw)
+    return nil unless raw.is_a?(Hash) || raw.is_a?(ActionController::Parameters)
+
+    data = raw.to_unsafe_h
+    touches = {}
+    %w[first_touch last_touch].each do |key|
+      touch = data[key] || data[key.to_sym]
+      next unless touch.is_a?(Hash)
+
+      values = sanitize_utm_hash(touch['values'] || touch[:values] || {})
+      touch_payload = {
+        values: values,
+        landing_path: strip_path(touch['landing_path'] || touch[:landing_path]),
+        referrer_host: strip_host(touch['referrer_host'] || touch[:referrer_host]),
+        ts: touch['ts'] || touch[:ts]
+      }.compact
+
+      touches[key] = touch_payload if touch_payload.present?
+    end
+
+    ttl = data['ttl_days'] || data[:ttl_days]
+    touches['ttl_days'] = ttl if ttl
+
+    touches.presence
+  end
+
+  def sanitize_utm_hash(hash)
+    return {} unless hash.is_a?(Hash)
+
+    hash.stringify_keys.slice(*ALLOWED_UTM_KEYS).transform_values { |v| sanitize_utm_value(v) }.compact
+  end
+
+  def sanitize_utm_value(val)
+    return nil if val.blank?
+    val.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
+  end
+
+  def strip_path(path)
+    return nil if path.blank?
+    uri = URI.parse(path) rescue nil
+    uri&.path.presence || path
+  end
+
+  def strip_host(ref)
+    return nil if ref.blank?
+    uri = URI.parse(ref) rescue nil
+    uri&.host || ref
+  end
+
+  def apply_utm_to_lead(lead, utm_data, attribution)
+    return if lead.nil?
+    utm_data.each do |key, value|
+      next if value.blank?
+      lead.send("#{key}=", value) if lead.respond_to?("#{key}=")
+    end
+
+    if attribution.present?
+      landing = attribution.dig('last_touch', 'landing_path') || attribution.dig(:last_touch, :landing_path)
+      ref_host = attribution.dig('last_touch', 'referrer_host') || attribution.dig(:last_touch, :referrer_host)
+
+      lead.landing_path = strip_path(landing) if lead.respond_to?(:landing_path=)
+      lead.referrer_host = strip_host(ref_host) if lead.respond_to?(:referrer_host=)
+      lead.attribution_json = attribution if lead.respond_to?(:attribution_json=)
+    end
   end
 
   def truthy?(value)

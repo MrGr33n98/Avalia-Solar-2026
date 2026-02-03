@@ -9,12 +9,20 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+  id-token: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Specific job permissions
     permissions:
       contents: read
       packages: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +53,8 @@ jobs:
             KEY=$(grep -E '^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=' .env | head -n1 | cut -d= -f2- | tr -d '\r')
           fi
           if [ -z "$KEY" ]; then
-            KEY="p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go"
+            echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is required but not set in secrets, vars, or .env."
+            exit 1
           fi
           echo "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$KEY" >> $GITHUB_ENV
 
@@ -59,8 +68,12 @@ jobs:
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           build-args: |
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
+            type=gha,scope=backend
+          cache-to: |
+            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache,mode=max
+            type=gha,scope=backend,mode=max
 
       - name: Build and Push Frontend
         if: matrix.component == 'frontend'
@@ -83,21 +96,26 @@ jobs:
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN || '' }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT || '' }}
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
+            type=gha,scope=frontend
+          cache-to: |
+            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache,mode=max
+            type=gha,scope=frontend,mode=max
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          command_timeout: 20m
+          command_timeout: 10m
+          script_stop: true
           script: |
             set -euo pipefail
             cd ~/Avalia-Solar-2026

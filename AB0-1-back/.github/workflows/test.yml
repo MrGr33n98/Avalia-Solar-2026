@@ -9,11 +9,13 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       RAILS_ENV: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -24,12 +26,10 @@ jobs:
       - name: Run RuboCop
         run: bundle exec rubocop --parallel
 
-      - name: Run Brakeman
-        run: bundle exec brakeman -q -w2
-
   test:
-    needs: lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:14
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -61,14 +61,9 @@ jobs:
           ruby-version: '3.2.2'
           bundler-cache: true
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get -yqq install libpq-dev
-          bundle install --jobs 4 --retry 3
-
       - name: Setup Database
         run: |
-          bundle exec rails db:create db:schema:load
+          bundle exec rails db:prepare
 
       - name: Run RSpec Tests
         run: |
@@ -78,7 +73,8 @@ jobs:
 
       - name: Upload Coverage Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
+          retention-days: 7

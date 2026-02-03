@@ -1,8 +1,13 @@
+require 'uri'
+
 module Api
   module V1
     class BannerEventsController < Api::V1::BaseController
       skip_before_action :authenticate_api_user, raise: false
       skip_before_action :verify_authenticity_token, raise: false
+
+      ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_term utm_content gclid fbclid msclkid].freeze
+      ALLOWED_METADATA_KEYS = %w[slot_key position page_path category_id banner_id title link].freeze
 
       def create
         event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {}, metadata: {})
@@ -23,9 +28,9 @@ module Api
           tracked_at: tracked_at,
           ip_hash: safe_hash(request.remote_ip.to_s),
           user_agent_hash: safe_hash(request.user_agent.to_s),
-          referrer: request.referer.to_s,
-          utm_json: sanitize_json(event_params[:utm]),
-          metadata_json: sanitize_json(event_params[:metadata])
+          referrer: sanitized_referrer,
+          utm_json: sanitize_utm(event_params[:utm]),
+          metadata_json: sanitize_metadata(event_params[:metadata], banner_id)
         )
 
         render json: { status: 'ok' }, status: :created
@@ -33,9 +38,34 @@ module Api
 
       private
 
-      def sanitize_json(obj)
+      def sanitized_referrer
+        return nil if request.referer.blank?
+        uri = URI.parse(request.referer) rescue nil
+        uri&.host
+      end
+
+      def sanitize_utm(obj)
         return {} unless obj.is_a?(Hash)
-        obj.slice(*obj.keys) # ensure simple hash, no unsafe types
+
+        obj.stringify_keys.slice(*ALLOWED_UTM_KEYS).each_with_object({}) do |(key, val), acc|
+          norm = normalize_value(val)
+          acc[key] = norm if norm.present?
+        end
+      end
+
+      def sanitize_metadata(obj, banner_id)
+        return {} unless obj.is_a?(Hash)
+
+        obj = obj.stringify_keys
+        obj['banner_id'] ||= banner_id
+
+        obj.slice(*ALLOWED_METADATA_KEYS).each_with_object({}) do |(key, val), acc|
+          acc[key] = val if val.present?
+        end
+      end
+
+      def normalize_value(value)
+        value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
       end
 
       def safe_hash(value)

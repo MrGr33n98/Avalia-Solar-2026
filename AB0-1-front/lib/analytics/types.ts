@@ -27,6 +27,7 @@ export interface AnalyticsContext {
   // Page
   pathname: string;
   referrer: string;
+  referrer_host?: string;
   
   // Session
   session_id: string;
@@ -38,6 +39,11 @@ export interface AnalyticsContext {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
+  landing_path?: string;
+  attribution?: Attribution;
   
   // Geo (when available)
   city?: string;
@@ -75,4 +81,20 @@ export interface UTMParameters {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
 }
+
+export type AttributionTouch = {
+  values: UTMParameters;
+  landing_path: string;
+  referrer_host?: string;
+  ts: string;
+};
+
+export type Attribution = {
+  first_touch: AttributionTouch;
+  last_touch: AttributionTouch;
+  ttl_days: number;
+};
