@@ -118,7 +118,9 @@ export default function Navbar() {
               ) : (
                 <>
                   <Button asChild variant="ghost" size="sm">
-                    <Link href="/profile">Minha conta</Link>
+                    <Link href={user?.role === 'review' ? '/review-dashboard' : '/profile'}>
+                      Minha conta
+                    </Link>
                   </Button>
                   {user?.role === 'company' && (
                     <Button asChild variant="outline" size="sm">

@@ -21,6 +21,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { fetchApi } from '@/lib/api';
 import { formatCNPJ, formatPhone, isValidCNPJ, isValidPhone } from '@/app/dashboard/utils';
 import { useRouter } from 'next/navigation';
+import { isCorporateEmail } from '@/lib/utils';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 // Lista de estados brasileiros (UFs)
 const UFS = [
@@ -30,24 +33,48 @@ const UFS = [
 
 interface FormData {
   name: string;
-  description: string;
-  emailPublic: string;
+  email: string;
+  password: string;
+  passwordConfirmation: string;
   phone: string;
-  address: string;
-  state: string;
-  city: string;
-  cnpj: string;
   termsAccepted: boolean;
-  newsletter: boolean;
 }
+
+const PUBLIC_EMAIL_DOMAINS = [
+  'gmail.com',
+  'outlook.com',
+  'hotmail.com',
+  'yahoo.com',
+  'icloud.com',
+  'uol.com.br',
+  'terra.com.br',
+  'bol.com.br',
+  'ig.com.br',
+  'globomail.com'
+];
+
+const isCorporateEmail = (email: string) => {
+  if (!email) return false;
+  const domain = email.split('@')[1]?.toLowerCase();
+  return domain && !PUBLIC_EMAIL_DOMAINS.includes(domain);
+};
+
+const registerSchema = z.object({
+  name: z.string().min(2, 'Nome é obrigatório'),
+  email: z.string().email('E-mail inválido').refine(isCorporateEmail, {
+    message: 'Por favor, use um e-mail corporativo (não @gmail, @hotmail, etc.)'
+  }),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  password_confirmation: z.string()
+}).refine((data) => data.password === data.password_confirmation, {
+  message: "Senhas não conferem",
+  path: ["password_confirmation"],
+});
 
 export default function RegisterCompanyTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const logoFileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const {
@@ -58,72 +85,37 @@ export default function RegisterCompanyTab() {
     reset,
     formState: { errors },
   } = useForm<FormData>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       termsAccepted: false,
-      newsletter: false
     }
   });
 
-  const description = watch('description', '');
+  const password = watch('password');
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setSubmitError('O logo deve ter no máximo 2MB');
-        return;
-      }
-      if (!['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.type)) {
-        setSubmitError('Formato inválido. Use JPG, PNG ou SVG.');
-        return;
-      }
 
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setSubmitError(null);
-    }
-  };
-
-  const removeLogo = () => {
-    setLogoFile(null);
-    setLogoPreview(null);
-    if (logoFileInputRef.current) logoFileInputRef.current.value = '';
-  };
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     setSubmitError(null);
 
-    // Validações manuais extras
-    if (!isValidCNPJ(data.cnpj)) {
-      setSubmitError('CNPJ inválido');
+    if (!isCorporateEmail(data.email)) {
+      setSubmitError('Por favor, utilize um e-mail corporativo. E-mails públicos (Gmail, Hotmail, etc.) não são permitidos para cadastro de empresas.');
       setIsLoading(false);
       return;
     }
 
     try {
       const formData = new FormData();
-      formData.append('company[name]', data.name);
-      formData.append('company[description]', data.description);
-      formData.append('company[email_public]', data.emailPublic);
-      formData.append('company[phone]', data.phone);
-      formData.append('company[address]', data.address);
-      formData.append('company[state]', data.state);
-      formData.append('company[city]', data.city);
-      formData.append('company[cnpj]', data.cnpj.replace(/\D/g, ''));
-      formData.append('company[status]', 'pending');
-      formData.append('company[terms_accepted]', String(data.termsAccepted));
-      formData.append('company[newsletter_opt_in]', String(data.newsletter));
+      formData.append('user[name]', data.name);
+      formData.append('user[email]', data.email);
+      formData.append('user[password]', data.password);
+      formData.append('user[password_confirmation]', data.passwordConfirmation);
+      formData.append('user[phone]', data.phone);
+      formData.append('user[role]', 'company');
+      formData.append('terms_accepted', String(data.termsAccepted));
       
-      if (logoFile) {
-        formData.append('company[logo]', logoFile);
-      }
-
-      await fetchApi('/companies', {
+      await fetchApi('/auth/register', {
         method: 'POST',
         body: formData
       });
@@ -141,11 +133,6 @@ export default function RegisterCompanyTab() {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhone(e.target.value);
     setValue('phone', formatted);
-  };
-
-  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCNPJ(e.target.value);
-    setValue('cnpj', formatted);
   };
 
   const handleReset = () => {
@@ -185,7 +172,7 @@ export default function RegisterCompanyTab() {
           transition={{ delay: 0.5 }}
           className="text-slate-600 mb-8 max-w-md"
         >
-          Sua empresa foi cadastrada para análise e aprovação. Você receberá um e-mail de confirmação em breve.
+          Sua conta de empresa foi criada e está aguardando aprovação administrativa. Você receberá um e-mail assim que sua conta for ativada.
         </motion.p>
 
         <motion.div
@@ -201,15 +188,6 @@ export default function RegisterCompanyTab() {
             Voltar para Home
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="w-full"
-          >
-            Cadastrar outra empresa
-            <RefreshCcw className="ml-2 h-4 w-4" />
-          </Button>
         </motion.div>
       </motion.div>
     );
@@ -218,40 +196,8 @@ export default function RegisterCompanyTab() {
   return (
     <div className="h-full flex flex-col justify-center p-8 lg:p-12 overflow-y-auto custom-scrollbar">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900">Cadastro de Empresa</h2>
-        <p className="text-slate-600">Preencha os dados abaixo para cadastrar sua empresa.</p>
-      </div>
-
-      <div className="flex flex-col items-center justify-center mb-6">
-        <div className="relative group cursor-pointer" onClick={() => logoFileInputRef.current?.click()}>
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center border-2 border-dashed ${logoPreview ? 'border-emerald-500' : 'border-slate-300'} overflow-hidden bg-slate-50 hover:bg-slate-100 transition-colors`}>
-            {logoPreview ? (
-              <Image src={logoPreview} alt="Logo Preview" width={96} height={96} className="object-cover w-full h-full" />
-            ) : (
-              <Building className="w-8 h-8 text-slate-400" />
-            )}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-full transition-opacity">
-            <Upload className="w-6 h-6 text-white" />
-          </div>
-          <input
-            type="file"
-            ref={logoFileInputRef}
-            className="hidden"
-            accept="image/png, image/jpeg, image/svg+xml"
-            onChange={handleLogoChange}
-          />
-          {logoPreview && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); removeLogo(); }}
-              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-        <p className="text-xs text-slate-500 mt-2">Logo da Empresa (opcional, máx 2MB)</p>
+        <h2 className="text-2xl font-bold text-slate-900">Cadastro para Empresas</h2>
+        <p className="text-slate-600">Utilize seu e-mail corporativo para gerenciar sua empresa na plataforma.</p>
       </div>
 
       <AnimatePresence>
@@ -271,12 +217,12 @@ export default function RegisterCompanyTab() {
         )}
       </AnimatePresence>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Nome da Empresa <span className="text-red-500">*</span></Label>
+          <Label htmlFor="name">Nome Completo <span className="text-red-500">*</span></Label>
           <Input
             id="name"
-            placeholder="Ex: Solar Tech Soluções"
+            placeholder="Seu nome"
             className={`border-slate-200 focus:ring-emerald-500/20 ${errors.name ? 'border-red-500' : ''}`}
             {...register('name', { required: 'Nome é obrigatório', minLength: { value: 3, message: 'Mínimo 3 caracteres' } })}
           />
@@ -284,105 +230,65 @@ export default function RegisterCompanyTab() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Descrição <span className="text-red-500">*</span></Label>
-          <Textarea
-            id="description"
-            placeholder="Descreva brevemente sua empresa e serviços..."
-            className={`border-slate-200 focus:ring-emerald-500/20 resize-none h-24 ${errors.description ? 'border-red-500' : ''}`}
-            maxLength={160}
-            {...register('description', { required: 'Descrição é obrigatória', minLength: { value: 10, message: 'Mínimo 10 caracteres' } })}
+          <Label htmlFor="email">E-mail Corporativo <span className="text-red-500">*</span></Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="voce@suaempresa.com"
+            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.email ? 'border-red-500' : ''}`}
+            {...register('email', { 
+              required: 'E-mail é obrigatório',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'E-mail inválido'
+              }
+            })}
           />
-          <div className="flex justify-between">
-            {errors.description && <span className="text-xs text-red-500">{errors.description.message}</span>}
-            <span className="text-xs text-slate-400 ml-auto">{description.length}/160</span>
-          </div>
+          {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <Label htmlFor="emailPublic">E-mail Público <span className="text-red-500">*</span></Label>
-            <Input
-              id="emailPublic"
-              type="email"
-              placeholder="contato@empresa.com"
-              className={`border-slate-200 focus:ring-emerald-500/20 ${errors.emailPublic ? 'border-red-500' : ''}`}
-              {...register('emailPublic', { 
-                required: 'E-mail é obrigatório',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'E-mail inválido'
-                }
-              })}
-            />
-            {errors.emailPublic && <span className="text-xs text-red-500">{errors.emailPublic.message}</span>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone <span className="text-red-500">*</span></Label>
-            <Input
-              id="phone"
-              placeholder="(00) 00000-0000"
-              className={`border-slate-200 focus:ring-emerald-500/20 ${errors.phone ? 'border-red-500' : ''}`}
-              {...register('phone', { 
-                required: 'Telefone é obrigatório',
-                validate: (value) => isValidPhone(value) || 'Telefone inválido'
-              })}
-              onChange={handlePhoneChange}
-            />
-            {errors.phone && <span className="text-xs text-red-500">{errors.phone.message}</span>}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefone / WhatsApp <span className="text-red-500">*</span></Label>
+          <Input
+            id="phone"
+            placeholder="(00) 00000-0000"
+            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.phone ? 'border-red-500' : ''}`}
+            {...register('phone', { 
+              required: 'Telefone é obrigatório',
+            })}
+            onChange={handlePhoneChange}
+          />
+          {errors.phone && <span className="text-xs text-red-500">{errors.phone.message}</span>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-                <Label htmlFor="cnpj">CNPJ <span className="text-red-500">*</span></Label>
-                <Input
-                id="cnpj"
-                placeholder="00.000.000/0000-00"
-                className={`border-slate-200 focus:ring-emerald-500/20 ${errors.cnpj ? 'border-red-500' : ''}`}
-                {...register('cnpj', { 
-                    required: 'CNPJ é obrigatório',
-                    validate: (value) => isValidCNPJ(value) || 'CNPJ inválido'
-                })}
-                onChange={handleCnpjChange}
-                />
-                {errors.cnpj && <span className="text-xs text-red-500">{errors.cnpj.message}</span>}
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                    id="address"
-                    placeholder="Rua, Número, Bairro"
-                    className="border-slate-200 focus:ring-emerald-500/20"
-                    {...register('address')}
-                />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Senha <span className="text-red-500">*</span></Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="********"
+            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.password ? 'border-red-500' : ''}`}
+            {...register('password', {
+              required: 'Senha é obrigatória',
+              minLength: { value: 8, message: 'Mínimo 8 caracteres' }
+            })}
+          />
+          {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="space-y-2">
-            <Label htmlFor="state">Estado</Label>
-            <Select onValueChange={(value) => setValue('state', value)}>
-              <SelectTrigger className="border-slate-200 focus:ring-emerald-500/20">
-                <SelectValue placeholder="UF" />
-              </SelectTrigger>
-              <SelectContent>
-                {UFS.map((uf) => (
-                  <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="city">Cidade</Label>
-            <Input
-              id="city"
-              placeholder="Nome da cidade"
-              className="border-slate-200 focus:ring-emerald-500/20"
-              {...register('city')}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="passwordConfirmation">Confirmar Senha <span className="text-red-500">*</span></Label>
+          <Input
+            id="passwordConfirmation"
+            type="password"
+            placeholder="********"
+            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
+            {...register('passwordConfirmation', {
+              required: 'Confirmação de senha é obrigatória',
+              validate: (val) => val === password || 'As senhas não conferem'
+            })}
+          />
+          {errors.passwordConfirmation && <span className="text-xs text-red-500">{errors.passwordConfirmation.message}</span>}
         </div>
 
         <div className="space-y-4 pt-2">
@@ -403,23 +309,6 @@ export default function RegisterCompanyTab() {
               {errors.termsAccepted && <span className="text-xs text-red-500">{errors.termsAccepted.message}</span>}
             </div>
           </div>
-          
-          <div className="flex items-start space-x-2">
-             <Checkbox 
-                id="newsletter" 
-                className="mt-1"
-                onCheckedChange={(checked) => setValue('newsletter', checked === true)}
-                {...register('newsletter')}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label
-                htmlFor="newsletter"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Desejo receber novidades e dicas sobre o setor solar
-              </Label>
-            </div>
-          </div>
         </div>
 
         <Button
@@ -430,10 +319,10 @@ export default function RegisterCompanyTab() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Enviando cadastro...
+              Cadastrando...
             </>
           ) : (
-            'Cadastrar Empresa'
+            'Criar Conta de Empresa'
           )}
         </Button>
       </form>
