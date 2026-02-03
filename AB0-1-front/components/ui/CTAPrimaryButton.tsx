@@ -6,11 +6,14 @@ import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
+import Link from 'next/link';
+
 interface CTAPrimaryButtonProps extends ButtonProps {
   label?: string;
+  href?: string;
   companyId?: string;
   companySlug?: string;
-  ctaType?: 'budget' | 'lead' | 'contact' | 'external' | 'quote_request';
+  ctaType?: 'budget' | 'lead' | 'contact' | 'external' | 'quote_request' | 'search_submitted' | 'blog_view';
   ctaDestination?: string;
   loading?: boolean;
   trackProps?: Record<string, any>;
@@ -24,6 +27,7 @@ export const CTAPrimaryButton = React.forwardRef<HTMLButtonElement, CTAPrimaryBu
   ({ 
     children, 
     label = 'Solicitar Orçamento', 
+    href,
     companyId, 
     companySlug, 
     ctaType = 'budget',
@@ -51,7 +55,7 @@ export const CTAPrimaryButton = React.forwardRef<HTMLButtonElement, CTAPrimaryBu
       }
     };
 
-    return (
+    const button = (
       <Button
         ref={ref}
         className={cn(
@@ -72,6 +76,16 @@ export const CTAPrimaryButton = React.forwardRef<HTMLButtonElement, CTAPrimaryBu
         )}
       </Button>
     );
+
+    if (href) {
+      return (
+        <Link href={href} className="contents">
+          {button}
+        </Link>
+      );
+    }
+
+    return button;
   }
 );
 

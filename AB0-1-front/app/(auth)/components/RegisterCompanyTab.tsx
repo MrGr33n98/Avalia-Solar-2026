@@ -31,7 +31,7 @@ const UFS = [
   'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-interface FormData {
+interface RegisterCompanyFormData {
   name: string;
   email: string;
   password: string;
@@ -40,35 +40,20 @@ interface FormData {
   termsAccepted: boolean;
 }
 
-const PUBLIC_EMAIL_DOMAINS = [
-  'gmail.com',
-  'outlook.com',
-  'hotmail.com',
-  'yahoo.com',
-  'icloud.com',
-  'uol.com.br',
-  'terra.com.br',
-  'bol.com.br',
-  'ig.com.br',
-  'globomail.com'
-];
-
-const isCorporateEmail = (email: string) => {
-  if (!email) return false;
-  const domain = email.split('@')[1]?.toLowerCase();
-  return domain && !PUBLIC_EMAIL_DOMAINS.includes(domain);
-};
-
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
   email: z.string().email('E-mail inválido').refine(isCorporateEmail, {
     message: 'Por favor, use um e-mail corporativo (não @gmail, @hotmail, etc.)'
   }),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  password_confirmation: z.string()
-}).refine((data) => data.password === data.password_confirmation, {
+  passwordConfirmation: z.string(),
+  phone: z.string().min(10, 'Telefone inválido'),
+  termsAccepted: z.boolean().refine(v => v === true, {
+    message: 'Você deve aceitar os termos'
+  })
+}).refine((data) => data.password === data.passwordConfirmation, {
   message: "Senhas não conferem",
-  path: ["password_confirmation"],
+  path: ["passwordConfirmation"],
 });
 
 export default function RegisterCompanyTab() {
@@ -84,7 +69,7 @@ export default function RegisterCompanyTab() {
     watch,
     reset,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<RegisterCompanyFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       termsAccepted: false,
@@ -93,9 +78,7 @@ export default function RegisterCompanyTab() {
 
   const password = watch('password');
 
-
-
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: RegisterCompanyFormData) => {
     setIsLoading(true);
     setSubmitError(null);
 

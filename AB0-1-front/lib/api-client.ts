@@ -161,7 +161,14 @@ export async function fetchApiSafe<T>(
 // Empresas
 export const companiesApiSafe = {
   getAll: async (
-    params?: { status?: string; featured?: boolean; category_id?: number; limit?: number; include?: string }
+    params?: { 
+      status?: string; 
+      featured?: boolean; 
+      category_id?: number; 
+      limit?: number; 
+      include?: string;
+      sort?: string;
+    }
   ): Promise<Company[]> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;

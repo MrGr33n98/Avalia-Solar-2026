@@ -65,7 +65,7 @@ function ConfirmEmailContent() {
 
         // Capturar resposta bruta para debug se não for OK ou se não for JSON
         const contentType = response.headers.get('content-type');
-        let data;
+        let data: any;
         
         if (contentType && contentType.includes('application/json')) {
           data = await response.json();

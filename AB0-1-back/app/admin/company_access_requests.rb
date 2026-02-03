@@ -1,4 +1,12 @@
-﻿ActiveAdmin.register CompanyAccessRequest do
+ActiveAdmin.register CompanyAccessRequest do
+  menu priority: 11, label: proc {
+    pending_count = CompanyAccessRequest.pending.count
+    if pending_count > 0
+      "Solicitações de Acesso <span class='count'>#{pending_count}</span>".html_safe
+    else
+      "Solicitações de Acesso"
+    end
+  }
   actions :index, :show
 
   scope :all, default: true
@@ -28,6 +36,7 @@
       )
 
       member = CompanyMember.find_or_initialize_by(user: resource.user, company: resource.company)
+      member.role = 'manager' if member.respond_to?(:role)
       member.status = 'active' if member.respond_to?(:status)
       member.save!
     end

@@ -26,7 +26,7 @@ export const buildCompanyPath = (
 };
 
 export const buildCompanySubPath = (
-  slug?: string | null,
+  slug: string | null | undefined,
   name: string | null | undefined,
   suffix: string,
   fallbackId?: number | string

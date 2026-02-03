@@ -116,11 +116,14 @@ module Api
           )
         end
 
+        requested_role = params[:role] || (params[:user] && params[:user][:role]) || 'review'
+        requested_role = 'review' unless User::ROLES.include?(requested_role)
+
         user = User.new(attrs.merge(
           terms_accepted: true,
           terms_accepted_at: Time.current,
-          role: 'review', # Força role 'review' no cadastro inicial
-          status: :active # Usuários comuns começam ativos após confirmação de email
+          role: requested_role,
+          status: requested_role == 'company' ? :pending : :active
         ))
 
         if params[:user] && params[:user][:avatar].present?
@@ -486,7 +489,8 @@ module Api
           :phone,
           :avatar,
           :terms_accepted,
-          :company_id
+          :company_id,
+          :role
         )
       end
 

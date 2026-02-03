@@ -63,11 +63,11 @@ function markTrackedInMemory(key: string): void {
   // Cleanup old entries periodically
   if (eventCache.size > 100) {
     const now = Date.now();
-    for (const [k, timestamp] of eventCache.entries()) {
+    eventCache.forEach((timestamp, k) => {
       if (now - timestamp > DEDUPE_TTL * 2) {
         eventCache.delete(k);
       }
-    }
+    });
   }
 }
 

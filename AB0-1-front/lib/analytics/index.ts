@@ -25,6 +25,8 @@ import {
   mapToGA4Event 
 } from './gtag';
 
+export { DashboardEvents } from './ga4';
+
 // Initialization state
 let initialized = false;
 let currentUserId: string | null = null;
@@ -158,7 +160,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     user_id: currentUserId || undefined,
     source,
     landing_path: attribution?.last_touch?.landing_path || attribution?.first_touch?.landing_path,
-    attribution,
+    attribution: attribution || undefined,
     ...utms,
     ...currentContext
   };

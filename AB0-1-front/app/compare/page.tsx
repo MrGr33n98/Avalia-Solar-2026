@@ -3,7 +3,7 @@
 import { useComparison } from '@/hooks/useComparison';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Star, MapPin, Check, X, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Star, MapPin, Check, X, ArrowLeft, MessageCircle, Scale } from 'lucide-react';
 import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';

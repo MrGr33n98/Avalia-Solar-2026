@@ -219,6 +219,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   image_url?: string;
+  sku?: string;
   company?: any;  // Associated company data
   category?: any; // Associated category data
   specs?: Array<{

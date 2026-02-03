@@ -24,6 +24,14 @@ ActiveAdmin.register_page 'Dashboard' do
         end
       end
       column do
+        panel 'Solicitações de Acesso' do
+          div class: 'dashboard-metric', style: 'text-align: center; padding: 20px;' do
+            h1 CompanyAccessRequest.pending.count, style: 'font-size: 3em; margin-bottom: 10px; color: #2196F3;'
+            span 'Acessos pendentes', class: 'status_tag pending'
+          end
+        end
+      end
+      column do
         panel 'Total de Usuários' do
           div class: 'dashboard-metric', style: 'text-align: center; padding: 20px;' do
             h1 User.count, style: 'font-size: 3em; margin-bottom: 10px;'
@@ -42,6 +50,21 @@ ActiveAdmin.register_page 'Dashboard' do
     end
 
     # Charts & Lists
+    columns do
+      column do
+        panel 'Solicitações de Acesso Pendentes' do
+          table_for CompanyAccessRequest.pending.order(created_at: :desc).limit(10) do
+            column :user
+            column :company
+            column :requested_at
+            column '' do |request|
+              link_to 'Ver Solicitação', admin_company_access_request_path(request), class: 'button'
+            end
+          end
+        end
+      end
+    end
+
     columns do
       column do
         panel 'Empresas Recentes' do
@@ -64,6 +87,7 @@ ActiveAdmin.register_page 'Dashboard' do
         panel 'Ações Rápidas' do
           div class: 'quick-actions', style: 'display: flex; flex-direction: column; gap: 10px; padding: 20px;' do
             div link_to 'Moderar Empresas', admin_companies_path(scope: 'pending_review'), class: 'button', style: 'width: 100%; text-align: center;'
+            div link_to 'Solicitações de Acesso', admin_company_access_requests_path(scope: 'pending'), class: 'button', style: 'width: 100%; text-align: center;'
             div link_to 'Nova Categoria', new_admin_category_path, class: 'button', style: 'width: 100%; text-align: center;'
             div link_to 'Gerenciar Usuários', admin_users_path, class: 'button', style: 'width: 100%; text-align: center;'
           end

@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: user.email,
         name: user.name,
         role: user.role,
-        company_id: user.company_id
+        company_id: user.company_id ? String(user.company_id) : undefined
       });
     }
   }, [user]);

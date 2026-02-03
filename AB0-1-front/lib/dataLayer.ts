@@ -171,6 +171,25 @@ export function trackFormSubmit(
 }
 
 /**
+ * Track Form Error
+ */
+export function trackFormError(
+  formName: string,
+  errorType: string,
+  errorMessage?: string
+): void {
+  pushToDataLayer({
+    event: 'form_error',
+    formName,
+    errorType,
+    errorMessage,
+    timestamp: Date.now(),
+  });
+}
+
+// === Lead Events ===
+
+/**
  * Track Lead Generated
  */
 export function trackLeadGenerated(
@@ -188,12 +207,49 @@ export function trackLeadGenerated(
 }
 
 /**
+ * Track Category Click
+ */
+export function trackCategoryClick(
+  categoryId: string | number,
+  categoryName: string,
+  listingPosition?: number
+): void {
+  pushToDataLayer({
+    event: 'category_click',
+    categoryId,
+    categoryName,
+    listingPosition,
+    timestamp: Date.now(),
+  });
+}
+
+/**
+ * Track CTA Click
+ */
+export function trackCTAClick(
+  label: string,
+  type: string,
+  destination?: string,
+  additionalData?: Record<string, any>
+): void {
+  pushToDataLayer({
+    event: 'cta_click',
+    ctaLabel: label,
+    ctaType: type,
+    ctaDestination: destination,
+    timestamp: Date.now(),
+    ...additionalData,
+  });
+}
+
+/**
  * Track Company Click
  */
 export function trackCompanyClick(
   companyId: string | number,
   companyName: string,
-  listingPosition: number
+  listingPosition: number,
+  additionalData?: Record<string, any>
 ): void {
   pushToDataLayer({
     event: 'company_click',
@@ -201,6 +257,7 @@ export function trackCompanyClick(
     companyName,
     listingPosition,
     timestamp: Date.now(),
+    ...additionalData,
   });
 }
 

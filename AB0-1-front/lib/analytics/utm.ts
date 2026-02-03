@@ -124,7 +124,7 @@ function clearStorages(): void {
 
 function isExpired(payload?: StoredPayload | null): boolean {
   if (!payload) return true;
-  return payload.expires_at && Date.now() > payload.expires_at;
+  return !!(payload.expires_at && Date.now() > payload.expires_at);
 }
 
 function buildTouch(values: UTMParameters, pathname?: string, referrer?: string): AttributionTouch {

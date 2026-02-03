@@ -107,7 +107,7 @@ export default async function CompanyDetailPage({ params }: Props) {
       latitude: company.latitude,
       longitude: company.longitude
     } : undefined,
-    aggregateRating: company.rating_count > 0 ? {
+    aggregateRating: (company.rating_count && company.rating_count > 0) ? {
       '@type': 'AggregateRating',
       ratingValue: company.rating_avg,
       reviewCount: company.rating_count,
@@ -123,9 +123,9 @@ export default async function CompanyDetailPage({ params }: Props) {
       closes: '18:00'
     } : undefined,
     sameAs: [
-      company.instagram,
-      company.facebook,
-      company.linkedin
+      company.instagram_url,
+      company.facebook_url,
+      company.linkedin_url
     ].filter(Boolean)
   };
 

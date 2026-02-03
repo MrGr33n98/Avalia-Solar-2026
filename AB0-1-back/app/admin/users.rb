@@ -1,4 +1,12 @@
 ActiveAdmin.register User do
+  menu priority: 2, label: proc {
+    pending_count = User.where(status: :pending).count
+    if pending_count > 0
+      "Usuários <span class='count'>#{pending_count}</span>".html_safe
+    else
+      "Usuários"
+    end
+  }
   permit_params do
     permitted = [:email, :password, :password_confirmation, :name, :role, :company_id, :status, :rejection_reason, :terms_accepted,
                 company_members_attributes: [:id, :company_id, :role, :_destroy]]

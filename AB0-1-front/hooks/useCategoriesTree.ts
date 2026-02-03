@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApiSafe } from '@/lib/api-client';
 import { CategoryTreeNode } from '@/types';
+export type { CategoryTreeNode };
 
 export function useCategoriesTree() {
   const [categories, setCategories] = useState<CategoryTreeNode[]>([]);
