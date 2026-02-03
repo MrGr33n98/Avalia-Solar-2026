@@ -131,7 +131,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 15m
-          script_stop: true
+          script_stop: false
           envs: DOCKER_USER,DOCKER_TOKEN
           script: |
             set -ex
@@ -163,17 +163,12 @@ jobs:
 
             echo "?? Aguardando backend ficar healthy..."
             for i in $(seq 1 30); do
-              HEALTH=$(docker compose ps backend --format json | grep -o '"Health":"healthy"' || echo "")
-              case "$HEALTH" in
-                *healthy*)
-                  echo "?? backend healthy"
-                  break
-                  ;;
-                *)
-                  echo "Aguardando backend... ($i/30)"
-                  sleep 2
-                  ;;
-              esac
+              if docker compose ps backend --format json | grep -q '"Health":"healthy"'; then
+                echo "?? backend healthy"
+                break
+              fi
+              echo "Aguardando backend... ($i/30)"
+              sleep 2
             done
 
             echo "?? Migracoes de banco..."
@@ -186,18 +181,14 @@ jobs:
             
             echo "?? Empresas encontradas: $HAS_DATA"
 
-            # Usamos 'case' em vez de 'if [' pois o drone-ssh e extremamente agressivo
-            # e interrompe o script se '[' retornar 1 (quando a condicao e falsa).
-            case "$HAS_DATA" in
-              0)
-                echo "?? Banco vazio, executando seeds e restauracao..."
-                docker compose exec -T backend bundle exec rails runner "require 'json'; f = Rails.root.join('companies.json'); if File.exist?(f); data = JSON.parse(File.read(f)); data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }; puts 'Restaurado'; end" || echo "?? Falha na restauracao"
-                docker compose exec -T backend bundle exec rails db:seed || echo "?? Falha no seed"
-                ;;
-              *)
-                echo "?? Banco ja possui dados. Ignorando seeds/restauracao."
-                ;;
-            esac
+            # Voltamos para 'if' mas garantindo que o comando falso nao mate o script
+            if [ "$HAS_DATA" = "0" ]; then
+              echo "?? Banco vazio, executando seeds e restauracao..."
+              docker compose exec -T backend bundle exec rails runner "require 'json'; f = Rails.root.join('companies.json'); if File.exist?(f); data = JSON.parse(File.read(f)); data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }; puts 'Restaurado'; end" || echo "?? Falha na restauracao"
+              docker compose exec -T backend bundle exec rails db:seed || echo "?? Falha no seed"
+            else
+              echo "?? Banco ja possui dados. Ignorando seeds/restauracao."
+            fi
 
             echo "?? Verificacao final de tabelas..."
             docker compose exec -T backend bundle exec rails runner "essential = %w[companies users]; missing = essential.reject { |t| ActiveRecord::Base.connection.table_exists?(t) }; if missing.any?; puts \"ERRO: Tabelas faltando: #{missing.join(', ')}\"; exit 1; end; puts 'Tabelas OK'"
