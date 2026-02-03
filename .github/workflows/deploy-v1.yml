@@ -163,7 +163,7 @@ jobs:
 
             echo "?? Aguardando backend ficar healthy..."
             for i in $(seq 1 30); do
-              if docker compose ps backend --format json | grep -q '"Health":"healthy"'; then
+              if docker compose ps backend | grep -q "healthy"; then
                 echo "?? backend healthy"
                 break
               fi
