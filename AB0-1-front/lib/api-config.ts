@@ -48,7 +48,8 @@ export const getApiOrigin = () => getApiRuntimeConfig().origin;
 
 export const buildApiUrl = (endpoint: string) => {
   const baseUrl = stripTrailingSlash(getApiBaseUrl());
-  let cleanEndpoint = endpoint.replace(/^\/+/, '');
+  // Remove leading slashes and trailing punctuation (colons, dots, commas) that might cause 404
+  let cleanEndpoint = endpoint.replace(/^\/+/, '').replace(/[:.,]+$/, '');
   
   // Se o endpoint já começar com api/v1, removemos para evitar duplicação
   if (cleanEndpoint.toLowerCase().startsWith('api/v1/')) {

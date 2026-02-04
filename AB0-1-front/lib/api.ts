@@ -666,7 +666,7 @@ export async function fetchApi<T = any>(
 
     // Specific handling for 404 Not Found
     if (error.message?.includes('[404]') || error.context?.status === 404) {
-      const customMessage = `[404] O recurso solicitado não foi encontrado (${url}). Por favor, verifique se o endereço está correto ou se o serviço está temporariamente indisponível.`;
+      const customMessage = `[404] O recurso solicitado não foi encontrado (${url}). Por favor, verifique se o endereço está correto. Se o problema persistir, entre em contato com o suporte do Avalia Solar.`;
       console.warn(`[API] 404 Error: ${customMessage}`);
       
       const enhancedError = new Error(customMessage);

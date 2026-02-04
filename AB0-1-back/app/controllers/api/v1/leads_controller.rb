@@ -55,7 +55,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
     # For review users, list leads matching their email
     @leads = ::Lead.where(email: current_user.email).order(created_at: :desc)
-    render json: @leads
+    
+    render json: {
+      data: @leads.map { |l| serialize_lead(l) },
+      meta: { page: 1, total_pages: 1, total_count: @leads.count }
+    }
   rescue StandardError => e
     Rails.logger.error("Leads mine error: #{e.message}")
     render_error_response(
@@ -64,6 +68,22 @@ class Api::V1::LeadsController < Api::V1::BaseController
       status: :internal_server_error,
       code: 'INTERNAL_ERROR'
     )
+  end
+
+  private
+
+  def serialize_lead(lead)
+    {
+      id: lead.id,
+      company: {
+        id: lead.company_id,
+        name: lead.company || 'Empresa não identificada',
+        logo_url: lead.company_id ? lead.company&.logo_url : nil
+      },
+      category: lead.product_vertical,
+      status: lead.wizard_status,
+      created_at: lead.created_at
+    }
   end
 
   def show

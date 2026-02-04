@@ -92,7 +92,15 @@ export default function ReviewDashboardPage() {
         router.push(`/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`);
         return;
       }
-      setError('Não foi possível carregar os dados do painel. Tente novamente mais tarde.');
+      
+      const errorMessage = err.message || 'Não foi possível carregar os dados do painel. Tente novamente mais tarde.';
+      setError(errorMessage);
+      
+      if (err?.status === 404) {
+        toast.error(errorMessage, {
+          duration: 10000, // Show longer for 404s to allow reading the instructions
+        });
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

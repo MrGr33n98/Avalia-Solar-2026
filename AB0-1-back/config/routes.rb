@@ -130,6 +130,9 @@ Rails.application.routes.draw do
         end
       end
 
+      # Review Dashboard routes
+      get 'review_dashboard/summary', to: 'review_dashboard#summary'
+
       # Categories routes
       # Refatorado: sem 'only' para permitir create/update/destroy
       resources :categories do

@@ -135,6 +135,21 @@ const nextConfig = {
   },
 
   trailingSlash: false,
+  
+  async redirects() {
+    return [
+      {
+        source: '/produtos',
+        destination: '/products',
+        permanent: true,
+      },
+      {
+        source: '/empresas',
+        destination: '/companies',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 // TASK-006: Sentry configuration for Next.js

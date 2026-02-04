@@ -50,8 +50,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def mine
     @reviews = current_user.reviews.includes(:company).order(created_at: :desc)
-    render json: @reviews, include: {
-      company: { only: %i[id name logo_url slug] }
+    render json: {
+      data: @reviews.map { |r| serialize_review(r) }
     }
   end
 
@@ -109,6 +109,21 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   private
+
+  def serialize_review(review)
+    {
+      id: review.id,
+      company: {
+        id: review.company.id,
+        name: review.company.name,
+        logo_url: review.company.logo_url
+      },
+      rating: review.rating,
+      body: review.comment,
+      status: review.status,
+      created_at: review.created_at
+    }
+  end
 
   def set_review
     @review = Review.find(params[:id])
