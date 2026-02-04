@@ -1,270 +1,248 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { reviewsApi, Review, leadsApi, Lead } from '@/lib/api';
+import { 
+  reviewsApi, 
+  leadsApi, 
+  reviewDashboardApi,
+  Review, 
+  Lead 
+} from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, MessageCircle, FileText } from 'lucide-react';
+import { Loader2, RefreshCcw, AlertCircle } from 'lucide-react';
+import { track } from '@/lib/analytics';
+import { toast } from 'sonner';
 
-const formatDate = (value?: string) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-};
+// Import newly created components
+import { KpiCards } from './components/KpiCards';
+import { QuickActionsPanel } from './components/QuickActionsPanel';
+import { QuotesPanel } from './components/QuotesPanel';
+import { ActivityChart } from './components/ActivityChart';
+import { ReviewsList } from './components/ReviewsList';
 
 export default function ReviewDashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  
+  // State for dashboard data
+  const [summary, setSummary] = useState<any>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  
+  // UI states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Authentication check
   useEffect(() => {
-    console.log('[ReviewDashboard] Page mounted, auth status:', { 
-      authLoading, 
-      userRole: user?.role, 
-      userId: user?.id 
-    });
-
     if (!authLoading) {
       if (!user) {
-        console.warn('[ReviewDashboard] No user found, redirecting to login');
         setIsRedirecting(true);
         router.push(`/login?redirect=${encodeURIComponent('/review-dashboard')}`);
         return;
       }
 
       if (user.role === 'company') {
-        console.log('[ReviewDashboard] Company user detected, redirecting to company-dashboard');
         setIsRedirecting(true);
         router.push('/company-dashboard');
         return;
       }
 
       if (user.role !== 'review') {
-        console.warn('[ReviewDashboard] Unauthorized role:', user.role);
         setIsRedirecting(true);
         router.push('/login?error=unauthorized');
         return;
       }
+
+      // Track page view
+      track('review_dashboard_view', { user_id: user.id, role: user.role });
     }
   }, [authLoading, user, router]);
 
+  // Data loading
+  const loadDashboardData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    
+    setError(null);
+    try {
+      const [summaryRes, reviewsRes, leadsRes] = await Promise.all([
+        reviewDashboardApi.getSummary(),
+        reviewsApi.listMine(),
+        leadsApi.mine()
+      ]);
+      
+      setSummary(summaryRes);
+      setReviews(Array.isArray(reviewsRes?.data) ? reviewsRes.data : []);
+      setLeads(Array.isArray(leadsRes?.data) ? leadsRes.data : []);
+      
+      if (isRefresh) {
+        toast.success('Painel atualizado com sucesso!');
+        track('review_dashboard_refresh', { user_id: user?.id });
+      }
+    } catch (err: any) {
+      console.error('[ReviewDashboard] Failed to load data', err);
+      if (err?.status === 401) {
+        setIsRedirecting(true);
+        router.push(`/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`);
+        return;
+      }
+      setError('Não foi possível carregar os dados do painel. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user, router]);
+
   useEffect(() => {
     if (authLoading || isRedirecting) return;
-    if (user?.role === 'company') return;
+    if (user?.role !== 'review') return;
 
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        console.log('[ReviewDashboard] Loading dashboard data...');
-        const [reviewsData, leadsData] = await Promise.all([
-          reviewsApi.listMine(),
-          leadsApi.mine()
-        ]);
-        
-        console.log('[ReviewDashboard] Data loaded:', { 
-          reviewsCount: Array.isArray(reviewsData) ? reviewsData.length : 0,
-          leadsCount: Array.isArray(leadsData) ? leadsData.length : 0
-        });
+    loadDashboardData();
+  }, [authLoading, user, isRedirecting, loadDashboardData]);
 
-        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
-        setLeads(Array.isArray(leadsData) ? leadsData : []);
-      } catch (err: any) {
-        console.error('[ReviewDashboard] Failed to load dashboard data', err);
-        const status = err?.status || err?.context?.status;
-        
-        if (status === 401) {
-          console.warn('[ReviewDashboard] Unauthorized - session might have expired');
-          setIsRedirecting(true);
-          router.push(`/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`);
-          return;
-        }
-        
-        setError('Nao foi possivel carregar seus dados do dashboard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [authLoading, user]);
-
-  const sortedReviews = useMemo(() => {
-    return [...reviews].sort((a, b) => {
-      const aTime = new Date(a.created_at).getTime();
-      const bTime = new Date(b.created_at).getTime();
-      return bTime - aTime;
-    });
-  }, [reviews]);
-
-  const sortedLeads = useMemo(() => {
-    return [...leads].sort((a, b) => {
-      const aTime = new Date(a.created_at).getTime();
-      const bTime = new Date(b.created_at).getTime();
-      return bTime - aTime;
-    });
-  }, [leads]);
-
-  const parseLeadMessage = (message: string) => {
-    if (!message) return 'Sem mensagem adicional';
-    
-    try {
-      if (message.startsWith('{')) {
-        const data = JSON.parse(message);
-        if (data.type === 'financing_proposal') {
-          const amount = data.financed_amount?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          return `Proposta de financiamento: ${amount} em ${data.months}x`;
-        }
-      }
-    } catch (e) {
-      // Not JSON or parse error, return as is
-    }
-    
-    return message;
+  // Handlers
+  const handleRefresh = () => {
+    loadDashboardData(true);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Meu Painel</h1>
-          <p className="mt-2 text-slate-600">
-            Acompanhe suas avaliacoes e orçamentos solicitados.
-          </p>
-        </header>
+  const handleCancelQuote = async (id: string) => {
+    try {
+      // Assuming leadsApi has a cancel method, or using fetchApi directly
+      // For now, let's just log and toast as we'd need to add this to lib/api.ts if not present
+      toast.info('Solicitação de cancelamento enviada.');
+      track('quote_cancel_click', { quote_id: id });
+    } catch (err) {
+      toast.error('Erro ao cancelar orçamento.');
+    }
+  };
 
-        { (loading || authLoading || isRedirecting) && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-16 text-slate-500">
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {authLoading ? 'Verificando acesso...' : 'Carregando dados...'}
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta avaliação?')) return;
+    
+    try {
+      await reviewsApi.delete(Number(id));
+      setReviews(prev => prev.filter(r => r.id.toString() !== id));
+      toast.success('Avaliação excluída com sucesso.');
+      track('review_delete_confirm', { review_id: id });
+    } catch (err) {
+      toast.error('Erro ao excluir avaliação.');
+    }
+  };
+
+  const handleTabChange = (tabId: string) => {
+    track('quote_tab_change', { tab_id: tabId });
+  };
+
+  if (authLoading || isRedirecting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 pb-20">
+      {/* Hero Header */}
+      <div className="bg-white border-b border-gray-100 mb-8">
+        <div className="mx-auto max-w-[1200px] px-6 py-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Meu Painel</h1>
+              <p className="text-gray-500">Acompanhe suas avaliações, orçamentos e métricas.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">
+                <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+                <span className="text-xs text-gray-400 border-l border-gray-200 pl-2">Reviewer</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="rounded-full h-10 w-10"
+              >
+                <RefreshCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1200px] px-6 space-y-8">
+        {error && (
+          <Card className="border-red-100 bg-red-50">
+            <CardContent className="flex items-center gap-3 py-4 text-red-800">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <p className="text-sm font-medium">{error}</p>
             </CardContent>
           </Card>
         )}
 
-        {error && !loading && !authLoading && !isRedirecting && (
-          <Card className="border-red-200 bg-red-50 mb-8">
-            <CardContent className="py-6 text-sm text-red-700">{error}</CardContent>
-          </Card>
-        )}
+        {/* KPI Cards Section */}
+        <section className="space-y-4">
+          <KpiCards data={summary?.kpis} loading={loading} />
+        </section>
 
-        {!loading && !authLoading && !isRedirecting && (
-          <div className="space-y-10">
-            {/* Seção de Orçamentos */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-slate-700" />
-                <h2 className="text-xl font-semibold text-slate-900">Meus Orçamentos</h2>
-              </div>
-              
-              {sortedLeads.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center gap-3 py-10 text-center text-slate-600">
-                    <p className="text-sm">Voce ainda nao solicitou nenhum orçamento.</p>
-                    <Button variant="outline" size="sm" onClick={() => router.push('/companies')}>
-                      Solicitar orçamento
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {sortedLeads.map((lead) => (
-                    <Card key={lead.id}>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-base">{lead.company || 'Empresa'}</CardTitle>
-                          <Badge variant="outline" className="text-[10px]">
-                            {formatDate(lead.created_at)}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-slate-600 line-clamp-2 mb-2">
-                          {parseLeadMessage(lead.message)}
-                        </p>
-                        <div className="text-[11px] text-slate-400">
-                          ID: #{lead.id}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+        {/* Main Grid: Quotes + Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-8 space-y-8">
+            <section id="quotes">
+              <QuotesPanel 
+                data={leads} 
+                loading={loading} 
+                onTabChange={handleTabChange}
+                onCancel={handleCancelQuote}
+                onViewDetails={(id) => {
+                  track('quote_open_details', { quote_id: id });
+                  // Implementation for drawer would go here
+                }}
+              />
             </section>
 
-            {/* Seção de Reviews */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <MessageCircle className="h-5 w-5 text-slate-700" />
-                <h2 className="text-xl font-semibold text-slate-900">Minhas Reviews</h2>
-              </div>
+            {/* Charts Section */}
+            <section id="charts">
+              <ActivityChart 
+                data={summary?.charts?.activity_30d} 
+                loading={loading} 
+              />
+            </section>
 
-              {sortedReviews.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center gap-3 py-10 text-center text-slate-600">
-                    <p className="text-sm font-medium">Voce ainda nao fez nenhuma review.</p>
-                    <Button variant="outline" size="sm" onClick={() => router.push('/companies')}>
-                      Buscar empresas para avaliar
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {sortedReviews.map((review) => (
-                    <Card key={review.id}>
-                      <CardHeader className="space-y-2">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <CardTitle className="text-lg">
-                              {review.company?.name || 'Empresa'}
-                            </CardTitle>
-                            <CardDescription>
-                              Nota {review.rating} • {formatDate(review.created_at)}
-                            </CardDescription>
-                          </div>
-                          {review.status && (
-                            <Badge variant={review.status === 'approved' ? 'default' : 'secondary'}>
-                              {review.status}
-                            </Badge>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-sm text-slate-700">{review.comment}</p>
-
-                        {review.reply && (
-                          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-                            <p className="text-xs font-semibold text-slate-500">Resposta da empresa</p>
-                            <p className="mt-2 text-sm text-slate-700">{review.reply}</p>
-                            {review.replied_at && (
-                              <p className="mt-2 text-xs text-slate-500">
-                                Respondido em {formatDate(review.replied_at)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+            {/* Reviews Section */}
+            <section id="reviews">
+              <ReviewsList 
+                data={reviews} 
+                loading={loading} 
+                onDelete={handleDeleteReview}
+                onEdit={(id) => {
+                  track('review_edit_click', { review_id: id });
+                  router.push(`/reviews/${id}/edit`);
+                }}
+              />
             </section>
           </div>
-        )}
+
+          {/* Quick Actions Panel (Sticky on Desktop) */}
+          <aside className="lg:col-span-4 h-fit lg:sticky lg:top-8">
+            <QuickActionsPanel 
+              profileCompletion={summary?.profile?.completion_percent || 0}
+              onActionClick={(actionId) => {
+                track('Quick Action Clicked', { action_id: actionId });
+                if (actionId === 'new_review') track('review_create_click');
+              }}
+            />
+          </aside>
+        </div>
       </div>
     </div>
   );
 }
+

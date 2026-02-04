@@ -237,30 +237,40 @@ export interface Product {
 
 export interface Lead {
   id: number;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  message: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  company_obj?: {
+    id: number | string;
+    name: string;
+    logo_url: string | null;
+  };
+  message?: string;
+  status?: string;
+  category?: string;
+  product_vertical?: string;
+  company_logo_url?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Review {
   id: number;
   rating: number;
-  comment: string;
-  user_id: number;
-  product_id: number;
+  comment?: string;
+  body?: string; // for compatibility
+  user_id?: number;
+  product_id?: number;
   company_id?: number;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   user?: { id: number; name: string; avatar_url?: string | null };
   product?: { id: number; name: string };
   company?: { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
   replied_at?: string;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected' | 'draft';
   verified?: boolean;
   featured?: boolean;
   helpful_count?: number;
@@ -695,6 +705,10 @@ export const dashboardApi = {
       return await fetchApi('/company_dashboard/stats');
     }
   },
+};
+
+export const reviewDashboardApi = {
+  getSummary: () => fetchApi('/review_dashboard/summary'),
 };
 
 export const companiesApi = {
