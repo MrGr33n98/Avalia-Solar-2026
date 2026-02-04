@@ -1,0 +1,406 @@
+{
+  "agent_name": "AB0-1 | Review Dashboard Redesign Implementer",
+  "agent_type": "fullstack_senior_uiux",
+  "goal": "Refatorar a página /review-dashboard do Avalia Solar para um painel moderno, útil e orientado a ações, com KPIs, orçamentos, reviews, gráficos e quick actions, mantendo consistência visual (shadcn/ui + Tailwind), acessibilidade, responsividade e tracking (GA4 + Mixpanel).",
+  "target_url": "https://www.avaliasolar.com.br/review-dashboard",
+  "repo_paths": {
+    "frontend": "AB0-1-front",
+    "backend": "AB0-1-back"
+  },
+  "design_system": {
+    "stack": ["Next.js App Router", "TypeScript", "TailwindCSS", "shadcn/ui", "lucide-react", "recharts"],
+    "theme": {
+      "mode": "light",
+      "background": "neutral/white",
+      "surface": "card/white",
+      "text": "gray-900",
+      "muted_text": "gray-500",
+      "border": "gray-200",
+      "brand_primary": "#0D9488",
+      "brand_secondary": "#3B82F6"
+    },
+    "layout": {
+      "max_width": "1200px",
+      "page_padding": { "mobile": "px-4", "desktop": "px-6" },
+      "vertical_spacing": "space-y-6",
+      "grid": {
+        "kpi": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
+        "main": "grid grid-cols-1 lg:grid-cols-12 gap-6"
+      }
+    },
+    "typography": {
+      "font": "Inter",
+      "h1": "text-2xl md:text-3xl font-bold tracking-tight",
+      "h2": "text-lg md:text-xl font-semibold",
+      "body": "text-sm md:text-base",
+      "muted": "text-sm text-muted-foreground"
+    },
+    "a11y": {
+      "focus_ring": true,
+      "contrast": "WCAG AA",
+      "keyboard_navigation": true,
+      "aria_labels_required": true,
+      "empty_states_accessible": true
+    }
+  },
+  "data_model": {
+    "viewer": {
+      "roles_supported": ["review"],
+      "auth_required": true,
+      "redirect_if_unauth": "/login?redirect=/review-dashboard"
+    },
+    "kpis": [
+      { "key": "quotes_total", "label": "Orçamentos solicitados", "icon": "ClipboardList" },
+      { "key": "quotes_open", "label": "Em aberto", "icon": "Clock" },
+      { "key": "quotes_replied", "label": "Respondidos", "icon": "MessageCircle" },
+      { "key": "reviews_published", "label": "Reviews publicadas", "icon": "Star" }
+    ],
+    "charts": [
+      {
+        "id": "activity_30d",
+        "title": "Atividade (últimos 30 dias)",
+        "type": "line",
+        "series": [
+          { "key": "profile_views", "label": "Visitas", "unit": "count" },
+          { "key": "whatsapp_clicks", "label": "Cliques WhatsApp", "unit": "count" },
+          { "key": "cta_clicks", "label": "Cliques CTA", "unit": "count" }
+        ],
+        "x_axis": { "key": "date", "format": "DD/MM" },
+        "y_axis": { "format": "integer" },
+        "empty_state": {
+          "title": "Sem dados ainda",
+          "message": "Quando você interagir com empresas e solicitar orçamentos, os gráficos aparecem aqui."
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "quotes_table",
+        "title": "Meus Orçamentos",
+        "tabs": [
+          { "id": "open", "label": "Em aberto", "status_filter": ["open", "pending"] },
+          { "id": "replied", "label": "Respondidos", "status_filter": ["replied"] },
+          { "id": "closed", "label": "Finalizados", "status_filter": ["closed", "canceled"] }
+        ],
+        "columns": [
+          { "key": "company", "label": "Empresa", "type": "companyCell" },
+          { "key": "category", "label": "Categoria", "type": "text" },
+          { "key": "status", "label": "Status", "type": "badge" },
+          { "key": "created_at", "label": "Data", "type": "date" },
+          { "key": "actions", "label": "Ações", "type": "rowActions" }
+        ],
+        "row_actions": [
+          { "id": "view", "label": "Ver detalhes", "action": "openDrawer:quoteDetails" },
+          { "id": "message", "label": "Mensagens", "action": "navigate:/messages?quoteId={id}" },
+          { "id": "cancel", "label": "Cancelar", "action": "confirmThen:apiCancelQuote" }
+        ],
+        "empty_state": {
+          "title": "Você ainda não solicitou nenhum orçamento",
+          "message": "Solicite orçamentos para integradores e acompanhe respostas aqui.",
+          "primary_cta": { "label": "Solicitar orçamento", "href": "/empresas" }
+        }
+      }
+    ],
+    "lists": [
+      {
+        "id": "reviews_list",
+        "title": "Minhas Reviews",
+        "filters": [
+          { "id": "all", "label": "Todas" },
+          { "id": "published", "label": "Publicadas", "status_filter": ["published"] },
+          { "id": "pending", "label": "Pendentes", "status_filter": ["pending", "moderation"] },
+          { "id": "draft", "label": "Rascunhos", "status_filter": ["draft"] }
+        ],
+        "item_layout": {
+          "left": ["company_logo", "company_name", "rating_stars", "date"],
+          "body": ["review_snippet"],
+          "right": ["edit", "delete"]
+        },
+        "actions": [
+          { "id": "edit", "label": "Editar", "action": "navigate:/reviews/{id}/edit" },
+          { "id": "delete", "label": "Excluir", "action": "confirmThen:apiDeleteReview" }
+        ],
+        "empty_state": {
+          "title": "Nenhuma review ainda",
+          "message": "Sua primeira avaliação ajuda outras pessoas a escolherem bons integradores.",
+          "primary_cta": { "label": "Escrever avaliação", "action": "openModal:newReview" }
+        }
+      }
+    ],
+    "quick_actions": [
+      {
+        "id": "new_review",
+        "label": "Escrever nova avaliação",
+        "icon": "PlusCircle",
+        "action": "openModal:newReview"
+      },
+      {
+        "id": "browse_companies",
+        "label": "Encontrar integradores",
+        "icon": "Building2",
+        "action": "navigate:/empresas"
+      },
+      {
+        "id": "browse_products",
+        "label": "Explorar produtos",
+        "icon": "PackageSearch",
+        "action": "navigate:/produtos"
+      },
+      {
+        "id": "complete_profile",
+        "label": "Completar perfil",
+        "icon": "UserRound",
+        "action": "navigate:/minha-conta"
+      }
+    ]
+  },
+  "ui_spec": {
+    "page_title": "Meu Painel",
+    "page_subtitle": "Acompanhe suas avaliações, orçamentos e métricas.",
+    "sections_order": [
+      "HeroHeader",
+      "KpiCards",
+      "MainGrid(Quotes + QuickActions)",
+      "Charts",
+      "ReviewsList"
+    ],
+    "components": {
+      "HeroHeader": {
+        "layout": "row",
+        "left": ["H1 title", "subtitle"],
+        "right": ["optional: profile chip (name + role)", "optional: refresh button"],
+        "actions": [
+          {
+            "id": "refresh",
+            "label": "Atualizar",
+            "icon": "RefreshCcw",
+            "behavior": "refetch all queries, show toast"
+          }
+        ]
+      },
+      "KpiCards": {
+        "component": "Card",
+        "card_style": "rounded-2xl shadow-sm border",
+        "content": ["icon", "label", "value", "delta(optional)"],
+        "loading": "skeleton cards",
+        "interaction": "click navigates to relevant section/tab"
+      },
+      "QuotesPanel": {
+        "component": "Card + Tabs + Table",
+        "table_features": [
+          "pagination",
+          "skeleton rows",
+          "empty state",
+          "status badge colors",
+          "row hover",
+          "mobile stacked rows"
+        ],
+        "drawer": {
+          "id": "quoteDetails",
+          "content": ["company info", "status timeline", "messages preview", "quote metadata"]
+        }
+      },
+      "QuickActionsPanel": {
+        "component": "Card",
+        "content": [
+          "buttons with icons",
+          "profile completion progress",
+          "help tip box"
+        ],
+        "profile_progress": {
+          "logic": "calculate based on filled fields",
+          "display": "Progress bar + percent"
+        }
+      },
+      "ActivityChart": {
+        "component": "Card + Recharts LineChart",
+        "features": [
+          "legend",
+          "tooltip",
+          "responsive container",
+          "empty state",
+          "loading skeleton"
+        ]
+      },
+      "ReviewsList": {
+        "component": "Card + Filter chips + List",
+        "list_item": [
+          "company logo",
+          "company name",
+          "rating stars",
+          "created date",
+          "snippet",
+          "actions"
+        ],
+        "delete_confirm": "Dialog shadcn"
+      }
+    },
+    "responsiveness": {
+      "mobile": {
+        "kpi_grid": "1 column",
+        "main_grid": "stacked",
+        "table": "stacked layout, hide less important columns"
+      },
+      "desktop": {
+        "kpi_grid": "4 columns",
+        "main_grid": "Quotes 8/12 + QuickActions 4/12"
+      }
+    },
+    "tone": "clean, bright, not dark, Amazon-like marketplace clarity (but SaaS dashboard layout)"
+  },
+  "api_contracts": {
+    "frontend_client": "AB0-1-front/lib/api.ts",
+    "endpoints_required": [
+      {
+        "id": "getReviewDashboardSummary",
+        "method": "GET",
+        "path": "/api/v1/review_dashboard/summary",
+        "response_schema": {
+          "kpis": {
+            "quotes_total": "number",
+            "quotes_open": "number",
+            "quotes_replied": "number",
+            "reviews_published": "number"
+          },
+          "charts": {
+            "activity_30d": [
+              {
+                "date": "YYYY-MM-DD",
+                "profile_views": "number",
+                "whatsapp_clicks": "number",
+                "cta_clicks": "number"
+              }
+            ]
+          },
+          "profile": {
+            "completion_percent": "number",
+            "missing_fields": ["string"]
+          }
+        }
+      },
+      {
+        "id": "listQuotes",
+        "method": "GET",
+        "path": "/api/v1/quotes?status={status}&page={page}",
+        "response_schema": {
+          "data": [
+            {
+              "id": "string",
+              "company": { "id": "string", "name": "string", "logo_url": "string|null" },
+              "category": "string",
+              "status": "open|pending|replied|closed|canceled",
+              "created_at": "ISO8601"
+            }
+          ],
+          "meta": { "page": "number", "total_pages": "number", "total_count": "number" }
+        }
+      },
+      {
+        "id": "listMyReviews",
+        "method": "GET",
+        "path": "/api/v1/my_reviews?status={status}",
+        "response_schema": {
+          "data": [
+            {
+              "id": "string",
+              "company": { "id": "string", "name": "string", "logo_url": "string|null" },
+              "rating": "number(1-5)",
+              "body": "string",
+              "status": "published|pending|draft",
+              "created_at": "ISO8601"
+            }
+          ]
+        }
+      },
+      {
+        "id": "deleteReview",
+        "method": "DELETE",
+        "path": "/api/v1/reviews/{id}",
+        "response_schema": { "ok": "boolean" }
+      },
+      {
+        "id": "cancelQuote",
+        "method": "POST",
+        "path": "/api/v1/quotes/{id}/cancel",
+        "response_schema": { "ok": "boolean" }
+      }
+    ],
+    "backend_tasks_if_missing": [
+      "Criar controller review_dashboard_controller.rb com endpoint /summary",
+      "Garantir escopo por current_user (role review)",
+      "Adicionar serializers/blueprints e paginação para quotes e reviews",
+      "Garantir CORS/auth middleware compatíveis com Better Auth/JWT"
+    ]
+  },
+  "auth_and_permissions": {
+    "middleware_rules": [
+      "Somente usuários autenticados com role=review acessam /review-dashboard",
+      "Se não autenticado: redirect /login?redirect=/review-dashboard",
+      "Se autenticado mas role != review: redirect para dashboard correto"
+    ],
+    "token_storage": "cookie httpOnly + refresh if needed",
+    "error_handling": {
+      "401": "redirect to login preserving redirect param",
+      "403": "render AccessDenied card with CTA",
+      "500": "toast + error boundary"
+    }
+  },
+  "tracking": {
+    "ga4_events": [
+      { "name": "review_dashboard_view", "params": ["user_id", "role"] },
+      { "name": "review_dashboard_refresh", "params": ["user_id"] },
+      { "name": "quote_tab_change", "params": ["tab_id"] },
+      { "name": "quote_open_details", "params": ["quote_id"] },
+      { "name": "review_create_click", "params": [] },
+      { "name": "review_edit_click", "params": ["review_id"] },
+      { "name": "review_delete_confirm", "params": ["review_id"] }
+    ],
+    "mixpanel_events": [
+      { "name": "Dashboard Viewed", "props": ["role", "kpi_quotes_total", "kpi_reviews_published"] },
+      { "name": "Quote Details Opened", "props": ["quote_id", "status"] },
+      { "name": "Quick Action Clicked", "props": ["action_id"] }
+    ]
+  },
+  "implementation_plan": {
+    "frontend_files": [
+      "AB0-1-front/app/review-dashboard/page.tsx",
+      "AB0-1-front/app/review-dashboard/components/KpiCards.tsx",
+      "AB0-1-front/app/review-dashboard/components/QuotesPanel.tsx",
+      "AB0-1-front/app/review-dashboard/components/QuickActionsPanel.tsx",
+      "AB0-1-front/app/review-dashboard/components/ActivityChart.tsx",
+      "AB0-1-front/app/review-dashboard/components/ReviewsList.tsx"
+    ],
+    "backend_files_if_needed": [
+      "AB0-1-back/app/controllers/api/v1/review_dashboard_controller.rb",
+      "AB0-1-back/config/routes.rb",
+      "AB0-1-back/app/serializers/* or blueprints/*"
+    ],
+    "quality_gates": [
+      "TypeScript strict (no any)",
+      "Loading states (skeletons)",
+      "Empty states",
+      "Mobile responsive",
+      "A11y checks",
+      "Unit tests for utils + component rendering smoke",
+      "E2E Playwright test for review dashboard happy path"
+    ]
+  },
+  "acceptance_criteria": [
+    "Página /review-dashboard renderiza com: hero + KPIs + tabela de orçamentos + ações rápidas + gráfico + lista de reviews",
+    "Sem telas vazias: sempre mostrar empty states ricos",
+    "Carregamento suave com skeletons",
+    "Layout claro (não dark)",
+    "Clicks e navegações funcionam",
+    "Tracking GA4 e Mixpanel disparando eventos",
+    "Usuário não autenticado é redirecionado preservando redirect",
+    "Compatível com mobile e desktop"
+  ],
+  "output_required": {
+    "deliverables": [
+      "Código implementado na estrutura acima",
+      "Lista de endpoints necessários (com fallback se não existirem)",
+      "Testes Playwright atualizados",
+      "Checklist final de QA"
+    ]
+  }
+}

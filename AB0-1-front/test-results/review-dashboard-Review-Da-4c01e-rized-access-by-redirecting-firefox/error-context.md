@@ -1,0 +1,131 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Home Avalia Solar" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "Avalia Solar Logo" [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - search "Buscar" [ref=e8]:
+            - generic [ref=e9]:
+              - img [ref=e10]
+              - textbox "Buscar produtos, serviços..." [ref=e13]
+          - combobox [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]:
+              - img [ref=e16]
+              - generic [ref=e19]: Localização
+            - img [ref=e20]
+        - generic [ref=e23]:
+          - button "Categorias" [ref=e25] [cursor=pointer]:
+            - text: Categorias
+            - img [ref=e26]
+          - link "Empresas" [ref=e28] [cursor=pointer]:
+            - /url: /companies
+          - link "Produtos" [ref=e29] [cursor=pointer]:
+            - /url: /products
+          - link "Blog" [ref=e30] [cursor=pointer]:
+            - /url: /blog
+          - generic [ref=e31]:
+            - link "Minha conta" [ref=e32] [cursor=pointer]:
+              - /url: /profile
+            - link "Dashboard" [ref=e33] [cursor=pointer]:
+              - /url: /dashboard/company
+            - button "Sair" [ref=e34] [cursor=pointer]
+  - img [ref=e36]
+  - contentinfo [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - link "Avalia Solar" [ref=e42] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e43]: O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - img [ref=e46]
+              - generic [ref=e49]: contato@avaliasolar.com.br
+            - generic [ref=e50]:
+              - img [ref=e51]
+              - generic [ref=e53]: (65) 99242-3309
+            - generic [ref=e54]:
+              - img [ref=e55]
+              - generic [ref=e58]: Florianópolis, SC
+        - generic [ref=e59]:
+          - heading "Empresa" [level=3] [ref=e60]
+          - list [ref=e61]:
+            - listitem [ref=e62]:
+              - link "Sobre Nós" [ref=e63] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e64]:
+              - link "Carreiras" [ref=e65] [cursor=pointer]:
+                - /url: /careers
+            - listitem [ref=e66]:
+              - link "Imprensa" [ref=e67] [cursor=pointer]:
+                - /url: /press
+            - listitem [ref=e68]:
+              - link "Blog" [ref=e69] [cursor=pointer]:
+                - /url: /blog
+        - generic [ref=e70]:
+          - heading "Suporte" [level=3] [ref=e71]
+          - list [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Centro de Ajuda" [ref=e74] [cursor=pointer]:
+                - /url: /help
+            - listitem [ref=e75]:
+              - link "Contato" [ref=e76] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e77]:
+              - link "API Docs" [ref=e78] [cursor=pointer]:
+                - /url: /api-docs
+            - listitem [ref=e79]:
+              - link "Status" [ref=e80] [cursor=pointer]:
+                - /url: /status
+        - generic [ref=e81]:
+          - heading "Legal" [level=3] [ref=e82]
+          - list [ref=e83]:
+            - listitem [ref=e84]:
+              - link "Termos de Uso" [ref=e85] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e86]:
+              - link "Política de Privacidade" [ref=e87] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e88]:
+              - link "Política de Cookies" [ref=e89] [cursor=pointer]:
+                - /url: /cookies
+            - listitem [ref=e90]:
+              - link "DMCA" [ref=e91] [cursor=pointer]:
+                - /url: /dmca
+      - generic [ref=e93]:
+        - generic [ref=e94]: © 2025 Avalia Solar. Todos os direitos reservados.
+        - generic [ref=e95]:
+          - link "Facebook" [ref=e96] [cursor=pointer]:
+            - /url: https://facebook.com
+            - img [ref=e97]
+          - link "Twitter" [ref=e99] [cursor=pointer]:
+            - /url: https://twitter.com
+            - img [ref=e100]
+          - link "Instagram" [ref=e102] [cursor=pointer]:
+            - /url: https://instagram.com
+            - img [ref=e103]
+          - link "LinkedIn" [ref=e107] [cursor=pointer]:
+            - /url: https://linkedin.com
+            - img [ref=e108]
+  - region "Notifications alt+T"
+  - alert [ref=e112]
+  - generic [ref=e115]:
+    - img [ref=e117]
+    - generic [ref=e124]:
+      - heading "Cookies & Privacidade" [level=3] [ref=e125]
+      - paragraph [ref=e126]:
+        - text: Utilizamos cookies para melhorar sua experiência e analisar o tráfego do site. Ao clicar em "Aceitar", você concorda com o uso de cookies conforme nossa
+        - link "Política de Privacidade" [ref=e127] [cursor=pointer]:
+          - /url: /privacy
+        - text: .
+      - generic [ref=e128]:
+        - button "Aceitar Tudo" [ref=e129] [cursor=pointer]
+        - button "Recusar" [ref=e130] [cursor=pointer]
+    - button [ref=e131] [cursor=pointer]:
+      - img [ref=e132]
+```

@@ -128,6 +128,11 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
+                  {user?.role !== 'review' && (
+                    <div className="mr-2">
+                      <CompanySwitcher className="w-48" />
+                    </div>
+                  )}
                   <Button asChild variant="ghost" size="sm">
                     <Link 
                       href={user?.role === 'review' ? '/review-dashboard' : '/profile'}

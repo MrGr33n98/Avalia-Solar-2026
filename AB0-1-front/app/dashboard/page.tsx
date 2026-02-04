@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCompanyContext } from '@/context/CompanyContext';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,12 +26,22 @@ import RealtimeDashboard from '@/app/dashboard/components/RealtimeDashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { activeCompany, isLoading: companyLoading } = useCompanyContext();
   const [loading, setLoading] = useState(false);
-  const [companyId, setCompanyId] = useState<number | null>(null);
 
-  // Mock user and stats for demo - replace with actual auth
-  const user = { name: 'Demo User' };
-  const isAuthenticated = true; // Set to true for demo
+  useEffect(() => {
+    if (!companyLoading && !activeCompany) {
+      router.push('/select-company');
+    }
+  }, [activeCompany, companyLoading, router]);
+
+  if (companyLoading || !activeCompany) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Mock stats for demo
   const stats = {
@@ -184,13 +195,13 @@ export default function DashboardPage() {
       </section>
 
       {/* Realtime Company Analytics */}
-      {companyId ? (
+      {activeCompany?.id ? (
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
               <h2 className="text-3xl font-bold text-foreground mb-2">Analytics em Tempo Real</h2>
               <p className="text-muted-foreground mb-6">Atualização contínua das métricas críticas da sua empresa.</p>
-              <RealtimeDashboard companyId={companyId} />
+              <RealtimeDashboard companyId={activeCompany.id} />
             </motion.div>
           </div>
         </section>

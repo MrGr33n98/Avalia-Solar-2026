@@ -113,6 +113,45 @@ module Api
         end
       end
 
+      # GET /api/v1/companies/featured
+      def featured
+        @companies = ::Company.active.where(featured: true).limit(10)
+        render json: @companies.map { |c| company_json_attributes(c) }
+      end
+
+      # GET /api/v1/companies/mine
+      def mine
+        authenticate_api_user
+        
+        @companies = current_user.active_member_companies.includes(:categories)
+        
+        if params[:q].present?
+          term = params[:q].to_s.strip
+          @companies = @companies.where('name ILIKE ? OR city ILIKE ?', "%#{term}%", "%#{term}%")
+        end
+
+        # Cache for 5 minutes as requested
+        cache_key = "user_#{current_user.id}_companies_mine_#{params[:q]}"
+        
+        companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+          @companies.map do |company|
+            {
+              id: company.id,
+              name: company.name,
+              slug: company.slug,
+              city: company.city,
+              state: company.state,
+              logo_url: company.logo_url,
+              category: company.categories.first&.name,
+              status: company.status,
+              verified: company.verified
+            }
+          end
+        end
+
+        render json: companies_data
+      end
+
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company

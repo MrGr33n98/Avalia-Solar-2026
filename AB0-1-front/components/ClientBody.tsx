@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
 import QuoteWizardModal from '@/components/QuoteWizardModal';
@@ -33,13 +34,15 @@ export default function ClientBody({
       <Context7Provider>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-                    {children}
-                    <QuoteWizardModal />
-                    <QuickLeadModal />
-                    <ComparisonFloatingBar />
-                    <Toaster />
-                    <CookieConsent />
-                  </AuthProvider>
+            <CompanyProvider>
+              {children}
+              <QuoteWizardModal />
+              <QuickLeadModal />
+              <ComparisonFloatingBar />
+              <Toaster />
+              <CookieConsent />
+            </CompanyProvider>
+          </AuthProvider>
         </ThemeProvider>
       </Context7Provider>
     </QueryProvider>

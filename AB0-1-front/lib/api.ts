@@ -727,6 +727,7 @@ export const companiesApi = {
       return [];
     }
   },
+  mine: (params?: any) => fetchApi<any[]>('/companies/mine', { params }),
     getById: async (id: number | string): Promise<Company | null> => {
       try {
         const response = await fetchApi<{ company: Company }>(`/companies/${id}`);

@@ -62,6 +62,7 @@ Rails.application.routes.draw do
           get :cities
           get :locations
           get :featured
+          get :mine
         end
 
         member do
