@@ -87,11 +87,11 @@ export default function LandingHero() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6">
-            Encontre as melhores empresas de <span className="text-brand-blue">energia solar</span> perto de você.
+            Encontre as melhores empresas de <span className="text-brand-blue">energia solar e mobilidade elétrica</span> perto de você.
           </h1>
           
           <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
-            Compare orçamentos, veja avaliações reais e economize até 95% na sua conta de luz com os melhores instaladores do Brasil.
+            Compare orçamentos, avaliações reais e instale solar, baterias ou carregadores veiculares com segurança.
           </p>
 
           {/* Search Box */}

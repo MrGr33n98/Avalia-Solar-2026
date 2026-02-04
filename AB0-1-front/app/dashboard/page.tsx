@@ -19,7 +19,8 @@ import {
   FileText,
   Calendar,
   Bell,
-  Building2
+  Building2,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import RealtimeDashboard from '@/app/dashboard/components/RealtimeDashboard';
