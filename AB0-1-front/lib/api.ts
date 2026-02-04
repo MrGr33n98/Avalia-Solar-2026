@@ -727,7 +727,21 @@ export const companiesApi = {
       return [];
     }
   },
-  mine: (params?: any) => fetchApi<any[]>('/companies/mine', { params }),
+  mine: async (params?: any): Promise<Company[]> => {
+    try {
+      // Try /companies/mine first (RESTful)
+      const response = await fetchApi<any>('/companies/mine', { params });
+      if (Array.isArray(response)) return response;
+      if (response?.data && Array.isArray(response.data)) return response.data;
+      
+      // Fallback to /users/me_companies if needed
+      const altResponse = await fetchApi<any>('/users/me_companies', { params });
+      return altResponse?.companies || altResponse || [];
+    } catch (error) {
+      console.error('Error fetching mine companies:', error);
+      return [];
+    }
+  },
     getById: async (id: number | string): Promise<Company | null> => {
       try {
         const response = await fetchApi<{ company: Company }>(`/companies/${id}`);
@@ -875,6 +889,18 @@ export const categoriesApi = {
       return [];
     } catch (error) {
       console.error('Error fetching category banners:', error);
+      return [];
+    }
+  },
+  getTree: async (): Promise<Category[]> => {
+    try {
+      const response = await fetchApi<any>('/categories/tree');
+      if (Array.isArray(response)) return response;
+      if (response?.data && Array.isArray(response.data)) return response.data;
+      if (response?.categories && Array.isArray(response.categories)) return response.categories;
+      return [];
+    } catch (error) {
+      console.error('Error fetching category tree:', error);
       return [];
     }
   },
@@ -1055,8 +1081,13 @@ export const authApi = {
   },
   me: async (): Promise<User | null> => {
     try {
+      // First try the unified /auth/me endpoint
       const resp = await fetchApi<{ user: User }>('/auth/me');
-      return resp.user;
+      if (resp?.user) return resp.user;
+      
+      // Fallback to /users/me if /auth/me doesn't return the user object directly
+      const userResp = await fetchApi<User>('/users/me');
+      return userResp;
     } catch (error: any) {
       const status = error?.status || error?.context?.status;
       const msg = error?.message || '';

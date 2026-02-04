@@ -22,7 +22,7 @@ interface CompanySwitcherProps {
 }
 
 export function CompanySwitcher({ className }: CompanySwitcherProps) {
-  const { activeCompany, companies, setActiveCompany, isLoading } = useCompanyContext();
+  const { activeCompany, companies, selectCompany, isLoading } = useCompanyContext();
   const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
 
@@ -85,7 +85,11 @@ export function CompanySwitcher({ className }: CompanySwitcherProps) {
             {companies.slice(0, 5).map((company) => (
               <DropdownMenuItem
                 key={company.id}
-                onSelect={() => setActiveCompany(company)}
+                onSelect={() => {
+                  void selectCompany(company).catch((error) => {
+                    console.warn('[CompanySwitcher] Failed to select company', error);
+                  });
+                }}
                 className="gap-2 cursor-pointer"
               >
                 <div className="relative h-5 w-5 flex-shrink-0 rounded bg-muted overflow-hidden border">

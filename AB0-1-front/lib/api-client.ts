@@ -193,7 +193,14 @@ export const companiesApiSafe = {
   // 🔥 Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number | string): Promise<Company | null> => {
     try {
+      console.log(`[companiesApiSafe.getById] Fetching company: ${id}`);
       const response = await fetchApiSafe<any>(`companies/${id}`);
+      
+      if (!response) {
+        console.warn(`[companiesApiSafe.getById] No response for company: ${id}`);
+        return null;
+      }
+
       console.log('[companiesApiSafe.getById] Raw response:', response);
       
       // Backend retorna: { company: { ... } }
@@ -202,14 +209,19 @@ export const companiesApiSafe = {
         console.log('[companiesApiSafe.getById] Unwrapped company:', {
           id: response.company.id,
           name: response.company.name,
-          banner_url: response.company.banner_url,
-          logo_url: response.company.logo_url
+          slug: response.company.slug,
+          status: response.company.status
         });
         return response.company;
       }
       
-      console.log('[companiesApiSafe.getById] Returning response as-is:', response);
-      return response || null;
+      // Se já vier desembrulhado (compatibilidade)
+      if (response && response.id) {
+        return response;
+      }
+      
+      console.warn('[companiesApiSafe.getById] Returning null - could not parse company data from:', response);
+      return null;
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);
       // Return null on error to prevent breaking the UI
@@ -278,6 +290,18 @@ export const categoriesApiSafe = {
       console.error(`Error fetching category with slug ${slug}:`, error);
       // Return null on error to prevent breaking the UI
       return null;
+    }
+  },
+  getTree: async (): Promise<Category[]> => {
+    try {
+      const response = await fetchApiSafe<any>('categories/tree');
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      if (response && Array.isArray(response.categories)) return response.categories;
+      return [];
+    } catch (error) {
+      console.error('Error fetching category tree:', error);
+      return [];
     }
   },
 };

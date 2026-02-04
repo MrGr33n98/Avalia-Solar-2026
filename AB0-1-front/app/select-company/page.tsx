@@ -5,39 +5,50 @@ import { useRouter } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { 
   Building2, 
   Check, 
-  MapPin, 
   Search, 
   Plus, 
-  ArrowRight, 
   Loader2,
-  Building,
-  CheckCircle2,
   AlertCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SelectCompanyPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const { companies, activeCompany, setActiveCompany, isLoading } = useCompanyContext();
+  const { loading: authLoading } = useAuth();
+  const { companies, selectCompany, isLoading } = useCompanyContext();
   const [search, setSearch] = useState('');
+  const [selectingId, setSelectingId] = useState<number | null>(null);
+  const [selectError, setSelectError] = useState<string | null>(null);
 
-  const handleSelect = (company: any) => {
-    setActiveCompany(company);
-    router.push('/dashboard');
+  const handleSelect = async (company: any) => {
+    if (selectingId) return;
+    try {
+      setSelectError(null);
+      setSelectingId(company.id);
+      console.log(`[SelectCompany] Selecting company: ${company.name} (${company.id})`);
+
+      await selectCompany(company);
+
+      console.log(`[SelectCompany] Selection synced with backend, redirecting...`);
+
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('[SelectCompany] Error selecting company:', error);
+      setSelectError('Não foi possível selecionar a empresa. Tente novamente.');
+    } finally {
+      setSelectingId(null);
+    }
   };
 
+  const normalizedSearch = search.toLowerCase();
   const filteredCompanies = companies.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    c.city.toLowerCase().includes(search.toLowerCase())
+    c.name.toLowerCase().includes(normalizedSearch) || 
+    (c.city || '').toLowerCase().includes(normalizedSearch)
   );
 
   if (authLoading || isLoading) {
@@ -82,17 +93,34 @@ export default function SelectCompanyPage() {
             ))}
           </div>
 
+          {selectError && (
+            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span>{selectError}</span>
+            </div>
+          )}
+
           <div className="space-y-8 py-4">
             <div>
               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">Minhas empresas</h4>
               <div className="space-y-4">
                 {filteredCompanies.length > 0 ? (
-                  filteredCompanies.map((company) => (
-                    <div
-                      key={company.id}
-                      className="flex items-center gap-5 p-5 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group cursor-pointer"
-                      onClick={() => handleSelect(company)}
-                    >
+                  filteredCompanies.map((company) => {
+                    const isSelecting = selectingId === company.id;
+                    return (
+                      <div
+                        key={company.id}
+                        className={`flex items-center gap-5 p-5 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group cursor-pointer ${selectingId ? 'opacity-70 pointer-events-none' : ''}`}
+                        onClick={() => handleSelect(company)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSelect(company);
+                          }
+                        }}
+                      >
                       <div className="relative h-14 w-14 flex-shrink-0 rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center shadow-md">
                         {company.logo_url ? (
                           <Image
@@ -119,16 +147,26 @@ export default function SelectCompanyPage() {
                       </div>
 
                       <Button 
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-6 text-lg rounded-xl transition-all"
+                        type="button"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-6 text-lg rounded-xl transition-all min-w-[140px]"
+                        disabled={isSelecting}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelect(company);
                         }}
                       >
-                        Selecionar
+                        {isSelecting ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Selecionando...
+                          </div>
+                        ) : (
+                          'Selecionar'
+                        )}
                       </Button>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                     <p className="text-gray-500 font-medium">Nenhuma empresa encontrada para sua busca.</p>

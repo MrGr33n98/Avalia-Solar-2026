@@ -41,7 +41,7 @@ module Api
 
           # Filtra por empresas do usuário autenticado
           if ActiveModel::Type::Boolean.new.cast(params[:mine])
-            authenticate_api_user
+            return if authenticate_api_user == false
             @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
           end
 
@@ -143,8 +143,6 @@ module Api
 
         render json: companies_data
       end
-
-      private
 
       def fetch_mine_companies_data(scope)
         scope.map do |company|
@@ -471,7 +469,7 @@ module Api
       end
 
       def request_admin_access
-        authenticate_api_user
+        return if authenticate_api_user == false
         return unless @company
 
         change = PendingChange.create!(
@@ -709,12 +707,26 @@ module Api
       def find_company_by_id_or_slug(raw_id)
         return nil if raw_id.blank?
 
+        Rails.logger.info "[CompaniesController] Searching for company with raw_id: #{raw_id}"
+
         candidate_id = raw_id.to_s[/\A\d+/]
-        company = ::Company.find_by(id: candidate_id) if candidate_id.present?
+        if candidate_id.present?
+          company = ::Company.find_by(id: candidate_id)
+          Rails.logger.info "[CompaniesController] Found by ID (#{candidate_id}): #{company&.name}" if company
+        end
 
         if company.nil? && ::Company.column_names.include?('slug')
           company = ::Company.find_by(slug: raw_id)
+          Rails.logger.info "[CompaniesController] Found by slug (#{raw_id}): #{company&.name}" if company
         end
+
+        if company.nil?
+          # Try lowercase just in case
+          company = ::Company.find_by(slug: raw_id.to_s.downcase)
+          Rails.logger.info "[CompaniesController] Found by lowercase slug: #{company&.name}" if company
+        end
+
+        Rails.logger.warn "[CompaniesController] Company NOT FOUND for: #{raw_id}" if company.nil?
 
         company
       end

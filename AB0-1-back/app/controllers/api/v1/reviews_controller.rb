@@ -18,7 +18,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
     # Filtra por reviews do usuário autenticado, se solicitado
     if ActiveModel::Type::Boolean.new.cast(params[:mine])
-      authenticate_api_user
+      return if authenticate_api_user == false
       @reviews = @reviews.where(user_id: current_user.id)
     end
     

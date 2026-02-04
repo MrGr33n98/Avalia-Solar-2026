@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { companiesApi } from '@/lib/api';
+import { companiesApi, companyAccessApi } from '@/lib/api';
 
 interface Company {
   id: number;
@@ -19,6 +19,7 @@ interface Company {
 interface CompanyContextType {
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
+  selectCompany: (company: Company) => Promise<void>;
   companies: Company[];
   isLoading: boolean;
   refetchCompanies: () => void;
@@ -61,6 +62,21 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const selectCompany = async (company: Company) => {
+    if (!company?.id) return;
+    if (activeCompany?.id === company.id) return;
+
+    const previous = activeCompany;
+    setActiveCompany(company);
+    try {
+      await companyAccessApi.selectActiveCompany(company.id);
+    } catch (error) {
+      console.warn('[CompanyContext] Failed to persist active company selection', error);
+      setActiveCompany(previous ?? null);
+      throw error;
+    }
+  };
+
   // Automatically select the first company if none is selected and companies are loaded
   useEffect(() => {
     if (!activeCompany && companies.length > 0) {
@@ -79,6 +95,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     <CompanyContext.Provider value={{ 
       activeCompany, 
       setActiveCompany, 
+      selectCompany,
       companies, 
       isLoading, 
       refetchCompanies: refetch 

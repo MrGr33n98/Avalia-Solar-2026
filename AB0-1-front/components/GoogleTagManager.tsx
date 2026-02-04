@@ -62,7 +62,8 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
               gtag('js', new Date());
               gtag('config', '${gaId}', {
                 page_path: window.location.pathname,
-                send_page_view: true
+                send_page_view: true,
+                cookie_domain: 'auto'
               });
             `,
           }}

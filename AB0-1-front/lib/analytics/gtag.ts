@@ -86,7 +86,8 @@ export function gtagSetUserId(userId: string | null): void {
   
   try {
     window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
-      user_id: userId
+      user_id: userId,
+      cookie_domain: 'auto'
     });
   } catch (e) {
     console.error('[GA4] Failed to set user ID:', e);
