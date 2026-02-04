@@ -176,6 +176,7 @@ export default function LoginTab() {
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="seu@email.com"
             value={email}
@@ -194,6 +195,7 @@ export default function LoginTab() {
           <div className="relative">
             <Input
               id="password"
+              name="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
