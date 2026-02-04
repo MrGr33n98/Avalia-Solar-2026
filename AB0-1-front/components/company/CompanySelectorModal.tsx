@@ -182,5 +182,5 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
         </div>
       </DialogContent>
     </Dialog>
-  );"}]}
+  );
 }
