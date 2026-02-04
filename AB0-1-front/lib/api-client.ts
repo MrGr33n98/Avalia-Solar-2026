@@ -1,19 +1,20 @@
-// =======================
+﻿// =======================
 // api-client.ts
 // =======================
 
 import { Category, Company, Review, Product, FinancingOption } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
+import { ApiError, toApiError } from './api-error';
 
 // Re-export types so they can be imported from api-client
 export type { Category, Company, Review, Product, FinancingOption };
 
 // ------------------
-// Configuração
+// ConfiguraÃ§Ã£o
 // ------------------
 // Use internal Docker network URL for server-side requests, browser URL for client-side
-// Função auxiliar para montar query params como sufixo seguro
+// FunÃ§Ã£o auxiliar para montar query params como sufixo seguro
 const buildQueryParams = (params: Record<string, any>) => {
   const queryParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -26,7 +27,7 @@ const buildQueryParams = (params: Record<string, any>) => {
 };
 
 // ------------------
-// Função genérica com fetch seguro (SSR friendly)
+// FunÃ§Ã£o genÃ©rica com fetch seguro (SSR friendly)
 // ------------------
 export async function fetchApiSafe<T>(
   endpoint: string,
@@ -128,34 +129,42 @@ export async function fetchApiSafe<T>(
       // Handle different error statuses gracefully
       if (response.status === 404) {
         console.log(`[404] Resource not found at ${url}`);
-        return null as any;
+        return options?.fallback !== undefined ? options.fallback : (null as any);
       }
 
-      if (response.status === 401 || response.status === 403) {
-        const errorData = responseBody || { error: 'Unauthorized' };
-        throw new Error(`[${response.status}] ${errorData.error || 'Unauthorized'} at ${url}`);
-      }
-      
-      if (response.status >= 500) {
-        console.error(`[500] Server error at ${url}`);
-        // For server errors, we can show a toast or handle it gracefully
-        throw new Error('Server error - please try again later');
-      }
-      
       const errorData = responseBody || { error: `API Error (${response.status})` };
-      throw new Error(`[${response.status}] ${errorData.error || 'API Error'} at ${url}`);
+      const errorCode = errorData?.code;
+      const message = errorData?.error || errorData?.message || response.statusText || 'API Error';
+      const apiError = new ApiError(`[${response.status}] ${message}`, {
+        status: response.status,
+        code: errorCode,
+        url,
+        method,
+        details: responseBody
+      });
+
+      if (options?.fallback !== undefined) {
+        return options.fallback;
+      }
+
+      throw apiError;
     }
 
     return responseBody;
   } catch (error) {
-    console.error(`❌ Failed to access ${url}:`, error);
+    const apiError = toApiError(error, {
+      url,
+      method,
+      isNetworkError: error instanceof TypeError
+    });
+    console.error(`[API] Failed to access ${url}:`, apiError);
     // Re-throw the error so calling functions can handle it appropriately
-    throw error;
+    throw apiError;
   }
 }
 
 // ------------------
-// APIs Específicas
+// APIs EspecÃ­ficas
 // ------------------
 
 // Empresas
@@ -174,7 +183,7 @@ export const companiesApiSafe = {
       const url = `companies${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url); // Usar 'any' temporariamente para inspecionar a resposta
       
-      // Verificar se a resposta é um array diretamente ou um objeto com a propriedade 'companies'
+      // Verificar se a resposta Ã© um array diretamente ou um objeto com a propriedade 'companies'
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -190,34 +199,39 @@ export const companiesApiSafe = {
     }
   },
 
-  // 🔥 Corrigido para desembrulhar o objeto { company: { ... } }
+  // ðŸ”¥ Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number | string): Promise<Company | null> => {
+    const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
     try {
       console.log(`[companiesApiSafe.getById] Fetching company: ${id}`);
-      const response = await fetchApiSafe<any>(`companies/${id}`);
+      const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`);
       
-      if (!response) {
-        console.warn(`[companiesApiSafe.getById] No response for company: ${id}`);
-        return null;
+      if (response) {
+        console.log('[companiesApiSafe.getById] Raw response:', response);
+        
+        // Backend retorna: { company: { ... } }
+        // Precisamos desembrulhar para pegar apenas o objeto company
+        if (response && response.company) {
+          console.log('[companiesApiSafe.getById] Unwrapped company:', {
+            id: response.company.id,
+            name: response.company.name,
+            slug: response.company.slug,
+            status: response.company.status
+          });
+          return response.company;
+        }
+        
+        // Se jÃ¡ vier desembrulhado (compatibilidade)
+        if (response && response.id) {
+          return response;
+        }
       }
 
-      console.log('[companiesApiSafe.getById] Raw response:', response);
-      
-      // Backend retorna: { company: { ... } }
-      // Precisamos desembrulhar para pegar apenas o objeto company
-      if (response && response.company) {
-        console.log('[companiesApiSafe.getById] Unwrapped company:', {
-          id: response.company.id,
-          name: response.company.name,
-          slug: response.company.slug,
-          status: response.company.status
-        });
-        return response.company;
-      }
-      
-      // Se já vier desembrulhado (compatibilidade)
-      if (response && response.id) {
-        return response;
+      if (slugCandidate) {
+        console.warn(`[companiesApiSafe.getById] Fallback to slug lookup for: ${id}`);
+        const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`);
+        if (bySlug?.company) return bySlug.company;
+        if (bySlug?.id) return bySlug;
       }
       
       console.warn('[companiesApiSafe.getById] Returning null - could not parse company data from:', response);
@@ -225,6 +239,18 @@ export const companiesApiSafe = {
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);
       // Return null on error to prevent breaking the UI
+      return null;
+    }
+  },
+
+  getBySlug: async (slug: string): Promise<Company | null> => {
+    try {
+      const response = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(slug)}`);
+      if (response?.company) return response.company;
+      if (response?.id) return response;
+      return null;
+    } catch (error) {
+      console.error(`Error fetching company with slug ${slug}:`, error);
       return null;
     }
   },
@@ -306,7 +332,7 @@ export const categoriesApiSafe = {
   },
 };
 
-// Avaliações (Reviews)
+// AvaliaÃ§Ãµes (Reviews)
 export const reviewsApiSafe = {
   getAll: async (params?: { limit?: number; company_id?: number }): Promise<Review[]> => {
     try {
@@ -473,7 +499,7 @@ export const leadsWizardApi = {
       });
 
       if (!response) {
-        throw new Error('Lead não encontrado ou erro de comunicação.');
+        throw new Error('Lead nÃ£o encontrado ou erro de comunicaÃ§Ã£o.');
       }
 
       return response;
@@ -483,8 +509,8 @@ export const leadsWizardApi = {
         // Mock success with some companies
         return {
            companies: [
-             { id: 1, name: 'WEG Solar', city: 'São Paulo', state: 'SP', rating_avg: 4.9, reviews_count: 120, verified: true, featured: true, logo_url: null },
-             { id: 2, name: 'Intelbras Solar', city: 'Florianópolis', state: 'SC', rating_avg: 4.8, reviews_count: 85, verified: true, featured: false, logo_url: null }
+             { id: 1, name: 'WEG Solar', city: 'SÃ£o Paulo', state: 'SP', rating_avg: 4.9, reviews_count: 120, verified: true, featured: true, logo_url: null },
+             { id: 2, name: 'Intelbras Solar', city: 'FlorianÃ³polis', state: 'SC', rating_avg: 4.8, reviews_count: 85, verified: true, featured: false, logo_url: null }
            ]
         };
       }
@@ -518,3 +544,6 @@ export const financingOptionsApiSafe = {
     }
   },
 };
+
+
+

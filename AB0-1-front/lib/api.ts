@@ -2,6 +2,7 @@
 // Imports
 // =======================
 import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
+import { ApiError, toApiError } from './api-error';
 
 // =======================
 // API Response Types
@@ -569,12 +570,24 @@ export const api = {
             // We also allow retrying 404 once in case of transient backend issues during deployments
             if (response.status >= 400 && response.status < 500 && 
                 response.status !== 429 && response.status !== 404) {
-              const err = new Error(`[${response.status}] ${message}`);
+              const err = new ApiError(`[${response.status}] ${message}`, {
+                status: response.status,
+                code: details?.code,
+                url,
+                method: config.method,
+                details
+              });
               (err as any).context = errorContext;
               throw err;
             }
             
-            const err = new Error(`[${response.status}] ${message}`);
+            const err = new ApiError(`[${response.status}] ${message}`, {
+              status: response.status,
+              code: details?.code,
+              url,
+              method: config.method,
+              details
+            });
             (err as any).context = errorContext;
             throw err;
           }
@@ -584,7 +597,12 @@ export const api = {
         } catch (fetchError: any) {
           clearTimeout(timeoutId);
           if (fetchError.name === 'AbortError') {
-            throw new Error('Request timeout');
+            throw new ApiError('Request timeout', {
+              status: 0,
+              url,
+              method: config.method,
+              isTimeout: true
+            });
           }
           throw fetchError;
         }
@@ -664,13 +682,24 @@ export async function fetchApi<T = any>(
       stack: error.stack
     });
 
+    if (error instanceof ApiError) {
+      if (!(error as any).context) {
+        (error as any).context = errorContext;
+      }
+      throw error;
+    }
+
     // Specific handling for 404 Not Found
     if (error.message?.includes('[404]') || error.context?.status === 404) {
       const customMessage = `[404] O recurso solicitado não foi encontrado (${url}). Por favor, verifique se o endereço está correto. Se o problema persistir, entre em contato com o suporte do Avalia Solar.`;
       console.warn(`[API] 404 Error: ${customMessage}`);
       
-      const enhancedError = new Error(customMessage);
-      (enhancedError as any).status = 404;
+      const enhancedError = new ApiError(customMessage, {
+        status: 404,
+        url,
+        method: options.method || 'GET',
+        details: errorContext
+      });
       (enhancedError as any).context = errorContext;
       throw enhancedError;
     }
@@ -679,15 +708,24 @@ export async function fetchApi<T = any>(
       const msg =
         error.response.data?.error ||
         `Erro na API (${error.response.status}): ${error.message}`;
-      const enhancedError = new Error(msg);
-      (enhancedError as any).status = error.response.status;
+      const enhancedError = new ApiError(msg, {
+        status: error.response.status,
+        url,
+        method: options.method || 'GET',
+        details: error.response.data
+      });
       (enhancedError as any).context = errorContext;
       throw enhancedError;
     }
 
     const detailedMessage = error?.message || error?.toString?.() || 'Erro desconhecido na API';
-    const enhancedError = new Error(`${detailedMessage} (Endpoint: ${endpoint})`);
-    (enhancedError as any).status = errorContext?.status;
+    const enhancedError = toApiError(error, {
+      status: errorContext?.status,
+      url,
+      method: options.method || 'GET',
+      details: errorContext
+    });
+    enhancedError.message = `${detailedMessage} (Endpoint: ${endpoint})`;
     (enhancedError as any).context = errorContext;
     throw enhancedError;
   }
@@ -742,13 +780,35 @@ export const companiesApi = {
       return [];
     }
   },
-    getById: async (id: number | string): Promise<Company | null> => {
-      try {
-        const response = await fetchApi<{ company: Company }>(`/companies/${id}`);
-        return response?.company || null;
-      } catch (error) {
-        console.error(`Error fetching company with ID ${id}:`, error);
+  getById: async (id: number | string): Promise<Company | null> => {
+    const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
+    try {
+      const response = await fetchApi<{ company: Company }>(`/companies/${encodeURIComponent(id)}`);
+      if (response?.company) return response.company;
+      return (response as any)?.id ? (response as any) : null;
+    } catch (error) {
+      if (slugCandidate) {
+        try {
+          const response = await fetchApi<{ company: Company }>(`/companies/by_slug/${encodeURIComponent(id)}`);
+          if (response?.company) return response.company;
+          return (response as any)?.id ? (response as any) : null;
+        } catch (slugError) {
+          console.error(`Error fetching company with slug ${id}:`, slugError);
+        }
+      }
+      console.error(`Error fetching company with ID ${id}:`, error);
       // Return null on error to prevent breaking the UI
+      return null;
+    }
+  },
+
+  getBySlug: async (slug: string): Promise<Company | null> => {
+    try {
+      const response = await fetchApi<{ company: Company }>(`/companies/by_slug/${encodeURIComponent(slug)}`);
+      if (response?.company) return response.company;
+      return (response as any)?.id ? (response as any) : null;
+    } catch (error) {
+      console.error(`Error fetching company with slug ${slug}:`, error);
       return null;
     }
   },

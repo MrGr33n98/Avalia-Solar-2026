@@ -1,10 +1,11 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, authApi, companyAccessApi } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
 import { identify, track } from '@/lib/analytics';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = !!user;
+  const authRequestId = useRef(0);
+
+  const nextAuthRequest = () => {
+    authRequestId.current += 1;
+    return authRequestId.current;
+  };
 
   useEffect(() => {
     checkAuth();
@@ -46,20 +53,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   async function checkAuth(): Promise<User | null> {
+    const requestId = nextAuthRequest();
     setLoading(true);
+    setError(null);
     console.log('[AuthContext] Checking authentication...');
     try {
       // Try to fetch user data
       const userData = await authApi.me();
       console.log('[AuthContext] Auth check result:', userData ? `User found (ID: ${userData.id}, Role: ${userData.role})` : 'No user found');
-      setUser(userData || null);
+      if (requestId === authRequestId.current) {
+        setUser(userData || null);
+      }
       return userData || null;
     } catch (error) {
       console.error('[AuthContext] Error checking auth:', error);
-      setUser(null);
+      if (requestId === authRequestId.current) {
+        setUser(null);
+        setError(getApiErrorMessage(error, 'Falha ao validar sessão.'));
+      }
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === authRequestId.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -106,6 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       console.log('[AuthContext] Attempting login for:', email);
+      nextAuthRequest();
+      setError(null);
       const response: any = await authApi.login(email, password);
 
       // Explicitly check for user in response or fetch it
@@ -126,12 +144,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('[AuthContext] Login failed:', error);
+      setError(getApiErrorMessage(error, 'Falha ao entrar. Verifique suas credenciais.'));
       throw error;
     }
   };
 
   const signInWithLinkedIn = async () => {
     try {
+      nextAuthRequest();
       await authClient.signIn.social({ provider: 'linkedin' });
       // After successful social login, the user is redirected back.
       // The checkAuth function will be triggered on page load to fetch user data.
@@ -147,14 +167,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    nextAuthRequest();
     track('Logout Performed');
     await authApi.logout();
     setUser(null);
+    setError(null);
+    setLoading(false);
     // No need to clear localStorage anymore
   };
 
   const refreshAuth = async (): Promise<boolean> => {
-    setLoading(true);
     const nextUser = await checkAuth();
     return !!nextUser;
   };

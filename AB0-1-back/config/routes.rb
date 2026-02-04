@@ -63,6 +63,7 @@ Rails.application.routes.draw do
           get :locations
           get :featured
           get :mine
+          get 'by_slug/:slug', to: 'companies#show_by_slug'
         end
 
         member do

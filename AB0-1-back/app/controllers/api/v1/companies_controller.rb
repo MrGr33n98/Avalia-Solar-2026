@@ -163,28 +163,15 @@ module Api
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company
-        serialized_company = CompanySerializer.new(@company).as_json
-        company_json = serialized_company.merge(
-          status: @company.status,
-          featured: @company.featured,
-          verified: @company.verified,
-          certifications: @company.certifications,
-          working_hours: @company.working_hours,
-          payment_methods: @company.payment_methods,
-          buttons: Rails.cache.fetch("company_buttons/#{@company.id}/#{@company.updated_at.to_i}", expires_in: 5.minutes) do
-            @company.company_buttons.active.ordered.select(:label, :url, :button_type).as_json(only: [:label, :url, :button_type])
-          end,
-          ctas: [],
-          cta_whatsapp_enabled: @company.respond_to?(:cta_whatsapp_enabled) ? @company.cta_whatsapp_enabled : nil,
-          cta_whatsapp_url: @company.respond_to?(:cta_whatsapp_url) ? @company.cta_whatsapp_url : nil,
-          whatsapp_button_style_json: @company.respond_to?(:whatsapp_button_style_json) ? @company.whatsapp_button_style_json : nil,
-          plan_status: @company.respond_to?(:plan_status) ? @company.plan_status : nil,
-          plan_id: @company.respond_to?(:plan_id) ? @company.plan_id : nil,
-          has_paid_plan: (@company.respond_to?(:plan_status) && @company.respond_to?(:plan)) ? @company.has_paid_plan? : false,
-          project_types: @company.project_types || [],
-          services_offered: @company.services_offered || []
-        )
-        render json: { company: company_json }, status: :ok
+        render json: { company: company_detail_payload(@company) }, status: :ok
+      end
+
+      # GET /api/v1/companies/by_slug/:slug
+      def show_by_slug
+        company = find_company_by_id_or_slug(params[:slug])
+        return render json: { error: 'Company not found' }, status: :not_found unless company
+
+        render json: { company: company_detail_payload(company) }, status: :ok
       end
 
       def categories
@@ -408,6 +395,30 @@ module Api
           financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
           financing_tab_visible: company.respond_to?(:financing_tab_visible?) ? company.financing_tab_visible? : false
         }
+      end
+
+      def company_detail_payload(company)
+        serialized_company = CompanySerializer.new(company).as_json
+        serialized_company.merge(
+          status: company.status,
+          featured: company.featured,
+          verified: company.verified,
+          certifications: company.certifications,
+          working_hours: company.working_hours,
+          payment_methods: company.payment_methods,
+          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}", expires_in: 5.minutes) do
+            company.company_buttons.active.ordered.select(:label, :url, :button_type).as_json(only: [:label, :url, :button_type])
+          end,
+          ctas: [],
+          cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
+          cta_whatsapp_url: company.respond_to?(:cta_whatsapp_url) ? company.cta_whatsapp_url : nil,
+          whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
+          plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
+          plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
+          has_paid_plan: (company.respond_to?(:plan_status) && company.respond_to?(:plan)) ? company.has_paid_plan? : false,
+          project_types: company.project_types || [],
+          services_offered: company.services_offered || []
+        )
       end
 
       def company_params
