@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_03_000300) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -206,7 +206,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.datetime "updated_at", null: false
     t.index ["banner_offer_id"], name: "index_banner_subscriptions_on_banner_offer_id"
     t.index ["checkout_session_id"], name: "index_banner_subscriptions_on_checkout_session_id"
-    t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "status = 'active' /*application:RailsBlogDemo*/"
+    t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "status = 'active' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["company_id"], name: "index_banner_subscriptions_on_company_id"
     t.index ["payment_reference"], name: "index_banner_subscriptions_on_payment_reference"
     t.index ["status"], name: "index_banner_subscriptions_on_status"
@@ -234,16 +234,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.text "rejected_reason"
     t.integer "width"
     t.integer "height"
-    t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
+    t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
     t.index ["company_id"], name: "index_banners_on_company_id"
     t.index ["end_date"], name: "index_banners_on_end_date"
     t.index ["moderation_status"], name: "index_banners_on_moderation_status"
-    t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
+    t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["priority"], name: "index_banners_on_priority"
     t.index ["slot_key"], name: "index_banners_on_slot_key"
-    t.index ["start_date", "end_date"], name: "idx_banners_date_range", where: "active = true /*application:RailsBlogDemo*/"
+    t.index ["start_date", "end_date"], name: "idx_banners_date_range", where: "active = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["start_date"], name: "index_banners_on_start_date"
   end
 
@@ -388,7 +388,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.json "project_types"
+    t.json "project_types", default: [], null: false
     t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
@@ -406,13 +406,31 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.string "slug", null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
     t.index ["slug"], name: "index_companies_on_slug", unique: true
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
+  end
+
+  create_table "company_access_requests", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "company_id", null: false
+    t.string "status", default: "pending", null: false
+    t.text "message"
+    t.text "admin_note"
+    t.datetime "requested_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "reviewed_at"
+    t.integer "reviewed_by_admin_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_company_access_requests_on_company_id"
+    t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
+    t.index ["status"], name: "index_company_access_requests_on_status"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "status IN ('pending','approved') /*application:RailsBlogDemo*/"
+    t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
   create_table "company_buttons", force: :cascade do |t|
@@ -526,8 +544,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.integer "role", default: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "active", null: false
     t.index ["company_id", "user_id"], name: "index_company_members_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_company_members_on_company_id"
+    t.index ["status"], name: "index_company_members_on_status"
     t.index ["user_id"], name: "index_company_members_on_user_id"
   end
 
@@ -939,7 +959,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.string "role", default: "user"
+    t.string "role", default: "review"
     t.integer "status", default: 0
     t.text "rejection_reason"
     t.integer "company_id"
@@ -992,6 +1012,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000000) do
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "companies", "plans"
+  add_foreign_key "company_access_requests", "admin_users", column: "reviewed_by_admin_user_id"
+  add_foreign_key "company_access_requests", "companies"
+  add_foreign_key "company_access_requests", "users"
   add_foreign_key "company_buttons", "companies"
   add_foreign_key "company_faqs", "companies"
   add_foreign_key "company_financing_offers", "companies"

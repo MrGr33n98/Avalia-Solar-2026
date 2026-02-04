@@ -66,16 +66,17 @@ module Api
       end
 
       def decoded_token
+        # Fallback to header (old method) for migration
+        header = request.headers['Authorization']
+        if header.present?
+          token = header.split.last
+          decoded = jwt_decode(token)
+          return decoded if decoded
+        end
+
         # Try to get token from cookie first (new method)
         token = cookies.signed[:jwt_token]
         return jwt_decode(token) if token.present?
-
-        # Fallback to header (old method) for migration
-        header = request.headers['Authorization']
-        return unless header
-
-        token = header.split.last
-        jwt_decode(token)
       end
 
       def render_error(message, status = :unprocessable_entity, code: nil)

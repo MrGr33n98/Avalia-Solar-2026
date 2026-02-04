@@ -14,6 +14,12 @@ import LocationSearch from './LocationSearch';
 
 import { CategoriesMegaMenu } from './categories/CategoriesMegaMenu';
 import { MobileCategoriesDrawer } from './navigation/MobileCategoriesDrawer';
+import dynamic from 'next/dynamic';
+
+const CompanySwitcher = dynamic(() => import('./company/CompanySwitcher').then(mod => mod.CompanySwitcher), {
+  ssr: false,
+  loading: () => <div className="h-9 w-48 animate-pulse rounded-md bg-muted/50" />
+});
 
 export default function Navbar() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -157,6 +163,11 @@ export default function Navbar() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center ml-auto gap-2">
+          {isAuthenticated && user?.role !== 'review' && (
+            <div className="mr-1">
+              <CompanySwitcher className="w-[140px]" />
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"

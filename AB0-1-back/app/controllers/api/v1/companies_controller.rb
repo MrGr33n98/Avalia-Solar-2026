@@ -5,7 +5,7 @@ module Api
       include Paginatable # TASK-017: Enable pagination
       
       before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories]
-      before_action :authenticate_api_user, only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors analytics_traffic]
+      before_action :authenticate_api_user, only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!, only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
 
@@ -57,7 +57,7 @@ module Api
             term = params[:q].to_s.strip
             if term.present?
               @companies = @companies.where(
-                'companies.name ILIKE :q OR companies.slug ILIKE :q OR companies.cnpj ILIKE :q',
+                'LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.slug) LIKE LOWER(:q) OR LOWER(companies.cnpj) LIKE LOWER(:q)',
                 q: "%#{term}%"
               )
             end
@@ -121,35 +121,45 @@ module Api
 
       # GET /api/v1/companies/mine
       def mine
-        authenticate_api_user
-        
-        @companies = current_user.active_member_companies.includes(:categories)
+        # Use a relation directly to avoid loading everything into memory at once
+        companies_scope = current_user.active_member_companies.includes(:categories)
         
         if params[:q].present?
           term = params[:q].to_s.strip
-          @companies = @companies.where('name ILIKE ? OR city ILIKE ?', "%#{term}%", "%#{term}%")
+          companies_scope = companies_scope.where('LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.city) LIKE LOWER(:q)', q: "%#{term}%")
         end
 
-        # Cache for 5 minutes as requested
-        cache_key = "user_#{current_user.id}_companies_mine_#{params[:q]}"
+        # Cache for 5 minutes as requested, handle cache failures gracefully
+        cache_key = "user_#{current_user.id}_companies_mine_#{Digest::SHA1.hexdigest(params[:q].to_s)}"
         
-        companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-          @companies.map do |company|
-            {
-              id: company.id,
-              name: company.name,
-              slug: company.slug,
-              city: company.city,
-              state: company.state,
-              logo_url: company.logo_url,
-              category: company.categories.first&.name,
-              status: company.status,
-              verified: company.verified
-            }
+        begin
+          companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+            fetch_mine_companies_data(companies_scope)
           end
+        rescue => e
+          Rails.logger.error("[CompaniesController#mine] Cache error: #{e.message}")
+          companies_data = fetch_mine_companies_data(companies_scope)
         end
 
         render json: companies_data
+      end
+
+      private
+
+      def fetch_mine_companies_data(scope)
+        scope.map do |company|
+          {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            city: company.city,
+            state: company.state,
+            logo_url: company.logo_url,
+            category: company.categories.first&.name,
+            status: company.status,
+            verified: company.verified
+          }
+        end
       end
 
       # GET /api/v1/companies/:id
