@@ -59,6 +59,7 @@ import { track } from "@/lib/analytics";
 interface CompanyDetailClientProps {
   company: Company;
   initialReviews?: Review[];
+  initialReviewsLoaded?: boolean;
 }
 
 interface ExtendedCompany extends Company {
@@ -68,7 +69,11 @@ interface ExtendedCompany extends Company {
   whatsapp_url?: string;
 }
 
-export default function CompanyDetailClient({ company, initialReviews = [] }: CompanyDetailClientProps): JSX.Element {
+export default function CompanyDetailClient({
+  company,
+  initialReviews = [],
+  initialReviewsLoaded = false,
+}: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
@@ -97,7 +102,8 @@ export default function CompanyDetailClient({ company, initialReviews = [] }: Co
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [productsLoading, setProductsLoading] = useState<boolean>(true);
-  const [reviewsLoading, setReviewsLoading] = useState<boolean>(initialReviews.length === 0);
+  const reviewsLoaded = initialReviewsLoaded || initialReviews.length > 0;
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(!reviewsLoaded);
   const [error, setError] = useState<string | null>(null);
 
   const [reviewAnalytics, setReviewAnalytics] = useState<ReviewAnalytics | null>(null);
@@ -232,7 +238,7 @@ export default function CompanyDetailClient({ company, initialReviews = [] }: Co
     };
   }, [reviews, reviewAnalytics, products, company.created_at, company.average_rating, company.rating_count]);
 
-  const shouldFetchReviews = initialReviews.length === 0;
+  const shouldFetchReviews = !reviewsLoaded;
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {

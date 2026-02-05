@@ -138,7 +138,11 @@ export default async function CompanyDetailPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando detalhes da empresa...</div>}>
-        <CompanyDetailClient company={company} initialReviews={initialReviews || []} />
+        <CompanyDetailClient
+          company={company}
+          initialReviews={initialReviews || []}
+          initialReviewsLoaded
+        />
       </Suspense>
     </>
   );
