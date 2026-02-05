@@ -59,7 +59,6 @@ puts "\n🔌 Criando categoria raiz de Mobilidade Elétrica..."
 root = Category.find_or_create_by!(seo_url: "mobilidade-eletrica") do |c|
   c.name = "Mobilidade Elétrica"
   c.seo_title = "Mobilidade Elétrica no Brasil 2026 | Carregadores, Veículos e Instaladores"
-  c.meta_description = "Diretório completo de carregadores elétricos, veículos EV, instaladores e infraestrutura de recarga no Brasil. Compare avaliações reais e encontre o melhor para sua casa, empresa ou condomínio."
   c.short_description = "Tudo sobre veículos elétricos e recarga: wallbox residencial, eletropostos públicos, instaladores certificados e integração com energia solar."
   c.description = "O guia definitivo para mobilidade elétrica no Brasil. Encontre as melhores soluções de carregamento, veículos e serviços com avaliações reais de usuários."
   c.kind = "main"
@@ -120,7 +119,6 @@ subcategories.each do |key, data|
     c.name = data[:name]
     c.parent_id = root.id
     c.seo_title = data[:seo_title]
-    c.meta_description = data[:short_description] # Reutiliza como meta
     c.short_description = data[:short_description]
     c.description = data[:short_description] # Pode expandir depois
     c.kind = "main"
