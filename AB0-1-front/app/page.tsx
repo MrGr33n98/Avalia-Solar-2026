@@ -119,7 +119,9 @@ async function getBanners(position: string): Promise<Banner[]> {
 }
 
 export default async function Home() {
-  const { allCategories, featuredCategories, companies, categoriesBanners, companiesBanners } = await getHomeData();
+  // We start all fetches in parallel, but we will await them only where needed
+  // This allows streaming the initial HTML (with Hero) faster if we use Suspense
+  const dataPromise = getHomeData();
 
   return (
     <main className="flex-grow">
@@ -127,11 +129,13 @@ export default async function Home() {
         <HomePageTracking />
       </Suspense>
 
-      <LandingHero categories={allCategories} />
+      <Suspense fallback={<div className="min-h-[600px] animate-pulse bg-gray-100" />}>
+        <LandingHeroWrapper dataPromise={dataPromise} />
+      </Suspense>
 
-      <div className="py-8 bg-slate-50 border-y border-slate-100">
-        <LandingCategoryChips categories={featuredCategories} />
-      </div>
+      <Suspense fallback={<div className="h-20 animate-pulse bg-gray-50" />}>
+        <LandingCategoryChipsWrapper dataPromise={dataPromise} />
+      </Suspense>
 
       <HowItWorks />
 
@@ -139,64 +143,13 @@ export default async function Home() {
 
       <TrustRow />
 
-      <SectionShell zebra>
-        <BannerByLocation location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
+      <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
+        <CategoriesSectionWrapper dataPromise={dataPromise} />
+      </Suspense>
 
-        <SectionHeader
-          title="Soluções por Categoria"
-          subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
-        />
-
-        {featuredCategories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {featuredCategories.map((category) => (
-              <LandingCategoryCard key={category.id} category={category} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState message="Nenhuma categoria encontrada." />
-        )}
-
-        <div className="mt-8 md:mt-10 text-center">
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/categories" className="group">
-              Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
-        </div>
-      </SectionShell>
-
-      <SectionShell>
-        <BannerByLocation location="companies_top" className="mb-8" initialBanners={companiesBanners} />
-
-        <SectionHeader
-          title="Empresas em Destaque"
-          subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
-          right={
-            <Button asChild variant="ghost" className="text-brand-blue font-bold">
-              <Link href="/companies" className="group">
-                Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </Button>
-          }
-        />
-
-        {companies.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
-            {companies.slice(0, 8).map((company) => (
-              <CompanyCard key={company.id} company={company} compact={true} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState message="Nenhuma empresa em destaque encontrada." />
-        )}
-
-        <div className="mt-12 text-center">
-          <Link href="/companies">
-            <CTAPrimaryButton label="Explorar todas as empresas" className="md:w-auto w-full" />
-          </Link>
-        </div>
-      </SectionShell>
+      <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
+        <CompaniesSectionWrapper dataPromise={dataPromise} />
+      </Suspense>
 
       {/* Conversion Banner */}
       <section className="py-20 bg-slate-900 text-white overflow-hidden relative">
@@ -225,5 +178,92 @@ export default async function Home() {
 
       <FloatingWhatsApp />
     </main>
+  );
+}
+
+// ==============================
+// WRAPPERS FOR STREAMING
+// ==============================
+
+async function LandingHeroWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+  const { allCategories } = await dataPromise;
+  return <LandingHero categories={allCategories} />;
+}
+
+async function LandingCategoryChipsWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+  const { featuredCategories } = await dataPromise;
+  return (
+    <div className="py-8 bg-slate-50 border-y border-slate-100">
+      <LandingCategoryChips categories={featuredCategories} />
+    </div>
+  );
+}
+
+async function CategoriesSectionWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+  const { featuredCategories, categoriesBanners } = await dataPromise;
+  return (
+    <SectionShell zebra>
+      <BannerByLocation location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
+
+      <SectionHeader
+        title="Soluções por Categoria"
+        subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
+      />
+
+      {featuredCategories.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {featuredCategories.map((category) => (
+            <LandingCategoryCard key={category.id} category={category} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="Nenhuma categoria encontrada." />
+      )}
+
+      <div className="mt-8 md:mt-10 text-center">
+        <Button asChild variant="outline" className="rounded-full">
+          <Link href="/categories" className="group">
+            Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </Button>
+      </div>
+    </SectionShell>
+  );
+}
+
+async function CompaniesSectionWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+  const { companies, companiesBanners } = await dataPromise;
+  return (
+    <SectionShell>
+      <BannerByLocation location="companies_top" className="mb-8" initialBanners={companiesBanners} />
+
+      <SectionHeader
+        title="Empresas em Destaque"
+        subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
+        right={
+          <Button asChild variant="ghost" className="text-brand-blue font-bold">
+            <Link href="/companies" className="group">
+              Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </Button>
+        }
+      />
+
+      {companies.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+          {companies.slice(0, 8).map((company) => (
+            <CompanyCard key={company.id} company={company} compact={true} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="Nenhuma empresa em destaque encontrada." />
+      )}
+
+      <div className="mt-12 text-center">
+        <Link href="/companies">
+          <CTAPrimaryButton label="Explorar todas as empresas" className="md:w-auto w-full" />
+        </Link>
+      </div>
+    </SectionShell>
   );
 }

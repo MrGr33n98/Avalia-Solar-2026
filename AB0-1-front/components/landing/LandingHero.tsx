@@ -81,6 +81,7 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
           height={600}
           fill
           priority
+          fetchPriority="high"
           quality={90}
           className="object-cover object-center"
           sizes="100vw"

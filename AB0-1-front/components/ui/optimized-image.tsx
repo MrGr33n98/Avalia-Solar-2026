@@ -30,6 +30,7 @@ interface OptimizedImageProps {
   useAspectRatio?: boolean;
   unoptimized?: boolean;
   loading?: 'lazy' | 'eager';
+  fetchPriority?: 'high' | 'low' | 'auto';
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -74,6 +75,7 @@ export function OptimizedImage({
   useAspectRatio = true,
   unoptimized = false,
   loading,
+  fetchPriority,
   onLoad,
   onError,
 }: OptimizedImageProps) {
@@ -96,6 +98,7 @@ export function OptimizedImage({
     alt,
     quality,
     priority,
+    fetchPriority: priority ? 'high' : fetchPriority,
     onLoad: handleLoad,
     onError: handleError,
     className: cn(

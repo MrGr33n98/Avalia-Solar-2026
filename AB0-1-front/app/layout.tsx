@@ -80,7 +80,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <head>
-        <GoogleTagManager gtmId={GTM_ID} gaId={GA_ID} />
         <link rel="preconnect" href="https://api.avaliasolar.com.br" />
         <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
@@ -93,16 +92,20 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://cdn.mxpnl.com" />
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
-        {/* Preload critical hero image for Landing Page */}
-        <link
-          rel="preload"
-          as="image"
-          href="/images/banner-landing-page-avalia-solar.jpg"
-          imageSrcSet="/images/banner-landing-page-avalia-solar.jpg 1200w"
-          imageSizes="100vw"
+        
+        {/* Preload critical LCP image with high priority */}
+        <link 
+          rel="preload" 
+          href="/images/banner-landing-page-avalia-solar.jpg" 
+          as="image" 
+          type="image/jpeg"
+          fetchPriority="high"
         />
       </head>
       <body suppressHydrationWarning className={inter.className}>
+        {/* Google Tag Manager - Initialized early in body to avoid blocking head, but still before main content */}
+        <GoogleTagManager gtmId={GTM_ID} gaId={GA_ID} />
+        
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
         

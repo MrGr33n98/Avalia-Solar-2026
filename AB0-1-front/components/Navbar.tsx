@@ -16,7 +16,7 @@ import { CategoriesMegaMenu } from './categories/CategoriesMegaMenu';
 import { MobileCategoriesDrawer } from './navigation/MobileCategoriesDrawer';
 import dynamic from 'next/dynamic';
 
-const CompanySwitcher = dynamic(() => import('./company/CompanySwitcher').then(mod => mod.CompanySwitcher), {
+const CompanySwitcher = dynamic(() => import('./company/CompanySwitcher').then(mod => ({ default: mod.CompanySwitcher })), {
   ssr: false,
   loading: () => <div className="h-9 w-48 animate-pulse rounded-md bg-muted/50" />
 });
