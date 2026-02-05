@@ -1,5 +1,5 @@
 ﻿# DiagnÃ³stico Completo - AB0-1 Project
-**Gerado em:** 2026-02-04 20:27:49
+**Gerado em:** 2026-02-05 10:43:27
 
 ---
 
@@ -7,18 +7,18 @@
 
 ### Frontend (AB0-1-front)
 - **Status:** [OK] Pasta encontrada
-- **Arquivos JavaScript/TypeScript:** 546 arquivos (67370 linhas)
+- **Arquivos JavaScript/TypeScript:** 459 arquivos (53057 linhas)
 - **Arquivos CSS/SCSS:** 6 arquivos (8128 linhas)
 - **Arquivos HTML/Vue:** 1 arquivos (85 linhas)
 - **Package.json:** [OK] Presente
-**Framework/Biblioteca Principal:** @heroicons/react, @hookform/resolvers, @radix-ui/react-accordion, @radix-ui/react-alert-dialog, @radix-ui/react-aspect-ratio, @radix-ui/react-avatar, @radix-ui/react-checkbox, @radix-ui/react-collapsible, @radix-ui/react-context-menu, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, @radix-ui/react-hover-card, @radix-ui/react-label, @radix-ui/react-menubar, @radix-ui/react-navigation-menu, @radix-ui/react-popover, @radix-ui/react-progress, @radix-ui/react-radio-group, @radix-ui/react-scroll-area, @radix-ui/react-select, @radix-ui/react-separator, @radix-ui/react-slider, @radix-ui/react-slot, @radix-ui/react-switch, @radix-ui/react-tabs, @radix-ui/react-toast, @radix-ui/react-toggle, @radix-ui/react-toggle-group, @radix-ui/react-tooltip, @rails/actioncable, @sentry/nextjs, @tanstack/react-query, @tanstack/react-table, @types/node, @types/react, @types/react-dom, autoprefixer, axios, better-auth, class-variance-authority, clsx, cmdk, date-fns, embla-carousel-autoplay, embla-carousel-react, framer-motion, html-to-image, input-otp, lucide-react, mixpanel-browser, next, next-themes, postcss, prop-types, react, react-day-picker, react-dom, react-hook-form, react-resizable-panels, recharts, sonner, tailwind-merge, tailwindcss, tailwindcss-animate, typescript, vaul, zod
+**Framework/Biblioteca Principal:** @hookform/resolvers, @radix-ui/react-accordion, @radix-ui/react-alert-dialog, @radix-ui/react-aspect-ratio, @radix-ui/react-avatar, @radix-ui/react-checkbox, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, @radix-ui/react-label, @radix-ui/react-popover, @radix-ui/react-progress, @radix-ui/react-scroll-area, @radix-ui/react-select, @radix-ui/react-separator, @radix-ui/react-slider, @radix-ui/react-slot, @radix-ui/react-switch, @radix-ui/react-tabs, @radix-ui/react-toast, @radix-ui/react-toggle, @radix-ui/react-toggle-group, @radix-ui/react-tooltip, @rails/actioncable, @sentry/nextjs, @tanstack/react-query, @types/node, @types/react, @types/react-dom, autoprefixer, better-auth, class-variance-authority, clsx, cmdk, critters, date-fns, embla-carousel-autoplay, embla-carousel-react, framer-motion, html-to-image, input-otp, lucide-react, mixpanel-browser, next, next-themes, postcss, react, react-dom, react-hook-form, recharts, sonner, tailwind-merge, tailwindcss, tailwindcss-animate, typescript, zod
 
 
 ### Backend (AB0-1-back)
 - **Status:** [OK] Pasta encontrada
 - **Arquivos Python:** 0 arquivos (0 linhas)
 - **Arquivos JavaScript/TypeScript:** 10 arquivos (655 linhas)
-- **Arquivos Ruby:** 3505 arquivos (94469 linhas)
+- **Arquivos Ruby:** 3503 arquivos (94250 linhas)
 - **Package.json:** [X] Ausente
 - **requirements.txt:** [X] Ausente
 - **Gemfile:** [OK] Presente
@@ -72,9 +72,6 @@ AB0-1-front/
 |   |   +--- page.tsx
 |   |--- categories
 |   |   |--- [slug]
-|   |   |--- CategoriesClient.tsx
-|   |   |--- CategoriesList.tsx
-|   |   |--- CategoryContext.tsx
 |   |   |--- error.tsx
 |   |   |--- layout.tsx
 |   |   +--- page.tsx
@@ -99,39 +96,28 @@ AB0-1-front/
 |   |   |   +--- page.tsx
 |   |   |--- components
 |   |   |   |--- AdvancedAnalytics.tsx
-|   |   |   |--- AdvancedAnalyticsIntegrated.tsx
 |   |   |   |--- AnalyticsSettings.tsx
 |   |   |   |--- ApprovalsPanel.tsx
-|   |   |   |--- AzureOverview.tsx
-|   |   |   |--- BacklinksButtonManager.tsx
 |   |   |   |--- BannersSponsorship.tsx
 |   |   |   |--- CampaignsMarketing.tsx
 |   |   |   |--- CategoriesManagement.tsx
 |   |   |   |--- CommandMenu.tsx
-|   |   |   |--- CompanyDashboardRefactored.tsx
 |   |   |   |--- CompanyInfo.tsx
-|   |   |   |--- CompanyInfoRefactored.tsx
 |   |   |   |--- CompanySettings.tsx
 |   |   |   |--- CompetitorBenchmark.tsx
-|   |   |   |--- DashboardHeader.tsx
-|   |   |   |--- DashboardSidebar.tsx
 |   |   |   |--- EnterpriseDashboard.tsx
 |   |   |   |--- EnterpriseHeader.tsx
-|   |   |   |--- EnterpriseMetricCard.tsx
 |   |   |   |--- EnterpriseSidebar.tsx
 |   |   |   |--- LeadsOpportunities.tsx
-|   |   |   |--- LeadsOpportunitiesRefactored.tsx
 |   |   |   |--- MediaGallery.tsx
 |   |   |   |--- MetricCard.tsx
 |   |   |   |--- OverviewTab.tsx
 |   |   |   |--- PerformanceMetrics.tsx
-|   |   |   |--- PremiumBannerManagement.tsx
 |   |   |   |--- ProductsManagement.tsx
 |   |   |   |--- RealtimeDashboard.tsx
 |   |   |   |--- RealtimeKPICard.tsx
 |   |   |   |--- ReviewsAnalytics.tsx
 |   |   |   |--- ReviewsManagement.tsx
-|   |   |   |--- ReviewsManagementRefactored.tsx
 |   |   |   |--- StatsCard.tsx
 |   |   |   |--- StyleAnalysis.tsx
 |   |   |   +--- ThemeToggle.tsx
@@ -146,11 +132,8 @@ AB0-1-front/
 |   |   |--- types
 |   |   |   +--- index.ts
 |   |   |--- utils
-|   |   |   |--- index.ts
-|   |   |   +--- validation.ts
-|   |   |--- company-dashboard.tsx
+|   |   |   +--- index.ts
 |   |   |--- error.tsx
-|   |   |--- page-new.tsx
 |   |   |--- page.tsx
 |   |   +--- README.md
 |   |--- dmca
@@ -164,8 +147,6 @@ AB0-1-front/
 |   |--- lib
 |   |   +--- cable.ts
 |   |--- login
-|   |   |--- LoginPageContent.tsx
-|   |   |--- page-wrapper.tsx
 |   |   +--- page.tsx
 |   |--- logout
 |   |   +--- page.tsx
@@ -188,11 +169,7 @@ AB0-1-front/
 |   |--- rating-stars
 |   |   +--- page.tsx
 |   |--- register
-|   |   |--- CompanyRegisterForm.tsx
-|   |   |--- page.tsx
-|   |   |--- RegisterBenefits.tsx
-|   |   |--- RegisterModal.tsx
-|   |   +--- RegisterSuccess.tsx
+|   |   +--- page.tsx
 |   |--- register-company
 |   |--- register-user
 |   |   +--- page.tsx
@@ -392,25 +369,20 @@ AB0-1-front/
 |   |--- admin
 |   |   +--- CategoryImporter.tsx
 |   |--- blog
-|   |   |--- AuthorBio.tsx
 |   |   |--- AuthorCardWithStats.tsx
 |   |   |--- BlogFiltersBar.tsx
 |   |   |--- BlogHero.tsx
 |   |   |--- BlogPromoBanner.tsx
 |   |   |--- BlogSidebar.tsx
 |   |   |--- BlogTimeTracker.tsx
-|   |   |--- CategoryFilter.tsx
 |   |   |--- CategoryHighlights.tsx
 |   |   |--- ChecklistCard.tsx
-|   |   |--- EnergyCalculator.tsx
 |   |   |--- FeaturedPostsSection.tsx
-|   |   |--- PostAuthorCard.tsx
 |   |   |--- PostCard.tsx
 |   |   |--- PostHeader.tsx
 |   |   |--- PostSidebar.tsx
 |   |   |--- PostTOC.tsx
 |   |   |--- ReadingProgress.tsx
-|   |   |--- RelatedPosts.tsx
 |   |   |--- RelatedPostsGrid.tsx
 |   |   |--- ShareButtons.tsx
 |   |   |--- StickyMobileCTA.tsx
@@ -436,17 +408,16 @@ AB0-1-front/
 |   |   |--- RatingFilter.tsx
 |   |   |--- SortFilter.tsx
 |   |   +--- types.ts
+|   |--- home
+|   |   +--- HomePageTracking.tsx
 |   |--- landing
 |   |   |--- HowItWorks.tsx
 |   |   |--- LandingCategoryCard.tsx
 |   |   |--- LandingCategoryChips.tsx
-|   |   |--- LandingHero.tsx
-|   |   |--- LandingHeroBanner.tsx
+|   |   |--- LandingHeroClient.tsxclear
 |   |   |--- LandingTrustBanner.tsx
 |   |   +--- SavingsCalculator.tsx
 |   |--- navigation
-|   |   |--- CategoryColumn.tsx
-|   |   |--- MegaMenuCategories.tsx
 |   |   +--- MobileCategoriesDrawer.tsx
 |   |--- products
 |   |   |--- FeaturedCompaniesStrip.tsx
@@ -462,26 +433,17 @@ AB0-1-front/
 |   |   |--- badge.tsx
 |   |   |--- breadcrumb.tsx
 |   |   |--- button.tsx
-|   |   |--- calendar.tsx
 |   |   |--- card.tsx
 |   |   |--- carousel.tsx
-|   |   |--- chart.tsx
 |   |   |--- checkbox.tsx
-|   |   |--- collapsible.tsx
 |   |   |--- command.tsx
-|   |   |--- context-menu.tsx
 |   |   |--- CTAPrimaryButton.tsx
-|   |   |--- data-table.tsx
 |   |   |--- dialog.tsx
-|   |   |--- drawer.tsx
 |   |   |--- dropdown-menu.tsx
 |   |   |--- form.tsx
-|   |   |--- hover-card.tsx
 |   |   |--- input-otp.tsx
 |   |   |--- input.tsx
 |   |   |--- label.tsx
-|   |   |--- menubar.tsx
-|   |   |--- navigation-menu.tsx
 |   |   |--- NPSDetailedCard.tsx
 |   |   |--- OnboardingIncentive.tsx
 |   |   |--- OpportunitiesCard.tsx
@@ -489,9 +451,7 @@ AB0-1-front/
 |   |   |--- pagination.tsx
 |   |   |--- popover.tsx
 |   |   |--- progress.tsx
-|   |   |--- radio-group.tsx
 |   |   |--- RankingTable.tsx
-|   |   |--- resizable.tsx
 |   |   |--- scroll-area.tsx
 |   |   |--- select.tsx
 |   |   |--- separator.tsx
@@ -503,51 +463,56 @@ AB0-1-front/
 |   |   |--- switch.tsx
 |   |   |--- table.tsx
 |   |   |--- tabs.tsx
-|   |   +--- textarea.tsx
+|   |   |--- textarea.tsx
+|   |   |--- toast.tsx
+|   |   |--- toggle-group.tsx
+|   |   |--- toggle.tsx
+|   |   |--- tooltip.tsx
+|   |   |--- TrustRow.tsx
+|   |   +--- WhatsAppCTAButton.tsx
 |   |--- __tests__
 |   |   |--- CategoryCard.test.tsx
 |   |   |--- CompanyCard.test.tsx
 |   |   +--- CompanyCardCarousel.test.tsx
-|   |--- AdvancedCarousel.tsx
 |   |--- AppBreadcrumb.tsx
 |   |--- ArticleBanner.tsx
 |   |--- ArticleConversionSection.tsx
-|   |--- AuthorAvatarFloating.tsx
-|   |--- Banner.tsx
 |   |--- BannerByLocation.tsx
-|   |--- BannerCarousel.tsx
 |   |--- BannerContainer.tsx
-|   |--- BannerPlaceholder.tsx
-|   |--- BlogCard.tsx
 |   |--- BreadcrumbJsonLd.tsx
-|   |--- CategoriesIndex.tsx
-|   |--- CategoriesIndexV2.tsx
 |   |--- CategoriesIndexWithSidebar.tsx
-|   |--- CategoryBanner.tsx
 |   |--- CategoryCard.module.css
 |   |--- CategoryCard.tsx
-|   |--- CategoryCardFeatured.tsx
 |   |--- CategoryCardMinimal.tsx
-|   |--- CategoryDropdown.tsx
 |   |--- CategoryDropdownItem.tsx
 |   |--- ClientBody.tsx
-|   |--- ClientOnly.tsx
-|   |--- CompaniesFiltersSheet.tsx
-|   |--- CompaniesResultsBar.tsx
-|   |--- CompaniesSidebarFilters.tsx
 |   |--- CompanyCard.module.css
 |   |--- CompanyCard.test.tsx
 |   |--- CompanyCard.tsx
 |   |--- CompanyCardCarousel.tsx
 |   |--- ComparisonFloatingBar.tsx
 |   |--- CookieConsent.tsx
-|   |--- DashboardStats.tsx
 |   |--- error-boundary.tsx
-|   |--- error-test-button.tsx
 |   |--- ErrorBoundary.tsx
 |   |--- FloatingWhatsApp.tsx
 |   |--- Footer.tsx
-|   +--- GoogleTagManager.tsx
+|   |--- GoogleTagManager.tsx
+|   |--- Header.tsx
+|   |--- Hero.tsx
+|   |--- Hero.tsx.bak
+|   |--- ItemListJsonLd.tsx
+|   |--- JsonLd.tsx
+|   |--- LoadingSpinner.tsx
+|   |--- LocationFilter.tsx
+|   |--- LocationSearch.tsx
+|   |--- Navbar.tsx
+|   |--- NavbarSearch.tsx
+|   |--- ProductCard.tsx
+|   |--- QuickLeadModal.tsx
+|   |--- QuoteForm.tsx
+|   |--- QuoteWizardModal.tsx
+|   |--- RatingStars.tsx
+|   +--- ReviewBadge.test.tsx
 |--- config
 |   +--- environments
 |       |--- development.rb
@@ -555,7 +520,6 @@ AB0-1-front/
 |--- context
 |   +--- CompanyContext.tsx
 |--- contexts
-|   |--- AnalyticsContext.tsx
 |   +--- AuthContext.tsx
 |--- cypress
 |   +--- e2e
@@ -566,31 +530,20 @@ AB0-1-front/
 |   |--- RealtimeDashboard.md
 |   +--- select-company-click-fix.md
 |--- hooks
-|   |--- index.ts
-|   |--- use-error-handler.ts
 |   |--- use-toast.ts
 |   |--- useAuth.ts
-|   |--- useAutoLocalization.ts
 |   |--- useBannerGlobal.ts
 |   |--- useBanners.ts
 |   |--- useBannersQuery.ts
 |   |--- useCategories.ts
 |   |--- useCategoriesQuery.ts
 |   |--- useCategoriesTree.ts
-|   |--- useCategory.ts
-|   |--- useCategoryByIdOrSlug.ts
-|   |--- useCompanies.ts
 |   |--- useCompaniesSafe.ts
 |   |--- useComparison.ts
-|   |--- useDashboard.ts
-|   |--- useDebounce.ts
 |   |--- useFavorites.ts
 |   |--- useLocationData.ts
 |   |--- usePageTracking.ts
-|   |--- useProduct.ts
 |   |--- useProducts.ts
-|   |--- useReviews.ts
-|   |--- useSearch.ts
 |   +--- useUtm.ts
 |--- lib
 |   |--- analytics
@@ -608,21 +561,18 @@ AB0-1-front/
 |   |--- __tests__
 |   |   +--- utils.test.ts
 |   |--- api-analytics.ts
-|   |--- api-check.ts
 |   |--- api-client.ts
 |   |--- api-config.ts
 |   |--- api-error.ts
 |   |--- api-faq.ts
 |   |--- api.ts
 |   |--- authClient.ts
-|   |--- betterAuthClient.ts
 |   |--- cable.ts
 |   |--- color-analyzer.ts
 |   |--- content-fixer.ts
 |   |--- dataLayer.ts
 |   |--- error-handler.ts
 |   |--- financing.ts
-|   |--- index.ts
 |   |--- lead-engine.ts
 |   |--- QueryProvider.tsx
 |   |--- quote-wizard.ts
@@ -682,8 +632,6 @@ AB0-1-front/
 |   |--- index.ts
 |   +--- rails__actioncable.d.ts
 |--- utils
-|   |--- address.ts
-|   |--- categories.ts
 |   +--- image.ts
 |--- __tests__
 |   |--- app
@@ -747,6 +695,7 @@ AB0-1-front/
 |--- instrumentation.ts
 |--- jest.config.js
 |--- jest.setup.js
+|--- knip.json
 |--- lighthouse-developers-chrome.json
 |--- lighthouse-login.json
 |--- lighthouserc.json
@@ -758,8 +707,7 @@ AB0-1-front/
 |--- package.json
 |--- PERFORMANCE_OPTIMIZATION_REPORT.md
 |--- playwright.config.ts
-|--- PLAYWRIGHT_TESTS_FIXED.md
-+--- postcss.config.js
++--- PLAYWRIGHT_TESTS_FIXED.md
 
 ```
 
@@ -1119,7 +1067,8 @@ AB0-1-back/
 |   |   |--- jwt_blacklist_service.rb
 |   |   |--- lead_distribution_service.rb
 |   |   |--- notification_service.rb
-|   |   +--- search_service.rb
+|   |   |--- search_service.rb
+|   |   +--- slack_notification_service.rb
 |   |--- validators
 |   |   |--- phone_validator.rb
 |   |   +--- url_validator.rb
@@ -1470,9 +1419,6 @@ AB0-1-back/
 |   |--- recover_from_dump.rb
 |   |--- schema.rb
 |   |--- seeds.rb
-|   |--- seeds_category_banners.rb
-|   |--- seeds_companies_dump.rb
-|   |--- seeds_mobilidade_eletrica.rb
 |   |--- SEED_MOBILIDADE_ELETRICA.md
 |   +--- test.sqlite3
 |--- docs
@@ -6941,32 +6887,27 @@ AB0-1-back/
     "dev:clean": "npm run clean:next && next dev",
     "build": "next build",
     "build:clean": "npm run clean:next && next build",
+    "analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "cross-env NODE_ENV=development jest",
     "test:watch": "cross-env NODE_ENV=development jest --watch",
     "test:coverage": "cross-env NODE_ENV=development jest --coverage",
-    "test:ci": "cross-env NODE_ENV=development jest --ci --coverage --maxWorkers=2"
+    "test:ci": "cross-env NODE_ENV=development jest --ci --coverage --maxWorkers=2",
+    "knip": "knip"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.1",
-    "@radix-ui/react-collapsible": "^1.1.0",
-    "@radix-ui/react-context-menu": "^2.2.1",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
-    "@radix-ui/react-hover-card": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
-    "@radix-ui/react-menubar": "^1.1.1",
-    "@radix-ui/react-navigation-menu": "^1.2.0",
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-progress": "^1.1.0",
-    "@radix-ui/react-radio-group": "^1.2.0",
     "@radix-ui/react-scroll-area": "^1.1.0",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-separator": "^1.1.0",
@@ -6981,16 +6922,15 @@ AB0-1-back/
     "@rails/actioncable": "^7.1.0",
     "@sentry/nextjs": "^8.0.0",
     "@tanstack/react-query": "^5.90.12",
-    "@tanstack/react-table": "^8.21.3",
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
-    "axios": "^1.12.2",
     "better-auth": "^1.4.12",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "critters": "^0.0.23",
     "date-fns": "^3.6.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
@@ -7002,37 +6942,31 @@ AB0-1-back/
     "next": "^14.2.34",
     "next-themes": "^0.3.0",
     "postcss": "8.4.30",
-    "prop-types": "^15.8.1",
     "react": "^18.2.0",
-    "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.63.0",
-    "react-resizable-panels": "^2.1.3",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.2.2",
-    "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@eslint/config-array": "^0.21.0",
-    "@eslint/object-schema": "^2.1.6",
+    "@next/bundle-analyzer": "^14.2.34",
     "@playwright/test": "^1.53.2",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/lodash": "^4.17.20",
-    "@types/mixpanel-browser": "^2.60.0",
-    "@types/testing-library__jest-dom": "^5.14.9",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.33",
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0"
+    "jest-environment-jsdom": "^30.2.0",
+    "knip": "^5.83.0"
   }
 }
 

@@ -20,8 +20,8 @@ import {
   Zap
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { debounce } from 'lodash';
-import { track } from '@/lib/analytics';
+import debounce from 'lodash/debounce';
+import { track } from '@/lib/analytics/lazy';
 
 interface SearchBarProps {
   placeholder?: string;

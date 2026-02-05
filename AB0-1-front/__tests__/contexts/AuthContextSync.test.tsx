@@ -25,7 +25,7 @@ jest.mock('@/lib/authClient', () => ({
   }
 }));
 
-jest.mock('@/lib/analytics', () => ({
+jest.mock('@/lib/analytics/lazy', () => ({
   identify: jest.fn(),
   track: jest.fn()
 }));

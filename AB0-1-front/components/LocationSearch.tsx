@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLocationData } from '@/hooks/useLocationData';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 interface LocationSearchProps {
   className?: string;

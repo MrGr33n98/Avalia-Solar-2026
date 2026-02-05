@@ -71,7 +71,7 @@ const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false }
 
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
-import { track } from "@/lib/analytics";
+import { track } from "@/lib/analytics/lazy";
 
 interface CompanyDetailClientProps {
   company: Company;

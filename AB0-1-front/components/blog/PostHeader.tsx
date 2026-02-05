@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import ShareButtons from './ShareButtons';
 
 interface PostHeaderProps {

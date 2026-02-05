@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { buildCategoryPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 const MotionDiv = motion.div;
 

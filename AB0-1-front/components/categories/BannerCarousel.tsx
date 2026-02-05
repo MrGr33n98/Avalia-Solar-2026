@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 export interface Banner {
   id: number;

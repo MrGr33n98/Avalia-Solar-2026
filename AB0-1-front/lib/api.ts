@@ -469,9 +469,26 @@ const attemptRefresh = async (): Promise<boolean> => {
       headers: getApiRequestHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
-    return response.ok;
+
+    if (!response.ok) {
+      const details = await response.json().catch(() => ({}));
+      if (details.code === 'REFRESH_TOKEN_REVOKED' || details.code === 'INVALID_REFRESH_TOKEN') {
+        console.warn('[API] Refresh token is invalid or revoked. User must re-authenticate.');
+      } else {
+        console.warn('[API] Refresh failed with status:', response.status, details);
+      }
+      return false;
+    }
+
+    // O backend retorna { token: string, user: User }
+    // Como estamos usando credentials: 'include', o browser atualizará os cookies (jwt_token e refresh_token)
+    // automaticamente se o backend enviar os headers Set-Cookie correspondentes.
+    const data = await response.json().catch(() => ({}));
+    console.log('[API] Session refreshed successfully');
+    
+    return true;
   } catch (error) {
-    console.warn('[API] Refresh failed:', error);
+    console.warn('[API] Refresh failed due to network or parsing error:', error);
     return false;
   }
 };

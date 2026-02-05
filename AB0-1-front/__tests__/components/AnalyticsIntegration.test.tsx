@@ -3,11 +3,11 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import CategoryCard from '@/components/CategoryCard';
 import CompanyHero from '@/app/companies/[id]/components/CompanyHero';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import '@testing-library/jest-dom';
 
 // Mock analytics
-jest.mock('@/lib/analytics', () => ({
+jest.mock('@/lib/analytics/lazy', () => ({
   track: jest.fn(),
 }));
 

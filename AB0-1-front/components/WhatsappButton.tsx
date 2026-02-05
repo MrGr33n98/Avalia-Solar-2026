@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { appendUtm } from '@/lib/analytics/utm';
 
 type Styles = {

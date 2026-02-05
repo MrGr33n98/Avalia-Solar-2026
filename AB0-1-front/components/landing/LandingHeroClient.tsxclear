@@ -7,7 +7,7 @@ import { Search, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import LocationSearch from '@/components/LocationSearch';
 import { useCategories } from '@/hooks/useCategories';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import type { Category } from '@/lib/api';
 

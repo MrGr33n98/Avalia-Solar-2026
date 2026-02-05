@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import ShareButtons from '@/components/blog/ShareButtons';
 import { ReadingProgress } from '@/components/blog/ReadingProgress';
 import { BlogTimeTracker } from '@/components/blog/BlogTimeTracker';
@@ -9,7 +9,7 @@ import { CategoryHighlights } from '@/components/blog/CategoryHighlights';
 import { useParams } from 'next/navigation';
 
 // Mock the analytics module
-jest.mock('@/lib/analytics', () => ({
+jest.mock('@/lib/analytics/lazy', () => ({
   track: jest.fn(),
 }));
 

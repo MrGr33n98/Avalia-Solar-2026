@@ -34,7 +34,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 interface Notification {
   id: string;

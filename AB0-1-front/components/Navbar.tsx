@@ -3,27 +3,34 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, ChevronDown, ChevronRight } from 'lucide-react';
+import { Menu, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import SearchBar from './SearchBar';
 import NavbarSearch from './NavbarSearch';
 import LocationSearch from './LocationSearch';
 
-import { CategoriesMegaMenu } from './categories/CategoriesMegaMenu';
-import { MobileCategoriesDrawer } from './navigation/MobileCategoriesDrawer';
 import dynamic from 'next/dynamic';
 
 const CompanySwitcher = dynamic(() => import('./company/CompanySwitcher').then(mod => ({ default: mod.CompanySwitcher })), {
   ssr: false,
   loading: () => <div className="h-9 w-48 animate-pulse rounded-md bg-muted/50" />
 });
+const CategoriesMegaMenu = dynamic(
+  () => import('./categories/CategoriesMegaMenu').then(mod => mod.CategoriesMegaMenu),
+  { ssr: false, loading: () => null }
+);
+const MobileCategoriesDrawer = dynamic(
+  () => import('./navigation/MobileCategoriesDrawer').then(mod => mod.MobileCategoriesDrawer),
+  { ssr: false, loading: () => null }
+);
 
 export default function Navbar() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const [megaMenuMounted, setMegaMenuMounted] = useState(false);
+  const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
@@ -49,6 +56,16 @@ export default function Navbar() {
     if (location.state) params.set('state', location.state);
     if (location.city) params.set('city', location.city);
     router.push(`/companies?${params.toString()}`);
+  };
+
+  const openMegaMenu = () => {
+    if (!megaMenuMounted) setMegaMenuMounted(true);
+    setIsMegaMenuOpen(true);
+  };
+
+  const toggleMegaMenu = () => {
+    if (!megaMenuMounted) setMegaMenuMounted(true);
+    setIsMegaMenuOpen((prev) => !prev);
   };
 
   // Close mega menu on click outside
@@ -92,7 +109,7 @@ export default function Navbar() {
             <div 
               className="static" 
               ref={megaMenuRef}
-              onMouseEnter={() => setIsMegaMenuOpen(true)}
+              onMouseEnter={openMegaMenu}
               onMouseLeave={() => setIsMegaMenuOpen(false)}
             >
               <Button
@@ -100,16 +117,18 @@ export default function Navbar() {
                 className={`flex items-center gap-1 font-medium transition-colors ${
                   isMegaMenuOpen ? 'text-primary bg-slate-50' : 'text-gray-700 hover:text-primary'
                 }`}
-                onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
+                onClick={toggleMegaMenu}
               >
                 Categorias
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
 
-              <CategoriesMegaMenu 
-                isOpen={isMegaMenuOpen} 
-                onClose={() => setIsMegaMenuOpen(false)} 
-              />
+              {megaMenuMounted && (
+                <CategoriesMegaMenu 
+                  isOpen={isMegaMenuOpen} 
+                  onClose={() => setIsMegaMenuOpen(false)} 
+                />
+              )}
             </div>
 
             <Link href="/companies" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
@@ -172,7 +191,10 @@ export default function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsMobileDrawerOpen(true)}
+            onClick={() => {
+              if (!mobileDrawerMounted) setMobileDrawerMounted(true);
+              setIsMobileDrawerOpen(true);
+            }}
             aria-label="Menu"
             className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
           >
@@ -182,10 +204,12 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Drawer */}
-      <MobileCategoriesDrawer 
-        isOpen={isMobileDrawerOpen} 
-        onClose={() => setIsMobileDrawerOpen(false)} 
-      />
+      {mobileDrawerMounted && (
+        <MobileCategoriesDrawer 
+          isOpen={isMobileDrawerOpen} 
+          onClose={() => setIsMobileDrawerOpen(false)} 
+        />
+      )}
     </nav>
   );
 }

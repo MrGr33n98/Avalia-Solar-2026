@@ -8,7 +8,7 @@
     "dev:clean": "npm run clean:next && next dev",
     "build": "next build",
     "build:clean": "npm run clean:next && next build",
-    "analyze": "ANALYZE=true next build",
+    "analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "cross-env NODE_ENV=development jest",

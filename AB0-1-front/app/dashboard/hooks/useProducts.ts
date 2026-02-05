@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { productsApi } from '@/lib/api';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import type { Product } from '../types';
 
 export function useProducts(companyId: string) {

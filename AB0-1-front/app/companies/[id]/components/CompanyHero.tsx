@@ -13,7 +13,7 @@ import { Company } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal } from '@/lib/lead-engine';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
 
 interface CompanyHeroProps {

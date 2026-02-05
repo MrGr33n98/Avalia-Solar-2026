@@ -11,7 +11,7 @@ import { leadsApiSafe } from '@/lib/api-client';
 import { getFullImageUrl } from '@/utils/image';
 import Link from 'next/link';
 import { Sun, Wallet, Leaf, ShieldCheck, MessageSquare, PhoneCall } from 'lucide-react';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 export default function ArticleConversionSection({ article }: { article: any }) {
   const { banners } = useBanners();

@@ -20,7 +20,7 @@ import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useComparison } from '@/hooks/useComparison';
 import { cn } from '@/lib/utils';

@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCcw, AlertCircle } from 'lucide-react';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
 
 // Import newly created components

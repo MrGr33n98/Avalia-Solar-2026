@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { leadsWizardApi } from '@/lib/api-client';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { Zap, ShieldCheck, Clock, MapPin } from 'lucide-react';
 
 export default function QuickLeadModal() {

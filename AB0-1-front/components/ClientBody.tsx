@@ -12,10 +12,13 @@ const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), 
 const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
+const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
+  ssr: false,
+  loading: () => null,
+});
 
-import { Toaster } from '@/components/ui/sonner';
-import { useEffect } from 'react';
-import { initializeAnalytics, page } from '@/lib/analytics';
+import { useCallback, useEffect, useRef } from 'react';
+import { initializeAnalytics, page } from '@/lib/analytics/lazy';
 import { usePathname } from 'next/navigation';
 
 export default function ClientBody({
@@ -24,10 +27,30 @@ export default function ClientBody({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const analyticsLoadedRef = useRef(false);
+
+  const loadAnalytics = useCallback((reason: string) => {
+    if (analyticsLoadedRef.current) return;
+    analyticsLoadedRef.current = true;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Analytics] Lazy init triggered (${reason})`);
+    }
+    initializeAnalytics();
+    page();
+  }, []);
 
   useEffect(() => {
-    initializeAnalytics();
-  }, []);
+    const handleInteraction = () => loadAnalytics('interaction');
+    window.addEventListener('pointerdown', handleInteraction, { once: true });
+    window.addEventListener('keydown', handleInteraction, { once: true });
+
+    const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), 2500);
+    return () => {
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadAnalytics]);
 
   useEffect(() => {
     const shouldIgnore = (message: string) =>
@@ -58,6 +81,7 @@ export default function ClientBody({
   }, []);
 
   useEffect(() => {
+    if (!analyticsLoadedRef.current) return;
     page();
   }, [pathname]);
 

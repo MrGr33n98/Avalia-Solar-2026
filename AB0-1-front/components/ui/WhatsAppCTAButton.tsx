@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 
 interface WhatsAppCTAButtonProps extends ButtonProps {

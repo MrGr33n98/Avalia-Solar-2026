@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 // Components
 import ThemeToggle from './ThemeToggle';

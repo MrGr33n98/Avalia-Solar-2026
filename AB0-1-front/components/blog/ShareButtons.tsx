@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Facebook, Linkedin, Twitter, Share2, Link as LinkIcon, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 interface ShareButtonsProps {
   title: string;

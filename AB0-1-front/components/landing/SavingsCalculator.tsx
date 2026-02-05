@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { openLeadModal } from '@/lib/lead-engine';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 export default function SavingsCalculator() {
   const [bill, setBill] = useState(350);

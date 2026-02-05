@@ -9,9 +9,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock lodash debounce para testes imediatos
-jest.mock('lodash', () => ({
-  debounce: (fn: any) => {
-    // Para testes, executar a função imediatamente
+jest.mock('lodash/debounce', () => ({
+  __esModule: true,
+  default: (fn: any) => {
+    // Para testes, executar a funcao imediatamente
     fn.cancel = jest.fn();
     return fn;
   },

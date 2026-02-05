@@ -6,7 +6,7 @@ import { MessageCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
 import { cn } from '@/lib/utils';
 

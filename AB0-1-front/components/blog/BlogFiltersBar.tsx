@@ -9,7 +9,7 @@ import { BlogPromoBanner } from './BlogPromoBanner';
 import { CategoryWithCount } from '@/lib/api/blog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 interface BlogFiltersBarProps {
   categories: CategoryWithCount[];

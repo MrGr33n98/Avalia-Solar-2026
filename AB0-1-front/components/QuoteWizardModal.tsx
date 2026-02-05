@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
-import { track, DashboardEvents } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 type WizardCompany = {
   id: number;

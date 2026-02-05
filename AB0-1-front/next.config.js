@@ -22,6 +22,7 @@ const nextConfig = {
   experimental: {
     // webpackBuildWorker: true,
     optimizeCss: enableOptimizeCss,
+    optimizePackageImports: ['lucide-react', 'date-fns'],
   },
 
   // TASK-023: Enable TypeScript and ESLint checks

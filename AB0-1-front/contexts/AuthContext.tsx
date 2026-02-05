@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, authApi, companyAccessApi } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
-import { identify, track } from '@/lib/analytics';
+import { identify, track } from '@/lib/analytics/lazy';
 import { getApiErrorMessage } from '@/lib/api-error';
 
 interface AuthContextType {

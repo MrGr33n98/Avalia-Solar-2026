@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 import { useParams } from 'next/navigation';
 
 export function BlogTimeTracker() {

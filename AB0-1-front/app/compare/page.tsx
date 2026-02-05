@@ -7,7 +7,7 @@ import { Star, MapPin, Check, X, ArrowLeft, MessageCircle, Scale } from 'lucide-
 import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
-import { track } from '@/lib/analytics';
+import { track } from '@/lib/analytics/lazy';
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
