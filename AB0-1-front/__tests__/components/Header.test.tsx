@@ -38,6 +38,6 @@ describe('Header', () => {
     
     const logo = screen.getByRole('img', { name: /Logo/ });
     expect(logo).toHaveClass('h-10');
-    expect(logo).toHaveClass('w-auto');
+    expect(logo).toHaveClass('w-[75px]');
   });
 });

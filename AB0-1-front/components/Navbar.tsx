@@ -70,9 +70,10 @@ export default function Navbar() {
           <Image 
             src="/images/logo.png" 
             alt="Avalia Solar Logo" 
-            width={64} 
-            height={64} 
-            className="h-14 w-auto object-contain" 
+            width={84} 
+            height={56} 
+            sizes="84px"
+            className="h-14 w-[84px] object-contain" 
             priority 
           />
         </Link>

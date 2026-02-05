@@ -4,10 +4,13 @@ import Image from 'next/image';
 const Header = () => (
   <div className="flex items-center">
     <Link href="/" className="flex items-center">
-      <img 
-        src="/images/logo.png" 
-        alt="Logo" 
-        className="h-10 w-auto"
+      <Image
+        src="/images/logo.png"
+        alt="Logo"
+        width={75}
+        height={50}
+        sizes="75px"
+        className="h-10 w-[75px] object-contain"
       />
     </Link>
   </div>
