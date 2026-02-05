@@ -4,7 +4,7 @@ class CategorySerializer < ActiveModel::Serializer
   attributes :id, :name, :seo_url, :seo_title,
              :short_description, :description,
              :parent_id, :kind, :status, :featured,
-             :average_rating, :reviews_count,
+             :average_rating, :reviews_count, :articles_count,
              :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url,
              :parent, :subcategories
@@ -16,6 +16,13 @@ class CategorySerializer < ActiveModel::Serializer
 
   def reviews_count
     object.total_reviews_count
+  end
+
+  def articles_count
+    map = instance_options[:articles_count_map]
+    return map[object.id] if map
+
+    object.articles.published.count
   end
 
   def banner_url

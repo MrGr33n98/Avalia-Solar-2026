@@ -7,16 +7,20 @@ class Api::V1::ArticlesController < Api::V1::BaseController
 
   def index
     cache_key = cache_key_for('articles', params.except(:page, :per_page))
+    cache_key = "#{cache_key}/#{Digest::MD5.hexdigest({ page: params[:page], per_page: params[:per_page], q: params[:q], sort: params[:sort] }.to_json)}"
     
     cached_json(cache_key, expires_in: 15.minutes) do
-      scope = Article.includes(:category, :companies, :author).with_attached_banner.order(published_at: :desc)
-      scope = scope.where(status: 'published')
+      scope = Article.includes(:category, :companies, :author).with_attached_banner
+      scope = scope.published
       scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
-      scope = scope.where(featured: true) if boolean_param(:featured)
+      scope = scope.featured if boolean_param(:featured)
       
       if params[:company_id].present?
         scope = scope.joins(:companies).where(companies: { id: params[:company_id] })
       end
+      
+      scope = apply_search(scope)
+      scope = apply_sort(scope)
 
       paginated = paginate(scope)
       set_pagination_headers(paginated)
@@ -71,6 +75,29 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     render json: related_scope, each_serializer: ArticleSerializer
   end
 
+  def featured
+    limit = params[:limit].to_i
+    limit = 3 if limit <= 0
+    limit = [limit, 12].min
+
+    scope = Article.includes(:category, :companies, :author)
+                   .with_attached_banner
+                   .published
+                   .featured
+                   .order(published_at: :desc)
+                   .limit(limit)
+
+    if scope.empty?
+      scope = Article.includes(:category, :companies, :author)
+                     .with_attached_banner
+                     .published
+                     .order(published_at: :desc)
+                     .limit(limit)
+    end
+
+    render json: scope, each_serializer: ArticleSerializer
+  end
+
   def create
     @article = Article.new(article_params)
     if @article.save
@@ -110,17 +137,51 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   def article_params
-    params.require(:article).permit(
+    permitted = [
       :title, :slug, :content, :excerpt, :meta_title, :meta_description, :published_at,
       :status, :featured, :category_id, :author_id, :banner,
-      :product_id, :company_id, :sponsored, :sponsored_label, :views_count,
-      company_ids: []
-    )
+      :product_id, :sponsored, :sponsored_label, :views_count
+    ]
+    permitted << :company_id if Article.column_names.include?('company_id')
+
+    params.require(:article).permit(*permitted, company_ids: [])
   end
 
   def boolean_param(name)
     return false unless params.key?(name)
     ActiveModel::Type::Boolean.new.cast(params[name])
+  end
+
+  def apply_search(scope)
+    return scope unless params[:q].present?
+
+    term = params[:q].to_s.strip
+    return scope if term.blank?
+
+    adapter = ActiveRecord::Base.connection.adapter_name.downcase
+    if adapter.include?('sqlite')
+      q_lower = term.downcase
+      scope.where(
+        'LOWER(title) LIKE :q OR LOWER(content) LIKE :q OR LOWER(excerpt) LIKE :q',
+        q: "%#{q_lower}%"
+      )
+    else
+      scope.where(
+        'title ILIKE :q OR content ILIKE :q OR excerpt ILIKE :q',
+        q: "%#{term}%"
+      )
+    end
+  end
+
+  def apply_sort(scope)
+    case params[:sort].to_s
+    when 'popular'
+      scope.order(views_count: :desc, published_at: :desc, created_at: :desc)
+    when 'oldest'
+      scope.order(published_at: :asc, created_at: :asc)
+    else # latest
+      scope.order(published_at: :desc, created_at: :desc)
+    end
   end
 
   # Expire article caches when data changes

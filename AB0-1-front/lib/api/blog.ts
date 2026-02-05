@@ -14,20 +14,10 @@ export interface PostsResponse {
 export interface CategoryWithCount {
   id: number;
   name: string;
-  slug: string;
-  count: number;
-}
-
-export interface FeaturedPost {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt: string;
-  cover_image_url: string | null;
-  category?: { name: string; slug: string; id: number };
-  author?: { name: string; avatar_url: string | null };
-  published_at: string;
-  reading_time?: number;
+  slug?: string;
+  seo_url?: string | null;
+  count?: number;
+  articles_count?: number;
 }
 
 export const blogApi = {
@@ -53,29 +43,40 @@ export const blogApi = {
     }
   },
 
-  async fetchFeatured(): Promise<FeaturedPost[]> {
+  async fetchFeatured(): Promise<Article[]> {
     try {
-      const res = await fetch(buildApiUrl('articles/featured'), {
+      const res = await fetch(buildApiUrl('articles?featured=true&per_page=3'), {
         headers: getApiRequestHeaders(),
         next: { revalidate: 300 }
       });
       if (!res.ok) return [];
-      return res.json();
+      const payload = await res.json();
+      if (Array.isArray(payload)) return payload;
+      return payload?.data || [];
     } catch (error) {
       // Fallback to fetching latest posts if featured endpoint missing
       const latest = await this.fetchPosts({ per_page: 3 });
-      return latest.data as unknown as FeaturedPost[];
+      return latest.data as Article[];
     }
   },
 
   async fetchCategories(): Promise<CategoryWithCount[]> {
     try {
-      const res = await fetch(buildApiUrl('categories'), {
+      const res = await fetch(buildApiUrl('categories?view=cards&limit=200'), {
         headers: getApiRequestHeaders(),
         next: { revalidate: 3600 }
       });
       if (!res.ok) return [];
-      return res.json();
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : payload?.data || [];
+      return list.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        slug: item.seo_url || item.slug || undefined,
+        seo_url: item.seo_url || null,
+        articles_count: item.articles_count ?? 0,
+        count: item.articles_count ?? 0
+      }));
     } catch (error) {
       return [];
     }

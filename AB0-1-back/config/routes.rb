@@ -50,6 +50,9 @@ Rails.application.routes.draw do
 
       # Articles routes
       resources :articles do
+        collection do
+          get :featured
+        end
         member do
           get :related
         end

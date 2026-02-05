@@ -103,7 +103,9 @@ function PostSidebarContent() {
                  className="flex items-center justify-between p-2 text-sm text-slate-600 hover:text-primary hover:bg-primary/5 rounded-md transition-colors"
                >
                  <span>{cat.name}</span>
-                 <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{Math.floor(Math.random() * 20) + 1}</span>
+                 <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                   {cat.articles_count ?? 0}
+                 </span>
                </Link>
             ))}
             {!categories?.length && (

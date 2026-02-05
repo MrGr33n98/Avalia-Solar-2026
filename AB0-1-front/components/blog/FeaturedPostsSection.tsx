@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Calendar, ArrowRight } from 'lucide-react';
-import { FeaturedPost } from '@/lib/api/blog';
+import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface FeaturedPostsSectionProps {
-  posts: FeaturedPost[];
+  posts: Article[];
 }
 
 export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
@@ -20,6 +20,12 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
 
   const mainPost = posts[0];
   const sidePosts = posts.slice(1, 3);
+  const mainImage = getFullImageUrl(mainPost.cover_image_url || mainPost.image_url);
+  const mainAuthorName = mainPost.author_name || mainPost.author?.name;
+  const mainAuthorAvatar = mainPost.author?.avatar_url || mainPost.author_avatar_url;
+  const mainReadingTime = mainPost.reading_time_minutes
+    ? mainPost.reading_time_minutes
+    : Math.ceil((mainPost.content || '').replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
 
   return (
     <section className="mb-16">
@@ -37,7 +43,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
             <Card className="h-full overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
               <div className="relative h-64 sm:h-80 lg:h-full w-full">
                 <Image
-                  src={getFullImageUrl(mainPost.cover_image_url)}
+                  src={mainImage}
                   alt={mainPost.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -59,31 +65,31 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                   </p>
                   
                   <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-300 font-medium">
-                    {mainPost.author && (
+                    {mainAuthorName && (
                       <div className="flex items-center gap-2">
-                        {mainPost.author.avatar_url && (
+                        {mainAuthorAvatar && (
                           <div className="relative w-6 h-6 rounded-full overflow-hidden border border-white/20">
                             <Image 
-                              src={getFullImageUrl(mainPost.author.avatar_url)} 
-                              alt={mainPost.author.name} 
+                              src={getFullImageUrl(mainAuthorAvatar)} 
+                              alt={mainAuthorName} 
                               fill 
                               className="object-cover" 
                             />
                           </div>
                         )}
-                        <span>{mainPost.author.name}</span>
+                        <span>{mainAuthorName}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
-                      {format(new Date(mainPost.published_at), "d MMM, yyyy", { locale: ptBR })}
+                      {format(new Date(mainPost.published_at || mainPost.created_at || new Date()), "d MMM, yyyy", { locale: ptBR })}
                     </div>
-                    {mainPost.reading_time && (
+                    {mainReadingTime ? (
                       <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        {mainPost.reading_time} min
+                        {mainReadingTime} min
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -98,7 +104,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
               <Card className="h-full border-none shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden bg-white">
                 <div className="relative h-40 w-full shrink-0 overflow-hidden">
                   <Image
-                    src={getFullImageUrl(post.cover_image_url) || '/images/avalia-solar-place-holder.PNG'}
+                    src={getFullImageUrl(post.cover_image_url || post.image_url) || '/images/avalia-solar-place-holder.PNG'}
                     alt={post.title}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -118,7 +124,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                   <div className="mt-auto pt-3 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {format(new Date(post.published_at), "d MMM", { locale: ptBR })}
+                      {format(new Date(post.published_at || post.created_at || new Date()), "d MMM", { locale: ptBR })}
                     </span>
                     <span className="flex items-center gap-1 font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0 duration-300">
                       Ler artigo <ArrowRight className="w-3 h-3" />

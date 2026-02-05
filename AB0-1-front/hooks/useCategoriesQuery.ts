@@ -11,6 +11,7 @@ export interface CategoryCardData {
   featured: boolean;
   banner_url: string | null;
   icon_url?: string | null;
+  articles_count?: number;
   companies_count: number;
   products_count: number;
   reviews_count?: number;
@@ -34,6 +35,7 @@ function adaptCategoryData(data: CategoryCardData): Category {
     status: 'active',
     parent_id: null,
     logo: null,
+    articles_count: data.articles_count,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

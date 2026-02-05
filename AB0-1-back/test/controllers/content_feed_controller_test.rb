@@ -4,8 +4,8 @@ class ContentFeedControllerTest < ActionDispatch::IntegrationTest
   def setup
     @company = Company.create!(name: 'C', description: 'D')
     @category = Category.create!(name: 'Solar', description: 'Energy')
-    Article.create!(title: 'Organic A', content: 'Body', category: @category, company: @company)
-    Article.create!(title: 'Sponsored A', content: 'Body', category: @category, company: @company, sponsored: true)
+    Article.create!(title: 'Organic A', content: 'Body', category: @category, companies: [@company])
+    Article.create!(title: 'Sponsored A', content: 'Body', category: @category, companies: [@company], sponsored: true)
   end
 
   test 'GET /api/v1/content_feed returns success and payload' do

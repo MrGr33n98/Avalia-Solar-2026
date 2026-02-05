@@ -140,7 +140,8 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                         value={String(cat.id)} // (se você migrar p/ slug, troque aqui)
                         className="rounded-full px-4 h-9 text-sm whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
                       >
-                        {cat.name} <span className="ml-1 text-slate-500">({cat.count})</span>
+                        {cat.name}{' '}
+                        <span className="ml-1 text-slate-500">({cat.articles_count ?? cat.count ?? 0})</span>
                       </TabsTrigger>
                     ))}
                   </TabsList>

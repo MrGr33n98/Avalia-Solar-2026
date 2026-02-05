@@ -8,6 +8,8 @@ export interface ArticleAuthor {
   id?: number | null;
   name?: string | null;
   email?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
 }
 
 export interface Article {
@@ -18,9 +20,11 @@ export interface Article {
   content: string;
   status?: string | null;
   published_at?: string | null;
+  published_date?: string | null;
   views_count?: number | null;
   image_url?: string | null;
   cover_image_url?: string | null;
+  reading_time_minutes?: number | null;
   sponsored?: boolean;
   sponsored_label?: string | null;
   category?: ArticleCategory | null;

@@ -317,6 +317,7 @@ export interface Category {
   description?: string;
   parent_id?: number | null;
   parent?: { id: number; name: string; seo_url: string } | null;
+  articles_count?: number;
   companies_count?: number;
   products_count?: number;
   subcategories?: Category[];

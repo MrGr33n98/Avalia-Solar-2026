@@ -7,11 +7,11 @@ class ContentFeedServiceTest < ActiveSupport::TestCase
 
     # Organic articles
     3.times do |i|
-      Article.create!(title: "Organic #{i}", content: 'Body', category: @category, company: @company, sponsored: false)
+      Article.create!(title: "Organic #{i}", content: 'Body', category: @category, companies: [@company], sponsored: false)
     end
     # Sponsored articles
     2.times do |i|
-      Article.create!(title: "Sponsored #{i}", content: 'Body', category: @category, company: @company, sponsored: true, sponsored_label: 'AD')
+      Article.create!(title: "Sponsored #{i}", content: 'Body', category: @category, companies: [@company], sponsored: true, sponsored_label: 'AD')
     end
 
     # Organic campaign reviews
@@ -32,9 +32,9 @@ class ContentFeedServiceTest < ActiveSupport::TestCase
 
   test 'feed respects company filter' do
     other_company = Company.create!(name: 'OtherCo', description: 'Other')
-    Article.create!(title: 'Other article', content: 'X', category: @category, company: other_company)
+    Article.create!(title: 'Other article', content: 'X', category: @category, companies: [other_company])
     feed = ContentFeedService.new(company_id: @company.id, limit: 5).build
-    refute feed.any? { |i| i.respond_to?(:company_id) && i.company_id == other_company.id }, 'Feed should exclude other company content'
+    refute feed.any? { |i| i.is_a?(Article) && i.companies.exists?(other_company.id) }, 'Feed should exclude other company content'
   end
 
   test 'sponsored interval logic interleaves sponsored items' do

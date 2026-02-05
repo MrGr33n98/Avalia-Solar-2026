@@ -35,7 +35,8 @@ module Api
         end
 
         # MODO LEGADO: Mantém compatibilidade com código existente
-        cache_key = cache_key_for('categories', params.except(:page, :per_page))
+        articles_ts = ::Article.maximum(:updated_at)&.to_i || 0
+        cache_key = "#{cache_key_for('categories', params.except(:page, :per_page))}/articles/#{articles_ts}"
 
         cached_json(cache_key, expires_in: 1.hour) do
           query = ::Category.all
@@ -50,17 +51,19 @@ module Api
             companies: [:logo_attachment, :logo_blob]
           )
 
+          articles_count_map = ::Article.published.group(:category_id).count
+
           if params[:page].present?
             paginated = paginate(query)
             set_pagination_headers(paginated)
             {
-              data: paginated.map { |c| category_json(c) },
+              data: paginated.map { |c| category_json(c, articles_count_map: articles_count_map) },
               meta: { pagination: pagination_metadata(paginated) }
             }
           else
             results = query.to_a
             results = featured_fallback(results) if featured_true? && results.empty?
-            results.map { |c| category_json(c) }
+            results.map { |c| category_json(c, articles_count_map: articles_count_map) }
           end
         end
       end
@@ -306,9 +309,9 @@ module Api
       # -------------------------
       # Helpers
       # -------------------------
-      def category_json(category)
+      def category_json(category, articles_count_map: nil)
         ActiveModelSerializers::Adapter.create(
-          CategorySerializer.new(category)
+          CategorySerializer.new(category, articles_count_map: articles_count_map)
         ).as_json
       end
 
@@ -410,6 +413,7 @@ module Api
 
         # Otimização: removemos includes de companies/products pois usamos counter columns
         @categories = @categories.includes(:badges, banner_attachment: :blob, icon_attachment: :blob)
+        articles_count_map = ::Article.published.group(:category_id).count
 
         # Paginação (se parâmetros fornecidos)
         if params[:page].present? || params[:per_page].present?
@@ -421,7 +425,7 @@ module Api
           @categories = @categories.offset((page - 1) * per_page).limit(per_page)
 
           # Mapeamento manual otimizado
-          data = map_categories_data(@categories)
+          data = map_categories_data(@categories, articles_count_map)
 
           # Retorna com metadata de paginação
           render json: {
@@ -436,14 +440,14 @@ module Api
         else
           # Sem paginação - aplicar limite se fornecido
           @categories = @categories.limit(params[:limit].to_i) if limit_present?
-          data = map_categories_data(@categories)
+          data = map_categories_data(@categories, articles_count_map)
           render json: data
         end
       end
 
       private
 
-      def map_categories_data(categories)
+      def map_categories_data(categories, articles_count_map = {})
         categories.map do |category|
           {
             id: category.id,
@@ -454,6 +458,7 @@ module Api
             featured: category.featured,
             banner_url: category.banner_url,
             icon_url: category.icon_url,
+            articles_count: articles_count_map[category.id].to_i,
             # Usando colunas cacheadas para performance O(1)
             companies_count: (category.respond_to?(:companies_count) ? category.companies_count : 0).to_i,
             products_count: (category.respond_to?(:products_count) ? category.products_count : 0).to_i,

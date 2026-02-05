@@ -6,7 +6,7 @@ module Api
         return unless authorize_feature!('analytics')
 
         leads = current_company.leads
-        content = Article.where(company_id: current_company.id)
+        content = Article.joins(:companies).where(companies: { id: current_company.id })
         campaigns = CampaignReview.where(company_id: current_company.id)
 
         render json: {

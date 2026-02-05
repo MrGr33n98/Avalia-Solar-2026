@@ -35,8 +35,8 @@ class ContentFeedService
   private
 
   def base_articles
-    scope = Article.includes(:company, :category).order(created_at: :desc)
-    scope = scope.where(company_id: @company_id) if @company_id.present?
+    scope = Article.includes(:companies, :category).order(created_at: :desc)
+    scope = scope.joins(:companies).where(companies: { id: @company_id }) if @company_id.present?
     scope = scope.where(category_id: @category_id) if @category_id.present?
     scope
   end
