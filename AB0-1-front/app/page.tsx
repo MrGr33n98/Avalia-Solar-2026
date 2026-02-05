@@ -1,8 +1,6 @@
-'use client';
-
-import { useEffect, useState, ReactNode, Suspense } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ArrowRight, Info } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 
 import BannerByLocation from '@/components/BannerByLocation';
 import CompanyCard from '@/components/CompanyCard';
@@ -12,23 +10,15 @@ import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
 import LandingHero from '@/components/landing/LandingHero';
 import HowItWorks from '@/components/landing/HowItWorks';
 import SavingsCalculator from '@/components/landing/SavingsCalculator';
-import LandingTrustBanner from '@/components/landing/LandingTrustBanner';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { TrustRow } from '@/components/ui/TrustRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
-import { Skeleton } from '@/components/ui/skeleton';
-import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
-import type { Category, Company, Review } from '@/lib/api';
-import { usePageTracking } from '@/hooks/usePageTracking';
-import { trackCompanyClick, trackCategoryClick, trackCTAClick } from '@/lib/dataLayer';
+import HomePageTracking from '@/components/home/HomePageTracking';
+import { categoriesApiSafe, companiesApiSafe } from '@/lib/api-client';
+import type { Category, Company } from '@/lib/api';
+
+export const revalidate = 300;
 
 function SectionShell({
   children,
@@ -69,140 +59,43 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function ErrorState({ message }: { message: string }) {
-  return (
-    <Card className="flex items-center gap-3 p-4 border-red-200 bg-red-50">
-      <AlertCircle className="h-5 w-5 text-red-600" />
-      <p className="text-sm text-red-700">{message}</p>
-    </Card>
-  );
+async function getHomeData(): Promise<{
+  allCategories: Category[];
+  featuredCategories: Category[];
+  companies: Company[];
+}> {
+  const [allCategories, featuredCategories, companies] = await Promise.all([
+    categoriesApiSafe.getAll({ status: 'active' }),
+    categoriesApiSafe.getAll({
+      featured: true,
+      status: 'active',
+      limit: 8,
+      include: 'average_rating,reviews_count',
+    } as any),
+    companiesApiSafe.getAll({
+      status: 'active',
+      featured: true,
+      limit: 12,
+      include: 'logo_url,banner_url,average_rating,rating_count',
+    }),
+  ]);
+
+  return {
+    allCategories: Array.isArray(allCategories) ? allCategories : [],
+    featuredCategories: Array.isArray(featuredCategories) ? featuredCategories : [],
+    companies: Array.isArray(companies) ? companies : [],
+  };
 }
 
-function SkeletonCategoryCard() {
-  return (
-    <Card className="overflow-hidden">
-      <div className="relative aspect-[3/1] bg-gray-100">
-        <Skeleton className="w-full h-full" />
-      </div>
-      <div className="p-3 flex flex-col justify-between min-h-[110px]">
-        <div className="space-y-2">
-          <Skeleton className="h-3.5 w-2/3" />
-          <Skeleton className="h-2.5 w-full" />
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-3.5 w-10" />
-            <Skeleton className="h-3.5 w-12" />
-          </div>
-          <Skeleton className="h-9 w-20 rounded-lg" />
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function SkeletonCompanyCard() {
-  return (
-    <Card className="overflow-hidden rounded-2xl border border-gray-200 h-[240px]">
-      <div className="relative bg-gray-100 aspect-[4/1]">
-        <Skeleton className="w-full h-full" />
-      </div>
-      <div className="pt-6 px-3 pb-3 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-3/5" />
-          <Skeleton className="h-3 w-10" />
-        </div>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-16" />
-        </div>
-        <Skeleton className="h-3 w-1/2" />
-        <div className="mt-auto flex items-center gap-2">
-          <Skeleton className="h-10 flex-1 rounded-xl" />
-          <Skeleton className="h-10 w-10 rounded-xl" />
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function HomePageContent() {
-  // GTM Page Tracking
-  usePageTracking({
-    type: 'homepage',
-    title: 'Avalia Solar - Encontre Empresas de Energia Solar',
-    sections: ['hero', 'categories', 'companies', 'testimonials'],
-  });
-
-  const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [loadingReviews, setLoadingReviews] = useState(true);
-  const [errorCategories, setErrorCategories] = useState<string | null>(null);
-  const [errorCompanies, setErrorCompanies] = useState<string | null>(null);
-  const [errorReviews, setErrorReviews] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        if (process.env.NODE_ENV !== 'production') console.log('[Home] Fetching categories...');
-        const response = await categoriesApiSafe.getAll({ 
-          featured: true, 
-          status: 'active', 
-          limit: 8,
-          include: 'average_rating,reviews_count'
-        } as any);
-        if (process.env.NODE_ENV !== 'production') console.log('[Home] Categories response:', response);
-        setFeaturedCategories(response);
-      } catch {
-        setErrorCategories('Erro ao carregar categorias.');
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-
-    const fetchCompanies = async () => {
-      try {
-        const response = await companiesApiSafe.getAll({
-          status: 'active',
-          featured: true,
-          limit: 12,
-          include: 'logo_url,banner_url,average_rating,rating_count',
-        });
-        if (process.env.NODE_ENV !== 'production') {
-          const withBanner = (response || []).filter((c) => !!c.banner_url);
-          console.log('[Home] Companies loaded:', response?.length || 0, 'with banner_url:', withBanner.length);
-        }
-        setCompanies(response);
-      } catch {
-        setErrorCompanies('Erro ao carregar empresas.');
-      } finally {
-        setLoadingCompanies(false);
-      }
-    };
-
-    const fetchReviews = async () => {
-      try {
-        const response = await reviewsApiSafe.getAll();
-        setReviews(response);
-      } catch {
-        setErrorReviews('Erro ao carregar avaliações.');
-      } finally {
-        setLoadingReviews(false);
-      }
-    };
-
-    fetchCategories();
-    fetchCompanies();
-    fetchReviews();
-  }, []);
+export default async function Home() {
+  const { allCategories, featuredCategories, companies } = await getHomeData();
 
   return (
     <main className="flex-grow">
-      <LandingHero />
-      
+      <HomePageTracking />
+
+      <LandingHero categories={allCategories} />
+
       <div className="py-8 bg-slate-50 border-y border-slate-100">
         <LandingCategoryChips categories={featuredCategories} />
       </div>
@@ -221,22 +114,14 @@ function HomePageContent() {
           subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
         />
 
-        {loadingCategories ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <SkeletonCategoryCard key={i} />
-            ))}
-          </div>
-        ) : errorCategories ? (
-          <ErrorState message={errorCategories} />
-        ) : featuredCategories.length > 0 ? (
+        {featuredCategories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {featuredCategories.map((category) => (
               <LandingCategoryCard key={category.id} category={category} />
             ))}
           </div>
         ) : (
-          <EmptyState message={`Nenhuma categoria encontrada. (${featuredCategories.length} categorias carregadas)`} />
+          <EmptyState message="Nenhuma categoria encontrada." />
         )}
 
         <div className="mt-8 md:mt-10 text-center">
@@ -263,15 +148,7 @@ function HomePageContent() {
           }
         />
 
-        {loadingCompanies ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <SkeletonCompanyCard key={i} />
-            ))}
-          </div>
-        ) : errorCompanies ? (
-          <ErrorState message={errorCompanies} />
-        ) : companies.length > 0 ? (
+        {companies.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
             {companies.slice(0, 8).map((company) => (
               <CompanyCard key={company.id} company={company} compact={true} />
@@ -315,13 +192,5 @@ function HomePageContent() {
 
       <FloatingWhatsApp />
     </main>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={null}>
-      <HomePageContent />
-    </Suspense>
   );
 }

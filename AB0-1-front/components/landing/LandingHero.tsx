@@ -3,21 +3,29 @@
 import React, { useState } from 'react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { Search, MapPin, Zap } from 'lucide-react';
+import { Search, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import LocationSearch from '@/components/LocationSearch';
 import { useCategories } from '@/hooks/useCategories';
 import { track } from '@/lib/analytics';
-import { cn } from '@/lib/utils';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import type { Category } from '@/lib/api';
 
 /**
  * Modern, high-conversion Hero section for the Landing Page
  * Focused on action: Category + Location search
  */
-export default function LandingHero() {
+type LandingHeroProps = {
+  categories?: Category[];
+};
+
+export default function LandingHero({ categories: prefetchedCategories = [] }: LandingHeroProps) {
   const router = useRouter();
-  const { categories } = useCategories(true);
+  const { categories: fetchedCategories } = useCategories(true, {
+    initialCategories: prefetchedCategories,
+    skipFetch: prefetchedCategories.length > 0,
+  });
+  const categories = prefetchedCategories.length > 0 ? prefetchedCategories : fetchedCategories;
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [location, setLocation] = useState<{ state: string; city?: string } | null>(null);
 

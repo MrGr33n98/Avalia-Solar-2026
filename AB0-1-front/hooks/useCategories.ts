@@ -4,9 +4,15 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { categoriesApiSafe } from '@/lib/api-client';
 import { Category } from '@/lib/api';
 
-export function useCategories(fetchAll: boolean = false) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+type UseCategoriesOptions = {
+  initialCategories?: Category[];
+  skipFetch?: boolean;
+};
+
+export function useCategories(fetchAll: boolean = false, options?: UseCategoriesOptions) {
+  const initialCategories = options?.initialCategories ?? [];
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(initialCategories.length === 0);
   const [error, setError] = useState<Error | null>(null);
 
   const loadCategories = useCallback(async () => {
@@ -37,12 +43,21 @@ export function useCategories(fetchAll: boolean = false) {
     }
   }, [fetchAll]);
 
-  const didRunRef = useRef(false);
   useEffect(() => {
+    if (initialCategories.length > 0) {
+      setCategories(initialCategories);
+      setLoading(false);
+    }
+  }, [initialCategories]);
+
+  const didRunRef = useRef(false);
+  const shouldSkipFetch = Boolean(options?.skipFetch || initialCategories.length > 0);
+  useEffect(() => {
+    if (shouldSkipFetch) return;
     if (didRunRef.current) return;
     didRunRef.current = true;
     loadCategories();
-  }, [loadCategories]);
+  }, [loadCategories, shouldSkipFetch]);
 
   // The search functionality was broken and has been temporarily removed.
   const [searchTerm, setSearchTerm] = useState('');
