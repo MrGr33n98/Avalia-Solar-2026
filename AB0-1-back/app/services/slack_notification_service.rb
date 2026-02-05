@@ -6,7 +6,10 @@ require 'json'
 class SlackNotificationService
   def self.notify(message, attachments = [])
     webhook_url = ENV['SLACK_WEBHOOK_URL']
-    return unless webhook_url
+    if webhook_url.blank?
+      Rails.logger.warn("[SlackNotificationService] SLACK_WEBHOOK_URL is missing")
+      return
+    end
 
     payload = {
       text: message,
