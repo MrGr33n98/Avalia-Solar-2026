@@ -119,7 +119,13 @@ export function OptimizedImage({
   ) : null;
 
   if (fill) {
-    const ratioStyle = useAspectRatio ? { aspectRatio: `${width}/${height}` } : undefined;
+    const canUseAspectRatio =
+      useAspectRatio &&
+      typeof width === 'number' &&
+      typeof height === 'number' &&
+      width > 0 &&
+      height > 0;
+    const ratioStyle = canUseAspectRatio ? { aspectRatio: `${width}/${height}` } : undefined;
     return (
       <div
         className={cn('relative w-full overflow-hidden', containerClassName)}

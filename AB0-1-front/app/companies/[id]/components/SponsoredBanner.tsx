@@ -33,10 +33,16 @@ export default function SponsoredBanner({
 }: SponsoredBannerProps) {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function loadBanner() {
+      if (mounted) {
+        setLoading(true);
+        setImageFailed(false);
+      }
       try {
         const response = await api.request<Banner[]>({
           url: '/banners',
@@ -56,6 +62,8 @@ export default function SponsoredBanner({
       } catch (err: any) {
         if (!mounted) return;
         setError(err?.message || 'Erro ao carregar banner patrocinado');
+      } finally {
+        if (mounted) setLoading(false);
       }
     }
     loadBanner();
@@ -67,7 +75,7 @@ export default function SponsoredBanner({
   if (error) {
     return null;
   }
-  if (!banner) {
+  if (loading) {
     return (
       <div className={className}>
         <div className="animate-pulse rounded-xl bg-muted h-24" />
@@ -75,27 +83,33 @@ export default function SponsoredBanner({
     );
   }
 
+  const imageSrc =
+    banner?.image_url && !imageFailed
+      ? banner.image_url
+      : '/images/banner-avalia-solar.png';
+
+  const imageAlt = banner?.title || 'Banner';
+
   const onClick = () => {
-    analyticsApi.trackBannerEvent({
-      banner_id: banner.id,
-      company_id: companyId,
-      event_type: 'click',
-    });
+    if (banner) {
+      analyticsApi.trackBannerEvent({
+        banner_id: banner.id,
+        company_id: companyId,
+        event_type: 'click',
+      });
+    }
   };
 
   const content = (
     <div className="relative w-full overflow-hidden rounded-xl">
-      {banner.image_url ? (
-        <Image
-          src={banner.image_url}
-          alt={banner.title}
-          width={banner.width || 600}
-          height={banner.height || (variant === 'square' ? 250 : 180)}
-          className="w-full h-auto object-cover"
-        />
-      ) : (
-        <div className="h-24 bg-muted rounded-xl" />
-      )}
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        width={banner?.width || 600}
+        height={banner?.height || (variant === 'square' ? 250 : 180)}
+        className="w-full h-auto object-cover"
+        onError={() => setImageFailed(true)}
+      />
     </div>
   );
 
@@ -103,14 +117,14 @@ export default function SponsoredBanner({
     return (
       <Card className={className}>
         <CardContent className="p-3">
-          {banner.link_url ? (
+          {banner?.link_url ? (
             <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
               {content}
             </a>
           ) : (
             content
           )}
-          {banner.link_url && (
+          {banner?.link_url && (
             <div className="mt-3">
               <Button asChild variant="default" className="w-full">
                 <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
@@ -126,7 +140,7 @@ export default function SponsoredBanner({
 
   return (
     <div className={className}>
-      {banner.link_url ? (
+      {banner?.link_url ? (
         <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
           {content}
         </a>
