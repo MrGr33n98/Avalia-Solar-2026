@@ -41,6 +41,7 @@ class Company < ApplicationRecord
   has_many :banners, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
   has_many :company_videos, dependent: :destroy
+  has_and_belongs_to_many :articles
   belongs_to :plan, optional: true
   has_many :company_members, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
@@ -131,7 +132,7 @@ class Company < ApplicationRecord
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
 
   def self.ransackable_attributes(auth_object = nil)
-    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "project_types", "services_offered", "plan_id", "moderation_status"]
+    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status"]
   end
 
   def self.ransackable_associations(auth_object = nil)

@@ -37,11 +37,11 @@ class Article < ApplicationRecord
 
   # Add these methods for Ransack
   def self.ransackable_attributes(_auth_object = nil)
-    %w[category_id company_id content created_at id product_id title updated_at sponsored sponsored_label slug status featured views_count published_at author_id]
+    %w[category_id content created_at id product_id title updated_at sponsored sponsored_label slug status featured views_count published_at author_id]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[category product companies author company]
+    %w[category product companies author]
   end
 
   private
