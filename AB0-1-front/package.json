@@ -8,15 +8,14 @@
     "dev:clean": "npm run clean:next && next dev",
     "build": "next build",
     "build:clean": "npm run clean:next && next build",
-    "analyze": "cross-env ANALYZE=true next build",
+    "analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "cross-env NODE_ENV=development jest",
     "test:watch": "cross-env NODE_ENV=development jest --watch",
     "test:coverage": "cross-env NODE_ENV=development jest --coverage",
     "test:ci": "cross-env NODE_ENV=development jest --ci --coverage --maxWorkers=2",
-    "knip": "knip",
-    "analyze": "ANALYZE=true next build"
+    "knip": "knip"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -52,6 +51,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "critters": "^0.0.23",
     "date-fns": "^3.6.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
