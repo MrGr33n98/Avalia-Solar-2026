@@ -150,6 +150,11 @@ const nextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'https',
+        hostname: 'nyc3.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '3001',

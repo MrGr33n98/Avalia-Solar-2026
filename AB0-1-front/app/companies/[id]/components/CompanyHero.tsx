@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
 import { RatingStars } from '@/components/RatingStars';
@@ -99,13 +100,15 @@ export default function CompanyHero({
       {/* Banner */}
       <div className="relative w-full mb-8">
         <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px]">
-          <Image
-            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
-            alt={!bannerUrl || bannerError ? `Banner padrão da empresa ${company.name}` : `${company.name} banner`}
+          <OptimizedImage
+            src={bannerUrl || '/images/banner-avalia-solar.png'}
+            alt={`${company.name} banner`}
             fill
             priority
+            quality={90}
             className="object-cover rounded-2xl shadow-lg"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            fallbackSrc="/images/banner-avalia-solar.png"
             onError={() => setBannerError(true)}
           />
           {(!bannerUrl || bannerError) && (
@@ -120,26 +123,15 @@ export default function CompanyHero({
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
         <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
           <div className="mr-4 mb-3 sm:mb-0 relative">
-            {logoUrl && !logoError ? (
-              <Image
-                src={logoUrl}
-                alt={company.name}
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-full border-2 border-white object-cover bg-white shadow-sm"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-white shadow-sm">
-                <Image
-                  src="/images/logo-placeholder.svg"
-                  alt="Logo placeholder"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 opacity-50"
-                />
-              </div>
-            )}
+            <OptimizedImage
+              src={logoUrl || "/images/logo-placeholder.svg"}
+              alt={company.name}
+              width={64}
+              height={64}
+              className="w-16 h-16 rounded-full border-2 border-white object-cover bg-white shadow-sm"
+              fallbackSrc="/images/logo-placeholder.svg"
+              onError={() => setLogoError(true)}
+            />
             {company.verified && (
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
                 <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />

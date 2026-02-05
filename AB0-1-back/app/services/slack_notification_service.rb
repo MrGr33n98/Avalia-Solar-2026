@@ -4,7 +4,7 @@ require 'net/http'
 require 'json'
 
 class SlackNotificationService
-  def self.notify(message, attachments = [])
+  def self.notify(message, attachments = [], synchronous: false)
     webhook_url = ENV['SLACK_WEBHOOK_URL']
     if webhook_url.blank?
       Rails.logger.warn("[SlackNotificationService] SLACK_WEBHOOK_URL is missing")
@@ -16,7 +16,7 @@ class SlackNotificationService
       attachments: attachments
     }
 
-    Thread.new do
+    send_request = -> do
       begin
         uri = URI(webhook_url)
         http = Net::HTTP.new(uri.host, uri.port)
@@ -25,10 +25,21 @@ class SlackNotificationService
         request = Net::HTTP::Post.new(uri.path, { 'Content-Type' => 'application/json' })
         request.body = payload.to_json
         
-        http.request(request)
+        response = http.request(request)
+        unless response.is_a?(Net::HTTPSuccess)
+          Rails.logger.error("[SlackNotificationService] Slack API error: #{response.code} - #{response.body}")
+        end
+        response
       rescue StandardError => e
         Rails.logger.error("[SlackNotificationService] Failed to send notification: #{e.message}")
+        nil
       end
+    end
+
+    if synchronous
+      send_request.call
+    else
+      Thread.new { send_request.call }
     end
   end
 

@@ -56,26 +56,67 @@ const REDIRECT_SLUGS = new Set([
   'signup',
 ]);
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 function CategoryLoadingFallback() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6">
-        <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Carregando categoria</p>
-              <p className="text-xs text-muted-foreground">
-                Preparando empresas e filtros...
-              </p>
+    <div className="min-h-screen bg-background">
+      {/* Mobile Fallback */}
+      <div className="md:hidden">
+        <div className="p-4 space-y-6">
+          <Skeleton className="h-48 w-full rounded-2xl" /> {/* Hero */}
+          <div className="grid grid-cols-5 gap-2"> {/* Quick Actions */}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-2 w-full mx-auto" />
+              </div>
+            ))}
+          </div>
+          <div className="space-y-4"> {/* Companies */}
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-5 w-10" />
             </div>
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-xl" />
+            ))}
           </div>
+        </div>
+      </div>
 
-          <div className="mt-6 space-y-3">
-            <div className="h-3 w-3/4 rounded bg-muted" />
-            <div className="h-3 w-2/3 rounded bg-muted" />
-            <div className="h-3 w-1/2 rounded bg-muted" />
+      {/* Desktop Fallback */}
+      <div className="hidden md:block container mx-auto px-4 py-8">
+        <Skeleton className="h-4 w-48 mb-6" /> {/* Breadcrumb */}
+        <div className="flex justify-between items-start mb-12">
+          <div className="space-y-4 w-full max-w-2xl">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
           </div>
+          <Skeleton className="h-12 w-48 rounded-xl" />
+        </div>
+
+        <div className="grid grid-cols-[280px_1fr] gap-8">
+          <aside className="space-y-6">
+            <Skeleton className="h-[500px] w-full rounded-xl" /> {/* Filters */}
+          </aside>
+          <main className="space-y-8">
+            <Skeleton className="h-48 w-full rounded-xl" /> {/* Banner */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-end pb-4 border-b border-gray-100">
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-64" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-80 w-full rounded-xl" />
+                ))}
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

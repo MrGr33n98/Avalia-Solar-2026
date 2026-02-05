@@ -10,7 +10,6 @@
  * - No PII tracking
  */
 
-import mixpanel from 'mixpanel-browser';
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
@@ -31,6 +30,7 @@ export { DashboardEvents } from './ga4';
 let initialized = false;
 let currentUserId: string | null = null;
 let currentContext: Partial<AnalyticsContext> = {};
+let mixpanelInstance: any = null;
 const BACKEND_ENDPOINT = '/api/v1/analytics/track';
 const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 
@@ -53,7 +53,12 @@ export function initializeAnalytics(): void {
   updateAttribution();
   
   // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
-  initializeSDKs();
+  // Usamos requestIdleCallback para não bloquear a thread principal
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => initializeSDKs());
+  } else {
+    setTimeout(() => initializeSDKs(), 1000);
+  }
 
   // Listen for consent change to re-initialize or update SDKs
   onConsentChange((consent) => {
@@ -69,14 +74,16 @@ export function initializeAnalytics(): void {
 /**
  * Initialize SDKs (internal)
  */
-function initializeSDKs(): void {
+async function initializeSDKs(): Promise<void> {
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
   const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const hasConsent = hasAnalyticsConsent();
   
   // Mixpanel - APENAS com consentimento
-  if (mixpanelToken && hasConsent) {
+  if (mixpanelToken && hasConsent && !mixpanelInstance) {
     try {
+      // Dynamic import to reduce initial bundle size
+      const mixpanel = (await import('mixpanel-browser')).default;
       mixpanel.init(mixpanelToken, {
         debug: process.env.NODE_ENV === 'development',
         track_pageview: false, // Manual tracking
@@ -87,6 +94,7 @@ function initializeSDKs(): void {
           console.log('[Analytics] Mixpanel initialized');
         }
       });
+      mixpanelInstance = mixpanel;
     } catch (e) {
       console.error('[Analytics] Mixpanel init failed:', e);
     }
@@ -218,11 +226,11 @@ export function track(
   const sendToGA4 = options.sendTo?.ga4 !== false;
   
   // Send to Mixpanel
-  if (sendToMixpanel) {
+  if (sendToMixpanel && mixpanelInstance) {
     try {
       // Convert to Title Case for Mixpanel
       const mixpanelEventName = toTitleCase(eventName);
-      mixpanel.track(mixpanelEventName, sanitized);
+      mixpanelInstance.track(mixpanelEventName, sanitized);
       
       if (process.env.NODE_ENV === 'development') {
         console.log('[Mixpanel] Event:', mixpanelEventName, sanitized);
@@ -372,14 +380,15 @@ export function page(
   });
   
   // Mixpanel
-  try {
-    mixpanel.track_pageview(sanitized);
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Mixpanel] Page View:', sanitized);
+  if (mixpanelInstance) {
+    try {
+      mixpanelInstance.track_pageview(sanitized);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Mixpanel] Page View:', sanitized);
+      }
+    } catch (e) {
+      console.error('[Analytics] Mixpanel page view failed:', e);
     }
-  } catch (e) {
-    console.error('[Analytics] Mixpanel page view failed:', e);
   }
   
   // GA4
@@ -406,14 +415,16 @@ export function identify(
   const sanitizedTraits = sanitizeProperties(traits);
   
   // Mixpanel
-  try {
-    mixpanel.identify(userId);
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Mixpanel] Identify:', userId, sanitizedTraits);
+  if (mixpanelInstance) {
+    try {
+      mixpanelInstance.identify(userId);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Mixpanel] Identify:', userId, sanitizedTraits);
+      }
+    } catch (e) {
+      console.error('[Analytics] Mixpanel identify failed:', e);
     }
-  } catch (e) {
-    console.error('[Analytics] Mixpanel identify failed:', e);
   }
   
   // GA4
@@ -439,10 +450,12 @@ export function setUserProperties(traits: UserTraits): void {
   const sanitized = sanitizeProperties(traits);
   
   // Mixpanel
-  try {
-    mixpanel.people.set(sanitized);
-  } catch (e) {
-    console.error('[Analytics] Mixpanel set user properties failed:', e);
+  if (mixpanelInstance) {
+    try {
+      mixpanelInstance.people.set(sanitized);
+    } catch (e) {
+      console.error('[Analytics] Mixpanel set user properties failed:', e);
+    }
   }
   
   // GA4
@@ -460,14 +473,16 @@ export function alias(newId: string): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  try {
-    mixpanel.alias(newId);
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Mixpanel] Alias:', newId);
+  if (mixpanelInstance) {
+    try {
+      mixpanelInstance.alias(newId);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Mixpanel] Alias:', newId);
+      }
+    } catch (e) {
+      console.error('[Analytics] Mixpanel alias failed:', e);
     }
-  } catch (e) {
-    console.error('[Analytics] Mixpanel alias failed:', e);
   }
 }
 
@@ -480,10 +495,12 @@ export function reset(): void {
   currentUserId = null;
   currentContext = {};
   
-  try {
-    mixpanel.reset();
-  } catch (e) {
-    console.error('[Analytics] Mixpanel reset failed:', e);
+  if (mixpanelInstance) {
+    try {
+      mixpanelInstance.reset();
+    } catch (e) {
+      console.error('[Analytics] Mixpanel reset failed:', e);
+    }
   }
   
   try {

@@ -52,6 +52,7 @@ services:
       DOCKER: "true"
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: db
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # As chaves de SPACES virão do .env via env_file
       # Fallbacks para o SDK da AWS (Active Storage)
       AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}

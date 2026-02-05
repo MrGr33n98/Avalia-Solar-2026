@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyCard from '@/components/CompanyCard';
 import SidebarFilter from '@/components/SidebarFilter';
 import { Category, Company, Banner, categoriesApi } from '@/lib/api';
@@ -311,13 +312,15 @@ function CategoryHeader({
       {/* 1. Background Imersivo */}
       <div className="absolute inset-0 z-0">
         {hasImage ? (
-          <Image
+          <OptimizedImage
             src={bannerUrl!}
             alt={category.name}
             fill
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
             onError={() => setImageError(true)}
             priority
+            quality={90}
+            fallbackSrc="/images/default-banner.svg"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950" />

@@ -77,13 +77,11 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
         <OptimizedImage
           src="/images/banner-landing-page-avalia-solar.jpg"
           alt="Avalia Solar Background"
-          width={1024}
-          height={401}
+          width={1200}
+          height={600}
           fill
           priority
-          unoptimized
-          loading="eager"
-          quality={85}
+          quality={90}
           className="object-cover object-center"
           sizes="100vw"
           containerClassName="h-full"

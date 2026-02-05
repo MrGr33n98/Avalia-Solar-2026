@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from 'next/dynamic';
 import {
   LayoutDashboard,
   Package,
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Company, Product, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,13 +47,28 @@ import { cn } from "@/lib/utils";
 import CompanyHero from "./components/CompanyHero";
 import CompanySidebar from "./components/CompanySidebar";
 import CompanyOverview from "./components/CompanyOverview";
-import CompanyProducts from "./components/CompanyProducts";
-import CompanyReviews from "./components/CompanyReviews";
-import CompanyFinancing from "./components/CompanyFinancing";
-import MediaGallery from "@/app/dashboard/components/MediaGallery";
-import FaqSection from "./components/FaqSection";
-import SocialProof from "./components/SocialProof";
-import StickyCTA from "./components/StickyCTA";
+
+// Dynamic Components for Performance (TBT Reduction)
+const CompanyProducts = dynamic(() => import("./components/CompanyProducts"), {
+  loading: () => <div className="space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-48 w-full" /></div>
+});
+const CompanyReviews = dynamic(() => import("./components/CompanyReviews"), {
+  loading: () => <div className="space-y-4"><Skeleton className="h-64 w-full" /></div>
+});
+const CompanyFinancing = dynamic(() => import("./components/CompanyFinancing"), {
+  loading: () => <div className="space-y-4"><Skeleton className="h-48 w-full" /></div>
+});
+const MediaGallery = dynamic(() => import("@/app/dashboard/components/MediaGallery"), {
+  loading: () => <div className="grid grid-cols-3 gap-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>
+});
+const FaqSection = dynamic(() => import("./components/FaqSection"), {
+  loading: () => <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+});
+const SocialProof = dynamic(() => import("./components/SocialProof"), {
+  loading: () => <Skeleton className="h-24 w-full" />
+});
+const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false });
+
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { track } from "@/lib/analytics";

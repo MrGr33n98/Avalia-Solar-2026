@@ -46,7 +46,7 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
       {gaId && (
         <Script
           id="google-tag-ga4"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         />
       )}
@@ -54,7 +54,7 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
       {gaId && (
         <Script
           id="ga4-config"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -73,7 +73,7 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
       {/* Google Tag Manager */}
       <Script
         id="gtm-script"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

@@ -80,7 +80,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <head>
-        {/* Google Tag Manager & GA4 */}
         <GoogleTagManager gtmId={GTM_ID} gaId={GA_ID} />
         <link rel="preconnect" href="https://api.avaliasolar.com.br" />
         <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
@@ -88,11 +87,19 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://api-js.mixpanel.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api-js.mixpanel.com" />
+        <link rel="preconnect" href="https://cdn.mxpnl.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.mxpnl.com" />
+        <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
+        {/* Preload critical hero image for Landing Page */}
         <link
           rel="preload"
           as="image"
           href="/images/banner-landing-page-avalia-solar.jpg"
-          imagesizes="100vw"
+          imageSrcSet="/images/banner-landing-page-avalia-solar.jpg 1200w"
+          imageSizes="100vw"
         />
       </head>
       <body suppressHydrationWarning className={inter.className}>

@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Info } from 'lucide-react';
@@ -8,8 +9,15 @@ import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
 import LandingHero from '@/components/landing/LandingHero';
-import HowItWorks from '@/components/landing/HowItWorks';
-import SavingsCalculator from '@/components/landing/SavingsCalculator';
+
+const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
+  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
+});
+const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalculator'), {
+  ssr: false,
+  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
+});
+
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { TrustRow } from '@/components/ui/TrustRow';
 import { Button } from '@/components/ui/button';

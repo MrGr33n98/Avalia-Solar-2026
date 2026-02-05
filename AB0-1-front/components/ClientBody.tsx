@@ -1,15 +1,19 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
-import QuoteWizardModal from '@/components/QuoteWizardModal';
-import QuickLeadModal from '@/components/QuickLeadModal';
-import ComparisonFloatingBar from '@/components/ComparisonFloatingBar';
+
+// Lazy load heavy client-side modals and floating components
+const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
+const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
+const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
+const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
+
 import { Toaster } from '@/components/ui/sonner';
-import { CookieConsent } from '@/components/CookieConsent';
 import { useEffect } from 'react';
 import { initializeAnalytics, page } from '@/lib/analytics';
 import { usePathname } from 'next/navigation';

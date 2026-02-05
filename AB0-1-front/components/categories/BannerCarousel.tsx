@@ -12,7 +12,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { track } from '@/lib/analytics';
 
 export interface Banner {
@@ -59,7 +59,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
       }}
     >
       <CarouselContent>
-        {banners.map((banner) => (
+        {banners.map((banner, index) => (
           <CarouselItem key={banner.id}>
             <div className="relative w-full h-[280px] md:h-[400px] group">
               {banner.link_url ? (
@@ -79,7 +79,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
                     });
                   }}
                 >
-                  <BannerImage banner={banner} />
+                  <BannerImage banner={banner} isFirst={index === 0} />
                 </a>
               ) : (
                 <div 
@@ -94,7 +94,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
                     });
                   }}
                 >
-                  <BannerImage banner={banner} />
+                  <BannerImage banner={banner} isFirst={index === 0} />
                 </div>
               )}
             </div>
@@ -111,18 +111,20 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
   );
 }
 
-function BannerImage({ banner }: { banner: Banner }) {
+function BannerImage({ banner, isFirst }: { banner: Banner; isFirst: boolean }) {
   const imageUrl = getFullImageUrl(banner.image_url);
   const [error, setError] = React.useState(false);
 
   return (
     <>
-      <Image
+      <OptimizedImage
         src={error ? '/images/default-banner.svg' : (imageUrl || '/images/default-banner.svg')}
         alt={banner.title}
         fill
         className="object-cover transition-transform duration-700 group-hover:scale-105"
-        priority
+        priority={isFirst}
+        quality={90}
+        fallbackSrc="/images/default-banner.svg"
         onError={() => setError(true)}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
