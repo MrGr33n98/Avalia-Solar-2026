@@ -32,7 +32,7 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedCategory(val);
-    
+
     if (val) {
       const cat = categories.find(c => c.id.toString() === val);
       track('category_selected', {
@@ -53,7 +53,7 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
 
     let url = '/companies';
     const params = new URLSearchParams();
-    
+
     if (selectedCategory) {
       const cat = categories.find(c => c.id.toString() === selectedCategory);
       if (cat?.seo_url) {
@@ -97,11 +97,11 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
             <Zap className="w-4 h-4 fill-brand-blue" />
             +1.500 Empresas Verificadas
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6">
             Encontre as melhores empresas de <span className="text-brand-blue">energia solar e mobilidade elétrica</span> perto de você.
           </h1>
-          
+
           <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
             Compare orçamentos, avaliações reais e instale solar, baterias ou carregadores veiculares com segurança.
           </p>
@@ -110,7 +110,7 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
           <Card className="p-2 md:p-3 shadow-2xl border-slate-100 rounded-2xl md:rounded-full bg-white max-w-3xl mx-auto">
             <div className="flex flex-col md:flex-row items-center gap-2">
               <div className="flex-1 w-full relative">
-                <select 
+                <select
                   className="w-full h-12 md:h-14 pl-12 pr-4 bg-slate-50 border-none rounded-xl md:rounded-l-full focus:ring-2 focus:ring-brand-blue appearance-none text-slate-700 font-medium cursor-pointer"
                   value={selectedCategory}
                   onChange={handleCategoryChange}
@@ -126,13 +126,13 @@ export default function LandingHero({ categories: prefetchedCategories = [] }: L
               <div className="hidden md:block w-px h-8 bg-slate-200" />
 
               <div className="flex-1 w-full">
-                <LocationSearch 
-                  className="w-full h-12 md:h-14 border-none bg-slate-50 md:bg-transparent rounded-xl focus:ring-2 focus:ring-brand-blue font-medium" 
+                <LocationSearch
+                  className="w-full h-12 md:h-14 border-none bg-slate-50 md:bg-transparent rounded-xl focus:ring-2 focus:ring-brand-blue font-medium"
                   onLocationSelect={setLocation}
                 />
               </div>
 
-              <CTAPrimaryButton 
+              <CTAPrimaryButton
                 label="Buscar Empresas"
                 ctaType="search_submitted"
                 onClick={handleSearch}
