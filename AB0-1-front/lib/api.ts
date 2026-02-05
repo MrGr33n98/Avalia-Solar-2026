@@ -3,6 +3,8 @@
 // =======================
 import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
 import { ApiError, toApiError } from './api-error';
+import * as Sentry from '@sentry/nextjs';
+import { logError } from './error-handler';
 
 // =======================
 // API Response Types
@@ -650,6 +652,19 @@ export const api = {
             console.warn(`[API] Resource not found (404) after ${attempt + 1} attempts: ${url}`);
           } else if (!shouldSilence) {
             console.error('[API] Final Error:', error);
+            
+            // Log to Sentry using centralized error handler
+            logError(error instanceof Error ? error : new Error(String(error)), {
+              action: 'api_request_failure',
+              metadata: {
+                url,
+                method: config.method,
+                attempt: attempt + 1,
+                status: errorStatus,
+                isTimeout: error.message === 'Request timeout',
+                details: error?.context?.details || error?.details
+              }
+            });
           } else {
             console.info('[API] Final Error (silenced):', {
               status: errorStatus,

@@ -16,12 +16,18 @@ import { Loader2, RefreshCcw, AlertCircle } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
 
+import dynamic from 'next/dynamic';
+
 // Import newly created components
 import { KpiCards } from './components/KpiCards';
 import { QuickActionsPanel } from './components/QuickActionsPanel';
 import { QuotesPanel } from './components/QuotesPanel';
-import { ActivityChart } from './components/ActivityChart';
 import { ReviewsList } from './components/ReviewsList';
+
+const ActivityChart = dynamic(() => import('./components/ActivityChart').then(mod => mod.ActivityChart), {
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 rounded-lg" />,
+  ssr: false
+});
 
 export default function ReviewDashboardPage() {
   const router = useRouter();

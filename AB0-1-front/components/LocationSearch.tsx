@@ -27,7 +27,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
   const [selectedLabel, setSelectedLabel] = React.useState('Localização');
   
   // Use existing hook for data
-  const { states, cities, fetchStates, fetchCities } = useLocationData();
+  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities, error, citiesError } = useLocationData();
 
   React.useEffect(() => {
     fetchStates();
@@ -39,19 +39,12 @@ export default function LocationSearch({ className, onLocationSelect }: Location
     setSelectedState(state);
     fetchCities(state);
     setValue(''); // Reset command input value if needed
-    // Keep open to select city? Or just select state?
-    // Let's assume selecting state allows selecting city next, or "All cities in State"
   };
 
   const handleSelect = (currentValue: string, type: 'state' | 'city') => {
     if (type === 'state') {
       handleStateSelect(currentValue);
       setSelectedLabel(currentValue);
-      // Don't close yet if we want city selection
-      // But for simple UX, maybe just selecting state is enough initially
-      // Or we can have a nested structure. 
-      // Let's implement a simple 2-step or flattened list if possible.
-      // Given the hook structure, it fetches cities AFTER state is known.
     } else {
       // City selected
       setValue(currentValue);
@@ -96,15 +89,28 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[240px] p-0">
         <Command>
           <CommandInput placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} />
-          <CommandList>
-            <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+          <CommandList className="max-h-[300px] overflow-y-auto">
+            {loadingStates && view === 'states' && (
+              <div className="p-4 text-sm text-center text-muted-foreground animate-pulse">
+                Carregando estados...
+              </div>
+            )}
             
-            {view === 'states' && (
+            {error && view === 'states' && (
+              <div className="p-4 text-sm text-center text-destructive">
+                {error}
+              </div>
+            )}
+
+            <CommandEmpty>
+              {!loadingStates && !loadingCities && "Nenhum resultado encontrado."}
+            </CommandEmpty>
+            
+            {view === 'states' && !loadingStates && (
               <CommandGroup heading="Estados">
-                 {/* Option to clear/select all */}
                  <CommandItem
                   onSelect={() => {
                     setSelectedLabel("Todo Brasil");
@@ -119,9 +125,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                   <CommandItem
                     key={state}
                     value={state}
-                    onSelect={(currentValue) => {
-                      // Uppercase match usually, but value passed from CommandItem matches the loop key if not specified otherwise? 
-                      // Actually value is usually lowercased by cmdk. Let's use the original state name.
+                    onSelect={() => {
                       handleStateSelect(state); 
                       setView('cities');
                     }}
@@ -149,33 +153,46 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                 >
                   ← Voltar para Estados
                 </CommandItem>
-                <CommandItem
-                   onSelect={() => {
-                     setSelectedLabel(`Todo ${selectedState}`);
-                     setOpen(false);
-                     if (onLocationSelect && selectedState) onLocationSelect({ state: selectedState });
-                   }}
-                >
-                  <Check className="mr-2 h-4 w-4 opacity-0" />
-                  Todas em {selectedState}
-                </CommandItem>
-                {cities.map((city) => (
-                  <CommandItem
-                    key={city}
-                    value={city}
-                    onSelect={(currentValue) => {
-                      handleSelect(city, 'city');
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === city ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {city}
-                  </CommandItem>
-                ))}
+                
+                {loadingCities ? (
+                  <div className="p-4 text-sm text-center text-muted-foreground animate-pulse">
+                    Carregando cidades...
+                  </div>
+                ) : citiesError ? (
+                  <div className="p-4 text-sm text-center text-destructive">
+                    {citiesError}
+                  </div>
+                ) : (
+                  <>
+                    <CommandItem
+                      onSelect={() => {
+                        setSelectedLabel(`Todo ${selectedState}`);
+                        setOpen(false);
+                        if (onLocationSelect && selectedState) onLocationSelect({ state: selectedState });
+                      }}
+                    >
+                      <Check className="mr-2 h-4 w-4 opacity-0" />
+                      Todas em {selectedState}
+                    </CommandItem>
+                    {cities.map((city) => (
+                      <CommandItem
+                        key={city}
+                        value={city}
+                        onSelect={() => {
+                          handleSelect(city, 'city');
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === city ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {city}
+                      </CommandItem>
+                    ))}
+                  </>
+                )}
               </CommandGroup>
             )}
           </CommandList>

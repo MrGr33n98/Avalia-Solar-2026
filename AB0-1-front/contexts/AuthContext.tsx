@@ -6,6 +6,8 @@ import { User, authApi, companyAccessApi } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
 import { identify, track } from '@/lib/analytics/lazy';
 import { getApiErrorMessage } from '@/lib/api-error';
+import * as Sentry from '@sentry/nextjs';
+import { logError } from '@/lib/error-handler';
 
 interface AuthContextType {
   user: User | null;
@@ -49,6 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: user.role,
         company_id: user.company_id ? String(user.company_id) : undefined
       });
+
+      // Set user in Sentry for better error tracking
+      Sentry.setUser({
+        id: String(user.id),
+        email: user.email,
+        username: user.name,
+        role: user.role,
+      });
+    } else {
+      // Clear user in Sentry on logout
+      Sentry.setUser(null);
     }
   }, [user]);
 
@@ -144,6 +157,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('[AuthContext] Login failed:', error);
+      
+      // Log to Sentry
+      logError(error instanceof Error ? error : new Error(String(error)), {
+        action: 'login_failed',
+        metadata: { email }
+      });
+
       setError(getApiErrorMessage(error, 'Falha ao entrar. Verifique suas credenciais.'));
       throw error;
     }

@@ -21,7 +21,12 @@ import OpportunitiesCard from '@/components/ui/OpportunitiesCard';
 import OnboardingIncentive from '@/components/ui/OnboardingIncentive';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
 import RankingTable, { type RankingRow } from '@/components/ui/RankingTable';
-import AdvancedAnalytics from './AdvancedAnalytics';
+import dynamic from 'next/dynamic';
+
+const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 rounded-lg" />,
+  ssr: false
+});
 
 type DashboardStats = {
   profileViews: number;

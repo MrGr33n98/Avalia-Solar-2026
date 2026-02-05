@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { companiesApiSafe } from '@/lib/api-client';
 import { statesApi, citiesApi } from '@/lib/api';
 
 const CACHE_KEY_STATES = 'avalia_solar_states_cache';
 const CACHE_KEY_CITIES_PREFIX = 'avalia_solar_cities_cache_';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const MIN_REQUEST_INTERVAL = 500; // 500ms rate limit
 
 interface CacheItem<T> {
   data: T;
@@ -31,6 +32,9 @@ export function useLocationData() {
   const [error, setError] = useState<string | null>(null);
   const [citiesError, setCitiesError] = useState<string | null>(null);
   const [stateIndex, setStateIndex] = useState<Record<string, number>>({});
+  
+  const lastRequestTime = useRef<number>(0);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const withTimeout = useCallback(async <T,>(promise: Promise<T>, label: string, timeoutMs = 8000): Promise<T> => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -145,62 +149,80 @@ export function useLocationData() {
       return;
     }
 
-    setLoadingCities(true);
-    setCitiesError(null);
-    const cacheKey = `${CACHE_KEY_CITIES_PREFIX}${state}`;
+    // Debounce implementation (300ms)
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    if (!forceRefresh) {
-      const cached = getCachedData<string[]>(cacheKey);
-      if (cached) {
-        setCities(cached);
-        setLoadingCities(false);
-        return;
-      }
-    }
-
-    try {
-      let list: string[] = [];
-      const stateId = stateIndex[state];
-
-      try {
-        if (stateId && stateId > 0) {
-          const resp: any = await withTimeout(citiesApi.getByState(stateId), `cities-${state}`);
-          const arr: any[] = Array.isArray(resp) ? resp : Array.isArray(resp?.cities) ? resp.cities : Array.isArray(resp?.data) ? resp.data : [];
-          list = arr
-            .map((c: any) => c.name ?? c.city_name ?? c)
-            .filter((c: any) => c && String(c).trim() !== '')
-            .map((c: any) => String(c));
+    return new Promise<void>((resolve) => {
+      debounceTimer.current = setTimeout(async () => {
+        // Rate limiting
+        const now = Date.now();
+        if (now - lastRequestTime.current < MIN_REQUEST_INTERVAL && !forceRefresh) {
+          console.warn(`[useLocationData] Rate limit hit for ${state}. Skipping request.`);
+          resolve();
+          return;
         }
-      } catch (err) {
-        console.error(`Failed to fetch cities by state id for ${state}:`, err);
-      }
+        lastRequestTime.current = now;
 
-      if (!list || list.length === 0) {
+        setLoadingCities(true);
+        setCitiesError(null);
+        const cacheKey = `${CACHE_KEY_CITIES_PREFIX}${state}`;
+
+        if (!forceRefresh) {
+          const cached = getCachedData<string[]>(cacheKey);
+          if (cached) {
+            setCities(cached);
+            setLoadingCities(false);
+            resolve();
+            return;
+          }
+        }
+
         try {
-          const data = await withTimeout(companiesApiSafe.getCities(state), `cities-${state}`);
-          list = (Array.isArray(data) ? data : []).filter(c => c && String(c).trim() !== '');
+          let list: string[] = [];
+          const stateId = stateIndex[state];
+
+          try {
+            if (stateId && stateId > 0) {
+              const resp: any = await withTimeout(citiesApi.getByState(stateId), `cities-${state}`);
+              const arr: any[] = Array.isArray(resp) ? resp : Array.isArray(resp?.cities) ? resp.cities : Array.isArray(resp?.data) ? resp.data : [];
+              list = arr
+                .map((c: any) => c.name ?? c.city_name ?? c)
+                .filter((c: any) => c && String(c).trim() !== '')
+                .map((c: any) => String(c));
+            }
+          } catch (err) {
+            console.error(`Failed to fetch cities by state id for ${state}:`, err);
+          }
+
+          if (!list || list.length === 0) {
+            try {
+              const data = await withTimeout(companiesApiSafe.getCities(state), `cities-${state}`);
+              list = (Array.isArray(data) ? data : []).filter(c => c && String(c).trim() !== '');
+            } catch (err) {
+              console.error(`Failed to fetch cities for ${state}:`, err);
+              setCitiesError('Não foi possível carregar as cidades deste estado. Verifique sua conexão.');
+            }
+          }
+
+          const unique = Array.from(new Set(list)).sort();
+          setCities(unique);
+          if (unique.length > 0) {
+            setCachedData(cacheKey, unique);
+          } else if (typeof window !== 'undefined') {
+            localStorage.removeItem(cacheKey);
+          }
+          if (!unique.length) {
+            setCitiesError(prev => prev || 'Nenhuma cidade encontrada para este estado.');
+          }
         } catch (err) {
           console.error(`Failed to fetch cities for ${state}:`, err);
-          setCitiesError('Falha ao carregar cidades. Verifique sua conexão e tente novamente.');
+          setCitiesError('Ocorreu um erro ao carregar as cidades. Tente novamente mais tarde.');
+        } finally {
+          setLoadingCities(false);
+          resolve();
         }
-      }
-
-      const unique = Array.from(new Set(list)).sort();
-      setCities(unique);
-      if (unique.length > 0) {
-        setCachedData(cacheKey, unique);
-      } else if (typeof window !== 'undefined') {
-        localStorage.removeItem(cacheKey);
-      }
-      if (!unique.length) {
-        setCitiesError(prev => prev || 'Nenhuma cidade encontrada para este estado.');
-      }
-    } catch (err) {
-      console.error(`Failed to fetch cities for ${state}:`, err);
-      setCitiesError('Falha ao carregar cidades. Verifique sua conexão e tente novamente.');
-    } finally {
-      setLoadingCities(false);
-    }
+      }, 300); // 300ms debounce
+    });
   }, [stateIndex, withTimeout]);
 
   // Initial load

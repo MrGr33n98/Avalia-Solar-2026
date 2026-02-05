@@ -20,6 +20,7 @@ const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod
 import { useCallback, useEffect, useRef } from 'react';
 import { initializeAnalytics, page } from '@/lib/analytics/lazy';
 import { usePathname } from 'next/navigation';
+import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 
 export default function ClientBody({
   children,
@@ -53,6 +54,9 @@ export default function ClientBody({
   }, [loadAnalytics]);
 
   useEffect(() => {
+    // Setup centralized global error handlers (Sentry, etc.)
+    setupGlobalErrorHandlers();
+
     const shouldIgnore = (message: string) =>
       message.includes('The message port closed before a response was received');
 
