@@ -400,7 +400,7 @@ fin_offer_count = { created: 0, updated: 0 }
 
 fin_disclaimer = 'Condições variam por parceiro e perfil. O Avalia Solar não vende, não intermedia e não garante financiamento. Conteúdo informativo para reviews/experiências.'
 
-solar_companies = Company.joins(:categories).where(categories: { id: [root_solar.id, solar_children_records['financiamento-energia-solar']&.id].compact }).distinct
+solar_companies = Company.where(id: Company.joins(:categories).where(categories: { id: [root_solar.id, solar_children_records['financiamento-energia-solar']&.id].compact }).select(:id).distinct)
 
 solar_companies.find_each do |company|
   profile = company.company_financing_profile || company.build_company_financing_profile
