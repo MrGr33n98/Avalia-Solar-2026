@@ -28,6 +28,8 @@ interface OptimizedImageProps {
   placeholder?: 'blur' | 'empty';
   blurDataURL?: string;
   useAspectRatio?: boolean;
+  unoptimized?: boolean;
+  loading?: 'lazy' | 'eager';
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -70,6 +72,8 @@ export function OptimizedImage({
   placeholder = 'blur',
   blurDataURL,
   useAspectRatio = true,
+  unoptimized = false,
+  loading,
   onLoad,
   onError,
 }: OptimizedImageProps) {
@@ -103,6 +107,8 @@ export function OptimizedImage({
     sizes,
     placeholder,
     blurDataURL: placeholder === 'blur' ? blurDataURL || DEFAULT_BLUR_DATA_URL : undefined,
+    unoptimized,
+    loading: priority ? 'eager' : loading,
   };
 
   const placeholderNode = isLoading ? (

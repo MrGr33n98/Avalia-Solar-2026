@@ -73,6 +73,8 @@ export default function LandingHero() {
           height={401}
           fill
           priority
+          unoptimized
+          loading="eager"
           quality={85}
           className="object-cover object-center"
           sizes="100vw"
