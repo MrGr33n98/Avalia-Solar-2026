@@ -25,6 +25,7 @@ ActiveAdmin.register Article do
     id_column
     column :title
     column :category
+    column :product
     column :status do |article|
       status_tag article.status
     end
@@ -45,6 +46,7 @@ ActiveAdmin.register Article do
       row :title
       row :slug
       row :category
+      row :product
       row :status do |article|
         status_tag article.status
       end

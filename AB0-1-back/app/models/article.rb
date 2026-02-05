@@ -15,6 +15,7 @@ class Article < ApplicationRecord
   validates :category, presence: true
   validates :slug, presence: true, uniqueness: true
   validates :content, presence: true, if: -> { status == 'published' }
+  validates :published_at, presence: true, if: -> { status == 'published' }
   validate :banner_mime_type, if: -> { banner.attached? }
   validate :banner_file_size, if: -> { banner.attached? }
   validate :banner_dimensions, if: -> { banner.attached? }
