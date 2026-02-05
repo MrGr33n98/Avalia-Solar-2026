@@ -225,7 +225,7 @@ export default function CompanyCard({
       className={cn(
         'relative flex flex-col bg-white border border-gray-200 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden',
-        compact ? 'rounded-2xl h-[240px] md:h-auto' : 'rounded-2xl',
+        compact ? 'rounded-2xl h-[240px]' : 'rounded-2xl',
         className
       )}
       onClick={handleCardClick}

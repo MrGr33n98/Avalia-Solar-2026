@@ -42,7 +42,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
           />
         </div>
 
-        <div className="p-3 flex flex-col justify-between">
+        <div className="p-3 flex flex-col justify-between min-h-[110px]">
           <div>
             <h3 className="text-sm md:text-base font-semibold text-slate-900 leading-tight line-clamp-1">
               {category?.name || 'Categoria'}

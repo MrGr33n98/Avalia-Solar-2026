@@ -84,9 +84,18 @@ function SkeletonCategoryCard() {
       <div className="relative aspect-[3/1] bg-gray-100">
         <Skeleton className="w-full h-full" />
       </div>
-      <div className="p-3 space-y-2">
-        <Skeleton className="h-3.5 w-2/3" />
-        <Skeleton className="h-2.5 w-full" />
+      <div className="p-3 flex flex-col justify-between min-h-[110px]">
+        <div className="space-y-2">
+          <Skeleton className="h-3.5 w-2/3" />
+          <Skeleton className="h-2.5 w-full" />
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3.5 w-10" />
+            <Skeleton className="h-3.5 w-12" />
+          </div>
+          <Skeleton className="h-9 w-20 rounded-lg" />
+        </div>
       </div>
     </Card>
   );
@@ -94,13 +103,24 @@ function SkeletonCategoryCard() {
 
 function SkeletonCompanyCard() {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden rounded-2xl border border-gray-200 h-[240px]">
       <div className="relative bg-gray-100 aspect-[4/1]">
         <Skeleton className="w-full h-full" />
       </div>
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-4 w-2/3" />
+      <div className="pt-6 px-3 pb-3 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-3/5" />
+          <Skeleton className="h-3 w-10" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-16" />
+        </div>
         <Skeleton className="h-3 w-1/2" />
+        <div className="mt-auto flex items-center gap-2">
+          <Skeleton className="h-10 flex-1 rounded-xl" />
+          <Skeleton className="h-10 w-10 rounded-xl" />
+        </div>
       </div>
     </Card>
   );
