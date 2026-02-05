@@ -1,6 +1,6 @@
 ActiveAdmin.register Article do
   permit_params :title, :slug, :content, :excerpt, :meta_title, :meta_description, :published_at,
-                :status, :featured, :category_id, :author_id, :banner,
+                :status, :featured, :category_id, :author_id, :product_id, :banner,
                 :sponsored, :sponsored_label, :views_count,
                 company_ids: []
 
@@ -18,7 +18,6 @@ ActiveAdmin.register Article do
   filter :title
   filter :status, as: :select, collection: [['Rascunho', 'draft'], ['Publicado', 'published']]
   filter :category
-  filter :companies
   filter :created_at
 
   index do
@@ -31,7 +30,6 @@ ActiveAdmin.register Article do
     end
     column :sponsored
     column :sponsored_label
-    column :author
     column :published_at
     column :views_count
     column :banner do |article|
@@ -52,7 +50,6 @@ ActiveAdmin.register Article do
       end
       row :sponsored
       row :sponsored_label
-      row :author
       row :published_at
       row :featured
       row :views_count
@@ -60,6 +57,7 @@ ActiveAdmin.register Article do
       row :content do |article|
         raw article.content
       end
+      row :meta_description
       row :banner do |article|
         if article.banner.attached?
           image_tag article.banner.variant(resize_to_limit: [640, 360])
@@ -67,7 +65,6 @@ ActiveAdmin.register Article do
           status_tag 'Sem imagem', :warning
         end
       end
-      row :companies
     end
     active_admin_comments
   end
@@ -83,6 +80,7 @@ ActiveAdmin.register Article do
                   input_html: { accept: 'image/jpeg,image/png,image/gif' }
           f.input :slug, hint: 'Deixe em branco para gerar automaticamente a partir do título'
           f.input :category
+          f.input :product
           f.input :status, as: :select, collection: [['Rascunho', 'draft'], ['Publicado', 'published']], include_blank: false
           f.input :published_at, as: :datepicker
           f.input :featured, label: 'Destaque?'
