@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import HomePageTracking from '@/components/home/HomePageTracking';
 import { categoriesApiSafe, companiesApiSafe } from '@/lib/api-client';
-import type { Category, Company } from '@/lib/api';
+import { api } from '@/lib/api';
+import type { Banner, Category, Company } from '@/lib/api';
 
 export const revalidate = 300;
 
@@ -63,8 +64,10 @@ async function getHomeData(): Promise<{
   allCategories: Category[];
   featuredCategories: Category[];
   companies: Company[];
+  categoriesBanners: Banner[];
+  companiesBanners: Banner[];
 }> {
-  const [allCategories, featuredCategories, companies] = await Promise.all([
+  const [allCategories, featuredCategories, companies, categoriesBanners, companiesBanners] = await Promise.all([
     categoriesApiSafe.getAll({ status: 'active' }),
     categoriesApiSafe.getAll({
       featured: true,
@@ -78,17 +81,37 @@ async function getHomeData(): Promise<{
       limit: 12,
       include: 'logo_url,banner_url,average_rating,rating_count',
     }),
+    getBanners('categories_top'),
+    getBanners('companies_top'),
   ]);
 
   return {
     allCategories: Array.isArray(allCategories) ? allCategories : [],
     featuredCategories: Array.isArray(featuredCategories) ? featuredCategories : [],
     companies: Array.isArray(companies) ? companies : [],
+    categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
+    companiesBanners: Array.isArray(companiesBanners) ? companiesBanners : [],
   };
 }
 
+async function getBanners(position: string): Promise<Banner[]> {
+  try {
+    const response = await api.request<Banner[]>({
+      url: `/banners?position=${encodeURIComponent(position)}`,
+      method: 'GET',
+    });
+    const data: any = response?.data;
+    if (Array.isArray(data)) return data as Banner[];
+    if (Array.isArray(data?.banners)) return data.banners as Banner[];
+    return [];
+  } catch (error) {
+    console.warn(`[Home] Failed to fetch banners for ${position}:`, error);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const { allCategories, featuredCategories, companies } = await getHomeData();
+  const { allCategories, featuredCategories, companies, categoriesBanners, companiesBanners } = await getHomeData();
 
   return (
     <main className="flex-grow">
@@ -107,7 +130,7 @@ export default async function Home() {
       <TrustRow />
 
       <SectionShell zebra>
-        <BannerByLocation location="categories_top" className="mb-8" />
+        <BannerByLocation location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
 
         <SectionHeader
           title="Soluções por Categoria"
@@ -134,7 +157,7 @@ export default async function Home() {
       </SectionShell>
 
       <SectionShell>
-        <BannerByLocation location="companies_top" className="mb-8" />
+        <BannerByLocation location="companies_top" className="mb-8" initialBanners={companiesBanners} />
 
         <SectionHeader
           title="Empresas em Destaque"

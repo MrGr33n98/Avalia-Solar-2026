@@ -4,6 +4,7 @@ import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
+import type { Banner } from '@/lib/api';
 
 type BannerLocation = 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top' | 'companies_footer';
 type BannerContainerBanners = Parameters<typeof BannerContainer>[0]['banners'];
@@ -12,6 +13,7 @@ type BannerData = BannerContainerBanners[number];
 interface BannerByLocationProps {
   location: BannerLocation;
   className?: string;
+  initialBanners?: Banner[];
 }
 
 const RESERVED_LOCATIONS: BannerLocation[] = ['navbar', 'home_top', 'categories_top', 'companies_top'];
@@ -21,8 +23,15 @@ const PLACEHOLDER_ASPECT = 'aspect-[6/1] sm:aspect-[4/1]';
  * Componente que busca e renderiza banners por localização
  * Blindado contra erros - retorna null silenciosamente se falhar
  */
-export default function BannerByLocation({ location, className = '' }: BannerByLocationProps) {
-  const { data: banners = [], isLoading: loading, error } = useBannersQuery({ position: location });
+export default function BannerByLocation({ location, className = '', initialBanners }: BannerByLocationProps) {
+  const hasInitial = Boolean(initialBanners && initialBanners.length > 0);
+  const { data: fetchedBanners = [], isLoading, error } = useBannersQuery({
+    position: location,
+    enabled: !hasInitial,
+  });
+  const banners = hasInitial ? initialBanners || [] : fetchedBanners;
+  const loading = !hasInitial && isLoading;
+  const queryError = !hasInitial ? error : null;
   const shouldReserveSpace = RESERVED_LOCATIONS.includes(location);
 
   const renderPlaceholder = (isLoading: boolean) => (
@@ -45,8 +54,8 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
     }
 
     // Se houver erro, loga mas não quebra a página
-    if (error) {
-      console.warn(`[BannerByLocation] Error loading banners for ${location}:`, error);
+    if (queryError) {
+      console.warn(`[BannerByLocation] Error loading banners for ${location}:`, queryError);
       return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 

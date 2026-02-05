@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
-import { companiesApiSafe } from '@/lib/api-client';
+import { companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
 import { buildCompanyPath } from '@/lib/slug';
 
 interface Props {
@@ -82,6 +82,11 @@ export default async function CompanyDetailPage({ params }: Props) {
     logo_url: company.logo_url
   });
 
+  const initialReviews = await reviewsApiSafe.getAll({
+    company_id: company.id,
+    limit: 6,
+  });
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -133,7 +138,7 @@ export default async function CompanyDetailPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando detalhes da empresa...</div>}>
-        <CompanyDetailClient company={company} />
+        <CompanyDetailClient company={company} initialReviews={initialReviews || []} />
       </Suspense>
     </>
   );

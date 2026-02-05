@@ -58,6 +58,7 @@ import { track } from "@/lib/analytics";
 
 interface CompanyDetailClientProps {
   company: Company;
+  initialReviews?: Review[];
 }
 
 interface ExtendedCompany extends Company {
@@ -67,7 +68,7 @@ interface ExtendedCompany extends Company {
   whatsapp_url?: string;
 }
 
-export default function CompanyDetailClient({ company }: CompanyDetailClientProps): JSX.Element {
+export default function CompanyDetailClient({ company, initialReviews = [] }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
@@ -94,9 +95,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [currentCompany, setCurrentCompany] = useState<Company>(company);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [productsLoading, setProductsLoading] = useState<boolean>(true);
-  const [reviewsLoading, setReviewsLoading] = useState<boolean>(true);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(initialReviews.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const [reviewAnalytics, setReviewAnalytics] = useState<ReviewAnalytics | null>(null);
@@ -231,6 +232,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     };
   }, [reviews, reviewAnalytics, products, company.created_at, company.average_rating, company.rating_count]);
 
+  const shouldFetchReviews = initialReviews.length === 0;
+
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       if (!companyId) {
@@ -245,11 +248,15 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
         const [pData, rData] = await Promise.all([
           productsApiSafe.getByCompany(companyId),
-          reviewsApiSafe.getByCompany(companyId),
+          shouldFetchReviews
+            ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 })
+            : Promise.resolve(initialReviews),
         ]);
 
         setProducts(pData || []);
-        setReviews(rData || []);
+        if (shouldFetchReviews) {
+          setReviews(rData || []);
+        }
 
         if (analyticsEnabled && canViewAnalytics) {
           try {
@@ -278,7 +285,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     };
 
     fetchData();
-  }, [companyId, analyticsEnabled, canViewAnalytics, timeRange]);
+  }, [companyId, analyticsEnabled, canViewAnalytics, timeRange, shouldFetchReviews, initialReviews]);
 
   const bannerUrl = useMemo(() => {
     if (!currentCompany?.banner_url) return null;
