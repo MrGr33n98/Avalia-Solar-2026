@@ -481,6 +481,9 @@ export const api = {
   
   request: async function<T>(config: any): Promise<{ data: T }> {
     let lastError: any;
+    const silentStatusCodes = Array.isArray(config?.silentStatusCodes) ? config.silentStatusCodes : [];
+    const isRequestSilent = config?.silent === true;
+    const requestTag = config?.tag ? ` ${config.tag}` : '';
     
     const maxRetries = config.retries ?? MAX_RETRIES;
     const timeoutDuration = config.timeout ?? TIMEOUT;
@@ -563,8 +566,16 @@ export const api = {
               params: config.params,
               details
             };
-
-            console.error(`[API] Request failed:`, errorContext);
+            const shouldSilence = isRequestSilent || silentStatusCodes.includes(response.status);
+            if (!shouldSilence) {
+              console.error(`[API] Request failed${requestTag}:`, errorContext);
+            } else {
+              console.info(`[API] Request failed (silenced)${requestTag}:`, {
+                status: response.status,
+                url,
+                method: config.method
+              });
+            }
             
             // Don't retry on most 4xx errors (client errors), except 429 (Too Many Requests)
             // We also allow retrying 404 once in case of transient backend issues during deployments
@@ -616,10 +627,18 @@ export const api = {
                            error.message.match(/\[(5\d{2}|429)\]/);
                            
         if (!isRetryable || attempt === maxRetries - 1) {
-          if (error.context?.status === 404) {
+          const errorStatus = error?.context?.status;
+          const shouldSilence = isRequestSilent || silentStatusCodes.includes(errorStatus);
+          if (errorStatus === 404) {
             console.warn(`[API] Resource not found (404) after ${attempt + 1} attempts: ${url}`);
-          } else {
+          } else if (!shouldSilence) {
             console.error('[API] Final Error:', error);
+          } else {
+            console.info('[API] Final Error (silenced):', {
+              status: errorStatus,
+              url,
+              method: config.method
+            });
           }
           throw error;
         }
@@ -644,6 +663,8 @@ export async function fetchApi<T = any>(
   options: any = {}
 ): Promise<T> {
   const url = buildApiUrl(endpoint);
+  const silentStatusCodes = Array.isArray(options?.silentStatusCodes) ? options.silentStatusCodes : [];
+  const isSilent = options?.silent === true;
 
   try {
     const response = await api.request<T>({
@@ -660,9 +681,21 @@ export async function fetchApi<T = any>(
       params: options.params,
       next: options.next,
       cache: options.cache,
+      silent: options.silent,
+      silentStatusCodes: options.silentStatusCodes,
+      tag: options.tag,
     });
     return response.data;
   } catch (error: any) {
+    const status = error?.status || error?.context?.status;
+    if (options?.fallbackOnStatus && status !== undefined) {
+      const fallbackForStatus = options.fallbackOnStatus[status];
+      if (fallbackForStatus !== undefined) {
+        console.warn(`[API] Using fallback for ${url} due to status ${status}`);
+        return fallbackForStatus;
+      }
+    }
+
     // If a fallback is provided, return it instead of throwing
     if (options.fallback !== undefined) {
       console.warn(`[API] Using fallback for ${url} due to error:`, error.message);
@@ -676,11 +709,19 @@ export async function fetchApi<T = any>(
       params: options.params
     };
     
-    console.error(`[API] fetchApi Error for ${url}:`, {
-      message: error.message,
-      context: errorContext,
-      stack: error.stack
-    });
+    const shouldSilence = isSilent || silentStatusCodes.includes(status);
+    if (!shouldSilence) {
+      console.error(`[API] fetchApi Error for ${url}:`, {
+        message: error.message,
+        context: errorContext,
+        stack: error.stack
+      });
+    } else {
+      console.info(`[API] fetchApi Error (silenced) for ${url}:`, {
+        status,
+        context: errorContext
+      });
+    }
 
     if (error instanceof ApiError) {
       if (!(error as any).context) {
@@ -1142,12 +1183,20 @@ export const authApi = {
   me: async (): Promise<User | null> => {
     try {
       // First try the unified /auth/me endpoint
-      const resp = await fetchApi<{ user: User }>('/auth/me');
-      if (resp?.user) return resp.user;
+      const resp = await fetchApi<{ user: User } | null>('/auth/me', {
+        silentStatusCodes: [401],
+        fallbackOnStatus: { 401: null },
+        tag: 'auth.me',
+      });
+      if (resp && (resp as any).user) return (resp as any).user;
       
       // Fallback to /users/me if /auth/me doesn't return the user object directly
-      const userResp = await fetchApi<User>('/users/me');
-      return userResp;
+      const userResp = await fetchApi<User | null>('/users/me', {
+        silentStatusCodes: [401],
+        fallbackOnStatus: { 401: null },
+        tag: 'auth.me.fallback',
+      });
+      return userResp as User | null;
     } catch (error: any) {
       const status = error?.status || error?.context?.status;
       const msg = error?.message || '';

@@ -122,10 +122,129 @@ export interface CompanyAnalyticsSettings {
   claims: CompanyClaim[];
 }
 
+type AnalyticsAvailability = {
+  available: boolean;
+  reason?: string;
+  status?: number;
+  checkedAt: number;
+  expiresAt: number;
+};
+
+const ANALYTICS_CACHE_TTL_MS = 10 * 60 * 1000;
+const ANALYTICS_UNAUTH_TTL_MS = 60 * 1000;
+const analyticsAvailability = new Map<number, AnalyticsAvailability>();
+
+const getAvailability = (companyId: number): AnalyticsAvailability | null => {
+  const cached = analyticsAvailability.get(companyId);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    analyticsAvailability.delete(companyId);
+    return null;
+  }
+  return cached;
+};
+
+const setAvailability = (
+  companyId: number,
+  available: boolean,
+  reason?: string,
+  status?: number,
+  ttlMs: number = ANALYTICS_CACHE_TTL_MS
+) => {
+  analyticsAvailability.set(companyId, {
+    available,
+    reason,
+    status,
+    checkedAt: Date.now(),
+    expiresAt: Date.now() + ttlMs,
+  });
+};
+
+async function requestAnalytics<T>(
+  companyId: number,
+  label: string,
+  requestFn: () => Promise<T>,
+  fallback: T
+): Promise<T> {
+  if (!companyId) return fallback;
+
+  const cached = getAvailability(companyId);
+  if (cached && cached.available === false) {
+    console.info('[analyticsApi] Skipping request due to cached unavailability', {
+      label,
+      companyId,
+      reason: cached.reason,
+      status: cached.status,
+      expiresAt: cached.expiresAt,
+    });
+    return fallback;
+  }
+
+  try {
+    const data = await requestFn();
+    setAvailability(companyId, true, 'ok', 200, ANALYTICS_CACHE_TTL_MS);
+    return data;
+  } catch (error: any) {
+    const status = error?.status || error?.context?.status;
+    const reason =
+      status === 404 ? 'route_not_found' : status === 401 || status === 403 ? 'unauthorized' : 'error';
+    const ttl = status === 401 || status === 403 ? ANALYTICS_UNAUTH_TTL_MS : ANALYTICS_CACHE_TTL_MS;
+
+    if (status === 404 || status === 401 || status === 403) {
+      setAvailability(companyId, false, reason, status, ttl);
+    }
+
+    console.warn('[analyticsApi] Request failed, using fallback', {
+      label,
+      companyId,
+      status,
+      reason,
+    });
+    return fallback;
+  }
+}
+
+async function validateAnalyticsRoutes(companyId: number): Promise<boolean> {
+  if (!companyId) return false;
+  const cached = getAvailability(companyId);
+  if (cached) return cached.available;
+
+  try {
+    await fetchApi<{ data: any[] }>(
+      `/companies/${companyId}/analytics/historical`,
+      {
+        params: { days: 1 },
+        retries: 0,
+        silentStatusCodes: [401, 403, 404],
+        tag: 'analytics.validate',
+      }
+    );
+    setAvailability(companyId, true, 'ok', 200, ANALYTICS_CACHE_TTL_MS);
+    return true;
+  } catch (error: any) {
+    const status = error?.status || error?.context?.status;
+    const reason =
+      status === 404 ? 'route_not_found' : status === 401 || status === 403 ? 'unauthorized' : 'error';
+    const ttl = status === 401 || status === 403 ? ANALYTICS_UNAUTH_TTL_MS : ANALYTICS_CACHE_TTL_MS;
+
+    if (status === 404 || status === 401 || status === 403) {
+      setAvailability(companyId, false, reason, status, ttl);
+    }
+
+    console.warn('[analyticsApi] Validation failed', {
+      companyId,
+      status,
+      reason,
+    });
+    return false;
+  }
+}
+
 // =======================
 // Analytics API Endpoints
 // =======================
 export const analyticsApi = {
+  validateRoutes: validateAnalyticsRoutes,
   // Get company dashboard stats
   getStats: async (companyId?: number): Promise<CompanyAnalytics> => {
     try {
@@ -155,55 +274,56 @@ export const analyticsApi = {
     companyId: number,
     days: number = 30
   ): Promise<HistoricalData[]> => {
-    try {
-      const response = await fetchApi<{ data: any[] }>(
-        `/companies/${companyId}/analytics/historical`,
-        {
-          params: { days },
-          retries: 1, // avoid noisy retries for missing endpoints
-          fallback: { data: [] },
-        }
-      );
-      const data = response?.data || [];
-      return data.map((row) => ({
-        date: row.date,
-        views: row.views ?? 0,
-        clicks: row.clicks ?? 0,
-        leads: row.leads ?? 0,
-        conversion: row.conversion ?? 0,
-      }));
-    } catch (error: any) {
-      if (error?.status === 404) return [];
-      console.error('[analyticsApi.getHistoricalData] Error:', error);
-      return [];
-    }
+    return requestAnalytics(
+      companyId,
+      'historical',
+      async () => {
+        const response = await fetchApi<{ data: any[] }>(
+          `/companies/${companyId}/analytics/historical`,
+          {
+            params: { days },
+            retries: 1, // avoid noisy retries for missing endpoints
+            silentStatusCodes: [401, 403, 404],
+            tag: 'analytics.historical',
+          }
+        );
+        const data = response?.data || [];
+        return data.map((row) => ({
+          date: row.date,
+          views: row.views ?? 0,
+          clicks: row.clicks ?? 0,
+          leads: row.leads ?? 0,
+          conversion: row.conversion ?? 0,
+        }));
+      },
+      []
+    );
   },
 
   // Get review analytics
   getReviewAnalytics: async (companyId: number): Promise<ReviewAnalytics> => {
-    try {
-      const response = await fetchApi<ReviewAnalytics>(
-        `/companies/${companyId}/analytics/reviews`,
-        {
-          retries: 1,
-          fallback: {
-            total_reviews: 0,
-            average_rating: 0,
-            rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-            recent_reviews: [],
-          },
-        }
-      );
-      return response;
-    } catch (error) {
-      console.error('[analyticsApi.getReviewAnalytics] Error:', error);
-      return {
-        total_reviews: 0,
-        average_rating: 0,
-        rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-        recent_reviews: [],
-      };
-    }
+    const fallback = {
+      total_reviews: 0,
+      average_rating: 0,
+      rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      recent_reviews: [],
+    };
+    return requestAnalytics(
+      companyId,
+      'reviews',
+      async () => {
+        const response = await fetchApi<ReviewAnalytics>(
+          `/companies/${companyId}/analytics/reviews`,
+          {
+            retries: 1,
+            silentStatusCodes: [401, 403, 404],
+            tag: 'analytics.reviews',
+          }
+        );
+        return response;
+      },
+      fallback
+    );
   },
 
   // Settings: get
@@ -284,21 +404,23 @@ export const analyticsApi = {
     companyId: number,
     days: number = 30
   ): Promise<TrafficSource[]> => {
-    try {
-      const response = await fetchApi<{ sources: TrafficSource[] }>(
-        `/companies/${companyId}/analytics/traffic`,
-        {
-          params: { days },
-          retries: 1, // avoid retry loop on 404/502
-          fallback: { sources: [] },
-        }
-      );
-      return response.sources;
-    } catch (error: any) {
-      if (error?.status === 404) return [];
-      console.error('[analyticsApi.getTrafficSources] Error:', error);
-      return [];
-    }
+    return requestAnalytics(
+      companyId,
+      'traffic',
+      async () => {
+        const response = await fetchApi<{ sources: TrafficSource[] }>(
+          `/companies/${companyId}/analytics/traffic`,
+          {
+            params: { days },
+            retries: 1, // avoid retry loop on 404/502
+            silentStatusCodes: [401, 403, 404],
+            tag: 'analytics.traffic',
+          }
+        );
+        return response.sources || [];
+      },
+      []
+    );
   },
 
   // Get campaign performance

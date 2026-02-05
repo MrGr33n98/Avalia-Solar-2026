@@ -30,6 +30,34 @@ export default function ClientBody({
   }, []);
 
   useEffect(() => {
+    const shouldIgnore = (message: string) =>
+      message.includes('The message port closed before a response was received');
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const msg = String((event.reason as any)?.message || event.reason || '');
+      if (shouldIgnore(msg)) {
+        console.warn('[Runtime] Ignored browser extension message port error:', msg);
+        event.preventDefault();
+      }
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      const msg = String(event.message || '');
+      if (shouldIgnore(msg)) {
+        console.warn('[Runtime] Ignored browser extension message port error:', msg);
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  useEffect(() => {
     page();
   }, [pathname]);
 

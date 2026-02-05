@@ -107,9 +107,16 @@ export default function CompanyHero({
             priority
             quality={90}
             className="object-cover rounded-2xl shadow-lg"
+            containerClassName="h-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             fallbackSrc="/images/banner-avalia-solar.png"
-            onError={() => setBannerError(true)}
+            onError={() => {
+              console.warn('[CompanyHero] Banner failed to load', {
+                company_id: company.id,
+                bannerUrl,
+              });
+              setBannerError(true);
+            }}
           />
           {(!bannerUrl || bannerError) && (
             <div className="absolute inset-0 rounded-2xl ring-1 ring-border/50 pointer-events-none">

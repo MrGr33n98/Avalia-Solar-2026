@@ -126,9 +126,14 @@ export function OptimizedImage({
       width > 0 &&
       height > 0;
     const ratioStyle = canUseAspectRatio ? { aspectRatio: `${width}/${height}` } : undefined;
+    const fillContainerClass = cn(
+      'relative w-full overflow-hidden',
+      !canUseAspectRatio ? 'h-full' : '',
+      containerClassName
+    );
     return (
       <div
-        className={cn('relative w-full overflow-hidden', containerClassName)}
+        className={fillContainerClass}
         style={ratioStyle}
       >
         {placeholderNode}

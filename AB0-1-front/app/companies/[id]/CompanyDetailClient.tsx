@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from 'next/dynamic';
@@ -131,6 +131,7 @@ export default function CompanyDetailClient({
 
   const [bannerError, setBannerError] = useState<boolean>(false);
   const [logoError, setLogoError] = useState<boolean>(false);
+  const coverLogRef = useRef<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<string>("overview");
 
@@ -283,14 +284,29 @@ export default function CompanyDetailClient({
 
         if (analyticsEnabled && canViewAnalytics) {
           try {
-            const [rAnalytics, tSources, hData] = await Promise.all([
-              analyticsApi.getReviewAnalytics(companyId),
-              analyticsApi.getTrafficSources(companyId),
-              analyticsApi.getHistoricalData(companyId, timeRange),
-            ]);
-            setReviewAnalytics(rAnalytics);
-            setTrafficSources(tSources);
-            setHistoricalData(hData);
+            const routesAvailable = await analyticsApi.validateRoutes(companyId);
+            if (!routesAvailable) {
+              console.warn('[CompanyDetail] Analytics routes unavailable, skipping analytics fetch', {
+                company_id: companyId,
+              });
+              setReviewAnalytics({
+                total_reviews: 0,
+                average_rating: 0,
+                rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+                recent_reviews: [],
+              });
+              setTrafficSources([]);
+              setHistoricalData([]);
+            } else {
+              const [rAnalytics, tSources, hData] = await Promise.all([
+                analyticsApi.getReviewAnalytics(companyId),
+                analyticsApi.getTrafficSources(companyId),
+                analyticsApi.getHistoricalData(companyId, timeRange),
+              ]);
+              setReviewAnalytics(rAnalytics);
+              setTrafficSources(tSources);
+              setHistoricalData(hData);
+            }
           } catch (analyticsError) {
             console.error("Erro ao carregar analytics:", analyticsError);
             setReviewAnalytics(null);
@@ -325,6 +341,19 @@ export default function CompanyDetailClient({
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
     return `${base}${currentCompany.logo_url.startsWith("/") ? "" : "/"}${currentCompany.logo_url}`;
   }, [currentCompany?.logo_url]);
+
+  useEffect(() => {
+    const key = `${companyId}|${bannerUrl || 'no-banner'}|${logoUrl || 'no-logo'}`;
+    if (coverLogRef.current === key) return;
+    coverLogRef.current = key;
+    console.info('[CompanyDetail] Cover assets resolved', {
+      company_id: companyId,
+      bannerUrl,
+      logoUrl,
+      bannerError,
+      logoError,
+    });
+  }, [companyId, bannerUrl, logoUrl, bannerError, logoError]);
 
   if (error && !products.length && !reviews.length) {
     return (
