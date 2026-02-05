@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Cookie, X } from 'lucide-react';
 import Link from 'next/link';
 
-export function CookieConsent() {
+export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
