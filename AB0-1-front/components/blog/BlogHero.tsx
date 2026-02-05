@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { ImageOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface BannerImageProps {
   src: string;
@@ -16,6 +16,12 @@ interface BannerImageProps {
 
 const BannerImage = ({ src, alt, className, aspectRatio = 'video' }: BannerImageProps) => {
   const [status, setStatus] = React.useState<'loading' | 'error' | 'success'>('loading');
+  const sizeMap = {
+    video: { width: 1600, height: 900 },
+    wide: { width: 2100, height: 900 },
+    square: { width: 1000, height: 1000 },
+  } as const;
+  const { width, height } = sizeMap[aspectRatio];
 
   return (
     <div className={cn(
@@ -42,9 +48,11 @@ const BannerImage = ({ src, alt, className, aspectRatio = 'video' }: BannerImage
           <span className="text-xs font-medium">Imagem indisponível</span>
         </div>
       ) : (
-        <Image
+        <OptimizedImage
           src={src}
           alt={alt}
+          width={width}
+          height={height}
           fill
           className={cn(
             "object-contain transition-opacity duration-500",
@@ -53,7 +61,9 @@ const BannerImage = ({ src, alt, className, aspectRatio = 'video' }: BannerImage
           onLoad={() => setStatus('success')}
           onError={() => setStatus('error')}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          loading="lazy"
+          quality={85}
+          containerClassName="h-full"
+          useAspectRatio={false}
         />
       )}
     </div>

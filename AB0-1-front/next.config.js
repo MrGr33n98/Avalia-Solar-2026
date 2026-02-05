@@ -1,13 +1,23 @@
 /** @type {import('next').NextConfig} */
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
+const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
+const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
+
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
   // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
-  swcMinify: false,
+  swcMinify: enableSwcMinify,
+  compress: true,
   
   experimental: {
     // webpackBuildWorker: true,
+    optimizeCss: enableOptimizeCss,
   },
 
   // TASK-023: Enable TypeScript and ESLint checks
@@ -30,6 +40,24 @@ const nextConfig = {
 
   async headers() {
     return [
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ],
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ],
+      },
       {
         source: '/:path*',
         headers: [
@@ -102,6 +130,10 @@ const nextConfig = {
 
   // TASK-024: Enable image optimization
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    deviceSizes: [320, 420, 640, 768, 1024, 1280, 1600, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',
@@ -126,8 +158,8 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-    // Disable optimization for Active Storage images to avoid 404 errors
-    unoptimized: true,
+    // Disable optimization only if needed (env override)
+    unoptimized: !enableImageOptimization,
     
     // Domínios permitidos (legacy - usar remotePatterns acima)
     dangerouslyAllowSVG: true,
@@ -162,7 +194,7 @@ const enableSentry = process.env.NODE_ENV === 'production' && hasSentryConfig;
 if (enableSentry) {
   const { withSentryConfig } = require("@sentry/nextjs");
   
-  module.exports = withSentryConfig(
+  const sentryConfig = withSentryConfig(
     nextConfig,
     {
       // Sentry Webpack Plugin Options
@@ -195,6 +227,7 @@ if (enableSentry) {
       transpileClientSDK: false,
     }
   );
+  module.exports = withBundleAnalyzer(sentryConfig);
 } else {
-  module.exports = nextConfig;
+  module.exports = withBundleAnalyzer(nextConfig);
 }

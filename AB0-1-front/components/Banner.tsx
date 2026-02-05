@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { fetchApiSafe } from '@/lib/api-client';
 import { getCurrentUTMs } from '@/lib/analytics/utm';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface BannerProps {
   id?: number | string;
@@ -96,12 +96,22 @@ export function Banner({
         position === 'navbar' ? 'mb-6' : 'mb-4'
       )}
     >
-      <Image
+      <OptimizedImage
         src={imageUrl}
         alt={title}
+        width={type === 'rectangular_large' ? 1200 : 400}
+        height={type === 'rectangular_large' ? 400 : 300}
         fill
         className="object-contain md:object-cover object-center"
         priority={position === 'navbar'}
+        quality={85}
+        sizes={
+          type === 'rectangular_large'
+            ? '(max-width: 640px) 100vw, (max-width: 1200px) 100vw, 1200px'
+            : '(max-width: 640px) 100vw, 300px'
+        }
+        containerClassName="h-full"
+        useAspectRatio={false}
       />
       {sponsored && (
         <span className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded text-xs">

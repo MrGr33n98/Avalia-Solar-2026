@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
 import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
@@ -9,6 +10,13 @@ import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID, GA_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
 
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   title: 'Avalia Solar - Marketplace de Energia Solar',
@@ -70,12 +78,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <head>
         {/* Google Tag Manager & GA4 */}
         <GoogleTagManager gtmId={GTM_ID} gaId={GA_ID} />
+        <link rel="preconnect" href="https://api.avaliasolar.com.br" />
+        <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        <link
+          rel="preload"
+          as="image"
+          href="/images/banner-landing-page-avalia-solar.jpg"
+          imagesizes="100vw"
+        />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className={inter.className}>
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
         

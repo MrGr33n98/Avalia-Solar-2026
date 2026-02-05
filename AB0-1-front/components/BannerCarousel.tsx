@@ -6,9 +6,9 @@ import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { Banner } from '@/lib/api'; // Ensure Banner type is imported or defined
 import { getFullImageUrl } from '@/utils/image';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 type BannerWithDescription = Banner & { description?: string | null };
 
@@ -54,16 +54,24 @@ export default function BannerCarousel({
         <div className="flex">
           {banners.map((banner, index) => {
              const imageUrl = getFullImageUrl(banner.image_url || '');
+             const width = banner.width || 1600;
+             const height = banner.height || 400;
              return (
               <div className="relative flex-[0_0_100%] min-w-0" key={banner.id || index}>
                 <div className="relative aspect-[3/1] md:aspect-[4/1] w-full overflow-hidden">
                   {imageUrl ? (
-                    <Image
+                    <OptimizedImage
                       src={imageUrl}
                       alt={banner.title || 'Banner'}
+                      width={width}
+                      height={height}
                       fill
                       className="object-cover"
                       priority={index === 0}
+                      quality={85}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1280px"
+                      containerClassName="h-full"
+                      useAspectRatio={false}
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">

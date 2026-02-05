@@ -9,8 +9,9 @@ import { OptimizedImage, OptimizedAvatar, OptimizedLogo } from '@/components/ui/
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
+    const { fill, priority, blurDataURL, placeholder, sizes, quality, ...rest } = props;
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
+    return <img {...rest} />;
   },
 }));
 
@@ -25,7 +26,7 @@ describe('OptimizedImage', () => {
       />
     );
 
-    const image = screen.getByAlt('Test image');
+    const image = screen.getByAltText('Test image');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', '/test-image.jpg');
   });
@@ -41,7 +42,7 @@ describe('OptimizedImage', () => {
       />
     );
 
-    const image = screen.getByAlt('Test image');
+    const image = screen.getByAltText('Test image');
     expect(image).toHaveClass('custom-class');
   });
 
@@ -55,7 +56,7 @@ describe('OptimizedImage', () => {
       />
     );
 
-    const image = screen.getByAlt('Test image');
+    const image = screen.getByAltText('Test image');
     expect(image).toHaveClass('opacity-0'); // Initial loading state
   });
 
@@ -70,7 +71,7 @@ describe('OptimizedImage', () => {
       />
     );
 
-    const image = screen.getByAlt('Test image');
+    const image = screen.getByAltText('Test image');
     expect(image).toBeInTheDocument();
   });
 
@@ -80,10 +81,12 @@ describe('OptimizedImage', () => {
         src="/test-image.jpg"
         alt="Test image"
         fill
+        width={1200}
+        height={600}
       />
     );
 
-    const image = screen.getByAlt('Test image');
+    const image = screen.getByAltText('Test image');
     expect(image).toBeInTheDocument();
   });
 });
@@ -98,7 +101,7 @@ describe('OptimizedAvatar', () => {
       />
     );
 
-    const avatar = screen.getByAlt('User avatar');
+    const avatar = screen.getByAltText('User avatar');
     expect(avatar).toBeInTheDocument();
     expect(avatar).toHaveClass('rounded-full');
   });
@@ -111,7 +114,7 @@ describe('OptimizedAvatar', () => {
       />
     );
 
-    const avatar = screen.getByAlt('User avatar');
+    const avatar = screen.getByAltText('User avatar');
     expect(avatar).toBeInTheDocument();
   });
 });
@@ -125,7 +128,7 @@ describe('OptimizedLogo', () => {
       />
     );
 
-    const logo = screen.getByAlt('Company logo');
+    const logo = screen.getByAltText('Company logo');
     expect(logo).toBeInTheDocument();
   });
 
@@ -137,7 +140,7 @@ describe('OptimizedLogo', () => {
       />
     );
 
-    const logo = screen.getByAlt('Company logo');
+    const logo = screen.getByAltText('Company logo');
     expect(logo).toHaveStyle({ objectFit: 'contain' });
   });
 
@@ -151,7 +154,7 @@ describe('OptimizedLogo', () => {
       />
     );
 
-    const logo = screen.getByAlt('Company logo');
+    const logo = screen.getByAltText('Company logo');
     expect(logo).toBeInTheDocument();
   });
 });

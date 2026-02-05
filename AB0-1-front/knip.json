@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/page.tsx",
+    "app/**/layout.tsx",
+    "app/**/route.ts",
+    "app/**/not-found.tsx",
+    "app/**/error.tsx",
+    "app/**/global-error.tsx",
+    "app/**/loading.tsx",
+    "instrumentation.ts",
+    "middleware.ts"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "contexts/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}",
+    "types/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    ".env*",
+    ".env.*",
+    "**/.env*",
+    "**/.next/**",
+    "**/node_modules/**",
+    "**/public/**",
+    "**/coverage/**",
+    "**/tmp/**",
+    "**/temp/**",
+    "**/test-results/**",
+    "**/playwright-report/**",
+    "**/__tests__/**",
+    "**/*.d.ts",
+    "**/codebase/**",
+    "**/docs/**",
+    "**/script/**"
+  ],
+  "ignoreBinaries": [
+    "next",
+    "react",
+    "react-dom"
+  ]
+}

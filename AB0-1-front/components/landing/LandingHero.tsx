@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
 import { Search, MapPin, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -66,14 +66,17 @@ export default function LandingHero() {
     <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32 min-h-[500px] md:min-h-[600px] flex items-center">
       {/* Background Image with Next.js optimization */}
       <div className="absolute inset-0 z-0">
-        <Image
+        <OptimizedImage
           src="/images/banner-landing-page-avalia-solar.jpg"
           alt="Avalia Solar Background"
+          width={1024}
+          height={401}
           fill
           priority
-          quality={90}
+          quality={85}
           className="object-cover object-center"
           sizes="100vw"
+          containerClassName="h-full"
         />
         {/* Semi-transparent overlay to ensure text legibility */}
         <div className="absolute inset-0 bg-white/70 md:bg-white/60 backdrop-blur-[1px]" />

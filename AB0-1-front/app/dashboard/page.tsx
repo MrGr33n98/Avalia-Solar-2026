@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useCompanyContext } from '@/context/CompanyContext';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
+import {
   Users, 
   Package, 
   Star, 
@@ -23,7 +24,24 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import RealtimeDashboard from '@/app/dashboard/components/RealtimeDashboard';
+
+const RealtimeDashboard = dynamic(
+  () => import('@/app/dashboard/components/RealtimeDashboard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-5 w-40" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-24 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-72 w-full" />
+      </div>
+    ),
+  }
+);
 
 export default function DashboardPage() {
   const router = useRouter();

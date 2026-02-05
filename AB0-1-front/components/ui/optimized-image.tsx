@@ -9,18 +9,25 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
+const DEFAULT_BLUR_DATA_URL =
+  'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+
 interface OptimizedImageProps {
   src: string;
   alt: string;
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   fill?: boolean;
   className?: string;
+  containerClassName?: string;
   priority?: boolean;
   quality?: number;
   sizes?: string;
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   fallbackSrc?: string;
+  placeholder?: 'blur' | 'empty';
+  blurDataURL?: string;
+  useAspectRatio?: boolean;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -54,11 +61,15 @@ export function OptimizedImage({
   height,
   fill = false,
   className,
+  containerClassName,
   priority = false,
   quality = 85,
   sizes,
   objectFit = 'cover',
   fallbackSrc = '/images/placeholder.png',
+  placeholder = 'blur',
+  blurDataURL,
+  useAspectRatio = true,
   onLoad,
   onError,
 }: OptimizedImageProps) {
@@ -89,30 +100,50 @@ export function OptimizedImage({
       className
     ),
     style: { objectFit },
+    sizes,
+    placeholder,
+    blurDataURL: placeholder === 'blur' ? blurDataURL || DEFAULT_BLUR_DATA_URL : undefined,
   };
 
+  const placeholderNode = isLoading ? (
+    <div className="absolute inset-0 bg-muted animate-pulse pointer-events-none" aria-hidden="true" />
+  ) : null;
+
   if (fill) {
+    const ratioStyle = useAspectRatio ? { aspectRatio: `${width}/${height}` } : undefined;
     return (
-      <Image
-        {...imageProps}
-        alt={alt}
-        fill
-        sizes={
-          sizes ||
-          '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
-        }
-      />
+      <div
+        className={cn('relative w-full overflow-hidden', containerClassName)}
+        style={ratioStyle}
+      >
+        {placeholderNode}
+        <Image
+          {...imageProps}
+          alt={alt}
+          fill
+          sizes={
+            sizes ||
+            '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+          }
+        />
+      </div>
     );
   }
 
   return (
-    <Image
-      {...imageProps}
-      alt={alt}
-      width={width || 800}
-      height={height || 600}
-      sizes={sizes}
-    />
+    <div
+      className={cn('relative inline-block overflow-hidden', containerClassName)}
+      style={{ width, height }}
+    >
+      {placeholderNode}
+      <Image
+        {...imageProps}
+        alt={alt}
+        width={width}
+        height={height}
+        sizes={sizes}
+      />
+    </div>
   );
 }
 
