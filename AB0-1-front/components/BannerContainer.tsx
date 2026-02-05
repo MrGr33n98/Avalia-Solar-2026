@@ -79,9 +79,6 @@ export function BannerContainer({ banners }: BannerContainerProps) {
       if (typeof banner.height === 'number' && banner.height > 0) {
         style.maxHeight = `${banner.height}px`;
       }
-      if (typeof banner.width === 'number' && banner.width > 0 && typeof banner.height === 'number' && banner.height > 0) {
-        style.aspectRatio = `${banner.width} / ${banner.height}`;
-      }
       return style;
     };
 

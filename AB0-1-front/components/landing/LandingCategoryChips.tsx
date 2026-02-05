@@ -62,7 +62,7 @@ export default function LandingCategoryChips({
         <div className="relative rounded-2xl bg-white/70 border border-gray-200 shadow-sm">
           <div
             ref={scrollerRef}
-            className="flex items-center gap-3 overflow-x-auto px-3 py-3 no-scrollbar"
+            className="flex items-center gap-3 overflow-x-auto px-3 py-3 no-scrollbar min-h-[56px]"
             role="list"
             aria-label="Categorias em destaque"
           >
@@ -112,4 +112,3 @@ export default function LandingCategoryChips({
     </section>
   );
 }
-

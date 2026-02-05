@@ -95,7 +95,7 @@ function SkeletonCategoryCard() {
 function SkeletonCompanyCard() {
   return (
     <Card className="overflow-hidden">
-      <div className="relative h-32 bg-gray-100">
+      <div className="relative bg-gray-100 aspect-[4/1]">
         <Skeleton className="w-full h-full" />
       </div>
       <div className="p-4 space-y-2">

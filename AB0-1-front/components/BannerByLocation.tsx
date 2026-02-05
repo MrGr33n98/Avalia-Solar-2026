@@ -3,6 +3,7 @@
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
+import { cn } from '@/lib/utils';
 
 type BannerLocation = 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top' | 'companies_footer';
 type BannerContainerBanners = Parameters<typeof BannerContainer>[0]['banners'];
@@ -13,32 +14,46 @@ interface BannerByLocationProps {
   className?: string;
 }
 
+const RESERVED_LOCATIONS: BannerLocation[] = ['navbar', 'home_top', 'categories_top', 'companies_top'];
+const PLACEHOLDER_ASPECT = 'aspect-[6/1] sm:aspect-[4/1]';
+
 /**
  * Componente que busca e renderiza banners por localização
  * Blindado contra erros - retorna null silenciosamente se falhar
  */
 export default function BannerByLocation({ location, className = '' }: BannerByLocationProps) {
   const { data: banners = [], isLoading: loading, error } = useBannersQuery({ position: location });
+  const shouldReserveSpace = RESERVED_LOCATIONS.includes(location);
+
+  const renderPlaceholder = (isLoading: boolean) => (
+    <div className={cn('w-full', className)} aria-hidden="true">
+      <div
+        className={cn(
+          'w-full rounded-2xl',
+          PLACEHOLDER_ASPECT,
+          isLoading ? 'animate-pulse bg-gray-200' : 'bg-transparent'
+        )}
+      />
+    </div>
+  );
 
   // Blindagem contra erros
   try {
     // Se ainda está carregando, mostra skeleton
     if (loading) {
-      return (
-        <div className={`animate-pulse bg-gray-200 rounded-2xl ${className}`} style={{ aspectRatio: '3/1' }} />
-      );
+      return renderPlaceholder(true);
     }
 
     // Se houver erro, loga mas não quebra a página
     if (error) {
       console.warn(`[BannerByLocation] Error loading banners for ${location}:`, error);
-      return null;
+      return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 
     // Se não houver banners, retorna null silenciosamente
     if (!banners || !Array.isArray(banners) || banners.length === 0) {
       console.info(`[BannerByLocation] No banners found for position: ${location}`);
-      return null;
+      return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 
     // Usa os banners retornados da API (já filtrados por position)
@@ -46,7 +61,7 @@ export default function BannerByLocation({ location, className = '' }: BannerByL
 
     // Se não houver banners para essa localização, retorna null
     if (locationBanners.length === 0) {
-      return null;
+      return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 
     // Renderiza os banners usando o BannerContainer
