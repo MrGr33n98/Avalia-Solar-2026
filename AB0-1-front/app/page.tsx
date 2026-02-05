@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Info } from 'lucide-react';
 
@@ -115,7 +115,9 @@ export default async function Home() {
 
   return (
     <main className="flex-grow">
-      <HomePageTracking />
+      <Suspense fallback={null}>
+        <HomePageTracking />
+      </Suspense>
 
       <LandingHero categories={allCategories} />
 

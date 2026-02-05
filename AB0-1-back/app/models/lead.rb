@@ -34,6 +34,7 @@ class Lead < ApplicationRecord
   before_validation :ensure_otp_attempts_default
 
   after_commit :track_analytics_event, on: :create
+  after_commit :notify_slack, on: :create
 
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
             :decision_timeline, :address_full,
@@ -172,5 +173,9 @@ class Lead < ApplicationRecord
     )
   rescue StandardError => e
     Rails.logger.warn("[Analytics] lead tracking failed: #{e.message}")
+  end
+
+  def notify_slack
+    SlackNotificationService.notify_lead(self)
   end
 end

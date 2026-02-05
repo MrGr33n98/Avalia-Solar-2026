@@ -7,6 +7,7 @@ class Review < ApplicationRecord
   enum status: { pending: 0, approved: 1, rejected: 2 }
 
   after_commit :track_analytics_event, on: :create
+  after_commit :notify_slack, on: :create
   after_update_commit :notify_user_of_reply, if: :saved_change_to_reply?
 
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
@@ -36,6 +37,10 @@ class Review < ApplicationRecord
     )
   rescue StandardError => e
     Rails.logger.warn("[Analytics] review tracking failed: #{e.message}")
+  end
+
+  def notify_slack
+    SlackNotificationService.notify_review(self)
   end
 
   def notify_user_of_reply

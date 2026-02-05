@@ -1,4 +1,4 @@
-﻿class CompanyAccessRequest < ApplicationRecord
+class CompanyAccessRequest < ApplicationRecord
   STATUSES = %w[pending approved rejected].freeze
 
   belongs_to :user
@@ -18,6 +18,8 @@
   scope :rejected, -> { where(status: 'rejected') }
 
   before_validation :set_requested_at, on: :create
+  after_create_commit :notify_slack_new_request
+  after_update_commit :notify_slack_approval, if: :saved_change_to_approved?
 
   def approved?
     status == 'approved'
@@ -46,5 +48,17 @@
 
   def set_requested_at
     self.requested_at ||= Time.current
+  end
+
+  def saved_change_to_approved?
+    saved_change_to_status? && approved?
+  end
+
+  def notify_slack_new_request
+    SlackNotificationService.notify_company_access_request(self)
+  end
+
+  def notify_slack_approval
+    SlackNotificationService.notify_company_access_approved(self)
   end
 end

@@ -11,6 +11,7 @@ class CompanyMember < ApplicationRecord
   validates :user_id, uniqueness: { scope: :company_id }
 
   after_create :track_member_assignment
+  after_commit :notify_slack, on: :create
 
   private
 
@@ -24,6 +25,10 @@ class CompanyMember < ApplicationRecord
         assigned_by: PaperTrail.request.whodunnit
       }
     )
+  end
+
+  def notify_slack
+    SlackNotificationService.notify_member_assigned(self)
   end
 
   def self.ransackable_associations(auth_object = nil)
