@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Calculator, Zap, TrendingDown, ArrowRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,11 +80,9 @@ export default function SavingsCalculator() {
           </div>
 
           <div className="relative">
-            <motion.div
+            <div
               key={bill}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="grid grid-cols-1 gap-3"
+              className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
               <Card className="bg-white/10 border-white/10 backdrop-blur-md overflow-hidden">
                 <CardContent className="p-5">
@@ -129,7 +126,7 @@ export default function SavingsCalculator() {
                   <p className="text-lg font-black text-blue-400">3-4 Anos</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

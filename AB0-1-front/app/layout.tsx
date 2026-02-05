@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 
 import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
@@ -9,6 +10,7 @@ import Footer from '@/components/Footer';
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID, GA_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
+import WebVitalsReporter from '@/components/WebVitalsReporter';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -86,10 +88,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-        <link rel="preconnect" href="https://api-js.mixpanel.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api-js.mixpanel.com" />
-        <link rel="preconnect" href="https://cdn.mxpnl.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://cdn.mxpnl.com" />
+        {/* Mixpanel preconnects removed - analytics lazy loaded after consent */}
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
         
@@ -123,6 +122,11 @@ export default function RootLayout({
             </ClientBody>
           </UtmProvider>
         </ThemeProvider>
+        
+        {/* Web Vitals Tracking - Non-blocking, after consent */}
+        <Suspense fallback={null}>
+          <WebVitalsReporter />
+        </Suspense>
       </body>
     </html>
   );

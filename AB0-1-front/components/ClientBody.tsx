@@ -45,7 +45,8 @@ export default function ClientBody({
     window.addEventListener('pointerdown', handleInteraction, { once: true });
     window.addEventListener('keydown', handleInteraction, { once: true });
 
-    const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), 2500);
+    // Increased timeout to 5s to reduce initial bundle impact
+    const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), 5000);
     return () => {
       window.removeEventListener('pointerdown', handleInteraction);
       window.removeEventListener('keydown', handleInteraction);
