@@ -4,7 +4,11 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 
 const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
-const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
+const isProduction = process.env.NODE_ENV === 'production';
+// A/B test: disable image optimization in production unless explicitly enabled.
+const enableImageOptimization = isProduction
+  ? process.env.NEXT_ENABLE_IMAGE_OPTIMIZATION === 'true'
+  : process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
 const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
 
 const nextConfig = {
