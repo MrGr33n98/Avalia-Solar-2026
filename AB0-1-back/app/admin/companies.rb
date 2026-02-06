@@ -257,24 +257,20 @@ end
       f.has_many :company_faqs, allow_destroy: true, new_record: 'Adicionar FAQ' do |cf|
         cf.input :question
         cf.input :answer
-        cf.input :status, as: :select, collection: %w[active inactive]
+        cf.input :status, as: :select, collection: CompanyFaq.statuses.keys
         cf.input :position
       end
     end
 
     f.inputs 'Membros da Empresa' do
       f.has_many :company_members, allow_destroy: true, heading: false, new_record: 'Adicionar Membro' do |m|
-        if m.object.nil?
-          m.template.concat "Erro: Objeto do membro está nulo"
-        else
-          m.input :user, collection: User.where(role: 'company').order(:name)
-          m.input :role, as: :select, collection: CompanyMember.roles.keys
-        end
+        m.input :user, collection: User.where(role: 'company').order(:name)
+        m.input :role, as: :select, collection: CompanyMember.roles.keys
       end
     end
 
     f.inputs 'Categories' do
-      f.input :categories, as: :select2, multiple: true
+      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Category.all.order(:name)
     end
 
     f.inputs 'Botões Personalizados' do

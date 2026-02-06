@@ -52,7 +52,7 @@ ActiveAdmin.register Product do
       f.input :company, collection: Company.all
 
       # Add categories select2
-      f.input :categories, as: :select2, multiple: true
+      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Category.all.order(:name)
     end
     f.actions
   end
