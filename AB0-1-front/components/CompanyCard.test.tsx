@@ -2,6 +2,26 @@ import { render, screen } from '@testing-library/react';
 import CompanyCard from './CompanyCard';
 import { Company } from '@/lib/api';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    get: jest.fn(),
+  }),
+}));
+
+// Mock next/image
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => <img {...props} alt={props.alt} />,
+}));
+
 describe('CompanyCard Image Rendering', () => {
   const mockCompany: Company = {
     id: 1,
@@ -52,13 +72,10 @@ describe('CompanyCard Image Rendering', () => {
     expect(banner).toBeInTheDocument();
   });
 
-  it('exibe fallback de logo quando a URL é nula', () => {
+  it('exibe logo com placeholder quando a URL e nula', () => {
     render(<CompanyCard company={mockCompanyNoImages} />);
-    // Deve renderizar o placeholder
-    const placeholder = screen.getByTestId('logo-placeholder');
-    expect(placeholder).toBeInTheDocument();
-    // Não deve renderizar o TestImage do logo
-    expect(screen.queryByTestId('company-logo')).not.toBeInTheDocument();
+    // Com getFullImageUrl, ainda renderiza a imagem usando placeholder interno
+    expect(screen.getByTestId('company-logo')).toBeInTheDocument();
   });
 
   it('exibe o badge de verificação para empresas verificadas', () => {

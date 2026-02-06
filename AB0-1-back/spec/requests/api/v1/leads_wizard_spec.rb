@@ -19,6 +19,7 @@ RSpec.describe 'Leads wizard API', type: :request do
       verified: true,
       featured: false,
       plan_status: 'active',
+      active_admin: true,
       cnpj: '12345678901234'
     }.merge(attrs))
     company.categories << category

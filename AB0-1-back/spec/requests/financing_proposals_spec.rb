@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'FinancingProposals', type: :request do
-  let!(:company) { Company.create!(name: 'Demo', status: 'active') }
+  let!(:company) { Company.create!(name: 'Demo', status: 'active', active_admin: true) }
 
   it 'creates proposal and returns status' do
     post "/api/v1/companies/#{company.id}/financing_proposals", params: {

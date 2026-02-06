@@ -60,6 +60,7 @@ ActiveAdmin.register Company do
     :email_public, :phone_alt, :facebook, :instagram,
     :linkedin, :description,
     :moderation_status, :rejected_reason, :financing_enabled,
+    :active_admin,
     project_types: [], services_offered: [], category_ids: [], media_assets: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
@@ -108,6 +109,7 @@ end
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
       f.input :verified
+      f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
     if Company.column_names.include?('effect')
       f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: { 
         'data-controller': 'effect', 
@@ -272,7 +274,7 @@ end
     end
 
     f.inputs 'Categories' do
-      f.input :categories, as: :check_boxes
+      f.input :categories, as: :select2, multiple: true
     end
 
     f.inputs 'Botões Personalizados' do

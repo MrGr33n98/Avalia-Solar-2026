@@ -132,7 +132,7 @@ class Company < ApplicationRecord
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
 
   def self.ransackable_attributes(auth_object = nil)
-    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status"]
+    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status", "active_admin"]
   end
 
   def self.ransackable_associations(auth_object = nil)
@@ -431,6 +431,11 @@ class Company < ApplicationRecord
   def has_paid_plan?
     return false unless respond_to?(:plan_status) && respond_to?(:plan)
     plan_status == 'active' && plan.present? && plan.price.to_f > 0
+  end
+
+  # Business rule: quote/whatsapp CTAs are paid features and require active_admin.
+  def quote_feature_enabled?
+    respond_to?(:active_admin) ? !!active_admin : false
   end
 
   def financing_feature_allowed?

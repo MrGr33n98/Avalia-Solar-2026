@@ -31,8 +31,12 @@ test.describe('Botão de WhatsApp', () => {
       await popup.waitForLoadState('domcontentloaded')
       expect(popup.url()).toMatch(/^https:\/\/wa\.me\//)
     }
-    // Botão de orçamento deve estar sempre visível no card
-    const quoteBtn = page.getByText('Solicite um orçamento')
-    await expect(quoteBtn.first()).toBeVisible()
+    // Botao de orcamento so aparece quando active_admin esta habilitado
+    const quoteBtn = page.getByText(/or.amento/i)
+    if (await quoteBtn.count() > 0) {
+      await expect(quoteBtn.first()).toBeVisible()
+    } else {
+      await expect(page.getByText(/Avaliar/i).first()).toBeVisible()
+    }
   })
 })

@@ -396,6 +396,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000300) do
     t.integer "profile_views_count", default: 0, null: false
     t.integer "cta_clicks_count", default: 0, null: false
     t.integer "whatsapp_clicks_count", default: 0, null: false
+    t.boolean "active_admin", default: false, null: false
     t.integer "plan_id"
     t.string "moderation_status"
     t.datetime "submitted_at"

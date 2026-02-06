@@ -169,4 +169,5 @@ gem 'pundit'
 gem 'caxlsx'
 # gem 'activeadmin_caxlsx'
 
-gem "cpf_cnpj", "~> 1.0"
+gem 'activeadmin_select2'
+gem 'cpf_cnpj', '~> 1.0'

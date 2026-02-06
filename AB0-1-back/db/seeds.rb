@@ -406,6 +406,7 @@ companies_data.each do |data|
   company.status = 'active'
   company.moderation_status = 'approved'
   company.featured = true
+  company.active_admin = true
   company.financing_enabled = data[:categories].any? { |c| c.include?('financiamento') || c.include?('credito') }
 
   if company.save

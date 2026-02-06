@@ -12,6 +12,7 @@ FactoryBot.define do
     description { Faker::Company.catch_phrase }
     email { Faker::Internet.email }
     status { :pending }
+    active_admin { true }
     association :plan
     
     # Initialize JSON columns

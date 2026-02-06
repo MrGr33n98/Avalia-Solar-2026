@@ -30,6 +30,7 @@ interface ExtendedCompany extends Company {
   whatsapp_url?: string;
   whatsapp_enabled?: boolean;
   effect?: boolean;
+  active_admin?: boolean;
 }
 
 interface Props {
@@ -132,6 +133,8 @@ export default function CompanyCard({
   const hasWhatsapp = Boolean(whatsappLinkRaw);
   const enabledRaw = (company as any).cta_whatsapp_enabled ?? (company as any).whatsapp_enabled;
   const whatsappEnabled = enabledRaw === undefined || enabledRaw === null ? true : Boolean(enabledRaw);
+  // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
+  const canRequestQuote = company.active_admin === true;
 
   const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
 
@@ -393,49 +396,53 @@ export default function CompanyCard({
           "mt-auto print:hidden",
           compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
         )}>
-          <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
-            {hasWhatsapp && whatsappEnabled ? (
-              WhatsAppCTAButton && (
-                <WhatsAppCTAButton
-                  phone={whatsappLinkRaw}
-                  companyId={id.toString()}
-                  companySlug={company.slug}
-                  label={text.whatsapp}
-                  className={cn(
-                    'w-full shadow-sm font-bold rounded-xl transition-all',
-                    compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
-                  )}
-                />
-              )
-            ) : (
-              CTAPrimaryButton && (
-                <CTAPrimaryButton
-                  label={text.budget}
-                  companyId={id.toString()}
-                  companySlug={company.slug}
-                  ctaType="quote_request"
-                  ctaDestination="quote_wizard"
-                  onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
-                  className={cn(
-                    'w-full shadow-sm font-bold rounded-xl transition-all',
-                    compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
-                  )}
-                />
-              )
-            )}
-          </div>
+          {canRequestQuote && (
+            <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
+              {hasWhatsapp && whatsappEnabled ? (
+                WhatsAppCTAButton && (
+                  <WhatsAppCTAButton
+                    phone={whatsappLinkRaw}
+                    companyId={id.toString()}
+                    companySlug={company.slug}
+                    label={text.whatsapp}
+                    className={cn(
+                      'w-full shadow-sm font-bold rounded-xl transition-all',
+                      compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
+                    )}
+                  />
+                )
+              ) : (
+                CTAPrimaryButton && (
+                  <CTAPrimaryButton
+                    label={text.budget}
+                    companyId={id.toString()}
+                    companySlug={company.slug}
+                    ctaType="quote_request"
+                    ctaDestination="quote_wizard"
+                    onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
+                    className={cn(
+                      'w-full shadow-sm font-bold rounded-xl transition-all',
+                      compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                    )}
+                  />
+                )
+              )}
+            </div>
+          )}
 
           <Button
             variant="outline"
             className={cn(
               'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium transition-all',
-              compact ? 'h-11 w-11 p-0 flex-shrink-0 lg:h-9 lg:w-9' : 'w-full h-11 lg:h-10'
+              compact
+                ? (canRequestQuote ? 'h-11 w-11 p-0 flex-shrink-0 lg:h-9 lg:w-9' : 'h-11 w-full lg:h-10')
+                : 'w-full h-11 lg:h-10'
             )}
             asChild
           >
           <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact ? 'w-5 h-5 lg:w-4 lg:h-4' : 'w-4 h-4 mr-1')} />
-            {!compact && text.review}
+            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact && canRequestQuote ? 'w-5 h-5 lg:w-4 lg:h-4' : 'w-4 h-4 mr-1')} />
+            {(!compact || !canRequestQuote) && text.review}
           </Link>
           </Button>
         </div>

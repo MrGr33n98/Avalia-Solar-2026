@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import CompanyCard from '../CompanyCard';
 
+// Mock next/image
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => <img {...props} alt={props.alt} />,
+}));
+
 // Mock do router do Next.js para corrigir o erro "invariant" nos testes
 jest.mock('next/navigation', () => ({
   useRouter: () => ({

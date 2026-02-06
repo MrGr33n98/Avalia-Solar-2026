@@ -211,3 +211,9 @@ API checks:
 - POST /api/v1/auth/signup
 - POST /api/v1/auth/login
 - GET /api/v1/auth/me
+
+## Regra de Negocio: Orcamentos (Recurso Pago)
+
+- Os botoes de Orcamento/WhatsApp so devem aparecer quando `companies.active_admin = true`.
+- O backend valida a regra: a API de leads bloqueia criacao de lead para empresas com `active_admin = false`.
+- Para habilitar, use o ActiveAdmin em Empresas e marque **Ativar orcamentos (recurso pago)**.

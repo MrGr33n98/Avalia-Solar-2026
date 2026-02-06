@@ -13,6 +13,7 @@ class CompanySerializer < ActiveModel::Serializer
              :instagram, :facebook, :linkedin,
              :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
+             :active_admin,
              :effect, :media_upload_allowed,
              :faqs,
              :financing_enabled,
@@ -46,11 +47,31 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def cta_whatsapp_enabled
+    return false unless quote_feature_enabled?
     object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
   end
 
   def cta_whatsapp_url
+    return nil unless quote_feature_enabled?
     object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
+  end
+
+  def whatsapp_enabled
+    return false unless quote_feature_enabled?
+    object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
+  end
+
+  def whatsapp_url
+    return nil unless quote_feature_enabled?
+    object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
+  end
+
+  def active_admin
+    object.respond_to?(:active_admin) ? !!object.active_admin : false
+  end
+
+  def quote_feature_enabled?
+    object.respond_to?(:quote_feature_enabled?) ? object.quote_feature_enabled? : active_admin
   end
 
   def effect

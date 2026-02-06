@@ -84,6 +84,7 @@ interface ExtendedCompany extends Company {
   whatsapp_enabled?: boolean;
   cta_whatsapp_url?: string;
   whatsapp_url?: string;
+  active_admin?: boolean;
 }
 
 export default function CompanyDetailClient({
@@ -206,20 +207,21 @@ export default function CompanyDetailClient({
   }, [companyId, isAuthenticated, mediaUploadAllowed, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
+  const canRequestQuote = extendedCompany.active_admin === true;
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
-  const [ctaEnabled, setCtaEnabled] = useState<boolean>(() => {
-    return enabledRawInit === undefined || enabledRawInit === null ? true : Boolean(enabledRawInit);
-  });
+  const ctaEnabled = canRequestQuote
+    ? (enabledRawInit === undefined || enabledRawInit === null ? true : Boolean(enabledRawInit))
+    : false;
 
-  const [ctaUrl, setCtaUrl] = useState<string | null>(() => {
-    return (
-      extendedCompany.cta_whatsapp_url ||
-      extendedCompany.whatsapp_url ||
-      (currentCompany as any)?.whatsapp ||
-      null
-    );
-  });
+  const ctaUrl = canRequestQuote
+    ? (
+        extendedCompany.cta_whatsapp_url ||
+        extendedCompany.whatsapp_url ||
+        (currentCompany as any)?.whatsapp ||
+        null
+      )
+    : null;
 
   const tabs = useMemo(() => {
     const baseTabs = [
@@ -558,16 +560,18 @@ export default function CompanyDetailClient({
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-transparent">
-              <CardContent className="p-6 text-center">
-                <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                <h4 className="font-bold text-slate-900 mb-1">Precisa de ajuda?</h4>
-                <p className="text-xs text-slate-500 mb-4">Nossos especialistas podem te ajudar a escolher a melhor empresa.</p>
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
-                  Falar com especialista
-                </Button>
-              </CardContent>
-            </Card>
+            {canRequestQuote && (
+              <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-transparent">
+                <CardContent className="p-6 text-center">
+                  <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                  <h4 className="font-bold text-slate-900 mb-1">Precisa de ajuda?</h4>
+                  <p className="text-xs text-slate-500 mb-4">Nossos especialistas podem te ajudar a escolher a melhor empresa.</p>
+                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
+                    Falar com especialista
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </aside>
         </div>
       </main>

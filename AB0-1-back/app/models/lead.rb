@@ -49,6 +49,7 @@ class Lead < ApplicationRecord
   validates :email,
             format: { with: SIMPLE_EMAIL_REGEX, message: 'must be a valid email' },
             if: :proposal_validation_required?
+  validate :validate_company_quote_access, on: :create
 
   # Add these methods for Ransack
   def self.ransackable_attributes(_auth_object = nil)
@@ -130,6 +131,17 @@ class Lead < ApplicationRecord
     end
 
     parts
+  end
+
+  def validate_company_quote_access
+    return if company_id.blank?
+
+    company = Company.find_by(id: company_id)
+    return if company.nil?
+    return if company.quote_feature_enabled?
+
+    # Business rule: quote/whatsapp CTAs are paid and require active_admin.
+    errors.add(:company_id, 'empresa não habilitada para orçamentos')
   end
 
   private

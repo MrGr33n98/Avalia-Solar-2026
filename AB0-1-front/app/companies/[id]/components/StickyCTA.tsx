@@ -18,6 +18,7 @@ interface StickyCTAProps {
 
 export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const canRequestQuote = (company as any).active_admin === true;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,6 +44,8 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
     });
     openLeadModal({ preferredCompanyId: company.id, source: 'sticky-cta', type: 'quick' });
   };
+
+  if (!canRequestQuote) return null;
 
   return (
     <AnimatePresence>

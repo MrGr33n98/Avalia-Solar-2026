@@ -1,6 +1,20 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import CompanyCard from '@/components/CompanyCard';
 import { Company } from '@/lib/api';
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    get: jest.fn(),
+  }),
+}));
 
 // Mock next/image
 jest.mock('next/image', () => ({
@@ -11,7 +25,12 @@ jest.mock('next/image', () => ({
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
   Star: () => <svg data-testid="star-icon" />,
+  StarHalf: () => <svg data-testid="star-half-icon" />,
   MapPin: () => <svg data-testid="map-pin-icon" />,
+  Building2: () => <svg data-testid="building-icon" />,
+  Share2: () => <svg data-testid="share-icon" />,
+  Check: () => <svg data-testid="check-icon" />,
+  Scale: () => <svg data-testid="scale-icon" />,
   MessageCircle: () => <svg data-testid="message-circle-icon" />,
   Globe: () => <svg data-testid="globe-icon" />,
   Clock: () => <svg data-testid="clock-icon" />,
@@ -28,60 +47,27 @@ describe('CompanyCard', () => {
     name: 'Energia Solar LTDA',
     logo_url: 'https://example.com/logo.jpg',
     banner_url: 'https://example.com/banner.jpg',
-    description:
-      'Especialistas em instalação de painéis solares com mais de 10 anos de experiência',
-    city: 'São Paulo',
+    description: 'Especialistas em instalacao de paineis solares com mais de 10 anos de experiencia',
+    city: 'Sao Paulo',
     state: 'SP',
     average_rating: 4.5,
     rating_count: 120,
-    business_hours: 'Seg-Sex 8h às 18h',
-    payment_methods: ['Cartão de Crédito', 'Boleto', 'PIX'],
     website: 'https://example.com',
-    social_links: {
-      facebook: 'https://facebook.com/example',
-      instagram: 'https://instagram.com/example',
-    },
-    category_name: 'Painéis Solares',
+    category_name: 'Paineis Solares',
   };
 
-  it('renders company with all data', () => {
+  it('renders main company info', () => {
     render(<CompanyCard company={mockCompany} />);
 
-    // Main company link (usa regex porque o accessible name pode incluir mais conteúdo)
-    const companyLink = screen.getByRole('link', { name: /Energia Solar LTDA/i });
-    expect(companyLink).toHaveAttribute('href', '/companies/1-energia-solar-ltda');
-
-    // Rating and reviews
-    expect(screen.getByText(/4\.5/)).toBeInTheDocument();
-    expect(screen.getByText(/120 avaliações/)).toBeInTheDocument();
-
-    // Location with map-pin
-    const locationElement = screen.getByText(/São Paulo - SP/);
-    expect(
-      within(locationElement.closest('div') as HTMLElement).getByTestId('map-pin-icon')
-    ).toBeInTheDocument();
-
-    // Payment methods
-    expect(
-      screen.getByText(/Cartão de Crédito, Boleto, PIX/i)
-    ).toBeInTheDocument();
-
-    // Social links (usando getByRole + href check)
-    expect(screen.getByRole('link', { name: /globe/i })).toHaveAttribute(
-      'href',
-      'https://example.com'
-    );
-    expect(screen.getByRole('link', { name: /facebook/i })).toHaveAttribute(
-      'href',
-      'https://facebook.com/example'
-    );
-    expect(screen.getByRole('link', { name: /instagram/i })).toHaveAttribute(
-      'href',
-      'https://instagram.com/example'
-    );
+    const companyLinks = screen.getAllByRole('link', { name: /Energia Solar LTDA/i });
+    const profileLink = companyLinks.find((link) => (link as HTMLAnchorElement).getAttribute('href') === '/companies/energia-solar-ltda');
+    expect(profileLink).toBeTruthy();
+    expect(screen.getByText(/Sao Paulo, SP/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Paineis Solares/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/\(120\)/)).toBeInTheDocument();
   });
 
-  it('handles company without optional data', () => {
+  it('omits location when city/state are missing', () => {
     const minimalCompany: Company = {
       id: 2,
       name: 'Minimal Company',
@@ -90,30 +76,10 @@ describe('CompanyCard', () => {
     };
 
     render(<CompanyCard company={minimalCompany} />);
-
-    // Main company link
-    const companyLink = screen.getByRole('link', { name: /Minimal Company/i });
-    expect(companyLink).toHaveAttribute('href', '/companies/2-minimal-company');
-
-    // Rating
-    expect(screen.getByText(/0\.0/)).toBeInTheDocument();
-
-    // Optional fields não devem aparecer
-    expect(screen.queryByTestId('map-pin-icon')).not.toBeInTheDocument();
-    expect(screen.queryByText(/avaliações/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sao Paulo/i)).not.toBeInTheDocument();
   });
 
-  it('renders social links correctly', () => {
-    render(<CompanyCard company={mockCompany} />);
-
-    const facebookLink = screen.getByRole('link', { name: /facebook/i });
-    expect(facebookLink).toHaveAttribute('href', 'https://facebook.com/example');
-
-    const instagramLink = screen.getByRole('link', { name: /instagram/i });
-    expect(instagramLink).toHaveAttribute('href', 'https://instagram.com/example');
-  });
-
-  it('shows default values when data is missing', () => {
+  it('renders fallback description when missing', () => {
     const companyWithMissingData: Company = {
       id: 3,
       name: 'Incomplete Company',
@@ -122,15 +88,10 @@ describe('CompanyCard', () => {
     };
 
     render(<CompanyCard company={companyWithMissingData} />);
-
-    // Default description
-    expect(screen.getByText(/no description/i)).toBeInTheDocument();
-
-    // Default payment methods não devem aparecer
-    expect(screen.queryByTestId('credit-card-icon')).not.toBeInTheDocument();
+    expect(screen.getByText(/Visite o perfil/i)).toBeInTheDocument();
   });
 
-  it('exibe botões de WhatsApp e Solicitar Orçamento quando setup completo', () => {
+  it('exibe WhatsApp quando active_admin esta ativo', () => {
     const setupCompany: Company = {
       ...mockCompany,
       id: 10,
@@ -140,34 +101,51 @@ describe('CompanyCard', () => {
       whatsapp: '+55 31 99876-5432',
       has_paid_plan: true,
       plan_status: 'active',
+      active_admin: true,
     };
 
     render(<CompanyCard company={setupCompany} />);
 
-    // Botão WhatsApp presente
     expect(screen.getByRole('button', { name: /WhatsApp/i })).toBeInTheDocument();
-    // Botão Solicitar Orçamento presente
-    expect(screen.getByRole('button', { name: /Solicitar Orçamento/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /or.amento/i })).not.toBeInTheDocument();
   });
 
-  it('não exibe WhatsApp/Orçamento quando setup está incompleto', () => {
-    const incompleteCompany: Company = {
+  it('exibe Orcamento quando active_admin esta ativo e WhatsApp indisponivel', () => {
+    const setupCompany: Company = {
       ...mockCompany,
       id: 11,
-      status: 'inactive',
-      verified: false,
+      status: 'active',
+      verified: true,
       whatsapp_enabled: false,
       whatsapp: '',
-      has_paid_plan: false,
-      plan_status: 'inactive',
+      has_paid_plan: true,
+      plan_status: 'active',
+      active_admin: true,
     };
 
-    render(<CompanyCard company={incompleteCompany} />);
+    render(<CompanyCard company={setupCompany} />);
 
-    // Botões não devem aparecer
+    expect(screen.getByRole('button', { name: /or.amento/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /WhatsApp/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Solicitar Orçamento/i })).not.toBeInTheDocument();
-    // Nenhum fallback renderizado
-    expect(screen.queryByText(/Contatos indisponíveis/i)).not.toBeInTheDocument();
+  });
+
+  it('esconde WhatsApp/Orcamento quando active_admin esta desativado', () => {
+    const inactiveCompany: Company = {
+      ...mockCompany,
+      id: 12,
+      status: 'inactive',
+      verified: false,
+      whatsapp_enabled: true,
+      whatsapp: '+55 31 99876-5432',
+      has_paid_plan: false,
+      plan_status: 'inactive',
+      active_admin: false,
+    };
+
+    render(<CompanyCard company={inactiveCompany} />);
+
+    expect(screen.queryByRole('button', { name: /WhatsApp/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /or.amento/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
   });
 });

@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
+import Link from 'next/link';
+import { buildCompanySubPath } from '@/lib/slug';
 
 interface CompanyHeroProps {
   company: Company;
@@ -48,6 +50,9 @@ export default function CompanyHero({
   const [isSharing, setIsSharing] = useState(false);
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
+  // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
+  const canRequestQuote = (company as any).active_admin === true;
+  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
   const handleShare = async () => {
     track('company_share_click', {
@@ -203,7 +208,7 @@ export default function CompanyHero({
             {inComp ? 'Comparando' : 'Comparar'}
           </Button>
 
-          {company.buttons && company.buttons.length > 0 ? (
+          {canRequestQuote && company.buttons && company.buttons.length > 0 ? (
             company.buttons.map((btn, idx) => {
               if (btn.button_type === 'whatsapp') {
                 return (
@@ -255,7 +260,7 @@ export default function CompanyHero({
                 </Button>
               );
             })
-          ) : (
+          ) : canRequestQuote ? (
             <>
               <Button
                 size="default"
@@ -289,6 +294,28 @@ export default function CompanyHero({
                 </div>
               )}
             </>
+          ) : (
+            <Button
+              size="default"
+              variant="outline"
+              className="flex-1 sm:flex-none border-border hover:bg-muted"
+              asChild
+            >
+              <Link
+                href={reviewPath}
+                onClick={() => {
+                  track('company_review_click', {
+                    company_id: company.id,
+                    company_name: company.name,
+                    source: 'company-hero',
+                    element_type: 'button',
+                    action_type: 'click'
+                  });
+                }}
+              >
+                Avaliar
+              </Link>
+            </Button>
           )}
         </div>
       </div>

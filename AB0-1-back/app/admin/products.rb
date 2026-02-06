@@ -51,8 +51,8 @@ ActiveAdmin.register Product do
       f.input :image_url
       f.input :company, collection: Company.all
 
-      # Add categories checkbox
-      f.input :categories, as: :check_boxes
+      # Add categories select2
+      f.input :categories, as: :select2, multiple: true
     end
     f.actions
   end

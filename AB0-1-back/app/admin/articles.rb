@@ -81,8 +81,8 @@ ActiveAdmin.register Article do
                   hint: f.object.banner.attached? ? image_tag(f.object.banner.variant(resize_to_limit: [320, 180]), height: '100') : 'Upload de imagem (JPEG, PNG ou GIF) até 5MB. Sugerido 1200x630px',
                   input_html: { accept: 'image/jpeg,image/png,image/gif' }
           f.input :slug, hint: 'Deixe em branco para gerar automaticamente a partir do título'
-          f.input :category
-          f.input :product
+          f.input :category, as: :select2
+          f.input :product, as: :select2
           f.input :status, as: :select, collection: [['Rascunho', 'draft'], ['Publicado', 'published']], include_blank: false
           f.input :published_at, as: :datepicker
           f.input :featured, label: 'Destaque?'
@@ -99,7 +99,7 @@ ActiveAdmin.register Article do
 
       tab 'Relacionamentos' do
         f.inputs 'Empresas Relacionadas' do
-          f.input :companies, as: :check_boxes, collection: Company.all
+          f.input :companies, as: :select2, multiple: true, collection: Company.all
         end
       end
 
