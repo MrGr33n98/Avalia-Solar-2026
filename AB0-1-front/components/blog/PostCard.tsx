@@ -12,28 +12,42 @@ import { getFullImageUrl } from '@/utils/image';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { track } from '@/lib/analytics/lazy';
+import { buildArticleLink } from '@/lib/blog/article-links';
 
 interface PostCardProps {
   post: Article;
+  position?: number;
+  placement?: string;
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, position, placement = 'blog_list_card' }: PostCardProps) {
   // Word count estimate (if not provided by API)
   const wordCount = post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
-  const readTime = Math.ceil(wordCount / 200) || 5;
+  const readTime = post.reading_time_minutes || Math.ceil(wordCount / 200) || 5;
+  const slugOrId = post.slug || String(post.id);
+  const { url, utm } = buildArticleLink({
+    slugOrId,
+    placement,
+    category: post.category?.name,
+    term: post.slug || String(post.id)
+  });
 
   return (
     <Link 
-      href={`/blog/${post.slug}`} 
+      href={url} 
       className="group block h-full"
       onClick={() => {
-        track('blog_list_item_click', {
+        track('blog_article_click', {
           post_id: post.id,
           post_title: post.title,
-          post_slug: post.slug,
+          post_slug: post.slug || String(post.id),
           category_name: post.category?.name,
           element_type: 'card',
-          action_type: 'click'
+          action_type: 'click',
+          placement,
+          position,
+          link_url: url,
+          ...utm
         });
       }}
     >
@@ -66,7 +80,11 @@ export function PostCard({ post }: PostCardProps) {
           <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {post.published_at ? format(new Date(post.published_at), "d MMM, yyyy", { locale: ptBR }) : 'Recente'}
+              {post.published_date
+                ? post.published_date
+                : post.published_at
+                  ? format(new Date(post.published_at), "d MMM, yyyy", { locale: ptBR })
+                  : 'Recente'}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">

@@ -31,6 +31,14 @@ let initialized = false;
 let currentUserId: string | null = null;
 let currentContext: Partial<AnalyticsContext> = {};
 let mixpanelInstance: any = null;
+let initPromise: Promise<void> | null = null;
+const EVENT_QUEUE_LIMIT = 100;
+const eventQueue: Array<{
+  name: string;
+  properties: Record<string, any>;
+  options: EventOptions;
+  eventId: string;
+}> = [];
 const BACKEND_ENDPOINT = '/api/v1/analytics/track';
 const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 
@@ -55,9 +63,9 @@ export function initializeAnalytics(): void {
   // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
   // Usamos requestIdleCallback para não bloquear a thread principal
   if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(() => initializeSDKs());
+    window.requestIdleCallback(() => void initializeSDKs());
   } else {
-    setTimeout(() => initializeSDKs(), 1000);
+    setTimeout(() => void initializeSDKs(), 1000);
   }
 
   // Listen for consent change to re-initialize or update SDKs
@@ -75,6 +83,9 @@ export function initializeAnalytics(): void {
  * Initialize SDKs (internal)
  */
 async function initializeSDKs(): Promise<void> {
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
   const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const hasConsent = hasAnalyticsConsent();
@@ -111,6 +122,31 @@ async function initializeSDKs(): Promise<void> {
   }
   
   initialized = true;
+  flushEventQueue();
+  initPromise = null;
+  })();
+
+  return initPromise;
+}
+
+function enqueueEvent(
+  eventName: string,
+  properties: Record<string, any>,
+  options: EventOptions
+): string {
+  const eventId = options.eventId || generateEventId();
+  const payload = { name: eventName, properties, options: { ...options, eventId }, eventId };
+  if (eventQueue.length >= EVENT_QUEUE_LIMIT) eventQueue.shift();
+  eventQueue.push(payload);
+  return eventId;
+}
+
+function flushEventQueue(): void {
+  if (!initialized || eventQueue.length === 0) return;
+  const queued = eventQueue.splice(0, eventQueue.length);
+  queued.forEach((item) => {
+    track(item.name, item.properties, item.options);
+  });
 }
 
 /**
@@ -189,6 +225,8 @@ export function track(
   
   if (!initialized) {
     console.warn('[Analytics] Not initialized, queueing event:', eventName);
+    enqueueEvent(eventName, properties, options);
+    void initializeSDKs();
     return;
   }
   
@@ -333,6 +371,7 @@ function sendToBackend(
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(body),
+      keepalive: true,
     });
   } catch (err) {
     console.warn('[Analytics] Failed to send to backend', err);

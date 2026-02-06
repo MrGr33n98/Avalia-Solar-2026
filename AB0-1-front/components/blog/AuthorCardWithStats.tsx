@@ -23,7 +23,7 @@ export function AuthorCardWithStats({
   bio, 
   avatarUrl, 
   role = 'Editor & Especialista Solar',
-  stats = { posts: 12, likes: 450, followers: 1200 } // Mock default stats
+  stats
 }: AuthorCardWithStatsProps) {
   if (!name) return null;
 
@@ -60,29 +60,33 @@ export function AuthorCardWithStats({
             </p>
           )}
 
-          <div className="grid grid-cols-3 gap-4 border-t border-slate-200 pt-4 mt-4 w-full max-w-md mx-auto sm:mx-0">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                <FileText className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Posts</span>
+          {stats && (
+            <div className="grid grid-cols-3 gap-4 border-t border-slate-200 pt-4 mt-4 w-full max-w-md mx-auto sm:mx-0">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
+                  <FileText className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Posts</span>
+                </div>
+                <span className="font-bold text-slate-900">{stats.posts}</span>
               </div>
-              <span className="font-bold text-slate-900">{stats.posts}</span>
-            </div>
-            <div className="text-center border-l border-slate-200">
-              <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                <Star className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Likes</span>
+              <div className="text-center border-l border-slate-200">
+                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
+                  <Star className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Likes</span>
+                </div>
+                <span className="font-bold text-slate-900">{stats.likes}</span>
               </div>
-              <span className="font-bold text-slate-900">{stats.likes}</span>
-            </div>
-            <div className="text-center border-l border-slate-200">
-              <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                <Users className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Seguidores</span>
+              <div className="text-center border-l border-slate-200">
+                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
+                  <Users className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Seguidores</span>
+                </div>
+                <span className="font-bold text-slate-900">
+                  {stats.followers >= 1000 ? `${(stats.followers / 1000).toFixed(1)}k` : stats.followers}
+                </span>
               </div>
-              <span className="font-bold text-slate-900">{(stats.followers / 1000).toFixed(1)}k</span>
             </div>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>

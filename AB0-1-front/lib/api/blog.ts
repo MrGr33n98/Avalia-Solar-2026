@@ -36,7 +36,16 @@ export const blogApi = {
       });
 
       if (!res.ok) throw new Error('Failed to fetch posts');
-      return res.json();
+      const payload = await res.json();
+      const data = Array.isArray(payload) ? payload : payload?.data || [];
+      const metaRaw = payload?.meta?.pagination || payload?.meta || {};
+      const meta = {
+        page: metaRaw.page ?? 1,
+        per_page: metaRaw.per_page ?? metaRaw.perPage ?? params.per_page ?? 10,
+        total: metaRaw.total ?? 0,
+        total_pages: metaRaw.total_pages ?? metaRaw.totalPages ?? 0,
+      };
+      return { data, meta };
     } catch (error) {
       console.error(error);
       return { data: [], meta: { page: 1, per_page: 10, total: 0, total_pages: 0 } };

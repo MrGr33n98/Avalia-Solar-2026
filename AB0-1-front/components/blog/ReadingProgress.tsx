@@ -4,11 +4,25 @@ import * as React from 'react';
 import { track } from '@/lib/analytics/lazy';
 import { useParams } from 'next/navigation';
 
-export function ReadingProgress() {
+interface ReadingProgressProps {
+  articleId?: number | string;
+  articleSlug?: string;
+  articleTitle?: string;
+  categoryId?: number | string;
+  categoryName?: string;
+}
+
+export function ReadingProgress({
+  articleId,
+  articleSlug,
+  articleTitle,
+  categoryId,
+  categoryName
+}: ReadingProgressProps) {
   const [progress, setProgress] = React.useState(0);
   const trackedThresholds = React.useRef<Set<number>>(new Set());
   const params = useParams();
-  const slug = params?.slug as string;
+  const slug = articleSlug || (params?.slug as string);
 
   React.useEffect(() => {
     const updateProgress = () => {
@@ -25,7 +39,11 @@ export function ReadingProgress() {
         if (scrollPercent >= threshold && !trackedThresholds.current.has(threshold)) {
           trackedThresholds.current.add(threshold);
           track('blog_scroll_depth', {
+            post_id: articleId,
             post_slug: slug,
+            post_title: articleTitle,
+            category_id: categoryId,
+            category_name: categoryName,
             scroll_percentage: threshold,
             scroll_milestone: `${threshold}%`
           });
@@ -35,7 +53,7 @@ export function ReadingProgress() {
 
     window.addEventListener('scroll', updateProgress, { passive: true });
     return () => window.removeEventListener('scroll', updateProgress);
-  }, [slug]);
+  }, [slug, articleId, articleTitle, categoryId, categoryName]);
 
   return (
     <div className="fixed top-0 left-0 w-full z-50 h-1 bg-transparent">

@@ -8,6 +8,7 @@ import { BlogFiltersBar } from '@/components/blog/BlogFiltersBar';
 import { PostCard } from '@/components/blog/PostCard';
 import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
+import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -106,8 +107,8 @@ export default async function BlogIndexPage({
             {posts.length > 0 ? (
               <div className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
+                  {posts.map((post, index) => (
+                    <PostCard key={post.id} post={post} position={index + 1} />
                   ))}
                 </div>
 
@@ -152,6 +153,7 @@ export default async function BlogIndexPage({
       </div>
       
       <StickyMobileCTA />
+      <NewsletterPopup />
     </div>
   );
 }

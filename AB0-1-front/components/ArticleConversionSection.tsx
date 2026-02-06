@@ -46,6 +46,19 @@ export default function ArticleConversionSection({ article }: { article: any }) 
         company_id: article?.company_id,
       });
       setStatus('success');
+      track('blog_lead_form_success', {
+        post_id: article?.id,
+        post_title: article?.title,
+        post_slug: article?.slug,
+        category_name: article?.category?.name
+      });
+      track('blog_conversion', {
+        conversion_type: 'lead_form',
+        post_id: article?.id,
+        post_title: article?.title,
+        post_slug: article?.slug,
+        category_name: article?.category?.name
+      });
       setLead({
         name: '',
         email: '',
@@ -54,6 +67,12 @@ export default function ArticleConversionSection({ article }: { article: any }) 
       });
     } catch {
       setStatus('error');
+      track('blog_lead_form_error', {
+        post_id: article?.id,
+        post_title: article?.title,
+        post_slug: article?.slug,
+        category_name: article?.category?.name
+      });
     }
   };
 
@@ -78,8 +97,8 @@ export default function ArticleConversionSection({ article }: { article: any }) 
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link 
-              href={article?.category?.slug ? `/categories/${article.category.slug}` : '/categories'} 
+          <Link 
+              href={article?.category?.seo_url ? `/categories/${article.category.seo_url}` : '/categories'} 
               className="flex-1"
               onClick={() => track('blog_cta_click', {
                 post_id: article?.id,

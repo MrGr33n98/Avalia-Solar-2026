@@ -4,10 +4,24 @@ import * as React from 'react';
 import { track } from '@/lib/analytics/lazy';
 import { useParams } from 'next/navigation';
 
-export function BlogTimeTracker() {
+interface BlogTimeTrackerProps {
+  articleId?: number | string;
+  articleSlug?: string;
+  articleTitle?: string;
+  categoryId?: number | string;
+  categoryName?: string;
+}
+
+export function BlogTimeTracker({
+  articleId,
+  articleSlug,
+  articleTitle,
+  categoryId,
+  categoryName
+}: BlogTimeTrackerProps) {
   const startTime = React.useRef<number>(Date.now());
   const params = useParams();
-  const slug = params?.slug as string;
+  const slug = articleSlug || (params?.slug as string);
   const trackedThresholds = React.useRef<Set<number>>(new Set());
 
   React.useEffect(() => {
@@ -19,7 +33,11 @@ export function BlogTimeTracker() {
       if (timeSpent <= 0) return;
 
       track('blog_time_on_page', {
+        post_id: articleId,
         post_slug: slug,
+        post_title: articleTitle,
+        category_id: categoryId,
+        category_name: categoryName,
         time_seconds: timeSpent,
         is_completed: isCompleted
       });
@@ -34,7 +52,11 @@ export function BlogTimeTracker() {
         if (timeSpent >= threshold && !trackedThresholds.current.has(threshold)) {
           trackedThresholds.current.add(threshold);
           track('blog_time_milestone', {
+            post_id: articleId,
             post_slug: slug,
+            post_title: articleTitle,
+            category_id: categoryId,
+            category_name: categoryName,
             time_seconds: threshold,
             milestone: `${threshold}s`
           });
@@ -65,7 +87,7 @@ export function BlogTimeTracker() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [slug]);
+  }, [slug, articleId, articleTitle, categoryId, categoryName]);
 
   return null;
 }

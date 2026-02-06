@@ -22,6 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import debounce from 'lodash/debounce';
 import { track } from '@/lib/analytics/lazy';
+import { buildArticleLink } from '@/lib/blog/article-links';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -132,7 +133,7 @@ export default function SearchBar({
     }
   };
 
-  const handleItemClick = (type: string, id: number, slug?: string, name?: string) => {
+  const handleItemClick = (type: GroupKey, id: number, slug?: string, name?: string) => {
     setShowResults(false);
     setActiveIndex(-1);
     
@@ -150,6 +151,30 @@ export default function SearchBar({
         category_slug: slug,
         source: 'search_results'
       });
+    } else if (type === 'articles') {
+      const slugOrId = slug || String(id);
+      const { url, utm } = buildArticleLink({
+        slugOrId,
+        placement: 'search_results',
+        source: 'search',
+        medium: 'internal',
+        campaign: 'blog_search',
+        content: 'search_result',
+        term: slugOrId
+      });
+      track('blog_article_click', {
+        post_id: id,
+        post_title: name,
+        post_slug: slugOrId,
+        element_type: 'search_result',
+        action_type: 'click',
+        placement: 'search_results',
+        link_url: url,
+        ...utm
+      });
+      router.push(url);
+      onClose?.();
+      return;
     }
     
     // Use slug for categories, id for others
@@ -179,7 +204,7 @@ export default function SearchBar({
           type: group,
           id: item.id,
           label: group === 'articles' ? item.title : item.name || item.title || String(item.id),
-          slug: group === 'categories' ? item.seo_url : undefined,
+          slug: group === 'categories' ? item.seo_url : group === 'articles' ? item.slug : undefined,
         });
       });
     });
@@ -513,7 +538,7 @@ export default function SearchBar({
                         key={article.id}
                         article={article}
                         active={activeIndex === flatIndex}
-                        onClick={() => handleItemClick('articles', article.id, undefined, article.title)}
+                        onClick={() => handleItemClick('articles', article.id, article.slug, article.title)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
                       />
                     );

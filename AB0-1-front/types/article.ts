@@ -36,6 +36,7 @@ export interface Article {
   author_bio?: string | null;
   meta_title?: string | null;
   meta_description?: string | null;
+  faqs?: Array<{ question: string; answer: string }>;
   created_at?: string;
   updated_at?: string;
 }

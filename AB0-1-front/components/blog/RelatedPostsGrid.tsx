@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
+import { track } from '@/lib/analytics/lazy';
+import { buildArticleLink } from '@/lib/blog/article-links';
 
 interface RelatedPostsGridProps {
   articles: Article[];
@@ -27,13 +29,39 @@ export function RelatedPostsGrid({ articles }: RelatedPostsGridProps) {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {articles.slice(0, 3).map((article) => {
+        {articles.slice(0, 3).map((article, index) => {
           const imageUrl = getFullImageUrl(article.image_url);
           const wordCount = article.content ? article.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
-          const readTime = Math.ceil(wordCount / 200);
+          const readTime = article.reading_time_minutes || Math.ceil(wordCount / 200);
+          const slugOrId = article.slug || String(article.id);
+          const link = buildArticleLink({
+            slugOrId,
+            placement: 'related',
+            category: article.category?.name,
+            term: article.slug || String(article.id),
+            content: `related_${index + 1}`
+          });
 
           return (
-            <Link key={article.id} href={`/blog/${article.slug}`} className="group h-full">
+            <Link
+              key={article.id}
+              href={link.url}
+              className="group h-full"
+              onClick={() =>
+                track('blog_article_click', {
+                  post_id: article.id,
+                  post_title: article.title,
+                  post_slug: slugOrId,
+                  category_name: article.category?.name,
+                  element_type: 'related',
+                  action_type: 'click',
+                  placement: 'related',
+                  position: index + 1,
+                  link_url: link.url,
+                  ...link.utm,
+                })
+              }
+            >
               <Card className="h-full border-none shadow-none hover:shadow-lg transition-all duration-300 bg-transparent hover:bg-white overflow-hidden">
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl">
                   {imageUrl ? (

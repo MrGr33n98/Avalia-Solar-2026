@@ -10,6 +10,8 @@ import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { track } from '@/lib/analytics/lazy';
+import { buildArticleLink } from '@/lib/blog/article-links';
 
 interface FeaturedPostsSectionProps {
   posts: Article[];
@@ -20,6 +22,13 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
 
   const mainPost = posts[0];
   const sidePosts = posts.slice(1, 3);
+  const mainSlugOrId = mainPost.slug || String(mainPost.id);
+  const mainLink = buildArticleLink({
+    slugOrId: mainSlugOrId,
+    placement: 'featured_main',
+    category: mainPost.category?.name,
+    term: mainPost.slug || String(mainPost.id)
+  });
   const mainImage = getFullImageUrl(mainPost.cover_image_url || mainPost.image_url);
   const mainAuthorName = mainPost.author_name || mainPost.author?.name;
   const mainAuthorAvatar = mainPost.author?.avatar_url || mainPost.author_avatar_url;
@@ -39,7 +48,24 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Featured Post */}
         <div className="lg:col-span-8 group relative">
-          <Link href={`/blog/${mainPost.slug}`} className="block h-full">
+          <Link
+            href={mainLink.url}
+            className="block h-full"
+            onClick={() =>
+              track('blog_article_click', {
+                post_id: mainPost.id,
+                post_title: mainPost.title,
+                post_slug: mainSlugOrId,
+                category_name: mainPost.category?.name,
+                element_type: 'featured_main',
+                action_type: 'click',
+                placement: 'featured_main',
+                position: 1,
+                link_url: mainLink.url,
+                ...mainLink.utm,
+              })
+            }
+          >
             <Card className="h-full overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
               <div className="relative h-64 sm:h-80 lg:h-full w-full">
                 <Image
@@ -99,8 +125,35 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
 
         {/* Side Posts */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          {sidePosts.map((post) => (
-            <Link key={post.id} href={`/blog/${post.slug}`} className="block flex-1 group">
+          {sidePosts.map((post, index) => {
+            const slugOrId = post.slug || String(post.id);
+            const link = buildArticleLink({
+              slugOrId,
+              placement: 'featured_side',
+              category: post.category?.name,
+              term: post.slug || String(post.id),
+              content: `featured_side_${index + 1}`
+            });
+            return (
+            <Link
+              key={post.id}
+              href={link.url}
+              className="block flex-1 group"
+              onClick={() =>
+                track('blog_article_click', {
+                  post_id: post.id,
+                  post_title: post.title,
+                  post_slug: slugOrId,
+                  category_name: post.category?.name,
+                  element_type: 'featured_side',
+                  action_type: 'click',
+                  placement: 'featured_side',
+                  position: index + 1,
+                  link_url: link.url,
+                  ...link.utm,
+                })
+              }
+            >
               <Card className="h-full border-none shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden bg-white">
                 <div className="relative h-40 w-full shrink-0 overflow-hidden">
                   <Image
@@ -133,7 +186,8 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                 </CardContent>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

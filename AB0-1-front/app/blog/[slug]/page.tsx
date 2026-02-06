@@ -1,16 +1,20 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { getFullImageUrl } from '@/utils/image';
 import { Article } from '@/types/article';
 import { ReadingProgress } from '@/components/blog/ReadingProgress';
 import { BlogTimeTracker } from '@/components/blog/BlogTimeTracker';
+import { ArticleEngagementTracker } from '@/components/blog/ArticleEngagementTracker';
 import { PostHeader } from '@/components/blog/PostHeader';
 import { PostSidebar } from '@/components/blog/PostSidebar';
 import { AuthorCardWithStats } from '@/components/blog/AuthorCardWithStats';
 import { RelatedPostsGrid } from '@/components/blog/RelatedPostsGrid';
 import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
+import { StickyShareBar } from '@/components/blog/StickyShareBar';
+import { ArticleComments } from '@/components/blog/ArticleComments';
+import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import ArticleConversionSection from '@/components/ArticleConversionSection';
 import { PostTOC } from '@/components/blog/PostTOC';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -19,12 +23,22 @@ import { fixArticleContent } from '@/lib/content-fixer';
 
 async function getArticle(slug: string): Promise<Article | null> {
   try {
-    const res = await fetch(buildApiUrl(`articles/${slug}`), {
+    const safeSlug = decodeURIComponent(slug || '').trim();
+    const res = await fetch(buildApiUrl(`articles/${safeSlug || slug}`), {
       headers: getApiRequestHeaders(),
       next: { revalidate: 1800 }
     });
-    if (!res.ok) return null;
-    return res.json();
+    if (res.ok) return res.json();
+
+    if (safeSlug && safeSlug !== slug) {
+      const fallbackRes = await fetch(buildApiUrl(`articles/${safeSlug}`), {
+        headers: getApiRequestHeaders(),
+        next: { revalidate: 1800 }
+      });
+      if (fallbackRes.ok) return fallbackRes.json();
+    }
+
+    return null;
   } catch (error) {
     console.error('Failed to fetch article:', error);
     return null;
@@ -81,13 +95,16 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const relatedArticles = await getRelatedArticles(params.slug);
 
   if (!article) {
-    redirect('/blog');
+    notFound();
   }
 
+  const articleSlug = article.slug || String(article.id);
   const authorName = article.author_name || article.author?.name || 'Avalia Solar';
   const authorAvatarUrl = article.author_avatar_url 
     ? getFullImageUrl(article.author_avatar_url) 
     : (article.author as any)?.avatar_photo_url ? getFullImageUrl((article.author as any).avatar_photo_url) : undefined;
+  const authorBio = article.author_bio || article.author?.bio || undefined;
+  const categoryName = article.category?.name;
   
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -112,9 +129,22 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://avaliasolar.com.br/blog/${article.slug}`
+      '@id': `https://avaliasolar.com.br/blog/${articleSlug}`
     }
   };
+
+  const faqJsonLd = article.faqs && article.faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: article.faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer
+      }
+    }))
+  } : null;
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -136,7 +166,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         '@type': 'ListItem',
         position: 3,
         name: article.title,
-        item: `https://avaliasolar.com.br/blog/${article.slug}`
+        item: `https://avaliasolar.com.br/blog/${articleSlug}`
       }
     ]
   };
@@ -147,13 +177,39 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       
-      <ReadingProgress />
-      <BlogTimeTracker />
+      <ReadingProgress
+        articleId={article.id}
+        articleSlug={articleSlug}
+        articleTitle={article.title}
+        categoryId={article.category?.id}
+        categoryName={categoryName}
+      />
+      <BlogTimeTracker
+        articleId={article.id}
+        articleSlug={articleSlug}
+        articleTitle={article.title}
+        categoryId={article.category?.id}
+        categoryName={categoryName}
+      />
+      <ArticleEngagementTracker
+        articleId={article.id}
+        articleSlug={articleSlug}
+        articleTitle={article.title}
+        categoryId={article.category?.id}
+        categoryName={categoryName}
+      />
+      <StickyShareBar title={article.title} slug={articleSlug} />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
@@ -187,21 +243,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="pt-2 pb-4 px-2">
-                       {/* We reuse the logic inside PostTOC but strictly for mobile context if needed, 
-                           or just rely on the same component but styled differently. 
-                           Since PostTOC uses document query, it works client side. 
-                           Let's try to reuse PostTOC but remove the 'hidden lg:block' class via props or wrapper.
-                           Actually, PostTOC has 'hidden lg:block' hardcoded. I should have made it responsive.
-                           For now, I'll rely on the sidebar TOC for desktop and maybe a simplified list here if I could extract it server side,
-                           but regex parsing HTML is fragile.
-                           I'll leave the accordion shell here and maybe inject a client TOC component that is mobile specific.
-                           Let's update PostTOC to be flexible or create MobilePostTOC.
-                           For now, I will skip complex Mobile TOC implementation to avoid duplication and focus on the rest.
-                           The prompt asked for "TOC em Sheet/Drawer (botão “Sumário” fixo)".
-                           I'll stick to the desktop sidebar TOC for now as it's the main request, 
-                           and maybe add a simple 'On this page' block if I can.
-                        */}
-                       <p className="text-sm text-slate-500 italic">Use a barra lateral no desktop para navegar pelos tópicos.</p>
+                      <PostTOC showOnMobile className="block" />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -229,18 +271,19 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             {/* Author Bio */}
             <AuthorCardWithStats 
               name={authorName} 
-              bio={article.author_bio} 
+              bio={authorBio} 
               avatarUrl={authorAvatarUrl}
-              // Mock stats since they are not in article data yet
-              stats={{
-                posts: Math.floor(Math.random() * 50) + 5,
-                likes: Math.floor(Math.random() * 500) + 50,
-                followers: Math.floor(Math.random() * 2000) + 100
-              }}
             />
 
             {/* Related Posts */}
             <RelatedPostsGrid articles={relatedArticles} />
+
+            {/* Comments */}
+            <ArticleComments
+              articleId={article.id}
+              articleSlug={articleSlug}
+              articleTitle={article.title}
+            />
           </div>
 
           {/* Sidebar Column (Sticky) */}
@@ -257,6 +300,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       </main>
 
       <StickyMobileCTA />
+      <NewsletterPopup />
     </div>
   );
 }

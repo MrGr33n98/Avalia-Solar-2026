@@ -1,22 +1,22 @@
 'use client';
 
 import React from 'react';
+import { Facebook, Linkedin, Twitter, Link as LinkIcon, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Facebook, Linkedin, Twitter, Share2, Link as LinkIcon, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { track } from '@/lib/analytics/lazy';
 import { buildArticleLink } from '@/lib/blog/article-links';
 
-interface ShareButtonsProps {
+interface StickyShareBarProps {
   title: string;
   slug: string;
 }
 
-export default function ShareButtons({ title, slug }: ShareButtonsProps) {
+export function StickyShareBar({ title, slug }: StickyShareBarProps) {
   const handleShare = (platform: string) => {
     const link = buildArticleLink({
       slugOrId: slug,
-      placement: 'share_button',
+      placement: 'sticky_share',
       source: platform,
       medium: platform === 'copy' ? 'internal' : 'social',
       campaign: 'blog_share',
@@ -29,7 +29,7 @@ export default function ShareButtons({ title, slug }: ShareButtonsProps) {
       post_id: slug,
       post_title: title,
       platform: platform,
-      element_type: 'button',
+      element_type: 'sticky',
       action_type: 'click',
       link_url: link.url,
       ...link.utm
@@ -56,39 +56,57 @@ export default function ShareButtons({ title, slug }: ShareButtonsProps) {
       }
     })();
 
-    if (shareUrl) window.open(shareUrl, '_blank');
+    if (shareUrl) {
+      window.open(shareUrl, '_blank');
+    }
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 my-6">
-      <span className="text-sm font-medium text-slate-500 mr-2 flex items-center">
-        <Share2 className="w-4 h-4 mr-2" />
-        Compartilhar:
-      </span>
-      
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#0077b5] hover:border-[#0077b5]" onClick={() => handleShare('linkedin')}>
+    <div className="hidden lg:flex flex-col gap-2 fixed left-6 top-1/2 -translate-y-1/2 z-40">
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full bg-white shadow-sm hover:text-[#0077b5] hover:border-[#0077b5]"
+        onClick={() => handleShare('linkedin')}
+        aria-label="Compartilhar no LinkedIn"
+      >
         <Linkedin className="h-4 w-4" />
-        <span className="sr-only">LinkedIn</span>
       </Button>
-
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1877f2] hover:border-[#1877f2]" onClick={() => handleShare('facebook')}>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full bg-white shadow-sm hover:text-[#1877f2] hover:border-[#1877f2]"
+        onClick={() => handleShare('facebook')}
+        aria-label="Compartilhar no Facebook"
+      >
         <Facebook className="h-4 w-4" />
-        <span className="sr-only">Facebook</span>
       </Button>
-
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#1da1f2] hover:border-[#1da1f2]" onClick={() => handleShare('twitter')}>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full bg-white shadow-sm hover:text-[#1da1f2] hover:border-[#1da1f2]"
+        onClick={() => handleShare('twitter')}
+        aria-label="Compartilhar no X/Twitter"
+      >
         <Twitter className="h-4 w-4" />
-        <span className="sr-only">Twitter</span>
       </Button>
-
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:text-[#25d366] hover:border-[#25d366]" onClick={() => handleShare('whatsapp')}>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full bg-white shadow-sm hover:text-[#25d366] hover:border-[#25d366]"
+        onClick={() => handleShare('whatsapp')}
+        aria-label="Compartilhar no WhatsApp"
+      >
         <MessageCircle className="h-4 w-4" />
-        <span className="sr-only">WhatsApp</span>
       </Button>
-
-      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-100" onClick={() => handleShare('copy')}>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full bg-white shadow-sm hover:bg-slate-50"
+        onClick={() => handleShare('copy')}
+        aria-label="Copiar link"
+      >
         <LinkIcon className="h-4 w-4" />
-        <span className="sr-only">Copiar Link</span>
       </Button>
     </div>
   );

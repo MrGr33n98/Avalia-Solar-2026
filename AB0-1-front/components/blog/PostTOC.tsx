@@ -5,7 +5,12 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { List } from 'lucide-react';
 
-export function PostTOC() {
+interface PostTOCProps {
+  className?: string;
+  showOnMobile?: boolean;
+}
+
+export function PostTOC({ className, showOnMobile = false }: PostTOCProps) {
   const [headings, setHeadings] = useState<{ id: string; text: string; level: number }[]>([]);
   const [activeId, setActiveId] = useState<string>('');
 
@@ -47,7 +52,7 @@ export function PostTOC() {
   if (headings.length === 0) return null;
 
   return (
-    <div className="hidden lg:block mb-8">
+    <div className={cn(showOnMobile ? 'block' : 'hidden lg:block', 'mb-8', className)}>
       <div className="flex items-center gap-2 mb-4 text-sm font-bold text-slate-900 uppercase tracking-wider">
         <List className="w-4 h-4" />
         Neste artigo

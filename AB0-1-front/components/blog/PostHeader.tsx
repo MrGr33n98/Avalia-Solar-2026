@@ -21,18 +21,21 @@ interface PostHeaderProps {
 }
 
 export function PostHeader({ article }: PostHeaderProps) {
-  const publishedDate = article.published_at
-    ? format(new Date(article.published_at), "d 'de' MMMM, yyyy", { locale: ptBR })
-    : 'Data indisponível';
+  const publishedDate = article.published_date
+    ? article.published_date
+    : article.published_at
+      ? format(new Date(article.published_at), "d 'de' MMMM, yyyy", { locale: ptBR })
+      : 'Data indisponível';
 
   const authorName = article.author_name || article.author?.name || 'Avalia Solar';
+  const slugOrId = article.slug || String(article.id);
   const authorAvatarUrl = article.author_avatar_url 
     ? getFullImageUrl(article.author_avatar_url) 
     : (article.author as any)?.avatar_photo_url ? getFullImageUrl((article.author as any).avatar_photo_url) : null;
   
   // Calculate read time based on word count (avg 200 wpm)
   const wordCount = article.content ? article.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
-  const readTime = Math.ceil(wordCount / 200);
+  const readTime = article.reading_time_minutes || Math.ceil(wordCount / 200);
 
   React.useEffect(() => {
     track('blog_post_view', {
@@ -120,7 +123,7 @@ export function PostHeader({ article }: PostHeaderProps) {
               </Tooltip>
             </TooltipProvider>
             
-            <ShareButtons title={article.title} slug={article.slug} />
+            <ShareButtons title={article.title} slug={slugOrId} />
           </div>
         </div>
       </div>

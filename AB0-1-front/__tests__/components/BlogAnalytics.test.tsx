@@ -67,6 +67,11 @@ Object.assign(navigator, {
   },
 });
 
+Object.defineProperty(window, 'open', {
+  writable: true,
+  value: jest.fn(),
+});
+
 describe('Blog Analytics Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
