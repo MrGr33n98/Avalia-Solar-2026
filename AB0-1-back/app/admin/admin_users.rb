@@ -25,7 +25,7 @@ ActiveAdmin.register AdminUser do
   filter :current_sign_in_at
   filter :created_at
 
-  form do |f|
+  form html: { multipart: true } do |f|
     f.inputs 'Detalhes do Usuário' do
       f.input :name
       f.input :email

@@ -39,14 +39,14 @@ class ArticleSerializer < ActiveModel::Serializer
 
     {
       id: object.author.id,
-      name: object.author&.try(:name) || object.author&.try(:email),
+      name: object.author&.try(:name).presence,
       avatar_url: author_avatar_url,
       bio: object.author&.try(:bio)
     }
   end
 
   def author_name
-    object.author&.try(:name) || object.author&.try(:email)
+    object.author&.try(:name).presence
   end
 
   def author_email

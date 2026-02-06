@@ -71,6 +71,7 @@ admin_password = ENV['SEED_ADMIN_PASSWORD']
 
 if admin_email.present? && admin_password.present?
   admin = AdminUser.find_or_initialize_by(email: admin_email)
+  admin.name = 'Avalia Solar' if admin.name.blank?
   admin.password = admin_password
   admin.password_confirmation = admin_password
   admin.save!
@@ -78,6 +79,7 @@ if admin_email.present? && admin_password.present?
 else
   default_email = 'felipe@avaliasolar.com.br'
   admin = AdminUser.find_or_initialize_by(email: default_email)
+  admin.name = 'Avalia Solar' if admin.name.blank?
   if admin.new_record?
     generated = SecureRandom.base64(16)
     admin.password = generated
