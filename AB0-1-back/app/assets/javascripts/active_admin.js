@@ -1,5 +1,5 @@
 //= require active_admin/base
-//= require activeadmin_select2
+//= require activeadmin_addons/all
 //= require activeadmin/quill_editor/quill
 //= require activeadmin/quill_editor_input
 //= require admin/location_selector
