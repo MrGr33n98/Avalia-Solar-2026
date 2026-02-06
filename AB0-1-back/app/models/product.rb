@@ -33,7 +33,13 @@ class Product < ApplicationRecord
     return db_value if db_value.present?
 
     return nil unless image.attached?
-    Rails.application.routes.url_helpers.url_for(image)
+    
+    options = Rails.application.routes.default_url_options.dup
+    if Rails.env.development? && options[:host] == 'localhost'
+      options[:port] = 3001
+    end
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
   end
 
   # Ransack configuration

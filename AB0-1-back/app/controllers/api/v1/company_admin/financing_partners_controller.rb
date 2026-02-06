@@ -76,7 +76,7 @@ module Api
         def logo_url(partner)
           return unless partner.logo.attached?
 
-          Rails.application.routes.url_helpers.rails_blob_url(
+          Rails.application.routes.url_helpers.rails_storage_proxy_url(
             partner.logo,
             **default_url_options.merge(only_path: false)
           )

@@ -8,10 +8,10 @@ class UserSerializer < ActiveModel::Serializer
   def avatar_url
     return unless object.avatar.attached?
     
-    Rails.application.routes.url_helpers.rails_blob_url(
-      object.avatar, 
-      host: Rails.application.config.action_controller.default_url_options[:host] || 'localhost:3000'
-    )
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.avatar, options)
   rescue
     nil
   end

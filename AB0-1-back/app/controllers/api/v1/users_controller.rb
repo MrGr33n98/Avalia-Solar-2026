@@ -163,7 +163,9 @@ class Api::V1::UsersController < Api::V1::BaseController
     return nil unless user
     user_json = user.as_json
     if user.avatar.attached?
-      user_json[:avatar_url] = url_for(user.avatar)
+      options = Rails.application.routes.default_url_options.dup
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+      user_json[:avatar_url] = rails_storage_proxy_url(user.avatar, options)
     end
     user_json
   end

@@ -22,6 +22,9 @@ Rails.application.configure do
   # Evita 404 por URL expirada do DiskService em páginas cacheadas
   config.active_storage.service_urls_expire_in = 7.days
   
+  # Força o uso de proxy para servir imagens via API em vez de redirecionar para o S3
+  config.active_storage.resolve_model_to_route = :proxy
+  
   # --- CONFIGURAÇÃO UNIFICADA DE URL ---
   # Usa APP_HOST com esquema; extrai host e protocolo corretamente
   app_host = ENV.fetch('APP_HOST', 'https://api.avaliasolar.com.br')

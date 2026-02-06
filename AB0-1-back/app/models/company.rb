@@ -583,8 +583,7 @@ class Company < ApplicationRecord
     return nil unless attachment&.attached?
 
     begin
-      # In Rails 7, we can use rails_blob_url if host is configured
-      # or simply use the route helper
+      # Use rails_storage_proxy_url to serve images through the app
       options = Rails.application.routes.default_url_options.dup
       
       # For development, ensure port is correct if using localhost
@@ -592,7 +591,7 @@ class Company < ApplicationRecord
         options[:port] = 3001
       end
 
-      Rails.application.routes.url_helpers.rails_blob_url(attachment, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
     rescue => e
       Rails.logger.error("Error generating attachment URL for company #{id}: #{e.message}")
       nil

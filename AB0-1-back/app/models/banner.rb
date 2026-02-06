@@ -146,11 +146,11 @@ class Banner < ApplicationRecord
       source = image.variant(resize_to_limit: [width, height])
     end
 
-    Rails.application.routes.url_helpers.rails_blob_url(source, **safe_url_options, only_path: false)
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
   rescue StandardError => e
     Rails.logger.error("Error generating banner image URL: #{e.message}")
     begin
-      Rails.application.routes.url_helpers.rails_blob_url(image, **safe_url_options, only_path: false)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(image, safe_url_options)
     rescue StandardError
       nil
     end

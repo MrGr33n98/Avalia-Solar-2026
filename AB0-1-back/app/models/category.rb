@@ -89,7 +89,7 @@ class Category < ApplicationRecord
     begin
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      Rails.application.routes.url_helpers.rails_blob_url(banner, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(banner, options)
     rescue => e
       Rails.logger.error("Error generating category banner URL: #{e.message}")
       nil
@@ -101,7 +101,7 @@ class Category < ApplicationRecord
     begin
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      Rails.application.routes.url_helpers.rails_blob_url(icon, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(icon, options)
     rescue => e
       Rails.logger.error("Error generating category icon URL: #{e.message}")
       nil

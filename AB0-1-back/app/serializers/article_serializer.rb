@@ -11,7 +11,12 @@ class ArticleSerializer < ActiveModel::Serializer
   has_many :companies
 
   def image_url
-    object.banner.attached? ? Rails.application.routes.url_helpers.rails_blob_url(object.banner, only_path: false) : nil
+    return unless object.banner.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.banner, options)
   end
 
   def cover_image_url
@@ -55,9 +60,13 @@ class ArticleSerializer < ActiveModel::Serializer
 
   def author_avatar_url
     return nil unless object.author&.avatar_photo&.attached?
-    Rails.application.routes.url_helpers.rails_blob_url(
+    
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(
       object.author.avatar_photo.variant(resize_to_fill: [150, 150]),
-      only_path: false
+      options
     )
   end
 

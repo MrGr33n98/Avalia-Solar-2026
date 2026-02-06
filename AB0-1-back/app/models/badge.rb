@@ -25,7 +25,7 @@ class Badge < ApplicationRecord
         options[:port] = 3001
       end
 
-      Rails.application.routes.url_helpers.rails_blob_url(badge_image, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(badge_image, options)
     rescue => e
       Rails.logger.error("Error generating badge image URL for badge #{id}: #{e.message}")
       nil

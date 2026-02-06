@@ -467,9 +467,12 @@ module Api
             views_count: (category.respond_to?(:views_count) ? category.views_count : 0).to_i,
             tags: category.tags,
             badges: category.badges.map do |b|
+              options = Rails.application.routes.default_url_options.dup
+              options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+              
               {
                 name: b.name,
-                image_url: (Rails.application.routes.url_helpers.rails_blob_url(b.badge_image, only_path: false) if b.badge_image.attached?)
+                image_url: (Rails.application.routes.url_helpers.rails_storage_proxy_url(b.badge_image, options) if b.badge_image.attached?)
               }
             end
           }

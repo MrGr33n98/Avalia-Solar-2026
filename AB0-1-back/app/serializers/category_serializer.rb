@@ -28,13 +28,19 @@ class CategorySerializer < ActiveModel::Serializer
   def banner_url
     return unless object.banner.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(object.banner, only_path: false)
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.banner, options)
   end
 
   def icon_url
     return unless object.icon.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(object.icon, only_path: false)
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.icon, options)
   end
 
   def parent
@@ -62,10 +68,12 @@ class CategorySerializer < ActiveModel::Serializer
   # Temporarily commented out to fix the search issue
   # def banners
   #   object.banners.map do |banner|
+  #     options = Rails.application.routes.default_url_options.dup
+  #     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
   #     {
   #       id: banner.id,
   #       title: banner.title,
-  #       image_url: banner.image.attached? ? rails_blob_url(banner.image, only_path: false) : nil,
+  #       image_url: banner.image.attached? ? rails_storage_proxy_url(banner.image, options) : nil,
   #       link: banner.link,
   #       banner_type: banner.banner_type,
   #       position: banner.position,

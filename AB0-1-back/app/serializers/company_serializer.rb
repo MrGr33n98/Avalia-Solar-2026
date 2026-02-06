@@ -153,13 +153,11 @@ class CompanySerializer < ActiveModel::Serializer
     return nil unless attachment.attached?
 
     begin
-      # Use rails_blob_url for Active Storage attachments with full URL
-      # Force host to localhost:3001 if not set correctly in config
-      options = { only_path: false }
-      options[:host] = 'localhost' if Rails.env.development?
-      options[:port] = 3001 if Rails.env.development?
+      # Use rails_storage_proxy_url to serve images through the app instead of direct S3 redirects
+      options = Rails.application.routes.default_url_options.dup
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       
-      Rails.application.routes.url_helpers.rails_blob_url(attachment, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
     rescue StandardError => e
       Rails.logger.error("Error generating attachment URL for company #{object.id}: #{e.message}")
       nil

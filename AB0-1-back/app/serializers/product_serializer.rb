@@ -9,6 +9,9 @@ class ProductSerializer < ActiveModel::Serializer
   def image_url
     return unless object.image.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(object.image, only_path: false)
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+    
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.image, options)
   end
 end
