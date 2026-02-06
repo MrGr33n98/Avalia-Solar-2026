@@ -15,6 +15,9 @@ ActiveAdmin.register AdminUser do
     end
     column :name
     column :email
+    column :otp_enabled? do |admin|
+      status_tag (admin.otp_required_for_login ? "Habilitado" : "Desabilitado"), (admin.otp_required_for_login ? :ok : :warning)
+    end
     column :current_sign_in_at
     column :created_at
     actions

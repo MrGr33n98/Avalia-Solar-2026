@@ -4,7 +4,7 @@ class AdminUser < ApplicationRecord
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
          :two_factor_authenticatable,
-         otp_secret_encryption_key: Rails.application.secret_key_base
+         otp_secret_encryption_key: ENV['OTP_SECRET_KEY'] || Rails.application.secret_key_base
          
   # Notifications association
   has_many :notifications, as: :recipient, dependent: :destroy, class_name: 'Noticed::Notification'

@@ -34,7 +34,7 @@ export function StickyMobileCTA() {
           variant="outline" 
           className="flex-1 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold" 
           size="lg" 
-          onClick={() => window.open('https://wa.me/5511999999999', '_blank')}
+          onClick={() => window.open('https://wa.me/556593465055', '_blank')}
         >
           <MessageCircle className="w-4 h-4 mr-2" />
           WhatsApp

@@ -19,7 +19,7 @@ function ContactPageContent() {
         </p>
         <div className="mt-8 space-y-2 text-sm text-muted-foreground">
           <p>Email: contato@avaliasolar.com.br</p>
-          <p>Telefone: (65) 99242-3309</p>
+          <p>Telefone: +55 65 9346-5055</p>
         </div>
       </div>
     </div>

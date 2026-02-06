@@ -20,7 +20,7 @@ describe('Footer', () => {
     render(<Footer />);
     
     expect(screen.getByText('contato@avaliasolar.com.br')).toBeInTheDocument();
-    expect(screen.getByText('(65) 99242-3309')).toBeInTheDocument();
+    expect(screen.getByText('+55 65 9346-5055')).toBeInTheDocument();
     expect(screen.getByText('Florianópolis, SC')).toBeInTheDocument();
   });
 

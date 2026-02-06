@@ -65,7 +65,7 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
           <Button 
             variant="outline" 
             className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold"
-            onClick={() => window.open('https://wa.me/5511999999999', '_blank')}
+            onClick={() => window.open('https://wa.me/556593465055', '_blank')}
           >
             <MessageCircle className="w-4 h-4 mr-2" />
             Chamar no WhatsApp
