@@ -1,10 +1,19 @@
 class AdminUser < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
+  otp_secret_key = begin
+    raw_key = ENV['OTP_SECRET_KEY'].presence
+    raw_key ||= Rails.application.credentials.dig(:otp_secret_key)
+    raw_key ||= Rails.application.secret_key_base
+
+    key_len = ActiveSupport::MessageEncryptor.key_len
+    raw_key.bytesize == key_len ? raw_key : ActiveSupport::KeyGenerator.new(raw_key).generate_key('otp_secret', key_len)
+  end
+
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
          :two_factor_authenticatable,
-         otp_secret_encryption_key: ENV['OTP_SECRET_KEY'] || Rails.application.secret_key_base
+         otp_secret_encryption_key: otp_secret_key
          
   # Notifications association
   has_many :notifications, as: :recipient, dependent: :destroy, class_name: 'Noticed::Notification'
