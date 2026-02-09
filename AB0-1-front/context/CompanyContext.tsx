@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { companiesApi, companyAccessApi } from '@/lib/api';
+import { companiesApi, companyAccessApi, hasPossibleAuthSession } from '@/lib/api';
 
 interface Company {
   id: number;
@@ -32,7 +32,11 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   const { data: companies = [], isLoading, refetch } = useQuery({
     queryKey: ['my-companies'],
-    queryFn: () => companiesApi.mine().then(res => res as Company[]),
+    queryFn: () => {
+      if (!hasPossibleAuthSession()) return Promise.resolve([]);
+      return companiesApi.mine().then(res => res as Company[]);
+    },
+    enabled: hasPossibleAuthSession(),
     retry: 1,
   });
 

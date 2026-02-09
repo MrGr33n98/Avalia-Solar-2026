@@ -70,19 +70,39 @@ const getCache = async () => {
   return cacheReady;
 };
 
-const fetchJSON = async <T>(endpoint: string, signal: AbortSignal): Promise<T> => {
+const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 2): Promise<T> => {
   const url = buildApiUrl(endpoint);
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getApiRequestHeaders({ Accept: 'application/json' }),
-    credentials: 'include',
-    cache: 'no-store',
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(`[${response.status}] Failed to fetch ${endpoint}`);
+  
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getApiRequestHeaders({ Accept: 'application/json' }),
+        cache: 'no-store',
+        signal,
+      });
+
+      if (!response.ok) {
+        console.error(`[HomeFallbackCache] Fetch failed (Attempt ${i + 1}/${retries + 1}): ${url} [${response.status}]`);
+        if (i === retries) {
+          throw new Error(`[${response.status}] Failed to fetch ${endpoint} after ${retries + 1} attempts`);
+        }
+        // Wait a bit before retry
+        await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+        continue;
+      }
+
+      return (await response.json()) as T;
+    } catch (error: any) {
+      if (error.name === 'AbortError') throw error;
+      
+      console.error(`[HomeFallbackCache] Error (Attempt ${i + 1}/${retries + 1}): ${error.message}`);
+      if (i === retries) throw error;
+      await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+    }
   }
-  return (await response.json()) as T;
+  
+  throw new Error(`Failed to fetch ${endpoint}`);
 };
 
 export async function getCachedActiveCategories(): Promise<Category[]> {

@@ -10,8 +10,9 @@ class CategorySerializer < ActiveModel::Serializer
              :parent, :subcategories
              # :banner_sponsored, :banners  # Temporarily commented out
 
-  has_many :companies
-  has_many :products
+  # Remove has_many associations that cause N+1 queries and complex serialization
+  # has_many :companies
+  # has_many :products
   # has_many :banners, serializer: BannerSerializer  # Commented out - BannerSerializer not found
 
   def reviews_count
