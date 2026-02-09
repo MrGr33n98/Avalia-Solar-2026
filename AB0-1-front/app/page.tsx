@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Info } from 'lucide-react';
+import { unstable_cache } from 'next/cache';
 
 import LandingHero from '@/components/landing/LandingHero';
 
@@ -119,6 +120,12 @@ async function getHomeData(): Promise<{
   };
 }
 
+const getHomeDataCached = unstable_cache(
+  async () => getHomeData(),
+  ['home-data-v2'],
+  { revalidate: 600, tags: ['home-data'] }
+);
+
 async function getBanners(position: string): Promise<Banner[]> {
   try {
     const response = await api.request<Banner[]>({
@@ -138,7 +145,7 @@ async function getBanners(position: string): Promise<Banner[]> {
 export default async function Home() {
   // We start all fetches in parallel, but we will await them only where needed
   // This allows streaming the initial HTML (with Hero) faster if we use Suspense
-  const dataPromise = getHomeData();
+  const dataPromise = getHomeDataCached();
 
   return (
     <main className="flex-grow">
