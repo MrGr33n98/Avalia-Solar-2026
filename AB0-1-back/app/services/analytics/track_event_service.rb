@@ -249,7 +249,7 @@ module Analytics
         properties: {
           company_id: event.company_id,
           user_id: event.user_id,
-          environment: Rails.env,
+          environment: Rails.env.to_s,
           platform: 'backend',
           server_timestamp: event.tracked_at.to_i,
           **event.metadata

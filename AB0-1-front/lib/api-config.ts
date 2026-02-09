@@ -26,10 +26,14 @@ const normalizeOrigin = (rawBase: string) => {
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
+  const defaultPublicBase =
+    process.env.NODE_ENV === 'production'
+      ? 'https://api.avaliasolar.com.br'
+      : 'http://localhost:3001';
   const publicBase =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:3001';
+    defaultPublicBase;
 
   const rawBase = internalBase || publicBase;
   const origin = normalizeOrigin(rawBase);

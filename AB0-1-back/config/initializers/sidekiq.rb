@@ -68,8 +68,8 @@ begin
     Rails.logger.error "❌ Sidekiq error in #{job['class']}: #{ex.message}"
     Rails.logger.error "Retry: #{job['retry_count']}/#{job['retry']}"
     
-    # Track failed job metrics
-    if defined?(Yabeda)
+    # Track failed job metrics (guarded: custom metric may not exist)
+    if defined?(Yabeda) && Yabeda.respond_to?(:sidekiq) && Yabeda.sidekiq.respond_to?(:job_errors)
       Yabeda.sidekiq.job_errors.increment(
         { queue: job['queue'], class: job['class'] },
         by: 1
