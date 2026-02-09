@@ -26,6 +26,12 @@ const normalizeOrigin = (rawBase: string) => {
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
+  const serverProxyBase = isServer
+    ? (
+        process.env.API_PROXY_TARGET ||
+        (process.env.NODE_ENV === 'production' ? 'http://ab0-backend:3001' : 'http://localhost:3001')
+      )
+    : '';
   const browserBase = !isServer ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || '') : '';
   const defaultPublicBase =
     process.env.NODE_ENV === 'production'
@@ -38,7 +44,7 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
 
   // Browser defaults to same-origin (/api/v1) to avoid CORS;
   // server-side keeps absolute URL for SSR/fetches.
-  const rawBase = isServer ? (internalBase || publicBase) : browserBase;
+  const rawBase = isServer ? (internalBase || serverProxyBase || publicBase) : browserBase;
   const origin = normalizeOrigin(rawBase);
 
   return {

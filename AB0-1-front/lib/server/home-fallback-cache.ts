@@ -132,11 +132,20 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
   const result = await cache.get<Category[]>(
     'home.categories.featured',
     async (signal) => {
-      const payload = await fetchJSON<unknown>(
-        'categories?featured=true&status=active&limit=8&include=average_rating,reviews_count',
+      const featuredPayload = await fetchJSON<unknown>(
+        'categories?view=cards&featured=true&limit=8&sort_by=featured_desc',
         signal
       );
-      return extractCategories(payload);
+      const featured = extractCategories(featuredPayload);
+      if (featured.length > 0) {
+        return featured;
+      }
+
+      const fallbackPayload = await fetchJSON<unknown>(
+        'categories?view=cards&page=1&per_page=8&sort_by=featured_desc',
+        signal
+      );
+      return extractCategories(fallbackPayload);
     },
     { fallback: [] }
   );

@@ -94,13 +94,19 @@ async function getHomeData(): Promise<{
   featuredCategories: Category[];
   categoriesBanners: Banner[];
 }> {
-  const [featuredCategories, categoriesBanners] = await Promise.all([
+  const [featuredCategoriesRaw, categoriesBanners] = await Promise.all([
     getCachedFeaturedCategories(),
     getCachedBanners('categories_top'),
   ]);
 
+  const featuredCategories = Array.isArray(featuredCategoriesRaw) ? featuredCategoriesRaw : [];
+  const categoriesForHome =
+    featuredCategories.length > 0
+      ? featuredCategories
+      : (await getCachedActiveCategories()).slice(0, 8);
+
   return {
-    featuredCategories: Array.isArray(featuredCategories) ? featuredCategories : [],
+    featuredCategories: categoriesForHome,
     categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
   };
 }
