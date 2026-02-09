@@ -7,6 +7,7 @@
     "clean:next": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true });\"",
     "dev:clean": "npm run clean:next && next dev",
     "build": "next build",
+    "postbuild": "node script/warm-home-cache.mjs || echo \"cache warm skipped\"",
     "build:clean": "npm run clean:next && next build",
     "analyze": "cross-env ANALYZE=true NODE_OPTIONS=\"--max-old-space-size=4096\" next build",
     "start": "next start",
@@ -16,7 +17,9 @@
     "test:coverage": "cross-env NODE_ENV=development jest --coverage",
     "test:ci": "cross-env NODE_ENV=development jest --ci --coverage --maxWorkers=2",
     "knip": "knip",
-    "perf:lhci": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json"
+    "perf:lhci": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json",
+    "perf:warm-cache": "node script/warm-home-cache.mjs",
+    "perf:simulate-cache-fallback": "node script/simulate-home-cache-fallback.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

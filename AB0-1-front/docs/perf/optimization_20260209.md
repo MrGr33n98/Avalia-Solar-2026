@@ -12,6 +12,12 @@
 - Added analytics feature-flag guard (`NEXT_PUBLIC_ENABLE_ANALYTICS=false` disables GTM injection).
 - Added API route proxy for Web Vitals: `app/api/v1/analytics/web-vitals/route.ts`.
 - Enabled anonymous acceptance of `web_vital` event type in backend analytics controller.
+- Added layered fallback cache for home data (`categories` + `banners`) with:
+  - timeout budget of 200ms for origin API calls
+  - stale-while-revalidate behavior
+  - memory + disk persistence (`.cache/home-fallback-cache.json`)
+  - cache metrics endpoint at `/api/cache-metrics`
+- Added cache warming script: `script/warm-home-cache.mjs` (runs in `postbuild`).
 - Added auth session hint strategy to avoid anonymous bootstrap requests to `/auth/me`.
 - Added in-memory cache and retry/backoff improvements in API clients for idempotent/public requests.
 - Added extra code splitting on home route with dynamic imports for below-fold UI.
@@ -36,3 +42,6 @@
    - Web vitals requests return `202` from `/api/v1/analytics/web-vitals`.
    - Anonymous homepage no longer triggers `/auth/me` and `/auth/refresh` noise.
 4. Record new GTmetrix/Lighthouse values and compare with baseline.
+5. Validate fallback behavior by simulating API latency/outage and checking:
+   - cache hit rate from `/api/cache-metrics`
+   - stale/fallback serving without homepage hard failures

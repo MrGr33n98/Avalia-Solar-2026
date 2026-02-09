@@ -17,8 +17,14 @@ Rails.application.configure do
   config.assets.digest = true
 
   # Armazenamento e Host de API
-  # IMPORTANTE: Usar Spaces em produção para persistir imagens entre deploys
-  config.active_storage.service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'spaces').to_sym
+  # IMPORTANTE: Usar Spaces em produção para persistir imagens entre deploys.
+  # Fallback para local caso credenciais estejam ausentes, evitando erro 500 no admin.
+  active_storage_service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'spaces')
+  if active_storage_service == 'spaces' && (ENV['SPACES_ACCESS_KEY_ID'].blank? || ENV['SPACES_SECRET_ACCESS_KEY'].blank?)
+    Rails.logger.error('[ActiveStorage] Credenciais do Spaces ausentes. Aplicando fallback para storage local.')
+    active_storage_service = 'local'
+  end
+  config.active_storage.service = active_storage_service.to_sym
   # Evita 404 por URL expirada do DiskService em páginas cacheadas
   config.active_storage.service_urls_expire_in = 7.days
   

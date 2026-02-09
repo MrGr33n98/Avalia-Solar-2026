@@ -17,9 +17,13 @@ const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalc
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { categoriesApiSafe, companiesApiSafe } from '@/lib/api-client';
-import { api } from '@/lib/api';
+import { companiesApiSafe } from '@/lib/api-client';
 import type { Banner, Category, Company } from '@/lib/api';
+import {
+  getCachedActiveCategories,
+  getCachedBanners,
+  getCachedFeaturedCategories,
+} from '@/lib/server/home-fallback-cache';
 
 const HomePageTracking = dynamic(() => import('@/components/home/HomePageTracking'), {
   ssr: false,
@@ -87,65 +91,65 @@ function EmptyState({ message }: { message: string }) {
 }
 
 async function getHomeData(): Promise<{
-  allCategories: Category[];
   featuredCategories: Category[];
-  companies: Company[];
   categoriesBanners: Banner[];
+}> {
+  const [featuredCategories, categoriesBanners] = await Promise.all([
+    getCachedFeaturedCategories(),
+    getCachedBanners('categories_top'),
+  ]);
+
+  return {
+    featuredCategories: Array.isArray(featuredCategories) ? featuredCategories : [],
+    categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
+  };
+}
+
+async function getCompaniesData(): Promise<{
+  companies: Company[];
   companiesBanners: Banner[];
 }> {
-  const [allCategories, featuredCategories, companies, categoriesBanners, companiesBanners] = await Promise.all([
-    categoriesApiSafe.getAll({ status: 'active' }),
-    categoriesApiSafe.getAll({
-      featured: true,
-      status: 'active',
-      limit: 8,
-      include: 'average_rating,reviews_count',
-    } as any),
+  const [companies, companiesBanners] = await Promise.all([
     companiesApiSafe.getAll({
       status: 'active',
       featured: true,
       limit: 12,
       include: 'logo_url,banner_url,average_rating,rating_count',
     }),
-    getBanners('categories_top'),
-    getBanners('companies_top'),
+    getCachedBanners('companies_top'),
   ]);
 
   return {
-    allCategories: Array.isArray(allCategories) ? allCategories : [],
-    featuredCategories: Array.isArray(featuredCategories) ? featuredCategories : [],
     companies: Array.isArray(companies) ? companies : [],
-    categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
     companiesBanners: Array.isArray(companiesBanners) ? companiesBanners : [],
   };
 }
 
-const getHomeDataCached = unstable_cache(
-  async () => getHomeData(),
-  ['home-data-v2'],
-  { revalidate: 600, tags: ['home-data'] }
+const getHeroDataCached = unstable_cache(
+  async () => {
+    const allCategories = await getCachedActiveCategories();
+    return { allCategories };
+  },
+  ['home-hero-data-v1'],
+  { revalidate: 600, tags: ['home-data', 'home-hero'] }
 );
 
-async function getBanners(position: string): Promise<Banner[]> {
-  try {
-    const response = await api.request<Banner[]>({
-      url: `/banners?position=${encodeURIComponent(position)}`,
-      method: 'GET',
-    });
-    const data: any = response?.data;
-    if (Array.isArray(data)) return data as Banner[];
-    if (Array.isArray(data?.banners)) return data.banners as Banner[];
-    return [];
-  } catch (error) {
-    console.warn(`[Home] Failed to fetch banners for ${position}:`, error);
-    return [];
-  }
-}
+const getHomeDataCached = unstable_cache(
+  async () => getHomeData(),
+  ['home-categories-section-v1'],
+  { revalidate: 600, tags: ['home-data', 'home-categories'] }
+);
+
+const getCompaniesDataCached = unstable_cache(
+  async () => getCompaniesData(),
+  ['home-companies-section-v1'],
+  { revalidate: 600, tags: ['home-data', 'home-companies'] }
+);
 
 export default async function Home() {
-  // We start all fetches in parallel, but we will await them only where needed
-  // This allows streaming the initial HTML (with Hero) faster if we use Suspense
-  const dataPromise = getHomeDataCached();
+  const heroDataPromise = getHeroDataCached();
+  const categoriesDataPromise = getHomeDataCached();
+  const companiesDataPromise = getCompaniesDataCached();
 
   return (
     <main className="flex-grow">
@@ -154,11 +158,11 @@ export default async function Home() {
       </Suspense>
 
       <Suspense fallback={<div className="min-h-[600px] animate-pulse bg-gray-100" />}>
-        <LandingHeroWrapper dataPromise={dataPromise} />
+        <LandingHeroWrapper dataPromise={heroDataPromise} />
       </Suspense>
 
       <Suspense fallback={<div className="h-20 animate-pulse bg-gray-50" />}>
-        <LandingCategoryChipsWrapper dataPromise={dataPromise} />
+        <LandingCategoryChipsWrapper dataPromise={categoriesDataPromise} />
       </Suspense>
 
       <HowItWorks />
@@ -170,11 +174,11 @@ export default async function Home() {
       </Suspense>
 
       <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
-        <CategoriesSectionWrapper dataPromise={dataPromise} />
+        <CategoriesSectionWrapper dataPromise={categoriesDataPromise} />
       </Suspense>
 
       <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
-        <CompaniesSectionWrapper dataPromise={dataPromise} />
+        <CompaniesSectionWrapper dataPromise={companiesDataPromise} />
       </Suspense>
 
       {/* Conversion Banner */}
@@ -211,12 +215,20 @@ export default async function Home() {
 // WRAPPERS FOR STREAMING
 // ==============================
 
-async function LandingHeroWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+async function LandingHeroWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHeroDataCached>;
+}) {
   const { allCategories } = await dataPromise;
   return <LandingHero categories={allCategories} />;
 }
 
-async function LandingCategoryChipsWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+async function LandingCategoryChipsWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeDataCached>;
+}) {
   const { featuredCategories } = await dataPromise;
   return (
     <div className="py-8 bg-slate-50 border-y border-slate-100">
@@ -225,7 +237,11 @@ async function LandingCategoryChipsWrapper({ dataPromise }: { dataPromise: Retur
   );
 }
 
-async function CategoriesSectionWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+async function CategoriesSectionWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeDataCached>;
+}) {
   const { featuredCategories, categoriesBanners } = await dataPromise;
   return (
     <SectionShell zebra>
@@ -257,7 +273,11 @@ async function CategoriesSectionWrapper({ dataPromise }: { dataPromise: ReturnTy
   );
 }
 
-async function CompaniesSectionWrapper({ dataPromise }: { dataPromise: ReturnType<typeof getHomeData> }) {
+async function CompaniesSectionWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getCompaniesDataCached>;
+}) {
   const { companies, companiesBanners } = await dataPromise;
   return (
     <SectionShell>

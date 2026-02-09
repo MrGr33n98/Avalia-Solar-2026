@@ -5,6 +5,13 @@ class Company < ApplicationRecord
   include Moderation
   has_paper_trail # Enable rollback capabilities
 
+  ALLOWED_LOGO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
+  ALLOWED_BANNER_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
+  ALLOWED_MEDIA_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
+  LOGO_MAX_SIZE = 5.megabytes
+  BANNER_MAX_SIZE = 10.megabytes
+  MEDIA_MAX_SIZE = 15.megabytes
+
   enum status: {
     active: 'active',
     inactive: 'inactive',
@@ -318,86 +325,62 @@ class Company < ApplicationRecord
   end
 
   def validate_attachments
-    # Só valida se houver novos uploads anexados
-    validate_logo_attachment if logo.attached? && logo.attachment.present?
-    validate_banner_attachment if banner.attached? && banner.attachment.present?
+    validate_logo_attachment if logo.attached?
+    validate_banner_attachment if banner.attached?
     validate_media_assets_attachments if media_assets.attached?
-  rescue => e
-    Rails.logger.error "Erro na validação de attachments: #{e.message}"
-    # Não bloqueia salvamento se houver erro nas validações de arquivo
   end
 
   def validate_media_assets_attachments
     media_assets.each do |asset|
-      next unless asset.attachment.present? # Só valida novos uploads
-
-      begin
-        content_type = asset.blob.content_type
-        if !content_type.start_with?('image/')
-          errors.add(:media_assets, "arquivo #{asset.filename} deve ser uma imagem")
-        end
-
-        if asset.blob.byte_size > 15.megabytes
-          errors.add(:media_assets, "arquivo #{asset.filename} excede o limite de 15MB")
-        end
-      rescue => e
-        Rails.logger.error "Erro ao validar asset: #{e.message}"
-      end
+      validate_blob_type_and_size(
+        attribute: :media_assets,
+        blob: asset.blob,
+        allowed_types: ALLOWED_MEDIA_CONTENT_TYPES,
+        max_size: MEDIA_MAX_SIZE,
+        invalid_type_message: "arquivo #{asset.filename} deve ser JPG, PNG, SVG ou WEBP",
+        invalid_size_message: "arquivo #{asset.filename} excede o limite de 15MB"
+      )
     end
   end
 
   def validate_logo_attachment
     return unless logo.attached?
-    
-    begin
-      content_type = logo.blob.content_type
-      if !content_type.in?(%w[image/png image/jpeg image/jpg image/svg+xml image/webp])
-        errors.add(:logo, 'deve ser PNG, JPG, SVG ou WebP')
-      end
-      
-      if logo.blob.byte_size > 5.megabytes
-        errors.add(:logo, 'tamanho máximo é 5MB')
-      end
 
-      # Validação de dimensões (opcional, apenas se não for SVG)
-      if content_type != 'image/svg+xml'
-        logo.blob.analyze unless logo.blob.analyzed?
-        meta = logo.blob.metadata || {}
-        w = meta['width']
-        h = meta['height']
-        if w && h && (w < 100 || h < 100)
-          errors.add(:logo, "dimensões muito pequenas (#{w}x#{h}px). Mínimo recomendado: 200x200px")
-        end
-      end
-    rescue => e
-      Rails.logger.error "Erro ao validar logo: #{e.message}"
-    end
+    validate_blob_type_and_size(
+      attribute: :logo,
+      blob: logo.blob,
+      allowed_types: ALLOWED_LOGO_CONTENT_TYPES,
+      max_size: LOGO_MAX_SIZE,
+      invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
+      invalid_size_message: 'tamanho máximo é 5MB'
+    )
+    validate_minimum_dimensions(
+      attribute: :logo,
+      blob: logo.blob,
+      min_width: 100,
+      min_height: 100,
+      recommendation: '200x200px'
+    )
   end
 
   def validate_banner_attachment
     return unless banner.attached?
-    
-    begin
-      content_type = banner.blob.content_type
-      if !content_type.in?(%w[image/png image/jpeg image/jpg image/webp])
-        errors.add(:banner, 'deve ser PNG, JPG ou WebP')
-      end
-      
-      if banner.blob.byte_size > 10.megabytes
-        errors.add(:banner, 'tamanho máximo é 10MB')
-      end
-      
-      # Análise de dimensões
-      banner.blob.analyze unless banner.blob.analyzed?
-      meta = banner.blob.metadata || {}
-      w = meta['width']
-      h = meta['height']
-      if w && h && (w < 800 || h < 200)
-        errors.add(:banner, "dimensões muito pequenas (#{w}x#{h}px). Mínimo recomendado: 1200x400px")
-      end
-    rescue => e
-      Rails.logger.warn "Falha ao analisar banner: #{e.message}"
-    end
+
+    validate_blob_type_and_size(
+      attribute: :banner,
+      blob: banner.blob,
+      allowed_types: ALLOWED_BANNER_CONTENT_TYPES,
+      max_size: BANNER_MAX_SIZE,
+      invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
+      invalid_size_message: 'tamanho máximo é 10MB'
+    )
+    validate_minimum_dimensions(
+      attribute: :banner,
+      blob: banner.blob,
+      min_width: 800,
+      min_height: 200,
+      recommendation: '1200x400px'
+    )
   end
   
   # Constantes (mantidas no modelo)
@@ -645,5 +628,32 @@ class Company < ApplicationRecord
       # A separate scheduled job should handle heavy calculations
       category.touch
     end
+  end
+
+  def validate_blob_type_and_size(attribute:, blob:, allowed_types:, max_size:, invalid_type_message:, invalid_size_message:)
+    return if blob.blank?
+
+    content_type = blob.content_type.to_s
+    errors.add(attribute, invalid_type_message) unless allowed_types.include?(content_type)
+    errors.add(attribute, invalid_size_message) if blob.byte_size.to_i > max_size
+  rescue StandardError => e
+    Rails.logger.warn("[Company] Falha ao validar blob atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
+    errors.add(attribute, 'arquivo inválido ou corrompido')
+  end
+
+  def validate_minimum_dimensions(attribute:, blob:, min_width:, min_height:, recommendation:)
+    return if blob.blank?
+    return if blob.content_type == 'image/svg+xml'
+
+    blob.analyze unless blob.analyzed?
+    metadata = blob.metadata || {}
+    width = metadata['width']
+    height = metadata['height']
+    return if width.blank? || height.blank?
+    return if width >= min_width && height >= min_height
+
+    errors.add(attribute, "dimensões muito pequenas (#{width}x#{height}px). Mínimo recomendado: #{recommendation}")
+  rescue StandardError => e
+    Rails.logger.warn("[Company] Falha ao validar dimensoes atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
   end
 end

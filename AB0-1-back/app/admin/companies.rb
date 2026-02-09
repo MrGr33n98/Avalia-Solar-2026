@@ -102,6 +102,21 @@ end
 
   form html: { multipart: true } do |f|
     f.semantic_errors *f.object.errors.attribute_names
+    safe_preview = lambda do |attachment, max_width:, empty_text:|
+      unless attachment.attached?
+        next content_tag(:span, empty_text)
+      end
+
+      begin
+        image_tag(
+          url_for(attachment),
+          style: "max-width: #{max_width}px; display: block; margin-top: 10px"
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[Admin::Companies] Preview indisponivel attachment=#{attachment.name} company_id=#{f.object.id} error=#{e.class} #{e.message}")
+        content_tag(:span, 'Arquivo anexado, mas pre-visualizacao indisponivel no momento.')
+      end
+    end
 
     f.inputs 'Basic Information' do
       f.input :name
@@ -185,7 +200,9 @@ end
 
     f.inputs 'Financiamento (nova aba)' do
       f.input :financing_enabled, label: 'Habilitar Financiamento Premium'
-      para 'Configurações detalhadas (perfil, parceiros, ofertas) estão no menu Financiamento.'
+      f.template.concat(
+        f.template.content_tag(:p, 'Configurações detalhadas (perfil, parceiros, ofertas) estão no menu Financiamento.')
+      )
     end
 
     f.inputs 'Coverage & Certifications' do
@@ -205,20 +222,25 @@ end
 
     f.inputs 'Media & Visual Assets' do
       f.input :logo, as: :file, 
-              hint: f.object.logo.attached? ? image_tag(url_for(f.object.logo), style: 'max-width: 100px; display: block; margin-top: 10px') : 'PNG, JPG ou SVG (Máx 5MB)'
+              hint: safe_preview.call(f.object.logo, max_width: 100, empty_text: 'PNG, JPG, SVG ou WEBP (Max 5MB)')
       
       f.input :banner, as: :file,
-              hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), style: 'max-width: 300px; display: block; margin-top: 10px') : 'Recomendado: 1200x400px (Máx 10MB)'
+              hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1200x400 (Max 10MB)')
       
       f.input :media_assets, as: :file, input_html: { multiple: true }, 
-              hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG (Máx 15MB por arquivo)'
+              hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG, SVG ou WEBP (Max 15MB por arquivo)'
       
       if f.object.media_assets.attached?
         f.template.concat(
           f.template.content_tag(:div, class: 'media-gallery-preview') do
             f.object.media_assets.map do |asset|
               f.template.content_tag(:div, style: 'display: inline-block; margin: 5px;') do
-                f.template.image_tag(url_for(asset), style: 'max-width: 100px; height: auto; border: 1px solid #ddd;')
+                begin
+                  f.template.image_tag(url_for(asset), style: 'max-width: 100px; height: auto; border: 1px solid #ddd;')
+                rescue StandardError => e
+                  Rails.logger.warn("[Admin::Companies] Preview indisponivel media_asset=#{asset.id} company_id=#{f.object.id} error=#{e.class} #{e.message}")
+                  f.template.content_tag(:span, 'Preview indisponivel')
+                end
               end
             end.join.html_safe
           end
@@ -356,14 +378,22 @@ end
       end
       row :banner do |company|
         if company.banner.attached?
-          image_tag(url_for(company.banner), style: 'max-width: 300px')
+          begin
+            image_tag(url_for(company.banner), style: 'max-width: 300px')
+          rescue StandardError
+            content_tag(:span, 'Banner anexado, mas preview indisponivel')
+          end
         else
           content_tag(:span, 'Sem banner')
         end
       end
       row :logo do |company|
         if company.logo.attached?
-          image_tag(url_for(company.logo), style: 'max-width: 200px')
+          begin
+            image_tag(url_for(company.logo), style: 'max-width: 200px')
+          rescue StandardError
+            content_tag(:span, 'Logo anexado, mas preview indisponivel')
+          end
         else
           content_tag(:span, 'Sem logo')
         end
@@ -377,7 +407,13 @@ end
             if resource.media_assets.attached?
               ul do
                 resource.media_assets.each do |img|
-                  li { image_tag(url_for(img), style: 'max-width: 120px; height: auto;') }
+                  li do
+                    begin
+                      image_tag(url_for(img), style: 'max-width: 120px; height: auto;')
+                    rescue StandardError
+                      content_tag(:span, 'Preview indisponivel')
+                    end
+                  end
                 end
               end
             else
