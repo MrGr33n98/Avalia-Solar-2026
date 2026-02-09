@@ -15,6 +15,7 @@ import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId, isNewSession } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
+import { getApiBaseUrl } from '../api-config';
 import { 
   initializeGTag, 
   gtagEvent, 
@@ -39,7 +40,6 @@ const eventQueue: Array<{
   options: EventOptions;
   eventId: string;
 }> = [];
-const BACKEND_ENDPOINT = '/api/v1/analytics/track';
 const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 
 /**
@@ -334,6 +334,7 @@ function sendToBackend(
   properties: Record<string, any>
 ): void {
   if (typeof window === 'undefined') return;
+  const backendEndpoint = `${getApiBaseUrl()}/analytics/track`;
 
   const companyId = properties.company_id ?? context.company_id ?? null;
   if (!companyId && !GLOBAL_EVENTS.has(eventName)) return;
@@ -366,7 +367,7 @@ function sendToBackend(
   };
 
   try {
-    void fetch(BACKEND_ENDPOINT, {
+    void fetch(backendEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
