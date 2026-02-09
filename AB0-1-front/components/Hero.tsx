@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Zap, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -20,11 +19,8 @@ export default function Hero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           {/* Main Heading */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
+          <div
+            className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-700"
           >
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="text-foreground">Compare e Encontre a</span>{' '}
@@ -35,14 +31,11 @@ export default function Hero() {
             <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed line-clamp-2">
               Conecte-se com as melhores empresas de energia solar do Brasil. Compare preços, avaliações e encontre a solução perfeita para sua casa ou empresa.
             </p>
-          </motion.div>
+          </div>
 
           {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-10 max-w-2xl mx-auto"
+          <div
+            className="mt-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both"
           >
             <div className="relative">
               <SearchBar placeholder="Busque empresas, produtos ou serviços..." />
@@ -59,14 +52,11 @@ export default function Hero() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+          <div
+            className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both"
           >
             {isAuthenticated ? (
               <>
@@ -117,7 +107,7 @@ export default function Hero() {
                 </Link>
               </>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

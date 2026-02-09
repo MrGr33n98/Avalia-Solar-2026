@@ -23,7 +23,6 @@ import {
   Building2,
   Loader2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const RealtimeDashboard = dynamic(
   () => import('@/app/dashboard/components/RealtimeDashboard'),
@@ -141,10 +140,8 @@ export default function DashboardPage() {
       {/* Header */}
       <section className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+          <div
+            className="animate-in fade-in slide-in-from-bottom-8 duration-700"
           >
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Bem-vindo de volta, {user?.name || 'usuário'}!
@@ -161,7 +158,7 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -170,12 +167,10 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {statsConfig.map((stat, index) => (
-                <motion.div
+                <div
                   key={stat.title}
-                  className="bg-card rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="bg-card rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -207,7 +202,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>

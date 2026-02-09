@@ -1,7 +1,6 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Building2, 
   MapPin, 
@@ -220,20 +219,16 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     <div className="space-y-6">
       {/* Pending Approval Alert */}
       {pendingApproval && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
+        <div
+          className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300"
         >
-          <Alert className="border-amber-200 bg-amber-50">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <strong>AlteraÃ§Ãµes enviadas para aprovaÃ§Ã£o!</strong>
-              <br />
-              Suas mudanÃ§as estÃ£o sendo revisadas pela equipe do ActiveAdmin e serÃ£o publicadas apÃ³s aprovaÃ§Ã£o.
+          <Alert className="bg-emerald-50 border-emerald-200 text-emerald-800">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <AlertDescription className="font-medium">
+              Suas alterações foram enviadas e estão em análise. Elas aparecerão no perfil público em breve.
             </AlertDescription>
           </Alert>
-        </motion.div>
+        </div>
       )}
 
       {/* Header Actions */}

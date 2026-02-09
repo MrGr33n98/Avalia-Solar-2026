@@ -15,19 +15,36 @@ module Api
 
         retries = 0
         begin
-          @companies = ::Company.includes(:categories, :reviews)
+          @companies = ::Company.includes(:categories)
 
           # Ordenação (Classificação)
           if params[:sort].present?
-            valid_sorts = %w[rating rating_avg name created_at]
+            valid_sorts = %w[
+              rating
+              rating_avg
+              rating_desc
+              reviews_desc
+              name
+              name_asc
+              name_desc
+              created_at
+              newest
+              recommended
+            ]
             if valid_sorts.include?(params[:sort])
               case params[:sort]
-              when 'rating', 'rating_avg'
+              when 'rating', 'rating_avg', 'rating_desc'
                 @companies = @companies.reorder(rating_avg: :desc, rating_count: :desc)
-              when 'name'
+              when 'reviews_desc'
+                @companies = @companies.reorder(rating_count: :desc, rating_avg: :desc)
+              when 'name', 'name_asc'
                 @companies = @companies.reorder(name: :asc)
-              when 'created_at'
+              when 'name_desc'
+                @companies = @companies.reorder(name: :desc)
+              when 'created_at', 'newest'
                 @companies = @companies.reorder(created_at: :desc)
+              when 'recommended'
+                @companies = @companies.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc, created_at: :desc)
               end
             else
               Rails.logger.warn "[Classification] Invalid sort parameter: #{params[:sort]}"
@@ -68,8 +85,32 @@ module Api
             @companies = @companies.where(featured: featured_value)
           end
 
+          if params[:verified].present?
+            verified_value = ActiveModel::Type::Boolean.new.cast(params[:verified])
+            @companies = @companies.where(verified: verified_value)
+          end
+
+          if params[:state].present?
+            states = Array(params[:state]).flat_map { |v| v.to_s.split(',') }.map { |s| s.strip.upcase }.reject(&:blank?)
+            @companies = @companies.where(state: states) if states.any?
+          end
+
+          if params[:city].present?
+            cities = Array(params[:city]).flat_map { |v| v.to_s.split(',') }.map(&:strip).reject(&:blank?)
+            @companies = @companies.where(city: cities) if cities.any?
+          end
+
+          if params[:min_rating].present?
+            @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f)
+          end
+
           if params[:category_id].present?
             @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
+          end
+
+          if params[:category_ids].present?
+            category_ids = Array(params[:category_ids]).flat_map { |v| v.to_s.split(',') }.map(&:to_i).select(&:positive?)
+            @companies = @companies.joins(:categories).where(categories: { id: category_ids }) if category_ids.any?
           end
           
           # Apply manual limit only if not using pagination
@@ -81,6 +122,7 @@ module Api
           if params[:page].present?
             paginated = paginate(@companies)
             set_pagination_headers(paginated)
+            expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
             
             companies_json = paginated.map do |company|
               company_json_attributes(company)
@@ -91,6 +133,7 @@ module Api
               meta: { pagination: pagination_metadata(paginated) }
             }, status: :ok
           else
+            expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
             companies_json = @companies.map do |company|
               company_json_attributes(company)
             end
@@ -354,6 +397,31 @@ module Api
       end
 
       def company_json_attributes(company)
+        if params[:fields].to_s == 'card'
+          return {
+            id: company.id,
+            slug: company.slug,
+            name: company.name,
+            description: company.description,
+            website: company.website,
+            phone: company.phone,
+            state: company.state,
+            city: company.city,
+            created_at: company.created_at,
+            updated_at: company.updated_at,
+            banner_url: company.banner_url,
+            logo_url: company.logo_url,
+            rating_avg: company.rating_avg,
+            rating_count: company.rating_count,
+            status: company.status,
+            featured: company.featured,
+            verified: company.verified,
+            financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
+            active_admin: company.respond_to?(:active_admin) ? company.active_admin : false,
+            whatsapp: company.respond_to?(:whatsapp) ? company.whatsapp : nil
+          }
+        end
+
         {
           id: company.id,
           slug: company.slug,

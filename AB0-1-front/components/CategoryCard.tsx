@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { ArrowRight, Building2, Package, Star, TrendingUp, Users } from 'lucide-react';
 import { Category } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +13,6 @@ import { buildCategoryPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/lazy';
-
-const MotionDiv = motion.div;
 
 interface CategoryCardProps {
   category: Category;
@@ -46,11 +43,8 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
   };
 
   return (
-    <MotionDiv
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cn("h-full", className)}
+    <div
+      className={cn("h-full animate-in fade-in slide-in-from-bottom-4 duration-500", className)}
     >
       <Link 
         href={displayData.seo_url} 
@@ -98,43 +92,25 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
 
              {/* Badge */}
-             <div className="absolute top-3 left-3 flex flex-col gap-2">
+             <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                {displayData.featured && (
-                 <Badge variant="secondary" className="bg-white/90 text-primary hover:bg-white shadow-sm backdrop-blur-sm w-fit">
-                   <TrendingUp className="w-3 h-3 mr-1" />
+                 <Badge className="bg-primary text-primary-foreground border-none shadow-md px-2.5 py-0.5">
                    Destaque
                  </Badge>
                )}
-               {displayData.badges.map((badge, idx) => (
-                  <Badge key={idx} variant="outline" className="bg-black/50 text-white border-white/20 backdrop-blur-sm w-fit">
-                    {badge.image_url && <Image src={badge.image_url} alt={badge.name} width={12} height={12} className="mr-1" />}
-                    {badge.name}
-                  </Badge>
-               ))}
+               <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm border-none shadow-sm flex items-center gap-1 px-2 py-0.5">
+                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                 <span className="font-bold text-xs">{displayData.rating}</span>
+               </Badge>
              </div>
-          </div>
 
-          <CardHeader className="pb-2 relative -mt-12 z-10 px-5">
-             <div className="bg-background/95 backdrop-blur rounded-xl p-4 shadow-sm border border-border/50">
-               <h3 className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+             {/* Title Overlay */}
+             <div className="absolute bottom-0 left-0 right-0 p-4">
+               <h3 className="text-xl font-bold text-white group-hover:text-primary-light transition-colors drop-shadow-md">
                  {displayData.name}
                </h3>
-               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                    <span className="font-medium text-foreground">{displayData.rating}</span>
-                  </div>
-                  <Separator orientation="vertical" className="h-3" />
-                  <span>{displayData.companies_count} empresas</span>
-                  {displayData.average_price && (
-                    <>
-                      <Separator orientation="vertical" className="h-3" />
-                      <span className="text-green-600 font-medium">{displayData.average_price}</span>
-                    </>
-                  )}
-               </div>
              </div>
-          </CardHeader>
+          </div>
 
           <CardContent className="px-5 pb-4 pt-2 flex-grow space-y-3">
             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
@@ -143,28 +119,36 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
             
             {displayData.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {displayData.tags.slice(0, 3).map((tag, i) => (
-                  <span key={i} className="text-[10px] px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">
+                {displayData.tags.slice(0, 3).map((tag: string) => (
+                  <span key={tag} className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/80 bg-muted/50 px-2 py-0.5 rounded">
                     {tag}
                   </span>
                 ))}
-                {displayData.tags.length > 3 && (
-                  <span className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground rounded-full">
-                    +{displayData.tags.length - 3}
-                  </span>
-                )}
               </div>
             )}
           </CardContent>
 
-          <CardFooter className="px-5 pb-5 pt-0 mt-auto">
-            <Button variant="ghost" className="w-full justify-between group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-              Explorar Categoria
-              <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
-            </Button>
+          <Separator className="opacity-40" />
+
+          <CardFooter className="px-5 py-3.5 bg-muted/20 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-4 text-muted-foreground">
+              <div className="flex items-center gap-1.5" title="Empresas registradas">
+                <Building2 className="w-3.5 h-3.5 text-primary/60" />
+                <span className="font-semibold text-foreground/80">{displayData.companies_count}</span>
+              </div>
+              <div className="flex items-center gap-1.5" title="Produtos/Serviços">
+                <Package className="w-3.5 h-3.5 text-primary/60" />
+                <span className="font-semibold text-foreground/80">{displayData.products_count}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 text-primary font-bold group-hover:translate-x-1 transition-transform">
+              Explorar
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
           </CardFooter>
         </Card>
       </Link>
-    </MotionDiv>
+    </div>
   );
 }

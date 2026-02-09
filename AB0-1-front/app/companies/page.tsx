@@ -1,16 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
-import { Search, Grid, List, MapPin, Heart, Building2, Package, Folder, Star, Zap } from 'lucide-react';
+import { Search, Grid, List, Building2, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
-import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import BannerByLocation from '@/components/BannerByLocation';
 import { cn } from '@/lib/utils';
 import { FilterSidebar } from '@/components/filters/FilterSidebar';
@@ -26,14 +24,10 @@ function CompaniesContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [totalCount, setTotalCount] = useState(0);
   const PAGE_SIZE = 12;
 
-  const { favorites } = useFavorites();
-
-  // URL-driven filters
   const filters = useMemo(() => parseQueryParams(searchParams), [searchParams]);
-
   const [searchInput, setSearchInput] = useState(filters.search || '');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -44,21 +38,20 @@ function CompaniesContent() {
   };
 
   const removeFilter = (key: keyof CompanyFilters, value?: any) => {
-    let updated: any;
+    let updated: CompanyFilters;
     if (Array.isArray(filters[key])) {
       const currentArray = filters[key] as any[];
-      updated = { ...filters, [key]: currentArray.filter(v => v !== value), page: 1 };
+      updated = { ...filters, [key]: currentArray.filter((v) => v !== value), page: 1 };
     } else if (typeof filters[key] === 'boolean') {
       updated = { ...filters, [key]: false, page: 1 };
     } else {
       updated = { ...filters, [key]: DEFAULT_FILTERS[key], page: 1 };
     }
-    
+
     const queryString = stringifyQueryParams(updated);
     router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
 
-  // Sincronizar searchInput quando os filtros mudam via URL (ex: reset)
   useEffect(() => {
     setSearchInput(filters.search || '');
   }, [filters.search]);
@@ -66,12 +59,24 @@ function CompaniesContent() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const data = await companiesApiSafe.getAll({ 
-          include: 'logo_url',
+        const response = await companiesApiSafe.getAllPaginated({
+          page: filters.page || 1,
+          per_page: PAGE_SIZE,
+          q: filters.search || undefined,
+          state: filters.state.length > 0 ? filters.state : undefined,
+          city: filters.city.length > 0 ? filters.city : undefined,
+          category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
+          min_rating: filters.min_rating || undefined,
+          verified: filters.verified || undefined,
           featured: filters.featured || undefined,
+          sort: filters.sort || undefined,
+          fields: 'card',
         });
-        setCompanies(data || []);
+
+        setCompanies(response.data || []);
+        setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
       } catch (err) {
         setError((err as any)?.message || 'Erro ao carregar dados');
       } finally {
@@ -82,98 +87,32 @@ function CompaniesContent() {
     fetchData();
   }, [filters]);
 
-  const filteredCompanies = useMemo(() => {
-    return companies
-      .filter(company => {
-        // Busca por texto
-        if (filters.search) {
-          const search = filters.search.toLowerCase();
-          const matchesSearch = 
-            company.name?.toLowerCase().includes(search) ||
-            company.description?.toLowerCase().includes(search);
-          if (!matchesSearch) return false;
-        }
-
-        // Filtro de Estados
-        if (filters.state && filters.state.length > 0) {
-          if (!company.state || !filters.state.includes(company.state.toUpperCase())) {
-            return false;
-          }
-        }
-
-        // Filtro de Cidades
-        if (filters.city && filters.city.length > 0) {
-          if (!company.city || !filters.city.includes(company.city)) {
-            return false;
-          }
-        }
-
-        // Filtro de Categorias
-        if (filters.category_ids && filters.category_ids.length > 0) {
-          if (company.category_id && !filters.category_ids.includes(Number(company.category_id))) {
-            return false;
-          }
-        }
-
-        // Filtro de Avaliação Mínima
-        if (filters.min_rating) {
-          const rating = Number(company.average_rating) || 0;
-          if (rating < filters.min_rating) return false;
-        }
-
-        // Filtros de Qualidade
-        if (filters.verified && !company.verified) return false;
-        if (filters.featured && !company.featured) return false;
-        
-        // Mock de filtros que o backend pode não ter ainda, mas a UI suporta
-          if (filters.financing_enabled && !company.financing_enabled) return false;
-          if (filters.whatsapp_enabled && !company.whatsapp) return false;
-
-        return true;
-      })
-      .sort((a, b) => {
-        switch (filters.sort) {
-          case 'rating_desc': {
-            const ra = Number(a.average_rating) || 0;
-            const rb = Number(b.average_rating) || 0;
-            return rb - ra;
-          }
-          case 'reviews_desc': {
-            const ra = a.reviews_count || 0;
-            const rb = b.reviews_count || 0;
-            return rb - ra;
-          }
-          case 'newest':
-            return (b.id || 0) - (a.id || 0);
-          case 'name_asc':
-            return (a.name || '').localeCompare(b.name || '');
-          case 'name_desc':
-            return (b.name || '').localeCompare(a.name || '');
-          default: // recommended (featured first, then rating)
-            if (a.featured && !b.featured) return -1;
-            if (!a.featured && b.featured) return 1;
-            const ra = Number(a.average_rating) || 0;
-            const rb = Number(b.average_rating) || 0;
-            return rb - ra;
-        }
-      });
-  }, [companies, filters]);
-
   const visibleCompanies = useMemo(
-    () => filteredCompanies.slice(0, visibleCount),
-    [filteredCompanies, visibleCount]
+    () =>
+      companies.filter((company) => {
+        if (filters.financing_enabled && !company.financing_enabled) return false;
+        if (filters.whatsapp_enabled && !company.whatsapp) return false;
+        return true;
+      }),
+    [companies, filters.financing_enabled, filters.whatsapp_enabled]
   );
 
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [filters]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.max(1, filters.page || 1);
+
+  const goToPage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    const updated = { ...filters, page: nextPage };
+    const queryString = stringifyQueryParams(updated);
+    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  };
 
   const quickActions = [
     { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
     { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
-    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' }
+    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' },
   ];
 
   if (error) {
@@ -217,9 +156,7 @@ function CompaniesContent() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Empresas de Energia Solar</h1>
-                <p className="text-slate-500 text-sm mt-1">
-                  Encontramos {filteredCompanies.length} empresas que atendem aos seus critérios
-                </p>
+                <p className="text-slate-500 text-sm mt-1">Encontramos {totalCount} empresas que atendem aos seus critérios</p>
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-center">
@@ -227,7 +164,7 @@ function CompaniesContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={cn("h-8 w-8", viewMode === 'grid' && "bg-slate-100 text-slate-900")}
+                    className={cn('h-8 w-8', viewMode === 'grid' && 'bg-slate-100 text-slate-900')}
                     onClick={() => setViewMode('grid')}
                   >
                     <Grid className="h-4 w-4" />
@@ -235,7 +172,7 @@ function CompaniesContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={cn("h-8 w-8", viewMode === 'list' && "bg-slate-100 text-slate-900")}
+                    className={cn('h-8 w-8', viewMode === 'list' && 'bg-slate-100 text-slate-900')}
                     onClick={() => setViewMode('list')}
                   >
                     <List className="h-4 w-4" />
@@ -254,7 +191,7 @@ function CompaniesContent() {
                     href={action.href}
                     className="flex flex-col items-center gap-2 rounded-xl bg-white p-3 text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
                   >
-                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-full transition-colors", action.styles)}>
+                    <div className={cn('flex h-10 w-10 items-center justify-center rounded-full transition-colors', action.styles)}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900">{action.label}</span>
@@ -265,39 +202,44 @@ function CompaniesContent() {
 
             <div className="space-y-4">
               {loading ? (
-                <div className={cn(
-                  "grid gap-4",
-                  viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
-                )}>
+                <div className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
                   {[...Array(6)].map((_, i) => (
                     <Skeleton key={i} className="h-64 rounded-xl bg-white" />
                   ))}
                 </div>
               ) : visibleCompanies.length > 0 ? (
                 <>
-                  <div 
+                  <div
                     data-testid="companies-grid"
-                    className={cn(
-                    "grid gap-4",
-                    viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
-                  )}>
+                    className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}
+                  >
                     {visibleCompanies.map((company) => (
-                      <CompanyCard 
-                        key={company.id} 
-                        company={company} 
-                        compact={viewMode === 'list'}
-                      />
+                      <CompanyCard key={company.id} company={company} compact={viewMode === 'list'} />
                     ))}
                   </div>
 
-                  {visibleCompanies.length < filteredCompanies.length && (
-                    <div className="flex justify-center pt-4">
+                  {totalPages > 1 && (
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
                       <Button
                         variant="outline"
-                        className="rounded-full px-8 border-slate-200 text-slate-600 hover:text-slate-900"
-                        onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage <= 1}
                       >
-                        Carregar mais empresas
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Anterior
+                      </Button>
+                      <span className="text-sm text-slate-500">
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                      >
+                        Próxima
+                        <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
                   )}
@@ -308,11 +250,9 @@ function CompaniesContent() {
                     <Search className="h-8 w-8 text-slate-300" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900">Nenhuma empresa encontrada</h3>
-                  <p className="text-slate-500 max-w-xs mt-1">
-                    Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.
-                  </p>
-                  <Button 
-                    variant="link" 
+                  <p className="text-slate-500 max-w-xs mt-1">Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.</p>
+                  <Button
+                    variant="link"
                     className="mt-4 text-blue-600"
                     onClick={() => {
                       router.replace(pathname, { scroll: false });
@@ -336,14 +276,16 @@ function CompaniesContent() {
 
 export default function CompaniesPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <CompaniesContent />
     </Suspense>
   );

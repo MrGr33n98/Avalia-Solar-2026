@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StateOption, CityOption } from './types';
-import { fetchApiSafe } from '@/lib/api-client';
+import { companiesApiSafe } from '@/lib/api-client';
 
 export function useStatesOptions() {
   const [states, setStates] = useState<StateOption[]>([]);
@@ -10,10 +10,9 @@ export function useStatesOptions() {
   useEffect(() => {
     async function fetchStates() {
       try {
-        const data = await fetchApiSafe<any[]>('/filters/states');
-        
-        const normalizedData: StateOption[] = Array.isArray(data) 
-          ? data.map((item: any) => typeof item === 'string' ? { state: item, count: 0 } : { state: item.state, count: item.count || 0 })
+        const data = await companiesApiSafe.getStates();
+        const normalizedData: StateOption[] = Array.isArray(data)
+          ? data.map((state) => ({ state, count: 0 }))
           : [];
           
         setStates(normalizedData.sort((a, b) => a.state.localeCompare(b.state)));
@@ -44,12 +43,13 @@ export function useCitiesOptions(selectedStates: string[]) {
     async function fetchCities() {
       setLoading(true);
       try {
-        const statesParam = selectedStates.join(',');
-        const data = await fetchApiSafe<any[]>(`/filters/cities?states=${statesParam}`);
-        
-        const normalizedData: CityOption[] = Array.isArray(data) 
-          ? data.map((item: any) => ({ city: item.city, state: item.state, count: item.count || 0 }))
-          : [];
+        const allCities = await Promise.all(
+          selectedStates.map(async (state) => {
+            const cities = await companiesApiSafe.getCities(state);
+            return cities.map((city) => ({ city, state, count: 0 }));
+          })
+        );
+        const normalizedData: CityOption[] = allCities.flat();
           
         setCities(normalizedData.sort((a, b) => a.city.localeCompare(b.city)));
       } catch (err) {

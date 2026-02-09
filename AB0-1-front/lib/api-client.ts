@@ -229,9 +229,18 @@ export const companiesApiSafe = {
       status?: string; 
       featured?: boolean; 
       category_id?: number; 
+      category_ids?: number[];
       limit?: number; 
       include?: string;
       sort?: string;
+      q?: string;
+      state?: string[] | string;
+      city?: string[] | string;
+      min_rating?: number;
+      verified?: boolean;
+      page?: number;
+      per_page?: number;
+      fields?: 'card';
     }
   ): Promise<Company[]> => {
     try {
@@ -251,6 +260,39 @@ export const companiesApiSafe = {
       console.error('Error fetching companies:', error);
       // Return empty array on error to prevent breaking the UI
       return [];
+    }
+  },
+
+  getAllPaginated: async (
+    params?: {
+      status?: string;
+      featured?: boolean;
+      category_id?: number;
+      category_ids?: number[];
+      sort?: string;
+      q?: string;
+      state?: string[] | string;
+      city?: string[] | string;
+      min_rating?: number;
+      verified?: boolean;
+      page?: number;
+      per_page?: number;
+      fields?: 'card';
+    }
+  ): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
+    try {
+      const url = `companies${buildQueryParams(params || {})}`;
+      const response = await fetchApiSafe<any>(url);
+      if (response && Array.isArray(response.data)) {
+        return { data: response.data, meta: response.meta };
+      }
+      if (Array.isArray(response)) {
+        return { data: response };
+      }
+      return { data: [] };
+    } catch (error) {
+      console.error('Error fetching paginated companies:', error);
+      return { data: [] };
     }
   },
 
