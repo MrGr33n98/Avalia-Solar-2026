@@ -100,7 +100,9 @@ end
     actions
   end
 
-  form do |f|
+  form html: { multipart: true } do |f|
+    f.semantic_errors *f.object.errors.attribute_names
+
     f.inputs 'Basic Information' do
       f.input :name
       f.input :description
@@ -201,10 +203,27 @@ end
       f.input :linkedin
     end
 
-    f.inputs 'Media' do
-      f.input :banner, as: :file
-      f.input :logo, as: :file
-      f.input :media_assets, as: :file, input_html: { multiple: true }, hint: 'Envie uma ou mais imagens para a galeria'
+    f.inputs 'Media & Visual Assets' do
+      f.input :logo, as: :file, 
+              hint: f.object.logo.attached? ? image_tag(url_for(f.object.logo), style: 'max-width: 100px; display: block; margin-top: 10px') : 'PNG, JPG ou SVG (Máx 5MB)'
+      
+      f.input :banner, as: :file,
+              hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), style: 'max-width: 300px; display: block; margin-top: 10px') : 'Recomendado: 1200x400px (Máx 10MB)'
+      
+      f.input :media_assets, as: :file, input_html: { multiple: true }, 
+              hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG (Máx 15MB por arquivo)'
+      
+      if f.object.media_assets.attached?
+        f.template.concat(
+          f.template.content_tag(:div, class: 'media-gallery-preview') do
+            f.object.media_assets.map do |asset|
+              f.template.content_tag(:div, style: 'display: inline-block; margin: 5px;') do
+                f.template.image_tag(url_for(asset), style: 'max-width: 100px; height: auto; border: 1px solid #ddd;')
+              end
+            end.join.html_safe
+          end
+        )
+      end
     end
 
     f.inputs 'CTAs' do
