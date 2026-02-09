@@ -32,19 +32,28 @@ RUN rm -rf /usr/local/bundle && mv /usr/local/bundle_backup /usr/local/bundle
 COPY AB0-1-back/ ./
 
 # 4. Compilação de Assets
-ENV RAILS_ENV=production
+ENV RAILS_ENV=production \
+    NODE_ENV=production \
+    REDIS_ENABLED=false \
+    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only
+
 RUN --mount=type=secret,id=rails_master_key \
     set -eux; \
-    test -d config; \
-    test -r config; \
-    cleanup() { rm -f config/master.key; }; \
-    trap cleanup EXIT; \
-    if [ -f /run/secrets/rails_master_key ] && [ -s /run/secrets/rails_master_key ]; then \
-      cp /run/secrets/rails_master_key config/master.key; \
-      chmod 600 config/master.key; \
+    # Validação rigorosa da Master Key
+    if [ ! -f /run/secrets/rails_master_key ] || [ ! -s /run/secrets/rails_master_key ]; then \
+      echo "::error::RAILS_MASTER_KEY não encontrada ou vazia! Verifique os secrets do GitHub."; \
+      exit 1; \
     fi; \
-    SECRET_KEY_BASE_DUMMY="$(ruby -rsecurerandom -e 'print SecureRandom.hex(64)')"; \
-    SECRET_KEY_BASE="$SECRET_KEY_BASE_DUMMY" bundle exec rake assets:precompile --trace
+    cp /run/secrets/rails_master_key config/master.key; \
+    chmod 600 config/master.key; \
+    \
+    # Execução do precompile com stubs para evitar conexões externas
+    # DATABASE_URL dummy evita que o Rails tente conectar no Postgres real durante o boot
+    DATABASE_URL=postgresql://localhost/dummy \
+    bundle exec rake assets:precompile --trace; \
+    \
+    # Limpeza imediata da master key para não vazar na imagem (mesmo sendo estágio builder)
+    rm -f config/master.key
 
 # --- Estágio Final ---
 FROM ruby:3.2.2-slim
