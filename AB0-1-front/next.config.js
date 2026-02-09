@@ -5,10 +5,8 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
 const isProduction = process.env.NODE_ENV === 'production';
-// A/B test: disable image optimization in production unless explicitly enabled.
-const enableImageOptimization = isProduction
-  ? process.env.NEXT_ENABLE_IMAGE_OPTIMIZATION === 'true'
-  : process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
+// Keep image optimization on by default. Only disable with explicit opt-out.
+const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
 const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
 
 const nextConfig = {
@@ -18,11 +16,22 @@ const nextConfig = {
   // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
   swcMinify: enableSwcMinify,
   compress: true,
+  compiler: {
+    ...(isProduction ? { removeConsole: { exclude: ['error', 'warn'] } } : {}),
+  },
   
   experimental: {
     // webpackBuildWorker: true,
     optimizeCss: enableOptimizeCss,
-    optimizePackageImports: ['lucide-react', 'date-fns'],
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      'recharts',
+      'framer-motion',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+    ],
   },
 
   // TASK-023: Enable TypeScript and ESLint checks

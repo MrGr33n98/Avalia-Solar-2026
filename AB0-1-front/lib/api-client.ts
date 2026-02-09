@@ -10,6 +10,15 @@ import { ApiError, toApiError } from './api-error';
 // Re-export types so they can be imported from api-client
 export type { Category, Company, Review, Product, FinancingOption };
 
+const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
+const SAFE_API_DEFAULT_TTL_MS = 5 * 60 * 1000;
+const SAFE_API_MAX_RETRIES = 3;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isPublicCacheableEndpoint = (endpoint: string) =>
+  /^(categories|companies|products|states|banners)/i.test(endpoint.replace(/^\/+/, ''));
+
 // ------------------
 // ConfiguraÃ§Ã£o
 // ------------------
@@ -35,14 +44,35 @@ export async function fetchApiSafe<T>(
 ): Promise<T> {
   const url = buildApiUrl(endpoint);
   const requestOptions: any = { ...options };
+  const normalizedEndpoint = endpoint.replace(/^\//, '');
+  const method = (requestOptions.method || 'GET').toString().toUpperCase();
+  const maxRetries = Number.isFinite(requestOptions.retries)
+    ? Number(requestOptions.retries)
+    : SAFE_API_MAX_RETRIES;
+  const cacheTtlMs = Number.isFinite(requestOptions.cacheTtlMs)
+    ? Number(requestOptions.cacheTtlMs)
+    : SAFE_API_DEFAULT_TTL_MS;
+  const shouldUseCache =
+    method === 'GET' &&
+    cacheTtlMs > 0 &&
+    requestOptions.noCache !== true &&
+    isPublicCacheableEndpoint(normalizedEndpoint);
+  const cacheKey = `${method}:${url}`;
+
+  if (shouldUseCache) {
+    const cached = SAFE_API_CACHE.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data as T;
+    }
+    if (cached && cached.expiresAt <= Date.now()) {
+      SAFE_API_CACHE.delete(cacheKey);
+    }
+  }
 
   const defaultHeaders: Record<string, string> = getApiRequestHeaders({
     'Content-Type': 'application/json',
   });
 
-  // Injeta UTM/attribution apenas em endpoints permitidos
-  const normalizedEndpoint = endpoint.replace(/^\//, '');
-  const method = (requestOptions.method || 'GET').toString().toUpperCase();
   const shouldAttachUtm =
     method !== 'GET' &&
     (normalizedEndpoint.startsWith('leads/wizard_create') ||
@@ -78,89 +108,114 @@ export async function fetchApiSafe<T>(
     requestOptions.body = JSON.stringify(bodyPayload);
   }
 
-  try {
-    console.log('[API] Request ->', requestOptions.method || 'GET', url);
-    
-    const response = await fetch(url, {
-      ...requestOptions,
-      credentials: 'include', // Important for JWT cookies
-      headers: {
-        ...defaultHeaders,
-        ...requestOptions.headers,
-      },
-    });
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log('[API] Request ->', method, url);
 
-    const responseBody = await response.json().catch(() => null);
-    console.log('[API] Response data:', responseBody);
-
-    if (!response.ok) {
-      // Handle token revocation (401 with specific error codes)
-      if (response.status === 401 && responseBody) {
-        const errorCode = responseBody.code;
-        const errorMsg = responseBody.error || responseBody.message || '';
-        
-        // Check for JWT revocation errors
-        if (errorCode === 'TOKEN_REVOKED' || errorCode === 'SESSION_EXPIRED' ||
-            errorMsg.toLowerCase().includes('revoked') || 
-            errorMsg.toLowerCase().includes('session expired')) {
-          
-          console.warn('[Auth] Token revoked, clearing session and redirecting to login');
-          
-          // Clear all auth data
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth');
-            localStorage.removeItem('user');
-            sessionStorage.clear();
-            
-            // Clear cookies
-            document.cookie.split(";").forEach((c) => {
-              document.cookie = c.replace(/^ +/, "")
-                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-            });
-            
-            // Redirect to login with reason
-            window.location.href = '/login?reason=session_expired';
-          }
-          
-          throw new Error('Session expired. Please login again.');
-        }
-      }
-      
-      // Handle different error statuses gracefully
-      if (response.status === 404) {
-        console.log(`[404] Resource not found at ${url}`);
-        return options?.fallback !== undefined ? options.fallback : (null as any);
-      }
-
-      const errorData = responseBody || { error: `API Error (${response.status})` };
-      const errorCode = errorData?.code;
-      const message = errorData?.error || errorData?.message || response.statusText || 'API Error';
-      const apiError = new ApiError(`[${response.status}] ${message}`, {
-        status: response.status,
-        code: errorCode,
-        url,
-        method,
-        details: responseBody
+      const response = await fetch(url, {
+        ...requestOptions,
+        credentials: 'include',
+        headers: {
+          ...defaultHeaders,
+          ...requestOptions.headers,
+        },
       });
 
-      if (options?.fallback !== undefined) {
-        return options.fallback;
+      const responseBody = await response.json().catch(() => null);
+      console.log('[API] Response data:', responseBody);
+
+      if (!response.ok) {
+        if (response.status === 401 && responseBody) {
+          const errorCode = responseBody.code;
+          const errorMsg = responseBody.error || responseBody.message || '';
+          if (
+            errorCode === 'TOKEN_REVOKED' ||
+            errorCode === 'SESSION_EXPIRED' ||
+            errorMsg.toLowerCase().includes('revoked') ||
+            errorMsg.toLowerCase().includes('session expired')
+          ) {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('auth');
+              localStorage.removeItem('user');
+              sessionStorage.clear();
+              document.cookie.split(';').forEach((c) => {
+                document.cookie = c
+                  .replace(/^ +/, '')
+                  .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+              });
+              window.location.href = '/login?reason=session_expired';
+            }
+            throw new Error('Session expired. Please login again.');
+          }
+        }
+
+        const errorData = responseBody || { error: `API Error (${response.status})` };
+        const message = errorData?.error || errorData?.message || response.statusText || 'API Error';
+        const apiError = new ApiError(`[${response.status}] ${message}`, {
+          status: response.status,
+          code: errorData?.code,
+          url,
+          method,
+          details: responseBody,
+        });
+
+        const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+        const retryableStatus =
+          response.status === 401 ||
+          response.status === 404 ||
+          response.status === 429 ||
+          response.status >= 500;
+        const shouldRetry = isIdempotent && retryableStatus && attempt < maxRetries - 1;
+        if (shouldRetry) {
+          const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
+          await sleep(delay);
+          continue;
+        }
+
+        if (response.status === 404 && options?.fallback !== undefined) {
+          return options.fallback;
+        }
+        if (options?.fallback !== undefined) {
+          return options.fallback;
+        }
+        throw apiError;
       }
 
+      if (shouldUseCache) {
+        SAFE_API_CACHE.set(cacheKey, {
+          expiresAt: Date.now() + cacheTtlMs,
+          data: responseBody,
+        });
+      }
+
+      return responseBody;
+    } catch (error) {
+      const apiError = toApiError(error, {
+        url,
+        method,
+        isNetworkError: error instanceof TypeError,
+      });
+
+      const status = (apiError as any)?.status;
+      const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+      const shouldRetryNetwork = apiError.isNetworkError && attempt < maxRetries - 1;
+      const shouldRetryStatus =
+        isIdempotent &&
+        attempt < maxRetries - 1 &&
+        (status === 401 || status === 404 || status === 429 || (typeof status === 'number' && status >= 500));
+
+      if (shouldRetryNetwork || shouldRetryStatus) {
+        const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
+        await sleep(delay);
+        continue;
+      }
+
+      console.error(`[API] Failed to access ${url}:`, apiError);
       throw apiError;
     }
-
-    return responseBody;
-  } catch (error) {
-    const apiError = toApiError(error, {
-      url,
-      method,
-      isNetworkError: error instanceof TypeError
-    });
-    console.error(`[API] Failed to access ${url}:`, apiError);
-    // Re-throw the error so calling functions can handle it appropriately
-    throw apiError;
   }
+
+  throw new ApiError('API request failed after retries', { url, method });
 }
 
 // ------------------

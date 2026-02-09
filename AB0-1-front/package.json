@@ -15,7 +15,8 @@
     "test:watch": "cross-env NODE_ENV=development jest --watch",
     "test:coverage": "cross-env NODE_ENV=development jest --coverage",
     "test:ci": "cross-env NODE_ENV=development jest --ci --coverage --maxWorkers=2",
-    "knip": "knip"
+    "knip": "knip",
+    "perf:lhci": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

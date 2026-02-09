@@ -8,7 +8,7 @@ import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import JsonLd from '@/components/JsonLd';
-import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID, GA_ID } from '@/components/GoogleTagManager';
+import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 
@@ -79,31 +79,26 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
+
   return (
     <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <head>
         <link rel="preconnect" href="https://api.avaliasolar.com.br" />
         <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
-        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        {analyticsEnabled && (
+          <>
+            <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+          </>
+        )}
         {/* Mixpanel preconnects removed - analytics lazy loaded after consent */}
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
-        
-        {/* Preload critical LCP image with high priority */}
-        <link 
-          rel="preload" 
-          href="/images/banner-landing-page-avalia-solar.jpg" 
-          as="image" 
-          type="image/jpeg"
-          fetchPriority="high"
-        />
       </head>
       <body suppressHydrationWarning className={inter.className}>
         {/* Google Tag Manager - Initialized early in body to avoid blocking head, but still before main content */}
-        <GoogleTagManager gtmId={GTM_ID} gaId={GA_ID} />
+        <GoogleTagManager gtmId={GTM_ID} />
         
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />

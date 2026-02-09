@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -34,6 +34,8 @@ export default function Navbar() {
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const logoPriority = pathname === '/';
 
   const handleMinhaContaClick = (e: React.MouseEvent) => {
     if (user?.role === 'review') {
@@ -91,7 +93,7 @@ export default function Navbar() {
             height={56} 
             sizes="84px"
             className="h-14 w-[84px] object-contain" 
-            priority 
+            priority={logoPriority}
           />
         </Link>
 

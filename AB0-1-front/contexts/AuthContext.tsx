@@ -1,12 +1,20 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, authApi, companyAccessApi } from '@/lib/api';
+import * as Sentry from '@sentry/nextjs';
+
+import {
+  User,
+  authApi,
+  clearAuthSessionHint,
+  companyAccessApi,
+  hasPossibleAuthSession,
+  setAuthSessionHint,
+} from '@/lib/api';
 import { authClient } from '@/lib/authClient';
 import { identify, track } from '@/lib/analytics/lazy';
 import { getApiErrorMessage } from '@/lib/api-error';
-import * as Sentry from '@sentry/nextjs';
 import { logError } from '@/lib/error-handler';
 
 interface AuthContextType {
@@ -39,20 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  // Track identity when user changes
-  useEffect(() => {
     if (user?.id) {
       identify(String(user.id), {
         email: user.email,
         name: user.name,
         role: user.role,
-        company_id: user.company_id ? String(user.company_id) : undefined
+        company_id: user.company_id ? String(user.company_id) : undefined,
       });
 
-      // Set user in Sentry for better error tracking
       Sentry.setUser({
         id: String(user.id),
         email: user.email,
@@ -60,29 +62,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: user.role,
       });
     } else {
-      // Clear user in Sentry on logout
       Sentry.setUser(null);
     }
   }, [user]);
 
-  async function checkAuth(): Promise<User | null> {
+  const checkAuth = useCallback(async (): Promise<User | null> => {
+    if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
+      setUser(null);
+      setLoading(false);
+      return null;
+    }
+
     const requestId = nextAuthRequest();
     setLoading(true);
     setError(null);
-    console.log('[AuthContext] Checking authentication...');
+
     try {
-      // Try to fetch user data
       const userData = await authApi.me();
-      console.log('[AuthContext] Auth check result:', userData ? `User found (ID: ${userData.id}, Role: ${userData.role})` : 'No user found');
       if (requestId === authRequestId.current) {
         setUser(userData || null);
+        if (userData) {
+          setAuthSessionHint();
+        } else {
+          clearAuthSessionHint();
+        }
       }
       return userData || null;
-    } catch (error) {
-      console.error('[AuthContext] Error checking auth:', error);
+    } catch (authError) {
       if (requestId === authRequestId.current) {
         setUser(null);
-        setError(getApiErrorMessage(error, 'Falha ao validar sessão.'));
+        setError(getApiErrorMessage(authError, 'Falha ao validar sessao.'));
+        clearAuthSessionHint();
       }
       return null;
     } finally {
@@ -90,17 +100,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
 
   const routeAfterLogin = async (nextUser: User) => {
-    console.log('[AuthContext] Routing user after login:', { id: nextUser.id, role: nextUser.role });
-    if (!nextUser) {
-      console.error('[AuthContext] routeAfterLogin called with null user');
-      return;
-    }
+    if (!nextUser) return;
 
     if (nextUser.role === 'review') {
-      console.log('[AuthContext] Review user detected, redirecting to /review-dashboard');
       router.push('/review-dashboard');
       return;
     }
@@ -113,8 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const companyId = active[0].company_id;
           try {
             await companyAccessApi.selectActiveCompany(companyId);
-          } catch (error) {
-            console.warn('[Auth] Failed to persist active company selection', error);
+          } catch {
+            // noop
           }
           setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
           router.push(`/company-dashboard?company_id=${companyId}`);
@@ -122,8 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push('/select-company');
         }
         return;
-      } catch (error) {
-        console.error('[Auth] Failed to load company access context:', error);
+      } catch {
         router.push('/select-company');
         return;
       }
@@ -134,38 +142,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('[AuthContext] Attempting login for:', email);
       nextAuthRequest();
       setError(null);
       const response: any = await authApi.login(email, password);
-
-      // Explicitly check for user in response or fetch it
       const nextUser: User | null = response?.user || (await checkAuth());
-      
-      if (nextUser) {
-        console.log('[AuthContext] Login successful, user:', { id: nextUser.id, role: nextUser.role });
-        setUser(nextUser);
-        track('Login Completed', { method: 'email' });
-        
-        // Wait for state update and cookies to settle
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        await routeAfterLogin(nextUser);
-      } else {
-        console.error('[AuthContext] Login succeeded but no user data found');
-        throw new Error('Falha ao obter dados do usuário após login.');
-      }
-    } catch (error) {
-      console.error('[AuthContext] Login failed:', error);
-      
-      // Log to Sentry
-      logError(error instanceof Error ? error : new Error(String(error)), {
-        action: 'login_failed',
-        metadata: { email }
-      });
 
-      setError(getApiErrorMessage(error, 'Falha ao entrar. Verifique suas credenciais.'));
-      throw error;
+      if (!nextUser) {
+        throw new Error('Falha ao obter dados do usuario apos login.');
+      }
+
+      setUser(nextUser);
+      setAuthSessionHint();
+      track('Login Completed', { method: 'email' });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await routeAfterLogin(nextUser);
+    } catch (loginError) {
+      logError(loginError instanceof Error ? loginError : new Error(String(loginError)), {
+        action: 'login_failed',
+        metadata: { email },
+      });
+      setError(getApiErrorMessage(loginError, 'Falha ao entrar. Verifique suas credenciais.'));
+      throw loginError;
     }
   };
 
@@ -173,16 +170,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       nextAuthRequest();
       await authClient.signIn.social({ provider: 'linkedin' });
-      // After successful social login, the user is redirected back.
-      // The checkAuth function will be triggered on page load to fetch user data.
       const nextUser = await checkAuth();
       if (nextUser) {
+        setAuthSessionHint();
         await routeAfterLogin(nextUser);
       }
-    } catch (error) {
-      console.error('[Auth] LinkedIn sign-in failed', error);
+    } catch (socialError) {
       setError('LinkedIn sign-in failed');
-      throw error;
+      throw socialError;
     }
   };
 
@@ -190,10 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     nextAuthRequest();
     track('Logout Performed');
     await authApi.logout();
+    clearAuthSessionHint();
     setUser(null);
     setError(null);
     setLoading(false);
-    // No need to clear localStorage anymore
   };
 
   const refreshAuth = async (): Promise<boolean> => {
@@ -202,20 +197,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      error,
-      isAuthenticated,
-      login,
-      logout,
-      signInWithLinkedIn,
-      forgotPassword: (email: string) => authApi.forgotPassword(email),
-      resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
-        authApi.resetPassword(token, password, passwordConfirmation),
-      resendConfirmation: (email: string) => authApi.resendConfirmation(email),
-      refreshAuth,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        isAuthenticated,
+        login,
+        logout,
+        signInWithLinkedIn,
+        forgotPassword: (email: string) => authApi.forgotPassword(email),
+        resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
+          authApi.resetPassword(token, password, passwordConfirmation),
+        resendConfirmation: (email: string) => authApi.resendConfirmation(email),
+        refreshAuth,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

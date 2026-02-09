@@ -1,31 +1,21 @@
-/**
- * Google Tag Manager Component
- * 
- * Componente que injeta o GTM no <head> e <body> da aplicação
- * Container ID: GTM-5RV76ZKR
- * 
- * Uso:
- * - Importar no layout.tsx principal
- * - Carregar apenas no cliente (use client)
- */
-
 'use client';
 
-import { useEffect } from 'react';
 import Script from 'next/script';
 
 interface GTMProps {
   gtmId: string;
-  gaId?: string;
 }
 
-export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
+const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
+
+export function GoogleTagManager({ gtmId }: GTMProps) {
+  if (!analyticsEnabled || !gtmId) return null;
+
   return (
     <>
-      {/* Google Consent Mode v2 - Default state */}
       <Script
         id="google-consent-mode"
-        strategy="beforeInteractive"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
@@ -42,35 +32,6 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
         }}
       />
 
-      {/* Google Tag (gtag.js) - GA4 */}
-      {gaId && (
-        <Script
-          id="google-tag-ga4"
-          strategy="lazyOnload"
-          src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        />
-      )}
-      
-      {gaId && (
-        <Script
-          id="ga4-config"
-          strategy="lazyOnload"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${gaId}', {
-                page_path: window.location.pathname,
-                send_page_view: true,
-                cookie_domain: 'auto'
-              });
-            `,
-          }}
-        />
-      )}
-
-      {/* Google Tag Manager */}
       <Script
         id="gtm-script"
         strategy="lazyOnload"
@@ -89,8 +50,9 @@ export function GoogleTagManager({ gtmId, gaId }: GTMProps) {
 }
 
 export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
+  if (!analyticsEnabled || !gtmId) return null;
+
   return (
-    /* Google Tag Manager (noscript) */
     <noscript>
       <iframe
         src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
@@ -102,8 +64,6 @@ export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
   );
 }
 
-// Exportações prontas para uso
 export const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-5RV76ZKR';
-export const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-9SD4S6S434';
 
 export default GoogleTagManager;

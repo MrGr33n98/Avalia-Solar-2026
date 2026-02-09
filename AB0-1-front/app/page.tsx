@@ -3,11 +3,6 @@ import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Info } from 'lucide-react';
 
-import BannerByLocation from '@/components/BannerByLocation';
-import CompanyCard from '@/components/CompanyCard';
-import FloatingWhatsApp from '@/components/FloatingWhatsApp';
-import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
-import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
 import LandingHero from '@/components/landing/LandingHero';
 
 const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
@@ -19,13 +14,35 @@ const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalc
 });
 
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import { TrustRow } from '@/components/ui/TrustRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import HomePageTracking from '@/components/home/HomePageTracking';
 import { categoriesApiSafe, companiesApiSafe } from '@/lib/api-client';
 import { api } from '@/lib/api';
 import type { Banner, Category, Company } from '@/lib/api';
+
+const HomePageTracking = dynamic(() => import('@/components/home/HomePageTracking'), {
+  ssr: false,
+  loading: () => null,
+});
+const LandingCategoryChips = dynamic(() => import('@/components/landing/LandingCategoryChips'), {
+  loading: () => <div className="h-12 animate-pulse bg-slate-100 rounded-xl" />,
+});
+const LandingCategoryCard = dynamic(() => import('@/components/landing/LandingCategoryCard'), {
+  loading: () => <div className="h-40 animate-pulse bg-white rounded-xl border border-gray-100" />,
+});
+const CompanyCard = dynamic(() => import('@/components/CompanyCard'), {
+  loading: () => <div className="h-60 animate-pulse bg-white rounded-xl border border-gray-100" />,
+});
+const BannerByLocationLazy = dynamic(() => import('@/components/BannerByLocation'), {
+  loading: () => <div className="h-20 animate-pulse bg-gray-100 rounded-xl" />,
+});
+const TrustRow = dynamic(() => import('@/components/ui/TrustRow').then((m) => m.TrustRow), {
+  loading: () => <div className="h-20 animate-pulse bg-gray-50 rounded-xl" />,
+});
+const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export const revalidate = 300;
 
@@ -141,7 +158,9 @@ export default async function Home() {
 
       <SavingsCalculator />
 
-      <TrustRow />
+      <Suspense fallback={<div className="h-20 animate-pulse bg-gray-50" />}>
+        <TrustRow />
+      </Suspense>
 
       <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
         <CategoriesSectionWrapper dataPromise={dataPromise} />
@@ -203,7 +222,7 @@ async function CategoriesSectionWrapper({ dataPromise }: { dataPromise: ReturnTy
   const { featuredCategories, categoriesBanners } = await dataPromise;
   return (
     <SectionShell zebra>
-      <BannerByLocation location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
+      <BannerByLocationLazy location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
 
       <SectionHeader
         title="Soluções por Categoria"
@@ -235,7 +254,7 @@ async function CompaniesSectionWrapper({ dataPromise }: { dataPromise: ReturnTyp
   const { companies, companiesBanners } = await dataPromise;
   return (
     <SectionShell>
-      <BannerByLocation location="companies_top" className="mb-8" initialBanners={companiesBanners} />
+      <BannerByLocationLazy location="companies_top" className="mb-8" initialBanners={companiesBanners} />
 
       <SectionHeader
         title="Empresas em Destaque"

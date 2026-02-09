@@ -462,10 +462,68 @@ const API_BASE_URL = getApiBaseUrl();
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1s
 const TIMEOUT = 60000; // Aumentado para 60s para evitar timeouts em conexões lentas ou cold start
+const AUTH_HINT_KEY = 'avalia.auth.session_hint';
+const PUBLIC_GET_CACHE = new Map<string, { expiry: number; data: unknown }>();
+const DEFAULT_PUBLIC_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const getErrorStatus = (error: any): number | undefined => {
+  const contextStatus = error?.context?.status ?? error?.status;
+  if (typeof contextStatus === 'number') return contextStatus;
+  const matched = String(error?.message || '').match(/\[(\d{3})\]/);
+  return matched ? Number(matched[1]) : undefined;
+};
+
+const shouldUsePublicCache = (method: string, url: string) => {
+  if (method !== 'GET') return false;
+  if (/\/(auth|users\/me|company_access|leads\/mine|reviews\/mine|companies\/mine)\b/i.test(url)) return false;
+  return /\/(states|categories|banners|products|companies)\b/i.test(url);
+};
+
+const getCachedPublicResponse = <T>(cacheKey: string): T | null => {
+  const entry = PUBLIC_GET_CACHE.get(cacheKey);
+  if (!entry) return null;
+  if (entry.expiry <= Date.now()) {
+    PUBLIC_GET_CACHE.delete(cacheKey);
+    return null;
+  }
+  return entry.data as T;
+};
+
+const setCachedPublicResponse = <T>(cacheKey: string, data: T, ttlMs: number) => {
+  PUBLIC_GET_CACHE.set(cacheKey, {
+    expiry: Date.now() + ttlMs,
+    data,
+  });
+};
+
+const hasAuthCookieHint = () => {
+  if (typeof document === 'undefined') return false;
+  const cookie = document.cookie || '';
+  return /(jwt_token|refresh_token|session|auth_token)=/i.test(cookie);
+};
+
+export const setAuthSessionHint = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(AUTH_HINT_KEY, '1');
+};
+
+export const clearAuthSessionHint = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(AUTH_HINT_KEY);
+};
+
+export const hasPossibleAuthSession = () => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem(AUTH_HINT_KEY) === '1' || hasAuthCookieHint();
+};
+
 const attemptRefresh = async (): Promise<boolean> => {
+  if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
+    return false;
+  }
+
   try {
     const url = buildApiUrl('/auth/refresh');
     const response = await fetch(url, {
@@ -508,6 +566,7 @@ export const api = {
     
     const maxRetries = config.retries ?? MAX_RETRIES;
     const timeoutDuration = config.timeout ?? TIMEOUT;
+    const requestMethod = (config.method || 'GET').toUpperCase();
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       let url = '';
@@ -529,7 +588,19 @@ export const api = {
           }
         }
         
-        console.log(`[API] Request (Attempt ${attempt + 1}) ->`, config.method, url, config.params || '');
+        console.log(`[API] Request (Attempt ${attempt + 1}) ->`, requestMethod, url, config.params || '');
+
+        const cacheTtlMs = Number.isFinite(config.cacheTtlMs)
+          ? Number(config.cacheTtlMs)
+          : DEFAULT_PUBLIC_CACHE_TTL_MS;
+        const usePublicCache = shouldUsePublicCache(requestMethod, url) && !config.noCache;
+        const cacheKey = `${requestMethod}:${url}`;
+        if (usePublicCache) {
+          const cached = getCachedPublicResponse<T>(cacheKey);
+          if (cached !== null) {
+            return { data: cached };
+          }
+        }
         
         const isFormData = config.data instanceof FormData;
         const baseHeaders = getApiRequestHeaders(
@@ -547,7 +618,7 @@ export const api = {
 
         try {
           const response = await fetch(url, {
-            method: config.method,
+            method: requestMethod,
             headers: {
               ...baseHeaders,
               ...config.headers,
@@ -566,7 +637,14 @@ export const api = {
           clearTimeout(timeoutId);
 
           if (!response.ok) {
-            if (response.status === 401 && !config._retry && !String(config.url).includes('/auth/refresh')) {
+            const shouldTryRefresh =
+              response.status === 401 &&
+              !config._retry &&
+              !String(config.url).includes('/auth/refresh') &&
+              hasPossibleAuthSession() &&
+              config.skipAuthRefresh !== true;
+
+            if (shouldTryRefresh) {
               const refreshed = await attemptRefresh();
               if (refreshed) {
                 return await api.request({ ...config, _retry: true });
@@ -583,7 +661,7 @@ export const api = {
               status: response.status,
               statusText: response.statusText,
               url,
-              method: config.method,
+              method: requestMethod,
               params: config.params,
               details
             };
@@ -606,7 +684,7 @@ export const api = {
                 status: response.status,
                 code: details?.code,
                 url,
-                method: config.method,
+                method: requestMethod,
                 details
               });
               (err as any).context = errorContext;
@@ -617,7 +695,7 @@ export const api = {
               status: response.status,
               code: details?.code,
               url,
-              method: config.method,
+              method: requestMethod,
               details
             });
             (err as any).context = errorContext;
@@ -625,6 +703,9 @@ export const api = {
           }
 
           const data = await response.json();
+          if (usePublicCache) {
+            setCachedPublicResponse(cacheKey, data, cacheTtlMs);
+          }
           return { data };
         } catch (fetchError: any) {
           clearTimeout(timeoutId);
@@ -632,7 +713,7 @@ export const api = {
             throw new ApiError('Request timeout', {
               status: 0,
               url,
-              method: config.method,
+              method: requestMethod,
               isTimeout: true
             });
           }
@@ -643,9 +724,14 @@ export const api = {
         lastError = error;
         
         // Retry if it's a timeout, network failure, or 5xx/429 (avoid retrying 4xx like 403/404)
+        const status = getErrorStatus(error);
+        const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(requestMethod);
+        const isRetryableStatus =
+          typeof status === 'number' &&
+          (status === 401 || status === 404 || status === 429 || status >= 500);
         const isRetryable = error.message === 'Request timeout' || 
                            error.message.includes('Network request failed') ||
-                           error.message.match(/\[(5\d{2}|429)\]/);
+                           (isIdempotent && isRetryableStatus);
                            
         if (!isRetryable || attempt === maxRetries - 1) {
           const errorStatus = error?.context?.status;
@@ -660,7 +746,7 @@ export const api = {
               action: 'api_request_failure',
               metadata: {
                 url,
-                method: config.method,
+                method: requestMethod,
                 attempt: attempt + 1,
                 status: errorStatus,
                 isTimeout: error.message === 'Request timeout',
@@ -671,13 +757,13 @@ export const api = {
             console.info('[API] Final Error (silenced):', {
               status: errorStatus,
               url,
-              method: config.method
+              method: requestMethod
             });
           }
           throw error;
         }
         
-        const delay = RETRY_DELAY * Math.pow(2, attempt);
+        const delay = RETRY_DELAY * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
         console.warn(`[API] Attempt ${attempt + 1} failed (${error.message}), retrying in ${delay}ms...`);
         await sleep(delay); // Exponential backoff
       }
@@ -715,9 +801,14 @@ export async function fetchApi<T = any>(
       params: options.params,
       next: options.next,
       cache: options.cache,
+      cacheTtlMs: options.cacheTtlMs,
+      noCache: options.noCache,
       silent: options.silent,
       silentStatusCodes: options.silentStatusCodes,
       tag: options.tag,
+      retries: options.retries,
+      timeout: options.timeout,
+      skipAuthRefresh: options.skipAuthRefresh,
     });
     return response.data;
   } catch (error: any) {
@@ -1216,11 +1307,17 @@ export const authApi = {
   },
   me: async (): Promise<User | null> => {
     try {
+      if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
+        return null;
+      }
+
       // First try the unified /auth/me endpoint
       const resp = await fetchApi<{ user: User } | null>('/auth/me', {
         silentStatusCodes: [401],
         fallbackOnStatus: { 401: null },
         tag: 'auth.me',
+        retries: 2,
+        cacheTtlMs: 0,
       });
       if (resp && (resp as any).user) return (resp as any).user;
       
@@ -1229,6 +1326,8 @@ export const authApi = {
         silentStatusCodes: [401],
         fallbackOnStatus: { 401: null },
         tag: 'auth.me.fallback',
+        retries: 2,
+        cacheTtlMs: 0,
       });
       return userResp as User | null;
     } catch (error: any) {
@@ -1237,6 +1336,7 @@ export const authApi = {
       
       if (status === 401 || msg.includes('[401]') || msg.toLowerCase().includes('not authenticated')) {
         console.warn('[authApi.me] Not authenticated or session expired');
+        clearAuthSessionHint();
         return null;
       }
       

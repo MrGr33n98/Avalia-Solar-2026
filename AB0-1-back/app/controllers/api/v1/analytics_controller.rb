@@ -2,7 +2,7 @@
 
 class Api::V1::AnalyticsController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[track conversions]
-  ALLOW_ANONYMOUS_EVENTS = %w[page_view search].freeze
+  ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital].freeze
 
   # POST /api/v1/analytics/track
   # Body: { company_id, event_type, metadata }
