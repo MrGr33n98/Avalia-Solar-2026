@@ -26,20 +26,24 @@ export default function WebVitalsReporter() {
     if (sentMetrics.current.has(metric.id)) return;
     sentMetrics.current.add(metric.id);
 
-    const body = JSON.stringify({
-      name: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-      id: metric.id,
-      navigationType: metric.navigationType,
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      timestamp: Date.now()
-    });
+    const payload = {
+      event_type: 'web_vital',
+      metadata: {
+        name: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+        id: metric.id,
+        navigationType: metric.navigationType,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        timestamp: Date.now()
+      }
+    };
+    const body = JSON.stringify(payload);
 
     // Send to backend (non-blocking, survives page unload)
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
       try {
-        navigator.sendBeacon('/api/v1/analytics/web-vitals', body);
+        navigator.sendBeacon('/api/v1/analytics/track', body);
       } catch (error) {
         console.warn('[WebVitals] Failed to send beacon:', error);
       }

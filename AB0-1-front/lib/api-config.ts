@@ -25,11 +25,17 @@ const normalizeOrigin = (rawBase: string) => {
 
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
   const serverProxyBase = isServer ? (process.env.API_PROXY_TARGET || '') : '';
+  
+  // Sincronizar com next.config.js fallback
+  const defaultServerProxy = isProduction ? 'http://ab0-backend:3001' : 'http://localhost:3001';
+  
   const browserBase = !isServer ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || '') : '';
   const defaultPublicBase =
-    process.env.NODE_ENV === 'production'
+    isProduction
       ? 'https://api.avaliasolar.com.br'
       : 'http://localhost:3001';
   const publicBase =
@@ -37,15 +43,17 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
     process.env.NEXT_PUBLIC_API_URL ||
     defaultPublicBase;
 
-  // Browser defaults to same-origin (/api/v1) to avoid CORS;
-  // server-side keeps absolute URL for SSR/fetches.
-  const rawBase = isServer ? (internalBase || serverProxyBase || publicBase) : browserBase;
+  // Browser defaults to publicBase if browserBase is missing, to avoid CORS issues
+  // or proxy failures on the same-origin.
+  const rawBase = isServer 
+    ? (internalBase || serverProxyBase || (isProduction ? defaultServerProxy : publicBase)) 
+    : (browserBase || publicBase);
   const origin = normalizeOrigin(rawBase);
 
   return {
     origin,
     baseUrl: `${origin}${API_VERSION_PATH}`,
-    isInternal: Boolean(internalBase) && isServer,
+    isInternal: (Boolean(internalBase) || (isServer && isProduction && rawBase.includes('ab0-backend'))) && isServer,
     isServer,
   };
 };

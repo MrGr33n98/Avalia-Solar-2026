@@ -1,4 +1,4 @@
-﻿// =======================
+// =======================
 // api-client.ts
 // =======================
 
@@ -114,7 +114,6 @@ export async function fetchApiSafe<T>(
 
       const response = await fetch(url, {
         ...requestOptions,
-        credentials: 'include',
         headers: {
           ...defaultHeaders,
           ...requestOptions.headers,

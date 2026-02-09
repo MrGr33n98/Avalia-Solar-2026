@@ -92,12 +92,16 @@ const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 2):
       });
 
       if (!response.ok) {
-        console.error(`[HomeFallbackCache] Fetch failed (Attempt ${i + 1}/${retries + 1}): ${url} [${response.status}]`);
+        const errorText = await response.text().catch(() => 'No error body');
+        console.error(`[HomeFallbackCache] Fetch failed (Attempt ${i + 1}/${retries + 1}): ${url} [${response.status}] - ${errorText.substring(0, 100)}`);
+        
         if (i === retries) {
-          throw new Error(`[${response.status}] Failed to fetch ${endpoint} after ${retries + 1} attempts`);
+          throw new Error(`[${response.status}] Failed to fetch ${endpoint} after ${retries + 1} attempts. Response: ${errorText.substring(0, 100)}`);
         }
-        // Wait a bit before retry
-        await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+        
+        // Wait a bit before retry (exponential backoff)
+        const delay = 500 * (i + 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
 
