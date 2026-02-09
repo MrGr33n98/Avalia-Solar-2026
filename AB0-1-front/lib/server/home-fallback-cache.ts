@@ -24,6 +24,15 @@ let cacheReady: Promise<LayeredSWRCache> | null = null;
 let persistQueue: Promise<void> = Promise.resolve();
 
 const safeArray = <T>(payload: unknown): T[] => (Array.isArray(payload) ? (payload as T[]) : []);
+const extractCategories = (payload: unknown): Category[] => {
+  if (Array.isArray(payload)) return payload as Category[];
+  if (payload && typeof payload === 'object') {
+    const data = payload as { data?: unknown; categories?: unknown };
+    if (Array.isArray(data.data)) return data.data as Category[];
+    if (Array.isArray(data.categories)) return data.categories as Category[];
+  }
+  return [];
+};
 
 const readPersistedEntries = async (): Promise<Record<string, CacheEntry<unknown>>> => {
   try {
@@ -111,7 +120,7 @@ export async function getCachedActiveCategories(): Promise<Category[]> {
     'home.categories.active',
     async (signal) => {
       const payload = await fetchJSON<unknown>('categories?status=active', signal);
-      return safeArray<Category>(payload);
+      return extractCategories(payload);
     },
     { fallback: [] }
   );
@@ -127,7 +136,7 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
         'categories?featured=true&status=active&limit=8&include=average_rating,reviews_count',
         signal
       );
-      return safeArray<Category>(payload);
+      return extractCategories(payload);
     },
     { fallback: [] }
   );
