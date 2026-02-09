@@ -228,14 +228,17 @@ export default function CompanyDetailClient({
       { id: "overview", label: "Visão Geral", icon: LayoutDashboard, iconColor: "text-slate-900" },
       { id: "products", label: "Produtos", icon: Package, iconColor: "text-slate-900" },
       { id: "reviews", label: "Avaliações", icon: MessageCircle, iconColor: "text-slate-900" },
-      { id: "financing", label: "Financiamento", icon: Banknote, iconColor: "text-slate-900", visible: currentCompany?.financing_tab_visible },
+      { id: "financing", label: "Financiamento", icon: Banknote, iconColor: "text-slate-900" },
       { id: "gallery", label: "Galeria", icon: ImageIcon, iconColor: "text-slate-900" },
       { id: "faq", label: "FAQ", icon: HelpCircle, iconColor: "text-slate-900" },
       { id: "stats", label: "Estatísticas", icon: BarChart3, iconColor: "text-slate-900" },
-    ].filter(tab => tab.visible !== false);
+    ].filter(tab => {
+      if (tab.id === "financing") return !!currentCompany?.financing_tab_visible;
+      return true;
+    });
     if (canEdit) baseTabs.push({ id: "edit", label: "Editar", icon: Edit, iconColor: "text-slate-900" });
     return baseTabs;
-  }, [canEdit]);
+  }, [canEdit, currentCompany?.financing_tab_visible]);
 
   const companyStats = useMemo(() => {
     const avgRating =

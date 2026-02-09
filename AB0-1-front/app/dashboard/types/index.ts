@@ -34,6 +34,7 @@ export interface Company {
   minimum_ticket?: number;
   maximum_ticket?: number;
   financing_options?: string;
+  financing_tab_visible?: boolean;
   response_time_sla?: string;
   languages?: string;
   logo_url?: string;

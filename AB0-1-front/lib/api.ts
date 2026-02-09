@@ -147,6 +147,7 @@ export interface Company {
   cta_whatsapp_enabled?: boolean;
   cta_whatsapp_url?: string | null;
   active_admin?: boolean;
+  financing_tab_visible?: boolean;
   whatsapp_button_style_json?: Record<string, any> | null;
   plan_status?: 'active' | 'inactive' | 'trial' | 'expired';
   category_info?: {
