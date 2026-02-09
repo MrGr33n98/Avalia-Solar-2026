@@ -26,12 +26,7 @@ const normalizeOrigin = (rawBase: string) => {
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
-  const serverProxyBase = isServer
-    ? (
-        process.env.API_PROXY_TARGET ||
-        (process.env.NODE_ENV === 'production' ? 'http://ab0-backend:3001' : 'http://localhost:3001')
-      )
-    : '';
+  const serverProxyBase = isServer ? (process.env.API_PROXY_TARGET || '') : '';
   const browserBase = !isServer ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || '') : '';
   const defaultPublicBase =
     process.env.NODE_ENV === 'production'
