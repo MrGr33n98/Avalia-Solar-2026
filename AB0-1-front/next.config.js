@@ -11,7 +11,9 @@ const apiProxyTarget = normalizeApiTarget(
   process.env.API_URL_INTERNAL ||
   (
     isProduction
-      ? 'http://ab0-backend:3001'
+      ? (process.env.NEXT_PUBLIC_API_URL?.startsWith('http') 
+          ? process.env.NEXT_PUBLIC_API_URL 
+          : 'http://ab0-backend:3001')
       : (
           process.env.NEXT_PUBLIC_API_BASE_URL ||
           process.env.NEXT_PUBLIC_API_URL ||

@@ -46,7 +46,7 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   // Browser defaults to publicBase if browserBase is missing, to avoid CORS issues
   // or proxy failures on the same-origin.
   const rawBase = isServer 
-    ? (internalBase || serverProxyBase || (isProduction ? defaultServerProxy : publicBase)) 
+    ? (internalBase || serverProxyBase || (publicBase.startsWith('http') ? publicBase : defaultServerProxy)) 
     : (browserBase || publicBase);
   const origin = normalizeOrigin(rawBase);
 
