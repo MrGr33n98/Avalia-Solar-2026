@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { getApiBaseUrl } from '@/lib/api-config';
-
 type WebVitalPayload = {
   name?: string;
   value?: number;
@@ -21,10 +19,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'error', message: 'Invalid JSON payload' }, { status: 400 });
   }
 
-  const apiBaseUrl = getApiBaseUrl();
+  const proxyUrl = new URL('/api/v1/analytics/track', request.url);
 
   try {
-    const response = await fetch(`${apiBaseUrl}/analytics/track`, {
+    const response = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -93,9 +93,42 @@ Rails.application.configure do
 
   # --- LIBERAÇÃO DE HOSTS ---
   # Whitelist mínima de hosts (evitar liberar todos com config.hosts.clear)
-  allowed_hosts = []
+  normalize_host = lambda do |raw_value|
+    raw = raw_value.to_s.strip
+    next nil if raw.empty?
+
+    candidate = raw.match?(%r{\Ahttps?://}i) ? raw : "https://#{raw}"
+    parsed = URI.parse(candidate)
+    parsed.host || raw.split('/').first
+  rescue URI::InvalidURIError
+    raw.split('/').first
+  end
+
+  allowed_hosts = %w[
+    localhost
+    127.0.0.1
+    backend
+    ab0-backend
+    staging.avaliasolar.com.br
+    staging-api.avaliasolar.com.br
+    avaliasolar.com.br
+    www.avaliasolar.com.br
+    api.avaliasolar.com.br
+    ab0-1.com
+    www.ab0-1.com
+  ]
   allowed_hosts << host if host.present?
-  extra_hosts = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
+
+  %w[APP_HOST FRONTEND_ORIGIN NEXT_PUBLIC_SITE_URL API_URL_INTERNAL API_PROXY_TARGET].each do |env_key|
+    parsed_host = normalize_host.call(ENV[env_key])
+    allowed_hosts << parsed_host if parsed_host.present?
+  end
+
+  extra_hosts = ENV.fetch('ALLOWED_HOSTS', '')
+                   .split(',')
+                   .map { |value| normalize_host.call(value) }
+                   .compact
   allowed_hosts.concat(extra_hosts)
-  config.hosts.concat(allowed_hosts) if allowed_hosts.any?
+
+  config.hosts.concat(allowed_hosts.map(&:downcase).uniq) if allowed_hosts.any?
 end
