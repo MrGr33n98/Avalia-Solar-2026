@@ -46,6 +46,7 @@ GEM
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.1, >= 1.2.0)
+    active_material (1.5.2)
     active_model_serializers (0.10.15)
       actionpack (>= 4.1)
       activemodel (>= 4.1)
@@ -61,6 +62,14 @@ GEM
       kaminari (>= 1.2.1)
       railties (>= 6.1)
       ransack (>= 4.0)
+    activeadmin_addons (1.10.2)
+      active_material (~> 1.5)
+      railties
+      redcarpet
+      require_all
+      sassc
+      sassc-rails
+      xdan-datetimepicker-rails (~> 2.5.1)
     activeadmin_quill_editor (2.0.0)
       activeadmin (>= 2.9, < 4)
     activejob (7.0.8.4)
@@ -385,6 +394,7 @@ GEM
       activerecord (>= 6.1.5)
       activesupport (>= 6.1.5)
       i18n
+    redcarpet (3.6.1)
     redis (5.4.1)
       redis-client (>= 0.22.0)
     redis-client (0.26.1)
@@ -394,6 +404,7 @@ GEM
       io-console (~> 0.5)
     request_store (1.7.0)
       rack (>= 1.4)
+    require_all (3.0.0)
     responders (3.1.0)
       actionpack (>= 5.2)
       railties (>= 5.2)
@@ -454,6 +465,12 @@ GEM
       fugit (~> 1.1, >= 1.11.1)
     sassc (2.4.0)
       ffi (~> 1.9)
+    sassc-rails (2.1.2)
+      railties (>= 4.0.0)
+      sassc (>= 2.0)
+      sprockets (> 3.0)
+      sprockets-rails
+      tilt
     scout_apm (5.7.1)
       parser
     selenium-webdriver (4.10.0)
@@ -505,6 +522,7 @@ GEM
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
     thor (1.4.0)
+    tilt (2.7.0)
     timeout (0.5.0)
     turbo-rails (1.4.0)
       actionpack (>= 6.0.0)
@@ -534,6 +552,9 @@ GEM
     websocket-driver (0.7.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    xdan-datetimepicker-rails (2.5.4)
+      jquery-rails
+      rails (>= 3.2.16)
     xpath (3.2.0)
       nokogiri (~> 1.8)
     yabeda (0.14.0)
@@ -566,6 +587,7 @@ PLATFORMS
 DEPENDENCIES
   active_model_serializers (~> 0.10.15)
   activeadmin (~> 3.2.0)
+  activeadmin_addons
   activeadmin_quill_editor
   amazing_print
   aws-sdk-s3 (~> 1.0)
@@ -642,8 +664,10 @@ CHECKSUMS
   actionpack (7.0.8.4) sha256=2e4809808c176b0dd35d3b9a23cb4896596ff50d15740accf6af83588a2a60a2
   actiontext (7.0.8.4) sha256=1ed8fb8cebdcc34fcaecf3b1404d48b2ea69fef9ae3f91ca4b9b672f6778a4bc
   actionview (7.0.8.4) sha256=45c1d33730073bb6f34b10abd81c5967ac0faff28cd4097103470022a1f52e0f
+  active_material (1.5.2) sha256=55e908ad6f670c7ef7f8cb397c55cc6a860242cfd447f8823ef1159da6790a68
   active_model_serializers (0.10.15) sha256=08275b2083ab4e8304279d838b99af546878e0d879a8154f731b0d16cb8b0c4c
   activeadmin (3.2.1) sha256=df08d785b742579b4646ff1928e28459c3068d0394328a43850187971b788b5f
+  activeadmin_addons (1.10.2) sha256=e1e5e8255032de7c2ca5b4da435580400383476c2053cb689cd53a7d8b54b38f
   activeadmin_quill_editor (2.0.0) sha256=8c0c83ff060168b7a6b1a6f459b581ff121a4fb1197e70f98ccfa92c88008903
   activejob (7.0.8.4) sha256=21eb13e3279eb6dcf8c9bfe90c0f78879f04ffd55c62302c47b73ccd5b6ca4ac
   activemodel (7.0.8.4) sha256=ef4e092d8644121b3e756e831bed6a16878317d02b9611bec8efcfdaee6525d6
@@ -779,11 +803,13 @@ CHECKSUMS
   rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
   rake (13.3.1) sha256=8c9e89d09f66a26a01264e7e3480ec0607f0c497a861ef16063604b1b08eb19c
   ransack (4.1.1) sha256=01db200ede29be9f147a2c433eb0005b36df24bc7f8b624a6eeea62d50788901
+  redcarpet (3.6.1) sha256=d444910e6aa55480c6bcdc0cdb057626e8a32c054c29e793fa642ba2f155f445
   redis (5.4.1) sha256=b5e675b57ad22b15c9bcc765d5ac26f60b675408af916d31527af9bd5a81faae
   redis-client (0.26.1) sha256=1e39d2862c4516a75ff777ee6ed08827af39336bfece4a48e944244891d9a073
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
   reline (0.3.6) sha256=b0914e86d6e0c0587f341e0c39060f6469e239207abea3ba7e352d3d6a77fae5
   request_store (1.7.0) sha256=e1b75d5346a315f452242a68c937ef8e48b215b9453a77a6c0acdca2934c88cb
+  require_all (3.0.0) sha256=937853faa2833388eab551107bf7bf87c6bba6b4800bac5ce469eda7b6a9fed0
   responders (3.1.0) sha256=3d7b3a40b74f7968a5d6c8c9ec8b0cdd022f39951160d89f003fe73b67053a55
   rexml (3.3.9) sha256=d71875b85299f341edf47d44df0212e7658cbdf35aeb69cefdb63f57af3137c9
   rotp (6.3.0) sha256=75d40087e65ed0d8022c33055a6306c1c400d1c12261932533b5d6cbcd868854
@@ -806,6 +832,7 @@ CHECKSUMS
   rubyzip (2.4.1) sha256=8577c88edc1fde8935eb91064c5cb1aef9ad5494b940cf19c775ee833e075615
   rufus-scheduler (3.9.2) sha256=55fa9e4db0ff69d7f38c804f17baba0c9bce5cba39984ae3c5cf6c039d1323b9
   sassc (2.4.0) sha256=4c60a2b0a3b36685c83b80d5789401c2f678c1652e3288315a1551d811d9f83e
+  sassc-rails (2.1.2) sha256=5f4fdf3881fc9bdc8e856ffbd9850d70a2878866feae8114aa45996179952db5
   scout_apm (5.7.1) sha256=bc43fcb405e2198f5ef27adee7f4cb63f9136d17ca43d13d359f768b759db9d6
   selenium-webdriver (4.10.0) sha256=a322af38f9a8966a6c3ab85c365b08c5556cdef72f577905b2b42469faee9d43
   sentry-rails (5.28.0) sha256=a0cbba7ce86312172db9d1b3c39c5302de07e446e7df3f68e4f4b1d240a91fc2
@@ -825,6 +852,7 @@ CHECKSUMS
   stimulus-rails (1.2.1) sha256=831bbcc0c12ea9c751e0a96b85d9908a0e4b42031964724d5b507166e06f0e8a
   terminal-table (4.0.0) sha256=f504793203f8251b2ea7c7068333053f0beeea26093ec9962e62ea79f94301d2
   thor (1.4.0) sha256=8763e822ccb0f1d7bee88cde131b19a65606657b847cc7b7b4b82e772bcd8a3d
+  tilt (2.7.0) sha256=0d5b9ba69f6a36490c64b0eee9f6e9aad517e20dcc848800a06eb116f08c6ab3
   timeout (0.5.0) sha256=852aefd13f41d84c2d0d83099b275034c6517395884b58e635acc8847c9190cb
   turbo-rails (1.4.0) sha256=108f2bf0245babfac286301759f80bfc92fbb5db902610cbf7becf911f8ea36e
   tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
@@ -840,6 +868,7 @@ CHECKSUMS
   websocket (1.2.9) sha256=884b12dee993217795bb5f58acc89c0121c88bdc99df4d1636c0505dca352b36
   websocket-driver (0.7.5) sha256=a280c3f44dcbb0323d58bc78dc49350c05d589ab7d13267fcff08d9d5ae76b28
   websocket-extensions (0.1.5) sha256=1c6ba63092cda343eb53fc657110c71c754c56484aad42578495227d717a8241
+  xdan-datetimepicker-rails (2.5.4) sha256=d69594c4268228cf85a195846dca98680385a1dbd93fda4c622fccb506974674
   xpath (3.2.0) sha256=6dfda79d91bb3b949b947ecc5919f042ef2f399b904013eb3ef6d20dd3a4082e
   yabeda (0.14.0) sha256=bc517bf22d692ebd80a29fc9fd2246c257aaf92d10b2735a775e2419351a43bf
   yabeda-prometheus (0.9.1) sha256=b87d80cae8cffbeb527c25d288eafa8eed9c1fb56cf49616db5c8611768cd5fd

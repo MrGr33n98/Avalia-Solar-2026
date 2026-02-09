@@ -59,7 +59,7 @@ ActiveAdmin.register Company do
     :response_time_sla, :languages,
     :email_public, :phone_alt, :facebook, :instagram,
     :linkedin, :description,
-    :moderation_status, :rejected_reason, :financing_enabled,
+    :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
     :active_admin,
     project_types: [], services_offered: [], category_ids: [], media_assets: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
@@ -200,6 +200,7 @@ end
 
     f.inputs 'Financiamento (nova aba)' do
       f.input :financing_enabled, label: 'Habilitar Financiamento Premium'
+      f.input :financing_tab_visible, label: 'Exibir aba de financiamento'
       f.template.concat(
         f.template.content_tag(:p, 'Configurações detalhadas (perfil, parceiros, ofertas) estão no menu Financiamento.')
       )

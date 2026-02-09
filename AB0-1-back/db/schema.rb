@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_03_000300) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -396,7 +396,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000300) do
     t.integer "profile_views_count", default: 0, null: false
     t.integer "cta_clicks_count", default: 0, null: false
     t.integer "whatsapp_clicks_count", default: 0, null: false
-    t.boolean "active_admin", default: false, null: false
     t.integer "plan_id"
     t.string "moderation_status"
     t.datetime "submitted_at"
@@ -405,6 +404,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_03_000300) do
     t.text "rejected_reason"
     t.boolean "financing_enabled", default: false, null: false
     t.string "slug", null: false
+    t.boolean "active_admin", default: false, null: false
+    t.boolean "financing_tab_visible", default: false, null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"

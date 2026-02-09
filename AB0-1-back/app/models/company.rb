@@ -498,7 +498,7 @@ class Company < ApplicationRecord
   end
 
   def financing_tab_visible?
-    financing_enabled && financing_feature_allowed?
+    financing_tab_visible
   end
 
   def whatsapp_enabled?

@@ -103,7 +103,7 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def financing_tab_visible
-    financing_enabled && financing_feature_allowed
+    object.financing_tab_visible?
   end
 
   def financing_profile
