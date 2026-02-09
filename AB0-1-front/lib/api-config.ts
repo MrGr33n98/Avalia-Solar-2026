@@ -26,6 +26,7 @@ const normalizeOrigin = (rawBase: string) => {
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
+  const browserBase = !isServer ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || '') : '';
   const defaultPublicBase =
     process.env.NODE_ENV === 'production'
       ? 'https://api.avaliasolar.com.br'
@@ -35,7 +36,9 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
     process.env.NEXT_PUBLIC_API_URL ||
     defaultPublicBase;
 
-  const rawBase = internalBase || publicBase;
+  // Browser defaults to same-origin (/api/v1) to avoid CORS;
+  // server-side keeps absolute URL for SSR/fetches.
+  const rawBase = isServer ? (internalBase || publicBase) : browserBase;
   const origin = normalizeOrigin(rawBase);
 
   return {

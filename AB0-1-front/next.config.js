@@ -5,6 +5,12 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
 const isProduction = process.env.NODE_ENV === 'production';
+const apiProxyTarget = (
+  process.env.API_PROXY_TARGET ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://api.avaliasolar.com.br'
+).replace(/\/+$/, '');
 // Keep image optimization on by default. Only disable with explicit opt-out.
 const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
 const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
@@ -195,6 +201,17 @@ const nextConfig = {
   },
 
   trailingSlash: false,
+
+  async rewrites() {
+    return {
+      fallback: [
+        {
+          source: '/api/v1/:path*',
+          destination: `${apiProxyTarget}/api/v1/:path*`,
+        },
+      ],
+    };
+  },
   
   async redirects() {
     return [
