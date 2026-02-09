@@ -37,13 +37,14 @@ RUN --mount=type=secret,id=rails_master_key \
     set -eux; \
     test -d config; \
     test -r config; \
+    cleanup() { rm -f config/master.key; }; \
+    trap cleanup EXIT; \
     if [ -f /run/secrets/rails_master_key ] && [ -s /run/secrets/rails_master_key ]; then \
       cp /run/secrets/rails_master_key config/master.key; \
       chmod 600 config/master.key; \
     fi; \
-    SECRET_KEY_BASE_DUMMY="$(ruby -e 'require \"securerandom\"; puts SecureRandom.hex(64)')"; \
-    SECRET_KEY_BASE="$SECRET_KEY_BASE_DUMMY" bundle exec rake assets:precompile --trace; \
-    rm -f config/master.key
+    SECRET_KEY_BASE_DUMMY="$(ruby -rsecurerandom -e 'print SecureRandom.hex(64)')"; \
+    SECRET_KEY_BASE="$SECRET_KEY_BASE_DUMMY" bundle exec rake assets:precompile --trace
 
 # --- Estágio Final ---
 FROM ruby:3.2.2-slim
