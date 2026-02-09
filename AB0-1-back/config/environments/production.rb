@@ -21,7 +21,8 @@ Rails.application.configure do
   # Fallback para local caso credenciais estejam ausentes, evitando erro 500 no admin.
   active_storage_service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'spaces')
   if active_storage_service == 'spaces' && (ENV['SPACES_ACCESS_KEY_ID'].blank? || ENV['SPACES_SECRET_ACCESS_KEY'].blank?)
-    Rails.logger.error('[ActiveStorage] Credenciais do Spaces ausentes. Aplicando fallback para storage local.')
+    msg = '[ActiveStorage] Credenciais do Spaces ausentes. Aplicando fallback para storage local.'
+    Rails.logger&.error(msg) || warn(msg)
     active_storage_service = 'local'
   end
   config.active_storage.service = active_storage_service.to_sym

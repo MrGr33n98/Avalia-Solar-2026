@@ -49,6 +49,7 @@ RUN --mount=type=secret,id=rails_master_key \
     \
     # Execução do precompile com stubs para evitar conexões externas
     # DATABASE_URL dummy evita que o Rails tente conectar no Postgres real durante o boot
+    # O assets:precompile no Rails 7 (Sprockets/Importmap) carrega o environment.
     DATABASE_URL=postgresql://localhost/dummy \
     bundle exec rake assets:precompile --trace; \
     \
