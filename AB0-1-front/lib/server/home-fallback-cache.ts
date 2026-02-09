@@ -18,7 +18,7 @@ const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'home-fallback-cache.json');
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_STALE_MS = 24 * 60 * 60 * 1000;
-const API_TIMEOUT_MS = 200;
+const API_TIMEOUT_MS = 5000;
 
 let cacheReady: Promise<LayeredSWRCache> | null = null;
 let persistQueue: Promise<void> = Promise.resolve();
