@@ -1,3 +1,4 @@
+## syntax=docker/dockerfile:1.7
 FROM ruby:3.2.2-slim AS builder
 
 # 1. Instalação de dependências do sistema
@@ -31,12 +32,17 @@ RUN rm -rf /usr/local/bundle && mv /usr/local/bundle_backup /usr/local/bundle
 COPY AB0-1-back/ ./
 
 # 4. Compilação de Assets
-ARG RAILS_MASTER_KEY
 ENV RAILS_ENV=production
-RUN if [ -n "$RAILS_MASTER_KEY" ]; then \
-      echo "$RAILS_MASTER_KEY" > config/master.key; \
-    fi && \
-    SECRET_KEY_BASE=$(openssl rand -hex 64) bundle exec rake assets:precompile && \
+RUN --mount=type=secret,id=rails_master_key \
+    set -eux; \
+    test -d config; \
+    test -r config; \
+    if [ -f /run/secrets/rails_master_key ] && [ -s /run/secrets/rails_master_key ]; then \
+      cp /run/secrets/rails_master_key config/master.key; \
+      chmod 600 config/master.key; \
+    fi; \
+    SECRET_KEY_BASE_DUMMY="$(ruby -e 'require \"securerandom\"; puts SecureRandom.hex(64)')"; \
+    SECRET_KEY_BASE="$SECRET_KEY_BASE_DUMMY" bundle exec rake assets:precompile --trace; \
     rm -f config/master.key
 
 # --- Estágio Final ---

@@ -58,6 +58,14 @@ jobs:
           fi
           echo "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$KEY" >> $GITHUB_ENV
 
+      - name: Validate Rails master key
+        if: matrix.component == 'backend'
+        run: |
+          if [ -z "${{ secrets.RAILS_MASTER_KEY }}" ]; then
+            echo "::error::RAILS_MASTER_KEY is required for backend assets precompile."
+            exit 1
+          fi
+
       - name: Build and Push Backend
         if: matrix.component == 'backend'
         uses: docker/build-push-action@v5
@@ -66,8 +74,8 @@ jobs:
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
-          build-args: |
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          secrets: |
+            rails_master_key=${{ secrets.RAILS_MASTER_KEY }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
             type=gha,scope=backend
