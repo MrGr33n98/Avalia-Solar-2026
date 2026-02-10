@@ -312,9 +312,13 @@ async function CompaniesSectionWrapper({
       )}
 
       <div className="mt-12 text-center">
-        <Link href="/companies">
-          <CTAPrimaryButton label="Explorar todas as empresas" className="md:w-auto w-full" />
-        </Link>
+        <CTAPrimaryButton 
+          label="Explorar todas as empresas" 
+          href="/companies"
+          ctaType="external"
+          ctaDestination="/companies"
+          className="md:w-auto w-full" 
+        />
       </div>
     </SectionShell>
   );

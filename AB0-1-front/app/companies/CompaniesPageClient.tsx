@@ -98,6 +98,7 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
       try {
         console.log('[Companies] Fetching with filters:', filters);
         const response = await companiesApiSafe.getAllPaginated({
+          status: 'active', // Garantir que apenas empresas ativas sejam listadas
           page: filters.page || 1,
           per_page: PAGE_SIZE,
           q: filters.search || undefined,

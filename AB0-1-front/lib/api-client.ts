@@ -342,7 +342,7 @@ export const companiesApiSafe = {
       const url = `companies${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url); // Usar 'any' temporariamente para inspecionar a resposta
       
-      // Verificar se a resposta Ã© um array diretamente ou um objeto com a propriedade 'companies'
+      // Verificar se a resposta é um array diretamente ou um objeto com a propriedade 'companies'
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -353,8 +353,7 @@ export const companiesApiSafe = {
       return [];
     } catch (error) {
       console.error('Error fetching companies:', error);
-      // Return empty array on error to prevent breaking the UI
-      return [];
+      throw error;
     }
   },
 
@@ -402,7 +401,7 @@ export const companiesApiSafe = {
       return { data: [] };
     } catch (error) {
       console.error('[companiesApiSafe.getAllPaginated] Error:', error);
-      return { data: [] };
+      throw error;
     }
   },
 
@@ -445,8 +444,7 @@ export const companiesApiSafe = {
       return null;
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);
-      // Return null on error to prevent breaking the UI
-      return null;
+      throw error;
     }
   },
 
@@ -458,7 +456,7 @@ export const companiesApiSafe = {
       return null;
     } catch (error) {
       console.error(`Error fetching company with slug ${slug}:`, error);
-      return null;
+      throw error;
     }
   },
 
@@ -468,7 +466,7 @@ export const companiesApiSafe = {
       return response.states || [];
     } catch (error) {
       console.error('Error fetching states:', error);
-      return [];
+      throw error;
     }
   },
 
@@ -479,7 +477,7 @@ export const companiesApiSafe = {
       return response.cities || [];
     } catch (error) {
       console.error('Error fetching cities:', error);
-      return [];
+      throw error;
     }
   },
 };
@@ -720,7 +718,3 @@ export const financingOptionsApiSafe = {
     }
   },
 };
-
-
-
-
