@@ -51,7 +51,11 @@ export function QueryProvider({ children }: QueryProviderProps) {
             // Configurações padrão para todas as queries
             staleTime: 5 * 60 * 1000, // 5 minutos
             gcTime: 10 * 60 * 1000, // 10 minutos (anteriormente cacheTime)
-            retry: 2,
+            retry: (failureCount, error: any) => {
+              const status = error?.status ?? error?.context?.status;
+              if (status === 429) return false;
+              return failureCount < 2;
+            },
             refetchOnWindowFocus: false,
             refetchOnReconnect: true,
             // Network mode: online | always | offlineFirst

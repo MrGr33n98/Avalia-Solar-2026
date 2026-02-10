@@ -462,9 +462,11 @@ const API_BASE_URL = getApiBaseUrl();
 // Update the api configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1s
-const TIMEOUT = 60000; // Aumentado para 60s para evitar timeouts em conexões lentas ou cold start
+const RATE_LIMIT_BLOCK_MS = 15_000;
+const TIMEOUT = 60000; // Aumentado para 60s para evitar timeouts em conexÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes lentas ou cold start
 const AUTH_HINT_KEY = 'avalia.auth.session_hint';
 const PUBLIC_GET_CACHE = new Map<string, { expiry: number; data: unknown }>();
+const RATE_LIMIT_BLOCKED_UNTIL = new Map<string, number>();
 const DEFAULT_PUBLIC_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -544,7 +546,7 @@ const attemptRefresh = async (): Promise<boolean> => {
     }
 
     // O backend retorna { token: string, user: User }
-    // Como estamos usando credentials: 'include', o browser atualizará os cookies (jwt_token e refresh_token)
+    // Como estamos usando credentials: 'include', o browser atualizarÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ os cookies (jwt_token e refresh_token)
     // automaticamente se o backend enviar os headers Set-Cookie correspondentes.
     const data = await response.json().catch(() => ({}));
     console.log('[API] Session refreshed successfully');
@@ -568,6 +570,15 @@ export const api = {
     const maxRetries = config.retries ?? MAX_RETRIES;
     const timeoutDuration = config.timeout ?? TIMEOUT;
     const requestMethod = (config.method || 'GET').toUpperCase();
+    const rateLimitKey = `${requestMethod}:${config.url}`;
+    const blockedUntil = RATE_LIMIT_BLOCKED_UNTIL.get(rateLimitKey) || 0;
+    if (Date.now() < blockedUntil) {
+      throw new ApiError('[429] Too many requests. Please try again later.', {
+        status: 429,
+        url: buildApiUrl(config.url),
+        method: requestMethod,
+      });
+    }
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       let url = '';
@@ -638,6 +649,15 @@ export const api = {
           clearTimeout(timeoutId);
 
           if (!response.ok) {
+            if (response.status === 429) {
+              const retryAfterRaw = response.headers.get('retry-after');
+              const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;
+              const retryAfterMs =
+                Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+                  ? retryAfterSeconds * 1000
+                  : RATE_LIMIT_BLOCK_MS;
+              RATE_LIMIT_BLOCKED_UNTIL.set(rateLimitKey, Date.now() + retryAfterMs);
+            }
             const shouldTryRefresh =
               response.status === 401 &&
               !config._retry &&
@@ -677,10 +697,10 @@ export const api = {
               });
             }
             
-            // Don't retry on most 4xx errors (client errors), except 429 (Too Many Requests)
+            // Don't retry on most 4xx errors (client errors)
             // We also allow retrying 404 once in case of transient backend issues during deployments
             if (response.status >= 400 && response.status < 500 && 
-                response.status !== 429 && response.status !== 404) {
+                response.status !== 404) {
               const err = new ApiError(`[${response.status}] ${message}`, {
                 status: response.status,
                 code: details?.code,
@@ -724,12 +744,12 @@ export const api = {
       } catch (error: any) {
         lastError = error;
         
-        // Retry if it's a timeout, network failure, or 5xx/429 (avoid retrying 4xx like 403/404)
+        // Retry if it's a timeout, network failure, or 5xx (avoid retrying 4xx like 403/429)
         const status = getErrorStatus(error);
         const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(requestMethod);
         const isRetryableStatus =
           typeof status === 'number' &&
-          (status === 401 || status === 404 || status === 429 || status >= 500);
+          (status === 401 || status === 404 || status >= 500);
         const isRetryable = error.message === 'Request timeout' || 
                            error.message.includes('Network request failed') ||
                            (isIdempotent && isRetryableStatus);
@@ -858,7 +878,7 @@ export async function fetchApi<T = any>(
 
     // Specific handling for 404 Not Found
     if (error.message?.includes('[404]') || error.context?.status === 404) {
-      const customMessage = `[404] O recurso solicitado não foi encontrado (${url}). Por favor, verifique se o endereço está correto. Se o problema persistir, entre em contato com o suporte do Avalia Solar.`;
+      const customMessage = `[404] The requested resource was not found (${url}). Please verify the address and try again.`;
       console.warn(`[API] 404 Error: ${customMessage}`);
       
       const enhancedError = new ApiError(customMessage, {

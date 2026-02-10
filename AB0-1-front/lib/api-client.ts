@@ -11,8 +11,12 @@ import { ApiError, toApiError } from './api-error';
 export type { Category, Company, Review, Product, FinancingOption };
 
 const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
+const SAFE_API_IN_FLIGHT = new Map<string, Promise<unknown>>();
 const SAFE_API_DEFAULT_TTL_MS = 5 * 60 * 1000;
 const SAFE_API_MAX_RETRIES = 3;
+const SAFE_API_RATE_LIMIT_BLOCK_MS = 15_000;
+const SAFE_API_NETWORK_BLOCK_MS = 5_000;
+const SAFE_API_BLOCKED_UNTIL = new Map<string, number>();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -58,6 +62,15 @@ export async function fetchApiSafe<T>(
     requestOptions.noCache !== true &&
     isPublicCacheableEndpoint(normalizedEndpoint);
   const cacheKey = `${method}:${url}`;
+  const throttleKey = `${method}:${normalizedEndpoint}`;
+  const blockedUntil = SAFE_API_BLOCKED_UNTIL.get(throttleKey) || 0;
+  if (Date.now() < blockedUntil) {
+    throw new ApiError('[429] Muitas solicitações. Por favor, tente novamente mais tarde.', {
+      status: 429,
+      url,
+      method,
+    });
+  }
 
   if (shouldUseCache) {
     const cached = SAFE_API_CACHE.get(cacheKey);
@@ -66,6 +79,13 @@ export async function fetchApiSafe<T>(
     }
     if (cached && cached.expiresAt <= Date.now()) {
       SAFE_API_CACHE.delete(cacheKey);
+    }
+  }
+
+  if (method === 'GET') {
+    const inFlight = SAFE_API_IN_FLIGHT.get(cacheKey);
+    if (inFlight) {
+      return inFlight as Promise<T>;
     }
   }
 
@@ -108,7 +128,8 @@ export async function fetchApiSafe<T>(
     requestOptions.body = JSON.stringify(bodyPayload);
   }
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  const executeRequest = async (): Promise<T> => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       console.log('[API] Request ->', method, url);
 
@@ -124,6 +145,16 @@ export async function fetchApiSafe<T>(
       console.log('[API] Response data:', responseBody);
 
       if (!response.ok) {
+        if (response.status === 429) {
+          const retryAfterRaw = response.headers.get('retry-after');
+          const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;
+          const retryAfterMs =
+            Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+              ? retryAfterSeconds * 1000
+              : SAFE_API_RATE_LIMIT_BLOCK_MS;
+          SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + retryAfterMs);
+        }
+
         if (response.status === 401 && responseBody) {
           const errorCode = responseBody.code;
           const errorMsg = responseBody.error || responseBody.message || '';
@@ -162,7 +193,6 @@ export async function fetchApiSafe<T>(
         const retryableStatus =
           response.status === 401 ||
           response.status === 404 ||
-          response.status === 429 ||
           response.status >= 500;
         const shouldRetry = isIdempotent && retryableStatus && attempt < maxRetries - 1;
         if (shouldRetry) {
@@ -195,6 +225,10 @@ export async function fetchApiSafe<T>(
         isNetworkError: error instanceof TypeError,
       });
 
+      if (apiError.isNetworkError) {
+        SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + SAFE_API_NETWORK_BLOCK_MS);
+      }
+
       const status = (apiError as any)?.status;
       const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
       const shouldRetryNetwork =
@@ -204,7 +238,7 @@ export async function fetchApiSafe<T>(
       const shouldRetryStatus =
         isIdempotent &&
         attempt < maxRetries - 1 &&
-        (status === 401 || status === 404 || status === 429 || (typeof status === 'number' && status >= 500));
+        (status === 401 || status === 404 || (typeof status === 'number' && status >= 500));
 
       if (shouldRetryNetwork || shouldRetryStatus) {
         const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
@@ -217,7 +251,18 @@ export async function fetchApiSafe<T>(
     }
   }
 
-  throw new ApiError('API request failed after retries', { url, method });
+    throw new ApiError('API request failed after retries', { url, method });
+  };
+
+  if (method === 'GET') {
+    const promise = executeRequest().finally(() => {
+      SAFE_API_IN_FLIGHT.delete(cacheKey);
+    });
+    SAFE_API_IN_FLIGHT.set(cacheKey, promise as Promise<unknown>);
+    return promise;
+  }
+
+  return executeRequest();
 }
 
 // ------------------

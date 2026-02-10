@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
@@ -24,6 +25,8 @@ const PLACEHOLDER_ASPECT = 'aspect-[6/1] sm:aspect-[4/1]';
  * Blindado contra erros - retorna null silenciosamente se falhar
  */
 export default function BannerByLocation({ location, className = '', initialBanners }: BannerByLocationProps) {
+  const didLogErrorRef = useRef(false);
+  const didLogEmptyRef = useRef(false);
   const hasInitial = Boolean(initialBanners && initialBanners.length > 0);
   const { data: fetchedBanners = [], isLoading, error } = useBannersQuery({
     position: location,
@@ -55,13 +58,19 @@ export default function BannerByLocation({ location, className = '', initialBann
 
     // Se houver erro, loga mas não quebra a página
     if (queryError) {
-      console.warn(`[BannerByLocation] Error loading banners for ${location}:`, queryError);
+      if (!didLogErrorRef.current) {
+        didLogErrorRef.current = true;
+        console.warn(`[BannerByLocation] Error loading banners for ${location}:`, queryError);
+      }
       return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 
     // Se não houver banners, retorna null silenciosamente
     if (!banners || !Array.isArray(banners) || banners.length === 0) {
-      console.info(`[BannerByLocation] No banners found for position: ${location}`);
+      if (!didLogEmptyRef.current && process.env.NODE_ENV === 'development') {
+        didLogEmptyRef.current = true;
+        console.info(`[BannerByLocation] No banners found for position: ${location}`);
+      }
       return shouldReserveSpace ? renderPlaceholder(false) : null;
     }
 

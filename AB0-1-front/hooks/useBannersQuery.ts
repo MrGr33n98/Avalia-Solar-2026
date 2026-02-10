@@ -56,7 +56,11 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     enabled,
     staleTime: 10 * 60 * 1000, // 10 minutos - banners mudam menos
     gcTime: 30 * 60 * 1000, // 30 minutos em cache
-    retry: 3, // Retry 3x (banners são críticos para monetização)
+    retry: (failureCount, error: any) => {
+      const status = error?.status ?? error?.context?.status;
+      if (status === 429) return false;
+      return failureCount < 1;
+    },
     refetchOnWindowFocus: false,
   });
 }

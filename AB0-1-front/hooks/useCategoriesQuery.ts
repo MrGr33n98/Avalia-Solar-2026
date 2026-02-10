@@ -126,7 +126,11 @@ export function useCategoriesQuery(options: CategoryFilterParams = {}) {
     enabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error: any) => {
+      const status = error?.status ?? error?.context?.status;
+      if (status === 429) return false;
+      return failureCount < 2;
+    },
     refetchOnWindowFocus: false,
   });
 }
