@@ -15,6 +15,7 @@ const customJestConfig = {
     '^@/lib/(.*)$': '<rootDir>/lib/$1',
     '^@/app/(.*)$': '<rootDir>/app/$1',
     '^@/public/(.*)$': '<rootDir>/public/$1',
+    '^@/context/(.*)$': '<rootDir>/context/$1',
     '^@/contexts/(.*)$': '<rootDir>/contexts/$1',
     '^@/utils/(.*)$': '<rootDir>/utils/$1',
     '^@/types$': '<rootDir>/types',

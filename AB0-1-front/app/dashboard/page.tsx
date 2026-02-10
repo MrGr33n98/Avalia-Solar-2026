@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useCompanyContext } from '@/context/CompanyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   Building,
-  FileText,
   Calendar,
   Bell,
   Building2,
@@ -44,16 +44,74 @@ const RealtimeDashboard = dynamic(
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, loading: authLoading, error: authError } = useAuth();
   const { activeCompany, isLoading: companyLoading } = useCompanyContext();
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const context = {
+      route: '/dashboard',
+      userId: user?.id ?? null,
+      role: user?.role ?? null,
+      authLoading,
+      companyLoading,
+      activeCompanyId: activeCompany?.id ?? null
+    };
+    console.debug('[DashboardPage] Session state update', context);
+  }, [authLoading, companyLoading, user?.id, user?.role, activeCompany?.id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      console.warn('[DashboardPage] Unauthenticated access, redirecting to login');
+      router.push('/login?return_to=%2Fdashboard');
+      return;
+    }
+
+    if (user.role === 'review') {
+      console.info('[DashboardPage] Review user redirected to review dashboard');
+      router.push('/review-dashboard');
+      return;
+    }
+
     if (!companyLoading && !activeCompany) {
+      console.info('[DashboardPage] Authenticated user without active company, redirecting');
       router.push('/select-company');
     }
-  }, [activeCompany, companyLoading, router]);
+  }, [authLoading, user, activeCompany, companyLoading, router]);
 
-  if (companyLoading || !activeCompany) {
+  if (authError) {
+    console.error('[DashboardPage] Failed to load auth session', {
+      route: '/dashboard',
+      authError
+    });
+
+    return (
+      <div className="flex h-[80vh] items-center justify-center px-4">
+        <Card className="max-w-xl w-full">
+          <CardHeader>
+            <CardTitle>Erro ao carregar sessao</CardTitle>
+            <CardDescription>
+              Nao foi possivel validar sua sessao. Tente recarregar o dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()}>Recarregar Dashboard</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (authLoading || companyLoading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !activeCompany) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -144,7 +202,7 @@ export default function DashboardPage() {
             className="animate-in fade-in slide-in-from-bottom-8 duration-700"
           >
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Bem-vindo de volta, {user?.name || 'usuário'}!
+              Bem-vindo de volta, {user?.name || 'usuario'}!
             </h1>
             <p className="text-muted-foreground">
               Aqui está um resumo das atividades mais recentes da sua conta.
@@ -212,11 +270,11 @@ export default function DashboardPage() {
       {activeCompany?.id ? (
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-3xl font-bold text-foreground mb-2">Analytics em Tempo Real</h2>
               <p className="text-muted-foreground mb-6">Atualização contínua das métricas críticas da sua empresa.</p>
               <RealtimeDashboard companyId={activeCompany.id} />
-            </motion.div>
+            </div>
           </div>
         </section>
       ) : null}
@@ -306,3 +364,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
