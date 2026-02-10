@@ -111,13 +111,23 @@ function isJsonContentType(contentType: string) {
   );
 }
 
-function shouldRetryWithFallback(upstreamResponse: Response) {
+function isPublicGetEndpoint(pathSegments: string[]) {
+  const firstSegment = (pathSegments[0] || '').toLowerCase();
+  return firstSegment === 'categories' || firstSegment === 'banners';
+}
+
+function shouldRetryWithFallback(upstreamResponse: Response, method: string, pathSegments: string[]) {
   if (RETRYABLE_UPSTREAM_STATUSES.has(upstreamResponse.status)) {
     return true;
   }
 
   if (upstreamResponse.status !== 403) {
     return false;
+  }
+
+  // Public home data endpoints are safe to retry across fallback upstreams.
+  if (method === 'GET' && isPublicGetEndpoint(pathSegments)) {
+    return true;
   }
 
   const contentType = (upstreamResponse.headers.get('content-type') || '').toLowerCase();
@@ -154,7 +164,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     try {
       const upstreamResponse = await fetch(upstreamUrl, init);
 
-      if (hasFallback && shouldRetryWithFallback(upstreamResponse)) {
+      if (hasFallback && shouldRetryWithFallback(upstreamResponse, method, pathSegments)) {
         continue;
       }
 
