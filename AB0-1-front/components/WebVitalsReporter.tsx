@@ -2,14 +2,14 @@
 
 import { useReportWebVitals } from 'next/web-vitals';
 import { track } from '@/lib/analytics/lazy';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 /**
  * Web Vitals Reporter Component
  * 
  * Tracks Core Web Vitals metrics and sends to:
  * 1. Analytics (Mixpanel/GA4) after consent
- * 2. Backend endpoint via sendBeacon (non-blocking)
+ * 2. Backend endpoint through the shared analytics pipeline
  * 
  * Metrics tracked:
  * - LCP (Largest Contentful Paint)
@@ -26,32 +26,22 @@ export default function WebVitalsReporter() {
     if (sentMetrics.current.has(metric.id)) return;
     sentMetrics.current.add(metric.id);
 
-    const payload = {
-      event_type: 'web_vital',
-      metadata: {
-        name: metric.name,
-        value: metric.value,
-        rating: metric.rating,
-        id: metric.id,
-        navigationType: metric.navigationType,
-        url: typeof window !== 'undefined' ? window.location.href : '',
-        timestamp: Date.now()
-      }
-    };
-    const body = JSON.stringify(payload);
+    const eventId =
+      metric.id ||
+      (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `wv-${metric.name}-${Date.now()}`);
+    const trackedAt = new Date().toISOString();
+    const eventType = 'web_vital';
 
-    // Send to backend (non-blocking, survives page unload)
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      try {
-        navigator.sendBeacon('/api/v1/analytics/track', body);
-      } catch (error) {
-        console.warn('[WebVitals] Failed to send beacon:', error);
-      }
-    }
+    // Guardrail: never send malformed tracking payloads
+    if (!eventType || !eventId || !trackedAt) return;
 
     // Send to analytics (respects consent via lazy analytics)
     try {
       track('web_vital', {
+        event_id: eventId,
+        tracked_at: trackedAt,
         metric_name: metric.name,
         metric_value: metric.value,
         metric_rating: metric.rating,

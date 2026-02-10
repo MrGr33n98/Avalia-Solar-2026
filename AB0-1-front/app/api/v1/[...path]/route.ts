@@ -71,6 +71,14 @@ function buildUpstreamUrl(baseUrl: string, pathSegments: string[], search: strin
 
 function buildUpstreamHeaders(request: NextRequest) {
   const headers = new Headers(request.headers);
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const forwardedPort = request.headers.get('x-forwarded-port');
+  const forwardedProto =
+    request.headers.get('x-forwarded-proto') ||
+    request.nextUrl.protocol.replace(':', '') ||
+    'https';
 
   headers.delete('host');
   headers.delete('connection');
@@ -83,6 +91,14 @@ function buildUpstreamHeaders(request: NextRequest) {
       headers.set(key, value);
     }
   });
+
+  // Preserve client forwarding metadata so backend rate-limit/security rules
+  // can evaluate real visitors instead of the frontend container IP.
+  if (forwardedFor) headers.set('x-forwarded-for', forwardedFor);
+  if (realIp) headers.set('x-real-ip', realIp);
+  if (forwardedHost) headers.set('x-forwarded-host', forwardedHost);
+  if (forwardedPort) headers.set('x-forwarded-port', forwardedPort);
+  if (forwardedProto) headers.set('x-forwarded-proto', forwardedProto);
 
   return headers;
 }

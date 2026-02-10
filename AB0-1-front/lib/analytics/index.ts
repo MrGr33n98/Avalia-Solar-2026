@@ -15,7 +15,6 @@ import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId, isNewSession } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
-import { getApiBaseUrl } from '../api-config';
 import { 
   initializeGTag, 
   gtagEvent, 
@@ -224,7 +223,9 @@ export function track(
   }
   
   if (!initialized) {
-    console.warn('[Analytics] Not initialized, queueing event:', eventName);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] Not initialized, queueing event:', eventName);
+    }
     enqueueEvent(eventName, properties, options);
     void initializeSDKs();
     return;
@@ -334,10 +335,19 @@ function sendToBackend(
   properties: Record<string, any>
 ): void {
   if (typeof window === 'undefined') return;
-  const backendEndpoint = `${getApiBaseUrl()}/analytics/track`;
+  const backendEndpoint = '/api/v1/analytics/track';
 
   const companyId = properties.company_id ?? context.company_id ?? null;
   if (!companyId && !GLOBAL_EVENTS.has(eventName)) return;
+  const trackedAt =
+    typeof properties.tracked_at === 'string'
+      ? properties.tracked_at
+      : typeof properties.timestamp === 'string'
+        ? properties.timestamp
+        : new Date().toISOString();
+
+  // Guardrail: never send malformed backend tracking payloads.
+  if (!eventName || !eventId || !trackedAt) return;
 
   const utm = getCurrentUTMs();
   const attribution = getAttribution();
@@ -362,20 +372,28 @@ function sendToBackend(
     event_id: eventId,
     event_type: eventName,
     company_id: companyId,
-    tracked_at: properties.timestamp || new Date().toISOString(),
+    tracked_at: trackedAt,
     metadata,
   };
+
+  const serializedBody = JSON.stringify(body);
+  if (!serializedBody || serializedBody === '{}') return;
 
   try {
     void fetch(backendEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
       credentials: 'include',
-      body: JSON.stringify(body),
+      body: serializedBody,
       keepalive: true,
     });
   } catch (err) {
-    console.warn('[Analytics] Failed to send to backend', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] Failed to send to backend', err);
+    }
   }
 }
 

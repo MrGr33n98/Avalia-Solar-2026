@@ -7,10 +7,22 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
   # POST /api/v1/analytics/track
   # Body: { company_id, event_type, metadata }
   def track
-    raw_type = params[:event_type].presence || params[:event].presence
-    company_id = params[:company_id].presence || params.dig(:company, :id)
-    event_id = params[:event_id].presence
-    metadata = params[:metadata].is_a?(Hash) ? params[:metadata] : (params[:data].is_a?(Hash) ? params[:data] : {})
+    # Ignore empty/truncated payloads from browsers/extensions to avoid noisy 400 logs.
+    if request.raw_post.to_s.strip.blank? &&
+       params[:event_type].blank? &&
+       params[:event].blank? &&
+       params.dig(:analytic, :event_type).blank?
+      return head :no_content
+    end
+
+    raw_type = params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence
+    company_id = params[:company_id].presence || params.dig(:company, :id).presence || params.dig(:analytic, :company_id).presence
+    event_id = params[:event_id].presence || params.dig(:analytic, :event_id).presence
+    metadata =
+      normalize_hash_param(params[:metadata]) ||
+      normalize_hash_param(params[:data]) ||
+      normalize_hash_param(params.dig(:analytic, :metadata)) ||
+      {}
 
     return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request if raw_type.blank?
 
@@ -82,6 +94,17 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       'badges_tab_open'
     else
       raw.to_s
+    end
+  end
+
+  def normalize_hash_param(value)
+    case value
+    when ActionController::Parameters
+      value.to_unsafe_h
+    when Hash
+      value
+    else
+      nil
     end
   end
 end

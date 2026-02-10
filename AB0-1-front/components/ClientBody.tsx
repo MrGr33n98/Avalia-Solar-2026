@@ -60,9 +60,24 @@ export default function ClientBody({
 
     const shouldIgnore = (message: string) =>
       message.includes('The message port closed before a response was received');
+    const isStaleServerActionError = (message: string) =>
+      /Failed to find Server Action/i.test(message);
+    const staleActionReloadKey = 'avalia.stale_server_action_reload_at';
+    const tryRecoverStaleServerAction = () => {
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(staleActionReloadKey) || 0);
+      if (now - lastReload < 15_000) return;
+      sessionStorage.setItem(staleActionReloadKey, String(now));
+      window.location.reload();
+    };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const msg = String((event.reason as any)?.message || event.reason || '');
+      if (isStaleServerActionError(msg)) {
+        event.preventDefault();
+        tryRecoverStaleServerAction();
+        return;
+      }
       if (shouldIgnore(msg)) {
         console.warn('[Runtime] Ignored browser extension message port error:', msg);
         event.preventDefault();
@@ -71,6 +86,11 @@ export default function ClientBody({
 
     const handleError = (event: ErrorEvent) => {
       const msg = String(event.message || '');
+      if (isStaleServerActionError(msg)) {
+        event.preventDefault();
+        tryRecoverStaleServerAction();
+        return;
+      }
       if (shouldIgnore(msg)) {
         console.warn('[Runtime] Ignored browser extension message port error:', msg);
         event.preventDefault();

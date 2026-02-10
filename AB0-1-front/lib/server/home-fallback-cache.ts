@@ -19,19 +19,78 @@ const CACHE_FILE = path.join(CACHE_DIR, 'home-fallback-cache.json');
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_STALE_MS = 24 * 60 * 60 * 1000;
 const API_TIMEOUT_MS = 5000;
+const FETCH_REVALIDATE_SECONDS = Math.max(60, Math.floor(CACHE_TTL_MS / 1000));
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
 let cacheReady: Promise<LayeredSWRCache> | null = null;
 let persistQueue: Promise<void> = Promise.resolve();
 
-const safeArray = <T>(payload: unknown): T[] => (Array.isArray(payload) ? (payload as T[]) : []);
-const extractCategories = (payload: unknown): Category[] => {
-  if (Array.isArray(payload)) return payload as Category[];
+const extractCollection = <T>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) return payload as T[];
   if (payload && typeof payload === 'object') {
-    const data = payload as { data?: unknown; categories?: unknown };
-    if (Array.isArray(data.data)) return data.data as Category[];
-    if (Array.isArray(data.categories)) return data.categories as Category[];
+    const data = payload as { data?: unknown; categories?: unknown; items?: unknown; banners?: unknown };
+    if (Array.isArray(data.data)) return data.data as T[];
+    if (Array.isArray(data.categories)) return data.categories as T[];
+    if (Array.isArray(data.items)) return data.items as T[];
+    if (Array.isArray(data.banners)) return data.banners as T[];
   }
   return [];
+};
+const extractCategories = (payload: unknown): Category[] => extractCollection<Category>(payload);
+
+const normalizeCategory = (item: any): Category | null => {
+  if (!item || typeof item !== 'object') return null;
+
+  const id = Number(item.id);
+  const name = String(item.name || '').trim();
+  if (!Number.isFinite(id) || !name) return null;
+
+  return {
+    id,
+    name,
+    seo_url: String(item.seo_url || item.slug || id),
+    seo_title: String(item.seo_title || name),
+    short_description: typeof item.short_description === 'string' ? item.short_description : undefined,
+    description: typeof item.description === 'string' ? item.description : undefined,
+    parent_id: typeof item.parent_id === 'number' ? item.parent_id : null,
+    kind: typeof item.kind === 'string' ? item.kind : 'service',
+    status: typeof item.status === 'string' ? item.status : 'active',
+    featured: Boolean(item.featured),
+    banner_url: typeof item.banner_url === 'string' ? item.banner_url : null,
+    icon_url: typeof item.icon_url === 'string' ? item.icon_url : null,
+    average_rating: typeof item.average_rating === 'number' ? item.average_rating : 0,
+    average_price: typeof item.average_price === 'number' ? item.average_price : 0,
+    views_count: typeof item.views_count === 'number' ? item.views_count : 0,
+    reviews_count: typeof item.reviews_count === 'number' ? item.reviews_count : 0,
+    companies_count: typeof item.companies_count === 'number' ? item.companies_count : 0,
+    products_count: typeof item.products_count === 'number' ? item.products_count : 0,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    badges: Array.isArray(item.badges) ? item.badges : [],
+    logo: item.logo ?? null,
+    created_at: typeof item.created_at === 'string' ? item.created_at : '',
+    updated_at: typeof item.updated_at === 'string' ? item.updated_at : '',
+  } as Category;
+};
+
+const flattenCategoryTree = (payload: unknown): Category[] => {
+  const queue = extractCollection<any>(payload);
+  const seen = new Set<number>();
+  const categories: Category[] = [];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const normalized = normalizeCategory(current);
+    if (normalized && !seen.has(normalized.id)) {
+      seen.add(normalized.id);
+      categories.push(normalized);
+    }
+
+    if (Array.isArray(current?.children)) {
+      queue.push(...current.children);
+    }
+  }
+
+  return categories;
 };
 
 const readPersistedEntries = async (): Promise<Record<string, CacheEntry<unknown>>> => {
@@ -87,13 +146,17 @@ const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 2):
       const response = await fetch(url, {
         method: 'GET',
         headers: getApiRequestHeaders({ Accept: 'application/json' }),
-        cache: 'no-store',
+        next: { revalidate: FETCH_REVALIDATE_SECONDS },
         signal,
       });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'No error body');
-        console.error(`[HomeFallbackCache] Fetch failed (Attempt ${i + 1}/${retries + 1}): ${url} [${response.status}] - ${errorText.substring(0, 100)}`);
+        if (IS_DEV) {
+          console.warn(
+            `[HomeFallbackCache] Fetch failed (Attempt ${i + 1}/${retries + 1}): ${url} [${response.status}] - ${errorText.substring(0, 100)}`
+          );
+        }
         
         if (i === retries) {
           throw new Error(`[${response.status}] Failed to fetch ${endpoint} after ${retries + 1} attempts. Response: ${errorText.substring(0, 100)}`);
@@ -109,7 +172,9 @@ const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 2):
     } catch (error: any) {
       if (error.name === 'AbortError') throw error;
       
-      console.error(`[HomeFallbackCache] Error (Attempt ${i + 1}/${retries + 1}): ${error.message}`);
+      if (IS_DEV) {
+        console.warn(`[HomeFallbackCache] Error (Attempt ${i + 1}/${retries + 1}): ${error.message}`);
+      }
       if (i === retries) throw error;
       await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
     }
@@ -123,8 +188,25 @@ export async function getCachedActiveCategories(): Promise<Category[]> {
   const result = await cache.get<Category[]>(
     'home.categories.active',
     async (signal) => {
-      const payload = await fetchJSON<unknown>('categories?status=active', signal);
-      return extractCategories(payload);
+      try {
+        const payload = await fetchJSON<unknown>('categories?status=active', signal);
+        const categories = extractCategories(payload);
+        if (categories.length > 0) return categories;
+      } catch (error) {
+        if (IS_DEV) {
+          console.warn('[HomeFallbackCache] Active categories endpoint failed, trying tree fallback', error);
+        }
+      }
+
+      try {
+        const treePayload = await fetchJSON<unknown>('categories/tree', signal);
+        return flattenCategoryTree(treePayload);
+      } catch (error) {
+        if (IS_DEV) {
+          console.warn('[HomeFallbackCache] Categories tree fallback failed', error);
+        }
+        return [];
+      }
     },
     { fallback: [] }
   );
@@ -136,20 +218,35 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
   const result = await cache.get<Category[]>(
     'home.categories.featured',
     async (signal) => {
-      const featuredPayload = await fetchJSON<unknown>(
-        'categories?view=cards&featured=true&limit=8&sort_by=featured_desc',
-        signal
-      );
-      const featured = extractCategories(featuredPayload);
-      if (featured.length > 0) {
-        return featured;
-      }
+      const tryFetchCategories = async (endpoint: string, extractor: (payload: unknown) => Category[]) => {
+        try {
+          const payload = await fetchJSON<unknown>(endpoint, signal);
+          return extractor(payload);
+        } catch (error) {
+          if (IS_DEV) {
+            console.warn(`[HomeFallbackCache] Endpoint failed (${endpoint})`, error);
+          }
+          return [];
+        }
+      };
 
-      const fallbackPayload = await fetchJSON<unknown>(
-        'categories?view=cards&page=1&per_page=8&sort_by=featured_desc',
-        signal
+      const featuredCards = await tryFetchCategories(
+        'categories?view=cards&featured=true&limit=8&sort_by=featured_desc',
+        extractCategories
       );
-      return extractCategories(fallbackPayload);
+      if (featuredCards.length > 0) return featuredCards;
+
+      const cardsFallback = await tryFetchCategories(
+        'categories?view=cards&page=1&per_page=8&sort_by=featured_desc',
+        extractCategories
+      );
+      if (cardsFallback.length > 0) return cardsFallback;
+
+      const activeFallback = await tryFetchCategories('categories?status=active&limit=8', extractCategories);
+      if (activeFallback.length > 0) return activeFallback;
+
+      const treeFallback = await tryFetchCategories('categories/tree', flattenCategoryTree);
+      return treeFallback.slice(0, 8);
     },
     { fallback: [] }
   );
@@ -161,9 +258,11 @@ export async function getCachedBanners(position: 'categories_top' | 'companies_t
   const result = await cache.get<Banner[]>(
     `home.banners.${position}`,
     async (signal) => {
-      const payload = await fetchJSON<Banner[] | { banners?: Banner[] }>(`banners?position=${position}`, signal);
+      const payload = await fetchJSON<Banner[] | { banners?: Banner[]; data?: Banner[] }>(`banners?position=${position}`, signal);
       if (Array.isArray(payload)) return payload;
-      return safeArray<Banner>(payload?.banners);
+      if (Array.isArray(payload?.banners)) return payload.banners;
+      if (Array.isArray(payload?.data)) return payload.data;
+      return [];
     },
     { fallback: [] }
   );

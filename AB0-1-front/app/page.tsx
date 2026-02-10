@@ -227,7 +227,6 @@ async function LandingHeroWrapper({
   dataPromise: ReturnType<typeof getHeroDataCached>;
 }) {
   const { allCategories } = await dataPromise;
-  console.log(`[LandingHeroWrapper] Categories count: ${allCategories?.length || 0}`);
   return <LandingHero categories={allCategories} />;
 }
 
