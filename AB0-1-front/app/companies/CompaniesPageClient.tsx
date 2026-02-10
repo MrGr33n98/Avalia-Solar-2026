@@ -30,14 +30,17 @@ interface CompaniesPageClientProps {
 }
 
 interface CompaniesContentProps extends CompaniesPageClientProps {}
+const EMPTY_CATEGORY_IDS: number[] = [];
 
-export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], canonicalPath }: CompaniesContentProps) {
+export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canonicalPath }: CompaniesContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParamsKey = searchParams.toString();
+  const activeForcedCategoryIds = forcedCategoryIds ?? EMPTY_CATEGORY_IDS;
   const pathCategoryIds = useMemo(
-    () => (forcedCategoryIds.length > 0 ? forcedCategoryIds : extractCategoryIdsFromPath(pathname)),
-    [forcedCategoryIds, pathname]
+    () => (activeForcedCategoryIds.length > 0 ? activeForcedCategoryIds : extractCategoryIdsFromPath(pathname)),
+    [activeForcedCategoryIds, pathname]
   );
   const pathSlugById = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -48,10 +51,37 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
   const PAGE_SIZE = 12;
 
   const filters = useMemo(
-    () => parseQueryParams(searchParams, { pathCategoryIds }),
-    [searchParams, pathCategoryIds]
+    () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
+    [searchParamsKey, pathCategoryIds]
   );
   const [searchInput, setSearchInput] = useState(filters.search || '');
+  const requestParams = useMemo(
+    () => ({
+      status: 'active' as const,
+      page: filters.page || 1,
+      per_page: PAGE_SIZE,
+      q: filters.search || undefined,
+      state: filters.state.length > 0 ? filters.state : undefined,
+      city: filters.city.length > 0 ? filters.city : undefined,
+      category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
+      min_rating: filters.min_rating || undefined,
+      verified: filters.verified || undefined,
+      featured: filters.featured || undefined,
+      sort: filters.sort || undefined,
+      fields: 'card' as const,
+    }),
+    [
+      filters.page,
+      filters.search,
+      filters.state,
+      filters.city,
+      filters.category_ids,
+      filters.min_rating,
+      filters.verified,
+      filters.featured,
+      filters.sort,
+    ]
+  );
 
   const buildTargetUrl = (nextFilters: CompanyFilters): string => {
     const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
@@ -92,41 +122,40 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
   }, [filters.search]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        console.log('[Companies] Fetching with filters:', filters);
-        const response = await companiesApiSafe.getAllPaginated({
-          status: 'active', // Garantir que apenas empresas ativas sejam listadas
-          page: filters.page || 1,
-          per_page: PAGE_SIZE,
-          q: filters.search || undefined,
-          state: filters.state.length > 0 ? filters.state : undefined,
-          city: filters.city.length > 0 ? filters.city : undefined,
-          category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
-          min_rating: filters.min_rating || undefined,
-          verified: filters.verified || undefined,
-          featured: filters.featured || undefined,
-          sort: filters.sort || undefined,
-          fields: 'card',
-        });
+        console.log('[Companies] Fetching with filters:', requestParams);
+        const response = await companiesApiSafe.getAllPaginated(requestParams);
 
         console.log('[Companies] API Response:', response);
-        setCompanies(response.data || []);
-        setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
+        if (!cancelled) {
+          setCompanies(response.data || []);
+          setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
+        }
       } catch (err) {
         console.error('[Companies] Fetch error:', err);
         const errorMsg = (err as any)?.message || 'Erro ao carregar empresas';
         const detailedError = `${errorMsg}. Verifique se o backend está rodando em http://localhost:3001`;
-        setError(detailedError);
+        if (!cancelled) {
+          setError(detailedError);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, [filters]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestParams]);
 
   const visibleCompanies = useMemo(
     () => {
@@ -416,3 +445,4 @@ export default function CompaniesPageClient(props: CompaniesPageClientProps) {
     </Suspense>
   );
 }
+

@@ -19,7 +19,7 @@ import { QualityFilters } from './QualityFilters';
 import { SortFilter } from './SortFilter';
 import { ActiveFiltersSummary } from './ActiveFiltersSummary';
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
-import { parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
+import { areFiltersEqual, parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
 import {
   buildCompaniesCategoriesPath,
   COMPANIES_PATH,
@@ -32,16 +32,22 @@ export const FilterSidebar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
   const pathCategoryIds = useMemo(() => extractCategoryIdsFromPath(pathname), [pathname]);
   const slugByIdFromPath = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
   
   const [filters, setFilters] = useState<CompanyFilters>(DEFAULT_FILTERS);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  const parsedFilters = useMemo(
+    () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
+    [searchParamsKey, pathCategoryIds]
+  );
+
   // Hydrate filters from URL on mount and searchParams change
   useEffect(() => {
-    setFilters(parseQueryParams(searchParams, { pathCategoryIds }));
-  }, [searchParams, pathCategoryIds]);
+    setFilters((current) => (areFiltersEqual(current, parsedFilters) ? current : parsedFilters));
+  }, [parsedFilters]);
 
   const buildTargetUrl = useCallback((nextFilters: CompanyFilters) => {
     const hasPathCategories = isCompaniesCategoriesPath(pathname);

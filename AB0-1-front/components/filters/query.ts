@@ -90,3 +90,35 @@ export function isFilterActive(filters: CompanyFilters): boolean {
     filters.whatsapp_enabled
   );
 }
+
+const sameStringArray = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+const sameNumberArray = (a: number[], b: number[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+export function areFiltersEqual(a: CompanyFilters, b: CompanyFilters): boolean {
+  return (
+    a.search === b.search &&
+    sameStringArray(a.state, b.state) &&
+    sameStringArray(a.city, b.city) &&
+    sameNumberArray(a.category_ids, b.category_ids) &&
+    a.min_rating === b.min_rating &&
+    a.verified === b.verified &&
+    a.featured === b.featured &&
+    a.financing_enabled === b.financing_enabled &&
+    a.whatsapp_enabled === b.whatsapp_enabled &&
+    a.sort === b.sort &&
+    a.page === b.page
+  );
+}
