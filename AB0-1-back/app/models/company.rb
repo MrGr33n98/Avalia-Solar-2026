@@ -507,6 +507,18 @@ class Company < ApplicationRecord
     generate_attachment_url(logo)
   end
 
+  def media_urls
+    return [] unless media_assets.attached?
+
+    media_assets.filter_map do |asset|
+      generate_attachment_url(asset)
+    end
+  end
+
+  def published_videos
+    company_videos.where(status: 'published').order(created_at: :desc)
+  end
+
   def calculate_historical_stats(days)
     end_date = Date.current
     start_date = end_date - days.days
@@ -584,7 +596,12 @@ class Company < ApplicationRecord
   end
 
   def generate_attachment_url(attachment)
-    return nil unless attachment&.attached?
+    return nil if attachment.blank?
+    if attachment.respond_to?(:attached?)
+      return nil unless attachment.attached?
+    elsif !attachment.is_a?(ActiveStorage::Attachment)
+      return nil
+    end
 
     begin
       # Use rails_storage_proxy_url to serve images through the app
