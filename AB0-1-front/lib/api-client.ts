@@ -32,7 +32,15 @@ const buildQueryParams = (params: Record<string, any>) => {
   const queryParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      queryParams.append(key, value.toString());
+      if (Array.isArray(value)) {
+        value.forEach((v) => {
+          if (v !== undefined && v !== null) {
+            queryParams.append(`${key}[]`, v.toString());
+          }
+        });
+      } else {
+        queryParams.append(key, value.toString());
+      }
     }
   });
   const qs = queryParams.toString();
