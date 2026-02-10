@@ -76,6 +76,7 @@ RSpec.describe 'Company Access API', type: :request do
 
   describe 'GET /api/v1/company_access/context' do
     it 'returns context for review users' do
+      create_active_company(name: 'Empresa Contexto')
       auth = auth_headers(review_user)
       get '/api/v1/company_access/context', headers: auth
 
@@ -84,6 +85,7 @@ RSpec.describe 'Company Access API', type: :request do
       expect(body['active_memberships']).to be_an(Array)
       expect(body['pending_requests']).to be_an(Array)
       expect(body['suggested_companies']).to be_an(Array)
+      expect(body['suggested_companies'].first).to include('logo_url')
     end
 
     it 'returns active memberships and pending requests' do

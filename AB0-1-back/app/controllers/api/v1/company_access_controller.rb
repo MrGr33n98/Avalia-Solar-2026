@@ -26,7 +26,10 @@
         suggested_scope = apply_company_query_filter(suggested_scope, query, company_columns)
         suggested_scope = apply_company_sort_order(suggested_scope, company_columns)
 
-        suggested_companies = suggested_scope.limit(limit).select(*company_context_select_columns(company_columns))
+        suggested_companies = suggested_scope
+                              .with_attached_logo
+                              .limit(limit)
+                              .select(*company_context_select_columns(company_columns))
 
         track_company_access_context_request('success')
 
@@ -56,7 +59,8 @@
               company_slug: company_has_column?(company, :slug) ? company.slug : nil,
               city: company_has_column?(company, :city) ? company.city : nil,
               state: company_has_column?(company, :state) ? company.state : nil,
-              verified: company_has_column?(company, :verified) ? company.verified : false
+              verified: company_has_column?(company, :verified) ? company.verified : false,
+              logo_url: company.logo_url
             }
           end,
           query: query.presence,

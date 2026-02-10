@@ -62,6 +62,7 @@ test.describe('Select Company Flow', () => {
                   city: 'Sao Paulo',
                   state: 'SP',
                   verified: true,
+                  logo_url: 'http://localhost:3001/uploads/volitbras-logo.png',
                 },
               ],
             }),
@@ -83,6 +84,7 @@ test.describe('Select Company Flow', () => {
                 city: 'Goiania',
                 state: 'GO',
                 verified: true,
+                logo_url: null,
               },
             ],
           }),
@@ -113,6 +115,7 @@ test.describe('Select Company Flow', () => {
 
     await page.fill('input[placeholder="Buscar empresa por nome..."]', 'voli');
     await expect(page.locator('text=Volitbras')).toBeVisible();
+    await expect(page.locator('img[alt=\"Volitbras\"]')).toBeVisible();
     await page.click('button:has-text("Solicitar acesso")');
 
     await expect(

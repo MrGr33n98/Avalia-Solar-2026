@@ -380,8 +380,17 @@ export default function SelectCompanyPage() {
                       className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/20 transition-all"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="h-11 w-11 rounded-full border border-gray-100 bg-white flex items-center justify-center shrink-0">
-                          <Building2 className="h-5 w-5 text-gray-300" />
+                        <div className="relative h-11 w-11 rounded-full border border-gray-100 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                          {company.logo_url ? (
+                            <Image
+                              src={company.logo_url}
+                              alt={company.company_name}
+                              fill
+                              className="object-cover p-1"
+                            />
+                          ) : (
+                            <Building2 className="h-5 w-5 text-gray-300" />
+                          )}
                         </div>
 
                         <div className="min-w-0">

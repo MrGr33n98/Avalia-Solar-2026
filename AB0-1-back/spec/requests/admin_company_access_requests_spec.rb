@@ -1,4 +1,5 @@
-﻿require 'rails_helper'
+require 'rails_helper'
+require 'cgi'
 
 RSpec.describe 'Admin Company Access Requests', type: :request do
   include Devise::Test::IntegrationHelpers
@@ -10,7 +11,18 @@ RSpec.describe 'Admin Company Access Requests', type: :request do
     end
   end
 
-  let(:company) { create(:company, status: 'active', moderation_status: 'approved') }
+  let(:category) { create(:category, status: 'active') }
+  let(:company) do
+    create(
+      :company,
+      status: 'active',
+      moderation_status: 'approved',
+      state: 'SP',
+      city: 'Sao Paulo',
+      phone: '11999999999',
+      categories: [category]
+    )
+  end
   let(:user) { create(:user, role: 'company', status: :active, company: nil, confirmed_at: Time.current) }
   let!(:access_request) { create(:company_access_request, user: user, company: company, status: 'pending') }
 
@@ -34,5 +46,18 @@ RSpec.describe 'Admin Company Access Requests', type: :request do
     expect(response).to redirect_to(admin_company_access_request_path(access_request))
     expect(access_request.reload.status).to eq('rejected')
     expect(access_request.admin_note).to eq('Nao autorizado')
+  end
+
+  it 'renders approve/reject action items with PUT form submission script' do
+    get admin_company_access_request_path(access_request)
+
+    decoded_html = CGI.unescapeHTML(response.body)
+
+    expect(response).to have_http_status(:ok)
+    expect(decoded_html).to include(approve_admin_company_access_request_path(access_request))
+    expect(decoded_html).to include(reject_admin_company_access_request_path(access_request))
+    expect(decoded_html).to include("methodInput.name = '_method'")
+    expect(decoded_html).to include("methodInput.value = 'put'")
+    expect(decoded_html).to include("csrfInput.name = 'authenticity_token'")
   end
 end

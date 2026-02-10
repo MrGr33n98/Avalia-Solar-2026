@@ -305,6 +305,7 @@ export interface CompanyAccessSuggestedCompany {
   state?: string;
   verified?: boolean;
   match_reason?: string;
+  logo_url?: string | null;
 }
 
 export interface CompanyAccessContext {
