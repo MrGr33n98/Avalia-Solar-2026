@@ -13,10 +13,8 @@ import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   display: 'swap',
-  preload: true,
-  fallback: ['system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
   variable: '--font-sans',
 });
 
@@ -96,7 +94,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
       </head>
-      <body suppressHydrationWarning className={inter.className}>
+      <body suppressHydrationWarning className="font-sans">
         {/* Google Tag Manager - Initialized early in body to avoid blocking head, but still before main content */}
         <GoogleTagManager gtmId={GTM_ID} />
         
