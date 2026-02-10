@@ -20,6 +20,7 @@ export default function QuickLeadModal() {
   const [leadId, setLeadId] = useState<number | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [verificationHint, setVerificationHint] = useState('');
 
   const [form, setForm] = useState({
     fullName: '',
@@ -39,6 +40,7 @@ export default function QuickLeadModal() {
       setOpen(true);
       setStep(1);
       setError(null);
+      setVerificationHint('');
       track('Quick Lead Opened', { source: detail.source });
     };
     window.addEventListener('open-quick-lead', handler as EventListener);
@@ -59,6 +61,10 @@ export default function QuickLeadModal() {
 
     if (!form.fullName || !form.email || !form.phone) {
       setError('Preencha os campos obrigatórios.');
+      return;
+    }
+    if (!isValidEmail(form.email)) {
+      setError('Informe um e-mail valido.');
       return;
     }
 
@@ -92,6 +98,7 @@ export default function QuickLeadModal() {
 
       const response = await leadsWizardApi.create(payload);
       setLeadId(response.lead_id);
+      setVerificationHint(response.email_hint || form.email);
       setResendCooldown(60);
       setStep(2);
       track('Quick Lead Created', { lead_id: response.lead_id });
@@ -112,7 +119,7 @@ export default function QuickLeadModal() {
 
     setSubmitting(true);
     try {
-      await leadsWizardApi.verifyOtp(leadId, otpCode);
+      await leadsWizardApi.verifyEmailCode(leadId, otpCode);
       setStep(3);
       track('Quick Lead Verified', { lead_id: leadId });
     } catch (err: any) {
@@ -126,7 +133,7 @@ export default function QuickLeadModal() {
     if (!leadId || resendCooldown > 0) return;
     setSubmitting(true);
     try {
-      await leadsWizardApi.resendOtp(leadId);
+      await leadsWizardApi.resendEmailCode(leadId);
       setResendCooldown(60);
     } catch (err: any) {
       setError(err?.message || 'Erro ao reenviar.');
@@ -240,8 +247,8 @@ export default function QuickLeadModal() {
           {step === 2 && (
             <div className="space-y-6 py-4 flex flex-col items-center">
               <div className="text-center space-y-2">
-                <h3 className="text-lg font-bold text-gray-900">Verifique seu Telefone</h3>
-                <p className="text-sm text-gray-500">Enviamos um código de 6 dígitos via SMS para {form.phone}</p>
+                <h3 className="text-lg font-bold text-gray-900">Verifique seu e-mail</h3>
+                <p className="text-sm text-gray-500">Enviamos um codigo de 6 digitos para {verificationHint || form.email}</p>
               </div>
 
               <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
@@ -295,3 +302,6 @@ export default function QuickLeadModal() {
     </Dialog>
   );
 }
+
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

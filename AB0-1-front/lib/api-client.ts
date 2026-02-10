@@ -197,7 +197,10 @@ export async function fetchApiSafe<T>(
 
       const status = (apiError as any)?.status;
       const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
-      const shouldRetryNetwork = apiError.isNetworkError && attempt < maxRetries - 1;
+      const shouldRetryNetwork =
+        isIdempotent &&
+        apiError.isNetworkError &&
+        attempt < maxRetries - 1;
       const shouldRetryStatus =
         isIdempotent &&
         attempt < maxRetries - 1 &&
@@ -560,58 +563,27 @@ export const leadsApiSafe = {
 
 export const leadsWizardApi = {
   create: async (payload: { lead: Record<string, any>; preferred_company_id?: number }): Promise<any> => {
-    try {
-      return await fetchApiSafe<any>('leads/wizard_create', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (error) {
-      console.warn('[leadsWizardApi.create] API failed, falling back to mock:', error);
-      // Mock successful response to allow flow continuity
-      return { lead_id: 999999 };
-    }
+    return await fetchApiSafe<any>('leads/wizard_create', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
-  sendOtp: async (leadId: number): Promise<any> => {
-    try {
-      return await fetchApiSafe<any>(`leads/${leadId}/send_otp`, { method: 'POST' });
-    } catch (error) {
-      console.warn('[leadsWizardApi.sendOtp] API failed, using mock');
-      return { success: true };
-    }
+  sendEmailCode: async (leadId: number): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/send_otp`, { method: 'POST' });
   },
-  resendOtp: async (leadId: number): Promise<any> => {
-    try {
-      return await fetchApiSafe<any>(`leads/${leadId}/resend_otp`, { method: 'POST' });
-    } catch (error) {
-       console.warn('[leadsWizardApi.resendOtp] API failed, using mock');
-       return { success: true };
-    }
+  resendEmailCode: async (leadId: number): Promise<any> => {
+    return await fetchApiSafe<any>(`leads/${leadId}/resend_otp`, { method: 'POST' });
   },
-  verifyOtp: async (leadId: number, otpCode: string): Promise<any> => {
-    try {
-      const response = await fetchApiSafe<any>(`leads/${leadId}/verify_otp`, {
-        method: 'POST',
-        body: JSON.stringify({ otp_code: otpCode }),
-      });
+  verifyEmailCode: async (leadId: number, verificationCode: string): Promise<any> => {
+    const normalizedCode = verificationCode.trim();
+    if (!/^\d{6}$/.test(normalizedCode)) {
+      throw new Error('Codigo de verificacao invalido');
+    }
 
-      if (!response) {
-        throw new Error('Lead nÃ£o encontrado ou erro de comunicaÃ§Ã£o.');
-      }
-
-      return response;
-    } catch (error) {
-      console.warn('[leadsWizardApi.verifyOtp] API failed, falling back to mock:', error);
-      if (otpCode === '000000' || otpCode.length === 6) {
-        // Mock success with some companies
-        return {
-           companies: [
-             { id: 1, name: 'WEG Solar', city: 'SÃ£o Paulo', state: 'SP', rating_avg: 4.9, reviews_count: 120, verified: true, featured: true, logo_url: null },
-             { id: 2, name: 'Intelbras Solar', city: 'FlorianÃ³polis', state: 'SC', rating_avg: 4.8, reviews_count: 85, verified: true, featured: false, logo_url: null }
-           ]
-        };
-      }
-      throw error;
-    }
+    return await fetchApiSafe<any>(`leads/${leadId}/verify_otp`, {
+      method: 'POST',
+      body: JSON.stringify({ otp_code: normalizedCode }),
+    });
   },
   result: async (leadId: number): Promise<any> => {
     return await fetchApiSafe<any>(`leads/${leadId}/wizard_result`);
@@ -640,6 +612,7 @@ export const financingOptionsApiSafe = {
     }
   },
 };
+
 
 
 

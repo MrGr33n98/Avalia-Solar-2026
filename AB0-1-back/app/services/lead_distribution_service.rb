@@ -148,12 +148,18 @@ class LeadDistributionService
 
   def sort_key(company)
     [
-      company.plan_status == 'active' ? 0 : 1,
+      plan_active?(company) ? 0 : 1,
       company.featured? ? 0 : 1,
       -company.rating_avg.to_f,
       -company.reviews_count.to_i,
       -company.rating_count.to_i
     ]
+  end
+
+  def plan_active?(company)
+    return false unless company.respond_to?(:plan_status)
+
+    company.plan_status.to_s == 'active'
   end
 
   def persist!(companies)

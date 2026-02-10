@@ -1,0 +1,9 @@
+<p>Ola, <%= @lead.name.presence || 'usuario' %>.</p>
+
+<p>Seu codigo de verificacao do Avalia Solar e:</p>
+
+<p style="font-size: 28px; font-weight: 700; letter-spacing: 6px;"><%= @otp_code %></p>
+
+<p>Este codigo expira em <%= @expires_in_minutes %> minutos.</p>
+
+<p>Se voce nao solicitou este codigo, ignore este e-mail.</p>

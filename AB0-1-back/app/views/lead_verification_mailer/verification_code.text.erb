@@ -1,0 +1,7 @@
+Ola, <%= @lead.name.presence || 'usuario' %>.
+
+Seu codigo de verificacao do Avalia Solar e: <%= @otp_code %>
+
+Este codigo expira em <%= @expires_in_minutes %> minutos.
+
+Se voce nao solicitou este codigo, ignore este e-mail.

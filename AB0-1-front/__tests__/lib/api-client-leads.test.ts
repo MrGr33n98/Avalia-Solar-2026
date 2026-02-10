@@ -3,36 +3,43 @@ import { leadsWizardApi } from '../../lib/api-client';
 // Mock global fetch
 global.fetch = jest.fn();
 
-describe('leadsWizardApi.verifyOtp', () => {
+describe('leadsWizardApi.verifyEmailCode', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should throw error when backend returns 404 (Lead not found)', async () => {
-    // Simulate 404 Not Found response
+  it('validates code format before calling backend', async () => {
+    await expect(leadsWizardApi.verifyEmailCode(10, 'abc'))
+      .rejects
+      .toThrow('Codigo de verificacao invalido');
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('throws when backend returns 404', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 404,
+      statusText: 'Not Found',
       json: async () => ({ error: 'Lead not found' }),
     });
 
-    // We expect verifyOtp to throw an error now, instead of returning null
-    // because returning null causes "response.companies" crash in UI
-    await expect(leadsWizardApi.verifyOtp(999, '123456'))
+    await expect(leadsWizardApi.verifyEmailCode(999, '123456'))
       .rejects
-      .toThrow('Lead não encontrado ou erro de comunicação.');
+      .toThrow('[404]');
   });
 
-  it('should return data when backend returns 200', async () => {
+  it('returns data when backend returns 200', async () => {
     const mockData = { companies: [{ id: 1, name: 'Test Company' }] };
-    
+
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => mockData,
     });
 
-    const result = await leadsWizardApi.verifyOtp(1, '123456');
+    const result = await leadsWizardApi.verifyEmailCode(1, '123456');
     expect(result).toEqual(mockData);
   });
 });
+

@@ -70,6 +70,7 @@ export default function QuoteWizardModal() {
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [companies, setCompanies] = useState<WizardCompany[]>([]);
+  const [verificationHint, setVerificationHint] = useState('');
 
   const progressValue = useMemo(
     () => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)),
@@ -108,6 +109,7 @@ export default function QuoteWizardModal() {
     setSubmitting(false);
     setResendCooldown(0);
     setCompanies([]);
+    setVerificationHint('');
   };
 
   const updateForm = (patch: Partial<WizardFormState>) => {
@@ -164,6 +166,10 @@ export default function QuoteWizardModal() {
         setError('Preencha nome, email e telefone.');
         return;
       }
+      if (!isValidEmail(form.email)) {
+        setError('Informe um e-mail valido.');
+        return;
+      }
       if (!form.consent) {
         setError('O consentimento e obrigatorio.');
         return;
@@ -192,6 +198,7 @@ export default function QuoteWizardModal() {
 
         const response = await leadsWizardApi.create(payload);
         setLeadId(response.lead_id);
+        setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
         setStep(8);
       } catch (err: any) {
@@ -231,7 +238,7 @@ export default function QuoteWizardModal() {
 
     setSubmitting(true);
     try {
-        const response = await leadsWizardApi.verifyOtp(leadId, otpCode);
+        const response = await leadsWizardApi.verifyEmailCode(leadId, otpCode);
         if (response && response.companies) {
           track('Wizard Conversion', {
             lead_id: leadId,
@@ -256,7 +263,7 @@ export default function QuoteWizardModal() {
 
     setSubmitting(true);
     try {
-      await leadsWizardApi.resendOtp(leadId);
+      await leadsWizardApi.resendEmailCode(leadId);
       setResendCooldown(60);
     } catch (err: any) {
       setError(err?.message || 'Nao foi possivel reenviar o codigo.');
@@ -505,8 +512,8 @@ export default function QuoteWizardModal() {
           {step === 8 && (
             <>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Verificacao por SMS</h2>
-                <p className="text-sm text-muted-foreground">Digite o codigo enviado para seu telefone.</p>
+                <h2 className="text-lg font-semibold text-foreground">Verificacao por e-mail</h2>
+                <p className="text-sm text-muted-foreground">Digite o codigo enviado para {verificationHint || form.email}.</p>
               </div>
               <div className="flex flex-col items-center gap-4">
                 <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
@@ -643,3 +650,6 @@ const parseNumber = (value: string) => {
   const number = Number(normalized);
   return Number.isFinite(number) ? number : 0;
 };
+
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

@@ -1,6 +1,4 @@
 require 'bcrypt'
-
-require 'bcrypt'
 class Lead < ApplicationRecord
   # Make company association optional since the database might not have company_id column
   belongs_to :company, optional: true
@@ -156,7 +154,9 @@ class Lead < ApplicationRecord
   def apply_address_fallbacks
     return if address_full.blank?
 
-    self.location = address_full if location.blank?
+    if respond_to?(:location) && respond_to?(:location=) && location.blank?
+      self.location = address_full
+    end
     return if city.present? && state.present? && zipcode.present?
 
     extracted = self.class.extract_address_parts(address_full)
@@ -171,14 +171,16 @@ class Lead < ApplicationRecord
 
   def track_analytics_event
     return if company_id.blank?
+    estimated_budget_value = has_attribute?(:estimated_budget) ? self[:estimated_budget] : nil
+    project_type_value = has_attribute?(:project_type) ? self[:project_type] : nil
 
     Analytics::TrackEventService.call(
       company_id: company_id,
       event_type: 'lead_created',
       metadata: {
         source: 'lead',
-        estimated_budget: estimated_budget,
-        project_type: project_type
+        estimated_budget: estimated_budget_value,
+        project_type: project_type_value
       }.compact,
       user: nil,
       tracked_at: created_at

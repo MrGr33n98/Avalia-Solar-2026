@@ -3,12 +3,14 @@ require 'rails_helper'
 RSpec.describe 'Leads wizard API', type: :request do
   before do
     allow(CNPJ).to receive(:valid?).and_return(true)
+    ActionMailer::Base.perform_deliveries = true
+    ActionMailer::Base.deliveries.clear
   end
 
   let(:category) { Category.create!(name: 'Solar', description: 'Categoria de energia solar') }
 
   def create_company(attrs = {})
-    company = Company.new({
+    base_attrs = {
       name: 'Solar Company',
       description: 'Descricao da empresa',
       email: 'contato@empresa.com',
@@ -18,10 +20,12 @@ RSpec.describe 'Leads wizard API', type: :request do
       status: 'active',
       verified: true,
       featured: false,
-      plan_status: 'active',
       active_admin: true,
       cnpj: '12345678901234'
-    }.merge(attrs))
+    }
+    base_attrs[:plan_status] = 'active' if Company.column_names.include?('plan_status')
+
+    company = Company.new(base_attrs.merge(attrs))
     company.categories << category
     company.save!
     company
@@ -53,7 +57,21 @@ RSpec.describe 'Leads wizard API', type: :request do
     }
 
     expect(response).to have_http_status(:created)
-    lead_id = JSON.parse(response.body)['lead_id']
+    create_payload = JSON.parse(response.body)
+    lead_id = create_payload['lead_id']
+    expect(create_payload['verification_channel']).to eq('email')
+    expect(create_payload['email_hint']).to be_present
+    expect(ActionMailer::Base.deliveries.size).to eq(1)
+    expect(ActionMailer::Base.deliveries.last.to).to include('lead@example.com')
+    Lead.find(lead_id).update_column(:otp_sent_at, 2.minutes.ago)
+
+    post "/api/v1/leads/#{lead_id}/send_otp"
+
+    expect(response).to have_http_status(:ok)
+    send_otp_payload = JSON.parse(response.body)
+    expect(send_otp_payload['verification_channel']).to eq('email')
+    expect(send_otp_payload['email_hint']).to be_present
+    expect(ActionMailer::Base.deliveries.size).to eq(2)
 
     post "/api/v1/leads/#{lead_id}/verify_otp", params: { otp_code: '123456' }
 

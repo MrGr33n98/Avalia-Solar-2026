@@ -70,8 +70,6 @@ class Api::V1::LeadsController < Api::V1::BaseController
     )
   end
 
-  private
-
   def serialize_lead(lead)
     {
       id: lead.id,
@@ -141,7 +139,9 @@ class Api::V1::LeadsController < Api::V1::BaseController
     lead.wizard_status = 'pending_otp'
     lead.consent_at = Time.current if truthy?(payload[:consent])
     lead.consent_ip = request.remote_ip if lead.consent_at.present?
-    lead.location = lead.address_full if lead.address_full.present?
+    if lead.address_full.present? && lead.respond_to?(:location=)
+      lead.location = lead.address_full
+    end
 
     lead.bill_value = parse_decimal(lead.bill_value)
     lead.monthly_kwh = parse_decimal(lead.monthly_kwh)
@@ -171,7 +171,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
       otp_code = lead.generate_otp!
       log_otp_code(lead, otp_code)
-      render json: { lead_id: lead.id, otp_sent_at: lead.otp_sent_at }, status: :created
+      deliver_otp_email!(lead, otp_code)
+
+      render json: {
+        lead_id: lead.id,
+        otp_sent_at: lead.otp_sent_at,
+        verification_channel: 'email',
+        email_hint: mask_email(lead.email)
+      }, status: :created
     else
       render json: { errors: lead.errors.full_messages }, status: :unprocessable_entity
     end
@@ -186,20 +193,27 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return render json: { error: 'Lead not found' }, status: :not_found if @lead.nil?
 
     if @lead.otp_verified_at.present?
-      return render json: { error: 'OTP already verified' }, status: :unprocessable_entity
+      return render json: { error: 'Verification code already confirmed' }, status: :unprocessable_entity
     end
 
     unless @lead.otp_can_resend?
       retry_in = ::Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
-      return render json: { error: 'OTP recently sent', retry_in: retry_in.to_i }, status: :too_many_requests
+      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i }, status: :too_many_requests
     end
 
     otp_code = @lead.generate_otp!
     log_otp_code(@lead, otp_code)
-    render json: { lead_id: @lead.id, otp_sent_at: @lead.otp_sent_at }, status: :ok
+    deliver_otp_email!(@lead, otp_code)
+
+    render json: {
+      lead_id: @lead.id,
+      otp_sent_at: @lead.otp_sent_at,
+      verification_channel: 'email',
+      email_hint: mask_email(@lead.email)
+    }, status: :ok
   rescue StandardError => e
     Rails.logger.error("Leads send_otp error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    render json: { error: 'Unable to send verification email' }, status: :internal_server_error
   end
 
   def resend_otp
@@ -215,21 +229,21 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
 
     if @lead.otp_attempts_exceeded?
-      return render json: { error: 'OTP attempts exceeded' }, status: :unprocessable_entity
+      return render json: { error: 'Verification attempts exceeded' }, status: :unprocessable_entity
     end
 
     if @lead.otp_expired?
-      return render json: { error: 'OTP expired' }, status: :unprocessable_entity
+      return render json: { error: 'Verification code expired' }, status: :unprocessable_entity
     end
 
     otp_code = params[:otp_code].presence || params.dig(:lead, :otp_code)
     if otp_code.blank?
-      return render json: { error: 'OTP code is required' }, status: :unprocessable_entity
+      return render json: { error: 'Verification code is required' }, status: :unprocessable_entity
     end
 
     unless @lead.valid_otp?(otp_code)
       @lead.increment_otp_attempts!
-      return render json: { error: 'Invalid OTP' }, status: :unprocessable_entity
+      return render json: { error: 'Invalid verification code' }, status: :unprocessable_entity
     end
 
     companies = []
@@ -541,5 +555,21 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return unless Rails.env.development? || Rails.env.test?
 
     Rails.logger.info("OTP for lead #{lead.id}: #{code}")
+  end
+
+  def deliver_otp_email!(lead, code)
+    raise ArgumentError, 'Lead e-mail is required for verification' if lead.email.blank?
+
+    LeadVerificationMailer.verification_code(lead.id, code).deliver_now
+  end
+
+  def mask_email(email)
+    return nil if email.blank?
+
+    local_part, domain = email.split('@', 2)
+    return email if local_part.blank? || domain.blank?
+    return email if local_part.length <= 2
+
+    "#{local_part[0, 2]}***@#{domain}"
   end
 end
