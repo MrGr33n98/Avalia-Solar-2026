@@ -654,12 +654,22 @@ end
     end
 
     def destroy
-      company = Company.find_by(id: params[:id])
-      if company
-        super
+      company = find_resource
+
+      if company.destroy
+        redirect_to collection_path, notice: 'Empresa excluida com sucesso.'
       else
-        redirect_to collection_path, notice: 'Empresa já excluída ou não encontrada.'
+        errors = company.errors.full_messages.presence || ['existem dependencias vinculadas']
+        redirect_to resource_path(company), alert: "Nao foi possivel excluir a empresa: #{errors.join(', ')}"
       end
+    rescue ActiveRecord::RecordNotFound
+      redirect_to collection_path, alert: 'Empresa nao encontrada.'
+    rescue ActiveRecord::InvalidForeignKey => e
+      Rails.logger.error("[Admin::Companies] Destroy failed for company_id=#{params[:id]}: #{e.class} #{e.message}")
+      redirect_to collection_path, alert: 'Nao foi possivel excluir a empresa porque existem registros vinculados.'
+    rescue StandardError => e
+      Rails.logger.error("[Admin::Companies] Unexpected destroy error for company_id=#{params[:id]}: #{e.class} #{e.message}")
+      redirect_to collection_path, alert: 'Erro inesperado ao excluir a empresa.'
     end
   end
 

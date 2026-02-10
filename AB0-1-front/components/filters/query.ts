@@ -1,6 +1,14 @@
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
 
-export function parseQueryParams(searchParams: URLSearchParams): CompanyFilters {
+interface ParseQueryParamsOptions {
+  pathCategoryIds?: number[];
+}
+
+interface StringifyQueryParamsOptions {
+  omitCategoryIds?: boolean;
+}
+
+export function parseQueryParams(searchParams: URLSearchParams, options: ParseQueryParamsOptions = {}): CompanyFilters {
   const searchStr = searchParams.get('search');
   const categoryIdsStr = searchParams.get('category_ids');
   const stateStr = searchParams.get('state');
@@ -12,10 +20,12 @@ export function parseQueryParams(searchParams: URLSearchParams): CompanyFilters 
   const whatsappStr = searchParams.get('whatsapp_enabled');
   const sortStr = searchParams.get('sort');
   const pageStr = searchParams.get('page');
+  const pathCategoryIds = options.pathCategoryIds || [];
+  const queryCategoryIds = categoryIdsStr ? categoryIdsStr.split(',').map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b) : [];
 
   return {
     search: searchStr || '',
-    category_ids: categoryIdsStr ? categoryIdsStr.split(',').map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b) : [],
+    category_ids: queryCategoryIds.length > 0 ? queryCategoryIds : [...pathCategoryIds].sort((a, b) => a - b),
     state: stateStr ? stateStr.split(',').filter(Boolean).sort() : [],
     city: cityStr ? cityStr.split(',').filter(Boolean).sort() : [],
     min_rating: minRatingStr ? Number(minRatingStr) : null,
@@ -28,14 +38,14 @@ export function parseQueryParams(searchParams: URLSearchParams): CompanyFilters 
   };
 }
 
-export function stringifyQueryParams(filters: CompanyFilters): string {
+export function stringifyQueryParams(filters: CompanyFilters, options: StringifyQueryParamsOptions = {}): string {
   const params = new URLSearchParams();
 
   if (filters.search) {
     params.set('search', filters.search);
   }
 
-  if (filters.category_ids.length > 0) {
+  if (!options.omitCategoryIds && filters.category_ids.length > 0) {
     params.set('category_ids', [...filters.category_ids].sort((a, b) => a - b).join(','));
   }
 

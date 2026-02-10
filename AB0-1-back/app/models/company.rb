@@ -46,10 +46,12 @@ class Company < ApplicationRecord
   has_many :company_financing_partners, dependent: :destroy
   has_many :company_financing_offers, dependent: :destroy
   has_many :banners, dependent: :nullify
+  has_many :banner_events, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
   has_many :company_videos, dependent: :destroy
   has_and_belongs_to_many :articles
   belongs_to :plan, optional: true
+  has_many :users, dependent: :nullify
   has_many :company_members, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   accepts_nested_attributes_for :company_members, allow_destroy: true

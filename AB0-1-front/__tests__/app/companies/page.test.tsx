@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import CompaniesPage from '../../../app/companies/page';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { CompaniesContent } from '../../../app/companies/CompaniesPageClient';
 
 const mockRouter = {
   push: jest.fn(),
@@ -45,10 +45,13 @@ jest.mock('@/components/LocationFilter', () => ({
 
 jest.mock('@/lib/api-client', () => ({
   companiesApiSafe: {
-    getAll: jest.fn().mockResolvedValue([
-      { id: 1, name: 'Empresa Alfa', state: 'SP', city: 'São Paulo' },
-      { id: 2, name: 'Empresa Beta', state: 'RJ', city: 'Rio' },
-    ]),
+    getAllPaginated: jest.fn().mockResolvedValue({
+      data: [
+        { id: 1, name: 'Empresa Alfa', state: 'SP', city: 'Sao Paulo' },
+        { id: 2, name: 'Empresa Beta', state: 'RJ', city: 'Rio' },
+      ],
+      meta: { pagination: { total: 2 } },
+    }),
   },
   categoriesApiSafe: {
     getAll: jest.fn().mockResolvedValue([
@@ -60,7 +63,7 @@ jest.mock('@/lib/api-client', () => ({
 jest.mock('@/hooks/useLocationData', () => ({
   useLocationData: () => ({
     states: ['SP', 'RJ'],
-    cities: ['São Paulo', 'Rio'],
+    cities: ['Sao Paulo', 'Rio'],
     loadingStates: false,
     loadingCities: false,
     fetchCities: jest.fn(),
@@ -68,45 +71,31 @@ jest.mock('@/hooks/useLocationData', () => ({
 }));
 
 beforeEach(() => {
-  jest.useFakeTimers();
   jest.clearAllMocks();
   mockSearchParams = new URLSearchParams();
 });
 
-afterEach(() => {
-  jest.useRealTimers();
-});
-
 describe('CompaniesPage', () => {
   it('renders hero and grid after data load', async () => {
-    await act(async () => {
-      render(<CompaniesPage />);
-    });
+    render(<CompaniesContent canonicalPath="/companies" />);
 
     expect(await screen.findByText(/Empresas de Energia Solar/i)).toBeInTheDocument();
     expect(screen.getByTestId('companies-grid')).toBeInTheDocument();
     expect(screen.getAllByTestId('company-card').length).toBeGreaterThan(0);
   });
 
-  it('shows active filter badge after debounced search', async () => {
-    let component: any;
-    await act(async () => {
-      component = render(<CompaniesPage />);
-    });
+  it('updates the URL query when user submits search', async () => {
+    render(<CompaniesContent canonicalPath="/companies" />);
+    await screen.findByText(/Empresas de Energia Solar/i);
 
     const search = screen.getAllByPlaceholderText(/Buscar empresas/i)[0];
     const form = search.closest('form');
-    
-    await act(async () => {
-      fireEvent.change(search, { target: { value: 'alfa' } });
-      fireEvent.submit(form!);
-    });
 
-    // Simulate the re-render after route update
-    await act(async () => {
-      component.rerender(<CompaniesPage />);
-    });
+    fireEvent.change(search, { target: { value: 'alfa' } });
+    fireEvent.submit(form!);
 
-    expect(await screen.findByText(/Busca: "alfa"/i)).toBeInTheDocument();
+    expect(mockRouter.replace).toHaveBeenCalled();
+    const lastCall = mockRouter.replace.mock.calls.at(-1)?.[0] as string;
+    expect(lastCall).toContain('search=alfa');
   });
 });

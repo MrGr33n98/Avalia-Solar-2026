@@ -1,7 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const LEGACY_COMPANIES_PATH = '/companies';
+const COMPANIES_CATEGORIES_PATH = '/companies/categorias';
+const FALLBACK_CATEGORY_SLUG = 'categoria';
+
+interface CategoryTreeLike {
+  id?: number;
+  name?: string;
+  seo_url?: string;
+  slug?: string;
+  children?: CategoryTreeLike[];
+  subcategories?: CategoryTreeLike[];
+}
+
+function normalizeCategoryIds(value: string | null): number[] {
+  if (!value) return [];
+
+  const parsed = value
+    .split(',')
+    .map((item) => Number(item.trim()))
+    .filter((item) => Number.isInteger(item) && item > 0);
+
+  return Array.from(new Set(parsed)).sort((a, b) => a - b);
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function extractCollection(payload: unknown): CategoryTreeLike[] {
+  if (Array.isArray(payload)) return payload as CategoryTreeLike[];
+  if (payload && typeof payload === 'object') {
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data as CategoryTreeLike[];
+    if (Array.isArray(obj.categories)) return obj.categories as CategoryTreeLike[];
+  }
+  return [];
+}
+
+function flattenCategoryIndex(categories: CategoryTreeLike[]): Record<number, string> {
+  const queue = [...categories];
+  const index: Record<number, string> = {};
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || typeof current.id !== 'number') continue;
+
+    const candidate = slugify(String(current.seo_url || current.slug || current.name || ''));
+    if (candidate) {
+      index[current.id] = candidate;
+    }
+
+    if (Array.isArray(current.children)) queue.push(...current.children);
+    if (Array.isArray(current.subcategories)) queue.push(...current.subcategories);
+  }
+
+  return index;
+}
+
+async function resolveCategorySlugIndex(request: NextRequest): Promise<Record<number, string>> {
+  try {
+    const response = await fetch(`${request.nextUrl.origin}/api/v1/categories/tree`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) return {};
+    const payload = await response.json();
+    return flattenCategoryIndex(extractCollection(payload));
+  } catch {
+    return {};
+  }
+}
+
+function buildCompaniesCategoriesPath(categoryIds: number[], slugById: Record<number, string>): string {
+  if (categoryIds.length === 0) return LEGACY_COMPANIES_PATH;
+
+  const segments = categoryIds.map((id) => {
+    const slug = slugById[id] || `${FALLBACK_CATEGORY_SLUG}-${id}`;
+    return `${slug}--${id}`;
+  });
+
+  return `${COMPANIES_CATEGORIES_PATH}/${segments.join('/')}`;
+}
+
 // This middleware runs on the edge
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   // Get the token from httpOnly cookie
   const token = request.cookies.get('jwt_token')?.value;
@@ -39,6 +128,23 @@ export function middleware(request: NextRequest) {
     response.headers.set('Expires', '0');
     return response;
   };
+
+  if (pathname === LEGACY_COMPANIES_PATH) {
+    const categoryIds = normalizeCategoryIds(request.nextUrl.searchParams.get('category_ids'));
+
+    if (categoryIds.length > 0) {
+      const slugById = await resolveCategorySlugIndex(request);
+      const destinationPath = buildCompaniesCategoriesPath(categoryIds, slugById);
+
+      const redirectUrl = new URL(destinationPath, request.url);
+      request.nextUrl.searchParams.forEach((value, key) => {
+        if (key === 'category_ids') return;
+        redirectUrl.searchParams.append(key, value);
+      });
+
+      return applyNoStoreHeaders(NextResponse.redirect(redirectUrl, 301));
+    }
+  }
   
   if (isProtectedRoute) {
     if (!token) {

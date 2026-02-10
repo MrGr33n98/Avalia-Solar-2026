@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { SlidersHorizontal, RotateCcw, X } from 'lucide-react';
 import { Accordion } from '@/components/ui/accordion';
@@ -20,27 +20,49 @@ import { SortFilter } from './SortFilter';
 import { ActiveFiltersSummary } from './ActiveFiltersSummary';
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
 import { parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
+import {
+  buildCompaniesCategoriesPath,
+  COMPANIES_PATH,
+  extractCategoryIdsFromPath,
+  extractCategorySlugByIdFromPath,
+  isCompaniesCategoriesPath,
+} from '@/lib/seo/companies-category-url';
 
 export const FilterSidebar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const pathCategoryIds = useMemo(() => extractCategoryIdsFromPath(pathname), [pathname]);
+  const slugByIdFromPath = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
   
   const [filters, setFilters] = useState<CompanyFilters>(DEFAULT_FILTERS);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Hydrate filters from URL on mount and searchParams change
   useEffect(() => {
-    setFilters(parseQueryParams(searchParams));
-  }, [searchParams]);
+    setFilters(parseQueryParams(searchParams, { pathCategoryIds }));
+  }, [searchParams, pathCategoryIds]);
+
+  const buildTargetUrl = useCallback((nextFilters: CompanyFilters) => {
+    const hasPathCategories = isCompaniesCategoriesPath(pathname);
+    const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
+
+    if (sortedCategoryIds.length > 0 && hasPathCategories) {
+      const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, {}, slugByIdFromPath);
+      const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
+      return `${nextPath}${queryString ? `?${queryString}` : ''}`;
+    }
+
+    const queryString = stringifyQueryParams(nextFilters);
+    return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
+  }, [pathname, slugByIdFromPath]);
 
   const updateFilters = useCallback((newFilters: Partial<CompanyFilters>) => {
     const updated = { ...filters, ...newFilters, page: 1 }; // Reset page on filter change
     setFilters(updated);
-    
-    const queryString = stringifyQueryParams(updated);
-    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  }, [filters, pathname, router]);
+
+    router.replace(buildTargetUrl(updated), { scroll: false });
+  }, [filters, buildTargetUrl, router]);
 
   const removeFilter = (key: keyof CompanyFilters, value?: any) => {
     if (Array.isArray(filters[key])) {
@@ -55,7 +77,7 @@ export const FilterSidebar: React.FC = () => {
 
   const clearFilters = () => {
     setFilters(DEFAULT_FILTERS);
-    router.replace(pathname, { scroll: false });
+    router.replace(COMPANIES_PATH, { scroll: false });
     if (isMobileOpen) setIsMobileOpen(false);
   };
 

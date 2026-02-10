@@ -1,292 +1,92 @@
-'use client';
+import type { Metadata } from 'next';
+import { permanentRedirect } from 'next/navigation';
+import CompaniesPageClient from './CompaniesPageClient';
+import {
+  buildCompaniesCategoriesPath,
+  COMPANIES_PATH,
+  normalizeCategoryIds,
+  toSearchParams,
+} from '@/lib/seo/companies-category-url';
+import { getCompaniesCategorySeoIndex, resolveCategoryNamesFromIds } from '@/lib/server/companies-category-seo';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
-import { Search, Grid, List, Building2, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import CompanyCard from '@/components/CompanyCard';
-import { companiesApiSafe, type Company } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import BannerByLocation from '@/components/BannerByLocation';
-import { cn } from '@/lib/utils';
-import { FilterSidebar } from '@/components/filters/FilterSidebar';
-import { parseQueryParams, stringifyQueryParams } from '@/components/filters/query';
-import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary';
-import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
-
-function CompaniesContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [totalCount, setTotalCount] = useState(0);
-  const PAGE_SIZE = 12;
-
-  const filters = useMemo(() => parseQueryParams(searchParams), [searchParams]);
-  const [searchInput, setSearchInput] = useState(filters.search || '');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updated = { ...filters, search: searchInput, page: 1 };
-    const queryString = stringifyQueryParams(updated);
-    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  };
-
-  const removeFilter = (key: keyof CompanyFilters, value?: any) => {
-    let updated: CompanyFilters;
-    if (Array.isArray(filters[key])) {
-      const currentArray = filters[key] as any[];
-      updated = { ...filters, [key]: currentArray.filter((v) => v !== value), page: 1 };
-    } else if (typeof filters[key] === 'boolean') {
-      updated = { ...filters, [key]: false, page: 1 };
-    } else {
-      updated = { ...filters, [key]: DEFAULT_FILTERS[key], page: 1 };
-    }
-
-    const queryString = stringifyQueryParams(updated);
-    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  };
-
-  useEffect(() => {
-    setSearchInput(filters.search || '');
-  }, [filters.search]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await companiesApiSafe.getAllPaginated({
-          page: filters.page || 1,
-          per_page: PAGE_SIZE,
-          q: filters.search || undefined,
-          state: filters.state.length > 0 ? filters.state : undefined,
-          city: filters.city.length > 0 ? filters.city : undefined,
-          category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
-          min_rating: filters.min_rating || undefined,
-          verified: filters.verified || undefined,
-          featured: filters.featured || undefined,
-          sort: filters.sort || undefined,
-          fields: 'card',
-        });
-
-        setCompanies(response.data || []);
-        setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
-      } catch (err) {
-        setError((err as any)?.message || 'Erro ao carregar dados');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters]);
-
-  const visibleCompanies = useMemo(
-    () =>
-      companies.filter((company) => {
-        if (filters.financing_enabled && !company.financing_enabled) return false;
-        if (filters.whatsapp_enabled && !company.whatsapp) return false;
-        return true;
-      }),
-    [companies, filters.financing_enabled, filters.whatsapp_enabled]
-  );
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const currentPage = Math.max(1, filters.page || 1);
-
-  const goToPage = (page: number) => {
-    const nextPage = Math.min(Math.max(page, 1), totalPages);
-    const updated = { ...filters, page: nextPage };
-    const queryString = stringifyQueryParams(updated);
-    router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  };
-
-  const quickActions = [
-    { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
-    { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
-    { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
-    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
-    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' },
-  ];
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
-            <p className="text-destructive">Erro ao carregar empresas: {error}</p>
-            <Button className="mt-4" onClick={() => window.location.reload()} variant="outline">
-              Tentar Novamente
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Buscar empresas..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
-          />
-        </form>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="lg:w-[300px] shrink-0">
-            <FilterSidebar />
-          </aside>
-
-          <div className="flex-1 space-y-6">
-            <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Empresas de Energia Solar</h1>
-                <p className="text-slate-500 text-sm mt-1">Encontramos {totalCount} empresas que atendem aos seus critérios</p>
-              </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-center">
-                <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('h-8 w-8', viewMode === 'grid' && 'bg-slate-100 text-slate-900')}
-                    onClick={() => setViewMode('grid')}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('h-8 w-8', viewMode === 'list' && 'bg-slate-100 text-slate-900')}
-                    onClick={() => setViewMode('list')}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                if (!Icon) return null;
-                return (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="flex flex-col items-center gap-2 rounded-xl bg-white p-3 text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
-                  >
-                    <div className={cn('flex h-10 w-10 items-center justify-center rounded-full transition-colors', action.styles)}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900">{action.label}</span>
-                  </Link>
-                );
-              })}
-            </section>
-
-            <div className="space-y-4">
-              {loading ? (
-                <div className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
-                  {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-64 rounded-xl bg-white" />
-                  ))}
-                </div>
-              ) : visibleCompanies.length > 0 ? (
-                <>
-                  <div
-                    data-testid="companies-grid"
-                    className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}
-                  >
-                    {visibleCompanies.map((company) => (
-                      <CompanyCard key={company.id} company={company} compact={viewMode === 'list'} />
-                    ))}
-                  </div>
-
-                  {totalPages > 1 && (
-                    <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-                      <Button
-                        variant="outline"
-                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
-                        onClick={() => goToPage(currentPage - 1)}
-                        disabled={currentPage <= 1}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Anterior
-                      </Button>
-                      <span className="text-sm text-slate-500">
-                        Página {currentPage} de {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
-                        onClick={() => goToPage(currentPage + 1)}
-                        disabled={currentPage >= totalPages}
-                      >
-                        Próxima
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-center">
-                  <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <Search className="h-8 w-8 text-slate-300" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900">Nenhuma empresa encontrada</h3>
-                  <p className="text-slate-500 max-w-xs mt-1">Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.</p>
-                  <Button
-                    variant="link"
-                    className="mt-4 text-blue-600"
-                    onClick={() => {
-                      router.replace(pathname, { scroll: false });
-                    }}
-                  >
-                    Limpar todos os filtros
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <section className="pt-4">
-              <BannerByLocation location="companies_footer" />
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+interface CompaniesPageProps {
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
-export default function CompaniesPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
-          </div>
-        </div>
-      }
-    >
-      <CompaniesContent />
-    </Suspense>
-  );
+const SITE_URL = 'https://www.avaliasolar.com.br';
+const DEFAULT_TITLE = 'Empresas de Energia Solar no Brasil | Avalia Solar';
+const DEFAULT_DESCRIPTION =
+  'Encontre empresas de energia solar avaliadas em todo o Brasil. Compare reputacao, servicos e localizacao para contratar com mais seguranca.';
+
+export const revalidate = 300;
+
+function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string): Metadata {
+  const hasCategories = categoryNames.length > 0;
+  const title = hasCategories
+    ? `Empresas de ${categoryNames.join(' e ')} | Avalia Solar`
+    : DEFAULT_TITLE;
+
+  const description = hasCategories
+    ? `Compare empresas especialistas em ${categoryNames.join(', ')} com avaliacoes reais, localizacao e canais de contato verificados.`
+    : DEFAULT_DESCRIPTION;
+
+  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
+
+  return {
+    title,
+    description,
+    keywords: [
+      'empresas de energia solar',
+      'instaladores solares',
+      ...categoryNames,
+      'avaliacoes de empresas solares',
+    ],
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+export async function generateMetadata({ searchParams }: CompaniesPageProps): Promise<Metadata> {
+  const params = toSearchParams(searchParams);
+  const categoryIds = normalizeCategoryIds(params.get('category_ids'));
+
+  if (categoryIds.length === 0) {
+    return buildCompaniesMetadata([], COMPANIES_PATH);
+  }
+
+  const seoIndex = await getCompaniesCategorySeoIndex();
+  const categoryNames = resolveCategoryNamesFromIds(categoryIds, seoIndex);
+  const canonicalPath = buildCompaniesCategoriesPath(categoryIds, seoIndex.byId);
+
+  return buildCompaniesMetadata(categoryNames, canonicalPath);
+}
+
+export default async function CompaniesPage({ searchParams }: CompaniesPageProps) {
+  const params = toSearchParams(searchParams);
+  const categoryIds = normalizeCategoryIds(params.get('category_ids'));
+
+  if (categoryIds.length > 0) {
+    const seoIndex = await getCompaniesCategorySeoIndex();
+    const canonicalPath = buildCompaniesCategoriesPath(categoryIds, seoIndex.byId);
+
+    params.delete('category_ids');
+    const queryString = params.toString();
+    const destination = `${canonicalPath}${queryString ? `?${queryString}` : ''}`;
+
+    permanentRedirect(destination);
+  }
+
+  return <CompaniesPageClient canonicalPath={COMPANIES_PATH} />;
 }

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { buildApiUrl } from '@/lib/api-config';
+import { buildCategorySegment } from '@/lib/seo/companies-category-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base URL
@@ -40,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Dynamic Categories
   let categoryRoutes: MetadataRoute.Sitemap = [];
+  let companyCategoryRoutes: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(buildApiUrl('categories?per_page=100'), { next: { revalidate: 3600 } });
     if (res.ok) {
@@ -51,6 +53,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }));
+
+      companyCategoryRoutes = data
+        .filter((cat: any) => Number(cat.companies_count || 0) > 0)
+        .map((cat: any) => ({
+          url: `${baseUrl}/companies/categorias/${buildCategorySegment({
+            id: Number(cat.id),
+            name: cat.name,
+            seo_url: cat.seo_url,
+          })}`,
+          lastModified: cat.updated_at || new Date().toISOString(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.75,
+        }));
     }
   } catch (error) {
     console.error('Failed to generate categories sitemap:', error);
@@ -75,5 +90,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate companies sitemap:', error);
   }
 
-  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyRoutes];
+  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyCategoryRoutes, ...companyRoutes];
 }
