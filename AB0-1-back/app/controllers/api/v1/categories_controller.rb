@@ -289,6 +289,7 @@ module Api
           name: category.name,
           slug: category.seo_url,
           icon_url: category.icon_url,
+          companies_count: category.companies_count || 0,
           children: category.children.select { |c| c.status == 'active' }
                                      .sort_by(&:name)
                                      .map { |child| category_tree_json(child) }

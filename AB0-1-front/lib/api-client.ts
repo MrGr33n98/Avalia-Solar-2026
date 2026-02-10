@@ -337,16 +337,31 @@ export const companiesApiSafe = {
   ): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
+      console.log('[companiesApiSafe.getAllPaginated] Fetching:', url);
+      
       const response = await fetchApiSafe<any>(url);
+      
+      console.log('[companiesApiSafe.getAllPaginated] Response structure:', {
+        isArray: Array.isArray(response),
+        hasData: response?.data !== undefined,
+        dataIsArray: Array.isArray(response?.data),
+        dataLength: response?.data?.length || 0,
+        hasMeta: response?.meta !== undefined,
+      });
+      
       if (response && Array.isArray(response.data)) {
+        console.log('[companiesApiSafe.getAllPaginated] Returning data array with', response.data.length, 'items');
         return { data: response.data, meta: response.meta };
       }
       if (Array.isArray(response)) {
+        console.log('[companiesApiSafe.getAllPaginated] Returning direct array with', response.length, 'items');
         return { data: response };
       }
+      
+      console.warn('[companiesApiSafe.getAllPaginated] Unexpected response format, returning empty array');
       return { data: [] };
     } catch (error) {
-      console.error('Error fetching paginated companies:', error);
+      console.error('[companiesApiSafe.getAllPaginated] Error:', error);
       return { data: [] };
     }
   },

@@ -96,6 +96,7 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
       setLoading(true);
       setError(null);
       try {
+        console.log('[Companies] Fetching with filters:', filters);
         const response = await companiesApiSafe.getAllPaginated({
           page: filters.page || 1,
           per_page: PAGE_SIZE,
@@ -110,10 +111,14 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
           fields: 'card',
         });
 
+        console.log('[Companies] API Response:', response);
         setCompanies(response.data || []);
         setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
       } catch (err) {
-        setError((err as any)?.message || 'Erro ao carregar dados');
+        console.error('[Companies] Fetch error:', err);
+        const errorMsg = (err as any)?.message || 'Erro ao carregar empresas';
+        const detailedError = `${errorMsg}. Verifique se o backend está rodando em http://localhost:3001`;
+        setError(detailedError);
       } finally {
         setLoading(false);
       }
@@ -123,12 +128,18 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
   }, [filters]);
 
   const visibleCompanies = useMemo(
-    () =>
-      companies.filter((company) => {
+    () => {
+      if (!companies || companies.length === 0) return [];
+      
+      const filtered = companies.filter((company) => {
         if (filters.financing_enabled && !company.financing_enabled) return false;
         if (filters.whatsapp_enabled && !company.whatsapp) return false;
         return true;
-      }),
+      });
+
+      console.log('[Companies] Visible/Total:', filtered.length, '/', companies.length);
+      return filtered;
+    },
     [companies, filters.financing_enabled, filters.whatsapp_enabled]
   );
 
@@ -203,11 +214,34 @@ export function CompaniesContent({ forcedCategoryIds = [], categoryNames = [], c
     return (
       <div className="min-h-screen bg-background py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
-            <p className="text-destructive">Erro ao carregar empresas: {error}</p>
-            <Button className="mt-4" onClick={() => window.location.reload()} variant="outline">
-              Tentar Novamente
-            </Button>
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-destructive mb-3">❌ Erro ao Carregar Empresas</h2>
+            <p className="text-destructive mb-4">{error}</p>
+            
+            <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200">
+              <h3 className="font-medium text-slate-900 mb-2">🔍 Passos para Diagnóstico:</h3>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700">
+                <li>Verifique se o backend Rails está rodando na porta 3001</li>
+                <li>Teste a API diretamente: <code className="bg-slate-100 px-1 rounded">curl http://localhost:3001/api/v1/companies</code></li>
+                <li>Verifique as variáveis de ambiente no arquivo .env.local</li>
+                <li>Verifique o console do navegador (F12) para erros detalhados</li>
+                <li>Execute o script de diagnóstico: <code className="bg-slate-100 px-1 rounded">node diagnose-companies-issue.js</code></li>
+              </ol>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Tentar Novamente
+              </Button>
+              <Button 
+                onClick={() => {
+                  window.open('http://localhost:3001/api/v1/companies', '_blank');
+                }}
+                variant="secondary"
+              >
+                Testar API Diretamente
+              </Button>
+            </div>
           </div>
         </div>
       </div>
