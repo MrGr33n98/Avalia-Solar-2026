@@ -33,6 +33,8 @@ let currentContext: Partial<AnalyticsContext> = {};
 let mixpanelInstance: any = null;
 let initPromise: Promise<void> | null = null;
 const EVENT_QUEUE_LIMIT = 100;
+const BACKEND_MIN_INTERVAL_MS = 400;
+const BACKEND_DEFAULT_RETRY_AFTER_MS = 15_000;
 const eventQueue: Array<{
   name: string;
   properties: Record<string, any>;
@@ -40,6 +42,8 @@ const eventQueue: Array<{
   eventId: string;
 }> = [];
 const GLOBAL_EVENTS = new Set(['page_view', 'search']);
+let backendLastSentAt = 0;
+let backendBlockedUntil = 0;
 
 /**
  * Initialize analytics SDKs
@@ -335,6 +339,9 @@ function sendToBackend(
   properties: Record<string, any>
 ): void {
   if (typeof window === 'undefined') return;
+  const now = Date.now();
+  if (now < backendBlockedUntil) return;
+  if (now - backendLastSentAt < BACKEND_MIN_INTERVAL_MS) return;
   const backendEndpoint = '/api/v1/analytics/track';
 
   const companyId = properties.company_id ?? context.company_id ?? null;
@@ -380,6 +387,7 @@ function sendToBackend(
   if (!serializedBody || serializedBody === '{}') return;
 
   try {
+    backendLastSentAt = now;
     void fetch(backendEndpoint, {
       method: 'POST',
       headers: {
@@ -389,7 +397,23 @@ function sendToBackend(
       credentials: 'include',
       body: serializedBody,
       keepalive: true,
-    });
+    })
+      .then((response) => {
+        if (response.status !== 429) return;
+        const retryAfterRaw = response.headers.get('retry-after');
+        const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;
+        const retryAfterMs =
+          Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+            ? retryAfterSeconds * 1000
+            : BACKEND_DEFAULT_RETRY_AFTER_MS;
+        backendBlockedUntil = Date.now() + retryAfterMs;
+      })
+      .catch((err) => {
+        // Never surface unhandled promise rejections for analytics.
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Analytics] Failed to send to backend', err);
+        }
+      });
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.warn('[Analytics] Failed to send to backend', err);
