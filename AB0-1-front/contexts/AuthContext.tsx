@@ -24,6 +24,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
   signInWithLinkedIn: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string, passwordConfirmation?: string) => Promise<void>;
@@ -174,6 +176,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      console.log('[AuthContext] Iniciando login com Google');
+      nextAuthRequest();
+      await authClient.signIn.social({ provider: 'google' });
+      console.log('[AuthContext] Login social iniciado');
+      const nextUser = await checkAuth();
+      if (nextUser) {
+        setAuthSessionHint();
+        await routeAfterLogin(nextUser);
+      }
+    } catch (socialError) {
+      console.error('[AuthContext] Erro no login com Google:', socialError);
+      setError('Google sign-in failed');
+      throw socialError;
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      console.log('[AuthContext] Iniciando login com Facebook');
+      nextAuthRequest();
+      await authClient.signIn.social({ provider: 'facebook' });
+      console.log('[AuthContext] Login social iniciado');
+      const nextUser = await checkAuth();
+      if (nextUser) {
+        setAuthSessionHint();
+        await routeAfterLogin(nextUser);
+      }
+    } catch (socialError) {
+      console.error('[AuthContext] Erro no login com Facebook:', socialError);
+      setError('Facebook sign-in failed');
+      throw socialError;
+    }
+  };
+
   const signInWithLinkedIn = async () => {
     try {
       nextAuthRequest();
@@ -213,6 +251,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated,
         login,
         logout,
+        signInWithGoogle,
+        signInWithFacebook,
         signInWithLinkedIn,
         forgotPassword: (email: string) => authApi.forgotPassword(email),
         resetPassword: (token: string, password: string, passwordConfirmation?: string) =>
