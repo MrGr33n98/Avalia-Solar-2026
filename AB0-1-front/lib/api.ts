@@ -301,6 +301,9 @@ export interface CompanyAccessSuggestedCompany {
   company_id: number;
   company_name: string;
   company_slug?: string;
+  city?: string;
+  state?: string;
+  verified?: boolean;
   match_reason?: string;
 }
 
@@ -308,6 +311,15 @@ export interface CompanyAccessContext {
   active_memberships: CompanyAccessMembership[];
   pending_requests: CompanyAccessPendingRequest[];
   suggested_companies: CompanyAccessSuggestedCompany[];
+  query?: string;
+  limit?: number;
+}
+
+interface CompanyAccessContextRequestOptions {
+  retries?: number;
+  timeout?: number;
+  useClientCache?: boolean;
+  silentStatusCodes?: number[];
 }
 
 export interface Category {
@@ -1202,8 +1214,78 @@ export const reviewsApi = {
   delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
 };
 
+const COMPANY_ACCESS_CONTEXT_CACHE_KEY = 'avalia.company_access.context.cache.v1';
+const COMPANY_ACCESS_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const readCompanyAccessContextFromClientCache = (): CompanyAccessContext | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = localStorage.getItem(COMPANY_ACCESS_CONTEXT_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as { cached_at?: number; payload?: CompanyAccessContext };
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const cachedAt = Number(parsed.cached_at || 0);
+    if (!Number.isFinite(cachedAt) || cachedAt <= 0) return null;
+    if (Date.now() - cachedAt > COMPANY_ACCESS_CONTEXT_CACHE_TTL_MS) return null;
+
+    const payload = parsed.payload;
+    if (!payload || typeof payload !== 'object') return null;
+    if (!Array.isArray(payload.active_memberships)) return null;
+    if (!Array.isArray(payload.pending_requests)) return null;
+    if (!Array.isArray(payload.suggested_companies)) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+};
+
+const writeCompanyAccessContextToClientCache = (payload: CompanyAccessContext) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(
+      COMPANY_ACCESS_CONTEXT_CACHE_KEY,
+      JSON.stringify({ cached_at: Date.now(), payload })
+    );
+  } catch {
+    // Ignore localStorage write errors.
+  }
+};
+
 export const companyAccessApi = {
-  context: () => fetchApi<CompanyAccessContext>('/company_access/context'),
+  context: async (
+    params?: { q?: string; limit?: number },
+    options?: CompanyAccessContextRequestOptions
+  ) => {
+    const hasSearchQuery = Boolean(params?.q && params.q.trim().length > 0);
+    const useClientCache = options?.useClientCache !== false && !hasSearchQuery;
+
+    try {
+      const payload = await fetchApi<CompanyAccessContext>('/company_access/context', {
+        params,
+        retries: options?.retries ?? 4,
+        timeout: options?.timeout ?? 20000,
+        silentStatusCodes: options?.silentStatusCodes,
+      });
+
+      if (useClientCache) {
+        writeCompanyAccessContextToClientCache(payload);
+      }
+
+      return payload;
+    } catch (error) {
+      if (useClientCache) {
+        const cachedPayload = readCompanyAccessContextFromClientCache();
+        if (cachedPayload) {
+          return cachedPayload;
+        }
+      }
+      throw error;
+    }
+  },
   createRequest: (company_id: number, message?: string) =>
     fetchApi('/company_access_requests', {
       method: 'POST',

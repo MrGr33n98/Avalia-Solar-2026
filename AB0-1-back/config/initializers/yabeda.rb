@@ -27,6 +27,10 @@ Yabeda.configure do
     counter :company_views_total,
             tags: [:company_id],
             comment: 'Total number of company profile views'
+
+    counter :company_access_context_requests_total,
+            tags: [:status],
+            comment: 'Total number of company access context requests by status'
     
     # Performance Metrics
     histogram :request_duration,

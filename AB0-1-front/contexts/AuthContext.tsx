@@ -116,7 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (nextUser.role === 'company') {
       try {
-        const context = await companyAccessApi.context();
+        const context = await companyAccessApi.context(undefined, {
+          retries: 5,
+          timeout: 25000,
+          useClientCache: true,
+        });
         const active = context?.active_memberships || [];
         if (active.length > 0) {
           const companyId = active[0].company_id;
@@ -131,7 +135,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push('/select-company');
         }
         return;
-      } catch {
+      } catch (routeError) {
+        logError(routeError instanceof Error ? routeError : new Error(String(routeError)), {
+          action: 'company_context_route_after_login_failed',
+          metadata: { user_id: nextUser.id },
+        });
         router.push('/select-company');
         return;
       }

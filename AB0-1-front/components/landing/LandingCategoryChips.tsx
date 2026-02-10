@@ -14,6 +14,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import type { Category } from '@/lib/api';
+import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 
@@ -44,11 +45,13 @@ export default function LandingCategoryChips({
   limit = 10,
 }: LandingCategoryChipsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const fallbackCategories = useMemo(() => getFallbackCategories(limit), [limit]);
+  const usingFallbackCategories = !Array.isArray(categories) || categories.length === 0;
 
   const items = useMemo(() => {
-    const safe = Array.isArray(categories) ? categories : [];
+    const safe = Array.isArray(categories) && categories.length > 0 ? categories : fallbackCategories;
     return safe.slice(0, Math.max(0, limit));
-  }, [categories, limit]);
+  }, [categories, fallbackCategories, limit]);
 
   const scrollBy = (delta: number) => {
     const el = scrollerRef.current;
@@ -108,6 +111,12 @@ export default function LandingCategoryChips({
             </Button>
           </div>
         </div>
+
+        {usingFallbackCategories ? (
+          <p className="mt-2 text-xs text-amber-700 px-1">
+            Categorias exibidas em modo de contingencia.
+          </p>
+        ) : null}
       </div>
     </section>
   );

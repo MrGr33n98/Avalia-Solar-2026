@@ -1,222 +1,452 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { companyAccessApi, type CompanyAccessSuggestedCompany } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Building2, 
-  Check, 
-  Search, 
-  Plus, 
-  Loader2,
-  AlertCircle
-} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Building2,
+  Check,
+  Search,
+  Plus,
+  Loader2,
+  AlertCircle,
+  Send,
+} from 'lucide-react';
 import Image from 'next/image';
+
+const SEARCH_MIN_LENGTH = 2;
+const SEARCH_DEBOUNCE_MS = 300;
+
+const normalizeText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const includesQuery = (candidate: string | null | undefined, query: string) => {
+  if (!candidate) return false;
+  return normalizeText(candidate).includes(query);
+};
+
+const extractErrorMessage = (error: unknown, fallback: string) => {
+  const maybeError = error as any;
+  const detailedMessage =
+    maybeError?.context?.details?.message ||
+    maybeError?.context?.details?.error ||
+    maybeError?.context?.details?.errors?.[0] ||
+    maybeError?.context?.message ||
+    maybeError?.message;
+
+  return typeof detailedMessage === 'string' && detailedMessage.trim().length > 0
+    ? detailedMessage
+    : fallback;
+};
 
 export default function SelectCompanyPage() {
   const router = useRouter();
   const { loading: authLoading } = useAuth();
   const { companies, selectCompany, isLoading } = useCompanyContext();
+
   const [search, setSearch] = useState('');
   const [selectingId, setSelectingId] = useState<number | null>(null);
-  const [selectError, setSelectError] = useState<string | null>(null);
+  const [requestingId, setRequestingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const [contextLoading, setContextLoading] = useState(true);
+  const [contextError, setContextError] = useState<string | null>(null);
+  const [suggestedCompanies, setSuggestedCompanies] = useState<CompanyAccessSuggestedCompany[]>([]);
+  const [pendingRequestIds, setPendingRequestIds] = useState<number[]>([]);
+
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<CompanyAccessSuggestedCompany[]>([]);
+
+  const normalizedQuery = useMemo(() => normalizeText(search.trim()), [search]);
+
+  const hasPendingRequest = (companyId: number) => pendingRequestIds.includes(companyId);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    const loadContext = async () => {
+      setContextLoading(true);
+      setContextError(null);
+      try {
+        const context = await companyAccessApi.context(
+          { limit: 8 },
+          { retries: 5, timeout: 25000, useClientCache: true }
+        );
+        if (cancelled) return;
+
+        setSuggestedCompanies(context?.suggested_companies || []);
+        setPendingRequestIds((context?.pending_requests || []).map((request) => request.company_id));
+      } catch (error) {
+        if (cancelled) return;
+        setContextError(
+          extractErrorMessage(
+            error,
+            'Nao foi possivel carregar as sugestoes de empresas para solicitacao de acesso.'
+          )
+        );
+      } finally {
+        if (!cancelled) {
+          setContextLoading(false);
+        }
+      }
+    };
+
+    void loadContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading]);
+
+  useEffect(() => {
+    const trimmed = search.trim();
+    if (trimmed.length < SEARCH_MIN_LENGTH) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      setSearchError(null);
+      try {
+        const context = await companyAccessApi.context(
+          { q: trimmed, limit: 20 },
+          { retries: 3, timeout: 20000, useClientCache: false }
+        );
+        if (cancelled) return;
+
+        setSearchResults(context?.suggested_companies || []);
+        const pendingIds = (context?.pending_requests || []).map((request) => request.company_id);
+        setPendingRequestIds((current) => Array.from(new Set([...current, ...pendingIds])));
+      } catch (error) {
+        if (cancelled) return;
+        setSearchResults([]);
+        setSearchError(
+          extractErrorMessage(
+            error,
+            'Nao foi possivel pesquisar empresas agora. Tente novamente em instantes.'
+          )
+        );
+      } finally {
+        if (!cancelled) {
+          setSearchLoading(false);
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [search]);
+
+  const filteredMyCompanies = useMemo(() => {
+    if (!normalizedQuery) return companies;
+    return companies.filter((company) => {
+      return (
+        includesQuery(company.name, normalizedQuery) ||
+        includesQuery(company.city, normalizedQuery) ||
+        includesQuery(company.state, normalizedQuery)
+      );
+    });
+  }, [companies, normalizedQuery]);
+
+  const visibleSuggestedCompanies = useMemo(() => {
+    const source = normalizedQuery.length >= SEARCH_MIN_LENGTH ? searchResults : suggestedCompanies;
+    return source.filter(
+      (company) => !companies.some((membership) => membership.id === company.company_id)
+    );
+  }, [normalizedQuery.length, searchResults, suggestedCompanies, companies]);
 
   const handleSelect = async (company: any) => {
-    if (selectingId) return;
+    if (selectingId || requestingId) return;
+
     try {
-      setSelectError(null);
+      setActionError(null);
+      setActionSuccess(null);
       setSelectingId(company.id);
-      console.log(`[SelectCompany] Selecting company: ${company.name} (${company.id})`);
 
       await selectCompany(company);
-
-      console.log(`[SelectCompany] Selection synced with backend, redirecting...`);
-
-      router.push('/dashboard');
+      router.push(`/company-dashboard?company_id=${company.id}`);
     } catch (error) {
-      console.error('[SelectCompany] Error selecting company:', error);
-      setSelectError('Não foi possível selecionar a empresa. Tente novamente.');
+      setActionError(
+        extractErrorMessage(error, 'Nao foi possivel selecionar a empresa. Tente novamente.')
+      );
     } finally {
       setSelectingId(null);
     }
   };
 
-  const normalizedSearch = search.toLowerCase();
-  const filteredCompanies = companies.filter(c => 
-    c.name.toLowerCase().includes(normalizedSearch) || 
-    (c.city || '').toLowerCase().includes(normalizedSearch)
-  );
+  const handleRequestAccess = async (company: CompanyAccessSuggestedCompany) => {
+    const companyId = company.company_id;
+    if (!companyId || requestingId || selectingId) return;
+    if (hasPendingRequest(companyId)) return;
 
-  if (authLoading || isLoading) {
+    try {
+      setActionError(null);
+      setActionSuccess(null);
+      setRequestingId(companyId);
+
+      await companyAccessApi.createRequest(
+        companyId,
+        `Solicitacao de acesso enviada via tela de selecao para ${company.company_name}`
+      );
+
+      setPendingRequestIds((current) => Array.from(new Set([...current, companyId])));
+      setActionSuccess(
+        `Solicitacao enviada para aprovacao do admin da empresa ${company.company_name}.`
+      );
+    } catch (error) {
+      setActionError(
+        extractErrorMessage(error, 'Nao foi possivel enviar a solicitacao de acesso.')
+      );
+    } finally {
+      setRequestingId(null);
+    }
+  };
+
+  if (authLoading || isLoading || contextLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground animate-pulse">Carregando suas empresas...</p>
+          <p className="text-sm text-muted-foreground">Carregando empresas...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="w-full max-w-[750px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-        <div className="p-10 pb-6 space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Escolha a empresa para administrar</h1>
-          <p className="text-gray-500 text-lg">Você pode alternar depois pelo menu.</p>
+    <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <div className="w-full max-w-[820px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        <div className="p-6 sm:p-8 pb-4 space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Escolha a empresa para administrar
+          </h1>
+          <p className="text-gray-500 text-sm sm:text-base">
+            Busque por nome, selecione uma empresa sua ou solicite acesso para aprovacao.
+          </p>
         </div>
 
-        <div className="px-10 pb-8 space-y-6">
+        <div className="px-6 sm:px-8 pb-6 space-y-5">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input 
-              placeholder="Digite o nome da empresa..." 
-              className="pl-12 h-14 bg-gray-50 border-gray-200 focus-visible:ring-primary/20 text-lg rounded-xl"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar empresa por nome..."
+              className="pl-10 h-11 bg-gray-50 border-gray-200 focus-visible:ring-primary/20"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {["Perto de mim", "Verificadas", "Minha cidade", "Com avaliações"].map((filter) => (
-              <Badge 
-                key={filter} 
-                variant="secondary" 
-                className="px-5 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer font-semibold transition-colors rounded-full"
-              >
-                {filter}
-              </Badge>
-            ))}
+            <Badge variant="secondary" className="px-3 py-1 bg-gray-100 text-gray-600">
+              Minhas empresas: {companies.length}
+            </Badge>
+            <Badge variant="secondary" className="px-3 py-1 bg-gray-100 text-gray-600">
+              Solicitacoes pendentes: {pendingRequestIds.length}
+            </Badge>
           </div>
 
-          {selectError && (
-            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>{selectError}</span>
+          {contextError && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{contextError}</span>
             </div>
           )}
 
-          <div className="space-y-8 py-4">
-            <div>
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">Minhas empresas</h4>
-              <div className="space-y-4">
-                {filteredCompanies.length > 0 ? (
-                  filteredCompanies.map((company) => {
-                    const isSelecting = selectingId === company.id;
-                    return (
-                      <div
-                        key={company.id}
-                        className={`flex items-center gap-5 p-5 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group cursor-pointer ${selectingId ? 'opacity-70 pointer-events-none' : ''}`}
-                        onClick={() => handleSelect(company)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleSelect(company);
-                          }
-                        }}
-                      >
-                      <div className="relative h-14 w-14 flex-shrink-0 rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center shadow-md">
+          {actionError && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{actionError}</span>
+            </div>
+          )}
+
+          {actionSuccess && (
+            <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <Check className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{actionSuccess}</span>
+            </div>
+          )}
+
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Minhas empresas</h4>
+
+            {filteredMyCompanies.length > 0 ? (
+              filteredMyCompanies.map((company) => {
+                const isSelecting = selectingId === company.id;
+                return (
+                  <div
+                    key={company.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="relative h-11 w-11 rounded-full border border-gray-100 bg-white overflow-hidden flex items-center justify-center shrink-0">
                         {company.logo_url ? (
                           <Image
                             src={company.logo_url}
                             alt={company.name}
                             fill
-                            className="object-cover p-1.5"
+                            className="object-cover p-1"
                           />
                         ) : (
-                          <Building2 className="h-7 w-7 text-gray-300" />
+                          <Building2 className="h-5 w-5 text-gray-300" />
                         )}
                       </div>
-                      
-                      <div className="flex flex-col flex-1 min-w-0">
+
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900 text-xl truncate">{company.name}</span>
+                          <span className="font-semibold text-gray-900 truncate">{company.name}</span>
                           {company.verified && (
-                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500">
-                              <Check className="h-3.5 w-3.5 text-white stroke-[4]" />
+                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shrink-0">
+                              <Check className="h-3 w-3 text-white stroke-[3]" />
                             </div>
                           )}
                         </div>
-                        <span className="text-gray-500 font-medium text-base">{company.city}, {company.state}</span>
+                        <span className="text-sm text-gray-500">
+                          {company.city || '-'}, {company.state || '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold min-w-[160px]"
+                      disabled={isSelecting || requestingId !== null}
+                      onClick={() => handleSelect(company)}
+                    >
+                      {isSelecting ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Selecionando...
+                        </span>
+                      ) : (
+                        'Selecionar'
+                      )}
+                    </Button>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-sm text-gray-500">
+                Nenhuma empresa sua encontrada para a busca atual.
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">
+              Empresas para solicitar acesso
+            </h4>
+
+            {searchLoading && (
+              <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Buscando empresas...
+              </div>
+            )}
+
+            {searchError && !searchLoading && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {searchError}
+              </div>
+            )}
+
+            {!searchLoading && visibleSuggestedCompanies.length > 0 && (
+              <div className="space-y-3">
+                {visibleSuggestedCompanies.map((company) => {
+                  const companyId = company.company_id;
+                  const isRequesting = requestingId === companyId;
+                  const isPending = hasPendingRequest(companyId);
+
+                  return (
+                    <div
+                      key={companyId}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/20 transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-11 w-11 rounded-full border border-gray-100 bg-white flex items-center justify-center shrink-0">
+                          <Building2 className="h-5 w-5 text-gray-300" />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900 truncate">
+                              {company.company_name}
+                            </span>
+                            {company.verified && (
+                              <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shrink-0">
+                                <Check className="h-3 w-3 text-white stroke-[3]" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {company.city || '-'}, {company.state || '-'}
+                          </span>
+                        </div>
                       </div>
 
-                      <Button 
+                      <Button
                         type="button"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-6 text-lg rounded-xl transition-all min-w-[140px]"
-                        disabled={isSelecting}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelect(company);
-                        }}
+                        variant={isPending ? 'secondary' : 'outline'}
+                        className="font-semibold min-w-[190px]"
+                        disabled={isPending || isRequesting || selectingId !== null}
+                        onClick={() => handleRequestAccess(company)}
                       >
-                        {isSelecting ? (
-                          <div className="flex items-center gap-2">
+                        {isRequesting ? (
+                          <span className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Selecionando...
-                          </div>
+                            Enviando...
+                          </span>
+                        ) : isPending ? (
+                          'Solicitacao pendente'
                         ) : (
-                          'Selecionar'
+                          <span className="flex items-center gap-2">
+                            <Send className="h-4 w-4" />
+                            Solicitar acesso
+                          </span>
                         )}
                       </Button>
                     </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                    <p className="text-gray-500 font-medium">Nenhuma empresa encontrada para sua busca.</p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            </div>
+            )}
 
-            <div>
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">Sugestões</h4>
-              <div className="space-y-4 opacity-50">
-                {[
-                  { name: "Energia Boa", city: "Goiânia", state: "GO", verified: true },
-                  { name: "Volitbras", city: "São Paulo", state: "SP", verified: true },
-                ].map((suggestion, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-5 p-5 rounded-2xl border border-gray-100 bg-gray-50/50"
-                  >
-                    <div className="h-14 w-14 rounded-full border-2 border-white bg-white flex items-center justify-center shadow-sm">
-                      <Building2 className="h-7 w-7 text-gray-200" />
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 text-xl truncate">{suggestion.name}</span>
-                        {suggestion.verified && (
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500">
-                            <Check className="h-3.5 w-3.5 text-white stroke-[4]" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-gray-500 font-medium text-base">{suggestion.city}, {suggestion.state}</span>
-                    </div>
-                    <Button variant="outline" className="border-gray-200 text-gray-400 font-bold px-8 py-6 text-lg rounded-xl">
-                      Selecionar
-                    </Button>
-                  </div>
-                ))}
+            {!searchLoading && !searchError && visibleSuggestedCompanies.length === 0 && (
+              <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-sm text-gray-500">
+                {search.trim().length >= SEARCH_MIN_LENGTH
+                  ? 'Nenhuma empresa encontrada com esse nome.'
+                  : 'Digite pelo menos 2 caracteres para buscar empresas pelo nome.'}
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="p-10 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between">
-          <p className="text-gray-500 font-bold text-lg">Não encontrei minha empresa</p>
-          <Button 
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-3 px-8 py-6 text-lg rounded-xl shadow-lg shadow-emerald-600/20"
+        <div className="p-6 sm:p-8 bg-gray-50/80 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+          <p className="text-gray-500 font-medium text-sm sm:text-base">
+            Nao encontrou sua empresa na busca?
+          </p>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-2"
             onClick={() => router.push('/register')}
           >
-            <Plus className="h-5 w-5 stroke-[3]" />
+            <Plus className="h-4 w-4" />
             Cadastrar empresa
           </Button>
         </div>

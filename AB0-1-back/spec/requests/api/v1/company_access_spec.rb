@@ -2,7 +2,8 @@
 
 RSpec.describe 'Company Access API', type: :request do
   let(:headers) { { 'Content-Type' => 'application/json' } }
-  let(:company) { create(:company, status: 'active', moderation_status: 'approved') }
+  let(:default_category) { create(:category, status: 'active') }
+  let(:company) { create_active_company }
   let(:company_user) { create(:user, role: 'company', status: :active, company: nil, confirmed_at: Time.current) }
   let(:review_user) { create(:user, role: 'review', status: :active, company: nil, city: 'Sao Paulo', state: 'SP', confirmed_at: Time.current) }
 
@@ -14,6 +15,22 @@ RSpec.describe 'Company Access API', type: :request do
     headers.merge('Authorization' => "Bearer #{token}")
   end
 
+  def create_active_company(attributes = {})
+    category = attributes.delete(:category) || default_category
+
+    create(
+      :company,
+      {
+        status: 'active',
+        moderation_status: 'approved',
+        state: 'SP',
+        city: 'Sao Paulo',
+        phone: '11999999999',
+        categories: [category]
+      }.merge(attributes)
+    )
+  end
+
   describe 'POST /api/v1/company_access_requests' do
     it 'returns 401 without authentication' do
       post '/api/v1/company_access_requests',
@@ -23,13 +40,15 @@ RSpec.describe 'Company Access API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
-    it 'returns 403 for review users' do
+    it 'creates a pending request for review users' do
       auth = auth_headers(review_user)
       post '/api/v1/company_access_requests',
            params: { company_id: company.id }.to_json,
            headers: auth
 
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:created)
+      body = JSON.parse(response.body)
+      expect(body['request']['status']).to eq('pending')
     end
 
     it 'creates a pending request for company users' do
@@ -56,18 +75,22 @@ RSpec.describe 'Company Access API', type: :request do
   end
 
   describe 'GET /api/v1/company_access/context' do
-    it 'returns 403 for review users' do
+    it 'returns context for review users' do
       auth = auth_headers(review_user)
       get '/api/v1/company_access/context', headers: auth
 
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['active_memberships']).to be_an(Array)
+      expect(body['pending_requests']).to be_an(Array)
+      expect(body['suggested_companies']).to be_an(Array)
     end
 
     it 'returns active memberships and pending requests' do
       create(:company_member, user: company_user, company: company, status: 'active')
       create(:company_access_request,
              user: company_user,
-             company: create(:company, status: 'active', moderation_status: 'approved'),
+             company: create_active_company(name: 'Empresa Pendente'),
              status: 'pending')
 
       auth = auth_headers(company_user)
@@ -78,6 +101,22 @@ RSpec.describe 'Company Access API', type: :request do
       expect(body['active_memberships']).to be_an(Array)
       expect(body['pending_requests']).to be_an(Array)
       expect(body['active_memberships'].first['company_id']).to eq(company.id)
+    end
+
+    it 'filters suggested companies by partial name query' do
+      create_active_company(name: 'Solar Master')
+      create_active_company(name: 'Eolica Forte')
+
+      auth = auth_headers(company_user)
+      get '/api/v1/company_access/context', params: { q: 'solar', limit: 10 }, headers: auth
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      names = body['suggested_companies'].map { |item| item['company_name'] }
+      expect(names).to include('Solar Master')
+      expect(names).not_to include('Eolica Forte')
+      expect(body['query']).to eq('solar')
+      expect(body['limit']).to eq(10)
     end
   end
 end

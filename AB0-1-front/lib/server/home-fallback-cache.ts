@@ -5,6 +5,7 @@ import path from 'path';
 
 import type { Banner, Category } from '@/lib/api';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
+import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import { LayeredSWRCache, type CacheEntry } from '@/lib/server/layered-swr-cache';
 
 type PersistedStore = {
@@ -21,6 +22,7 @@ const CACHE_STALE_MS = 24 * 60 * 60 * 1000;
 const API_TIMEOUT_MS = 5000;
 const FETCH_REVALIDATE_SECONDS = Math.max(60, Math.floor(CACHE_TTL_MS / 1000));
 const IS_DEV = process.env.NODE_ENV !== 'production';
+const DEFAULT_HOME_CATEGORY_FALLBACK = getFallbackCategories(8);
 
 let cacheReady: Promise<LayeredSWRCache> | null = null;
 let persistQueue: Promise<void> = Promise.resolve();
@@ -200,17 +202,18 @@ export async function getCachedActiveCategories(): Promise<Category[]> {
 
       try {
         const treePayload = await fetchJSON<unknown>('categories/tree', signal);
-        return flattenCategoryTree(treePayload);
+        const tree = flattenCategoryTree(treePayload);
+        return tree.length > 0 ? tree : DEFAULT_HOME_CATEGORY_FALLBACK;
       } catch (error) {
         if (IS_DEV) {
           console.warn('[HomeFallbackCache] Categories tree fallback failed', error);
         }
-        return [];
+        return DEFAULT_HOME_CATEGORY_FALLBACK;
       }
     },
-    { fallback: [] }
+    { fallback: DEFAULT_HOME_CATEGORY_FALLBACK }
   );
-  return result.data;
+  return result.data.length > 0 ? result.data : DEFAULT_HOME_CATEGORY_FALLBACK;
 }
 
 export async function getCachedFeaturedCategories(): Promise<Category[]> {
@@ -246,11 +249,13 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
       if (activeFallback.length > 0) return activeFallback;
 
       const treeFallback = await tryFetchCategories('categories/tree', flattenCategoryTree);
-      return treeFallback.slice(0, 8);
+      if (treeFallback.length > 0) return treeFallback.slice(0, 8);
+
+      return DEFAULT_HOME_CATEGORY_FALLBACK;
     },
-    { fallback: [] }
+    { fallback: DEFAULT_HOME_CATEGORY_FALLBACK }
   );
-  return result.data;
+  return result.data.length > 0 ? result.data : DEFAULT_HOME_CATEGORY_FALLBACK;
 }
 
 export async function getCachedBanners(position: 'categories_top' | 'companies_top'): Promise<Banner[]> {

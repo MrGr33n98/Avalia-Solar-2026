@@ -13,7 +13,7 @@ module Api
           return render_error_response(message: 'Não autorizado', status: :forbidden, code: 'FORBIDDEN')
         end
 
-        company = Company.find_by(id: params[:company_id])
+        company = ::Company.find_by(id: params[:company_id])
         unless company
           return render_error_response(message: 'Empresa não encontrada', status: :not_found, code: 'COMPANY_NOT_FOUND')
         end

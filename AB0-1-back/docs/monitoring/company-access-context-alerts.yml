@@ -1,0 +1,28 @@
+groups:
+  - name: avalia-company-access
+    rules:
+      - alert: CompanyAccessContextHighErrorRate
+        expr: |
+          (
+            sum(rate(ab0_company_access_context_requests_total{status="error"}[5m]))
+            /
+            clamp_min(sum(rate(ab0_company_access_context_requests_total[5m])), 0.001)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "High error rate on company_access/context"
+          description: "The /api/v1/company_access/context endpoint has >5% error rate for at least 5 minutes."
+
+      - alert: CompanyAccessContextNoSuccessfulRequests
+        expr: |
+          sum(rate(ab0_company_access_context_requests_total{status="success"}[10m])) < 0.01
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "No successful company_access/context responses"
+          description: "No successful requests detected for /api/v1/company_access/context in the last 10 minutes."

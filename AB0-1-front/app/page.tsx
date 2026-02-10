@@ -5,6 +5,7 @@ import { ArrowRight, Info } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 
 import LandingHero from '@/components/landing/LandingHero';
+import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 
 const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
   loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { companiesApiSafe } from '@/lib/api-client';
 import type { Banner, Category, Company } from '@/lib/api';
+import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import {
   getCachedActiveCategories,
   getCachedBanners,
@@ -50,6 +52,7 @@ const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), 
 });
 
 export const revalidate = 300;
+const FALLBACK_CATEGORY_MIN_ID = 9000;
 
 function SectionShell({
   children,
@@ -226,8 +229,18 @@ async function LandingHeroWrapper({
 }: {
   dataPromise: ReturnType<typeof getHeroDataCached>;
 }) {
-  const { allCategories } = await dataPromise;
-  return <LandingHero categories={allCategories} />;
+  try {
+    const { allCategories } = await dataPromise;
+    const safeCategories =
+      Array.isArray(allCategories) && allCategories.length > 0
+        ? allCategories
+        : getFallbackCategories(8);
+
+    return <LandingHero categories={safeCategories} />;
+  } catch (error) {
+    console.error('[Home] LandingHeroWrapper fallback triggered:', error);
+    return <LandingHero categories={getFallbackCategories(8)} />;
+  }
 }
 
 async function LandingCategoryChipsWrapper({
@@ -235,7 +248,18 @@ async function LandingCategoryChipsWrapper({
 }: {
   dataPromise: ReturnType<typeof getHomeDataCached>;
 }) {
-  const { featuredCategories } = await dataPromise;
+  let featuredCategories: Category[] = [];
+  try {
+    const data = await dataPromise;
+    featuredCategories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
+  } catch (error) {
+    console.error('[Home] LandingCategoryChipsWrapper fallback triggered:', error);
+  }
+
+  if (featuredCategories.length === 0) {
+    featuredCategories = getFallbackCategories(8);
+  }
+
   return (
     <div className="py-8 bg-slate-50 border-y border-slate-100">
       <LandingCategoryChips categories={featuredCategories} />
@@ -248,7 +272,21 @@ async function CategoriesSectionWrapper({
 }: {
   dataPromise: ReturnType<typeof getHomeDataCached>;
 }) {
-  const { featuredCategories, categoriesBanners } = await dataPromise;
+  let featuredCategories: Category[] = [];
+  let categoriesBanners: Banner[] = [];
+  try {
+    const data = await dataPromise;
+    featuredCategories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
+    categoriesBanners = Array.isArray(data?.categoriesBanners) ? data.categoriesBanners : [];
+  } catch (error) {
+    console.error('[Home] CategoriesSectionWrapper fallback triggered:', error);
+  }
+
+  const safeCategories = featuredCategories.length > 0 ? featuredCategories : getFallbackCategories(8);
+  const usingFallbackCategories =
+    safeCategories.length > 0 &&
+    safeCategories.every((category) => Number(category?.id) >= FALLBACK_CATEGORY_MIN_ID);
+
   return (
     <SectionShell zebra>
       <BannerByLocationLazy location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
@@ -258,15 +296,23 @@ async function CategoriesSectionWrapper({
         subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
       />
 
-      {featuredCategories.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {featuredCategories.map((category) => (
-            <LandingCategoryCard key={category.id} category={category} />
-          ))}
-        </div>
+      {safeCategories.length > 0 ? (
+        <CategoryCardsErrorBoundary>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {safeCategories.map((category) => (
+              <LandingCategoryCard key={category.id} category={category} />
+            ))}
+          </div>
+        </CategoryCardsErrorBoundary>
       ) : (
         <EmptyState message="Nenhuma categoria encontrada." />
       )}
+
+      {usingFallbackCategories ? (
+        <p className="mt-4 text-sm text-amber-700">
+          Categorias exibidas em modo de contingencia devido a indisponibilidade temporaria da API.
+        </p>
+      ) : null}
 
       <div className="mt-8 md:mt-10 text-center">
         <Button asChild variant="outline" className="rounded-full">
