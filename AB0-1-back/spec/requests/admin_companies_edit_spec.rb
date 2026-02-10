@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'nokogiri'
 require 'tempfile'
 
 RSpec.describe 'Admin Companies Edit', type: :request do
@@ -24,6 +25,17 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       get edit_admin_company_path(company)
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Membros da Empresa')
+    end
+
+    it 'renders CNPJ field as optional' do
+      get edit_admin_company_path(company)
+
+      document = Nokogiri::HTML(response.body)
+      cnpj_input = document.at_css('input#company_cnpj')
+
+      expect(response).to have_http_status(:success)
+      expect(cnpj_input).to be_present
+      expect(cnpj_input['required']).to be_nil
     end
 
     it 'loads edit page without errors for company with members' do
@@ -84,6 +96,54 @@ RSpec.describe 'Admin Companies Edit', type: :request do
         file&.close
         file&.unlink
       end
+    end
+
+    it 'allows updating company with blank CNPJ' do
+      company.update_column(:cnpj, '11222333000181')
+
+      patch admin_company_path(company), params: {
+        company: {
+          cnpj: '',
+          description: 'Descricao atualizada sem cnpj'
+        }
+      }
+
+      expect(response).to redirect_to(admin_company_path(company))
+      expect(company.reload.cnpj).to be_blank
+    end
+
+    it 'allows setting verified without CNPJ' do
+      patch admin_company_path(company), params: {
+        company: {
+          verified: true,
+          cnpj: '',
+          description: 'Empresa verificada sem cnpj'
+        }
+      }
+
+      expect(response).to redirect_to(admin_company_path(company))
+      expect(company.reload.verified).to be(true)
+      expect(company.reload.cnpj).to be_blank
+    end
+  end
+
+  describe 'POST /admin/companies' do
+    it 'creates a company without CNPJ' do
+      expect {
+        post admin_companies_path, params: {
+          company: {
+            name: 'Empresa Sem CNPJ via Admin',
+            description: 'Cadastro sem CNPJ no Active Admin',
+            status: 'pending',
+            cnpj: ''
+          }
+        }
+      }.to change(Company, :count).by(1)
+
+      created_company = Company.order(:id).last
+
+      expect(response).to redirect_to(admin_company_path(created_company))
+      expect(created_company.cnpj).to be_blank
     end
   end
 end

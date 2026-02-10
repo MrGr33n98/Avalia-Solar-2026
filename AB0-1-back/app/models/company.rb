@@ -78,7 +78,6 @@ class Company < ApplicationRecord
   validate :validate_ticket_range
   validate :validate_ready_for_activation, if: -> { status == 'active' }
   validate :validate_featured_requires_active
-  validate :validate_verified_requires_cnpj
   validate :validate_category_ids_format
   validate :validate_attachments
   
@@ -225,15 +224,6 @@ class Company < ApplicationRecord
     return if status == 'active'
 
     errors.add(:featured, 'só pode ser verdadeiro quando o status é active')
-  end
-
-  def validate_verified_requires_cnpj
-    return unless verified
-
-    digits = cnpj.to_s.gsub(/\D/, '')
-    if digits.length < 14 || (defined?(CNPJ) && !CNPJ.valid?(cnpj))
-      errors.add(:verified, 'exige um CNPJ válido')
-    end
   end
 
   # FIX #6: Adicionar validação robusta de category_ids format em Company

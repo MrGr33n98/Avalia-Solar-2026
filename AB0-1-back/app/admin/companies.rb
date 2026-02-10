@@ -173,7 +173,10 @@ end
     end
 
     f.inputs 'Business Details' do
-      f.input :cnpj
+      f.input :cnpj,
+              required: false,
+              input_html: { required: false, autocomplete: 'off' },
+              hint: 'Opcional'
       f.input :founded_year
       f.input :employees_count
       f.input :project_types, as: :check_boxes, collection: Company::PROJECT_TYPES, label: 'Tipos de Projetos'

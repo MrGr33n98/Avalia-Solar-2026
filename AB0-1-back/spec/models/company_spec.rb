@@ -3,7 +3,20 @@ require 'rails_helper'
 RSpec.describe Company, type: :model do
   let(:category) { Category.create!(name: 'Solar', description: 'Categoria de energia solar') }
 
-  describe 'validações' do
+  describe 'validacoes' do
+    it 'permite empresa sem CNPJ' do
+      company = build(:company, cnpj: nil, status: 'pending')
+
+      expect(company).to be_valid
+    end
+
+    it 'valida formato de CNPJ quando informado' do
+      company = build(:company, cnpj: 'cnpj-invalido')
+
+      expect(company).not_to be_valid
+      expect(company.errors[:cnpj]).to be_present
+    end
+
     it 'exige whatsapp_url quando whatsapp_enabled' do
       company = build(:company, whatsapp_enabled: true, whatsapp_url: nil)
 
@@ -11,14 +24,14 @@ RSpec.describe Company, type: :model do
       expect(company.errors[:whatsapp_url]).to be_present
     end
 
-    it 'não permite status active sem requisitos' do
+    it 'nao permite status active sem requisitos' do
       company = build(:company, status: 'active', email: nil, state: nil, city: nil)
 
       expect(company).not_to be_valid
       expect(company.errors[:email]).to be_present
     end
 
-    it 'valida estado inválido' do
+    it 'valida estado invalido' do
       company = build(:company, state: 'ZZ', city: 'Cidade Inexistente')
 
       expect(company).not_to be_valid
@@ -39,25 +52,32 @@ RSpec.describe Company, type: :model do
       expect(company.errors[:minimum_ticket]).to be_present
     end
 
-    context 'email_public validation' do
+    context 'corporate email validation' do
       it 'allows public email when status is pending' do
         company = build(:company, status: 'pending', email_public: 'test@gmail.com')
         expect(company.valid?).to be true
       end
 
       it 'rejects public email when status is active' do
-        company = build(:company, status: 'active', email_public: 'test@gmail.com')
-        # Note: company might be invalid for other reasons if status is active, 
-        # but we check specifically for email_public error.
+        company = build(
+          :company,
+          status: 'active',
+          website: 'https://corporativo.com',
+          email: 'test@gmail.com'
+        )
         company.valid?
-        expect(company.errors[:email_public]).to include('deve ser um e-mail corporativo')
+        expect(company.errors[:email].join(' ')).to include('deve ser um e-mail corporativo')
       end
 
       it 'allows corporate email always' do
-        company = build(:company, status: 'active', email_public: 'test@corporativo.com')
-        # We check if there is an error on email_public
+        company = build(
+          :company,
+          status: 'active',
+          website: 'https://corporativo.com',
+          email: 'test@corporativo.com'
+        )
         company.valid?
-        expect(company.errors[:email_public]).to be_empty
+        expect(company.errors[:email]).to be_empty
       end
     end
   end
