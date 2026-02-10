@@ -2,7 +2,6 @@
 class Api::V1::ReviewsController < Api::V1::BaseController
   before_action :set_review, only: %i[show update destroy]
   before_action :authenticate_api_user, only: %i[create update destroy mine]
-  before_action :require_review_user, only: %i[create destroy mine]
   before_action :ensure_owner, only: %i[destroy]
 
   def index
@@ -135,15 +134,6 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def reply_params
     params.require(:review).permit(:reply, :status)
-  end
-
-  def require_review_user
-    allowed_roles = ['review', 'admin']
-
-    unless allowed_roles.include?(current_user&.role)
-      Rails.logger.warn("[AccessDenied] non-review tried reviews action user=#{current_user&.id} role=#{current_user&.role} path=#{request.path} action=#{params[:action]}")
-      return render json: { error: 'Forbidden' }, status: :forbidden
-    end
   end
 
   def ensure_owner
