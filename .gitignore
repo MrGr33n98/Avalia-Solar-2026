@@ -101,4 +101,10 @@ agentes/
 # Backups
 backup_limpeza_*/
 
+# Playwright e Sentinel
+.cache/
+playwright-report/
+test-results/
+test-sentinel/
+
 # Duplicate env entries removed – already covered above
