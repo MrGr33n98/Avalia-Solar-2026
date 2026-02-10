@@ -14,14 +14,35 @@ const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
 const SAFE_API_IN_FLIGHT = new Map<string, Promise<unknown>>();
 const SAFE_API_DEFAULT_TTL_MS = 5 * 60 * 1000;
 const SAFE_API_MAX_RETRIES = 3;
-const SAFE_API_RATE_LIMIT_BLOCK_MS = 15_000;
-const SAFE_API_NETWORK_BLOCK_MS = 5_000;
+const SAFE_API_RATE_LIMIT_BLOCK_MS = 3_000; // Reduced from 15s to 3s
+const SAFE_API_NETWORK_BLOCK_MS = 2_000; // Reduced from 5s to 2s
 const SAFE_API_BLOCKED_UNTIL = new Map<string, number>();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const isPublicCacheableEndpoint = (endpoint: string) =>
   /^(categories|companies|products|states|banners)/i.test(endpoint.replace(/^\/+/, ''));
+
+// Utility functions to manage rate limiting
+export const clearRateLimitBlock = (endpoint?: string) => {
+  if (endpoint) {
+    SAFE_API_BLOCKED_UNTIL.delete(`GET:${endpoint}`);
+    console.log(`[API] Cleared rate limit block for: ${endpoint}`);
+  } else {
+    SAFE_API_BLOCKED_UNTIL.clear();
+    console.log('[API] Cleared all rate limit blocks');
+  }
+};
+
+export const getRateLimitStatus = () => {
+  const blocked: Array<{ endpoint: string; until: Date }> = [];
+  SAFE_API_BLOCKED_UNTIL.forEach((until, key) => {
+    if (until > Date.now()) {
+      blocked.push({ endpoint: key, until: new Date(until) });
+    }
+  });
+  return blocked;
+};
 
 // ------------------
 // ConfiguraÃ§Ã£o
@@ -73,11 +94,30 @@ export async function fetchApiSafe<T>(
   const throttleKey = `${method}:${normalizedEndpoint}`;
   const blockedUntil = SAFE_API_BLOCKED_UNTIL.get(throttleKey) || 0;
   if (Date.now() < blockedUntil) {
-    throw new ApiError('[429] Muitas solicitações. Por favor, tente novamente mais tarde.', {
-      status: 429,
-      url,
-      method,
-    });
+    console.warn(`[API] Rate limited until ${new Date(blockedUntil).toISOString()}, trying cached data`);
+    
+    // Try to use cached data if available
+    if (shouldUseCache) {
+      const cached = SAFE_API_CACHE.get(cacheKey);
+      if (cached) {
+        console.log('[API] Using cached data due to rate limit');
+        return cached.data as T;
+      }
+    }
+    
+    // If no cache and it's a public endpoint, wait and retry once
+    if (isPublicCacheableEndpoint(normalizedEndpoint)) {
+      const waitTime = Math.min(blockedUntil - Date.now(), 3000); // Max 3s wait
+      console.log(`[API] Waiting ${waitTime}ms before retry...`);
+      await sleep(waitTime);
+      SAFE_API_BLOCKED_UNTIL.delete(throttleKey); // Clear block after wait
+    } else {
+      throw new ApiError('[429] Muitas solicitações. Por favor, tente novamente mais tarde.', {
+        status: 429,
+        url,
+        method,
+      });
+    }
   }
 
   if (shouldUseCache) {
