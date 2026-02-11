@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApi, companiesApi } from '@/lib/api';
@@ -25,6 +25,12 @@ interface Notification {
   read: boolean;
 }
 
+const toSafeDate = (value: unknown): Date => {
+  if (!value) return new Date();
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 export function useCompanyDashboardData(companyId: string) {
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<any>(null);
@@ -34,24 +40,34 @@ export function useCompanyDashboardData(companyId: string) {
 
   const fetchCompanyData = useCallback(async () => {
     try {
+      console.debug('[CompanyDashboardData] Fetching company data', { companyId });
+
       const data = await companiesApi.getById(Number(companyId));
       if (!data) {
-        setCompanyError('Empresa não encontrada ou não associada à sua conta.');
+        console.warn('[CompanyDashboardData] Company not found for dashboard user', { companyId });
+        setCompanyError('Empresa nao encontrada ou nao associada a sua conta.');
       } else {
         setCompany(data);
       }
     } catch (error) {
-      console.error('Error fetching company:', error);
+      console.error('[CompanyDashboardData] Error fetching company', {
+        companyId,
+        endpoint: '/companies/:id',
+        error,
+      });
       setCompanyError('Falha ao carregar dados da empresa.');
     }
   }, [companyId]);
 
   const fetchDashboardStats = useCallback(async () => {
     try {
+      console.debug('[CompanyDashboardData] Fetching dashboard stats', { companyId });
+
       const data = await fetchApi<{ stats: any }>('/company_dashboard/stats', {
-        params: { company_id: companyId }
+        params: { company_id: companyId },
       });
       const s = data?.stats || {};
+
       setStats({
         profileViews: s.profile_views ?? 0,
         ctaClicks: s.cta_clicks ?? 0,
@@ -64,28 +80,39 @@ export function useCompanyDashboardData(companyId: string) {
         conversionRate: s.conversion_rate ?? 0,
       });
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('[CompanyDashboardData] Error fetching dashboard stats', {
+        companyId,
+        endpoint: '/company_dashboard/stats',
+        error,
+      });
     }
   }, [companyId]);
 
   const fetchNotifications = useCallback(async () => {
     try {
+      console.debug('[CompanyDashboardData] Fetching dashboard notifications', { companyId });
+
       const data = await fetchApi<{ notifications: any[] }>('/company_dashboard/notifications', {
-        params: { company_id: companyId }
+        params: { company_id: companyId },
       });
       const list = data?.notifications || [];
+
       setNotifications(
         list.map((n, idx) => ({
           id: `${n.type}-${n.timestamp ?? idx}-${idx}`,
           type: n.type,
           title: n.title,
           message: n.message,
-          timestamp: new Date(n.timestamp),
+          timestamp: toSafeDate(n.timestamp),
           read: !!n.read,
         }))
       );
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('[CompanyDashboardData] Error fetching notifications', {
+        companyId,
+        endpoint: '/company_dashboard/notifications',
+        error,
+      });
     }
   }, [companyId]);
 
@@ -97,11 +124,7 @@ export function useCompanyDashboardData(companyId: string) {
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([
-        fetchCompanyData(),
-        fetchDashboardStats(),
-        fetchNotifications()
-      ]);
+      await Promise.all([fetchCompanyData(), fetchDashboardStats(), fetchNotifications()]);
       setLoading(false);
     };
 
@@ -115,9 +138,7 @@ export function useCompanyDashboardData(companyId: string) {
   }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications, refreshData]);
 
   const markNotificationAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   return {
@@ -127,6 +148,6 @@ export function useCompanyDashboardData(companyId: string) {
     stats,
     notifications,
     markNotificationAsRead,
-    refreshData
+    refreshData,
   };
 }
