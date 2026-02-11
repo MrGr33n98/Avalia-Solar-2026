@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   FileText
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
