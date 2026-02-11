@@ -12,7 +12,18 @@ const parseCompanyId = (value: string | null): number | null => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
 
-export default function CompanyDashboardPage() {
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-4">
+        <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-muted-foreground">Carregando dashboard...</p>
+      </div>
+    </div>
+  );
+}
+
+function CompanyDashboardPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -99,14 +110,7 @@ export default function CompanyDashboardPage() {
   ]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">Carregando dashboard...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingFallback />;
   }
 
   if (!companyId) {
@@ -122,6 +126,14 @@ export default function CompanyDashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel...</div>}>
       <EnterpriseDashboard companyId={companyId} />
+    </Suspense>
+  );
+}
+
+export default function CompanyDashboardPage() {
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <CompanyDashboardPageInner />
     </Suspense>
   );
 }
