@@ -14,7 +14,11 @@ module Api
           plan_features: @company.effective_plan_features || {}
         }, status: :ok
       rescue => e
-        Rails.logger.error("Company dashboard stats error: #{e.message}")
+        Rails.logger.error(
+          "[CompanyDashboard#stats] #{e.class}: #{e.message} " \
+          "company_id=#{@company&.id} user_id=#{current_user&.id}"
+        )
+        Rails.logger.error("[CompanyDashboard#stats] backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
         render json: {
           stats: CompanyDashboard::StatsService.new(nil).call,
           plan_features: {}
@@ -312,7 +316,11 @@ module Api
           notifications: notifications.sort_by { |n| n[:timestamp] }.reverse.first(20)
         }
       rescue => e
-        Rails.logger.error("Company dashboard notifications error: #{e.message}")
+        Rails.logger.error(
+          "[CompanyDashboard#notifications] #{e.class}: #{e.message} " \
+          "company_id=#{@company&.id} user_id=#{current_user&.id}"
+        )
+        Rails.logger.error("[CompanyDashboard#notifications] backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
         render json: { notifications: [] }, status: :ok
       end
 
@@ -431,6 +439,19 @@ module Api
         unless @company
           render json: { error: 'Company not found' }, status: :not_found and return
         end
+      rescue => e
+        Rails.logger.error(
+          "[CompanyDashboard#set_company] #{e.class}: #{e.message} " \
+          "user_id=#{current_user&.id} admin=#{current_user&.admin?} " \
+          "params=#{params.to_unsafe_h.slice('company_id', 'id', 'company')}"
+        )
+        Rails.logger.error("[CompanyDashboard#set_company] backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
+        fallback_company = current_user&.active_member_companies&.first
+        if fallback_company
+          @company = fallback_company
+        else
+          render json: { error: 'Company not found' }, status: :not_found
+        end
       end
 
       def authenticate_company_user_or_admin!
@@ -481,5 +502,3 @@ module Api
     end
   end
 end
-
-
