@@ -27,6 +27,14 @@ interface CompanyContextType {
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
+const readActiveCompanyIdFromCookie = (): number | null => {
+  const match = document.cookie.match(/(?:^|;\s*)active_company_id=(\d+)/);
+  if (!match) return null;
+
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
 
@@ -45,10 +53,15 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('active_company');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setActiveCompanyState(parsed);
+        const parsed = JSON.parse(saved) as Company;
+        if (parsed?.id) {
+          setActiveCompanyState(parsed);
+        } else {
+          localStorage.removeItem('active_company');
+        }
       } catch (e) {
         console.error('Failed to parse active company from localStorage', e);
+        localStorage.removeItem('active_company');
       }
     }
   }, []);
@@ -81,19 +94,55 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Automatically select the first company if none is selected and companies are loaded
+  // Keep active company aligned with memberships from API and clean stale localStorage ids.
   useEffect(() => {
-    if (!activeCompany && companies.length > 0) {
-      // Check if we have a saved ID in cookies but not the full object in localStorage
-      const match = document.cookie.match(/active_company_id=(\d+)/);
-      const savedId = match ? parseInt(match[1]) : null;
-      
-      const found = savedId ? companies.find(c => c.id === savedId) : companies[0];
-      if (found) {
-        setActiveCompany(found);
+    if (isLoading) return;
+
+    if (!Array.isArray(companies) || companies.length === 0) {
+      if (activeCompany) {
+        setActiveCompany(null);
       }
+      return;
     }
-  }, [companies, activeCompany]);
+
+    const activeCompanyId = activeCompany ? Number(activeCompany.id) : null;
+    const activeMatch = activeCompanyId
+      ? companies.find((company) => Number(company.id) === activeCompanyId)
+      : null;
+
+    if (activeMatch) {
+      if (
+        activeCompany &&
+        (
+          activeCompany.name !== activeMatch.name ||
+          activeCompany.slug !== activeMatch.slug ||
+          activeCompany.city !== activeMatch.city ||
+          activeCompany.state !== activeMatch.state ||
+          activeCompany.logo_url !== activeMatch.logo_url ||
+          activeCompany.category !== activeMatch.category ||
+          activeCompany.status !== activeMatch.status ||
+          activeCompany.verified !== activeMatch.verified
+        )
+      ) {
+        setActiveCompany(activeMatch);
+      }
+      return;
+    }
+
+    const savedId = readActiveCompanyIdFromCookie();
+    const savedMatch = savedId
+      ? companies.find((company) => Number(company.id) === savedId)
+      : null;
+
+    setActiveCompany(savedMatch || companies[0]);
+  }, [companies, activeCompany, isLoading]);
+
+  // If the selected company is removed while syncing with backend, make sure the cookie is cleared.
+  useEffect(() => {
+    if (!activeCompany && !isLoading && companies.length === 0) {
+      document.cookie = 'active_company_id=; path=/; max-age=0; SameSite=Lax';
+    }
+  }, [activeCompany, isLoading, companies.length]);
 
   return (
     <CompanyContext.Provider value={{ 

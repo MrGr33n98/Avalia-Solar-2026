@@ -511,6 +511,8 @@ module Api
         params.require(:company).permit(*permitted)
       end
 
+      public
+
       def analytics_historical
         days = params[:days]&.to_i || 30
         cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
@@ -747,11 +749,10 @@ module Api
         return if performed?
         return if current_user&.admin?
 
-        if current_user&.company_user? && current_user.company_id == @company&.id
-          return if @company&.active?
+        if company_user_authorized_for_target_company?
+          return if company_active?(@company)
 
           render_error_response(
-            error: 'Forbidden',
             message: 'Company account is not active',
             status: :forbidden,
             code: 'COMPANY_INACTIVE'
@@ -760,7 +761,6 @@ module Api
         end
 
         render_error_response(
-          error: 'Forbidden',
           message: 'Not authorized to manage this company',
           status: :forbidden,
           code: 'FORBIDDEN'
@@ -771,16 +771,34 @@ module Api
         return if performed?
         return if current_user&.role.in?(%w[admin review])
 
-        if current_user&.role == 'company' && current_user.company_id == @company&.id
-          unless @company.active?
+        if company_user_authorized_for_target_company?
+          unless company_active?(@company)
             render json: { error: 'Company account is not active' }, status: :forbidden
             return
           end
           return
         end
 
-        Rails.logger.warn("[AccessDenied] analytics user=#{current_user&.id} role=#{current_user&.role} company_id=#{current_user&.company_id} target_company=#{@company&.id} path=#{request.path}")
+        Rails.logger.warn(
+          "[AccessDenied] analytics user=#{current_user&.id} role=#{current_user&.role} " \
+          "company_id=#{current_user&.company_id} target_company=#{@company&.id} " \
+          "has_membership=#{current_user&.active_membership_for?(@company&.id)} path=#{request.path}"
+        )
         render json: { error: 'Forbidden' }, status: :forbidden
+      end
+
+      def company_user_authorized_for_target_company?
+        return false unless current_user&.company_user?
+        return false unless @company&.id
+
+        current_user.company_id == @company.id || current_user.active_membership_for?(@company.id)
+      end
+
+      def company_active?(company)
+        return false unless company
+        return company.active_status? if company.respond_to?(:active_status?)
+
+        company.status.to_s == 'active'
       end
 
       def find_company_by_id_or_slug(raw_id)

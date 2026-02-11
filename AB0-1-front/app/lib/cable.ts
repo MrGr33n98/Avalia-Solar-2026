@@ -1,4 +1,5 @@
 import { createConsumer, Cable } from '@rails/actioncable'
+import { getApiOrigin } from '@/lib/api-config'
 
 type DashboardMessage = {
   type: string
@@ -18,9 +19,37 @@ type DashboardMessage = {
 
 let consumer: Cable | null = null
 
+function ensureCablePath(url: string): string {
+  const normalized = url.replace(/\/+$/, '')
+  if (normalized.endsWith('/cable')) return normalized
+  return `${normalized}/cable`
+}
+
+function toWsOrigin(origin: string): string {
+  if (!origin) return ''
+  if (origin.startsWith('wss://') || origin.startsWith('ws://')) return origin
+  if (origin.startsWith('https://')) return origin.replace('https://', 'wss://')
+  if (origin.startsWith('http://')) return origin.replace('http://', 'ws://')
+  return `wss://${origin.replace(/^\/+/, '')}`
+}
+
+function resolveCableUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_CABLE_URL?.trim()
+  if (envUrl) return ensureCablePath(envUrl)
+
+  const apiOrigin = getApiOrigin()
+  if (apiOrigin) return ensureCablePath(toWsOrigin(apiOrigin))
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return ensureCablePath(toWsOrigin(window.location.origin))
+  }
+
+  return 'ws://localhost:3001/cable'
+}
+
 export function getConsumer() {
   if (consumer) return consumer
-  const url = process.env.NEXT_PUBLIC_CABLE_URL || 'ws://localhost:3001/cable'
+  const url = resolveCableUrl()
   consumer = createConsumer(url)
   return consumer
 }
