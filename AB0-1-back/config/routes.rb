@@ -76,6 +76,7 @@ Rails.application.routes.draw do
           get 'analytics/traffic', to: 'companies#analytics_traffic'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
+          get :social_proof
         end
 
         resources :financing_options, only: [:index, :create, :update, :destroy] do
@@ -127,6 +128,9 @@ Rails.application.routes.draw do
         post 'upload_media', to: 'company_dashboard#upload_media'
         post 'add_video', to: 'company_dashboard#add_video'
         delete 'remove_video', to: 'company_dashboard#remove_video'
+        get 'social_proof_reviews', to: 'company_dashboard#social_proof_reviews'
+        patch 'social_proof_reviews/:id', to: 'company_dashboard#update_social_proof_review'
+        get 'social_proof_stats', to: 'company_dashboard#social_proof_stats'
 
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
           member do

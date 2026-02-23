@@ -157,6 +157,8 @@ export interface Company {
   };
   plan_id?: number | null;
   has_paid_plan?: boolean;
+  social_proof_enabled?: boolean;
+  can_use_social_proof?: boolean;
   plan_features?: Record<string, any>;
   media_upload_allowed?: boolean;
   project_types?: string[];
@@ -275,10 +277,26 @@ export interface Review {
   company?: { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
   replied_at?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'draft';
+  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft';
   verified?: boolean;
   featured?: boolean;
+  display_order?: number;
   helpful_count?: number;
+}
+
+export interface SocialProofReview {
+  id: number;
+  rating: number;
+  comment: string;
+  featured: boolean;
+  display_order: number;
+  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis';
+  created_at: string;
+  reply?: string | null;
+  replied_at?: string | null;
+  user: {
+    name: string;
+  };
 }
 
 export interface CompanyAccessMembership {
@@ -943,6 +961,20 @@ export const dashboardApi = {
       return await fetchApi('/company_dashboard/stats');
     }
   },
+  getSocialProofReviews: (params?: { company_id?: number | string }) =>
+    fetchApi('/company_dashboard/social_proof_reviews', { params }),
+  updateSocialProofReview: (
+    id: number | string,
+    review: { featured?: boolean; display_order?: number },
+    companyId?: number | string
+  ) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}`, {
+      method: 'PATCH',
+      params: companyId ? { company_id: companyId } : undefined,
+      body: JSON.stringify({ review }),
+    }),
+  getSocialProofStats: (params?: { company_id?: number | string }) =>
+    fetchApi('/company_dashboard/social_proof_stats', { params }),
 };
 
 export const reviewDashboardApi = {

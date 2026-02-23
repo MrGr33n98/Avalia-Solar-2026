@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_23_123000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -206,7 +206,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
     t.datetime "updated_at", null: false
     t.index ["banner_offer_id"], name: "index_banner_subscriptions_on_banner_offer_id"
     t.index ["checkout_session_id"], name: "index_banner_subscriptions_on_checkout_session_id"
-    t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "status = 'active' /*application:RailsBlogDemo*/"
+    t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "status = 'active' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["company_id"], name: "index_banner_subscriptions_on_company_id"
     t.index ["payment_reference"], name: "index_banner_subscriptions_on_payment_reference"
     t.index ["status"], name: "index_banner_subscriptions_on_status"
@@ -234,16 +234,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
     t.text "rejected_reason"
     t.integer "width"
     t.integer "height"
-    t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
+    t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
     t.index ["company_id"], name: "index_banners_on_company_id"
     t.index ["end_date"], name: "index_banners_on_end_date"
     t.index ["moderation_status"], name: "index_banners_on_moderation_status"
-    t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/"
+    t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "active = true AND moderation_status = 'approved' /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["priority"], name: "index_banners_on_priority"
     t.index ["slot_key"], name: "index_banners_on_slot_key"
-    t.index ["start_date", "end_date"], name: "idx_banners_date_range", where: "active = true /*application:RailsBlogDemo*/"
+    t.index ["start_date", "end_date"], name: "idx_banners_date_range", where: "active = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["start_date"], name: "index_banners_on_start_date"
   end
 
@@ -388,7 +388,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
     t.string "state"
     t.string "city"
     t.json "social_media", default: {}
-    t.json "project_types"
+    t.json "project_types", default: [], null: false
     t.json "services_offered", default: [], null: false
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
@@ -406,14 +406,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
     t.string "slug", null: false
     t.boolean "active_admin", default: false, null: false
     t.boolean "financing_tab_visible", default: false, null: false
+    t.boolean "social_proof_enabled", default: false, null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
-    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
     t.index ["slug"], name: "index_companies_on_slug", unique: true
+    t.index ["social_proof_enabled"], name: "index_companies_on_social_proof_enabled"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
-    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
 
@@ -883,7 +885,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_09_182146) do
     t.integer "status", default: 0
     t.text "reply"
     t.datetime "replied_at"
+    t.integer "display_order", default: 0, null: false
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
+    t.index ["company_id", "status", "featured", "display_order"], name: "idx_reviews_social_proof"
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
     t.index ["user_id"], name: "index_reviews_on_user_id"

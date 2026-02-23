@@ -24,6 +24,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     # Filtra por status se fornecido (útil para dashboards)
     if params[:status].present?
       @reviews = @reviews.where(status: params[:status])
+    elsif !ActiveModel::Type::Boolean.new.cast(params[:mine])
+      @reviews = @reviews.where(status: Review.statuses[:approved])
     end
 
     # Add a limit to avoid sending too much data

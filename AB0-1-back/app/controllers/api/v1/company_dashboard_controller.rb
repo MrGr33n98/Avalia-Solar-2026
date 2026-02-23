@@ -421,6 +421,76 @@ module Api
         render json: { message: 'RemoÃ§Ã£o de vÃ­deo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
       end
 
+      # GET /api/v1/company_dashboard/social_proof_reviews
+      def social_proof_reviews
+        reviews = @company.reviews.includes(:user).order(created_at: :desc)
+        feature_permission = current_user&.admin? || @company.can_use_social_proof?
+
+        render json: {
+          reviews: reviews.map do |review|
+            {
+              id: review.id,
+              rating: review.rating.to_f,
+              comment: review.comment.to_s,
+              status: review.status,
+              featured: review.featured,
+              display_order: review.display_order,
+              verified: review.verified,
+              created_at: review.created_at,
+              reply: review.reply,
+              replied_at: review.replied_at,
+              user_name: review.public_reviewer_name
+            }
+          end,
+          permissions: {
+            can_feature_reviews: feature_permission,
+            social_proof_enabled: @company.respond_to?(:social_proof_enabled) ? @company.social_proof_enabled : false,
+            featured_limit: Review::MAX_FEATURED_PER_COMPANY
+          }
+        }, status: :ok
+      end
+
+      # PATCH /api/v1/company_dashboard/social_proof_reviews/:id
+      def update_social_proof_review
+        review = @company.reviews.find(params[:id])
+        attrs = social_proof_update_params
+        wants_featured = ActiveModel::Type::Boolean.new.cast(attrs[:featured])
+
+        if attrs.key?(:featured) && wants_featured && !(current_user&.admin? || @company.can_use_social_proof?)
+          return render json: { error: 'Plano pago elegivel necessario para destacar reviews' }, status: :forbidden
+        end
+
+        if review.update(attrs)
+          render json: {
+            review: {
+              id: review.id,
+              featured: review.featured,
+              display_order: review.display_order,
+              status: review.status
+            }
+          }, status: :ok
+        else
+          render json: { errors: review.errors.full_messages }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Review not found for this company' }, status: :not_found
+      end
+
+      # GET /api/v1/company_dashboard/social_proof_stats
+      def social_proof_stats
+        approved_scope = @company.reviews.approved
+        render json: {
+          stats: {
+            total_reviews: @company.reviews.count,
+            approved_reviews: approved_scope.count,
+            featured_reviews: @company.reviews.where(featured: true).count,
+            average_rating: approved_scope.average(:rating).to_f.round(2),
+            rating_distribution: rating_distribution_for(approved_scope),
+            monthly_evolution: monthly_evolution_for(approved_scope)
+          }
+        }, status: :ok
+      end
+
       private
 
       def set_company
@@ -494,6 +564,41 @@ module Api
           :cta_whatsapp_template,
           :cta_utm_source, :cta_utm_medium, :cta_utm_campaign
         )
+      end
+
+      def social_proof_update_params
+        source =
+          if params[:review].present?
+            params.require(:review).permit(:featured, :display_order)
+          else
+            params.permit(:featured, :display_order)
+          end
+
+        source.to_h.symbolize_keys
+      end
+
+      def rating_distribution_for(scope)
+        distribution = scope.group(:rating).count
+        {
+          5 => distribution[5.0].to_i + distribution[5].to_i,
+          4 => distribution[4.0].to_i + distribution[4].to_i,
+          3 => distribution[3.0].to_i + distribution[3].to_i,
+          2 => distribution[2.0].to_i + distribution[2].to_i,
+          1 => distribution[1.0].to_i + distribution[1].to_i
+        }
+      end
+
+      def monthly_evolution_for(scope)
+        adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
+        expression =
+          if adapter.include?('sqlite')
+            "strftime('%Y-%m', created_at)"
+          else
+            "to_char(created_at, 'YYYY-MM')"
+          end
+
+        grouped = scope.group(Arel.sql(expression)).count
+        grouped.sort.to_h
       end
 
       def calculate_conversion_rate

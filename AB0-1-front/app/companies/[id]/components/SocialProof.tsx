@@ -1,136 +1,128 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Quote, Star } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Quote, ShieldCheck, Sparkles, Star, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { companiesApiSafe, SocialProofReview } from '@/lib/api-client';
 
 interface SocialProofProps {
+  companyId: number;
   companyName: string;
 }
 
-const testimonials = [
-  {
-    name: 'Mariana Costa',
-    role: 'Cliente residencial',
-    quote: 'Instalacao limpa, prazo em dia e economia imediata na conta.',
-    rating: 5,
-  },
-  {
-    name: 'Rodrigo Lima',
-    role: 'Diretor de operacoes',
-    quote: 'Time rapido no atendimento e relatorios claros de performance.',
-    rating: 5,
-  },
-  {
-    name: 'Juliana Campos',
-    role: 'Compras B2B',
-    quote: 'Facilidade para comparar propostas e suporte consultivo de ponta.',
-    rating: 4,
-  },
-];
+export default function SocialProof({ companyId, companyName }: SocialProofProps) {
+  const [reviews, setReviews] = useState<SocialProofReview[]>([]);
+  const [totalFeatured, setTotalFeatured] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-const trustBadges = [
-  { label: 'Suporte verificado', icon: ShieldCheck },
-  { label: 'Instalacoes auditadas', icon: Sparkles },
-  { label: 'Garantia de prazo', icon: Star },
-];
+  useEffect(() => {
+    let mounted = true;
 
-const successCases = [
-  { title: 'Rede varejo', metric: '25%+ economia', detail: '17 lojas com monitoramento ativo' },
-  { title: 'Condominio SP', metric: '18% payback mais rapido', detail: 'Projeto solar e gestao de consumo' },
-  { title: 'Fabrica MG', metric: '12% menos paradas', detail: 'Retaguarda tecnica 24/7' },
-];
+    const load = async () => {
+      try {
+        setLoading(true);
+        const payload = await companiesApiSafe.getSocialProof(companyId, { limit: 3 });
+        if (!mounted) return;
+        setReviews(payload.reviews || []);
+        setTotalFeatured(payload.total_featured_reviews || 0);
+      } catch (error) {
+        console.error('Failed to load social proof reviews:', error);
+        if (mounted) {
+          setReviews([]);
+          setTotalFeatured(0);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
 
-export default function SocialProof({ companyName }: SocialProofProps) {
-  const [caseIndex, setCaseIndex] = useState(0);
-  const activeCase = useMemo(() => successCases[caseIndex % successCases.length], [caseIndex]);
+    if (companyId) load();
 
-  const next = () => setCaseIndex((i) => (i + 1) % successCases.length);
-  const prev = () => setCaseIndex((i) => (i - 1 + successCases.length) % successCases.length);
+    return () => {
+      mounted = false;
+    };
+  }, [companyId]);
+
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((acc, item) => acc + Number(item.rating || 0), 0);
+    return Number((total / reviews.length).toFixed(1));
+  }, [reviews]);
+
+  if (loading) {
+    return (
+      <Card className="border-none shadow-md">
+        <CardHeader>
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-4 w-72" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (reviews.length === 0) return null;
 
   return (
     <Card className="border-none shadow-md">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
           <Quote className="h-5 w-5 text-primary" />
-          Provas sociais
+          Provas sociais reais
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Resultados e depoimentos que reforcam a confianca na {companyName}
+          Avaliacoes aprovadas de clientes da {companyName}
         </p>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-          <div className="p-4 rounded-xl border bg-muted/30 space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {trustBadges.map((item) => (
-                <Badge key={item.label} variant="secondary" className="gap-2 px-3 py-1">
-                  <item.icon className="h-4 w-4 text-primary" />
-                  {item.label}
-                </Badge>
-              ))}
-            </div>
-            <div className="rounded-lg bg-background border p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold">{activeCase.title}</div>
-                  <p className="text-sm text-muted-foreground">{activeCase.detail}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Resultado</div>
-                  <div className="text-lg font-bold text-primary">{activeCase.metric}</div>
-                </div>
+        <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Media atual</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-2xl font-bold text-foreground">{averageRating}</span>
+              <div className="flex items-center gap-1 text-amber-500">
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <Star key={idx} className="h-4 w-4" fill={idx < Math.round(averageRating) ? 'currentColor' : 'none'} />
+                ))}
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    aria-label="Case anterior"
-                    className="h-9 w-9 rounded-full border bg-white shadow-sm hover:bg-muted/60 transition"
-                    onClick={prev}
-                  >
-                    <ArrowLeft className="h-4 w-4 mx-auto" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="PrA?ximo case"
-                    className="h-9 w-9 rounded-full border bg-white shadow-sm hover:bg-muted/60 transition"
-                    onClick={next}
-                  >
-                    <ArrowRight className="h-4 w-4 mx-auto" />
-                  </button>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Reviews em destaque</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{totalFeatured}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {reviews.map((review) => (
+            <article key={review.id} className="rounded-lg border bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-foreground">{review.user?.name || 'Cliente'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  {successCases.map((_, idx) => (
-                    <span
+                <div className="flex items-center gap-1 text-amber-500" aria-label={`${review.rating} estrelas`}>
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <Star
                       key={idx}
-                      className={`h-2.5 w-2.5 rounded-full transition ${idx === caseIndex ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                      className={`h-4 w-4 ${idx + 1 <= Math.round(Number(review.rating || 0)) ? '' : 'text-muted-foreground/30'}`}
+                      fill={idx + 1 <= Math.round(Number(review.rating || 0)) ? 'currentColor' : 'none'}
                     />
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {testimonials.map((item) => (
-              <div key={item.name} className="rounded-lg border bg-white p-4 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">{item.name}</div>
-                    <p className="text-xs text-muted-foreground">{item.role}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-500" aria-label={`${item.rating} estrelas`}>
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                      <Star key={idx} className={`h-4 w-4 ${idx < item.rating ? '' : 'text-muted-foreground/30'}`} fill={idx < item.rating ? 'currentColor' : 'none'} />
-                    ))}
-                  </div>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/90">“{item.quote}”</p>
-              </div>
-            ))}
-          </div>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/90">&ldquo;{review.comment}&rdquo;</p>
+            </article>
+          ))}
         </div>
       </CardContent>
     </Card>

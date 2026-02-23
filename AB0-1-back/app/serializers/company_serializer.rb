@@ -14,6 +14,7 @@ class CompanySerializer < ActiveModel::Serializer
              :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
              :active_admin,
+             :social_proof_enabled, :can_use_social_proof,
              :effect, :media_upload_allowed,
              :faqs,
              :financing_enabled,
@@ -68,6 +69,14 @@ class CompanySerializer < ActiveModel::Serializer
 
   def active_admin
     object.respond_to?(:active_admin) ? !!object.active_admin : false
+  end
+
+  def social_proof_enabled
+    object.respond_to?(:social_proof_enabled) ? !!object.social_proof_enabled : false
+  end
+
+  def can_use_social_proof
+    object.respond_to?(:can_use_social_proof?) ? !!object.can_use_social_proof? : false
   end
 
   def quote_feature_enabled?

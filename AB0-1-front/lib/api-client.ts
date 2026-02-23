@@ -2,13 +2,13 @@
 // api-client.ts
 // =======================
 
-import { Category, Company, Review, Product, FinancingOption } from './api';
+import { Category, Company, Review, Product, FinancingOption, SocialProofReview } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
 import { ApiError, toApiError } from './api-error';
 
 // Re-export types so they can be imported from api-client
-export type { Category, Company, Review, Product, FinancingOption };
+export type { Category, Company, Review, Product, FinancingOption, SocialProofReview };
 
 const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
 const SAFE_API_IN_FLIGHT = new Map<string, Promise<unknown>>();
@@ -479,6 +479,26 @@ export const companiesApiSafe = {
       console.error('Error fetching cities:', error);
       throw error;
     }
+  },
+
+  getSocialProof: async (
+    companyId: number,
+    params?: { limit?: number }
+  ): Promise<{
+    company_id: number;
+    company_slug?: string;
+    total_featured_reviews: number;
+    generated_at: string;
+    reviews: SocialProofReview[];
+  }> => {
+    const query = buildQueryParams(params || {});
+    return fetchApiSafe<{
+      company_id: number;
+      company_slug?: string;
+      total_featured_reviews: number;
+      generated_at: string;
+      reviews: SocialProofReview[];
+    }>(`companies/${companyId}/social_proof${query}`);
   },
 };
 

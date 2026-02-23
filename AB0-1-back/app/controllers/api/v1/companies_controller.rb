@@ -4,7 +4,7 @@ module Api
     class CompaniesController < BaseController
       include Paginatable # TASK-017: Enable pagination
       
-      before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories]
+      before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories social_proof]
       before_action :authenticate_api_user, only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!, only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
@@ -220,6 +220,29 @@ module Api
       def categories
         cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
         render json: { categories: cats.as_json }, status: :ok
+      end
+
+      # GET /api/v1/companies/:id/social_proof
+      def social_proof
+        limit = params[:limit].to_i
+        limit = 3 if limit <= 0
+        limit = [limit, 10].min
+
+        cache_key = Review.social_proof_cache_key(@company.id, limit: limit)
+        payload = Rails.cache.fetch(cache_key, expires_in: 20.minutes) do
+          base_scope = @company.reviews.includes(:user).for_social_proof
+          selected = base_scope.limit(limit)
+
+          {
+            company_id: @company.id,
+            company_slug: @company.slug,
+            total_featured_reviews: base_scope.count,
+            generated_at: Time.current.iso8601,
+            reviews: selected.map { |review| social_proof_review_payload(review) }
+          }
+        end
+
+        render json: payload, status: :ok
       end
 
       # POST /api/v1/companies
@@ -460,6 +483,8 @@ module Api
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
           has_paid_plan: company.has_paid_plan?,
+          social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
+          can_use_social_proof: company.can_use_social_proof?,
           financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
           financing_tab_visible: company.respond_to?(:financing_tab_visible?) ? company.financing_tab_visible? : false
         }
@@ -484,6 +509,8 @@ module Api
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
           has_paid_plan: (company.respond_to?(:plan_status) && company.respond_to?(:plan)) ? company.has_paid_plan? : false,
+          social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
+          can_use_social_proof: company.can_use_social_proof?,
           project_types: company.project_types || [],
           services_offered: company.services_offered || []
         )
@@ -505,7 +532,7 @@ module Api
         ]
 
         if current_user&.admin?
-          permitted += [:featured, :status, :verified, :plan_id, :plan_status]
+          permitted += [:featured, :status, :verified, :plan_id, :plan_status, :social_proof_enabled]
         end
 
         params.require(:company).permit(*permitted)
@@ -743,6 +770,23 @@ module Api
         return 'Social Media' if host.include?('facebook') || host.include?('instagram') || host.include?('linkedin') || host.include?('t.co') || host.include?('x.com')
 
         'Referral'
+      end
+
+      def social_proof_review_payload(review)
+        {
+          id: review.id,
+          rating: review.rating.to_f,
+          comment: review.comment.to_s,
+          featured: review.featured,
+          display_order: review.display_order,
+          status: review.status,
+          created_at: review.created_at,
+          reply: review.reply,
+          replied_at: review.replied_at,
+          user: {
+            name: review.public_reviewer_name
+          }
+        }
       end
 
       def authorize_company_update!

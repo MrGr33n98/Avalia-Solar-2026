@@ -461,7 +461,7 @@ export default function CompanyDetailClient({
                 >
                   <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-8">
                     <CompanyOverview company={currentCompany} />
-                    <SocialProof companyName={currentCompany.name} />
+                    <SocialProof companyId={companyId} companyName={currentCompany.name} />
                   </TabsContent>
 
                   <TabsContent value="products" className="mt-0 focus-visible:outline-none">

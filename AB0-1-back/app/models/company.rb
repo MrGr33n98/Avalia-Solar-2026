@@ -140,7 +140,7 @@ class Company < ApplicationRecord
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
 
   def self.ransackable_attributes(auth_object = nil)
-    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status", "active_admin"]
+    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status", "active_admin", "social_proof_enabled"]
   end
 
   def self.ransackable_associations(auth_object = nil)
@@ -433,8 +433,36 @@ class Company < ApplicationRecord
   end
 
   def has_paid_plan?
-    return false unless respond_to?(:plan_status) && respond_to?(:plan)
-    plan_status == 'active' && plan.present? && plan.price.to_f > 0
+    return false unless respond_to?(:plan) && plan.present?
+
+    status_allows_plan =
+      if respond_to?(:plan_status)
+        plan_status.blank? || plan_status == 'active'
+      else
+        true
+      end
+
+    status_allows_plan && plan.price.to_f > 0
+  end
+
+  def can_use_social_proof?
+    return false if respond_to?(:social_proof_enabled) && !social_proof_enabled
+
+    plan_flag = feature_enabled_from_plan?(
+      :social_proof,
+      :social_proof_enabled,
+      :social_proof_feature,
+      :featured_reviews
+    )
+
+    plan_flag.nil? ? has_paid_plan? : plan_flag
+  rescue StandardError
+    has_paid_plan?
+  end
+
+  # Attribute-style helper for serializers/front usage.
+  def can_use_social_proof
+    can_use_social_proof?
   end
 
   # Business rule: quote/whatsapp CTAs are paid features and require active_admin.

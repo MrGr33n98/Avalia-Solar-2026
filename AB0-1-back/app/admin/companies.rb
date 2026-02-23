@@ -70,6 +70,7 @@ ActiveAdmin.register Company do
   permitted << :effect if Company.column_names.include?('effect')
   permitted << :plan_id if Company.column_names.include?('plan_id')
   permitted << :plan_status if Company.column_names.include?('plan_status')
+  permitted << :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
   permitted << :whatsapp_enabled
   permitted << :whatsapp_url
   if Company.column_names.include?('whatsapp_button_style_json') || Company.new.respond_to?(:whatsapp_button_style_json)
@@ -96,8 +97,22 @@ end
       status_tag company.moderation_status, class: "status_#{company.moderation_status}"
     end
     column :featured
+    column :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
     column :created_at
     actions
+  end
+
+  sidebar 'Social Proof status', only: %i[show edit] do
+    plan_name = resource.plan&.name || 'No plan'
+    plan_price = resource.plan&.price.to_f
+    eligibility = resource.can_use_social_proof? ? 'Eligible' : 'Not eligible'
+
+    attributes_table_for resource do
+      row('Plan') { "#{plan_name} (#{plan_price.positive? ? "R$ #{format('%.2f', plan_price)}" : 'free'})" }
+      row('Plan status') { resource.respond_to?(:plan_status) ? resource.plan_status.to_s : 'n/a' }
+      row('Feature toggle') { resource.respond_to?(:social_proof_enabled) ? resource.social_proof_enabled : false }
+      row('Eligibility') { eligibility }
+    end
   end
 
   form html: { multipart: true } do |f|
@@ -298,6 +313,20 @@ end
       end
     end
 
+    if Company.column_names.include?('social_proof_enabled')
+      f.inputs 'Configuracoes de Prova Social' do
+        f.input :social_proof_enabled,
+                as: :boolean,
+                label: 'Habilitar prova social real'
+        f.template.concat(
+          f.template.content_tag(
+            :p,
+            'Disponivel apenas para empresas com plano pago elegivel.'
+          )
+        )
+      end
+    end
+
     f.inputs 'FAQ da Empresa' do
       f.has_many :company_faqs, allow_destroy: true, new_record: 'Adicionar FAQ' do |cf|
         cf.input :question
@@ -374,6 +403,7 @@ end
       row :certifications
       row :featured
       row :verified
+      row :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
       row :status
       row :average_rating
       row :reviews_count

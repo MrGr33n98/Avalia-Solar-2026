@@ -58,4 +58,15 @@ FactoryBot.define do
     phone { Faker::PhoneNumber.cell_phone }
     association :company
   end
+
+  factory :review do
+    association :company
+    association :user
+    rating { 4.5 }
+    comment { 'Excelente atendimento e suporte durante toda a instalacao.' }
+    status { :pending }
+    featured { false }
+    verified { false }
+    display_order { 0 }
+  end
 end

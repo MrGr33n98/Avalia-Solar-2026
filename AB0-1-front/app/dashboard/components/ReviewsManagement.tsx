@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp, Flag, Pin, Eye, Trash2, MessageSquare, User } from 'lucide-react';
+import { Star, ThumbsUp, Flag, Pin, Eye, MessageSquare, User } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { reviewsApi } from '@/lib/api';
+import { dashboardApi, reviewsApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
 interface ReviewsManagementProps {
@@ -44,13 +44,34 @@ interface Review {
   verified: boolean;
   featured: boolean;
   helpful_count: number;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis';
   reply?: string;
   replied_at?: Date;
 }
 
+interface SocialProofPermissions {
+  can_feature_reviews: boolean;
+  social_proof_enabled: boolean;
+  featured_limit: number;
+}
+
+interface SocialProofStats {
+  total_reviews: number;
+  approved_reviews: number;
+  featured_reviews: number;
+  average_rating: number;
+  rating_distribution: Record<string, number>;
+  monthly_evolution: Record<string, number>;
+}
+
 export default function ReviewsManagement({ companyId }: ReviewsManagementProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [stats, setStats] = useState<SocialProofStats | null>(null);
+  const [permissions, setPermissions] = useState<SocialProofPermissions>({
+    can_feature_reviews: false,
+    social_proof_enabled: false,
+    featured_limit: 5,
+  });
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -62,12 +83,17 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
-      const data: any[] = await reviewsApi.getAll({ company_id: Number(companyId), limit: 20 });
-      const mapped: Review[] = (data || []).map((r: any) => ({
+      const [reviewsResp, statsResp] = await Promise.all([
+        dashboardApi.getSocialProofReviews({ company_id: Number(companyId) }),
+        dashboardApi.getSocialProofStats({ company_id: Number(companyId) }),
+      ]);
+
+      const rawReviews = Array.isArray((reviewsResp as any)?.reviews) ? (reviewsResp as any).reviews : [];
+      const mapped: Review[] = rawReviews.map((r: any) => ({
         id: String(r.id),
         rating: Number(r.rating || 0),
         comment: String(r.comment || ''),
-        user_name: r.user?.name || 'Anônimo',
+        user_name: r.user_name || r.user?.name || 'Cliente',
         user_avatar: undefined,
         created_at: new Date(r.created_at),
         verified: !!r.verified,
@@ -77,10 +103,16 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         reply: r.reply,
         replied_at: r.replied_at ? new Date(r.replied_at) : undefined
       }));
+
       setReviews(mapped);
+      if ((reviewsResp as any)?.permissions) {
+        setPermissions((reviewsResp as any).permissions);
+      }
+      setStats((statsResp as any)?.stats || null);
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setReviews([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -117,7 +149,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   const openReplyDialog = (review: Review) => {
     setSelectedReview(review);
     setReplyText(review.reply || '');
-    setReplyStatus(review.status || 'approved');
+    const normalizedStatus = review.status === 'approved' || review.status === 'rejected'
+      ? review.status
+      : 'pending';
+    setReplyStatus(normalizedStatus);
     setShowReplyDialog(true);
   };
 
@@ -126,11 +161,43 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   }, [companyId, fetchReviews]);
 
   const handleToggleFeatured = async (reviewId: string) => {
-    setReviews(reviews.map(review => 
-      review.id === reviewId 
-        ? { ...review, featured: !review.featured }
-        : review
-    ));
+    if (!permissions.can_feature_reviews) {
+      toast({
+        title: 'Recurso indisponivel no seu plano',
+        description: 'Ative um plano elegivel para usar destaque em prova social.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const review = reviews.find((item) => item.id === reviewId);
+    if (!review) return;
+
+    const enabling = !review.featured;
+    const currentFeatured = reviews.filter((item) => item.featured).length;
+    if (enabling && currentFeatured >= permissions.featured_limit) {
+      toast({
+        title: 'Limite de destaque atingido',
+        description: `Voce pode destacar ate ${permissions.featured_limit} reviews.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await dashboardApi.updateSocialProofReview(reviewId, { featured: enabling }, companyId);
+      setReviews((prev) =>
+        prev.map((item) => (item.id === reviewId ? { ...item, featured: enabling } : item))
+      );
+      fetchReviews();
+    } catch (error) {
+      console.error('Error updating featured review:', error);
+      toast({
+        title: 'Erro ao atualizar destaque',
+        description: 'Nao foi possivel salvar a alteracao.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleReportReview = async () => {
@@ -160,9 +227,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     );
   };
 
-  const averageRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : '0.0';
+  const averageRating = stats?.average_rating?.toFixed(1) ||
+    (reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+      : '0.0');
 
   if (loading) {
     return (
@@ -232,6 +300,9 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
           <p className="text-muted-foreground">
             Visualize e gerencie as avaliações da sua empresa
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Destaque permitido: {permissions.can_feature_reviews ? `sim (limite ${permissions.featured_limit})` : 'nao'}
+          </p>
         </div>
       </div>
 
@@ -259,7 +330,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total de Reviews</p>
-                <p className="text-2xl font-bold">{reviews.length}</p>
+                <p className="text-2xl font-bold">{stats?.total_reviews ?? reviews.length}</p>
               </div>
             </div>
           </CardContent>
@@ -290,7 +361,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
               <div>
                 <p className="text-sm text-muted-foreground">Em Destaque</p>
                 <p className="text-2xl font-bold">
-                  {reviews.filter(r => r.featured).length}
+                  {stats?.featured_reviews ?? reviews.filter(r => r.featured).length}
                 </p>
               </div>
             </div>
@@ -329,10 +400,12 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                           <Badge variant="outline" className={
                             review.status === 'approved' ? 'border-green-500 text-green-700' :
                             review.status === 'rejected' ? 'border-red-500 text-red-700' :
+                            review.status === 'in_analysis' ? 'border-blue-500 text-blue-700' :
                             'border-yellow-500 text-yellow-700'
                           }>
                             {review.status === 'approved' ? 'Aprovada' :
-                             review.status === 'rejected' ? 'Rejeitada' : 'Pendente'}
+                             review.status === 'rejected' ? 'Rejeitada' :
+                             review.status === 'in_analysis' ? 'Em analise' : 'Pendente'}
                           </Badge>
                         )}
                         {review.featured && (
@@ -388,6 +461,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={!permissions.can_feature_reviews}
                       onClick={() => handleToggleFeatured(review.id)}
                     >
                       <Pin className="h-4 w-4 mr-2" />
