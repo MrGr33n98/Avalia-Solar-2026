@@ -72,6 +72,8 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
+const ALL_CITIES_VALUE = '__ALL_CITIES__';
+
 // ==============================
 // COMPONENTE: Filtro Mobile (Conversão)
 // ==============================
@@ -91,15 +93,15 @@ function MobileLocationLeadFilter({
   handleFilterChange: (type: string, value: any) => void;
 }) {
   const [selectedState, setSelectedState] = useState(filters.state || '');
-  const [selectedCity, setSelectedCity] = useState(filters.city || '');
+  const [selectedCity, setSelectedCity] = useState(
+    filters.state ? filters.city || ALL_CITIES_VALUE : ''
+  );
 
   useEffect(() => {
-    setSelectedState(filters.state || '');
-  }, [filters.state]);
-
-  useEffect(() => {
-    setSelectedCity(filters.city || '');
-  }, [filters.city]);
+    const nextState = filters.state || '';
+    setSelectedState(nextState);
+    setSelectedCity(nextState ? filters.city || ALL_CITIES_VALUE : '');
+  }, [filters.state, filters.city]);
 
   const orderedStates = useMemo(
     () => [...states].sort((a, b) => a.localeCompare(b, 'pt-BR')),
@@ -111,6 +113,7 @@ function MobileLocationLeadFilter({
   );
 
   const cityEnabled = Boolean(selectedState);
+  const isAllCitiesSelected = selectedCity === ALL_CITIES_VALUE;
   const canApplyLocation = Boolean(selectedState && selectedCity);
 
   const cityPlaceholder = !cityEnabled
@@ -134,7 +137,10 @@ function MobileLocationLeadFilter({
 
   const applyLocationFilter = () => {
     if (!canApplyLocation) return;
-    handleFilterChange('location', { state: selectedState, city: selectedCity });
+    handleFilterChange('location', {
+      state: selectedState,
+      city: isAllCitiesSelected ? null : selectedCity,
+    });
   };
 
   return (
@@ -192,10 +198,11 @@ function MobileLocationLeadFilter({
               aria-label="Selecione sua cidade"
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              disabled={!cityEnabled || loadingCities || orderedCities.length === 0}
+              disabled={!cityEnabled || loadingCities}
               className="h-[52px] min-h-[52px] w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 transition-all duration-200 focus:border-[#14b8a6] focus:outline-none focus:ring-2 focus:ring-[#14b8a6]/25 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
               <option value="">{cityPlaceholder}</option>
+              {cityEnabled && <option value={ALL_CITIES_VALUE}>Todas as cidades</option>}
               {orderedCities.map((city) => (
                 <option key={city} value={city}>
                   {city}
