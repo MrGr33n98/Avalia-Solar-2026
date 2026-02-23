@@ -2,7 +2,7 @@
 
 class ReviewPolicy < ApplicationPolicy
   def index?
-    user.respond_to?(:admin?) && user.admin? || (user.respond_to?(:review_user?) && user.review_user?)
+    admin? || company_reviewer?
   end
 
   def show?
@@ -11,5 +11,11 @@ class ReviewPolicy < ApplicationPolicy
 
   def update?
     index?
+  end
+
+  private
+
+  def company_reviewer?
+    user.respond_to?(:review_user?) && user.review_user?
   end
 end
