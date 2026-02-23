@@ -13,6 +13,14 @@ class ReviewPolicy < ApplicationPolicy
     index?
   end
 
+  def approve?
+    admin?
+  end
+
+  alias_method :reject?, :approve?
+  alias_method :analyze?, :approve?
+  alias_method :batch_action?, :approve?
+
   private
 
   def company_reviewer?
