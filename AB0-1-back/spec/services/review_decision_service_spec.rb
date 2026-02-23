@@ -2,7 +2,17 @@ require 'rails_helper'
 
 RSpec.describe ReviewDecisionService do
   let(:company) { create(:company) }
-  let(:user) { create(:user, role: 'review', company: nil, status: :active) }
+  let(:user) do
+    create(
+      :user,
+      role: 'review',
+      company: nil,
+      status: :active,
+      city: 'Sao Paulo',
+      state: 'SP',
+      confirmed_at: Time.current
+    )
+  end
   let(:review) do
     create(
       :review,

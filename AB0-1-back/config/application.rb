@@ -31,11 +31,6 @@ module RailsBlogDemo
     config.autoload_paths << Rails.root.join('lib')
     config.eager_load_paths << Rails.root.join('lib')
 
-    %w[services].each do |folder|
-      config.autoload_paths << Rails.root.join("app/#{folder}")
-      config.eager_load_paths << Rails.root.join("app/#{folder}")
-    end
-
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
     # Idempotency for critical endpoints

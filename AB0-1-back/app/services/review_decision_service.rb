@@ -41,7 +41,7 @@ class ReviewDecisionService
       notify_review_owner(previous_status, new_status)
     end
     review.reload
-  rescue ActiveRecord::StaleObjectError => e
+  rescue ActiveRecord::StaleObjectError
     raise DecisionError, 'Review was already updated by another moderator'
   end
 

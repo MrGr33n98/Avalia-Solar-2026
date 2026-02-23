@@ -530,11 +530,25 @@ module Api
       end
 
       def authenticate_company_user!
-        unless current_user&.active_member_companies&.any?
+        memberships = current_user&.active_member_companies
+        has_membership = memberships.present? && memberships.any?
+        fallback_company = current_user&.company
+
+        unless has_membership || fallback_company.present?
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
+
         unless current_user&.active?
           return render json: { error: 'Access pending approval' }, status: :forbidden
+        end
+
+        if !has_membership && fallback_company&.active?
+          current_user.company_members.find_or_create_by!(
+            company: fallback_company
+          ) do |member|
+            member.status = 'active'
+            member.role = 'owner'
+          end
         end
       end
 

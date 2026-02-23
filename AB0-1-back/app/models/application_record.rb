@@ -5,5 +5,3 @@ class ApplicationRecord < ActiveRecord::Base
     %w[id email created_at updated_at]
   end
 end
-
-require_dependency Rails.root.join('app/models/review_decision_service.rb').to_s

@@ -1,7 +1,7 @@
 module Api
   module V1
     module Admin
-      class ReviewsController < ::Admin::ApplicationController
+      class ReviewsController < ::Api::V1::BaseController
         before_action :authenticate_admin_user!
         before_action :set_review, only: %i[show approve reject]
 
@@ -70,6 +70,12 @@ module Api
 
         def to_boolean(value)
           ActiveModel::Type::Boolean.new.cast(value)
+        end
+
+        def authenticate_admin_user!
+          return if current_admin_user
+
+          render json: { error: 'Unauthorized' }, status: :unauthorized
         end
       end
     end
