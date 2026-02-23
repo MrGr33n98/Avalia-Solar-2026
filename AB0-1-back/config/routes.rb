@@ -71,6 +71,7 @@ Rails.application.routes.draw do
 
         member do
           get 'sector_ratings/summary', to: 'sector_ratings#summary'
+          get 'sector_ratings/questions', to: 'sector_ratings#questions'
           get 'analytics/historical', to: 'companies#analytics_historical'
           get 'analytics/reviews', to: 'companies#analytics_reviews'
           get 'analytics/competitors', to: 'companies#analytics_competitors'

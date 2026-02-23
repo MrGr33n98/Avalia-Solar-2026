@@ -65,7 +65,8 @@ ActiveAdmin.register Company do
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
     company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
-    company_members_attributes: [:id, :user_id, :role, :_destroy]
+    company_members_attributes: [:id, :user_id, :role, :_destroy],
+    company_sector_questions_attributes: %i[id prompt weight order enabled _destroy]
   ]
   permitted << :effect if Company.column_names.include?('effect')
   permitted << :plan_id if Company.column_names.include?('plan_id')
@@ -73,6 +74,7 @@ ActiveAdmin.register Company do
   permitted << :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
   permitted << :whatsapp_enabled
   permitted << :whatsapp_url
+  permitted << :sector_ratings_enabled
   if Company.column_names.include?('whatsapp_button_style_json') || Company.new.respond_to?(:whatsapp_button_style_json)
     permitted + [whatsapp_button_style_json: [
       :variant, :bg_color, :text_color, :border_color,
@@ -82,6 +84,7 @@ ActiveAdmin.register Company do
     permitted
   end
 end
+
 
   index do
     selectable_column
@@ -314,17 +317,29 @@ end
     end
 
     if Company.column_names.include?('social_proof_enabled')
-      f.inputs 'Configuracoes de Prova Social' do
-        f.input :social_proof_enabled,
-                as: :boolean,
-                label: 'Habilitar prova social real'
-        f.template.concat(
-          f.template.content_tag(
-            :p,
-            'Disponivel apenas para empresas com plano pago elegivel.'
-          )
+    f.inputs 'Configuracoes de Prova Social' do
+      f.input :social_proof_enabled,
+              as: :boolean,
+              label: 'Habilitar prova social real'
+      f.template.concat(
+        f.template.content_tag(
+          :p,
+          'Disponivel apenas para empresas com plano pago elegivel.'
         )
+      )
+    end
+
+    f.inputs 'Configurações de Avaliações Setoriais' do
+      f.input :sector_ratings_enabled,
+              as: :boolean,
+              label: 'Habilitar perguntas customizadas para avalição setorial'
+      f.has_many :company_sector_questions, allow_destroy: true, new_record: 'Adicionar pergunta' do |q|
+        q.input :prompt
+        q.input :weight
+        q.input :order
+        q.input :enabled
       end
+    end
     end
 
     f.inputs 'FAQ da Empresa' do

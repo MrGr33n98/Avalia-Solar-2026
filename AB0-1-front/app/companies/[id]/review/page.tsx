@@ -12,6 +12,7 @@ import { useCompanySafe } from '@/hooks/useCompaniesSafe';
 import { reviewsApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
+import { SectorRatingForm } from '@/components/company/SectorRatingForm';
 
 import {
   Dialog,
@@ -284,17 +285,25 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
 
   return (
     <div className="container mx-auto py-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Avaliar {company.name}</h1>
           <p className="text-gray-600 mt-2">
             Sua opinião é importante para ajudar outros usuários a tomar decisões informadas.
           </p>
         </div>
-        
+
         <Suspense fallback={<div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">Carregando formulário...</div>}>
           <ReviewForm companyId={company.id} companyPath={companyPath} />
         </Suspense>
+
+        <div>
+          <h2 className="text-2xl font-semibold text-stone-900 mb-3">Avaliação setorial (opcional)</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            Responda as perguntas especializadas para complementar sua avaliação. As perguntas estão disponíveis quando a empresa habilita o módulo no painel Administrativo.
+          </p>
+          <SectorRatingForm companyId={company.id} sectorRatingsEnabled={Boolean(company.sector_ratings_enabled)} />
+        </div>
       </div>
     </div>
   );

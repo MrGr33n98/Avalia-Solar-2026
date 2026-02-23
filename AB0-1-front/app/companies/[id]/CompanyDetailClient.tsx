@@ -478,7 +478,13 @@ export default function CompanyDetailClient({
                       companyName={currentCompany?.name}
                     />
                     {isAuthenticated ? (
-                      <SectorRatingForm />
+                      currentCompany?.sector_ratings_enabled ? (
+                        <SectorRatingForm companyId={companyId} sectorRatingsEnabled />
+                      ) : (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-500">
+                          Esta empresa ainda não habilitou as perguntas setoriais.
+                        </div>
+                      )
                     ) : (
                       <div className="rounded-2xl border border-dashed border-slate-200/70 bg-slate-50 px-6 py-5 text-center text-sm text-slate-500">
                         Faça login para enviar sua avaliação ponderada.

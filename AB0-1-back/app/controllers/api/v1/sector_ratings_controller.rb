@@ -4,21 +4,22 @@ module Api
       before_action :authenticate_user!
       before_action :set_company
       before_action :ensure_member!
+      before_action :ensure_sector_ratings_enabled!
 
       def create
         rating = @company.sector_ratings.find_or_initialize_by(user: current_user)
         if rating.persisted?
-          render json: { error: 'Você já avaliou esta empresa.' }, status: :conflict
-          return
-        end
+        render json: { error: 'Você já avaliou esta empresa.' }, status: :conflict
+        return
+      end
 
         rating.assign_attributes(rating_params.merge(status: :published))
         if rating.save
-          render json: rating_response(rating), status: :created
+        render json: rating_response(rating), status: :created
         else
-          render json: { errors: rating.errors.full_messages }, status: :unprocessable_entity
-        end
+        render json: { errors: rating.errors.full_messages }, status: :unprocessable_entity
       end
+    end
 
       def summary
         summary = @company.sector_ratings.published
@@ -27,6 +28,10 @@ module Api
           count: summary.count,
           by_question: question_averages(summary)
         }
+      end
+
+      def questions
+        render json: @company.company_sector_questions.active.map(&:to_api_payload)
       end
 
       private
@@ -40,6 +45,12 @@ module Api
         return if allowed_company_ids.include?(@company.id)
 
         render json: { error: 'Usuário não autorizado para avaliar esta empresa' }, status: :forbidden
+      end
+
+      def ensure_sector_ratings_enabled!
+        return if @company.sector_ratings_enabled?
+
+        render json: { error: 'Avaliações setoriais não estão habilitadas para esta empresa' }, status: :forbidden
       end
 
       def rating_params

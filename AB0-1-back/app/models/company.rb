@@ -55,6 +55,8 @@ class Company < ApplicationRecord
   has_many :company_members, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :sector_ratings, dependent: :destroy
+  has_many :company_sector_questions, dependent: :destroy
+  accepts_nested_attributes_for :company_sector_questions, allow_destroy: true
   accepts_nested_attributes_for :company_members, allow_destroy: true
   has_many :members, through: :company_members, source: :user
 

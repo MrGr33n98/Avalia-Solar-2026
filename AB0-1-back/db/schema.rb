@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_23_205820) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_23_211837) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -409,6 +409,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_205820) do
     t.boolean "social_proof_enabled", default: false, null: false
     t.decimal "sector_rating_avg", precision: 4, scale: 2, default: "0.0", null: false
     t.integer "sector_rating_count", default: 0, null: false
+    t.boolean "sector_ratings_enabled", default: false, null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
@@ -555,6 +556,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_205820) do
     t.index ["company_id"], name: "index_company_members_on_company_id"
     t.index ["status"], name: "index_company_members_on_status"
     t.index ["user_id"], name: "index_company_members_on_user_id"
+  end
+
+  create_table "company_sector_questions", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.string "prompt", null: false
+    t.integer "weight", default: 1, null: false
+    t.integer "order", default: 0, null: false
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "order"], name: "index_company_sector_questions_on_company_and_order", unique: true
+    t.index ["company_id"], name: "index_company_sector_questions_on_company_id"
   end
 
   create_table "company_videos", force: :cascade do |t|
@@ -1062,6 +1075,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_205820) do
   add_foreign_key "company_financing_profiles", "companies"
   add_foreign_key "company_members", "companies"
   add_foreign_key "company_members", "users"
+  add_foreign_key "company_sector_questions", "companies"
   add_foreign_key "company_videos", "companies"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "forum_answers", "forum_questions"
