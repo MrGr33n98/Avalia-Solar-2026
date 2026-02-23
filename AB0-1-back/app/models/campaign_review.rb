@@ -17,7 +17,27 @@ class CampaignReview < ApplicationRecord
   validate :end_after_start
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[campaign_id company_id comment created_at id product_id rating updated_at user_id sponsored status start_at end_at]
+    %w[
+      campaign_id
+      company_id
+      comment
+      created_at
+      end_at
+      goal
+      id
+      member_id
+      prize
+      product_id
+      rating
+      share_code
+      shares
+      start_at
+      status
+      sponsored
+      title
+      updated_at
+      user_id
+    ]
   end
 
   def self.ransackable_associations(_auth_object = nil)
