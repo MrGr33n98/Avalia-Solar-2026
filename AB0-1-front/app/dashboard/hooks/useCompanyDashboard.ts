@@ -79,7 +79,12 @@ export function useCompanyDashboard(companyId: number) {
         const baseSeries: Partial<State['series']> = baseline?.series || {}
         dispatch({ type: 'SET_BASELINE', kpis: baseKpis, series: baseSeries })
       } catch (e) {
-        dispatch({ type: 'SET_STATUS', status: 'error' })
+        // Historical endpoint can legitimately fail (no baseline yet or temporary API issues).
+        // Keep the realtime channel alive instead of forcing the dashboard into hard error.
+        console.warn('[useCompanyDashboard] Baseline analytics unavailable', {
+          companyId,
+          error: e,
+        })
       }
     })()
 
@@ -87,7 +92,8 @@ export function useCompanyDashboard(companyId: number) {
       companyId,
       (msg) => {
         // acumular em batch para reduzir rerenders
-        const t = Date.parse(msg.tracked_at)
+        const trackedAt = Date.parse(msg.tracked_at)
+        const t = Number.isFinite(trackedAt) ? trackedAt : Date.now()
         const type = msg.type
         // counters
         if (msg.counters) {

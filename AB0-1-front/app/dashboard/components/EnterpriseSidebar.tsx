@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import {
   BadgeCheck,
   BarChart3,
@@ -245,13 +244,8 @@ function SidebarContent({
           </div>
         ) : (
           <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="space-y-1">
-            {groups.map((group, index) => (
-              <motion.div
-                key={group.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.02 }}
-              >
+            {groups.map((group) => (
+              <div key={group.id}>
                 <AccordionItem value={group.id} className="border-none">
                   {renderGroupTrigger(group)}
                   <AccordionContent className="pb-0 pt-2">
@@ -260,7 +254,7 @@ function SidebarContent({
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-              </motion.div>
+              </div>
             ))}
           </Accordion>
         )}

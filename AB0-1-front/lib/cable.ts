@@ -1,6 +1,26 @@
 import { getApiOrigin } from './api-config';
 
 type CableMessage = any;
+const PROD_API_ORIGIN = 'https://api.avaliasolar.com.br';
+
+function isLocalHostUrl(url: string): boolean {
+  return /(^|:\/\/)(localhost|127\.0\.0\.1)(:\d+)?/i.test(url);
+}
+
+function shouldForcePublicApiOrigin(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (process.env.NODE_ENV !== 'production') return false;
+  return !['localhost', '127.0.0.1'].includes(window.location.hostname);
+}
+
+function sanitizeOrigin(origin: string): string {
+  const trimmed = (origin || '').trim();
+  if (!trimmed) return '';
+  if (shouldForcePublicApiOrigin() && isLocalHostUrl(trimmed)) {
+    return PROD_API_ORIGIN;
+  }
+  return trimmed;
+}
 
 function toWsUrl(origin: string): string {
   if (!origin) return '';
@@ -13,7 +33,7 @@ export function subscribeCompanyDashboard(
   companyId: string | number,
   onMessage: (msg: CableMessage) => void
 ) {
-  const origin = getApiOrigin();
+  const origin = sanitizeOrigin(getApiOrigin()) || (process.env.NODE_ENV === 'production' ? PROD_API_ORIGIN : '');
   const wsOrigin = toWsUrl(origin);
   if (!wsOrigin) {
     console.warn('ActionCable: Missing WS Origin', { wsOrigin });

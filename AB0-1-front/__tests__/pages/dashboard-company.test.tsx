@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import CompanyDashboardPage from '@/app/dashboard/company/page';
+import CompanyDashboardPage from '@/app/dashboard/company/CompanyDashboardPageClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 

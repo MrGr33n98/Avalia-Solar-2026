@@ -12,7 +12,6 @@ import {
   Filter,
   Search,
   Star,
-  MapPin,
   CheckCircle,
   Home,
   Grid,
@@ -21,6 +20,7 @@ import {
   Zap,
   ArrowRight,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,6 @@ interface CategoryClientProps {
     next_page?: number | null;
   } | null;
 }
-
 // ==============================
 // Icon helper
 // ==============================
@@ -74,120 +73,162 @@ function XIcon({ className }: { className?: string }) {
 }
 
 // ==============================
-// COMPONENTE: Filtros de Localização Mobile
+// COMPONENTE: Filtro Mobile (Conversão)
 // ==============================
-function LocationFilterSection({
+function MobileLocationLeadFilter({
   filters,
   states,
   cities,
+  loadingCities,
+  fetchCities,
   handleFilterChange,
 }: {
   filters: any;
   states: string[];
   cities: string[];
+  loadingCities: boolean;
+  fetchCities: (state: string, forceRefresh?: boolean) => Promise<void>;
   handleFilterChange: (type: string, value: any) => void;
 }) {
+  const [selectedState, setSelectedState] = useState(filters.state || '');
+  const [selectedCity, setSelectedCity] = useState(filters.city || '');
+
+  useEffect(() => {
+    setSelectedState(filters.state || '');
+  }, [filters.state]);
+
+  useEffect(() => {
+    setSelectedCity(filters.city || '');
+  }, [filters.city]);
+
+  const orderedStates = useMemo(
+    () => [...states].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [states]
+  );
+  const orderedCities = useMemo(
+    () => [...cities].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [cities]
+  );
+
+  const cityEnabled = Boolean(selectedState);
+  const canApplyLocation = Boolean(selectedState && selectedCity);
+
+  const cityPlaceholder = !cityEnabled
+    ? 'Selecione seu estado'
+    : loadingCities
+      ? 'Carregando cidades...'
+      : orderedCities.length > 0
+        ? 'Selecione sua cidade'
+        : 'Nenhuma cidade disponível';
+
+  const statePlaceholder = orderedStates.length > 0 ? 'Selecione seu estado' : 'Carregando estados...';
+
+  const handleStateSelect = async (stateValue: string) => {
+    setSelectedState(stateValue);
+    setSelectedCity('');
+
+    if (stateValue) {
+      await fetchCities(stateValue);
+    }
+  };
+
+  const applyLocationFilter = () => {
+    if (!canApplyLocation) return;
+    handleFilterChange('location', { state: selectedState, city: selectedCity });
+  };
+
   return (
-    <div className="space-y-3">
-      {/* Estado */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <MapPin className="h-3.5 w-3.5 text-gray-500" />
-          <p className="text-xs font-semibold text-gray-700">Estado</p>
-          {filters.state && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 ml-auto"
-              onClick={() => handleFilterChange('state', '')}
-            >
-              <XIcon className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            onClick={() => handleFilterChange('state', '')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              !filters.state
-                ? 'bg-[#14b8a6] text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Todos
-          </button>
-
-          {states.map((state) => (
-            <button
-              key={state}
-              type="button"
-              onClick={() => handleFilterChange('state', state)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filters.state === state
-                  ? 'bg-[#14b8a6] text-white shadow'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {state}
-            </button>
-          ))}
-        </div>
+    <motion.section
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22 }}
+      className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_6px_22px_rgba(15,23,42,0.06)]"
+    >
+      <div className="space-y-1">
+        <p className="text-[14px] font-medium text-slate-700">Encontre fornecedores na sua região</p>
+        <p className="text-[11px] text-slate-500">
+          {canApplyLocation ? 'Tudo pronto para ver opções locais' : cityEnabled ? 'Falta apenas escolher sua cidade' : 'Passo 1 de 2'}
+        </p>
       </div>
 
-      {/* Cidade */}
-      {filters.state && cities.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <MapPin className="h-3.5 w-3.5 text-gray-500" />
-            <p className="text-xs font-semibold text-gray-700">Cidade em {filters.state}</p>
-            {filters.city && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0 ml-auto"
-                onClick={() => handleFilterChange('city', '')}
-              >
-                <XIcon className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleFilterChange('city', '')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                !filters.city
-                  ? 'bg-[#14b8a6] text-white shadow'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+      <div className="mt-6 space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="mobile-state-filter" className="text-xs font-semibold text-slate-700">
+            Estado
+          </label>
+          <div className="relative">
+            <select
+              id="mobile-state-filter"
+              aria-label="Selecione seu estado"
+              value={selectedState}
+              onChange={(e) => {
+                void handleStateSelect(e.target.value);
+              }}
+              className="h-[52px] min-h-[52px] w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 transition-all duration-200 focus:border-[#14b8a6] focus:outline-none focus:ring-2 focus:ring-[#14b8a6]/25"
             >
-              Todas
-            </button>
-
-            {cities.map((city) => (
-              <button
-                key={city}
-                type="button"
-                onClick={() => handleFilterChange('city', city)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  filters.city === city
-                    ? 'bg-[#14b8a6] text-white shadow'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {city}
-              </button>
-            ))}
+              <option value="">{statePlaceholder}</option>
+              {orderedStates.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
         </div>
-      )}
-    </div>
+
+        <motion.div
+          initial={false}
+          animate={{ opacity: cityEnabled ? 1 : 0.65, y: cityEnabled ? 0 : 4 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-2"
+        >
+          <label htmlFor="mobile-city-filter" className="text-xs font-semibold text-slate-700">
+            Cidade
+          </label>
+          <div className="relative">
+            <select
+              id="mobile-city-filter"
+              aria-label="Selecione sua cidade"
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              disabled={!cityEnabled || loadingCities || orderedCities.length === 0}
+              className="h-[52px] min-h-[52px] w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 transition-all duration-200 focus:border-[#14b8a6] focus:outline-none focus:ring-2 focus:ring-[#14b8a6]/25 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            >
+              <option value="">{cityPlaceholder}</option>
+              {orderedCities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {canApplyLocation && (
+            <motion.div
+              key="mobile-location-cta"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button
+                type="button"
+                onClick={applyLocationFilter}
+                className="h-[52px] min-h-[52px] w-full rounded-[14px] bg-[#14b8a6] text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#0d9488] focus-visible:ring-2 focus-visible:ring-[#14b8a6]/40 focus-visible:ring-offset-2"
+              >
+                Ver empresas disponíveis
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.section>
   );
 }
-
 // ==============================
 // COMPONENTE: Filtros Ativos
 // ==============================
@@ -446,69 +487,6 @@ function QuickActionsSection() {
 }
 
 // ==============================
-// COMPONENTE: MobileFiltersSection
-// ==============================
-function MobileFiltersSection({ filters, mobileStates, mobileCities, handleFilterChange }: any) {
-  return (
-    <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-900">Filtros</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFilterChange('clearAll', null)}
-          className="text-[10px] text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-        >
-          Limpar tudo
-        </Button>
-      </div>
-
-      {/* Localização */}
-      <LocationFilterSection filters={filters} states={mobileStates} cities={mobileCities} handleFilterChange={handleFilterChange} />
-
-      {/* Qualidade */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <Star className="h-3.5 w-3.5 text-gray-500" />
-          <p className="text-xs font-semibold text-gray-700">Qualidade</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {[5, 4, 3].map((rating) => (
-            <button
-              key={rating}
-              type="button"
-              onClick={() => handleFilterChange('rating', filters.rating === rating ? 0 : rating)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${
-                filters.rating === rating ? 'bg-amber-500 text-white shadow hover:bg-amber-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-0.5">
-                {[...Array(rating)].map((_, i) => (
-                  <Star key={i} className="h-2.5 w-2.5 fill-current" />
-                ))}
-                <span>+</span>
-              </div>
-            </button>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => handleFilterChange('verified', !filters.verified)}
-            className={`rounded-lg px-3 py-2 text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-              filters.verified ? 'bg-emerald-500 text-white shadow hover:bg-emerald-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <CheckCircle className="h-3.5 w-3.5" />
-            Verificadas
-          </button>
-        </div>
-      </div>
-    </motion.section>
-  );
-}
-
-// ==============================
 // COMPONENTE PRINCIPAL
 // ==============================
 export default function CategoryClientComponent({
@@ -574,6 +552,20 @@ export default function CategoryClientComponent({
       return;
     }
 
+    if (type === 'location') {
+      const nextState = value?.state || null;
+      const nextCity = value?.city || null;
+      const queryString = createQueryString({
+        state: nextState,
+        city: nextCity,
+        rating: null,
+        verified: null,
+      });
+      const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      router.push(nextUrl, { scroll: false });
+      return;
+    }
+
     // Map legacy or UI names to standard filter names if needed
     const filterKeyMap: Record<string, string> = {
       'searchTerm': 'search',
@@ -590,7 +582,8 @@ export default function CategoryClientComponent({
     }
 
     const queryString = createQueryString(updates);
-    router.push(`${pathname}?${queryString}`, { scroll: false });
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(nextUrl, { scroll: false });
   }, [pathname, router, createQueryString]);
 
   const filteredCompanies = companies;
@@ -690,7 +683,7 @@ export default function CategoryClientComponent({
     return Array.from(values).sort();
   }, [companies]);
 
-  const { states: allStates, cities: allCities, fetchCities } = useLocationData();
+  const { states: allStates, cities: allCities, loadingCities, fetchCities } = useLocationData();
 
   useEffect(() => {
     if (filters.state) {
@@ -766,12 +759,12 @@ export default function CategoryClientComponent({
             </motion.section>
           )}
 
-          <ActiveFilters filters={filters} handleFilterChange={handleFilterChange} />
-
-          <MobileFiltersSection
+          <MobileLocationLeadFilter
             filters={filters}
-            mobileStates={mobileStates}
-            mobileCities={mobileCities}
+            states={mobileStates}
+            cities={mobileCities}
+            loadingCities={loadingCities}
+            fetchCities={fetchCities}
             handleFilterChange={handleFilterChange}
           />
 

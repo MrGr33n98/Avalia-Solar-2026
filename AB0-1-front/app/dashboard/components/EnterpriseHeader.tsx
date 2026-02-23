@@ -18,7 +18,6 @@ import {
   FileSpreadsheet,
   FileText
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -115,11 +114,7 @@ export default function EnterpriseHeader({
   };
 
   return (
-    <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border/50 z-50"
-    >
+    <header className="sticky top-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border/50 z-50">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Left: Menu Button + Company Info */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -243,13 +238,9 @@ export default function EnterpriseHeader({
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-red-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold"
-                  >
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-red-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
                     {unreadCount > 9 ? '9+' : unreadCount}
-                  </motion.span>
+                  </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
@@ -278,15 +269,12 @@ export default function EnterpriseHeader({
                     </p>
                   </div>
                 ) : (
-                  notifications.map((notif, index) => {
+                  notifications.map((notif) => {
                     const Icon = getNotificationIcon(notif.type);
                     
                     return (
-                      <motion.div
+                      <div
                         key={notif.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
                         className={cn(
                           'p-3 border-b border-border/30 cursor-pointer transition-colors',
                           !notif.read && 'bg-blue-500/5 hover:bg-blue-500/10',
@@ -322,7 +310,7 @@ export default function EnterpriseHeader({
                             </p>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })
                 )}
@@ -390,7 +378,7 @@ export default function EnterpriseHeader({
           </DropdownMenu>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }
 

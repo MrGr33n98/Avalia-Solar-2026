@@ -1,10 +1,21 @@
 import { renderHook, act } from '@testing-library/react'
 import * as cable from '@/app/lib/cable'
 import { useCompanyDashboard } from '@/app/dashboard/hooks/useCompanyDashboard'
+import { fetchApi } from '@/lib/api'
 
 jest.mock('@/app/lib/cable')
+jest.mock('@/lib/api', () => ({
+  fetchApi: jest.fn(),
+}))
 
 describe('useCompanyDashboard', () => {
+  beforeEach(() => {
+    ;(fetchApi as jest.Mock).mockResolvedValue({
+      kpis: {},
+      series: { events: [], quotes: [], whatsapp: [], reviews: [] },
+    })
+  })
+
   it('updates KPIs when receiving counters', async () => {
     const unsub = jest.fn()
     ;(cable.subscribeCompanyDashboard as any).mockImplementation((_id: number, onMessage: any, onStatus: any) => {

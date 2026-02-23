@@ -18,6 +18,26 @@ type DashboardMessage = {
 }
 
 let consumer: Cable | null = null
+const PROD_API_ORIGIN = 'https://api.avaliasolar.com.br'
+
+function isLocalHostUrl(url: string): boolean {
+  return /(^|:\/\/)(localhost|127\.0\.0\.1)(:\d+)?/i.test(url)
+}
+
+function shouldForcePublicApiOrigin(): boolean {
+  if (typeof window === 'undefined') return false
+  if (process.env.NODE_ENV !== 'production') return false
+  return !['localhost', '127.0.0.1'].includes(window.location.hostname)
+}
+
+function sanitizeOrigin(origin: string): string {
+  const trimmed = origin.trim()
+  if (!trimmed) return ''
+  if (shouldForcePublicApiOrigin() && isLocalHostUrl(trimmed)) {
+    return PROD_API_ORIGIN
+  }
+  return trimmed
+}
 
 function ensureCablePath(url: string): string {
   const normalized = url.replace(/\/+$/, '')
@@ -34,14 +54,18 @@ function toWsOrigin(origin: string): string {
 }
 
 function resolveCableUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_CABLE_URL?.trim()
+  const envUrl = sanitizeOrigin(process.env.NEXT_PUBLIC_CABLE_URL || '')
   if (envUrl) return ensureCablePath(envUrl)
 
-  const apiOrigin = getApiOrigin()
+  const apiOrigin = sanitizeOrigin(getApiOrigin())
   if (apiOrigin) return ensureCablePath(toWsOrigin(apiOrigin))
 
   if (typeof window !== 'undefined' && window.location?.origin) {
     return ensureCablePath(toWsOrigin(window.location.origin))
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return ensureCablePath(toWsOrigin(PROD_API_ORIGIN))
   }
 
   return 'ws://localhost:3001/cable'
@@ -50,6 +74,9 @@ function resolveCableUrl(): string {
 export function getConsumer() {
   if (consumer) return consumer
   const url = resolveCableUrl()
+  if (process.env.NODE_ENV !== 'production') {
+    console.debug('[ActionCable] Using URL', url)
+  }
   consumer = createConsumer(url)
   return consumer
 }
