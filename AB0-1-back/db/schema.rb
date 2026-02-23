@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_23_123000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_23_140000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -873,6 +873,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_123000) do
     t.index ["sku"], name: "index_products_on_sku", unique: true
   end
 
+  create_table "review_decision_logs", force: :cascade do |t|
+    t.integer "review_id", null: false
+    t.integer "admin_user_id", null: false
+    t.string "action", null: false
+    t.string "previous_status"
+    t.string "new_status"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["admin_user_id"], name: "index_review_decision_logs_on_admin_user_id"
+    t.index ["review_id"], name: "index_review_decision_logs_on_review_id"
+  end
+
   create_table "reviews", force: :cascade do |t|
     t.decimal "rating", precision: 2, scale: 1
     t.text "comment"
@@ -886,6 +899,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_123000) do
     t.text "reply"
     t.datetime "replied_at"
     t.integer "display_order", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "status", "featured", "display_order"], name: "idx_reviews_social_proof"
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
@@ -1049,6 +1063,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_123000) do
   add_foreign_key "product_specifications", "products"
   add_foreign_key "product_specifications", "spec_templates"
   add_foreign_key "products", "companies"
+  add_foreign_key "review_decision_logs", "admin_users"
+  add_foreign_key "review_decision_logs", "reviews"
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "users"
   add_foreign_key "sponsored_plans", "categories"

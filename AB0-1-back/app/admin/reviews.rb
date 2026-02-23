@@ -8,66 +8,77 @@ ActiveAdmin.register Review do
   scope :in_analysis
 
   filter :company
+  filter :user
   filter :status, as: :select, collection: -> { Review.statuses.keys }
   filter :rating
   filter :featured
   filter :created_at
 
   batch_action :approve do |ids|
-    selected = batch_action_collection.where(id: ids)
-    updated = selected.update_all(status: Review.statuses[:approved], updated_at: Time.current)
-    redirect_to collection_path, notice: "#{updated} reviews approved."
+    result = run_batch_decision(ids, :approve)
+    message = "#{result[:processed]} reviews aprovadas."
+    message += " Erros: #{result[:errors].join('; ')}" if result[:errors].any?
+    redirect_to collection_path, notice: message
   end
 
   batch_action :reject do |ids|
-    selected = batch_action_collection.where(id: ids)
-    updated = selected.update_all(status: Review.statuses[:rejected], updated_at: Time.current)
-    redirect_to collection_path, notice: "#{updated} reviews rejected."
+    result = run_batch_decision(ids, :reject)
+    message = "#{result[:processed]} reviews rejeitadas."
+    message += " Erros: #{result[:errors].join('; ')}" if result[:errors].any?
+    redirect_to collection_path, notice: message
   end
 
   member_action :approve, method: :patch do
-    resource.update(status: :approved)
-    redirect_to resource_path, notice: 'Review approved.'
+    handle_review_decision(resource, :approve, 'Avaliação aprovada.')
   end
 
   member_action :reject, method: :patch do
-    resource.update(status: :rejected)
-    redirect_to resource_path, notice: 'Review rejected.'
+    handle_review_decision(resource, :reject, 'Avaliação rejeitada.')
   end
 
   member_action :analyze, method: :patch do
     resource.update(status: :in_analysis)
-    redirect_to resource_path, notice: 'Review moved to in_analysis.'
+    redirect_to resource_path, notice: 'Review set to análise.'
   end
 
   action_item :approve, only: :show, if: proc { !resource.approved? } do
-    link_to 'Approve', approve_admin_review_path(resource), method: :patch
+    link_to 'Aprovar', approve_admin_review_path(resource), method: :patch,
+            data: { confirm: 'Confirma a aprovação desta avaliação?' }
   end
 
   action_item :reject, only: :show, if: proc { !resource.rejected? } do
-    link_to 'Reject', reject_admin_review_path(resource), method: :patch
+    link_to 'Rejeitar', reject_admin_review_path(resource), method: :patch,
+            data: { confirm: 'Deseja rejeitar esta avaliação?' }
   end
 
   action_item :analyze, only: :show, if: proc { !resource.in_analysis? } do
-    link_to 'Analyze', analyze_admin_review_path(resource), method: :patch
+    link_to 'Enviar para análise', analyze_admin_review_path(resource), method: :patch,
+            data: { confirm: 'Mover esta avaliação para análise?' }
   end
 
   index do
     selectable_column
     id_column
     column :company
-    column :user
+    column 'Usuário', &:user
     column :rating
     column :status do |review|
       status_tag review.status
     end
+    column :comment do |review|
+      truncate(review.comment, length: 120)
+    end
     column :featured
     column :display_order
     column :created_at
+    column :updated_at
     actions defaults: true do |review|
-      item 'Approve', approve_admin_review_path(review), method: :patch unless review.approved?
-      item 'Reject', reject_admin_review_path(review), method: :patch unless review.rejected?
-      item 'Analyze', analyze_admin_review_path(review), method: :patch unless review.in_analysis?
+      item 'Aprovar', approve_admin_review_path(review), method: :patch,
+           data: { confirm: 'Confirma a aprovação desta avaliação?' } unless review.approved?
+      item 'Rejeitar', reject_admin_review_path(review), method: :patch,
+           data: { confirm: 'Deseja rejeitar esta avaliação?' } unless review.rejected?
+      item 'Enviar para análise', analyze_admin_review_path(review), method: :patch,
+           data: { confirm: 'Deseja mover esta avaliação para análise?' } unless review.in_analysis?
     end
   end
 
@@ -116,11 +127,60 @@ ActiveAdmin.register Review do
       row :created_at
       row :updated_at
     end
+    panel 'Histórico de decisões' do
+      table_for resource.review_decision_logs.order(created_at: :desc) do
+        column :admin_user
+        column(:action) { |log| log.action.humanize }
+        column :previous_status
+        column :new_status
+        column :notes
+        column :created_at
+      end
+    end
+  end
+
+  sidebar 'Decisões recentes', only: :show do
+    table_for resource.review_decision_logs.order(created_at: :desc).limit(5) do
+      column :admin_user
+      column(:action) { |log| log.action.humanize }
+      column :created_at
+    end
   end
 
   controller do
     def scoped_collection
       super.includes(:company, :user)
+    end
+
+    def handle_review_decision(review, action, success_message)
+      ReviewDecisionService.new(
+        review: review,
+        admin_user: current_admin_user,
+        notes: params[:notes],
+        lock_version: params[:lock_version]
+      ).public_send("#{action}!")
+
+      redirect_to resource_path(review), notice: success_message
+    rescue ReviewDecisionService::DecisionError => e
+      redirect_to resource_path(review), alert: e.message
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to resource_path(review), alert: e.record.errors.full_messages.to_sentence
+    end
+
+    def run_batch_decision(ids, action)
+      processed = 0
+      errors = []
+
+      Review.where(id: ids).order(:id).find_each do |review|
+        begin
+          ReviewDecisionService.new(review: review, admin_user: current_admin_user).public_send("#{action}!")
+          processed += 1
+        rescue StandardError => e
+          errors << "##{review.id}: #{e.message}"
+        end
+      end
+
+      { processed: processed, errors: errors }
     end
   end
 end

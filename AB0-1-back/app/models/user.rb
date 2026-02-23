@@ -28,7 +28,7 @@ class User < ApplicationRecord
   accepts_nested_attributes_for :company_members, allow_destroy: true
 
   # Role validation
-  ROLES = %w[company review].freeze
+  ROLES = %w[admin company review].freeze
   enum status: { pending: 0, active: 1, rejected: 2, blocked: 3 }, _default: :pending
 
   validates :role, inclusion: { in: ROLES }, allow_nil: true

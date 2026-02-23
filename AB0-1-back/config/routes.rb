@@ -183,6 +183,15 @@ Rails.application.routes.draw do
         end
       end
 
+      namespace :admin do
+        resources :reviews, only: %i[index show] do
+          member do
+            patch :approve
+            patch :reject
+          end
+        end
+      end
+
       # Leads routes
       resources :leads, only: [:create, :index, :show] do
         collection do

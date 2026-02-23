@@ -6,13 +6,16 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def index
     # Eager load associations to prevent N+1 queries
-    @reviews = Review.includes(:user)
+    @reviews = Review.includes(:user, :company)
                      .order(created_at: :desc)
 
     # Filtra por company_id se fornecido
     if params[:company_id].present?
-      company_id = params[:company_id].to_i
-      @reviews = @reviews.where(company_id: company_id)
+      @reviews = @reviews.where(company_id: params[:company_id].to_i)
+    end
+
+    if params[:user_id].present?
+      @reviews = @reviews.where(user_id: params[:user_id].to_i)
     end
 
     # Filtra por reviews do usuário autenticado, se solicitado
