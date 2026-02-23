@@ -70,6 +70,7 @@ Rails.application.routes.draw do
         end
 
         member do
+          get 'sector_ratings/summary', to: 'sector_ratings#summary'
           get 'analytics/historical', to: 'companies#analytics_historical'
           get 'analytics/reviews', to: 'companies#analytics_reviews'
           get 'analytics/competitors', to: 'companies#analytics_competitors'
@@ -78,6 +79,8 @@ Rails.application.routes.draw do
           get :categories
           get :social_proof
         end
+
+        resources :sector_ratings, only: [:create]
 
         resources :financing_options, only: [:index, :create, :update, :destroy] do
           collection do

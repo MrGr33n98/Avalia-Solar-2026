@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_23_140000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_23_205820) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -407,6 +407,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_140000) do
     t.boolean "active_admin", default: false, null: false
     t.boolean "financing_tab_visible", default: false, null: false
     t.boolean "social_proof_enabled", default: false, null: false
+    t.decimal "sector_rating_avg", precision: 4, scale: 2, default: "0.0", null: false
+    t.integer "sector_rating_count", default: 0, null: false
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
@@ -908,6 +910,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_140000) do
     t.index ["user_id"], name: "index_reviews_on_user_id"
   end
 
+  create_table "sector_ratings", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.integer "user_id", null: false
+    t.integer "homologation", null: false
+    t.integer "technical_quality", null: false
+    t.integer "safety", null: false
+    t.integer "consultancy", null: false
+    t.decimal "total_score", precision: 4, scale: 2
+    t.string "status", default: "draft", null: false
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "user_id"], name: "index_sector_ratings_on_company_and_user", unique: true
+    t.index ["company_id"], name: "index_sector_ratings_on_company_id"
+    t.index ["user_id"], name: "index_sector_ratings_on_user_id"
+  end
+
   create_table "spec_templates", force: :cascade do |t|
     t.string "product_type", null: false
     t.string "key", null: false
@@ -1068,6 +1087,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_140000) do
   add_foreign_key "review_decision_logs", "reviews"
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "users"
+  add_foreign_key "sector_ratings", "companies"
+  add_foreign_key "sector_ratings", "users"
   add_foreign_key "sponsored_plans", "categories"
   add_foreign_key "sponsored_plans", "plans"
   add_foreign_key "sponsored_plans", "products"

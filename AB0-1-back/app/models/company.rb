@@ -54,6 +54,7 @@ class Company < ApplicationRecord
   has_many :users, dependent: :nullify
   has_many :company_members, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
+  has_many :sector_ratings, dependent: :destroy
   accepts_nested_attributes_for :company_members, allow_destroy: true
   has_many :members, through: :company_members, source: :user
 
@@ -169,6 +170,13 @@ class Company < ApplicationRecord
     
     # Update associated categories metrics
     categories.each(&:update_metrics!)
+  end
+
+  def recalculate_sector_rating_cache!
+    summary = sector_ratings.published
+    avg = summary.average(:total_score).to_f.round(2)
+    count = summary.count
+    update_columns(sector_rating_avg: avg, sector_rating_count: count)
   end
 
   def to_s
