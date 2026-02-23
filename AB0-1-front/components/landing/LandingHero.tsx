@@ -57,12 +57,6 @@ export default function LandingHero({ categories = [] }: LandingHeroProps) {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-wrap justify-center items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            <span className="font-bold text-slate-400">Trusted by:</span>
-            <div className="h-6 w-24 bg-slate-200 rounded" />
-            <div className="h-6 w-24 bg-slate-200 rounded" />
-            <div className="h-6 w-24 bg-slate-200 rounded" />
-          </div>
         </div>
       </div>
     </section>
