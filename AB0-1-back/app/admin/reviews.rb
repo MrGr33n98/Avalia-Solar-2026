@@ -1,4 +1,5 @@
 ActiveAdmin.register Review do
+  menu parent: 'Sistema', label: 'Reviews', priority: 3
   permit_params :company_id, :user_id, :rating, :comment, :status, :featured, :display_order, :verified, :reply, :replied_at
 
   scope :all, default: true
