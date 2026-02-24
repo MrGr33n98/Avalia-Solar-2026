@@ -111,6 +111,9 @@ export interface Company {
   rating_avg?: number;
   average_rating?: number;     // Alternative name for rating_avg
   rating_count?: number;
+  sector_ratings_enabled?: boolean;
+  sector_rating_avg?: number;
+  sector_rating_count?: number;
   certifications?: string | string[];
   awards?: string;
   partner_brands?: string;

@@ -23,7 +23,10 @@ class CompanySerializer < ActiveModel::Serializer
              :financing_profile,
              :financing_partners,
              :financing_offers,
-             :category_info
+             :category_info,
+             :sector_ratings_enabled,
+             :sector_rating_avg,
+             :sector_rating_count
 
   def category_info
     category = object.categories.first
@@ -113,6 +116,18 @@ class CompanySerializer < ActiveModel::Serializer
 
   def financing_tab_visible
     object.financing_tab_visible?
+  end
+
+  def sector_ratings_enabled
+    object.respond_to?(:sector_ratings_enabled?) ? object.sector_ratings_enabled? : false
+  end
+
+  def sector_rating_avg
+    object.try(:sector_rating_avg) || 0.0
+  end
+
+  def sector_rating_count
+    object.try(:sector_rating_count) || 0
   end
 
   def financing_profile
