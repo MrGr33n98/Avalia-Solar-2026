@@ -54,8 +54,8 @@ Thumbs.db
 /AB0-1-back/db/*.sqlite3
 /AB0-1-back/db/*.sqlite3-journal
 
-# Documentação (não ignorar por padrão)
-# Removidas regras que ignoravam *.md e *.txt/.github/PULL_REQUEST_TEMPLATE.md
+# Documentacao (nao ignorar por padrao)
+# Regras antigas para ignorar *.md e *.txt foram removidas.
 /.trae/
 /AB0-1-back/COMO_INICIAR_AGORA.txt
 /AB0-1-back/SIDEKIQ_NAMESPACE_FIX.md
@@ -88,7 +88,6 @@ Thumbs.db
 /task0-test.md
 /tasks/TASK-10.md
 
-/.github/PULL_REQUEST_TEMPLATE.md
 # Rascunhos locais / planejamento
 /docs/
 code-base-dashboards/

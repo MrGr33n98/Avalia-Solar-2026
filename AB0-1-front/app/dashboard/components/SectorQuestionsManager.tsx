@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { fetchApi } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 type SectorQuestion = {
   id?: number;
@@ -27,6 +26,7 @@ type Meta = {
   total: number;
   remaining: number;
   paid_required: boolean;
+  limit_reached: boolean;
 };
 
 interface Props {
@@ -34,16 +34,20 @@ interface Props {
   planFeatures?: Record<string, any>;
 }
 
+const EMPTY_FORM: SectorQuestion = { prompt: '', weight: 1, order: 1, enabled: true };
+
 export default function SectorQuestionsManager({ companyId, planFeatures }: Props) {
   const [questions, setQuestions] = useState<SectorQuestion[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [editing, setEditing] = useState<SectorQuestion | null>(null);
-  const [form, setForm] = useState<SectorQuestion>({ prompt: '', weight: 1, order: 1, enabled: true });
+  const [form, setForm] = useState<SectorQuestion>(EMPTY_FORM);
 
   const canCreate = useMemo(() => {
     if (!meta?.sector_ratings_enabled) return false;
+    if (meta.limit_reached) return false;
     if (meta.remaining > 0) return true;
     return !meta.paid_required;
   }, [meta]);
@@ -74,17 +78,17 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ prompt: '', weight: 1, order: questions.length + 1, enabled: true });
-    setModalOpen(true);
+    setForm({ ...EMPTY_FORM, order: questions.length + 1 });
+    setEditorOpen(true);
   };
 
-  const openEdit = (q: SectorQuestion) => {
-    setEditing(q);
-    setForm(q);
-    setModalOpen(true);
+  const openEdit = (question: SectorQuestion) => {
+    setEditing(question);
+    setForm({ ...question });
+    setEditorOpen(true);
   };
 
-  const handleSubmit = async () => {
+  const saveQuestion = async () => {
     try {
       const payload = { company_sector_question: form };
       if (editing?.id) {
@@ -102,7 +106,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
         });
         toast({ title: 'Pergunta criada' });
       }
-      setModalOpen(false);
+      setEditorOpen(false);
       await loadQuestions();
     } catch (error: any) {
       toast({
@@ -113,8 +117,29 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
     }
   };
 
-  const handleDelete = async (id?: number) => {
+  const toggleEnabled = async (question: SectorQuestion, enabled: boolean) => {
+    if (!question.id) return;
+
+    try {
+      await fetchApi(`/company_dashboard/sector_questions/${question.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_sector_question: { enabled } }),
+      });
+      setQuestions((prev) => prev.map((item) => (item.id === question.id ? { ...item, enabled } : item)));
+      toast({ title: enabled ? 'Pergunta ativada' : 'Pergunta desativada' });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao atualizar status',
+        description: error?.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const removeQuestion = async (id?: number) => {
     if (!id) return;
+
     try {
       await fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' });
       toast({ title: 'Pergunta removida' });
@@ -130,62 +155,77 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
 
   return (
     <Card className="border border-border shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle className="text-lg font-semibold">Perguntas da empresa</CardTitle>
           {meta && (
             <p className="text-sm text-muted-foreground">
-              {meta.total} de {meta.limit || meta.total} perguntas ativas. {meta.remaining > 0 ? `${meta.remaining} vagas livres.` : 'Limite atingido.'}
+              {meta.total} de {meta.limit || meta.total} perguntas ativas.
+              {meta.remaining > 0 ? ` ${meta.remaining} vagas livres.` : ' Limite atingido.'}
             </p>
           )}
         </div>
-        <Button onClick={openCreate} disabled={!canCreate || loading} variant="default">
-          <Plus className="h-4 w-4 mr-2" />
-          Nova pergunta
-        </Button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setListOpen(true)} disabled={loading || questions.length === 0}>
+            <Eye className="mr-2 h-4 w-4" />
+            Ver perguntas
+          </Button>
+          <Button onClick={openCreate} disabled={!canCreate || loading}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova pergunta
+          </Button>
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {!meta?.sector_ratings_enabled && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Perguntas setoriais desabilitadas no painel admin.
           </div>
         )}
-        {meta?.paid_required && meta.remaining <= 0 && (
+
+        {(meta?.paid_required || meta?.limit_reached) && meta?.remaining <= 0 && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-            Limite gratuito atingido. Faça upgrade de plano para adicionar mais perguntas.
+            Limite gratuito atingido. Faca upgrade de plano para adicionar mais perguntas.
           </div>
         )}
+
         <div className="grid gap-3">
           {questions.map((question) => (
             <div
               key={question.id || question.prompt}
-              className="rounded-lg border border-border/60 bg-white px-4 py-3 flex items-center justify-between gap-3"
+              className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-white px-4 py-3"
             >
-              <div>
-                <p className="text-sm font-medium text-foreground">{question.prompt}</p>
-              </div>
+              <p className="text-sm font-medium text-foreground">{question.prompt}</p>
+
               <div className="flex items-center gap-2">
                 <Switch
                   checked={question.enabled}
-                  onCheckedChange={(checked) => openEdit({ ...question, enabled: checked })}
+                  onCheckedChange={(checked) => void toggleEnabled(question, checked)}
                   aria-label="Ativar pergunta"
                 />
                 <Button variant="ghost" size="icon" onClick={() => openEdit(question)} aria-label="Editar">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(question.id)} aria-label="Excluir">
+                <Button variant="ghost" size="icon" onClick={() => void removeQuestion(question.id)} aria-label="Excluir">
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </div>
             </div>
           ))}
-          {questions.length === 0 && (
-            <div className="text-sm text-muted-foreground">Nenhuma pergunta cadastrada.</div>
-          )}
+
+          {questions.length === 0 && <div className="text-sm text-muted-foreground">Nenhuma pergunta cadastrada.</div>}
         </div>
+
+        {planFeatures && Object.keys(planFeatures).length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Regras de plano aplicadas automaticamente conforme configuracao do admin.
+          </p>
+        )}
       </CardContent>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar pergunta' : 'Nova pergunta'}</DialogTitle>
@@ -195,7 +235,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
               <Label>Pergunta</Label>
               <Input
                 value={form.prompt}
-                onChange={(e) => setForm((prev) => ({ ...prev, prompt: e.target.value }))}
+                onChange={(event) => setForm((prev) => ({ ...prev, prompt: event.target.value }))}
                 placeholder="Escreva a pergunta"
               />
             </div>
@@ -207,7 +247,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                   min={1}
                   max={5}
                   value={form.weight}
-                  onChange={(e) => setForm((prev) => ({ ...prev, weight: Number(e.target.value) || 1 }))}
+                  onChange={(event) => setForm((prev) => ({ ...prev, weight: Number(event.target.value) || 1 }))}
                 />
               </div>
               <div className="space-y-2">
@@ -217,15 +257,12 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                   min={1}
                   max={50}
                   value={form.order}
-                  onChange={(e) => setForm((prev) => ({ ...prev, order: Number(e.target.value) || 1 }))}
+                  onChange={(event) => setForm((prev) => ({ ...prev, order: Number(event.target.value) || 1 }))}
                 />
               </div>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
-              <div>
-                <p className="text-sm font-medium">Pergunta ativa</p>
-                <p className="text-xs text-muted-foreground">Controle visibilidade para os usuários.</p>
-              </div>
+              <p className="text-sm font-medium">Pergunta ativa</p>
               <Switch
                 checked={form.enabled}
                 onCheckedChange={(checked) => setForm((prev) => ({ ...prev, enabled: checked }))}
@@ -234,11 +271,32 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>
+            <Button variant="outline" onClick={() => setEditorOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={!form.prompt}>
+            <Button onClick={() => void saveQuestion()} disabled={!form.prompt.trim()}>
               Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={listOpen} onOpenChange={setListOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Perguntas cadastradas</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
+            {questions.map((question) => (
+              <div key={question.id || question.prompt} className="rounded-md border border-border/60 px-3 py-2 text-sm">
+                {question.prompt}
+              </div>
+            ))}
+            {questions.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma pergunta cadastrada.</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setListOpen(false)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

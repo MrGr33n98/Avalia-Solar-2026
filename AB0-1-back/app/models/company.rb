@@ -501,8 +501,9 @@ class Company < ApplicationRecord
   end
 
   def sector_question_limit
-    explicit = feature_enabled_from_plan?(:sector_question_limit, :sector_questions_limit)
-    return explicit.to_i if explicit.present?
+    explicit = feature_value_from_plan(:sector_question_limit, :sector_questions_limit)
+    explicit_limit = explicit.to_i if explicit.present?
+    return explicit_limit if explicit_limit.to_i.positive?
 
     has_paid_plan? ? 10 : SECTOR_QUESTIONS_FREE_LIMIT
   rescue StandardError
@@ -511,39 +512,61 @@ class Company < ApplicationRecord
 
   def requires_paid_plan_for_sector_question?(new_count: nil)
     count = new_count || company_sector_questions.count
-    return false if count <= SECTOR_QUESTIONS_FREE_LIMIT
+    return false if count <= SECTOR_QUESTIONS_FREE_LIMIT || has_paid_plan?
 
-    !has_paid_plan?
+    true
+  end
+
+  def sector_question_limit_reached?(new_count: nil)
+    count = new_count || company_sector_questions.count
+    count > sector_question_limit
+  rescue StandardError
+    false
   end
 
   def can_manage_sector_questions?
-    sector_ratings_enabled? && (active_admin? || has_paid_plan? || featured? || verified?)
+    respond_to?(:sector_ratings_enabled?) && sector_ratings_enabled?
+  end
+
+  # Public feature hash used by dashboard and serializers.
+  def effective_plan_features
+    company_overrides =
+      if respond_to?(:plan_features) && plan_features.present?
+        parse_features(plan_features)
+      else
+        {}
+      end
+
+    plan_hash = parse_features(raw_plan_features)
+    plan_hash.merge(company_overrides)
+  rescue StandardError => e
+    Rails.logger.error("[Company#effective_plan_features] company_id=#{id} error=#{e.class}: #{e.message}")
+    {}
   end
 
   def resolved_plan_features
     return @resolved_plan_features if defined?(@resolved_plan_features)
 
-    raw_features =
-      if respond_to?(:effective_plan_features) && effective_plan_features.present?
-        effective_plan_features
-      elsif respond_to?(:plan_features) && plan_features.present?
-        plan_features
-      elsif plan&.respond_to?(:features) && plan.features.present?
-        plan.features
-      else
-        {}
-      end
-
-    @resolved_plan_features = parse_features(raw_features)
+    @resolved_plan_features = effective_plan_features
   rescue StandardError
     @resolved_plan_features = {}
   end
 
   def feature_enabled_from_plan?(*keys)
+    value = feature_value_from_plan(*keys)
+    return nil if value.nil?
+
+    ActiveModel::Type::Boolean.new.cast(value)
+  end
+
+  def feature_value_from_plan(*keys)
     features = resolved_plan_features
     keys.flatten.each do |key|
-      value = features[key.to_s] || features[key.to_sym]
-      return ActiveModel::Type::Boolean.new.cast(value) unless value.nil?
+      value = features[key.to_s]
+      return value unless value.nil?
+
+      value = features[key.to_sym]
+      return value unless value.nil?
     end
     nil
   end
@@ -649,6 +672,22 @@ class Company < ApplicationRecord
       JSON.parse(raw_features) rescue (YAML.safe_load(raw_features) rescue {})
     when Hash
       raw_features
+    when NilClass
+      {}
+    else
+      raw_features.respond_to?(:to_unsafe_h) ? raw_features.to_unsafe_h : {}
+    end
+  end
+
+  def raw_plan_features
+    return {} unless respond_to?(:plan) && plan.present?
+
+    if plan.respond_to?(:feature_flags)
+      plan.feature_flags
+    elsif plan.respond_to?(:features_json) && plan.features_json.present?
+      plan.features_json
+    elsif plan.respond_to?(:features) && plan.features.present?
+      plan.features
     else
       {}
     end

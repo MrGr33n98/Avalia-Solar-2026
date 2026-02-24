@@ -21,6 +21,17 @@ module Analytics
     }.freeze
 
     GLOBAL_EVENTS = %w[page_view search landing_view].freeze
+    INTERNAL_SYSTEM_EVENTS = %w[
+      page_view
+      search
+      landing_view
+      theme_changed
+      theme_changed_dashboard
+      web_vital
+      performance_metric
+      error_occurred
+    ].freeze
+    PUBLIC_COMPANY_EVENTS = %w[profile_view cta_click whatsapp_click].freeze
 
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
@@ -40,7 +51,7 @@ module Analytics
 
       company = Company.find(@company_id) if @company_id.present?
 
-      if @company_id.blank? && !GLOBAL_EVENTS.include?(@event_type)
+      if @company_id.blank? && !GLOBAL_EVENTS.include?(normalized_event_type)
         return Result.new(ok: false, error: 'company_id missing for event')
       end
 
@@ -167,24 +178,43 @@ module Analytics
     end
 
     def authorize!(company)
-      # Internal/system events (e.g. created via callbacks/jobs)
+      # Telemetry/internal events should not fail authorization checks.
+      normalized_type = normalized_event_type
+      return if INTERNAL_SYSTEM_EVENTS.include?(normalized_type)
+
+      # Internal/system events created by jobs or callbacks.
       return if @user.nil?
       return if @user.respond_to?(:admin?) && @user.admin?
       return if @user.respond_to?(:review_user?) && @user.review_user?
 
       if @user.respond_to?(:company_user?) && @user.company_user?
-        raise Pundit::NotAuthorizedError, 'Forbidden' unless @user.company_id == company.id
-        return
+        same_company =
+          @user.company_id == company.id ||
+          (@user.respond_to?(:active_membership_for?) && @user.active_membership_for?(company.id))
+
+        return if same_company || PUBLIC_COMPANY_EVENTS.include?(normalized_type)
+
+        raise Pundit::NotAuthorizedError, 'Forbidden'
       end
 
-      # For other users, we might want to allow them to track events like profile views
-      # but we should be careful. For now, let's follow the original logic.
-      # If they are just a regular user, they can track events.
+      # Regular users can only track public-facing events.
+      return if PUBLIC_COMPANY_EVENTS.include?(normalized_type) || GLOBAL_EVENTS.include?(normalized_type)
+
+      raise Pundit::NotAuthorizedError, 'Forbidden'
+    rescue StandardError => e
+      raise if e.is_a?(Pundit::NotAuthorizedError)
+
+      Rails.logger.warn("[Analytics] authorize! fallback allow due error=#{e.class}: #{e.message}")
+      return
+    end
+
+    def normalized_event_type
+      @normalized_event_type ||= @event_type.to_s.downcase.gsub(/\s+/, '_')
     end
 
     def increment_daily_stat!(event)
       return if event.company_id.blank?
-      col = EVENT_TO_DAILY_COLUMN[event.event_type]
+      col = EVENT_TO_DAILY_COLUMN[normalized_event_type]
       return unless col
 
       day = event.tracked_at.to_date
@@ -196,7 +226,7 @@ module Analytics
     end
 
     def increment_company_counters(company)
-      counter = EVENT_TO_COMPANY_COUNTER[@event_type]
+      counter = EVENT_TO_COMPANY_COUNTER[normalized_event_type]
       return unless counter
 
       Company.increment_counter(counter, company.id)
@@ -205,9 +235,9 @@ module Analytics
     def increment_yabeda_metrics(event)
       return unless defined?(Yabeda)
 
-      Yabeda.ab0.analytics_events_total.increment({ event_type: event.event_type }, by: 1)
+      Yabeda.ab0.analytics_events_total.increment({ event_type: normalized_event_type }, by: 1)
       
-      if event.event_type == 'profile_view'
+      if normalized_event_type == 'profile_view'
         Yabeda.ab0.company_views_total.increment({ company_id: event.company_id }, by: 1)
       end
     end

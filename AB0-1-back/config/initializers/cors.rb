@@ -79,6 +79,12 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       credentials: true,
       max_age: 1800
 
+    resource '/companies/*/sector_ratings',
+      headers: :any,
+      methods: [:post, :options, :head],
+      credentials: true,
+      max_age: 1800
+
     # Active Storage resources
     resource '/rails/active_storage/*',
       headers: :any,

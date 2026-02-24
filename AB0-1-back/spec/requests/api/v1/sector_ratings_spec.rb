@@ -5,11 +5,12 @@ RSpec.describe 'Sector Ratings API', type: :request do
   let(:company) do
     create(
       :company,
-      status: 'active',
+      status: 'pending',
       moderation_status: 'approved',
       sector_ratings_enabled: true,
       state: 'SP',
-      city: 'Sao Paulo'
+      city: 'Sao Paulo',
+      phone: '11999999999'
     )
   end
   let(:review_user) do
@@ -39,6 +40,15 @@ RSpec.describe 'Sector Ratings API', type: :request do
       parsed = JSON.parse(response.body)
       expect(parsed.first['id']).to eq(question.id)
       expect(parsed.first['prompt']).to include('Tempo de resposta')
+    end
+
+    it 'supports legacy route without /api/v1 prefix' do
+      question = CompanySectorQuestion.create!(company: company, prompt: 'Qualidade tecnica', weight: 1, order: 1, enabled: true)
+      get "/companies/#{company.id}/sector_ratings/questions", headers: auth_headers(review_user)
+
+      expect(response).to have_http_status(:ok)
+      parsed = JSON.parse(response.body)
+      expect(parsed.first['id']).to eq(question.id)
     end
   end
 

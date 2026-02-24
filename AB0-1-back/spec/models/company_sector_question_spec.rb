@@ -20,4 +20,9 @@ RSpec.describe CompanySectorQuestion, type: :model do
     question.valid?
     expect(question.order).to eq(2)
   end
+
+  it 'allowlists ransack associations to keep ActiveAdmin index stable' do
+    expect(described_class.ransackable_associations).to include('company')
+    expect(described_class.ransackable_attributes).to include('company_id')
+  end
 end

@@ -45,6 +45,14 @@ FactoryBot.define do
     role { :editor }
   end
 
+  factory :company_sector_question do
+    association :company
+    sequence(:prompt) { |n| "Pergunta setorial #{n}" }
+    weight { 1 }
+    sequence(:order) { |n| n }
+    enabled { true }
+  end
+
   factory :company_access_request do
     association :user
     association :company

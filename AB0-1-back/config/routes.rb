@@ -7,11 +7,9 @@ Rails.application.routes.draw do
     mount Rswag::Api::Engine => '/api-docs'
   end
 
-  mount ActiveStorage::Engine => "/rails/active_storage"
-  # ActionCable websocket endpoint
+  mount ActiveStorage::Engine => '/rails/active_storage'
   mount ActionCable.server => '/cable'
 
-  # ActiveAdmin routes
   ActiveAdmin.routes(self)
 
   devise_for :admin_users, ActiveAdmin::Devise.config.merge(
@@ -20,7 +18,6 @@ Rails.application.routes.draw do
     }
   )
 
-  # Two-Factor Authentication routes for Admin
   namespace :admin do
     resource :two_factor, only: [:show, :manage] do
       post :enable
@@ -29,11 +26,11 @@ Rails.application.routes.draw do
       post :regenerate_backup_codes
     end
   end
+
   devise_for :users, controllers: {
     omniauth_callbacks: 'users/omniauth_callbacks'
   }
 
-  # Health check endpoints
   get '/health', to: 'health#show'
   get '/health/readiness', to: 'health#readiness'
   get '/health/liveness', to: 'health#liveness'
@@ -41,16 +38,12 @@ Rails.application.routes.draw do
   get '/health/test_error', to: 'health#test_error'
   get '/health/test_scout', to: 'health#test_scout'
 
-  # TASK-009: Metrics endpoint
   mount Yabeda::Prometheus::Exporter, at: '/metrics'
 
-  # API routes
   namespace :api do
     namespace :v1 do
-      # Global states endpoint for frontend compatibility
       get 'states', to: 'companies#states'
 
-      # Articles routes
       resources :articles do
         collection do
           get :featured
@@ -60,7 +53,6 @@ Rails.application.routes.draw do
         end
       end
 
-      # Companies routes
       resources :companies do
         collection do
           get :states
@@ -99,24 +91,16 @@ Rails.application.routes.draw do
         end
       end
 
-      # Analytics routes
       post 'analytics/track', to: 'analytics#track'
       get 'analytics/conversions', to: 'analytics#conversions'
 
-      # Banner offers (catalog)
       resources :banner_offers, only: [:index]
-
-      # Banner events (tracking)
       resources :banner_events, only: [:create]
-
-      # Payments webhooks
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
 
-      # Dashboard routes
       get 'dashboard/stats', to: 'dashboard#stats'
       get 'dashboard/export', to: 'dashboard_exports#export'
 
-      # Company Dashboard routes
       scope :company_dashboard do
         get 'stats', to: 'company_dashboard#stats'
         get 'banner_subscriptions', to: 'company_dashboard#banner_subscriptions'
@@ -147,11 +131,8 @@ Rails.application.routes.draw do
         end
       end
 
-      # Review Dashboard routes
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
 
-      # Categories routes
-      # Refatorado: sem 'only' para permitir create/update/destroy
       resources :categories do
         member do
           get :companies
@@ -166,13 +147,9 @@ Rails.application.routes.draw do
         end
       end
 
-      # Banners routes
       resources :banners, only: [:index]
-
-      # BannerGlobals routes
       resources :banner_globals, only: [:index]
 
-      # Products routes
       resources :products, only: [:index, :show] do
         member do
           get :reviews
@@ -184,7 +161,6 @@ Rails.application.routes.draw do
         end
       end
 
-      # Reviews routes
       resources :reviews, only: [:index, :show, :create, :update, :destroy] do
         collection do
           get :mine
@@ -196,18 +172,10 @@ Rails.application.routes.draw do
           member do
             patch :approve
             patch :reject
-    end
-  end
+          end
+        end
+      end
 
-  # Compat fallback for legacy frontend calls missing /api/v1 prefix
-  scope module: 'api/v1' do
-    get '/companies/:company_id/sector_ratings/questions', to: 'sector_ratings#questions'
-    get '/companies/:company_id/sector_ratings/summary', to: 'sector_ratings#summary'
-    post '/companies/:company_id/sector_ratings', to: 'sector_ratings#create'
-  end
-end
-
-      # Leads routes
       resources :leads, only: [:create, :index, :show] do
         collection do
           post :wizard_create
@@ -222,7 +190,6 @@ end
         end
       end
 
-      # Users routes
       resources :users, only: [:show, :update, :create] do
         collection do
           get :me_companies
@@ -230,17 +197,14 @@ end
         end
       end
 
-      # Company access routes
       get 'company_access/context', to: 'company_access#context'
       post 'company_access/select_active_company', to: 'company_access#select_active_company'
       resources :company_access_requests, only: [:create, :destroy]
 
-      # Search routes
       get 'search', to: 'search#index'
       get 'search/all', to: 'search#all'
       get 'search/suggest', to: 'search#suggest'
 
-      # Authentication routes
       scope :auth, controller: 'auth' do
         post :login
         post :signup
@@ -255,7 +219,6 @@ end
         post :confirm_email
       end
 
-      # Content Feed
       get 'content_feed', to: 'content_feed#index'
 
       namespace :dashboard do
@@ -305,9 +268,16 @@ end
     end
   end
 
+  # Legacy fallback for clients that still call API routes without /api/v1.
+  scope module: 'api/v1' do
+    get '/companies/:company_id/sector_ratings/questions', to: 'sector_ratings#questions'
+    get '/companies/:company_id/sector_ratings/summary', to: 'sector_ratings#summary'
+    post '/companies/:company_id/sector_ratings', to: 'sector_ratings#create'
+  end
+
   namespace :dashboard do
-    root to: "home#index"
-    get "analytics", to: "analytics#index"
+    root to: 'home#index'
+    get 'analytics', to: 'analytics#index'
     resource :company, only: [:edit, :update]
     resources :categories, only: [:index] do
       collection do
@@ -316,8 +286,7 @@ end
     end
   end
 
-  get "waiting_approval", to: "dashboard/access#waiting_approval", as: :waiting_approval
+  get 'waiting_approval', to: 'dashboard/access#waiting_approval', as: :waiting_approval
 
-  # Root route
   root 'rails/welcome#index'
 end
