@@ -38,6 +38,25 @@ type Action =
   | { type: 'MERGE_COUNTERS'; kpis: Partial<KPI> }
   | { type: 'APPEND_POINT'; key: keyof State['series']; point: Point }
 
+type RealtimeSubscription =
+  | (() => void)
+  | {
+      unsubscribe?: () => void
+    }
+  | null
+  | undefined
+
+function cleanupRealtimeSubscription(subscription: RealtimeSubscription) {
+  if (!subscription) return
+  if (typeof subscription === 'function') {
+    subscription()
+    return
+  }
+  if (typeof subscription.unsubscribe === 'function') {
+    subscription.unsubscribe()
+  }
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_STATUS':
@@ -88,7 +107,7 @@ export function useCompanyDashboard(companyId: number) {
       }
     })()
 
-    const sub = subscribeCompanyDashboard(
+    const subscription = subscribeCompanyDashboard(
       companyId,
       (msg) => {
         // acumular em batch para reduzir rerenders
@@ -122,7 +141,7 @@ export function useCompanyDashboard(companyId: number) {
 
     return () => {
       mounted = false
-      sub.unsubscribe()
+      cleanupRealtimeSubscription(subscription)
       if (timerRef.current) {
         window.clearTimeout(timerRef.current)
         timerRef.current = null

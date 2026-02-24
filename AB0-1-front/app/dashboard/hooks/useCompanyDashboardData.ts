@@ -4,6 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchApi, companiesApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 
+type RealtimeSubscription =
+  | (() => void)
+  | {
+      unsubscribe?: () => void;
+    }
+  | null
+  | undefined;
+
+const cleanupRealtimeSubscription = (subscription: RealtimeSubscription) => {
+  if (!subscription) return;
+  if (typeof subscription === 'function') {
+    subscription();
+    return;
+  }
+  if (typeof subscription.unsubscribe === 'function') {
+    subscription.unsubscribe();
+  }
+};
+
 interface DashboardStats {
   profileViews: number;
   ctaClicks: number;
@@ -132,11 +151,11 @@ export function useCompanyDashboardData(companyId: string) {
 
     loadAll();
 
-    const unsubscribe = subscribeCompanyDashboard(companyId, () => {
+    const subscription = subscribeCompanyDashboard(companyId, () => {
       refreshData();
     });
 
-    return unsubscribe;
+    return () => cleanupRealtimeSubscription(subscription);
   }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications, refreshData]);
 
   const markNotificationAsRead = (id: string) => {

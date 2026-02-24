@@ -40,6 +40,14 @@ type SlideItem = {
   _failed?: boolean;
 };
 
+const toSafeLength = (value: unknown, max = 50): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  const normalized = Math.floor(parsed);
+  if (normalized <= 0) return 0;
+  return Math.min(normalized, max);
+};
+
 function resolveImageSrc(url?: string | null): string | null {
   if (!url || typeof url !== 'string') return null;
   const trimmed = url.trim();
@@ -199,7 +207,7 @@ export default function SponsorCarousel({
     if (!api) return;
     const update = () => {
       setSelectedIndex(api.selectedScrollSnap());
-      setSnapCount(api.scrollSnapList().length);
+      setSnapCount(toSafeLength(api.scrollSnapList().length));
     };
     update();
     api.on('reInit', update);
@@ -209,6 +217,8 @@ export default function SponsorCarousel({
       api.off('select', update);
     };
   }, [api]);
+
+  const safeSnapCount = toSafeLength(snapCount);
 
   // ✅ fallback global quando não vem nada da API
   if (validSlides.length === 0) {
@@ -374,9 +384,9 @@ export default function SponsorCarousel({
         aria-label="Próximo banner"
       />
 
-        {snapCount > 1 ? (
+        {safeSnapCount > 1 ? (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-            {Array.from({ length: snapCount }).map((_, idx) => (
+            {Array.from({ length: safeSnapCount }).map((_, idx) => (
               <button
                 key={idx}
                 type="button"

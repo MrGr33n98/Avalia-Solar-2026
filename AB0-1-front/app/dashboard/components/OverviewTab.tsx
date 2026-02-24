@@ -49,6 +49,25 @@ type OverviewTabProps = {
   onNavigateToReviews?: () => void;
 };
 
+type RealtimeSubscription =
+  | (() => void)
+  | {
+      unsubscribe?: () => void;
+    }
+  | null
+  | undefined;
+
+const cleanupRealtimeSubscription = (subscription: RealtimeSubscription) => {
+  if (!subscription) return;
+  if (typeof subscription === 'function') {
+    subscription();
+    return;
+  }
+  if (typeof subscription.unsubscribe === 'function') {
+    subscription.unsubscribe();
+  }
+};
+
 const mapStats = (raw: any, company?: any): DashboardStats => {
   const s = raw?.stats || raw || {};
   
@@ -104,10 +123,10 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
 
   useEffect(() => {
     if (!companyId) return;
-    const unsubscribe = subscribeCompanyDashboard(companyId, () => {
+    const subscription = subscribeCompanyDashboard(companyId, () => {
       queryClient.invalidateQueries({ queryKey: ['company-dashboard-stats', companyId] });
     });
-    return unsubscribe;
+    return () => cleanupRealtimeSubscription(subscription);
   }, [companyId, queryClient]);
 
   const stats = statsQuery.data;

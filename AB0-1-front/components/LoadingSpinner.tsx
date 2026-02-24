@@ -2,6 +2,14 @@
 
 import React from 'react';
 
+const clampArrayLength = (value: unknown, fallback: number, max: number): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.floor(parsed);
+  if (normalized <= 0) return 0;
+  return Math.min(normalized, max);
+};
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   color?: 'blue' | 'gray' | 'white' | 'green' | 'red';
@@ -99,6 +107,8 @@ export function LoadingSkeleton({
   className = '',
   avatar = false 
 }: LoadingSkeletonProps) {
+  const safeLines = clampArrayLength(lines, 3, 10);
+
   return (
     <div className={`animate-pulse ${className}`}>
       {avatar && (
@@ -112,7 +122,7 @@ export function LoadingSkeleton({
       )}
       
       <div className="space-y-3">
-        {Array.from({ length: lines }).map((_, i) => (
+        {Array.from({ length: safeLines }).map((_, i) => (
           <div
             key={i}
             className="h-4 bg-gray-300 rounded"
@@ -183,11 +193,14 @@ export function LoadingTableRows({
   rows?: number; 
   columns?: number; 
 }) {
+  const safeRows = clampArrayLength(rows, 5, 50);
+  const safeColumns = clampArrayLength(columns, 4, 20);
+
   return (
     <>
-      {Array.from({ length: rows }).map((_, rowIndex) => (
+      {Array.from({ length: safeRows }).map((_, rowIndex) => (
         <tr key={rowIndex} className="animate-pulse">
-          {Array.from({ length: columns }).map((_, colIndex) => (
+          {Array.from({ length: safeColumns }).map((_, colIndex) => (
             <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
               <div className="h-4 bg-gray-300 rounded w-full"></div>
             </td>
@@ -208,9 +221,11 @@ export function LoadingGrid({
   items?: number;
   className?: string;
 }) {
+  const safeItems = clampArrayLength(items, 6, 60);
+
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-      {Array.from({ length: items }).map((_, i) => (
+      {Array.from({ length: safeItems }).map((_, i) => (
         <LoadingCard key={i} />
       ))}
     </div>

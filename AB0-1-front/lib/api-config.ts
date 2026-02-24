@@ -26,6 +26,7 @@ const normalizeOrigin = (rawBase: string) => {
 export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   const isServer = typeof window === 'undefined';
   const isProduction = process.env.NODE_ENV === 'production';
+  const useDirectApiInBrowser = process.env.NEXT_PUBLIC_USE_DIRECT_API === 'true';
   
   const internalBase = isServer ? process.env.API_URL_INTERNAL : '';
   const serverProxyBase = isServer ? (process.env.API_PROXY_TARGET || '') : '';
@@ -33,7 +34,11 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   // Sincronizar com next.config.js fallback
   const defaultServerProxy = isProduction ? 'http://ab0-backend:3001' : 'http://localhost:3001';
   
-  const browserBase = !isServer ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || '') : '';
+  // Browser should prefer same-origin proxy (/api/v1) by default to avoid CORS/network instability.
+  // Set NEXT_PUBLIC_USE_DIRECT_API=true to force direct browser calls to NEXT_PUBLIC_API_BASE_URL.
+  const browserBase = !isServer
+    ? (process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL || (useDirectApiInBrowser ? '' : '/api/v1'))
+    : '';
   const defaultPublicBase =
     isProduction
       ? 'https://api.avaliasolar.com.br'
