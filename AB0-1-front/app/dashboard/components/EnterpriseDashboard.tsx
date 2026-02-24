@@ -36,6 +36,7 @@ const ReviewsAnalytics = dynamic(() => import('./ReviewsAnalytics'), { loading: 
 const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), { loading: () => <DashboardTabSkeleton /> });
 const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), { loading: () => <DashboardTabSkeleton /> });
 const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => <DashboardTabSkeleton /> });
+const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), { loading: () => <DashboardTabSkeleton /> });
 
 function DashboardTabSkeleton() {
   return (
@@ -69,6 +70,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     company, 
     companyError, 
     stats, 
+    planFeatures,
     notifications, 
     markNotificationAsRead 
   } = useCompanyDashboardData(companyId);
@@ -470,6 +472,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     </p>
                   </div>
                   <ReviewsManagement companyId={companyId} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="sector-questions" className="mt-0 focus-visible:outline-none">
+                <div className="space-y-6">
+                  <SectorQuestionsManager companyId={companyId} planFeatures={planFeatures} />
                 </div>
               </TabsContent>
 

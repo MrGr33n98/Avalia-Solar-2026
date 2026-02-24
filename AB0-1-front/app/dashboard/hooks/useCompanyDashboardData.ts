@@ -37,6 +37,7 @@ export function useCompanyDashboardData(companyId: string) {
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [planFeatures, setPlanFeatures] = useState<Record<string, any>>({});
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -63,7 +64,7 @@ export function useCompanyDashboardData(companyId: string) {
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard stats', { companyId });
 
-      const data = await fetchApi<{ stats: any }>('/company_dashboard/stats', {
+      const data = await fetchApi<{ stats: any; plan_features?: Record<string, any> }>('/company_dashboard/stats', {
         params: { company_id: companyId },
       });
       const s = data?.stats || {};
@@ -79,6 +80,7 @@ export function useCompanyDashboardData(companyId: string) {
         activeCampaigns: s.active_campaigns ?? 0,
         conversionRate: s.conversion_rate ?? 0,
       });
+      setPlanFeatures(data?.plan_features || {});
     } catch (error) {
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
@@ -146,6 +148,7 @@ export function useCompanyDashboardData(companyId: string) {
     company,
     companyError,
     stats,
+    planFeatures,
     notifications,
     markNotificationAsRead,
     refreshData,

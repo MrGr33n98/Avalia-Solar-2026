@@ -77,6 +77,14 @@ export interface CompanyFinancingOffer {
   position?: number;
 }
 
+export interface SectorQuestion {
+  id?: number;
+  prompt: string;
+  weight: number;
+  order: number;
+  enabled: boolean;
+}
+
 export interface Company {
   id: number;
   slug?: string;
@@ -1529,6 +1537,23 @@ export const searchApi = {
       return { companies: [], products: [], categories: [], articles: [] };
     }
   },
+};
+
+export const sectorQuestionsApi = {
+  list: () => fetchApi<{ questions: SectorQuestion[]; meta: any }>('/company_dashboard/sector_questions'),
+  create: (question: SectorQuestion) =>
+    fetchApi('/company_dashboard/sector_questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_sector_question: question }),
+    }),
+  update: (id: number, question: SectorQuestion) =>
+    fetchApi(`/company_dashboard/sector_questions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_sector_question: question }),
+    }),
+  destroy: (id: number) => fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' }),
 };
 
 export const financingOptionsApi = {

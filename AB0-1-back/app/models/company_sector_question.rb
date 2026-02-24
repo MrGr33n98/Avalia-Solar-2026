@@ -24,4 +24,13 @@ class CompanySectorQuestion < ApplicationRecord
     return if order.present?
     self.order = (company.company_sector_questions.maximum(:order) || 0) + 1
   end
+
+  # Ransack allowlists to unblock ActiveAdmin search/index
+  def self.ransackable_associations(_auth_object = nil)
+    %w[company]
+  end
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[id prompt weight order enabled company_id created_at updated_at]
+  end
 end

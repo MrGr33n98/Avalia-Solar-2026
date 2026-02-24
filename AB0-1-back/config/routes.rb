@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   end
 
   mount ActiveStorage::Engine => "/rails/active_storage"
+  # ActionCable websocket endpoint
+  mount ActionCable.server => '/cable'
 
   # ActiveAdmin routes
   ActiveAdmin.routes(self)
@@ -136,6 +138,8 @@ Rails.application.routes.draw do
         patch 'social_proof_reviews/:id', to: 'company_dashboard#update_social_proof_review'
         get 'social_proof_stats', to: 'company_dashboard#social_proof_stats'
 
+        resources :sector_questions, controller: 'company_sector_questions', only: %i[index create update destroy]
+
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
           member do
             patch :submit
@@ -192,9 +196,16 @@ Rails.application.routes.draw do
           member do
             patch :approve
             patch :reject
-          end
-        end
-      end
+    end
+  end
+
+  # Compat fallback for legacy frontend calls missing /api/v1 prefix
+  scope module: 'api/v1' do
+    get '/companies/:company_id/sector_ratings/questions', to: 'sector_ratings#questions'
+    get '/companies/:company_id/sector_ratings/summary', to: 'sector_ratings#summary'
+    post '/companies/:company_id/sector_ratings', to: 'sector_ratings#create'
+  end
+end
 
       # Leads routes
       resources :leads, only: [:create, :index, :show] do

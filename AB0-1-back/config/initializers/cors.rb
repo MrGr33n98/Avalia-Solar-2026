@@ -51,7 +51,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
 
     origins origins_list
 
-    # API resources
+    # API resources (canonical)
     resource '/api/v1/*',
       headers: :any,
       expose: [
@@ -71,6 +71,13 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
       credentials: true,
       max_age: 3600 # Cache preflight por 1 hora
+
+    # Legacy fallback for sector_ratings (front que chama sem /api/v1)
+    resource '/companies/*/sector_ratings/*',
+      headers: :any,
+      methods: [:get, :post, :options, :head],
+      credentials: true,
+      max_age: 1800
 
     # Active Storage resources
     resource '/rails/active_storage/*',

@@ -83,6 +83,15 @@ Rails.application.configure do
   # Fila de processamento (Usando :sidekiq para processamento em background)
   config.active_job.queue_adapter = :sidekiq
 
+  # Action Cable (WebSocket) - habilita conexões do domínio público
+  config.action_cable.url = ENV.fetch('ACTION_CABLE_URL', 'wss://api.avaliasolar.com.br/cable')
+  config.action_cable.allowed_request_origins = [
+    'https://avaliasolar.com.br',
+    'https://www.avaliasolar.com.br',
+    'http://avaliasolar.com.br',
+    'http://www.avaliasolar.com.br'
+  ]
+
   # Localização e Fallbacks
   config.i18n.fallbacks = true
   config.active_support.report_deprecations = false

@@ -11,6 +11,7 @@ class Company < ApplicationRecord
   LOGO_MAX_SIZE = 5.megabytes
   BANNER_MAX_SIZE = 10.megabytes
   MEDIA_MAX_SIZE = 15.megabytes
+  SECTOR_QUESTIONS_FREE_LIMIT = 2
 
   enum status: {
     active: 'active',
@@ -497,6 +498,26 @@ class Company < ApplicationRecord
   # Expose without question mark for serializers expecting an attribute-style method
   def media_upload_allowed
     media_upload_allowed?
+  end
+
+  def sector_question_limit
+    explicit = feature_enabled_from_plan?(:sector_question_limit, :sector_questions_limit)
+    return explicit.to_i if explicit.present?
+
+    has_paid_plan? ? 10 : SECTOR_QUESTIONS_FREE_LIMIT
+  rescue StandardError
+    SECTOR_QUESTIONS_FREE_LIMIT
+  end
+
+  def requires_paid_plan_for_sector_question?(new_count: nil)
+    count = new_count || company_sector_questions.count
+    return false if count <= SECTOR_QUESTIONS_FREE_LIMIT
+
+    !has_paid_plan?
+  end
+
+  def can_manage_sector_questions?
+    sector_ratings_enabled? && (active_admin? || has_paid_plan? || featured? || verified?)
   end
 
   def resolved_plan_features

@@ -297,13 +297,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
           <ReviewForm companyId={company.id} companyPath={companyPath} />
         </Suspense>
 
-        <div>
-          <h2 className="text-2xl font-semibold text-stone-900 mb-3">Avaliação setorial (opcional)</h2>
-          <p className="text-sm text-stone-500 mb-4">
-            Responda as perguntas especializadas para complementar sua avaliação. As perguntas estão disponíveis quando a empresa habilita o módulo no painel Administrativo.
-          </p>
-          <SectorRatingForm companyId={company.id} sectorRatingsEnabled={Boolean(company.sector_ratings_enabled)} />
-        </div>
+        <SectorRatingForm companyId={company.id} sectorRatingsEnabled={Boolean(company.sector_ratings_enabled)} />
       </div>
     </div>
   );

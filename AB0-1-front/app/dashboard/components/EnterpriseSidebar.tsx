@@ -98,6 +98,7 @@ function SidebarContent({
   const leafItems: SidebarLeafItem[] = useMemo(
     () => [
       { id: 'overview', label: 'Home', icon: Home },
+      { id: 'sector-questions', label: 'Perguntas', icon: Edit3 },
       { id: 'integrations', label: 'Integrações', icon: Link2 },
       { id: 'avalia-badges', label: 'Selos Avalia Solar', icon: BadgeCheck },
     ],

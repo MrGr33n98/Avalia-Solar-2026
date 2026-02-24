@@ -250,11 +250,6 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
 
   return (
     <section className="space-y-6 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-soft lg:p-8">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Avaliação setorial</p>
-        <h2 className="text-2xl font-semibold text-stone-900">Como foi o serviço?</h2>
-        <p className="text-sm text-stone-500">Responda em até 5 estrelas e acompanhe a média ponderada ao final.</p>
-      </header>
 
       <div className="space-y-4">
         {allQuestions.map((question) => (
@@ -266,7 +261,6 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
               <p className="text-sm font-medium text-stone-800">{question.prompt}</p>
               <span className="text-xs font-semibold text-amber-600">Peso {question.weight}</span>
             </div>
-            <p className="text-xs text-stone-500">{question.helper}</p>
             <div className="mt-3 flex gap-2">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
