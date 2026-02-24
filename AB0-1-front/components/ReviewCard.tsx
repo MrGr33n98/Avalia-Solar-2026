@@ -9,9 +9,10 @@ interface ReviewCardProps {
   review: Review;
   className?: string;
   variant?: 'user' | 'company';
+  onReply?: (review: Review) => void;
 }
 
-export default function ReviewCard({ review, className = "", variant = 'user' }: ReviewCardProps) {
+export default function ReviewCard({ review, className = "", variant = 'user', onReply }: ReviewCardProps) {
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -103,10 +104,16 @@ export default function ReviewCard({ review, className = "", variant = 'user' }:
         </button>
         
         <div className="flex items-center space-x-4 text-sm text-gray-500">
-          <button className="hover:text-gray-700 transition-colors">
-            Responder
-          </button>
-          <button className="hover:text-gray-700 transition-colors">
+          {onReply && (
+            <button
+              className="hover:text-gray-700 transition-colors"
+              type="button"
+              onClick={() => onReply(review)}
+            >
+              Responder
+            </button>
+          )}
+          <button className="hover:text-gray-700 transition-colors" type="button">
             Compartilhar
           </button>
         </div>

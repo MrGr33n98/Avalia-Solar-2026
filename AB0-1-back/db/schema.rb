@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_23_211837) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_24_191500) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -935,6 +935,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_23_211837) do
     t.text "comment"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "answers", default: {}, null: false
+    t.index ["answers"], name: "index_sector_ratings_on_answers"
     t.index ["company_id", "user_id"], name: "index_sector_ratings_on_company_and_user", unique: true
     t.index ["company_id"], name: "index_sector_ratings_on_company_id"
     t.index ["user_id"], name: "index_sector_ratings_on_user_id"

@@ -51,6 +51,11 @@ const createBlankAnswers = (questions: SectorQuestion[]) =>
     return acc;
   }, {});
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL;
+
 export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnabled: propEnabled }: SectorRatingFormProps) {
   const { activeCompany } = useCompanyContext();
   const fallbackCompanyId = activeCompany?.id;
@@ -79,7 +84,14 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
 
     let cancelled = false;
     setLoadingQuestions(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/companies/${companyId}/sector_ratings/questions`, {
+    const baseUrl = API_BASE_URL?.replace(/\/+$/, '');
+    if (!baseUrl) {
+      setQuestionError('Configuração da API ausente. Defina NEXT_PUBLIC_API_BASE_URL.');
+      setLoadingQuestions(false);
+      return;
+    }
+
+    fetch(`${baseUrl}/companies/${companyId}/sector_ratings/questions`, {
       credentials: 'include'
     })
       .then(async (response) => {
@@ -160,23 +172,44 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
 
     setSubmitting(true);
     try {
+      const baseUrl = API_BASE_URL?.replace(/\/+$/, '');
+      if (!baseUrl) {
+        throw new Error('Configuração da API ausente. Defina NEXT_PUBLIC_API_BASE_URL.');
+      }
+      const hasCustomQuestions = allQuestions.some((q) => q.id);
+
+      const payload: any = {
+        sector_rating: {
+          comment,
+        },
+      };
+
+      if (hasCustomQuestions) {
+        payload.sector_rating.answers = allQuestions.reduce<Record<number, number>>((acc, question) => {
+          if (question.id) {
+            acc[question.id] = answers[question.key]!;
+          }
+          return acc;
+        }, {});
+      } else {
+        payload.sector_rating = {
+          ...payload.sector_rating,
+          homologation: answers.homologation!,
+          technical_quality: answers.technical_quality!,
+          safety: answers.safety!,
+          consultancy: answers.consultancy!,
+        };
+      }
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/companies/${companyId}/sector_ratings`,
+        `${baseUrl}/companies/${companyId}/sector_ratings`,
         {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            sector_rating: {
-              ...allQuestions.reduce<Record<string, number>>((acc, question) => {
-                acc[question.key] = answers[question.key]!;
-                return acc;
-              }, {}),
-              comment
-            }
-          })
+          body: JSON.stringify(payload)
         }
       );
 

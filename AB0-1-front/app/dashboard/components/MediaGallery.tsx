@@ -118,6 +118,27 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
   const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    const maxBytes = 8 * 1024 * 1024; // 8MB
+
+    const invalid = Array.from(files).filter(
+      (file) => !allowedTypes.includes(file.type) || file.size > maxBytes
+    );
+
+    if (invalid.length > 0) {
+      const reasons = invalid.map((file) => {
+        if (!allowedTypes.includes(file.type)) return `${file.name}: formato inválido`;
+        return `${file.name}: excede ${Math.round(maxBytes / 1024 / 1024)}MB`;
+      });
+      toast({
+        title: 'Upload bloqueado',
+        description: reasons.join(' | '),
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
+    }
     
     try {
       const form = new FormData();
