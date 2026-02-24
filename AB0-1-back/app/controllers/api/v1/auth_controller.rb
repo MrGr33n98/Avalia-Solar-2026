@@ -20,6 +20,8 @@ module Api
           )
         end
 
+        return unless enforce_corporate_domain_for_email!(email: email, operation: 'auth.login')
+
         user = User.find_by(email: email)
         if user&.valid_password?(password)
           # Se o usuário não tem role ou é apenas 'user', ele pode logar
@@ -98,6 +100,10 @@ module Api
       def register
         Rails.logger.info "[Audit] Initing user registration. Email: #{params[:email] || params.dig(:user, :email)}"
         attrs = user_params
+
+        if attrs[:email].present?
+          return unless enforce_corporate_domain_for_email!(email: attrs[:email], operation: 'auth.register')
+        end
         
         # Injeta localização da borda (Cloudflare) se não fornecida
         if @edge_location.present?
@@ -252,6 +258,8 @@ module Api
           )
         end
 
+        return unless enforce_corporate_domain_for_user!(user: user, operation: 'auth.refresh')
+
         tokens = issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: refresh_token)
         render json: { token: tokens[:access_token], user: user }, status: :ok
       rescue StandardError => e
@@ -266,6 +274,8 @@ module Api
       def me
         user = current_user
         if user
+          return unless enforce_corporate_domain_for_user!(user: user, operation: 'auth.me')
+
           render json: { user: user }, status: :ok
         else
           render_error_response(

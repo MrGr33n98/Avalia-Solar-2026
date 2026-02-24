@@ -5,6 +5,7 @@ require 'uri'
 module Api
   module V1
     class BaseController < ApplicationController
+      include CorporateDomainEnforcement
       # TASK-021: Include pagination
       include Paginatable
       
@@ -43,14 +44,13 @@ module Api
       end
 
       def authenticate_api_user
-        return if current_user
+        return render_unauthorized unless current_user
+        return true if skip_corporate_domain_validation?
 
-        render_error_response(
-          message: 'Authentication required',
-          status: :unauthorized,
-          code: 'UNAUTHORIZED'
+        enforce_corporate_domain_for_user!(
+          user: current_user,
+          operation: corporate_domain_operation
         )
-        false
       end
 
       def current_user
@@ -82,6 +82,23 @@ module Api
       def render_error(message, status = :unprocessable_entity, code: nil)
         code ||= status.to_s.upcase
         render_error_response(message: message, status: status, code: code)
+      end
+
+      def render_unauthorized
+        render_error_response(
+          message: 'Authentication required',
+          status: :unauthorized,
+          code: 'UNAUTHORIZED'
+        )
+        false
+      end
+
+      def corporate_domain_operation
+        "#{controller_path}##{action_name}"
+      end
+
+      def skip_corporate_domain_validation?
+        false
       end
 
       def render_error_response(message:, status:, code:, details: nil, retry_after: nil)

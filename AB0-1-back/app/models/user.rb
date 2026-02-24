@@ -42,7 +42,6 @@ class User < ApplicationRecord
   validate :adult_birthdate
   validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
-  validate :corporate_email_domain, if: -> { company_user? && active_member_companies.any? }
 
   def approved_for_dashboard?
     return true if review_user?
@@ -200,26 +199,6 @@ class User < ApplicationRecord
     return if role.blank?
     return if ROLES.include?(role)
     self.role = 'review'
-  end
-
-  def corporate_email_domain
-    return if email.blank?
-    
-    # Se o usuário está vinculado a empresas, validamos contra os domínios delas
-    # No novo fluxo, o usuário pode não ter empresa no cadastro inicial
-    companies_with_website = active_member_companies.where.not(website: [nil, ''])
-    return if companies_with_website.empty?
-
-    valid_domains = companies_with_website.map do |c|
-      website_url = c.website.match?(/\Ahttp/) ? c.website : "http://#{c.website}"
-      URI.parse(website_url).host&.sub(/\Awww\./, '') rescue nil
-    end.compact
-
-    return if valid_domains.empty?
-
-    unless valid_domains.any? { |domain| email.downcase.include?(domain.downcase) }
-      errors.add(:email, "must be from one of your companies domains (#{valid_domains.join(', ')})")
-    end
   end
 
   def password_complexity
