@@ -26,8 +26,17 @@ export function RatingStars({
   countClassName,
   ratingValueClassName
 }: RatingStarsProps) {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+  const parsedRating = Number(rating);
+  const normalizedRating = Number.isFinite(parsedRating)
+    ? Math.min(5, Math.max(0, parsedRating))
+    : 0;
+  const parsedCount = Number(count);
+  const normalizedCount = Number.isFinite(parsedCount)
+    ? Math.max(0, Math.floor(parsedCount))
+    : 0;
+
+  const fullStars = Math.floor(normalizedRating);
+  const hasHalfStar = normalizedRating % 1 >= 0.5;
   const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
   return (
@@ -65,12 +74,12 @@ export function RatingStars({
       </div>
       {showRatingValue && (
         <span className={cn("text-sm font-bold text-foreground", ratingValueClassName)}>
-          {rating.toFixed(1)}
+          {normalizedRating.toFixed(1)}
         </span>
       )}
-      {showCount && count > 0 && (
+      {showCount && normalizedCount > 0 && (
         <span className={cn("text-[11px] text-gray-400 font-bold", countClassName)}>
-          ({count.toLocaleString(lang)})
+          ({normalizedCount.toLocaleString(lang)})
         </span>
       )}
     </div>

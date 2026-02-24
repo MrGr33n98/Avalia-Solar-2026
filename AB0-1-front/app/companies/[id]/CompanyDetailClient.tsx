@@ -88,6 +88,21 @@ interface ExtendedCompany extends Company {
   active_admin?: boolean;
 }
 
+const toFiniteNumber = (value: unknown, fallback = 0): number => {
+  const parsed = typeof value === "number" ? value : Number.parseFloat(String(value ?? ""));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toSafeRating = (value: unknown, fallback = 0): number => {
+  const parsed = toFiniteNumber(value, fallback);
+  return Math.min(5, Math.max(0, parsed));
+};
+
+const toSafeCount = (value: unknown, fallback = 0): number => {
+  const parsed = toFiniteNumber(value, fallback);
+  return parsed > 0 ? Math.floor(parsed) : 0;
+};
+
 export default function CompanyDetailClient({
   company,
   initialReviews = [],
@@ -242,8 +257,21 @@ export default function CompanyDetailClient({
   }, [canEdit, currentCompany?.financing_tab_visible]);
 
   const companyStats = useMemo(() => {
+    const normalizedRatings = reviews.map((rev) => toSafeRating((rev as any)?.rating, 0));
+    const fallbackCompanyRating = toSafeRating(
+      (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating,
+      0
+    );
     const avgRating =
-      reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : (company.average_rating || 0);
+      normalizedRatings.length > 0
+        ? normalizedRatings.reduce((acc, value) => acc + value, 0) / normalizedRatings.length
+        : fallbackCompanyRating;
+    const rating = reviewAnalytics?.average_rating != null
+      ? toSafeRating(reviewAnalytics.average_rating, avgRating)
+      : avgRating;
+    const reviewCount = reviewAnalytics?.total_reviews != null
+      ? toSafeCount(reviewAnalytics.total_reviews, 0)
+      : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
 
     const createdYear = company.created_at
       ? new Date(company.created_at).getFullYear()
@@ -252,8 +280,8 @@ export default function CompanyDetailClient({
     const yearsInBusiness = Math.max(0, new Date().getFullYear() - createdYear);
 
     return {
-      rating: reviewAnalytics?.average_rating ?? avgRating,
-      reviewCount: reviewAnalytics?.total_reviews ?? (company.rating_count || reviews.length),
+      rating,
+      reviewCount,
       productCount: products.length,
       completedProjects: products.length * 10,
       yearsInBusiness,

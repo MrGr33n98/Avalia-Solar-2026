@@ -3,8 +3,10 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.26.2",
     "lucide-react": "^0.562.0",
+    "playwright": "^1.58.2",
     "react-hook-form": "^7.71.1",
     "tailwind-merge": "^3.4.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "devDependencies": {}
 }
