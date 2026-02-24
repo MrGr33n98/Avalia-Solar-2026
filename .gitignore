@@ -128,3 +128,24 @@ test-sentinel/
  /register_modal.png
  /*.webm
  /comprehensive-test*.js
+# Local test artifacts (generated)
+/test-artifacts/
+/00_LEIA_PRIMEIRO.md
+/COMPREHENSIVE_TEST_FINAL_REPORT.txt
+/INDICE_FINAL.txt
+/INDICE_SCREENSHOTS.md
+/README_TESTES.md
+/RELATORIO_TESTES_AVALIASOLAR.md
+/RELATORIO_TESTE_ABRANGENTE.md
+/SUMARIO_EXECUTIVO_TESTES.md
+/TEST_SUMMARY.txt
+/VISUAL_REPORT.txt
+/companies.png
+/company_detail.png
+/dashboard.png
+/error_*.png
+/homepage.png
+/login_modal.png
+/register_modal.png
+/*.webm
+/comprehensive-test*.js
