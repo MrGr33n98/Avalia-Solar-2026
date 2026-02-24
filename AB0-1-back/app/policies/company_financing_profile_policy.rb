@@ -19,8 +19,8 @@ class CompanyFinancingProfilePolicy < ApplicationPolicy
     def resolve
       if admin?
         scope.all
-      elsif user.respond_to?(:company_user?) && user.company_user?
-        scope.where(company_id: user.company_id)
+      elsif user_company_ids.any?
+        scope.where(company_id: user_company_ids)
       else
         scope.none
       end
@@ -37,7 +37,7 @@ class CompanyFinancingProfilePolicy < ApplicationPolicy
 
   def allowed?
     return true if admin?
-    user.respond_to?(:company_user?) && user.company_user? && record_company_id == user.company_id
+    can_manage_company_id?(record_company_id)
   end
 
   def record_company_id

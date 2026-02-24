@@ -3,7 +3,6 @@ class Api::V1::UsersController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[create]
   before_action :authorize_index!, only: %i[index]
   before_action :authorize_user_access!, only: %i[show update destroy]
-  before_action :enforce_profile_domain_validation!, only: %i[update], unless: :avatar_only_update_request?
   before_action :ensure_avatar_storage_configured!, only: %i[update], if: :avatar_upload_request?
 
   def me
@@ -60,11 +59,6 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
 
   def create
-    email = params.dig(:user, :email) || params[:email]
-    if email.present?
-      return unless enforce_corporate_domain_for_email!(email: email, operation: 'users.create')
-    end
-
     @user = User.new(user_params)
     @user.role = 'review' # Ensure it's a review user
 
@@ -121,10 +115,6 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   private
 
-  def skip_corporate_domain_validation?
-    avatar_only_update_request?
-  end
-
   def set_user
     @user = User.find(params[:id])
   end
@@ -147,25 +137,6 @@ class Api::V1::UsersController < Api::V1::BaseController
     return false unless user_payload.respond_to?(:[])
 
     user_payload[:avatar].present?
-  end
-
-  def avatar_only_update_request?
-    return false unless action_name == 'update'
-
-    user_payload = params[:user]
-    return false unless user_payload.respond_to?(:keys)
-    return false unless user_payload[:avatar].present?
-
-    payload_keys = user_payload.keys.map(&:to_s)
-    payload_keys.present? && (payload_keys - ['avatar']).empty?
-  end
-
-  def enforce_profile_domain_validation!
-    requested_email = params.dig(:user, :email).presence || @user&.email
-    enforce_corporate_domain_for_email!(
-      email: requested_email,
-      operation: 'users.update_profile'
-    )
   end
 
   def ensure_avatar_storage_configured!

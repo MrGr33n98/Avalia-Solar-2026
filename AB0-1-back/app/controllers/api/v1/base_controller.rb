@@ -5,7 +5,6 @@ require 'uri'
 module Api
   module V1
     class BaseController < ApplicationController
-      include CorporateDomainEnforcement
       # TASK-021: Include pagination
       include Paginatable
       
@@ -40,17 +39,19 @@ module Api
       end
 
       def require_company_user
-        require_role('company')
+        return if current_user&.admin?
+        return if current_user&.active_company_members&.exists?
+
+        render_error_response(
+          message: 'Acesso à gestão da empresa requer autorização aprovada.',
+          status: :forbidden,
+          code: 'COMPANY_ACCESS_REQUIRED'
+        )
       end
 
       def authenticate_api_user
         return render_unauthorized unless current_user
-        return true if skip_corporate_domain_validation?
-
-        enforce_corporate_domain_for_user!(
-          user: current_user,
-          operation: corporate_domain_operation
-        )
+        true
       end
 
       def current_user
@@ -90,14 +91,6 @@ module Api
           status: :unauthorized,
           code: 'UNAUTHORIZED'
         )
-        false
-      end
-
-      def corporate_domain_operation
-        "#{controller_path}##{action_name}"
-      end
-
-      def skip_corporate_domain_validation?
         false
       end
 

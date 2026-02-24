@@ -40,6 +40,27 @@ class ApplicationPolicy
     admin?
   end
 
+  def user_company_ids
+    return [] if user.blank?
+
+    if user.respond_to?(:active_company_members)
+      return user.active_company_members.pluck(:company_id)
+    end
+
+    Array(user.respond_to?(:company_id) ? user.company_id : nil).compact
+  end
+
+  def can_manage_company_id?(company_id)
+    return false if company_id.blank?
+    return true if admin?
+
+    if user.respond_to?(:active_membership_for?)
+      return user.active_membership_for?(company_id)
+    end
+
+    user_company_ids.include?(company_id)
+  end
+
   class Scope
     def initialize(user, scope)
       @user = user
@@ -57,5 +78,15 @@ class ApplicationPolicy
     private
 
     attr_reader :user, :scope
+
+    def user_company_ids
+      return [] if user.blank?
+
+      if user.respond_to?(:active_company_members)
+        return user.active_company_members.pluck(:company_id)
+      end
+
+      Array(user.respond_to?(:company_id) ? user.company_id : nil).compact
+    end
   end
 end

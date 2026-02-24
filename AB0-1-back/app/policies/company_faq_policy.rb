@@ -27,8 +27,8 @@ class CompanyFaqPolicy < ApplicationPolicy
     def resolve
       if admin?
         scope.all
-      elsif user.respond_to?(:company_user?) && user.company_user?
-        scope.where(company_id: user.company_id)
+      elsif user_company_ids.any?
+        scope.where(company_id: user_company_ids)
       else
         scope.none
       end
@@ -45,9 +45,8 @@ class CompanyFaqPolicy < ApplicationPolicy
 
   def company_scope?
     return true if admin?
-    return false unless user.respond_to?(:company_user?) && user.company_user?
 
     record_company_id = record.try(:company_id) || record.try(:company)&.id
-    record_company_id.present? && record_company_id == user.company_id
+    can_manage_company_id?(record_company_id)
   end
 end

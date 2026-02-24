@@ -86,6 +86,14 @@ ActiveAdmin.register CompanyAccessRequest do
       member.role = 'manager' if member.respond_to?(:role)
       member.status = 'active' if member.respond_to?(:status)
       member.save!
+
+      user = resource.user
+      user.role = 'company'
+      user.status = 'active'
+      if user.company_id.blank? || !user.active_membership_for?(user.company_id)
+        user.company_id = resource.company_id
+      end
+      user.save! if user.changed?
     end
 
     CompanyAccessMailer.access_granted(resource.user, resource.company).deliver_later
