@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { 
   User as UserIcon, 
@@ -31,6 +32,12 @@ import {
 import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import CompanyCard from '@/components/CompanyCard';
 import ReviewCard from '@/components/ReviewCard';
+import {
+  AvatarUploadClientError,
+  prepareAvatarFileForUpload,
+  uploadUserAvatar,
+} from '@/lib/avatar-upload';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,9 +46,29 @@ export default function ProfilePage() {
   const [userReviews, setUserReviews] = useState<Review[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
+  const [pendingAvatarPreviewUrl, setPendingAvatarPreviewUrl] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarUploadProgress, setAvatarUploadProgress] = useState(0);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   
-  const { user, loading, error, logout } = useAuth();
+  const { user, loading, error, logout, refreshAuth } = useAuth();
   const router = useRouter();
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingPreviewObjectUrlRef = useRef<string | null>(null);
+
+  const resetPendingAvatarState = () => {
+    setPendingAvatarFile(null);
+    setAvatarUploadProgress(0);
+    setAvatarError(null);
+    if (pendingPreviewObjectUrlRef.current) {
+      URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
+      pendingPreviewObjectUrlRef.current = null;
+    }
+    setPendingAvatarPreviewUrl(null);
+  };
 
   useEffect(() => {
     if (user) {
@@ -56,6 +83,18 @@ export default function ProfilePage() {
       fetchUserReviews();
     }
   }, [user]);
+
+  useEffect(() => {
+    setAvatarDisplayUrl(user?.avatar_url || null);
+  }, [user?.avatar_url]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreviewObjectUrlRef.current) {
+        URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
+      }
+    };
+  }, []);
 
   const fetchUserCompanies = async () => {
     try {
@@ -112,6 +151,83 @@ export default function ProfilePage() {
       router.push('/login');
     } catch (err) {
       console.error('Error during logout:', err);
+    }
+  };
+
+  const handleAvatarFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    event.currentTarget.value = '';
+    if (!selectedFile) return;
+
+    setAvatarError(null);
+    setAvatarUploadProgress(0);
+
+    try {
+      const preparedFile = await prepareAvatarFileForUpload(selectedFile);
+
+      if (pendingPreviewObjectUrlRef.current) {
+        URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
+      }
+
+      const objectUrl = URL.createObjectURL(preparedFile);
+      pendingPreviewObjectUrlRef.current = objectUrl;
+      setPendingAvatarPreviewUrl(objectUrl);
+      setPendingAvatarFile(preparedFile);
+    } catch (uploadError) {
+      const message =
+        uploadError instanceof AvatarUploadClientError
+          ? uploadError.message
+          : getApiErrorMessage(uploadError, 'Falha ao preparar a imagem.');
+      setAvatarError(message);
+      toast({
+        title: 'Falha ao selecionar foto',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!user || !pendingAvatarFile || avatarUploading) return;
+
+    setAvatarUploading(true);
+    setAvatarUploadProgress(0);
+    setAvatarError(null);
+
+    try {
+      const uploadResult = await uploadUserAvatar(user.id, pendingAvatarFile, {
+        retries: 2,
+        timeoutMs: 60_000,
+        onProgress: (progress) => setAvatarUploadProgress(progress.percent),
+      });
+
+      if (uploadResult.avatarUrl) {
+        setAvatarDisplayUrl(uploadResult.avatarUrl);
+        setUploadedAvatarUrl(uploadResult.avatarUrl);
+      }
+
+      await refreshAuth();
+      resetPendingAvatarState();
+      toast({
+        title: 'Foto atualizada com sucesso',
+        description: uploadResult.avatarUrl
+          ? 'A nova foto de perfil já está disponível.'
+          : 'Upload concluído.',
+      });
+    } catch (uploadError: any) {
+      const networkFailure = Boolean(uploadError?.isNetworkError);
+      const detailedMessage =
+        networkFailure
+          ? 'Falha de rede durante o upload. Verifique sua conexão e tente novamente.'
+          : getApiErrorMessage(uploadError, 'Não foi possível enviar a foto de perfil.');
+      setAvatarError(detailedMessage);
+      toast({
+        title: 'Erro no upload da foto',
+        description: detailedMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -191,14 +307,81 @@ export default function ProfilePage() {
                 <CardContent className="space-y-6">
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="w-24 h-24">
-                      <AvatarImage src={user.avatar_url || undefined} alt={user.name} />
+                      <AvatarImage
+                        src={pendingAvatarPreviewUrl || avatarDisplayUrl || undefined}
+                        alt={user.name}
+                      />
                       <AvatarFallback className="text-2xl">
                         {user.name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <Button variant="outline" size="sm">
-                      Alterar Foto
-                    </Button>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleAvatarFileSelect}
+                    />
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => avatarInputRef.current?.click()}
+                        disabled={avatarUploading}
+                      >
+                        Alterar Foto
+                      </Button>
+                      {pendingAvatarFile && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={handleAvatarUpload}
+                            disabled={avatarUploading}
+                          >
+                            {avatarUploading ? 'Enviando...' : 'Salvar Foto'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={resetPendingAvatarState}
+                            disabled={avatarUploading}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-muted-foreground text-center">
+                      Formatos aceitos: JPG e PNG. Tamanho máximo: 5MB.
+                    </p>
+
+                    {avatarUploading && (
+                      <div className="w-full max-w-sm space-y-2">
+                        <Progress value={avatarUploadProgress} className="h-2" />
+                        <p className="text-xs text-muted-foreground text-center">
+                          Enviando foto... {avatarUploadProgress}%
+                        </p>
+                      </div>
+                    )}
+
+                    {avatarError && (
+                      <p className="text-sm text-red-600 text-center">{avatarError}</p>
+                    )}
+
+                    {uploadedAvatarUrl && !pendingAvatarFile && (
+                      <div className="w-full max-w-sm rounded-md border border-border px-3 py-2 text-xs">
+                        <span className="font-medium text-foreground">URL pública: </span>
+                        <a
+                          href={uploadedAvatarUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="break-all text-primary underline"
+                        >
+                          {uploadedAvatarUrl}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   {isEditing ? (

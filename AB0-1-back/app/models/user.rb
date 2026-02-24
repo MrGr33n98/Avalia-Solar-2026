@@ -1,4 +1,7 @@
 class User < ApplicationRecord
+  ALLOWED_AVATAR_CONTENT_TYPES = %w[image/png image/jpeg image/jpg].freeze
+  MAX_AVATAR_SIZE_BYTES = 5.megabytes
+
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
          :omniauthable, omniauth_providers: [:google_oauth2, :linkedin]
@@ -243,11 +246,13 @@ class User < ApplicationRecord
 
   def validate_attachments
     return unless avatar.attached?
-    if !avatar.blob.content_type.in?(%w[image/png image/jpeg image/webp])
-      errors.add(:avatar, 'deve ser PNG, JPG ou WebP')
+
+    unless avatar.blob.content_type.in?(ALLOWED_AVATAR_CONTENT_TYPES)
+      errors.add(:avatar, 'deve ser JPG ou PNG')
     end
-    if avatar.blob.byte_size > 2.megabytes
-      errors.add(:avatar, 'tamanho máximo é 2MB')
+
+    if avatar.blob.byte_size > MAX_AVATAR_SIZE_BYTES
+      errors.add(:avatar, 'tamanho máximo é 5MB')
     end
   end
 end

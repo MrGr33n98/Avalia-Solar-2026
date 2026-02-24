@@ -3,6 +3,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[create]
   before_action :authorize_index!, only: %i[index]
   before_action :authorize_user_access!, only: %i[show update destroy]
+  before_action :ensure_avatar_storage_configured!, only: %i[update], if: :avatar_upload_request?
 
   def me
     render json: user_with_avatar(current_user)
@@ -131,6 +132,45 @@ class Api::V1::UsersController < Api::V1::BaseController
     end
 
     params.require(:user).permit(*permitted)
+  end
+
+  def avatar_upload_request?
+    user_payload = params[:user]
+    return false unless user_payload.respond_to?(:[])
+
+    user_payload[:avatar].present?
+  end
+
+  def ensure_avatar_storage_configured!
+    service_name = Rails.application.config.active_storage.service.to_s
+    if Rails.env.production? && service_name != 'spaces'
+      render_error_response(
+        message: 'Upload de avatar requer ACTIVE_STORAGE_SERVICE=spaces em produção.',
+        status: :service_unavailable,
+        code: 'STORAGE_MISCONFIGURED'
+      )
+      return false
+    end
+
+    return true unless service_name == 'spaces'
+
+    required_envs = %w[
+      SPACES_ACCESS_KEY_ID
+      SPACES_SECRET_ACCESS_KEY
+      SPACES_BUCKET
+      SPACES_ENDPOINT
+      SPACES_REGION
+    ]
+    missing = required_envs.select { |key| ENV[key].blank? }
+    return true if missing.empty?
+
+    render_error_response(
+      message: 'Configuração do servidor de imagens incompleta para upload de avatar.',
+      status: :service_unavailable,
+      code: 'STORAGE_MISCONFIGURED',
+      details: missing.map { |key| "#{key} ausente" }
+    )
+    false
   end
 
   def authorize_index!
