@@ -165,3 +165,20 @@ logs/
 .aios-core/local/
 .claude/settings.local.json
 .aios/install-log.txt
+
+# AIOS / Local AI tools
+.aios/
+.aios-core/
+.antigravity/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.github/agents/
+
+# local docs
+AGENTS.md
+QUICKSTART_MARKETPLACE.md
+
+# env files
+.env*
