@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCompanyContext } from '@/context/CompanyContext';
+import { buildApiUrl } from '@/lib/api-config';
 
 const DEFAULT_QUESTIONS = [
   {
@@ -51,11 +52,6 @@ const createBlankAnswers = (questions: SectorQuestion[]) =>
     return acc;
   }, {});
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_BROWSER_API_BASE_URL;
-
 export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnabled: propEnabled }: SectorRatingFormProps) {
   const { activeCompany } = useCompanyContext();
   const fallbackCompanyId = activeCompany?.id;
@@ -84,14 +80,9 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
 
     let cancelled = false;
     setLoadingQuestions(true);
-    const baseUrl = API_BASE_URL?.replace(/\/+$/, '');
-    if (!baseUrl) {
-      setQuestionError('Configuração da API ausente. Defina NEXT_PUBLIC_API_BASE_URL.');
-      setLoadingQuestions(false);
-      return;
-    }
+    const questionsUrl = buildApiUrl(`/companies/${companyId}/sector_ratings/questions`);
 
-    fetch(`${baseUrl}/companies/${companyId}/sector_ratings/questions`, {
+    fetch(questionsUrl, {
       credentials: 'include'
     })
       .then(async (response) => {
@@ -172,10 +163,7 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
 
     setSubmitting(true);
     try {
-      const baseUrl = API_BASE_URL?.replace(/\/+$/, '');
-      if (!baseUrl) {
-        throw new Error('Configuração da API ausente. Defina NEXT_PUBLIC_API_BASE_URL.');
-      }
+      const submitUrl = buildApiUrl(`/companies/${companyId}/sector_ratings`);
       const hasCustomQuestions = allQuestions.some((q) => q.id);
 
       const payload: any = {
@@ -201,17 +189,14 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
         };
       }
 
-      const response = await fetch(
-        `${baseUrl}/companies/${companyId}/sector_ratings`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+      const response = await fetch(submitUrl, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
