@@ -1,4 +1,6 @@
-# Node/Next (monorepo)
+############################
+# Node / Next / Monorepo
+############################
 node_modules/
 .pnp/
 .pnp.js
@@ -14,18 +16,29 @@ yarn-error.log*
 .turbo/
 node_modules/.cache/
 
+############################
 # TypeScript
+############################
 *.tsbuildinfo
-# next-env.d.ts deve ser versionado: NÃO ignorar
+# next-env.d.ts deve ser versionado
 
-# Ambiente
+############################
+# Environment / Secrets
+############################
 .env
-.env.*
-!/.env.example
 .env.local
+.env.*.local
+.env.*        # ignora env variantes
+!.env.example # mas mantém o exemplo versionado
+
+*.key
+*.pem
+
 .vercel
 
-# IDE / SO
+############################
+# IDE / OS
+############################
 .idea/
 .vscode/
 *.swp
@@ -34,118 +47,67 @@ node_modules/.cache/
 Thumbs.db
 *.tmp
 
+############################
 # Frontend específicos
-/AB0-1-front/node_modules
-/AB0-1-front/.env
-/AB0-1-front/cypress/videos
-/AB0-1-front/cypress/screenshots
-/AB0-1-front/.nyc_output
+############################
+/AB0-1-front/node_modules/
+/AB0-1-front/.env*
+/AB0-1-front/cypress/videos/
+/AB0-1-front/cypress/screenshots/
+/AB0-1-front/.nyc_output/
 
+############################
 # Rails (backend)
+############################
 /AB0-1-back/log/
 /AB0-1-back/tmp/
 /AB0-1-back/storage/
 /AB0-1-back/vendor/
-/AB0-1-back/.bundle
+/AB0-1-back/.bundle/
 /AB0-1-back/.byebug_history
 /AB0-1-back/config/master.key
-/AB0-1-back/.env
 /AB0-1-back/.env*
 /AB0-1-back/db/*.sqlite3
 /AB0-1-back/db/*.sqlite3-journal
 
-# Documentacao (nao ignorar por padrao)
-# Regras antigas para ignorar *.md e *.txt foram removidas.
-/.trae/
-/AB0-1-back/COMO_INICIAR_AGORA.txt
-/AB0-1-back/SIDEKIQ_NAMESPACE_FIX.md
-/AB0-1-back/fix_redis_connection.md
-/AB0-1-back/history.txt
-/AB0-1-back/public/robots.txt
-/AB0-1-back/routes.txt
-/AB0-1-front/OPTIMIZATION_CHANGES_SUMMARY.md
-/AB0-1-front/PERFORMANCE_OPTIMIZATION_REPORT.md
-/CICD_IMPLEMENTATION.md
-/COMANDOS_PARA_VM.txt
-/COMO_ASSOCIAR_USUARIO_EMPRESA.md
-/DEBUG_IMAGENS.md
-/FIXES_SUMMARY.md
-/FIX_REDIS_UPLOAD.md
-/GITHUB_SECRETS_CONFIG.txt
-/GITHUB_SECRETS_CONFIGURADOS.md
-/GITHUB_SECRETS_SETUP.md
-/IMAGENS_NAO_APARECEM_FIX.md
-/INSTALAR_REDIS_WINDOWS.md
-/INSTRUCOES_URGENTES.txt
-/QUICK_START_CICD.md
-/SOLUCAO_URGENTE.txt
-/SOLUCOES_APLICADAS.md
-/TESTE_IMAGENS_RAPIDO.md
-/history.txt
-/log.md
-/roteiro-de-estudo.md
-/script/lint_fixes_report_*.txt
-/task0-test.md
-/tasks/TASK-10.md
+############################
+# AI tools / Local tooling
+############################
+.aios/
+.aios-core/
+.antigravity/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.github/agents/
 
-# Rascunhos locais / planejamento
-/docs/
-code-base-dashboards/
-docs-v1/
-docs/infra/
-dashboard-sumario-*.md
-tasks-v1.md
-agentes/
+############################
+# Local docs / scratch
+############################
+AGENTS.md
+QUICKSTART_MARKETPLACE.md
 
-# Backups
-backup_limpeza_*/
-
-# Playwright e Sentinel
-.cache/
+############################
+# Local test artifacts
+############################
+test-artifacts/
 playwright-report/
 test-results/
 test-sentinel/
+.cache/
+logs/
+*.webm
+comprehensive-test*.js
+error_*.png
+companies.png
+company_detail.png
+dashboard.png
+homepage.png
+login_modal.png
+register_modal.png
 
-# Duplicate env entries removed – already covered above
-# Local test artifacts (generated)
- /test-artifacts/
- /00_LEIA_PRIMEIRO.md
- /COMPREHENSIVE_TEST_FINAL_REPORT.txt
- /INDICE_FINAL.txt
- /INDICE_SCREENSHOTS.md
- /README_TESTES.md
- /RELATORIO_TESTES_AVALIASOLAR.md
- /RELATORIO_TESTE_ABRANGENTE.md
- /SUMARIO_EXECUTIVO_TESTES.md
- /TEST_SUMMARY.txt
- /VISUAL_REPORT.txt
- /companies.png
- /company_detail.png
- /dashboard.png
- /error_*.png
- /homepage.png
- /login_modal.png
- /register_modal.png
- /*.webm
- /comprehensive-test*.js
-# Local test artifacts (generated)
-/test-artifacts/
-/00_LEIA_PRIMEIRO.md
-/COMPREHENSIVE_TEST_FINAL_REPORT.txt
-/INDICE_FINAL.txt
-/INDICE_SCREENSHOTS.md
-/README_TESTES.md
-/RELATORIO_TESTES_AVALIASOLAR.md
-/RELATORIO_TESTE_ABRANGENTE.md
-/SUMARIO_EXECUTIVO_TESTES.md
-/TEST_SUMMARY.txt
-/VISUAL_REPORT.txt
-/companies.png
-/company_detail.png
-/dashboard.png
-/error_*.png
-/homepage.png
-/login_modal.png
-/register_modal.png
-/*.webm
-/comprehensive-test*.js
+############################
+# Optional: backups
+############################
+backup_limpeza_*/

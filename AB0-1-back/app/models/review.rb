@@ -17,6 +17,7 @@ class Review < ApplicationRecord
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
   after_commit :invalidate_social_proof_cache
+  after_commit :broadcast_review_published, on: [:create, :update], if: :approved_and_status_changed?
   after_update_commit :notify_user_of_reply, if: :saved_change_to_reply?
 
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
@@ -136,5 +137,15 @@ class Review < ApplicationRecord
     ReviewMailer.new_reply(self).deliver_later
   rescue StandardError => e
     Rails.logger.error("[ReviewMailer] Failed to enqueue reply email: #{e.message}")
+  end
+
+  def approved_and_status_changed?
+    return false unless approved?
+
+    saved_change_to_status? || previously_new_record?
+  end
+
+  def broadcast_review_published
+    ActiveSupport::Notifications.instrument('review.published', review_id: id)
   end
 end
