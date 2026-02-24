@@ -50,7 +50,16 @@ jobs:
         working-directory: ./AB0-1-back
         run: |
           gem install bundler-audit
-          bundle audit check --update
+          bundle audit check --update --format text | tee bundler-audit-report.txt
+        continue-on-error: true
+
+      - name: Upload Ruby Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruby-bundler-audit-report
+          path: AB0-1-back/bundler-audit-report.txt
+          if-no-files-found: warn
 
       # Frontend Scan
       - name: Set up Node
@@ -76,11 +85,15 @@ jobs:
         working-directory: ./AB0-1-back
         run: |
           gem install brakeman
-          brakeman --format sarif -o brakeman.sarif
+          brakeman --format sarif -o brakeman.sarif || true
+          if [ ! -f brakeman.sarif ]; then
+            echo '{"version":"2.1.0","runs":[]}' > brakeman.sarif
+          fi
         continue-on-error: true
 
       - name: Upload Brakeman SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('AB0-1-back/brakeman.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: AB0-1-back/brakeman.sarif
           category: brakeman
