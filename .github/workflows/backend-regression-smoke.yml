@@ -22,6 +22,7 @@ permissions:
 jobs:
   regression-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: ./AB0-1-back
@@ -53,6 +54,7 @@ jobs:
     env:
       RAILS_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+      RUBY_VERSION: '3.2.2'
 
     steps:
       - name: Checkout
@@ -61,7 +63,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2.9'
+          ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
           working-directory: ./AB0-1-back
 
@@ -71,7 +73,8 @@ jobs:
           sudo apt-get install -y libpq-dev libvips42
 
       - name: Prepare test database
-        run: bundle exec rails db:prepare
+        run: |
+          bundle exec rails db:create db:schema:load
 
       - name: Validate critical routes
         run: |
