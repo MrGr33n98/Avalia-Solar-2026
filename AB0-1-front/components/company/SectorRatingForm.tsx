@@ -25,7 +25,7 @@ const DEFAULT_QUESTIONS = [
     prompt: 'O projeto foi bem explicado e atende a necessidade de consumo?',
     weight: 1,
   },
-] as const;
+];
 
 type SectorQuestion = {
   id?: number;
@@ -227,7 +227,7 @@ export function SectorRatingForm({ companyId: propCompanyId, sectorRatingsEnable
                   aria-label={`Avaliar ${value} estrelas`}
                   className={clsx(
                     'flex h-9 w-9 items-center justify-center rounded-full border transition',
-                    answers[question.key] && answers[question.key] >= value
+                    (answers[question.key] ?? 0) >= value
                       ? 'border-amber-500 bg-amber-500/20 text-amber-500 shadow-inner'
                       : 'border-stone-200 bg-white text-stone-400 hover:border-amber-400 hover:text-amber-500'
                   )}

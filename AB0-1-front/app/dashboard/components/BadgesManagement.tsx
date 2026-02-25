@@ -54,7 +54,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           <Award className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
           <h3 className="text-lg font-semibold">Nenhum selo atribuido</h3>
           <p className="text-sm text-muted-foreground max-w-xs mt-2">
-            Sua empresa ainda não possui selos de distinção atribuidos pela nossa equipe.
+            Sua empresa ainda nï¿½o possui selos de distinï¿½ï¿½o atribuidos pela nossa equipe.
           </p>
         </CardContent>
       </Card>
@@ -68,7 +68,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           <Card key={badge.id} className="overflow-hidden flex flex-col">
             <div className="bg-slate-50 dark:bg-slate-900 p-8 flex justify-center items-center h-48 border-b">
               <OptimizedImage
-                src={badge.image_url}
+                src={badge.image_url || ''}
                 alt={badge.name}
                 width={120}
                 height={120}
@@ -94,7 +94,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                   variant="outline" 
                   size="sm" 
                   className="text-[11px] h-8"
-                  onClick={() => copyToClipboard(badge.image_url, 'URL da imagem copiada!')}
+                  onClick={() => copyToClipboard(badge.image_url || '', 'URL da imagem copiada!')}
                 >
                   <Copy className="h-3 w-3 mr-1.5" />
                   URL Imagem
@@ -103,10 +103,10 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                   variant="outline" 
                   size="sm" 
                   className="text-[11px] h-8"
-                  onClick={() => copyToClipboard(badge.verifiable_url, 'Link de verificação copiado!')}
+                  onClick={() => copyToClipboard(badge.verifiable_url || '', 'Link de verificaï¿½ï¿½o copiado!')}
                 >
                   <ShieldCheck className="h-3 w-3 mr-1.5" />
-                  Verificável
+                  Verificï¿½vel
                 </Button>
               </div>
               
@@ -114,14 +114,14 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Snippet HTML</label>
                 <div className="relative group">
                   <pre className="p-2 bg-muted rounded text-[9px] overflow-x-hidden truncate border border-border">
-                    {<a href=""><img src="" width="150" /></a>}
+                    {`<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`}
                   </pre>
                   <Button
                     size="icon"
                     variant="ghost"
                     className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => copyToClipboard(
-                      <a href=""><img src="" width="150" /></a>,
+                      `<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`,
                       'Snippet HTML copiado!'
                     )}
                   >
@@ -133,7 +133,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
               <Button asChild variant="ghost" size="sm" className="w-full text-[11px] h-8 text-primary">
                 <a href={badge.verifiable_url} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-3 w-3 mr-1.5" />
-                  Abrir página do selo
+                  Abrir pï¿½gina do selo
                 </a>
               </Button>
             </CardContent>

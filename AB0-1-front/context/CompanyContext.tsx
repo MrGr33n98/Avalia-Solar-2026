@@ -2,19 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { companiesApi, companyAccessApi, hasPossibleAuthSession } from '@/lib/api';
-
-interface Company {
-  id: number;
-  name: string;
-  slug: string;
-  city: string;
-  state: string;
-  logo_url: string | null;
-  category: string;
-  status: string;
-  verified: boolean;
-}
+import { companiesApi, companyAccessApi, hasPossibleAuthSession, Company } from '@/lib/api';
 
 interface CompanyContextType {
   activeCompany: Company | null;

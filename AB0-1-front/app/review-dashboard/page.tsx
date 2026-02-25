@@ -84,8 +84,8 @@ export default function ReviewDashboardPage() {
       ]);
       
       setSummary(summaryRes);
-      setReviews(Array.isArray(reviewsRes?.data) ? reviewsRes.data : []);
-      setLeads(Array.isArray(leadsRes?.data) ? leadsRes.data : []);
+      setReviews(Array.isArray(reviewsRes) ? reviewsRes : (reviewsRes as any)?.data || []);
+      setLeads(Array.isArray(leadsRes) ? leadsRes : (leadsRes as any)?.data || []);
       
       if (isRefresh) {
         toast.success('Painel atualizado com sucesso!');

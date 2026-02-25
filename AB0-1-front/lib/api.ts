@@ -87,16 +87,19 @@ export interface SectorQuestion {
 
 export interface Company {
   id: number;
-  slug?: string;
+  slug: string;
   name: string;
+  city: string;
+  state: string;
+  status: string;
+  verified: boolean;
+  category: string;
   description: string;         // Corrigido de 'about' para 'description'
   about?: string;              // Legacy field - some APIs might still use this
   highlights?: string;
   website: string;
   phone: string;
   address: string;
-  state?: string;
-  city?: string;
   created_at: string;
   updated_at: string;
   banner_url?: string | null;
@@ -113,9 +116,7 @@ export interface Company {
   category_name?: string;
   category_id?: number;
   categories?: string;         // Some APIs return this as a string
-  status?: 'active' | 'inactive';
   featured?: boolean;
-  verified?: boolean;
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;
@@ -357,6 +358,7 @@ export interface Category {
   id: number;
   name: string;
   seo_url: string;
+  slug?: string;
   seo_title: string;
   short_description?: string;
   description?: string;
@@ -395,6 +397,7 @@ export interface Banner {
   title: string;
   description?: string | null;
   link?: string | null;
+  link_url?: string | null;
   image_url?: string | null;
   banner_type?: string;
   position?: string;

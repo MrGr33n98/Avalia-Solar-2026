@@ -15,8 +15,8 @@ const DEFAULT_BLUR_DATA_URL =
 interface OptimizedImageProps {
   src: string;
   alt: string;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   fill?: boolean;
   className?: string;
   containerClassName?: string;
@@ -153,14 +153,14 @@ export function OptimizedImage({
   return (
     <div
       className={cn('relative inline-block overflow-hidden', containerClassName)}
-      style={{ width, height }}
+      style={width && height ? { width, height } : undefined}
     >
       {placeholderNode}
       <Image
         {...imageProps}
         alt={alt}
-        width={width}
-        height={height}
+        width={width || 0}
+        height={height || 0}
         sizes={sizes}
       />
     </div>
