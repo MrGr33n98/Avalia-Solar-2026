@@ -1,62 +1,60 @@
 class Badge < ApplicationRecord
-  ALLOWED_BADGE_CONTENT_TYPES = %w[
-    image/png
-    image/jpeg
-    image/jpg
-    image/webp
-    image/gif
-    image/svg+xml
-  ].freeze
-  MAX_BADGE_IMAGE_SIZE = 5.megabytes
+  include Rails.application.routes.url_helpers
 
-  # Add association to Category
-  belongs_to :category, optional: true
+  ALLOWED_IMAGE_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
+  MAX_IMAGE_SIZE = 2.megabytes
 
-  # Add Active Storage for badge image
-  has_one_attached :badge_image
-  validate :badge_image_constraints
+  has_one_attached :image
+  
+  has_many :company_badges, dependent: :destroy
+  has_many :companies, through: :company_badges
 
-  # Add ransackable attributes for ActiveAdmin
+  validates :name, presence: true
+  validates :public_slug, presence: true, uniqueness: true
+  validate :image_constraints
+
+  scope :active, -> { where(active: true) }
+
+  before_validation :generate_slug, on: :create
+
   def self.ransackable_attributes(_auth_object = nil)
-    %w[category_id created_at description id image name position
-       updated_at year edition products]
+    %w[category_label created_at description id name position updated_at year edition active public_slug]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[category products badge_image_attachment badge_image_blob]
+    %w[companies company_badges image_attachment image_blob]
   end
 
   def image_url
-    return nil unless badge_image.attached?
+    return nil unless image.attached?
 
     begin
       options = Rails.application.routes.default_url_options.dup
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       
-      if Rails.env.development? && options[:host] == 'localhost'
-        options[:port] = 3001
-      end
-
-      Rails.application.routes.url_helpers.rails_storage_proxy_url(badge_image, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
     rescue => e
-      Rails.logger.error("Error generating badge image URL for badge #{id}: #{e.message}")
+      Rails.logger.error("Error generating image URL for badge #{id}: #{e.message}")
       nil
     end
   end
 
   private
 
-  def badge_image_constraints
-    return unless badge_image.attached?
+  def generate_slug
+    return if public_slug.present?
+    self.public_slug = "#{name.parameterize}-#{SecureRandom.hex(4)}"
+  end
 
-    blob = badge_image.blob
-    content_type = blob.content_type.to_s
+  def image_constraints
+    return unless image.attached?
 
-    unless ALLOWED_BADGE_CONTENT_TYPES.include?(content_type)
-      errors.add(:badge_image, 'deve ser PNG, JPG, JPEG, WEBP, GIF ou SVG')
+    if image.blob.byte_size > MAX_IMAGE_SIZE
+      errors.add(:image, "deve ter no máximo 2MB")
     end
 
-    if blob.byte_size > MAX_BADGE_IMAGE_SIZE
-      errors.add(:badge_image, 'deve ter no máximo 5MB')
+    unless ALLOWED_IMAGE_TYPES.include?(image.blob.content_type)
+      errors.add(:image, "deve ser PNG, JPG, JPEG ou WEBP")
     end
   end
 end

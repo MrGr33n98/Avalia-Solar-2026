@@ -61,7 +61,7 @@ ActiveAdmin.register Company do
     :linkedin, :description,
     :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
     :active_admin,
-    project_types: [], services_offered: [], category_ids: [], media_assets: [],
+    project_types: [], services_offered: [], category_ids: [], badge_ids: [], media_assets: [],
     financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
     company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
     company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
@@ -365,7 +365,11 @@ end
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Category.all.order(:name)
     end
 
-    f.inputs 'Botões Personalizados' do
+    f.inputs 'Selos / Badges' do
+      f.input :badges, as: :check_boxes, collection: Badge.active.order(:name)
+    end
+
+    f.inputs 'Botoes Personalizados' do
       f.has_many :company_buttons, allow_destroy: true, heading: false, sortable: :position, sortable_start: 1 do |cb|
         cb.input :label, label: 'Texto do Botão'
         cb.input :url, label: 'URL de Destino'
@@ -427,6 +431,19 @@ end
       row :reviews_count
       row :categories do |company|
         company.categories.pluck(:name).join(', ')
+      end
+      row :badges do |company|
+        div style: 'display: flex; gap: 10px; flex-wrap: wrap;' do
+          company.badges.each do |badge|
+            if badge.image.attached?
+              div title: badge.name do
+                image_tag url_for(badge.image), style: 'height: 40px; width: auto;'
+              end
+            else
+              span badge.name
+            end
+          end
+        end
       end
       row :banner do |company|
         if company.banner.attached?

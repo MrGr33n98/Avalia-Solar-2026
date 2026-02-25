@@ -965,6 +965,25 @@ export async function fetchApi<T = any>(
 // =======================
 // API Endpoints
 // =======================
+export interface Badge {
+  id: number;
+  name: string;
+  description?: string;
+  category?: string;
+  year?: number;
+  edition?: number;
+  public_slug: string;
+  image_url: string;
+  verifiable_url: string;
+}
+
+export const badgesApi = {
+  getByCompany: (companyId: number | string) => 
+    fetchApi<Badge[]>(`/companies/${companyId}/badges`),
+  getBySlug: (slug: string) =>
+    fetchApi<{ badge: Badge; featured_companies: any[] }>(`/badges/${slug}`),
+};
+
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
     try {

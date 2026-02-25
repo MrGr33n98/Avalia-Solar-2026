@@ -57,6 +57,8 @@ class Company < ApplicationRecord
   belongs_to :plan, optional: true
   has_many :users, dependent: :nullify
   has_many :company_members, dependent: :destroy
+  has_many :company_badges, dependent: :destroy
+  has_many :badges, through: :company_badges
   has_many :company_access_requests, dependent: :destroy
   has_many :sector_ratings, dependent: :destroy
   has_many :company_sector_questions, dependent: :destroy

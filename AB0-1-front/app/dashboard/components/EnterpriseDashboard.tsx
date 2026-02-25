@@ -38,6 +38,7 @@ const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), { loa
 const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => <DashboardTabSkeleton /> });
 const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), { loading: () => <DashboardTabSkeleton /> });
 const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), { loading: () => <DashboardTabSkeleton /> });
+const BadgesManagement = dynamic(() => import('./BadgesManagement'), { loading: () => <DashboardTabSkeleton /> });
 
 function DashboardTabSkeleton() {
   return (
@@ -230,13 +231,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Selos Avalia Solar</h2>
-                    <p className="text-sm text-muted-foreground">Gerencie e compartilhe seus selos no Avaliasolar.</p>
+                    <p className="text-sm text-muted-foreground">Gerencie e compartilhe seus selos oficiais de distinção.</p>
                   </div>
-                  <Card>
-                    <CardContent className="p-6 text-sm text-muted-foreground">
-                      Em breve.
-                    </CardContent>
-                  </Card>
+                  <BadgesManagement companyId={companyId} />
                 </div>
               </TabsContent>
 

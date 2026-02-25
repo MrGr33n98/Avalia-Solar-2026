@@ -1,66 +1,46 @@
-class Api::V1::BadgesController < Api::V1::BaseController
-  before_action :set_badge, only: %i[show update destroy]
+module Api
+  module V1
+    class BadgesController < BaseController
+      skip_before_action :authenticate_api_user, only: [:show]
+      
+      # GET /api/v1/companies/:id/badges
+      def index
+        company = ::Company.find_by_slug_or_id!(params[:company_id])
+        badges = company.badges.active.order(position: :asc)
+        
+        render json: badges.map { |badge| badge_payload(badge) }
+      end
 
-  def index
-    @badges = Badge.all
-    render json: @badges
-  rescue StandardError => e
-    Rails.logger.error("Badges error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
-  end
+      # GET /api/v1/badges/:slug
+      def show
+        badge = ::Badge.find_by!(public_slug: params[:slug])
+        
+        # Opcionalmente incluir empresas que possuem o selo
+        companies = badge.companies.active.limit(5).map do |c|
+          { id: c.id, name: c.name, slug: c.slug, logo_url: c.logo_url }
+        end
 
-  def show
-    render json: @badge
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Badge não encontrado' }, status: :not_found
-  rescue StandardError => e
-    Rails.logger.error("Badges error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
-  end
+        render json: {
+          badge: badge_payload(badge),
+          featured_companies: companies
+        }
+      end
 
-  def create
-    @badge = Badge.new(badge_params)
+      private
 
-    if @badge.save
-      render json: @badge, status: :created
-    else
-      render json: { errors: @badge.errors.full_messages }, status: :unprocessable_entity
+      def badge_payload(badge)
+        {
+          id: badge.id,
+          name: badge.name,
+          description: badge.description,
+          category: badge.category_label,
+          year: badge.year,
+          edition: badge.edition,
+          public_slug: badge.public_slug,
+          image_url: badge.image_url,
+          verifiable_url: "#{ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br')}/badges/#{badge.public_slug}"
+        }
+      end
     end
-  rescue StandardError => e
-    Rails.logger.error("Badges error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
-  end
-
-  def update
-    if @badge.update(badge_params)
-      render json: @badge
-    else
-      render json: { errors: @badge.errors.full_messages }, status: :unprocessable_entity
-    end
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Badge não encontrado' }, status: :not_found
-  rescue StandardError => e
-    Rails.logger.error("Badges error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
-  end
-
-  def destroy
-    @badge.destroy
-    render json: { message: 'Badge excluído' }, status: :ok
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Badge não encontrado' }, status: :not_found
-  rescue StandardError => e
-    Rails.logger.error("Badges error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
-  end
-
-  private
-
-  def set_badge
-    @badge = Badge.find(params[:id])
-  end
-
-  def badge_params
-    params.require(:badge).permit(:name, :description, :position, :year, :edition, :category_id, :products, :image)
   end
 end
