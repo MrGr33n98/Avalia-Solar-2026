@@ -13,6 +13,10 @@ class EventDispatcher
     when 'review.published'
       TrustScoreRecalculationWorker.perform_async(@payload[:review_id])
       AiModerationWorker.perform_async(@payload[:review_id])
+    when 'lead.captured'
+      RoiCalculationWorker.perform_async(@payload[:lead_id])
+      LeadScoringWorker.perform_async(@payload[:lead_id])
+      # FinancingMatchWorker.perform_async(@payload[:lead_id]) # Pending implementation
     end
   end
 end
