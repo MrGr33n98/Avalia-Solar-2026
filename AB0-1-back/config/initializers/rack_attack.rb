@@ -90,6 +90,14 @@ class Rack::Attack
     end
   end
 
+  # === Trust API Protection ===
+  # Limite: 60 requests por minuto por IP para a Trust API
+  throttle('trust_api/ip', limit: 60, period: 1.minute) do |req|
+    if req.path.start_with?('/api/v1/trust/')
+      req.ip
+    end
+  end
+
   # Limitar requests gerais por IP
   # Protege contra DDoS e scraping agressivo
   throttle('req/ip', limit: 300, period: 5.minutes) do |req|

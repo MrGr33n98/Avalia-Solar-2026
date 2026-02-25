@@ -197,6 +197,11 @@ Rails.application.routes.draw do
         end
       end
 
+      namespace :trust do
+        get :profile
+        get 'widgets/config', to: 'trust#widgets_config'
+      end
+
       get 'company_access/context', to: 'company_access#context'
       post 'company_access/select_active_company', to: 'company_access#select_active_company'
       resources :company_access_requests, only: [:create, :destroy]

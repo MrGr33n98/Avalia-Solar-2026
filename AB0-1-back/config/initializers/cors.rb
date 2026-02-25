@@ -51,6 +51,14 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
 
     origins origins_list
 
+    # Trust API (Publicly accessible for installers' websites)
+    resource '/api/v1/trust/*',
+      origins: '*',
+      headers: :any,
+      methods: [:get, :options, :head],
+      credentials: false,
+      max_age: 86400 # 24 hours
+
     # API resources (canonical)
     resource '/api/v1/*',
       headers: :any,
