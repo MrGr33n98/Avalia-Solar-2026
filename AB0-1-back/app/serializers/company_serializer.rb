@@ -7,7 +7,7 @@ class CompanySerializer < ActiveModel::Serializer
              :email_public, :featured, :verified,
              :media_upload_allowed,
              :rating_avg, :rating_count,
-             :banner_url, :logo_url, :verified_badge_image_url,
+             :banner_url, :logo_url, :verified_badge_image_url, :verified_badge_url,
              :created_at, :updated_at,
              :founded_year, :employees_count,
              :instagram, :facebook, :linkedin,
@@ -48,6 +48,10 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def verified_badge_image_url
+    generate_attachment_url(object.verified_badge)
+  end
+
+  def verified_badge_url
     generate_attachment_url(object.verified_badge)
   end
 
