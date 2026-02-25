@@ -62,7 +62,7 @@ jobs:
         if: matrix.component == 'backend'
         run: |
           if [ -z "${{ secrets.RAILS_MASTER_KEY }}" ]; then
-            echo "::error::RAILS_MASTER_KEY is required for backend assets precompile."
+            echo "::error::RAILS_MASTER_KEY está faltando nos Secrets do GitHub! O build do backend falhará sem ela."
             exit 1
           fi
 
@@ -105,7 +105,7 @@ jobs:
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN || '' }}
+            ${{ secrets.SENTRY_AUTH_TOKEN && format('SENTRY_AUTH_TOKEN={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
