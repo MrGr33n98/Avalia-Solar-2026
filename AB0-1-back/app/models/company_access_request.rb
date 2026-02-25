@@ -5,6 +5,8 @@ class CompanyAccessRequest < ApplicationRecord
   belongs_to :company
   belongs_to :reviewed_by_admin_user, class_name: 'AdminUser', optional: true
 
+  has_many_attached :documents
+
   validates :status, inclusion: { in: STATUSES }
   validates :user_id, :company_id, presence: true
   validates :user_id, uniqueness: {
@@ -19,7 +21,7 @@ class CompanyAccessRequest < ApplicationRecord
 
   before_validation :set_requested_at, on: :create
   after_create_commit :notify_slack_new_request
-  after_update_commit :notify_slack_approval, if: :saved_change_to_approved?
+  after_update_commit :handle_approval, if: :saved_change_to_approved?
 
   def approved?
     status == 'approved'
@@ -52,6 +54,33 @@ class CompanyAccessRequest < ApplicationRecord
 
   def saved_change_to_approved?
     saved_change_to_status? && approved?
+  end
+
+  def handle_approval
+    create_company_member
+    verify_company
+    notify_slack_approval
+  end
+
+  def create_company_member
+    CompanyMember.find_or_create_by!(
+      company: company,
+      user: user
+    ) do |member|
+      member.role = :owner
+      member.status = :active
+    end
+  end
+
+  def verify_company
+    return if company.verified?
+
+    company.update!(
+      verified: true,
+      moderation_status: 'active',
+      approved_at: Time.current,
+      approved_by_admin_user_id: reviewed_by_admin_user_id
+    )
   end
 
   def notify_slack_new_request

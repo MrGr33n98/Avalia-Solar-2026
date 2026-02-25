@@ -70,6 +70,7 @@ Rails.application.routes.draw do
           get 'analytics/reviews', to: 'companies#analytics_reviews'
           get 'analytics/competitors', to: 'companies#analytics_competitors'
           get 'analytics/traffic', to: 'companies#analytics_traffic'
+          get :widget_data, to: 'widget_data#show'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :social_proof

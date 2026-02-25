@@ -101,6 +101,8 @@ export interface Company {
   updated_at: string;
   banner_url?: string | null;
   logo_url?: string | null;
+  verified_badge_url?: string | null;
+  verified_badge_image_url?: string | null;
   buttons?: CompanyButton[];
   rating?: number;
   total_reviews?: number;

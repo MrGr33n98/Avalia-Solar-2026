@@ -74,7 +74,10 @@ ActiveAdmin.register CompanyAccessRequest do
       redirect_to resource_path, notice: 'Solicitacao ja aprovada.' and return
     end
 
-    resource.transaction do
+    begin
+      # O callback 'handle_approval' no modelo CompanyAccessRequest agora:
+      # 1. Cria o CompanyMember (Owner)
+      # 2. Marca a Company como verified: true
       resource.update!(
         status: 'approved',
         admin_note: params[:note].presence,
@@ -82,25 +85,24 @@ ActiveAdmin.register CompanyAccessRequest do
         reviewed_by_admin_user_id: current_admin_user.id
       )
 
-      member = CompanyMember.find_or_initialize_by(user: resource.user, company: resource.company)
-      member.role = 'manager' if member.respond_to?(:role)
-      member.status = 'active' if member.respond_to?(:status)
-      member.save!
-
+      # Atualizacoes adicionais de usuario se necessario
       user = resource.user
-      user.role = 'company'
-      user.status = 'active'
-      if user.company_id.blank? || !user.active_membership_for?(user.company_id)
-        user.company_id = resource.company_id
+      if user.respond_to?(:role) && user.role != 'admin'
+        user.update(role: 'company')
       end
-      user.save! if user.changed?
-    end
 
-    CompanyAccessMailer.access_granted(resource.user, resource.company).deliver_later
-    redirect_to resource_path, notice: 'Acesso aprovado e email enviado.'
-  rescue StandardError => e
-    Rails.logger.error("[Admin::CompanyAccessRequest] approve failed id=#{resource.id} error=#{e.class} #{e.message}")
-    redirect_to resource_path, alert: 'Falha ao aprovar solicitacao.'
+      # Notificacao via email
+      begin
+        CompanyAccessMailer.access_granted(resource.user, resource.company).deliver_later
+      rescue => e
+        Rails.logger.warn("[Admin::CompanyAccessRequest] mailer failed: #{e.message}")
+      end
+      
+      redirect_to resource_path, notice: 'Acesso aprovado e empresa verificada com sucesso.'
+    rescue StandardError => e
+      Rails.logger.error("[Admin::CompanyAccessRequest] approve failed id=#{resource.id}: #{e.message}")
+      redirect_to resource_path, alert: "Erro ao aprovar: #{e.message}"
+    end
   end
 
   member_action :reject, method: :put do
@@ -141,12 +143,27 @@ ActiveAdmin.register CompanyAccessRequest do
     attributes_table do
       row :user
       row :company
-      row :status
+      row :status do |request|
+        status_tag request.status
+      end
       row :message
       row :admin_note
       row :requested_at
       row :reviewed_at
       row :reviewed_by_admin_user
+      
+      if resource.documents.attached?
+        row :documents do
+          ul do
+            resource.documents.each do |doc|
+              li do
+                link_to(doc.filename.to_s, rails_blob_path(doc, disposition: "attachment"), target: "_blank")
+              end
+            end
+          end
+        end
+      end
+
       row :created_at
       row :updated_at
     end

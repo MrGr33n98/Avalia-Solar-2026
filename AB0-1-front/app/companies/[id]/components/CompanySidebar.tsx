@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
+import ClaimCompanyCard from './ClaimCompanyCard';
 
 interface CompanySidebarProps {
   company: Company;
@@ -16,6 +17,11 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
 
   return (
     <div className="space-y-6 sticky top-24">
+      {/* Claim Profile Card - Visible only if NOT verified */}
+      {!company.verified && (
+        <ClaimCompanyCard company={company} />
+      )}
+
       {/* Sponsored Square Banner */}
       <SponsoredBanner
         slotKey="company_sidebar_square"

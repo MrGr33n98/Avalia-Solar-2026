@@ -9,6 +9,7 @@ import {
   Edit3,
   Home,
   Link2,
+  ShieldCheck,
   Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -100,6 +101,7 @@ function SidebarContent({
       { id: 'overview', label: 'Home', icon: Home },
       { id: 'sector-questions', label: 'Perguntas', icon: Edit3 },
       { id: 'integrations', label: 'Integrações', icon: Link2 },
+      { id: 'trust-widget', label: 'Selo de Confiança', icon: ShieldCheck },
       { id: 'avalia-badges', label: 'Selos Avalia Solar', icon: BadgeCheck },
     ],
     []

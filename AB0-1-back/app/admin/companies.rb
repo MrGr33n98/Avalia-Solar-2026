@@ -50,7 +50,7 @@ ActiveAdmin.register Company do
   permit_params do
   permitted = [
     :name, :website, :phone, :address,
-    :state, :city, :banner, :logo, :featured, :verified,
+    :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
     :cnpj, :email, :whatsapp,
     :working_hours, :payment_methods,
     :certifications, :status, :founded_year, :employees_count,
@@ -249,6 +249,9 @@ end
       f.input :banner, as: :file,
               hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1200x400 (Max 10MB)')
       
+      f.input :verified_badge, as: :file,
+              hint: safe_preview.call(f.object.verified_badge, max_width: 100, empty_text: 'PNG, JPG ou WEBP (Max 2MB). Selo customizado exibido no widget e perfil.')
+
       f.input :media_assets, as: :file, input_html: { multiple: true }, 
               hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG, SVG ou WEBP (Max 15MB por arquivo)'
       
@@ -445,6 +448,17 @@ end
           end
         else
           content_tag(:span, 'Sem logo')
+        end
+      end
+      row :verified_badge do |company|
+        if company.verified_badge.attached?
+          begin
+            image_tag(url_for(company.verified_badge), style: 'max-width: 100px')
+          rescue StandardError
+            content_tag(:span, 'Selo anexado, mas preview indisponivel')
+          end
+        else
+          content_tag(:span, 'Sem selo customizado')
         end
       end
     end

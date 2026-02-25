@@ -25,7 +25,13 @@ class Company < ApplicationRecord
   # =========================
   has_one_attached :banner
   has_one_attached :logo
+  has_one_attached :verified_badge # TASK: Trust Widget Badge
   has_many_attached :media_assets
+
+  validates :verified_badge,
+            content_type: ALLOWED_LOGO_CONTENT_TYPES,
+            size: { less_than: 2.megabytes },
+            if: -> { verified_badge.attached? }
 
   # =========================
   # Associations

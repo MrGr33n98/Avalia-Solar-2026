@@ -135,6 +135,18 @@ export default function CompanyHero({
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
         <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
           <div className="mr-4 mb-3 sm:mb-0 relative">
+            {company.verified && company.verified_badge_url && (
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 z-20" title="Selo de Verificação">
+                <OptimizedImage
+                  src={company.verified_badge_url}
+                  alt="Verified Badge"
+                  width={48}
+                  height={48}
+                  className="object-contain drop-shadow-md"
+                  priority
+                />
+              </div>
+            )}
             <OptimizedImage
               src={logoUrl || "/images/logo-placeholder.svg"}
               alt={company.name}
@@ -144,7 +156,7 @@ export default function CompanyHero({
               fallbackSrc="/images/logo-placeholder.svg"
               onError={() => setLogoError(true)}
             />
-            {company.verified && (
+            {company.verified && !company.verified_badge_url && (
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
                 <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
               </div>
@@ -152,10 +164,16 @@ export default function CompanyHero({
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center flex-wrap gap-2 mb-1">
               <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate max-w-[250px] sm:max-w-xs" title={company.name}>
                 {company.name}
               </h1>
+              {company.verified && (
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200/50 flex items-center gap-1 px-2 py-0.5 h-6">
+                  <BadgeCheck className="w-3.5 h-3.5 fill-blue-600 text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Verificado</span>
+                </Badge>
+              )}
             </div>
             
             <p className="text-sm text-muted-foreground line-clamp-1 max-w-md mb-2">

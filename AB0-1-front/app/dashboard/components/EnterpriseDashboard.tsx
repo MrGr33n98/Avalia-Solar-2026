@@ -37,6 +37,7 @@ const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), { loadi
 const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), { loading: () => <DashboardTabSkeleton /> });
 const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => <DashboardTabSkeleton /> });
 const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), { loading: () => <DashboardTabSkeleton /> });
+const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), { loading: () => <DashboardTabSkeleton /> });
 
 function DashboardTabSkeleton() {
   return (
@@ -219,6 +220,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
+                <TrustWidgetDashboard company={company} />
               </TabsContent>
 
               <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
