@@ -2,19 +2,19 @@ module Api
   module V1
     class BadgesController < BaseController
       skip_before_action :authenticate_api_user, only: [:show]
-      
+
       # GET /api/v1/companies/:id/badges
       def index
         company = ::Company.find_by_slug_or_id!(params[:company_id])
         badges = company.badges.active.order(position: :asc)
-        
+
         render json: badges.map { |badge| badge_payload(badge) }
       end
 
       # GET /api/v1/badges/:slug
       def show
         badge = ::Badge.find_by!(public_slug: params[:slug])
-        
+
         # Opcionalmente incluir empresas que possuem o selo
         companies = badge.companies.active.limit(5).map do |c|
           { id: c.id, name: c.name, slug: c.slug, logo_url: c.logo_url }

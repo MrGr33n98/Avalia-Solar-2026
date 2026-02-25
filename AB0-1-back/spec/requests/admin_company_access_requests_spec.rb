@@ -31,9 +31,9 @@ RSpec.describe 'Admin Company Access Requests', type: :request do
   end
 
   it 'approves request and creates membership' do
-    expect {
+    expect do
       put approve_admin_company_access_request_path(access_request)
-    }.to change { CompanyMember.count }.by(1)
+    end.to change { CompanyMember.count }.by(1)
 
     expect(response).to redirect_to(admin_company_access_request_path(access_request))
     expect(access_request.reload.status).to eq('approved')

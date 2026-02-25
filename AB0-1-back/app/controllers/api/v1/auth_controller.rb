@@ -3,14 +3,14 @@ module Api
   module V1
     class AuthController < Api::V1::BaseController
       include JwtAuthenticatable
-      
+
       # Este controller é baseado em ActionController::API (direta ou indiretamente) e portanto
       # não possui o callback verify_authenticity_token usado para proteção CSRF em controllers
       # que herdam de ActionController::Base. Não é necessário (nem possível) chamar
       # skip_before_action :verify_authenticity_token aqui.
 
       def login
-        email, password, source = extract_credentials
+        email, password, = extract_credentials
 
         if email.blank? || password.blank?
           return render_error_response(
@@ -25,9 +25,9 @@ module Api
           # Se o usuário não tem role ou é apenas 'user', ele pode logar
           # Se ele tem role 'company', verificamos se ele tem vínculos ativos
           if user.company_user? && user.active_member_companies.empty?
-             # Se for um usuário que deveria ser company mas não tem empresa vinculada,
-             # talvez ele tenha acabado de se cadastrar ou o vínculo foi removido.
-             # Permitimos o login, mas o frontend redirecionará para o fluxo de "vincular empresa"
+            # Se for um usuário que deveria ser company mas não tem empresa vinculada,
+            # talvez ele tenha acabado de se cadastrar ou o vínculo foi removido.
+            # Permitimos o login, mas o frontend redirecionará para o fluxo de "vincular empresa"
           end
 
           if user.respond_to?(:active_status?) && !user.active_status?
@@ -120,11 +120,11 @@ module Api
         requested_role = 'review' unless User::ROLES.include?(requested_role)
 
         user = User.new(attrs.merge(
-          terms_accepted: true,
-          terms_accepted_at: Time.current,
-          role: requested_role,
-          status: requested_role == 'company' ? :pending : :active
-        ))
+                          terms_accepted: true,
+                          terms_accepted_at: Time.current,
+                          role: requested_role,
+                          status: requested_role == 'company' ? :pending : :active
+                        ))
 
         if params[:user] && params[:user][:avatar].present?
           Rails.logger.info "[Audit] Photo Flow: User avatar detected in registration request for #{user.email}"
@@ -133,20 +133,20 @@ module Api
         user.skip_confirmation_notification!
         if user.save
           Rails.logger.info "[Audit] User created successfully: ID #{user.id}, Email: #{user.email}"
-          
+
           if user.avatar.attached?
             Rails.logger.info "[Audit] Photo Flow: User avatar attached successfully for ID #{user.id}"
           end
 
           user.send_confirmation_instructions
           Rails.logger.info "[Audit] Confirmation email sent to #{user.email}"
-          
+
           Analytics::TrackEventService.call(
             event_type: 'registration_completed',
             user: user,
             company_id: user.company_id,
             metadata: request_metadata.merge(
-              city: attrs[:city], 
+              city: attrs[:city],
               state: attrs[:state]
             )
           )
@@ -175,10 +175,10 @@ module Api
         if current_token
           user_id = current_user&.id
           company_id = current_user&.company_id
-          
+
           revoke_current_token
           Rails.logger.info("[Auth] User logged out: user_id=#{user_id} ip=#{request.remote_ip}")
-          
+
           Analytics::TrackEventService.call(
             event_type: 'logout_performed',
             user: current_user,
@@ -186,31 +186,31 @@ module Api
             metadata: request_metadata
           )
         end
-        
+
         revoke_refresh_token
 
         # Clear cookies using unified helper to ensure domain consistency
         clear_auth_cookies
-        
-        render json: { 
+
+        render json: {
           message: 'Logout successful',
           code: 'LOGOUT_SUCCESS'
         }, status: :ok
       end
-      
+
       def logout_all
         # Revoke all tokens for current user (all devices)
         if current_user
           revoke_all_user_tokens
           Rails.logger.info("[Auth] User logged out from all devices: user_id=#{current_user.id} ip=#{request.remote_ip}")
         end
-        
+
         revoke_refresh_token
 
         # Clear cookies using unified helper to ensure domain consistency
         clear_auth_cookies
-        
-        render json: { 
+
+        render json: {
           message: 'Logged out from all devices successfully',
           code: 'LOGOUT_ALL_SUCCESS'
         }, status: :ok
@@ -300,7 +300,7 @@ module Api
         token = extract_token_from_header
         password = params[:password]
         password_confirmation = params[:password_confirmation]
-        
+
         # Se n?o houver no header, validar se token veio via query string (bloqueado)
         if token.blank?
           query_token = request.query_parameters['reset_password_token'] || request.query_parameters['token']
@@ -323,15 +323,15 @@ module Api
           )
         end
 
-        user = User.reset_password_by_token({ 
-          reset_password_token: token, 
-          password: password, 
-          password_confirmation: password_confirmation 
-        })
-        
+        user = User.reset_password_by_token({
+                                              reset_password_token: token,
+                                              password: password,
+                                              password_confirmation: password_confirmation
+                                            })
+
         if user.errors.empty?
           Rails.logger.info("[Auth] Password reset successfully: #{user.email} (IP: #{request.remote_ip})")
-          
+
           # Logar usuário automaticamente após reset
           tokens = issue_tokens_for(user)
 
@@ -342,7 +342,7 @@ module Api
             auto_login: true
           }, status: :ok
         end
-        
+
         Rails.logger.error("[Auth] Password reset failed: #{user.errors.full_messages.join(', ')}")
         render_error_response(
           message: 'Erro ao redefinir senha',
@@ -363,7 +363,7 @@ module Api
         end
 
         user = User.find_by(email: email)
-        if user && user.respond_to?(:confirmed?) && !user.confirmed?
+        if user.respond_to?(:confirmed?) && !user.confirmed?
           begin
             user.send_confirmation_instructions
             Rails.logger.info("[Auth] Confirmation instructions resent to #{email}")
@@ -394,7 +394,7 @@ module Api
           end
           token = params[:confirmation_token] || params[:token]
         end
-        
+
         if token.blank?
           Rails.logger.warn("[Auth] Confirmation blocked: token missing (IP: #{request.remote_ip})")
           return render_error_response(
@@ -423,11 +423,11 @@ module Api
           end
 
           Rails.logger.info("[Audit] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
-          
+
           # Logar usuário automaticamente após confirmação
           tokens = issue_tokens_for(user)
 
-          return render json: { 
+          return render json: {
             message: 'Email confirmado com sucesso.',
             token: tokens[:access_token],
             user: user,
@@ -453,8 +453,8 @@ module Api
         # Extrai token do header Authorization: Bearer TOKEN
         auth_header = request.headers['Authorization']
         return nil if auth_header.blank?
-        
-        auth_header.split(' ').last
+
+        auth_header.split.last
       end
 
       def extract_credentials
@@ -471,7 +471,7 @@ module Api
             'unknown'
           end
 
-        return [email, password, source]
+        [email, password, source]
       end
 
       def user_params
@@ -531,6 +531,7 @@ module Api
       def revoke_refresh_token
         token = extract_refresh_token
         return unless token.present?
+
         revoke_token(token)
       end
 
@@ -541,17 +542,17 @@ module Api
       def skip_token_check?
         # Pular verificação de revogação para ações que não usam JWT ou onde o token é de outro tipo
         # (como token de confirmação ou reset de senha enviado no header Authorization)
-        %w[login register signup forgot_password reset_password confirm_email resend_confirmation refresh].include?(action_name)
+        %w[login register signup forgot_password reset_password confirm_email resend_confirmation
+           refresh].include?(action_name)
       end
 
-      def development_fallback(action, error)
+      def development_fallback(_action, _error)
         render_error_response(
           message: 'Erro interno na autenticação',
           status: :internal_server_error,
           code: 'AUTH_INTERNAL_ERROR'
         )
       end
-
     end
   end
 end

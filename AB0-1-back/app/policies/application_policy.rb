@@ -43,9 +43,7 @@ class ApplicationPolicy
   def user_company_ids
     return [] if user.blank?
 
-    if user.respond_to?(:active_company_members)
-      return user.active_company_members.pluck(:company_id)
-    end
+    return user.active_company_members.pluck(:company_id) if user.respond_to?(:active_company_members)
 
     Array(user.respond_to?(:company_id) ? user.company_id : nil).compact
   end
@@ -54,9 +52,7 @@ class ApplicationPolicy
     return false if company_id.blank?
     return true if admin?
 
-    if user.respond_to?(:active_membership_for?)
-      return user.active_membership_for?(company_id)
-    end
+    return user.active_membership_for?(company_id) if user.respond_to?(:active_membership_for?)
 
     user_company_ids.include?(company_id)
   end
@@ -68,11 +64,11 @@ class ApplicationPolicy
     end
 
     def resolve
-      if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
-        scope.all
-      else
+      unless user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
         raise NotImplementedError, "You must define #resolve in #{self.class}"
       end
+
+      scope.all
     end
 
     private
@@ -82,9 +78,7 @@ class ApplicationPolicy
     def user_company_ids
       return [] if user.blank?
 
-      if user.respond_to?(:active_company_members)
-        return user.active_company_members.pluck(:company_id)
-      end
+      return user.active_company_members.pluck(:company_id) if user.respond_to?(:active_company_members)
 
       Array(user.respond_to?(:company_id) ? user.company_id : nil).compact
     end

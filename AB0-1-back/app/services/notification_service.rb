@@ -28,7 +28,7 @@ class NotificationService
       message: "Você recebeu uma nova avaliação de #{review.rating} estrelas",
       notifiable: review,
       data: { review_id: review.id, rating: review.rating },
-      delivery_channels: ['in_app', 'email']
+      delivery_channels: %w[in_app email]
     )
   end
 
@@ -37,10 +37,10 @@ class NotificationService
       user,
       'review_response',
       'Resposta na sua avaliação',
-      message: "A empresa respondeu sua avaliação",
+      message: 'A empresa respondeu sua avaliação',
       notifiable: response,
       data: { review_id: review.id, response_id: response.id },
-      delivery_channels: ['in_app', 'email']
+      delivery_channels: %w[in_app email]
     )
   end
 
@@ -61,7 +61,7 @@ class NotificationService
       user,
       'new_comment',
       'Novo comentário',
-      message: "Alguém comentou na sua avaliação",
+      message: 'Alguém comentou na sua avaliação',
       notifiable: comment,
       data: { comment_id: comment.id },
       delivery_channels: ['in_app']
@@ -73,7 +73,7 @@ class NotificationService
       user,
       'review_helpful',
       'Avaliação útil',
-      message: "Sua avaliação foi marcada como útil",
+      message: 'Sua avaliação foi marcada como útil',
       notifiable: review,
       data: { review_id: review.id },
       delivery_channels: ['in_app']
@@ -87,7 +87,7 @@ class NotificationService
       'Alerta de segurança',
       message: message,
       data: { alert_type: alert_type },
-      delivery_channels: ['in_app', 'email']
+      delivery_channels: %w[in_app email]
     )
   end
 

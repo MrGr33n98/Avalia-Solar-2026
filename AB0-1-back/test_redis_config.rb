@@ -3,8 +3,8 @@
 
 # Test script to verify Redis/Sidekiq configuration has no namespace issues
 
-puts "Testing Redis and Sidekiq configuration..."
-puts "=" * 60
+puts 'Testing Redis and Sidekiq configuration...'
+puts '=' * 60
 
 require 'bundler/setup'
 require 'redis'
@@ -21,8 +21,8 @@ puts "Redis URL: #{redis_url}"
 begin
   redis = Redis.new(url: redis_url, driver: :ruby)
   redis.ping
-  puts "✅ Redis connection: OK"
-rescue => e
+  puts '✅ Redis connection: OK'
+rescue StandardError => e
   puts "❌ Redis connection failed: #{e.message}"
   exit 1
 end
@@ -37,16 +37,14 @@ begin
       pool_timeout: 5
     }
   end
-  puts "✅ Sidekiq server config: OK"
+  puts '✅ Sidekiq server config: OK'
 rescue ArgumentError => e
-  if e.message.include?('namespace')
-    puts "❌ Sidekiq namespace error detected!"
-    puts "   #{e.message}"
-    puts "\n   Solution: Remove any :namespace option from Redis configuration"
-    exit 1
-  else
-    raise
-  end
+  raise unless e.message.include?('namespace')
+
+  puts '❌ Sidekiq namespace error detected!'
+  puts "   #{e.message}"
+  puts "\n   Solution: Remove any :namespace option from Redis configuration"
+  exit 1
 end
 
 # Test Sidekiq client configuration
@@ -60,17 +58,15 @@ begin
       size: 5
     }
   end
-  puts "✅ Sidekiq client config: OK"
+  puts '✅ Sidekiq client config: OK'
 rescue ArgumentError => e
-  if e.message.include?('namespace')
-    puts "❌ Sidekiq namespace error detected!"
-    puts "   #{e.message}"
-    puts "\n   Solution: Remove any :namespace option from Redis configuration"
-    exit 1
-  else
-    raise
-  end
+  raise unless e.message.include?('namespace')
+
+  puts '❌ Sidekiq namespace error detected!'
+  puts "   #{e.message}"
+  puts "\n   Solution: Remove any :namespace option from Redis configuration"
+  exit 1
 end
 
-puts "=" * 60
-puts "✅ All tests passed! Configuration is correct."
+puts '=' * 60
+puts '✅ All tests passed! Configuration is correct.'

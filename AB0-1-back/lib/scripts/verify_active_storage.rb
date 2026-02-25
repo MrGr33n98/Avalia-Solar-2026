@@ -8,12 +8,12 @@
 module Scripts
   class VerifyActiveStorage
     def self.run
-      puts "Iniciando verificação de recursos do Active Storage..."
+      puts 'Iniciando verificação de recursos do Active Storage...'
 
       # Lista de arquivos críticos para verificar
       critical_files = [
-        "icon-carros-eletricos-e-recargas.png",
-        "icon-recarga-em-condomínios.png",
+        'icon-carros-eletricos-e-recargas.png',
+        'icon-recarga-em-condomínios.png'
       ]
 
       # Verificar configuração do serviço
@@ -27,7 +27,7 @@ module Scripts
         blobs = ActiveStorage::Blob.where(filename: filename)
 
         if blobs.empty?
-          puts "❌ [DB] Arquivo não encontrado na tabela active_storage_blobs."
+          puts '❌ [DB] Arquivo não encontrado na tabela active_storage_blobs.'
           next
         else
           puts "✅ [DB] Encontrado(s) #{blobs.count} registro(s) no banco."
@@ -37,10 +37,15 @@ module Scripts
           # 2. Verificar integridade do arquivo físico/nuvem
           if blob.service.exist?(blob.key)
             puts "  ✅ [STORAGE] Arquivo existe no serviço de armazenamento (Key: #{blob.key})."
-            puts "  ℹ️  URL (com proxy): #{Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) rescue 'N/A'}"
+            puts "  ℹ️  URL (com proxy): #{begin
+              Rails.application.routes.url_helpers.rails_blob_path(blob,
+                                                                   only_path: true)
+            rescue StandardError
+              'N/A'
+            end}"
           else
             puts "  ❌ [STORAGE] ERRO CRÍTICO: O arquivo está registrado no banco mas NÃO existe no armazenamento (Key: #{blob.key})."
-            puts "     Sugestão: Remova o blob inválido ou faça upload manual do arquivo."
+            puts '     Sugestão: Remova o blob inválido ou faça upload manual do arquivo.'
           end
 
           # 3. Verificar integridade (Checksum) - Opcional, apenas se o arquivo existir
@@ -62,15 +67,15 @@ module Scripts
             test_file = storage_path.join('.write_test')
             File.write(test_file, 'test')
             File.delete(test_file)
-            puts "✅ Permissões de escrita confirmadas no diretório storage."
-          rescue => e
+            puts '✅ Permissões de escrita confirmadas no diretório storage.'
+          rescue StandardError => e
             puts "❌ Erro de permissão no diretório storage: #{e.message}"
           end
         else
           puts "❌ Diretório 'storage' não encontrado em #{storage_path}."
         end
       else
-        puts "Pulo verificação de disco local (Serviço não é local)."
+        puts 'Pulo verificação de disco local (Serviço não é local).'
       end
 
       puts "\nDiagnóstico concluído."

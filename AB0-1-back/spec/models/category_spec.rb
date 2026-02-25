@@ -28,4 +28,3 @@ RSpec.describe Category, type: :model do
     end
   end
 end
-

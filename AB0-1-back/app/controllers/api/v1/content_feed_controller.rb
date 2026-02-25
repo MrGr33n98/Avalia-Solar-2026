@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Api::V1::ContentFeedController < Api::V1::BaseController
   def index
     feed = ContentFeedService.new(

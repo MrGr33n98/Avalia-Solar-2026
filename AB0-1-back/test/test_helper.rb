@@ -39,7 +39,7 @@ if ENV['COVERAGE'] || ENV['CI']
 
     # Configurações de tracking
     track_files '{app,lib}/**/*.rb'
-    
+
     # Merge resultados de múltiplos runs
     merge_timeout 3600 # 1 hora
   end

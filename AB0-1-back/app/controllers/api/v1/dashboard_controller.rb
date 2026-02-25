@@ -1,7 +1,7 @@
 # app/controllers/api/v1/dashboard_controller.rb
 module Api
   module V1
-class DashboardController < BaseController
+    class DashboardController < BaseController
       before_action :require_admin
       def stats
         companies_count = Company.count

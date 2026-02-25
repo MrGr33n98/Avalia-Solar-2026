@@ -1,33 +1,32 @@
 class Api::V1::ArticlesController < Api::V1::BaseController
   include Cacheable # TASK-015: Enable caching
   include Paginatable # TASK-017: Enable pagination
-  
+
   before_action :set_article, only: %i[show update destroy]
   after_action :expire_articles_cache, only: %i[create update destroy]
 
   def index
     cache_key = cache_key_for('articles', params.except(:page, :per_page))
-    cache_key = "#{cache_key}/#{Digest::MD5.hexdigest({ page: params[:page], per_page: params[:per_page], q: params[:q], sort: params[:sort] }.to_json)}"
-    
+    cache_key = "#{cache_key}/#{Digest::MD5.hexdigest({ page: params[:page], per_page: params[:per_page],
+                                                        q: params[:q], sort: params[:sort] }.to_json)}"
+
     cached_json(cache_key, expires_in: 15.minutes) do
       scope = Article.includes(:category, :companies, :author).with_attached_banner
       scope = scope.published
       scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
       scope = scope.featured if boolean_param(:featured)
-      
-      if params[:company_id].present?
-        scope = scope.joins(:companies).where(companies: { id: params[:company_id] })
-      end
-      
+
+      scope = scope.joins(:companies).where(companies: { id: params[:company_id] }) if params[:company_id].present?
+
       scope = apply_search(scope)
       scope = apply_sort(scope)
 
       paginated = paginate(scope)
       set_pagination_headers(paginated)
-      
+
       {
         data: ActiveModelSerializers::SerializableResource.new(
-          paginated, 
+          paginated,
           each_serializer: ArticleSerializer
         ).as_json,
         meta: { pagination: pagination_metadata(paginated) }
@@ -55,7 +54,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     )
 
     cache_key = "articles/show/#{@article.id}/#{@article.updated_at.to_i}"
-    
+
     cached_json(cache_key, expires_in: 1.hour) do
       ArticleSerializer.new(@article).as_json
     end
@@ -64,14 +63,18 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   def related
-    @article = Article.friendly.find(params[:id]) rescue Article.find(params[:id])
-    
+    @article = begin
+      Article.friendly.find(params[:id])
+    rescue StandardError
+      Article.find(params[:id])
+    end
+
     # Simple related logic: same category, excluding self
     related_scope = Article.published
-                          .where(category_id: @article.category_id)
-                          .where.not(id: @article.id)
-                          .limit(3)
-    
+                           .where(category_id: @article.category_id)
+                           .where.not(id: @article.id)
+                           .limit(3)
+
     render json: related_scope, each_serializer: ArticleSerializer
   end
 
@@ -137,10 +140,10 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   def article_params
-    permitted = [
-      :title, :slug, :content, :excerpt, :meta_title, :meta_description, :published_at,
-      :status, :featured, :category_id, :author_id, :banner,
-      :product_id, :sponsored, :sponsored_label, :views_count
+    permitted = %i[
+      title slug content excerpt meta_title meta_description published_at
+      status featured category_id author_id banner
+      product_id sponsored sponsored_label views_count
     ]
     permitted << :company_id if Article.column_names.include?('company_id')
 
@@ -149,6 +152,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
 
   def boolean_param(name)
     return false unless params.key?(name)
+
     ActiveModel::Type::Boolean.new.cast(params[name])
   end
 
@@ -189,6 +193,6 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     expire_cache('articles')
     # Also expire category cache if article has category
     expire_cache("categories/show/#{@article.category_id}") if @article.category_id
-    Rails.logger.info("🗑️  Expired article caches")
+    Rails.logger.info('🗑️  Expired article caches')
   end
 end

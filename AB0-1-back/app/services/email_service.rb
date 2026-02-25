@@ -50,13 +50,13 @@ class EmailService
     end
 
     # Bulk operations
-    def send_bulk_emails(recipients, email_type, data = {})
+    def send_bulk_emails(recipients, email_type, _data = {})
       Rails.logger.info "[EmailService] Queueing #{recipients.count} #{email_type} emails"
-      
+
       recipients.each_with_index do |recipient, index|
         # Stagger emails to avoid overwhelming the mail server
         delay = (index * 2).seconds
-        
+
         case email_type
         when :welcome
           send_welcome_email(recipient, delay: delay)
@@ -74,13 +74,13 @@ class EmailService
     def delivery_stats(period: 24.hours)
       # This is a placeholder - implement based on your logging strategy
       Rails.logger.info "[EmailService] Email stats for last #{period}:"
-      
+
       # Example metrics you could track:
       # - Total emails sent
       # - Failed emails
       # - Emails by type
       # - Average delivery time
-      
+
       { period: period, note: 'Implement based on monitoring solution' }
     end
 
@@ -89,14 +89,14 @@ class EmailService
     def log_email_queued(email_type, recipient, urgent: false)
       priority = urgent ? '🔴' : '📧'
       Rails.logger.info "#{priority} [EmailService] Queued #{email_type} to #{recipient}"
-      
+
       # Track metrics
       track_email_metric(email_type, 'queued')
     end
 
     def track_email_metric(email_type, status)
       return unless defined?(Yabeda)
-      
+
       Yabeda.emails.queued.increment(
         { type: email_type, status: status },
         by: 1

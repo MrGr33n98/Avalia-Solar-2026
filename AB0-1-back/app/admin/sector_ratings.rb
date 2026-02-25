@@ -24,10 +24,10 @@ ActiveAdmin.register SectorRating do
     attributes_table do
       row :company
       row :user
-      row(:homologation) { |rating| rating.homologation }
-      row(:technical_quality) { |rating| rating.technical_quality }
-      row(:safety) { |rating| rating.safety }
-      row(:consultancy) { |rating| rating.consultancy }
+      row(:homologation, &:homologation)
+      row(:technical_quality, &:technical_quality)
+      row(:safety, &:safety)
+      row(:consultancy, &:consultancy)
       row :total_score
       row :status
       row :comment

@@ -19,7 +19,8 @@ ActiveAdmin.register BannerOffer do
       f.input :price_cents
       f.input :currency
       f.input :duration_days
-      f.input :rules_json, as: :text, input_html: { rows: 8 }, hint: 'JSON (ex: {"positions":["navbar"],"requires_moderation":true})'
+      f.input :rules_json, as: :text, input_html: { rows: 8 },
+                           hint: 'JSON (ex: {"positions":["navbar"],"requires_moderation":true})'
       f.input :active
     end
     f.actions
@@ -40,8 +41,12 @@ ActiveAdmin.register BannerOffer do
 
     def coerce_rules_json
       raw = params[:banner_offer][:rules_json]
-      if raw.is_a?(String) && raw.present?
-        params[:banner_offer][:rules_json] = JSON.parse(raw) rescue {}
+      return unless raw.is_a?(String) && raw.present?
+
+      params[:banner_offer][:rules_json] = begin
+        JSON.parse(raw)
+      rescue StandardError
+        {}
       end
     end
   end

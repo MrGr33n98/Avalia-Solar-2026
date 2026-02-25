@@ -5,7 +5,10 @@ RSpec.describe 'Company Access API', type: :request do
   let(:default_category) { create(:category, status: 'active') }
   let(:company) { create_active_company }
   let(:company_user) { create(:user, role: 'company', status: :active, company: nil, confirmed_at: Time.current) }
-  let(:review_user) { create(:user, role: 'review', status: :active, company: nil, city: 'Sao Paulo', state: 'SP', confirmed_at: Time.current) }
+  let(:review_user) do
+    create(:user, role: 'review', status: :active, company: nil, city: 'Sao Paulo', state: 'SP',
+                  confirmed_at: Time.current)
+  end
 
   def auth_headers(user)
     post '/api/v1/auth/login',

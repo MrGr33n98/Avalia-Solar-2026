@@ -5,7 +5,8 @@ RSpec.describe 'Analytics conversions endpoint', type: :request do
   let(:user) { create(:user, company:) }
 
   before do
-    AnalyticsEvent.create!(company_id: company.id, event_type: 'badge_cta_click', metadata: { referrer: '/companies/1' }, tracked_at: 1.day.ago)
+    AnalyticsEvent.create!(company_id: company.id, event_type: 'badge_cta_click',
+                           metadata: { referrer: '/companies/1' }, tracked_at: 1.day.ago)
     AnalyticsEvent.create!(company_id: company.id, event_type: 'badge_cta_view', metadata: {}, tracked_at: Time.current)
 
     allow_any_instance_of(Api::V1::AnalyticsController).to receive(:authenticate_api_user).and_return(true)

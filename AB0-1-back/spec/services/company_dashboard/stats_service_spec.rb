@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe CompanyDashboard::StatsService do
   let(:company) { create(:company, profile_views_count: 100) }
-  
+
   subject { described_class.new(company).call }
 
   context 'when company has no data' do

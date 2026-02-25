@@ -15,9 +15,7 @@
         company_columns = ::Company.column_names
 
         suggested_scope = ::Company.all
-        if company_columns.include?('status')
-          suggested_scope = suggested_scope.where(status: 'active')
-        end
+        suggested_scope = suggested_scope.where(status: 'active') if company_columns.include?('status')
         if company_columns.include?('moderation_status')
           suggested_scope = suggested_scope.where(moderation_status: 'approved')
         end
@@ -38,7 +36,7 @@
             {
               company_id: member.company_id,
               company_name: member.company&.name || "Empresa ##{member.company_id}",
-              company_slug: member.company&.respond_to?(:slug) ? member.company.slug : nil,
+              company_slug: member.company.respond_to?(:slug) ? member.company.slug : nil,
               member_role: member.role,
               member_status: member.status
             }
@@ -131,9 +129,7 @@
 
         normalized = ActiveRecord::Base.sanitize_sql_like(query.downcase)
         query_clauses = ['LOWER(companies.name) LIKE :term']
-        if company_columns.include?('slug')
-          query_clauses << "LOWER(COALESCE(companies.slug, '')) LIKE :term"
-        end
+        query_clauses << "LOWER(COALESCE(companies.slug, '')) LIKE :term" if company_columns.include?('slug')
 
         scope.where(query_clauses.join(' OR '), term: "%#{normalized}%")
       end

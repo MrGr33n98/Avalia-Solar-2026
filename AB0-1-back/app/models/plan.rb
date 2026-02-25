@@ -27,7 +27,15 @@ class Plan < ApplicationRecord
   def parse_feature_source(raw)
     case raw
     when String
-      JSON.parse(raw) rescue (YAML.safe_load(raw) rescue {})
+      begin
+        JSON.parse(raw)
+      rescue StandardError
+        begin
+          YAML.safe_load(raw)
+        rescue StandardError
+          {}
+        end
+      end
     when Hash
       raw
     else

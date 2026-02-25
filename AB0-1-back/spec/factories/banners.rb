@@ -106,14 +106,14 @@ FactoryBot.define do
 
   factory :banner_offer do
     name { Faker::Commerce.product_name }
-    price_cents { rand(1000..50000) }
+    price_cents { rand(1000..50_000) }
     currency { 'BRL' }
     duration_days { 30 }
     active { true }
     rules_json do
       {
-        positions: ['navbar', 'sidebar'],
-        banner_types: ['rectangular_large', 'rectangular_small'],
+        positions: %w[navbar sidebar],
+        banner_types: %w[rectangular_large rectangular_small],
         requires_moderation: true,
         max_active_per_position: 5
       }
@@ -122,8 +122,8 @@ FactoryBot.define do
     trait :with_limits do
       rules_json do
         {
-          positions: ['navbar', 'sidebar', 'categories_top'],
-          banner_types: ['rectangular_large', 'rectangular_small'],
+          positions: %w[navbar sidebar categories_top],
+          banner_types: %w[rectangular_large rectangular_small],
           requires_moderation: true,
           max_active_per_position: 2,
           max_total_active: 3
@@ -133,7 +133,7 @@ FactoryBot.define do
 
     trait :premium do
       name { 'Plano Premium' }
-      price_cents { 29900 }
+      price_cents { 29_900 }
       rules_json do
         {
           positions: Banner::ALLOWED_POSITIONS,

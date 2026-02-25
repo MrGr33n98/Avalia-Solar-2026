@@ -28,8 +28,8 @@ class Api::V1::UsersController < Api::V1::BaseController
             previous_company_id: current_user.company_id_before_last_save
           }
         )
-        render json: { 
-          message: 'Empresa alterada com sucesso', 
+        render json: {
+          message: 'Empresa alterada com sucesso',
           company_id: company_id,
           user: user_with_avatar(current_user)
         }
@@ -37,7 +37,8 @@ class Api::V1::UsersController < Api::V1::BaseController
         render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
       end
     else
-      render json: { error: 'Você não tem permissão para acessar esta empresa ou empresa inexistente' }, status: :forbidden
+      render json: { error: 'Você não tem permissão para acessar esta empresa ou empresa inexistente' },
+             status: :forbidden
     end
   end
 
@@ -120,14 +121,12 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
 
   def user_params
-    permitted = [
-      :name, :email, :password, :password_confirmation,
-      :city, :state, :phone, :avatar
+    permitted = %i[
+      name email password password_confirmation
+      city state phone avatar
     ]
 
-    if current_user&.admin?
-      permitted += [:role, :status, :company_id]
-    end
+    permitted += %i[role status company_id] if current_user&.admin?
 
     params.require(:user).permit(*permitted)
   end
@@ -184,9 +183,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   def authorize_user_access!
     return if current_user&.admin?
 
-    if @user.present? && current_user == @user
-      return
-    end
+    return if @user.present? && current_user == @user
 
     render_error_response(
       message: 'Not authorized to access this user',
@@ -197,6 +194,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def user_with_avatar(user)
     return nil unless user
+
     user_json = user.as_json
     if user.avatar.attached?
       options = Rails.application.routes.default_url_options.dup

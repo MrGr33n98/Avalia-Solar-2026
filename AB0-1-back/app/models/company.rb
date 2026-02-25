@@ -3,6 +3,7 @@ require 'securerandom'
 class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   include Moderation
+
   has_paper_trail # Enable rollback capabilities
 
   ALLOWED_LOGO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
@@ -89,7 +90,7 @@ class Company < ApplicationRecord
   validate :validate_featured_requires_active
   validate :validate_category_ids_format
   validate :validate_attachments
-  
+
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
@@ -98,12 +99,12 @@ class Company < ApplicationRecord
             format: { with: /\A\d{10,15}\z/,
                       message: 'must contain only digits (DDD + número)' },
             allow_blank: true
-  
+
   validates :whatsapp,
             format: { with: /\A\d{10,15}\z/,
                       message: 'must be a valid WhatsApp number' },
             allow_blank: true
-            
+
   SIMPLE_EMAIL_REGEX = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
   validates :email,
             format: { with: SIMPLE_EMAIL_REGEX,
@@ -113,7 +114,7 @@ class Company < ApplicationRecord
             format: { with: SIMPLE_EMAIL_REGEX,
                       message: 'must be a valid email' },
             allow_blank: true
-                      
+
   validate :validate_corporate_email, if: -> { status == 'active' }
 
   validates :whatsapp_url,
@@ -130,14 +131,14 @@ class Company < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
   validates :slug, presence: true, uniqueness: true
-  
+
   # Validate that minimum_ticket is less than maximum_ticket if both are present
   def validate_ticket_range
     return if minimum_ticket.blank? || maximum_ticket.blank?
-    
-    if minimum_ticket > maximum_ticket
-      errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
-    end
+
+    return unless minimum_ticket > maximum_ticket
+
+    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
   end
 
   # Scopes
@@ -148,17 +149,18 @@ class Company < ApplicationRecord
   scope :by_city, ->(city) { where(city: city) if city.present? }
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
 
-  def self.ransackable_attributes(auth_object = nil)
-    ["name", "description", "status", "state", "city", "featured", "verified", "cnpj", "founded_year", "employees_count", "rating_avg", "created_at", "updated_at", "plan_id", "moderation_status", "active_admin", "social_proof_enabled"]
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[name description status state city featured verified cnpj founded_year
+       employees_count rating_avg created_at updated_at plan_id moderation_status active_admin social_proof_enabled]
   end
 
-  def self.ransackable_associations(auth_object = nil)
-    [
-      "categories", "products", "reviews", "leads", "campaigns",
-      "company_buttons", "financing_options", "company_faqs",
-      "company_financing_profile", "company_financing_partners",
-      "company_financing_offers", "banners", "banner_subscriptions",
-      "company_videos", "plan", "company_members", "members"
+  def self.ransackable_associations(_auth_object = nil)
+    %w[
+      categories products reviews leads campaigns
+      company_buttons financing_options company_faqs
+      company_financing_profile company_financing_partners
+      company_financing_offers banners banner_subscriptions
+      company_videos plan company_members members
     ]
   end
 
@@ -173,9 +175,9 @@ class Company < ApplicationRecord
   def recalculate_rating_cache!
     new_rating = reviews.approved.average(:rating).to_f.round(2)
     new_count = reviews.approved.count
-    
+
     update_columns(rating_avg: new_rating, rating_count: new_count)
-    
+
     # Update associated categories metrics
     categories.each(&:update_metrics!)
   end
@@ -190,7 +192,7 @@ class Company < ApplicationRecord
   def to_s
     name
   end
-  
+
   def to_param
     slug.presence || super
   end
@@ -198,7 +200,7 @@ class Company < ApplicationRecord
   def self.find_by_slug_or_id!(id_or_slug)
     find_by(id: id_or_slug) || find_by!(slug: id_or_slug)
   end
-  
+
   def ready_for_activation?
     return false if name.blank? || name.length < 2
     return false if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
@@ -206,33 +208,24 @@ class Company < ApplicationRecord
     return false unless Locations::BrLocations.valid_city?(state, city)
     return false unless categories.any?
     return false unless phone.present? || whatsapp.present? || email_public.present?
+
     true
   end
 
   def validate_ready_for_activation
-    if name.blank? || name.length < 2
-      errors.add(:name, 'é obrigatório para ativação (mínimo 2 caracteres)')
-    end
+    errors.add(:name, 'é obrigatório para ativação (mínimo 2 caracteres)') if name.blank? || name.length < 2
 
-    if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
-      errors.add(:email, 'inválido ou ausente para ativação')
-    end
+    errors.add(:email, 'inválido ou ausente para ativação') if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
 
-    unless Locations::BrLocations.valid_state?(state)
-      errors.add(:state, 'inválido ou ausente para ativação')
-    end
+    errors.add(:state, 'inválido ou ausente para ativação') unless Locations::BrLocations.valid_state?(state)
 
-    unless Locations::BrLocations.valid_city?(state, city)
-      errors.add(:city, 'inválida ou ausente para ativação')
-    end
+    errors.add(:city, 'inválida ou ausente para ativação') unless Locations::BrLocations.valid_city?(state, city)
 
-    unless categories.any?
-      errors.add(:categories, 'pelo menos uma categoria é necessária para ativação')
-    end
+    errors.add(:categories, 'pelo menos uma categoria é necessária para ativação') unless categories.any?
 
-    unless phone.present? || whatsapp.present? || email_public.present?
-      errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email Público) é necessário para ativação')
-    end
+    return if phone.present? || whatsapp.present? || email_public.present?
+
+    errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email Público) é necessário para ativação')
   end
 
   def validate_featured_requires_active
@@ -256,29 +249,29 @@ class Company < ApplicationRecord
       return
     end
 
-    if category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
-      errors.add(:category_ids, 'contém identificadores inválidos')
-    end
+    return unless category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
+
+    errors.add(:category_ids, 'contém identificadores inválidos')
   end
 
   def validate_corporate_email
     return if email.blank?
-    
+
     # Se a empresa não tem website, não validamos domínio corporativo
     return if website.blank?
 
     domain = begin
       URI.parse(website).host&.sub(/\Awww\./, '')
-    rescue
+    rescue StandardError
       nil
     end
-    
+
     return if domain.blank?
 
     # Permite emails que contenham o domínio ou subdomínios
-    unless email.downcase.include?(domain.downcase)
-      errors.add(:email, "deve ser um e-mail corporativo (domínio #{domain})")
-    end
+    return if email.downcase.include?(domain.downcase)
+
+    errors.add(:email, "deve ser um e-mail corporativo (domínio #{domain})")
   end
 
   def normalize_company_fields
@@ -290,11 +283,11 @@ class Company < ApplicationRecord
     self.phone_alt = normalize_phone_value(phone_alt)
     self.whatsapp = normalize_phone_value(whatsapp)
 
-    if whatsapp.present? && whatsapp_url.blank?
-      digits = whatsapp.to_s
-      digits = digits.sub(/\A55/, '') if digits.length > 11
-      self.whatsapp_url = "https://wa.me/55#{digits}"
-    end
+    return unless whatsapp.present? && whatsapp_url.blank?
+
+    digits = whatsapp.to_s
+    digits = digits.sub(/\A55/, '') if digits.length > 11
+    self.whatsapp_url = "https://wa.me/55#{digits}"
   end
 
   def normalize_phone_value(value)
@@ -303,12 +296,10 @@ class Company < ApplicationRecord
   end
 
   def normalize_multiselects
-    if respond_to?(:project_types)
-      self.project_types = Array(self.project_types).map { |v| v.to_s.strip }.reject(&:blank?)
-    end
-    if respond_to?(:services_offered)
-      self.services_offered = Array(self.services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
-    end
+    self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:project_types)
+    return unless respond_to?(:services_offered)
+
+    self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
   end
 
   # Analytics methods
@@ -390,7 +381,7 @@ class Company < ApplicationRecord
       recommendation: '1200x400px'
     )
   end
-  
+
   # Constantes (mantidas no modelo)
   PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
   SERVICES_OFFERED = [
@@ -410,22 +401,25 @@ class Company < ApplicationRecord
   def validate_project_types
     # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
     # Usando 'self.project_types' resolve o escopo.
-    return if self.project_types.blank? 
-    invalid = Array(self.project_types) - PROJECT_TYPES
+    return if project_types.blank?
+
+    invalid = Array(project_types) - PROJECT_TYPES
     errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
-    return if self.services_offered.blank?
-    invalid = Array(self.services_offered) - SERVICES_OFFERED
+    return if services_offered.blank?
+
+    invalid = Array(services_offered) - SERVICES_OFFERED
     errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_cnpj_format
     return if cnpj.blank?
-    unless CNPJ.valid?(cnpj)
-      errors.add(:cnpj, 'inválido')
-    end
+
+    return if CNPJ.valid?(cnpj)
+
+    errors.add(:cnpj, 'inválido')
   end
 
   def validate_state_in_dataset
@@ -458,7 +452,7 @@ class Company < ApplicationRecord
         true
       end
 
-    status_allows_plan && plan.price.to_f > 0
+    status_allows_plan && plan.price.to_f.positive?
   end
 
   def can_use_social_proof?
@@ -559,7 +553,7 @@ class Company < ApplicationRecord
 
   def feature_enabled_from_plan?(*keys)
     value = feature_value_from_plan(*keys)
-    return nil if value.nil?
+    return false if value.nil?
 
     ActiveModel::Type::Boolean.new.cast(value)
   end
@@ -583,6 +577,7 @@ class Company < ApplicationRecord
   def whatsapp_enabled?
     # Ensure it returns a boolean even if the column is missing
     return false unless respond_to?(:whatsapp_enabled)
+
     !!whatsapp_enabled
   end
 
@@ -609,9 +604,9 @@ class Company < ApplicationRecord
   def calculate_historical_stats(days)
     end_date = Date.current
     start_date = end_date - days.days
-    
+
     stats = company_daily_stats.where(day: start_date..end_date).order(day: :asc)
-    
+
     {
       dates: stats.map { |s| s.day.strftime('%d/%m') },
       views: stats.map(&:profile_views),
@@ -635,7 +630,7 @@ class Company < ApplicationRecord
         status: plan_status
       }
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Analytics] Failed to track plan change: #{e.message}")
   end
 
@@ -650,7 +645,7 @@ class Company < ApplicationRecord
         activation_time: Time.current
       }
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Analytics] Failed to track company activation: #{e.message}")
   end
 
@@ -659,12 +654,12 @@ class Company < ApplicationRecord
 
     allowed = ALLOWED_LOGO_CONTENT_TYPES
     unless allowed.include?(verified_badge.blob.content_type)
-      errors.add(:verified_badge, "deve ser PNG, JPG, SVG ou WEBP")
+      errors.add(:verified_badge, 'deve ser PNG, JPG, SVG ou WEBP')
     end
 
-    if verified_badge.blob.byte_size > 2.megabytes
-      errors.add(:verified_badge, "deve ter no máximo 2MB")
-    end
+    return unless verified_badge.blob.byte_size > 2.megabytes
+
+    errors.add(:verified_badge, 'deve ter no máximo 2MB')
   end
 
   def ensure_slug
@@ -687,7 +682,15 @@ class Company < ApplicationRecord
   def parse_features(raw_features)
     case raw_features
     when String
-      JSON.parse(raw_features) rescue (YAML.safe_load(raw_features) rescue {})
+      begin
+        JSON.parse(raw_features)
+      rescue StandardError
+        begin
+          YAML.safe_load(raw_features)
+        rescue StandardError
+          {}
+        end
+      end
     when Hash
       raw_features
     when NilClass
@@ -713,6 +716,7 @@ class Company < ApplicationRecord
 
   def generate_attachment_url(attachment)
     return nil if attachment.blank?
+
     if attachment.respond_to?(:attached?)
       return nil unless attachment.attached?
     elsif !attachment.is_a?(ActiveStorage::Attachment)
@@ -722,14 +726,12 @@ class Company < ApplicationRecord
     begin
       # Use rails_storage_proxy_url to serve images through the app
       options = Rails.application.routes.default_url_options.dup
-      
+
       # For development, ensure port is correct if using localhost
-      if Rails.env.development? && options[:host] == 'localhost'
-        options[:port] = 3001
-      end
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
 
       Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("Error generating attachment URL for company #{id}: #{e.message}")
       nil
     end
@@ -745,17 +747,11 @@ class Company < ApplicationRecord
     return if all_ids.empty?
 
     # Using SQL for efficiency and avoiding N+1
-    Category.where(id: all_ids.uniq).each do |category|
-      # Enqueue the job for background processing
-      # CategoryMetricsUpdateJob.perform_later(category.id)
-      
-      # For now, we'll just update the timestamp to trigger cache invalidation
-      # A separate scheduled job should handle heavy calculations
-      category.touch
-    end
+    Category.where(id: all_ids.uniq).each(&:touch)
   end
 
-  def validate_blob_type_and_size(attribute:, blob:, allowed_types:, max_size:, invalid_type_message:, invalid_size_message:)
+  def validate_blob_type_and_size(attribute:, blob:, allowed_types:, max_size:, invalid_type_message:,
+                                  invalid_size_message:)
     return if blob.blank?
 
     content_type = blob.content_type.to_s

@@ -3,7 +3,7 @@ ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
                 :banner, :icon, :permissions_config, company_ids: [], product_ids: [],
-                badges_attributes: [:id, :name, :description, :year, :badge_image, :_destroy]
+                                                     badges_attributes: %i[id name description year badge_image _destroy]
 
   # Custom action to clear cache after update
   after_save do |category|
@@ -83,7 +83,7 @@ ActiveAdmin.register Category, namespace: :admin do
     end
 
     f.inputs 'Settings' do
-      f.input :status, as: :select, collection: [['Active', 'active'], ['Inactive', 'inactive']]
+      f.input :status, as: :select, collection: [%w[Active active], %w[Inactive inactive]]
       f.input :kind, as: :select, collection: [['Main Category', 'main'], ['Sub Category', 'sub']]
       f.input :parent,
               as: :select,
@@ -94,9 +94,10 @@ ActiveAdmin.register Category, namespace: :admin do
     end
 
     f.inputs 'Assets' do
-      f.input :icon, as: :file, hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
+      f.input :icon, as: :file,
+                     hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
       f.input :banner, as: :file, hint: (
-        hint_text = "Requisitos técnicos: 1200x800px (Proporção 3:2), Formato PNG ou JPG, Máximo de 500KB. Mantenha conteúdo importante dentro de 1000x700px."
+        hint_text = 'Requisitos técnicos: 1200x800px (Proporção 3:2), Formato PNG ou JPG, Máximo de 500KB. Mantenha conteúdo importante dentro de 1000x700px.'
         if f.object.banner.attached?
           content_tag(:div) do
             concat image_tag(url_for(f.object.banner), style: 'max-width: 300px; display: block; margin-bottom: 10px;')
@@ -114,24 +115,24 @@ ActiveAdmin.register Category, namespace: :admin do
         b.input :description
         b.input :year
         b.input :badge_image, as: :file,
-                hint: (b.object&.badge_image&.attached? ? image_tag(url_for(b.object.badge_image), size: '50x50') : 'No image')
+                              hint: (b.object&.badge_image&.attached? ? image_tag(url_for(b.object.badge_image), size: '50x50') : 'No image')
       end
     end
 
     f.inputs 'Associações' do
-      f.input :companies, as: :check_boxes, 
-              collection: Company.order(:name).map { |c| [c.name, c.id] },
-              label: 'Empresas nesta Categoria'
+      f.input :companies, as: :check_boxes,
+                          collection: Company.order(:name).map { |c| [c.name, c.id] },
+                          label: 'Empresas nesta Categoria'
     end
 
     f.inputs 'Configurações de Permissões' do
-      f.input :permissions_config, as: :text, 
-              label: 'Configurações de Permissões (JSON)',
-              hint: "Formato JSON: { \"can_see_leads\": true, \"can_manage_products\": true }. Essas configurações definem o que empresas nesta categoria podem acessar.",
-              input_html: { 
-                value: f.object.permissions_config.present? ? f.object.permissions_config.to_json : {}.to_json,
-                rows: 5
-              }
+      f.input :permissions_config, as: :text,
+                                   label: 'Configurações de Permissões (JSON)',
+                                   hint: 'Formato JSON: { "can_see_leads": true, "can_manage_products": true }. Essas configurações definem o que empresas nesta categoria podem acessar.',
+                                   input_html: {
+                                     value: f.object.permissions_config.present? ? f.object.permissions_config.to_json : {}.to_json,
+                                     rows: 5
+                                   }
     end
 
     f.actions
@@ -142,9 +143,7 @@ ActiveAdmin.register Category, namespace: :admin do
     selectable_column
     id_column
     column :icon do |category|
-      if category.icon.attached?
-        image_tag url_for(category.icon), size: '30x30'
-      end
+      image_tag url_for(category.icon), size: '30x30' if category.icon.attached?
     end
     column :name do |category|
       indent = (category.respond_to?(:depth) ? category.depth : 0) * 2
@@ -155,10 +154,16 @@ ActiveAdmin.register Category, namespace: :admin do
     column :companies_count
     column :products_count
     column :average_rating do |category|
-      number_with_precision(category.average_rating, precision: 1) if category.respond_to?(:average_rating) && category.average_rating.present?
+      if category.respond_to?(:average_rating) && category.average_rating.present?
+        number_with_precision(category.average_rating,
+                              precision: 1)
+      end
     end
     column :average_price do |category|
-      number_to_currency(category.average_price, unit: 'R$ ') if category.respond_to?(:average_price) && category.average_price.present?
+      if category.respond_to?(:average_price) && category.average_price.present?
+        number_to_currency(category.average_price,
+                           unit: 'R$ ')
+      end
     end
     column :views_count
     column :status do |category|
@@ -190,7 +195,8 @@ ActiveAdmin.register Category, namespace: :admin do
         status_tag(category.featured ? 'Yes' : 'No', class: (category.featured ? 'ok' : 'error'))
       end
       row :status do |category|
-        status_tag(category.status == 'active' ? 'Active' : 'Inactive', class: (category.status == 'active' ? 'ok' : 'error'))
+        status_tag(category.status == 'active' ? 'Active' : 'Inactive',
+                   class: (category.status == 'active' ? 'ok' : 'error'))
       end
       row :kind
       row :companies_count

@@ -1,4 +1,3 @@
-
 user = User.find_or_initialize_by(email: 'weg.employee.manual@weg.net')
 user.assign_attributes(
   name: 'Funcionario WEG Manual',
@@ -14,9 +13,9 @@ user.assign_attributes(
 )
 
 if user.save
-  puts "User created/updated successfully!"
+  puts 'User created/updated successfully!'
   puts "Email: #{user.email}"
-  puts "Password: Password123!"
+  puts 'Password: Password123!'
 else
   puts "Error creating user: #{user.errors.full_messages.join(', ')}"
   exit
@@ -37,14 +36,14 @@ company.assign_attributes(
 )
 
 if company.save
-  puts "Company created successfully!"
-  
-  unless company.members.include?(user)
+  puts 'Company created successfully!'
+
+  if company.members.include?(user)
+    puts 'User is already a member.'
+  else
     CompanyMember.create!(company: company, user: user, role: :owner)
     user.update(company: company) # Ensure direct association if needed by User model logic
-    puts "User associated with company!"
-  else
-    puts "User is already a member."
+    puts 'User associated with company!'
   end
 else
   puts "Error creating company: #{company.errors.full_messages.join(', ')}"

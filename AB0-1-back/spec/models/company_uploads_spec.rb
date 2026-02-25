@@ -3,7 +3,7 @@ require 'tempfile'
 
 RSpec.describe Company, type: :model do
   def with_temp_file(content, extension)
-    file = Tempfile.new(["upload-test", extension])
+    file = Tempfile.new(['upload-test', extension])
     file.binmode
     file.write(content)
     file.rewind

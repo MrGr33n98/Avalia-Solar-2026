@@ -4,8 +4,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '~> 3.2'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem 'rails', '~> 7.0.8'
 gem 'logger'
+gem 'rails', '~> 7.0.8'
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem 'sprockets-rails'
@@ -29,8 +29,8 @@ gem 'jbuilder'
 gem 'kaminari'
 
 # TASK-008: Structured logging
-gem 'lograge'
 gem 'amazing_print' # Better console output
+gem 'lograge'
 
 # Use Redis adapter to run Action Cable in production
 # TASK-014: Redis for caching, sessions, and background jobs
@@ -46,7 +46,7 @@ gem 'sidekiq-scheduler' # Cron-like job scheduler
 # gem "kredis"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-gem "bcrypt", "~> 3.1.20"
+gem 'bcrypt', '~> 3.1.20'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
@@ -60,11 +60,11 @@ gem 'bootsnap', require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem 'devise'
 gem 'devise-two-factor', '~> 5.0'
-gem 'rqrcode', '~> 2.2'
+gem 'image_processing', '~> 1.2'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-linkedin-oauth2', '~> 1.0'
 gem 'omniauth-rails_csrf_protection' # CSRF protection for OmniAuth
-gem 'image_processing', '~> 1.2'
+gem 'rqrcode', '~> 2.2'
 
 # Active Storage S3 support (DigitalOcean Spaces)
 gem 'aws-sdk-s3', '~> 1.0', require: false
@@ -74,15 +74,15 @@ gem 'mixpanel-ruby', '~> 2.3'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
-  gem 'sqlite3', '~> 1.4'
   gem 'rspec-rails', '~> 6.0'
+  gem 'sqlite3', '~> 1.4'
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mingw x64_mingw]
-  
+
   # TASK-022: API Documentation
   gem 'rswag-api'
-  gem 'rswag-ui'
   gem 'rswag-specs'
+  gem 'rswag-ui'
 end
 
 gem 'pg' # Make sure this line exists
@@ -99,11 +99,11 @@ group :development do
 
   # Ruby static code analyzer and formatter
   gem 'rubocop', require: false
-  
+
   # TASK-002: Security scanning tools
   gem 'brakeman', require: false
   # gem 'bundler-audit', require: false
-  
+
   # TASK-020: N+1 query detection
   gem 'bullet'
 end
@@ -113,11 +113,11 @@ group :test do
   gem 'capybara'
   gem 'selenium-webdriver'
   gem 'webdrivers'
-  
+
   # TASK-012: Test coverage reporting
   gem 'simplecov', require: false
   gem 'simplecov-console', require: false
-  
+
   # TASK-023: Testing Factories
   gem 'factory_bot_rails'
 end
@@ -142,22 +142,22 @@ gem 'rack-cors', require: 'rack/cors'
 gem 'rack-attack'
 
 # TASK-009: Metrics and Observability
-gem 'yabeda-rails'
 gem 'yabeda-prometheus'
 gem 'yabeda-puma-plugin'
+gem 'yabeda-rails'
 gem 'yabeda-sidekiq'
 
 # TASK-006: Error tracking with Sentry
-gem 'sentry-ruby'
 gem 'sentry-rails'
+gem 'sentry-ruby'
 gem 'sentry-sidekiq'
 
 # TASK-007: APM with Scout
-gem 'scout_apm'
-gem 'rackup', '~> 1.0'
 gem 'rack-session', '~> 1.0'
+gem 'rackup', '~> 1.0'
+gem 'scout_apm'
 
-gem "paper_trail", "~> 16.0"
+gem 'paper_trail', '~> 16.0'
 
 # Slug management
 gem 'friendly_id', '~> 5.5'

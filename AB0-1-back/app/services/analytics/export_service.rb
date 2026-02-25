@@ -26,7 +26,8 @@ module Analytics
       CSV.generate(headers: true) do |csv|
         csv << %w[id company_id user_id event_type source tracked_at metadata]
         scope.find_each do |ev|
-          csv << [ev.id, ev.company_id, ev.user_id, ev.event_type, ev.source, ev.tracked_at.iso8601, ev.metadata.to_json]
+          csv << [ev.id, ev.company_id, ev.user_id, ev.event_type, ev.source, ev.tracked_at.iso8601,
+                  ev.metadata.to_json]
         end
       end
     end
@@ -36,7 +37,8 @@ module Analytics
       CSV.generate(headers: true) do |csv|
         csv << %w[company_id day events_count quote_clicks whatsapp_clicks reviews_count average_rating rating_count]
         scope.find_each do |st|
-          csv << [st.company_id, st.day, st.events_count, st.quote_clicks, st.whatsapp_clicks, st.reviews_count, st.average_rating, st.rating_count]
+          csv << [st.company_id, st.day, st.events_count, st.quote_clicks, st.whatsapp_clicks, st.reviews_count,
+                  st.average_rating, st.rating_count]
         end
       end
     end

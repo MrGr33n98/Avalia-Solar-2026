@@ -20,19 +20,19 @@ class BlockTokensInUrlMiddleware
 
   def call(env)
     request = Rack::Request.new(env)
-    
+
     # Check for sensitive tokens in query string
     SENSITIVE_PARAMS.each do |param|
-      if request.params[param].present?
-        Rails.logger.warn(
-          "[Security] Blocked request with #{param} in URL query string | " \
-          "IP: #{request.ip} | " \
-          "Path: #{request.path} | " \
-          "User-Agent: #{request.user_agent}"
-        )
-        
-        return forbidden_response(request)
-      end
+      next unless request.params[param].present?
+
+      Rails.logger.warn(
+        "[Security] Blocked request with #{param} in URL query string | " \
+        "IP: #{request.ip} | " \
+        "Path: #{request.path} | " \
+        "User-Agent: #{request.user_agent}"
+      )
+
+      return forbidden_response(request)
     end
 
     @app.call(env)
@@ -40,7 +40,7 @@ class BlockTokensInUrlMiddleware
 
   private
 
-  def forbidden_response(request)
+  def forbidden_response(_request)
     [
       403,
       {

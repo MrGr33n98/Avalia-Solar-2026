@@ -31,11 +31,11 @@ class CompanyMember < ApplicationRecord
     SlackNotificationService.notify_member_assigned(self)
   end
 
-  def self.ransackable_associations(auth_object = nil)
-    ["company", "user", "versions"]
+  def self.ransackable_associations(_auth_object = nil)
+    %w[company user versions]
   end
 
-  def self.ransackable_attributes(auth_object = nil)
-    ["company_id", "created_at", "id", "role", "status", "updated_at", "user_id"]
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[company_id created_at id role status updated_at user_id]
   end
 end

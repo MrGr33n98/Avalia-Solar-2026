@@ -15,7 +15,7 @@ RSpec.describe 'Admin Dashboard', type: :request do
     Category.create!(
       name: 'Solar',
       description: 'Categoria de testes',
-      permissions_config: { "can_view_leads" => true, "max_leads_per_day" => 5 }
+      permissions_config: { 'can_view_leads' => true, 'max_leads_per_day' => 5 }
     )
   end
 
@@ -32,11 +32,11 @@ RSpec.describe 'Admin Dashboard', type: :request do
 
   it 'permite salvar e ler configurações de permissão na categoria' do
     category.reload
-    expect(category.permissions_config).to eq({ "can_view_leads" => true, "max_leads_per_day" => 5 })
-    
-    new_config = { "can_view_leads" => false, "max_leads_per_day" => 10 }
+    expect(category.permissions_config).to eq({ 'can_view_leads' => true, 'max_leads_per_day' => 5 })
+
+    new_config = { 'can_view_leads' => false, 'max_leads_per_day' => 10 }
     category.update!(permissions_config: new_config)
-    
+
     expect(category.reload.permissions_config).to eq(new_config)
   end
 end

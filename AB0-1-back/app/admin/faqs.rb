@@ -17,8 +17,8 @@ ActiveAdmin.register Faq do
     column :category
     column :position
     column :active
-    column('Helpful +') { |f| f.helpful_yes }
-    column('Helpful -') { |f| f.helpful_no }
+    column('Helpful +', &:helpful_yes)
+    column('Helpful -', &:helpful_no)
     actions
   end
 

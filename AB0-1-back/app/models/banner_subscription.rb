@@ -26,7 +26,8 @@ class BannerSubscription < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[id company_id banner_offer_id status provider checkout_session_id payment_reference starts_at ends_at activated_at canceled_at created_at updated_at]
+    %w[id company_id banner_offer_id status provider checkout_session_id payment_reference starts_at ends_at
+       activated_at canceled_at created_at updated_at]
   end
 
   def self.ransackable_associations(_auth_object = nil)

@@ -100,7 +100,7 @@ RSpec.describe Banner, type: :model do
         it 'is invalid when end_date is before start_date' do
           banner.start_date = 1.day.from_now
           banner.end_date = Time.current
-          
+
           expect(banner).not_to be_valid
           expect(banner.errors[:end_date]).to include('deve ser posterior à data de início')
         end
@@ -108,7 +108,7 @@ RSpec.describe Banner, type: :model do
         it 'is valid when end_date is after start_date' do
           banner.start_date = Time.current
           banner.end_date = 1.day.from_now
-          
+
           expect(banner).to be_valid
         end
 
@@ -116,7 +116,7 @@ RSpec.describe Banner, type: :model do
           now = Time.current
           banner.start_date = now
           banner.end_date = now
-          
+
           expect(banner).to be_valid
         end
       end
@@ -125,21 +125,21 @@ RSpec.describe Banner, type: :model do
         it 'is valid when both dates are nil' do
           banner.start_date = nil
           banner.end_date = nil
-          
+
           expect(banner).to be_valid
         end
 
         it 'is valid when only start_date is nil' do
           banner.start_date = nil
           banner.end_date = 1.day.from_now
-          
+
           expect(banner).to be_valid
         end
 
         it 'is valid when only end_date is nil' do
           banner.start_date = Time.current
           banner.end_date = nil
-          
+
           expect(banner).to be_valid
         end
       end
@@ -158,7 +158,7 @@ RSpec.describe Banner, type: :model do
         it 'validates total active banners limit' do
           # Assume offer has max_total_active: 3
           create_list(:banner, 3, company: company, active: true)
-          
+
           new_banner = build(:banner, company: company, active: true)
           expect(new_banner).not_to be_valid
           expect(new_banner.errors[:base]).to include(/Limite de .* banners ativos atingido/)
@@ -167,7 +167,7 @@ RSpec.describe Banner, type: :model do
         it 'validates position-specific limit' do
           # Assume offer has max_active_per_position: 2
           create_list(:banner, 2, company: company, active: true, position: 'navbar')
-          
+
           new_banner = build(:banner, company: company, active: true, position: 'navbar')
           expect(new_banner).not_to be_valid
           expect(new_banner.errors[:position]).to include(/Limite de .* banners ativos na posição/)
@@ -175,14 +175,14 @@ RSpec.describe Banner, type: :model do
 
         it 'allows creating banner when under limit' do
           create(:banner, company: company, active: true)
-          
+
           new_banner = build(:banner, company: company, active: true)
           expect(new_banner).to be_valid
         end
 
         it 'does not validate limit for inactive banners' do
           create_list(:banner, 5, company: company, active: true)
-          
+
           new_banner = build(:banner, company: company, active: false)
           expect(new_banner).to be_valid
         end
@@ -206,13 +206,13 @@ RSpec.describe Banner, type: :model do
       let!(:draft_banner) { create(:banner, :draft, active: true) }
       let!(:expired_banner) do
         create(:banner, :approved, active: true,
-               start_date: 2.days.ago,
-               end_date: 1.day.ago)
+                                   start_date: 2.days.ago,
+                                   end_date: 1.day.ago)
       end
       let!(:future_banner) do
         create(:banner, :approved, active: true,
-               start_date: 1.day.from_now,
-               end_date: 2.days.from_now)
+                                   start_date: 1.day.from_now,
+                                   end_date: 2.days.from_now)
       end
 
       it 'returns only active and approved banners' do
@@ -239,7 +239,7 @@ RSpec.describe Banner, type: :model do
         it 'sets default dimensions for navbar' do
           banner = build(:banner, position: 'navbar', width: nil, height: nil)
           banner.valid?
-          
+
           expect(banner.width).to eq(960)
           expect(banner.height).to eq(100)
         end
@@ -247,7 +247,7 @@ RSpec.describe Banner, type: :model do
         it 'sets default dimensions for sidebar' do
           banner = build(:banner, position: 'sidebar', width: nil, height: nil)
           banner.valid?
-          
+
           expect(banner.width).to eq(150)
           expect(banner.height).to eq(125)
         end
@@ -255,7 +255,7 @@ RSpec.describe Banner, type: :model do
         it 'sets default dimensions for other positions' do
           banner = build(:banner, position: 'categories_top', width: nil, height: nil)
           banner.valid?
-          
+
           expect(banner.width).to eq(600)
           expect(banner.height).to eq(200)
         end
@@ -265,7 +265,7 @@ RSpec.describe Banner, type: :model do
         it 'does not override provided dimensions' do
           banner = build(:banner, position: 'navbar', width: 1200, height: 200)
           banner.valid?
-          
+
           expect(banner.width).to eq(1200)
           expect(banner.height).to eq(200)
         end
@@ -282,23 +282,23 @@ RSpec.describe Banner, type: :model do
 
       it 'invalidates cache after save' do
         banner.update(title: 'New Title')
-        
+
         expect(Rails.cache).to have_received(:delete_matched).with('banners/v1/*')
         expect(Rails.logger).to have_received(:info).with(/Cache invalidado/)
       end
 
       it 'invalidates cache after destroy' do
         banner.destroy
-        
+
         expect(Rails.cache).to have_received(:delete_matched).with('banners/v1/*')
       end
 
       it 'logs error if cache invalidation fails' do
         allow(Rails.cache).to receive(:delete_matched).and_raise(StandardError.new('Redis error'))
         allow(Rails.logger).to receive(:error)
-        
+
         banner.update(title: 'New Title')
-        
+
         expect(Rails.logger).to have_received(:error).with(/Erro ao invalidar cache/)
       end
     end

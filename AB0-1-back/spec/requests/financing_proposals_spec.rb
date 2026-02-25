@@ -5,7 +5,7 @@ RSpec.describe 'FinancingProposals', type: :request do
 
   it 'creates proposal and returns status' do
     post "/api/v1/companies/#{company.id}/financing_proposals", params: {
-      amount: 10000,
+      amount: 10_000,
       months: 24,
       audience: 'pf',
       name: 'Cliente',

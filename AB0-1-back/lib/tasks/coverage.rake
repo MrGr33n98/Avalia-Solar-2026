@@ -11,7 +11,7 @@ namespace :test do
   task :coverage_report do
     ENV['COVERAGE'] = 'true'
     Rake::Task['test'].invoke
-    
+
     if File.exist?('coverage/index.html')
       puts "\n📊 Opening coverage report...\n"
       system('open coverage/index.html') || system('xdg-open coverage/index.html')
@@ -26,7 +26,7 @@ namespace :test do
     require 'json'
 
     coverage_file = 'coverage/.last_run.json'
-    
+
     unless File.exist?(coverage_file)
       puts "❌ Coverage file not found. Run 'rake test:coverage' first"
       exit 1

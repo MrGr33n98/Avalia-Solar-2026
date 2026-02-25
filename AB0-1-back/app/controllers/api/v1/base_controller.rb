@@ -7,10 +7,10 @@ module Api
     class BaseController < ApplicationController
       # TASK-021: Include pagination
       include Paginatable
-      
+
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token
-      
+
       # Capture Edge Geolocation data from Cloudflare Worker
       before_action :capture_edge_location
 
@@ -20,18 +20,18 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
-      
+
       private
-      
+
       def require_role(*roles)
-        unless current_user && roles.include?(current_user.role)
-          Rails.logger.warn("[AccessDenied] user=#{current_user&.id || 'guest'} role=#{current_user&.role || 'none'} path=#{request.path} action=#{params[:action]}")
-          return render_error_response(
-            message: 'Not authorized to perform this action',
-            status: :forbidden,
-            code: 'FORBIDDEN'
-          )
-        end
+        return if current_user && roles.include?(current_user.role)
+
+        Rails.logger.warn("[AccessDenied] user=#{current_user&.id || 'guest'} role=#{current_user&.role || 'none'} path=#{request.path} action=#{params[:action]}")
+        render_error_response(
+          message: 'Not authorized to perform this action',
+          status: :forbidden,
+          code: 'FORBIDDEN'
+        )
       end
 
       def require_admin
@@ -51,6 +51,7 @@ module Api
 
       def authenticate_api_user
         return render_unauthorized unless current_user
+
         true
       end
 
@@ -59,11 +60,9 @@ module Api
       end
 
       def jwt_decode(token)
-        begin
-          JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
-        rescue JWT::DecodeError
-          nil
-        end
+        JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
+      rescue JWT::DecodeError
+        nil
       end
 
       def decoded_token
@@ -77,7 +76,7 @@ module Api
 
         # Try to get token from cookie first (new method)
         token = cookies.signed[:jwt_token]
-        return jwt_decode(token) if token.present?
+        jwt_decode(token) if token.present?
       end
 
       def render_error(message, status = :unprocessable_entity, code: nil)
@@ -133,7 +132,8 @@ module Api
           state: @edge_location&.dig(:state)
         }
 
-        utm_params = params.permit(:utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content, :gclid, :fbclid, :msclkid).to_h
+        utm_params = params.permit(:utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content, :gclid, :fbclid,
+                                   :msclkid).to_h
         utm_clean = utm_params.transform_values { |v| normalize_utm(v) }.compact
         meta.merge!(utm_clean) if utm_clean.present?
 
@@ -142,24 +142,30 @@ module Api
 
       def sanitized_referrer
         return { host: nil, path: nil } if request.referer.blank?
-        uri = URI.parse(request.referer) rescue nil
+
+        uri = begin
+          URI.parse(request.referer)
+        rescue StandardError
+          nil
+        end
         { host: uri&.host, path: uri&.path }
       end
 
       def normalize_utm(value)
         return nil if value.blank?
+
         value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
       end
 
       def verify_edge_signature
-        secret = ENV['SHARED_SECRET']
+        secret = ENV.fetch('SHARED_SECRET', nil)
         return false if secret.blank?
 
         data = "#{@edge_location[:time]}#{@edge_location[:request_id]}#{@edge_location[:city]}#{@edge_location[:state]}"
         expected_signature = OpenSSL::HMAC.hexdigest('SHA256', secret, data)
-        
+
         ActiveSupport::SecurityUtils.secure_compare(expected_signature, @edge_location[:signature])
-      rescue => e
+      rescue StandardError => e
         Rails.logger.warn "Edge Signature Verification Failed: #{e.message}"
         false
       end
@@ -171,7 +177,7 @@ module Api
           code: 'NOT_FOUND'
         )
       end
-      
+
       def unprocessable_entity(exception)
         render_error_response(
           message: exception.message,
@@ -180,7 +186,7 @@ module Api
           details: exception.record&.errors&.full_messages
         )
       end
-      
+
       def bad_request(exception)
         render_error_response(
           message: exception.message,

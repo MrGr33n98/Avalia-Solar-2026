@@ -37,53 +37,53 @@ ActiveAdmin.register Company do
 
   member_action :suspend, method: :put do
     resource.update(moderation_status: :suspended)
-    redirect_to resource_path, notice: "Company suspended!"
+    redirect_to resource_path, notice: 'Company suspended!'
   end
 
   batch_action :approve do |ids|
     batch_action_collection.find(ids).each do |company|
       company.approve!(current_admin_user)
     end
-    redirect_to collection_path, alert: "The companies have been approved."
+    redirect_to collection_path, alert: 'The companies have been approved.'
   end
 
   permit_params do
-  permitted = [
-    :name, :website, :phone, :address,
-    :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
-    :cnpj, :email, :whatsapp,
-    :working_hours, :payment_methods,
-    :certifications, :status, :founded_year, :employees_count,
-    :awards, :partner_brands, :coverage_states, :coverage_cities,
-    :latitude, :longitude, :minimum_ticket, :maximum_ticket,
-    :response_time_sla, :languages,
-    :email_public, :phone_alt, :facebook, :instagram,
-    :linkedin, :description,
-    :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
-    :active_admin,
-    project_types: [], services_offered: [], category_ids: [], badge_ids: [], media_assets: [],
-    financing_options_attributes: [:id, :institution_name, :credit_line, :target_audience, :max_term_months, :grace_period_months, :interest_rate_percent, :active, :_destroy],
-    company_buttons_attributes: [:id, :label, :url, :active, :position, :button_type, :_destroy],
-    company_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
-    company_members_attributes: [:id, :user_id, :role, :_destroy],
-    company_sector_questions_attributes: %i[id prompt weight order enabled _destroy]
-  ]
-  permitted << :effect if Company.column_names.include?('effect')
-  permitted << :plan_id if Company.column_names.include?('plan_id')
-  permitted << :plan_status if Company.column_names.include?('plan_status')
-  permitted << :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
-  permitted << :whatsapp_enabled
-  permitted << :whatsapp_url
-  permitted << :sector_ratings_enabled
-  if Company.column_names.include?('whatsapp_button_style_json') || Company.new.respond_to?(:whatsapp_button_style_json)
-    permitted + [whatsapp_button_style_json: [
-      :variant, :bg_color, :text_color, :border_color,
-      :hover_bg_color, :icon_color, :rounded_px
-    ]]
-  else
-    permitted
+    permitted = [
+      :name, :website, :phone, :address,
+      :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
+      :cnpj, :email, :whatsapp,
+      :working_hours, :payment_methods,
+      :certifications, :status, :founded_year, :employees_count,
+      :awards, :partner_brands, :coverage_states, :coverage_cities,
+      :latitude, :longitude, :minimum_ticket, :maximum_ticket,
+      :response_time_sla, :languages,
+      :email_public, :phone_alt, :facebook, :instagram,
+      :linkedin, :description,
+      :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
+      :active_admin,
+      { project_types: [], services_offered: [], category_ids: [], badge_ids: [], media_assets: [],
+        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
+        company_buttons_attributes: %i[id label url active position button_type _destroy],
+        company_faqs_attributes: %i[id question answer status position _destroy],
+        company_members_attributes: %i[id user_id role _destroy],
+        company_sector_questions_attributes: %i[id prompt weight order enabled _destroy] }
+    ]
+    permitted << :effect if Company.column_names.include?('effect')
+    permitted << :plan_id if Company.column_names.include?('plan_id')
+    permitted << :plan_status if Company.column_names.include?('plan_status')
+    permitted << :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
+    permitted << :whatsapp_enabled
+    permitted << :whatsapp_url
+    permitted << :sector_ratings_enabled
+    if Company.column_names.include?('whatsapp_button_style_json') || Company.new.respond_to?(:whatsapp_button_style_json)
+      permitted + [{ whatsapp_button_style_json: %i[
+        variant bg_color text_color border_color
+        hover_bg_color icon_color rounded_px
+      ] }]
+    else
+      permitted
+    end
   end
-end
 
 
   index do
@@ -119,11 +119,9 @@ end
   end
 
   form html: { multipart: true } do |f|
-    f.semantic_errors *f.object.errors.attribute_names
+    f.semantic_errors(*f.object.errors.attribute_names)
     safe_preview = lambda do |attachment, max_width:, empty_text:|
-      unless attachment.attached?
-        next content_tag(:span, empty_text)
-      end
+      next content_tag(:span, empty_text) unless attachment.attached?
 
       begin
         image_tag(
@@ -145,26 +143,26 @@ end
       f.input :featured
       f.input :verified
       f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
-    if Company.column_names.include?('effect')
-      f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: { 
-        'data-controller': 'effect', 
-        'data-effect-target': 'checkbox', 
-        'data-action': 'change->effect#toggleFromCheckbox' 
-      }
-    end
-
-    if Company.column_names.include?('effect')
-      f.inputs 'Visual Effects Preview' do
-        f.template.concat(
-          f.template.content_tag(
-            :div,
-            '',
-            class: 'company-card admin-preview',
-            data: { controller: 'effect', 'effect-active-value': f.object.effect }
-          )
-        )
+      if Company.column_names.include?('effect')
+        f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: {
+          'data-controller': 'effect',
+          'data-effect-target': 'checkbox',
+          'data-action': 'change->effect#toggleFromCheckbox'
+        }
       end
-    end
+
+      if Company.column_names.include?('effect')
+        f.inputs 'Visual Effects Preview' do
+          f.template.concat(
+            f.template.content_tag(
+              :div,
+              '',
+              class: 'company-card admin-preview',
+              data: { controller: 'effect', 'effect-active-value': f.object.effect }
+            )
+          )
+        end
+      end
     end
 
     f.inputs 'Contact & Location' do
@@ -243,29 +241,27 @@ end
     end
 
     f.inputs 'Media & Visual Assets' do
-      f.input :logo, as: :file, 
-              hint: safe_preview.call(f.object.logo, max_width: 100, empty_text: 'PNG, JPG, SVG ou WEBP (Max 5MB)')
-      
-      f.input :banner, as: :file,
-              hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1200x400 (Max 10MB)')
-      
-      f.input :verified_badge, as: :file,
-              hint: safe_preview.call(f.object.verified_badge, max_width: 100, empty_text: 'PNG, JPG ou WEBP (Max 2MB). Selo customizado exibido no widget e perfil.')
+      f.input :logo, as: :file,
+                     hint: safe_preview.call(f.object.logo, max_width: 100, empty_text: 'PNG, JPG, SVG ou WEBP (Max 5MB)')
 
-      f.input :media_assets, as: :file, input_html: { multiple: true }, 
-              hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG, SVG ou WEBP (Max 15MB por arquivo)'
-      
+      f.input :banner, as: :file,
+                       hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1200x400 (Max 10MB)')
+
+      f.input :verified_badge, as: :file,
+                               hint: safe_preview.call(f.object.verified_badge, max_width: 100, empty_text: 'PNG, JPG ou WEBP (Max 2MB). Selo customizado exibido no widget e perfil.')
+
+      f.input :media_assets, as: :file, input_html: { multiple: true },
+                             hint: 'Envie uma ou mais imagens para a galeria. Formatos: JPG, PNG, SVG ou WEBP (Max 15MB por arquivo)'
+
       if f.object.media_assets.attached?
         f.template.concat(
           f.template.content_tag(:div, class: 'media-gallery-preview') do
             f.object.media_assets.map do |asset|
               f.template.content_tag(:div, style: 'display: inline-block; margin: 5px;') do
-                begin
-                  f.template.image_tag(url_for(asset), style: 'max-width: 100px; height: auto; border: 1px solid #ddd;')
-                rescue StandardError => e
-                  Rails.logger.warn("[Admin::Companies] Preview indisponivel media_asset=#{asset.id} company_id=#{f.object.id} error=#{e.class} #{e.message}")
-                  f.template.content_tag(:span, 'Preview indisponivel')
-                end
+                f.template.image_tag(url_for(asset), style: 'max-width: 100px; height: auto; border: 1px solid #ddd;')
+              rescue StandardError => e
+                Rails.logger.warn("[Admin::Companies] Preview indisponivel media_asset=#{asset.id} company_id=#{f.object.id} error=#{e.class} #{e.message}")
+                f.template.content_tag(:span, 'Preview indisponivel')
               end
             end.join.html_safe
           end
@@ -282,29 +278,29 @@ end
       f.inputs 'WhatsApp – Estilos do Botão' do
         styles = f.object.whatsapp_button_style_json || {}
         f.input :variant, as: :select,
-                input_html: { name: 'company[whatsapp_button_style_json][variant]' },
-                collection: [['Sólido', 'solid'], ['Contorno', 'outline']],
-                include_blank: false,
-                selected: styles['variant'] || 'solid',
-                label: 'Estilo'
+                          input_html: { name: 'company[whatsapp_button_style_json][variant]' },
+                          collection: [%w[Sólido solid], %w[Contorno outline]],
+                          include_blank: false,
+                          selected: styles['variant'] || 'solid',
+                          label: 'Estilo'
         f.input :bg_color, as: :string,
-                input_html: { type: 'color', name: 'company[whatsapp_button_style_json][bg_color]', value: styles['bg_color'] || '#16a34a' },
-                label: 'Cor de fundo'
+                           input_html: { type: 'color', name: 'company[whatsapp_button_style_json][bg_color]', value: styles['bg_color'] || '#16a34a' },
+                           label: 'Cor de fundo'
         f.input :hover_bg_color, as: :string,
-                input_html: { type: 'color', name: 'company[whatsapp_button_style_json][hover_bg_color]', value: styles['hover_bg_color'] || '#15803d' },
-                label: 'Cor de fundo (hover)'
+                                 input_html: { type: 'color', name: 'company[whatsapp_button_style_json][hover_bg_color]', value: styles['hover_bg_color'] || '#15803d' },
+                                 label: 'Cor de fundo (hover)'
         f.input :text_color, as: :string,
-                input_html: { type: 'color', name: 'company[whatsapp_button_style_json][text_color]', value: styles['text_color'] || '#ffffff' },
-                label: 'Cor do texto'
+                             input_html: { type: 'color', name: 'company[whatsapp_button_style_json][text_color]', value: styles['text_color'] || '#ffffff' },
+                             label: 'Cor do texto'
         f.input :border_color, as: :string,
-                input_html: { type: 'color', name: 'company[whatsapp_button_style_json][border_color]', value: styles['border_color'] || '#16a34a' },
-                label: 'Cor da borda'
+                               input_html: { type: 'color', name: 'company[whatsapp_button_style_json][border_color]', value: styles['border_color'] || '#16a34a' },
+                               label: 'Cor da borda'
         f.input :icon_color, as: :string,
-                input_html: { type: 'color', name: 'company[whatsapp_button_style_json][icon_color]', value: styles['icon_color'] || '#ffffff' },
-                label: 'Cor do ícone'
+                             input_html: { type: 'color', name: 'company[whatsapp_button_style_json][icon_color]', value: styles['icon_color'] || '#ffffff' },
+                             label: 'Cor do ícone'
         f.input :rounded_px, as: :number,
-                input_html: { name: 'company[whatsapp_button_style_json][rounded_px]', value: styles['rounded_px'] || 12, min: 0, max: 32 },
-                label: 'Arredondamento (px)'
+                             input_html: { name: 'company[whatsapp_button_style_json][rounded_px]', value: styles['rounded_px'] || 12, min: 0, max: 32 },
+                             label: 'Arredondamento (px)'
       end
     end
 
@@ -320,29 +316,29 @@ end
     end
 
     if Company.column_names.include?('social_proof_enabled')
-    f.inputs 'Configuracoes de Prova Social' do
-      f.input :social_proof_enabled,
-              as: :boolean,
-              label: 'Habilitar prova social real'
-      f.template.concat(
-        f.template.content_tag(
-          :p,
-          'Disponivel apenas para empresas com plano pago elegivel.'
+      f.inputs 'Configuracoes de Prova Social' do
+        f.input :social_proof_enabled,
+                as: :boolean,
+                label: 'Habilitar prova social real'
+        f.template.concat(
+          f.template.content_tag(
+            :p,
+            'Disponivel apenas para empresas com plano pago elegivel.'
+          )
         )
-      )
-    end
-
-    f.inputs 'Configurações de Avaliações Setoriais' do
-      f.input :sector_ratings_enabled,
-              as: :boolean,
-              label: 'Habilitar perguntas customizadas para avalição setorial'
-      f.has_many :company_sector_questions, allow_destroy: true, new_record: 'Adicionar pergunta' do |q|
-        q.input :prompt
-        q.input :weight
-        q.input :order
-        q.input :enabled
       end
-    end
+
+      f.inputs 'Configurações de Avaliações Setoriais' do
+        f.input :sector_ratings_enabled,
+                as: :boolean,
+                label: 'Habilitar perguntas customizadas para avalição setorial'
+        f.has_many :company_sector_questions, allow_destroy: true, new_record: 'Adicionar pergunta' do |q|
+          q.input :prompt
+          q.input :weight
+          q.input :order
+          q.input :enabled
+        end
+      end
     end
 
     f.inputs 'FAQ da Empresa' do
@@ -362,7 +358,8 @@ end
     end
 
     f.inputs 'Categories' do
-      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Category.all.order(:name)
+      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
+                           collection: Category.all.order(:name)
     end
 
     f.inputs 'Selos / Badges' do
@@ -373,7 +370,8 @@ end
       f.has_many :company_buttons, allow_destroy: true, heading: false, sortable: :position, sortable_start: 1 do |cb|
         cb.input :label, label: 'Texto do Botão'
         cb.input :url, label: 'URL de Destino'
-        cb.input :button_type, as: :select, collection: [['Primário (Azul)', 'primary'], ['WhatsApp (Verde)', 'whatsapp'], ['Secundário (Outline)', 'secondary'], ['Custom', 'custom']], include_blank: false
+        cb.input :button_type, as: :select,
+                               collection: [['Primário (Azul)', 'primary'], ['WhatsApp (Verde)', 'whatsapp'], ['Secundário (Outline)', 'secondary'], ['Custom', 'custom']], include_blank: false
         cb.input :active, label: 'Ativo'
       end
     end
@@ -404,7 +402,8 @@ end
 
     if Company.column_names.include?('effect')
       panel 'Visual Effect Preview' do
-        div class: 'company-card admin-preview', 'data-controller': 'effect', 'data-effect-active-value': resource.effect do
+        div class: 'company-card admin-preview', 'data-controller': 'effect',
+            'data-effect-active-value': resource.effect do
         end
       end
     end
@@ -488,11 +487,9 @@ end
               ul do
                 resource.media_assets.each do |img|
                   li do
-                    begin
-                      image_tag(url_for(img), style: 'max-width: 120px; height: auto;')
-                    rescue StandardError
-                      content_tag(:span, 'Preview indisponivel')
-                    end
+                    image_tag(url_for(img), style: 'max-width: 120px; height: auto;')
+                  rescue StandardError
+                    content_tag(:span, 'Preview indisponivel')
                   end
                 end
               end
@@ -555,7 +552,10 @@ end
           v.changeset.map { |k, val| "#{k}: #{val[0]} -> #{val[1]}" }.join('<br>').html_safe if v.changeset
         end
         column :actions do |v|
-          link_to 'Rollback', rollback_admin_company_path(resource, version_id: v.id), method: :put, data: { confirm: 'Deseja reverter para esta versão?' } if v.event == 'update'
+          if v.event == 'update'
+            link_to 'Rollback', rollback_admin_company_path(resource, version_id: v.id), method: :put,
+                                                                                         data: { confirm: 'Deseja reverter para esta versão?' }
+          end
         end
       end
     end
@@ -568,7 +568,7 @@ end
     if version.reify.save
       redirect_to resource_path, notice: "Empresa revertida para a versão de #{version.created_at}"
     else
-      redirect_to resource_path, alert: "Falha ao reverter versão."
+      redirect_to resource_path, alert: 'Falha ao reverter versão.'
     end
   end
 
@@ -589,7 +589,12 @@ end
     column :city
     column :featured
     column :verified
-    column(:effect) { |company| status_tag(company.effect ? 'On' : 'Off', class: company.effect ? 'ok' : 'warning') } if Company.column_names.include?('effect')
+    if Company.column_names.include?('effect')
+      column(:effect) do |company|
+        status_tag(company.effect ? 'On' : 'Off',
+                   class: company.effect ? 'ok' : 'warning')
+      end
+    end
     column :status
     column :plan_status if Company.column_names.include?('plan_status')
     column :plan if Company.reflect_on_association(:plan)
@@ -601,9 +606,8 @@ end
 
   member_action :approve, method: :put do
     resource.transaction do
-      unless resource.approve!(current_admin_user)
-        raise ActiveRecord::RecordInvalid.new(resource)
-      end
+      raise ActiveRecord::RecordInvalid, resource unless resource.approve!(current_admin_user)
+
       resource.update!(status: 'active')
 
       # FIX #5: Unificar aprovação de empresa e usuário criador no ActiveAdmin
@@ -625,7 +629,7 @@ end
       Rails.logger.error("[Admin::Companies] registration_approved failed company_id=#{resource.id} error=#{e.class} #{e.message}")
       flash[:alert] = 'Empresa aprovada, mas nao foi possivel enfileirar o email.'
     end
-    redirect_to resource_path(resource), notice: "Empresa aprovada com sucesso! E-mail enviado."
+    redirect_to resource_path(resource), notice: 'Empresa aprovada com sucesso! E-mail enviado.'
   rescue ActiveRecord::RecordInvalid => e
     redirect_to resource_path(resource), alert: "Não foi possível aprovar: #{e.record.errors.full_messages.join(', ')}"
   end
@@ -640,15 +644,14 @@ end
     # User asked for: "Sistema de aprovação/reprovação com campo para justificativa"
     # ActiveAdmin doesn't support input in member_action easily without custom page.
     # We will just update status to blocked/rejected and maybe send a generic reason or "Motivo não informado".
-    
+
     # Better approach: Redirect to a form or use input.
     # Let's try to grab a reason if passed, otherwise default.
-    
-    reason = params[:reason].presence || "Informações inconsistentes"
+
+    reason = params[:reason].presence || 'Informações inconsistentes'
     resource.transaction do
-      unless resource.reject!(current_admin_user, reason)
-        raise ActiveRecord::RecordInvalid.new(resource)
-      end
+      raise ActiveRecord::RecordInvalid, resource unless resource.reject!(current_admin_user, reason)
+
       resource.update!(status: 'blocked') # or inactive
     end
 
@@ -658,7 +661,7 @@ end
       Rails.logger.error("[Admin::Companies] registration_rejected failed company_id=#{resource.id} error=#{e.class} #{e.message}")
       flash[:alert] = 'Empresa reprovada, mas nao foi possivel enfileirar o email.'
     end
-    redirect_to resource_path(resource), notice: "Empresa reprovada. E-mail enviado."
+    redirect_to resource_path(resource), notice: 'Empresa reprovada. E-mail enviado.'
   rescue ActiveRecord::RecordInvalid => e
     redirect_to resource_path(resource), alert: "Não foi possível reprovar: #{e.record.errors.full_messages.join(', ')}"
   end
@@ -695,11 +698,11 @@ end
     def update
       # Verificar se há upload de arquivos
       has_file_uploads = params[:company] && (
-        params[:company][:banner].present? || 
-        params[:company][:logo].present? || 
+        params[:company][:banner].present? ||
+        params[:company][:logo].present? ||
         params[:company][:media_assets].present?
       )
-      
+
       if has_file_uploads
         # Verificar se storage está configurado corretamente
         begin
@@ -707,8 +710,9 @@ end
           # Tenta acessar o serviço para garantir que está configurado
           service.class.name
         rescue ArgumentError => e
-          if e.message.include?("missing keyword")
-            flash[:error] = "Credenciais do storage não configuradas. Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY no .env ou use ACTIVE_STORAGE_SERVICE=local"
+          if e.message.include?('missing keyword')
+            flash[:error] =
+              'Credenciais do storage não configuradas. Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY no .env ou use ACTIVE_STORAGE_SERVICE=local'
             redirect_to edit_admin_company_path(resource) and return
           end
           raise
@@ -717,17 +721,18 @@ end
 
       super
     rescue ArgumentError => e
-      if e.message.include?("unable to sign request") || e.message.include?("missing keyword") || e.message.include?("credentials")
-        Rails.logger.error "[Upload Error] Missing storage credentials: #{e.message}"
-        flash[:error] = "Erro de credenciais: Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY ou use storage local"
-        redirect_to edit_admin_company_path(resource)
-      else
+      unless e.message.include?('unable to sign request') || e.message.include?('missing keyword') || e.message.include?('credentials')
         raise
       end
-    rescue => e
+
+      Rails.logger.error "[Upload Error] Missing storage credentials: #{e.message}"
+      flash[:error] =
+        'Erro de credenciais: Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY ou use storage local'
+      redirect_to edit_admin_company_path(resource)
+    rescue StandardError => e
       Rails.logger.error "[Company Update Error] #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
-      
+
       flash[:error] = "Erro ao atualizar empresa: #{e.message}"
       redirect_to edit_admin_company_path(resource)
     end
@@ -757,12 +762,10 @@ end
     errors = []
 
     batch_action_collection.where(id: ids).find_each do |company|
-      begin
-        company.update!(status: 'active')
-        activated += 1
-      rescue ActiveRecord::RecordInvalid => e
-        errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
-      end
+      company.update!(status: 'active')
+      activated += 1
+    rescue ActiveRecord::RecordInvalid => e
+      errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
     end
 
     notice = "Empresas ativadas: #{activated}"
@@ -775,20 +778,18 @@ end
 
   batch_action :reject_with_reason, form: {
     reason: :text
-  }, confirm: "Rejeitar empresas selecionadas?" do |ids, inputs|
+  }, confirm: 'Rejeitar empresas selecionadas?' do |ids, inputs|
     companies = batch_action_collection.where(id: ids)
     rejected = 0
     errors = []
     reason = inputs[:reason].presence || 'Informações inconsistentes'
 
     companies.find_each do |company|
-      begin
-        company.update!(status: 'blocked')
-        CompanyMailer.registration_rejected(company, reason).deliver_later
-        rejected += 1
-      rescue ActiveRecord::RecordInvalid => e
-        errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
-      end
+      company.update!(status: 'blocked')
+      CompanyMailer.registration_rejected(company, reason).deliver_later
+      rejected += 1
+    rescue ActiveRecord::RecordInvalid => e
+      errors << "#{company.id}: #{e.record.errors.full_messages.join(', ')}"
     end
 
     notice = "#{rejected} empresas reprovadas."
@@ -823,9 +824,7 @@ end
 
   collection_action :import_csv, method: :post do
     file = params[:csv_file]
-    if file.nil?
-      redirect_to admin_companies_path, alert: 'Arquivo não enviado.' and return
-    end
+    redirect_to admin_companies_path, alert: 'Arquivo não enviado.' and return if file.nil?
 
     created = 0
     updated = 0
@@ -879,7 +878,9 @@ end
 
       raw_status = row['status'].to_s.strip.downcase
       status = Company.statuses.key?(raw_status) ? raw_status : 'pending'
-      errors << "linha #{line_number}: status inválido, definido como pending" if raw_status.present? && status == 'pending'
+      if raw_status.present? && status == 'pending'
+        errors << "linha #{line_number}: status inválido, definido como pending"
+      end
       status = 'pending' if force_pending
 
       attrs = {
@@ -900,12 +901,10 @@ end
         whatsapp_url: row['whatsapp_url']
       }
 
-      cats = (row['categories'] || '').to_s.split(',').map { |c| c.strip }.reject(&:blank?)
+      cats = (row['categories'] || '').to_s.split(',').map(&:strip).reject(&:blank?)
       existing_categories = cats.any? ? Category.where(name: cats) : Category.none
       missing_categories = cats - existing_categories.pluck(:name)
-      if missing_categories.any?
-        errors << "linha #{line_number}: categorias ausentes: #{missing_categories.join(', ')}"
-      end
+      errors << "linha #{line_number}: categorias ausentes: #{missing_categories.join(', ')}" if missing_categories.any?
 
       company.assign_attributes(attrs)
       company.categories = existing_categories if cats.any?

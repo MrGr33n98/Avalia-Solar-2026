@@ -61,22 +61,20 @@ class Api::V1::BannersController < Api::V1::BaseController
     # Ordenação por prioridade (Fase 1: implementa uso do campo priority)
     # Menor priority = maior importância
     # Sponsored banners têm preferência
-    if ::Banner.column_names.include?('priority')
-      @banners = @banners.order(
-        priority: :asc,        # Menor = mais importante
-        sponsored: :desc,       # Patrocinados primeiro
-        created_at: :desc       # Mais recentes
-      )
-    elsif ::Banner.column_names.include?('sponsored')
-      @banners = @banners.order(sponsored: :desc, created_at: :desc)
-    else
-      @banners = @banners.order(created_at: :desc)
-    end
+    @banners = if ::Banner.column_names.include?('priority')
+                 @banners.order(
+                   priority: :asc, # Menor = mais importante
+                   sponsored: :desc,       # Patrocinados primeiro
+                   created_at: :desc       # Mais recentes
+                 )
+               elsif ::Banner.column_names.include?('sponsored')
+                 @banners.order(sponsored: :desc, created_at: :desc)
+               else
+                 @banners.order(created_at: :desc)
+               end
 
     # Limita resultados se especificado
-    if params[:limit].present? && params[:limit].to_i.positive?
-      @banners = @banners.limit(params[:limit].to_i)
-    end
+    @banners = @banners.limit(params[:limit].to_i) if params[:limit].present? && params[:limit].to_i.positive?
 
     # Eager loading para evitar N+1 queries
     @banners = @banners.includes(:categories, :company, image_attachment: :blob)
@@ -102,7 +100,8 @@ class Api::V1::BannersController < Api::V1::BaseController
   # Reduz payload da resposta em ~40%
   def serialize_banners(banners)
     banners.as_json(
-      only: %i[id title link active position sponsored banner_type category_id company_id start_date end_date created_at width height],
+      only: %i[id title link active position sponsored banner_type category_id company_id start_date end_date
+               created_at width height],
       methods: %i[image_url link_url category_ids]
     )
   end

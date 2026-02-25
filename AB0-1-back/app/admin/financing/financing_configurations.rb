@@ -1,6 +1,6 @@
 ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
   menu parent: 'Configurações', label: 'Parâmetros Globais'
-  
+
   permit_params :name, :financing_type, :active,
                 :interest_rate_fixed, :interest_rate_variable,
                 :grace_period_days,
@@ -34,7 +34,9 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
       tab 'Geral' do
         f.inputs 'Identificação e Status' do
           f.input :name
-          f.input :financing_type, as: :select, collection: FinancingConfiguration.financing_types.keys.map { |k| [k.titleize, k] }
+          f.input :financing_type, as: :select, collection: FinancingConfiguration.financing_types.keys.map { |k|
+            [k.titleize, k]
+          }
           f.input :active, as: :boolean, label: 'Ativo'
         end
       end
@@ -47,7 +49,9 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
 
         f.inputs 'Carência' do
           f.input :grace_period_days, as: :number, input_html: { min: 0 }
-          li "Equivalente a #{f.object.grace_period_months} meses ou #{f.object.grace_period_years} anos" if f.object.grace_period_days.present?
+          if f.object.grace_period_days.present?
+            li "Equivalente a #{f.object.grace_period_months} meses ou #{f.object.grace_period_years} anos"
+          end
         end
       end
 
@@ -63,12 +67,13 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
         end
       end
     end
-    
+
     f.actions do
       f.action :submit
       f.action :cancel
-      if !f.object.new_record?
-        f.action :reset_defaults, label: 'Resetar para Padrões', as: :button, method: :put, url: reset_defaults_financiamentos_financing_configuration_path(f.object)
+      unless f.object.new_record?
+        f.action :reset_defaults, label: 'Resetar para Padrões', as: :button, method: :put,
+                                  url: reset_defaults_financiamentos_financing_configuration_path(f.object)
       end
     end
   end
@@ -78,11 +83,11 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
       row :name
       row :financing_type
       row :active
-      
+
       row 'Taxas' do |c|
         "Fixa: #{c.interest_rate_fixed}% | Variável: #{c.interest_rate_variable}%"
       end
-      
+
       row 'Carência' do |c|
         "#{c.grace_period_days} dias (#{c.grace_period_months} meses)"
       end
@@ -121,12 +126,12 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
       min_amount: 0.0,
       max_amount: 0.0
     )
-    redirect_to resource_path(resource), notice: "Configurações resetadas para os valores padrão."
+    redirect_to resource_path(resource), notice: 'Configurações resetadas para os valores padrão.'
   end
 
-  sidebar "Simulação Rápida", only: :show do
+  sidebar 'Simulação Rápida', only: :show do
     div do
-      "Simule o financiamento com as taxas atuais:"
+      'Simule o financiamento com as taxas atuais:'
     end
     ul do
       li "Taxa Mensal: #{resource.interest_rate_fixed}%"
@@ -159,17 +164,15 @@ ActiveAdmin.register FinancingConfiguration, namespace: :financiamentos do
   end
 
   collection_action :process_import_json, method: :post do
-    begin
-      file = params[:json_file]
-      if file
-        json = JSON.parse(file.read)
-        # Import logic would go here
-        redirect_to collection_path, notice: "Importação realizada com sucesso!"
-      else
-        redirect_to collection_path, alert: "Nenhum arquivo enviado."
-      end
-    rescue => e
-      redirect_to collection_path, alert: "Erro na importação: #{e.message}"
+    file = params[:json_file]
+    if file
+      JSON.parse(file.read)
+      # Import logic would go here
+      redirect_to collection_path, notice: 'Importação realizada com sucesso!'
+    else
+      redirect_to collection_path, alert: 'Nenhum arquivo enviado.'
     end
+  rescue StandardError => e
+    redirect_to collection_path, alert: "Erro na importação: #{e.message}"
   end
 end

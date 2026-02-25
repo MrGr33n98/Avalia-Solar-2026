@@ -14,9 +14,7 @@ class CompanyDashboardChannel < ApplicationCable::Channel
 
   def resolve_company
     # Company users can only subscribe to their own company
-    if current_user.respond_to?(:company_user?) && current_user.company_user?
-      return current_user.company
-    end
+    return current_user.company if current_user.respond_to?(:company_user?) && current_user.company_user?
 
     # Admin/Review can subscribe to any company if company_id param is provided
     if (current_user.respond_to?(:admin?) && current_user.admin?) || (current_user.respond_to?(:review_user?) && current_user.review_user?)

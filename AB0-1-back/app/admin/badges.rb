@@ -1,13 +1,12 @@
 ActiveAdmin.register Badge do
-  permit_params :name, :description, :position, :year, :edition, :category_label, :active, :public_slug, :image, company_ids: []
+  permit_params :name, :description, :position, :year, :edition, :category_label, :active, :public_slug, :image,
+                company_ids: []
 
   index do
     selectable_column
     id_column
     column :image do |badge|
-      if badge.image.attached?
-        image_tag url_for(badge.image), style: 'height: 50px; width: auto;'
-      end
+      image_tag url_for(badge.image), style: 'height: 50px; width: auto;' if badge.image.attached?
     end
     column :name
     column :category_label
@@ -39,13 +38,14 @@ ActiveAdmin.register Badge do
     end
 
     f.inputs 'Visual Asset' do
-      f.input :image, as: :file, hint: f.object.image.attached? ? image_tag(url_for(f.object.image), style: 'max-width: 150px') : 'Anexe uma imagem PNG/JPG/WEBP (Max 2MB)'
+      f.input :image, as: :file,
+                      hint: f.object.image.attached? ? image_tag(url_for(f.object.image), style: 'max-width: 150px') : 'Anexe uma imagem PNG/JPG/WEBP (Max 2MB)'
     end
 
     f.inputs 'Company Assignments' do
-      f.input :companies, 
-              as: :select, 
-              multiple: true, 
+      f.input :companies,
+              as: :select,
+              multiple: true,
               collection: Company.order(:name).map { |c| [c.name, c.id] },
               input_html: { class: 'select2-input', style: 'width: 100%' },
               label: 'Empresas Atribuidas (Selecione uma ou mais)'
@@ -65,9 +65,7 @@ ActiveAdmin.register Badge do
       row :position
       row :active
       row :image do |badge|
-        if badge.image.attached?
-          image_tag url_for(badge.image), style: 'max-width: 300px'
-        end
+        image_tag url_for(badge.image), style: 'max-width: 300px' if badge.image.attached?
       end
       row :public_url do |badge|
         url = "#{ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br')}/badges/#{badge.public_slug}"

@@ -23,7 +23,8 @@ module Api
 
         question = @company.company_sector_questions.new(question_params)
         if question.save
-          render json: { question: question.as_json(only: %i[id prompt weight order enabled]), meta: meta_payload }, status: :created
+          render json: { question: question.as_json(only: %i[id prompt weight order enabled]), meta: meta_payload },
+                 status: :created
         else
           render json: { errors: question.errors.full_messages }, status: :unprocessable_entity
         end

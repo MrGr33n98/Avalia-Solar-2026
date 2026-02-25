@@ -4,7 +4,7 @@ module Api
       class BaseController < Api::V1::BaseController
         include Paginatable
 
-        # Skip the parent's authentication if we are redefining it here, 
+        # Skip the parent's authentication if we are redefining it here,
         # but actually Api::V1::BaseController doesn't have before_action :authenticate_api_user
         # it just defines the method.
 

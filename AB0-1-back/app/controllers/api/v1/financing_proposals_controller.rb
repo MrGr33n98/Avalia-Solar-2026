@@ -5,7 +5,7 @@ module Api
 
       def create
         Rails.logger.info("[Financing] Proposal create START company_id=#{params[:company_id]} params=#{proposal_params.inspect}")
-        
+
         attrs = proposal_params
         option_id = attrs[:option_id].presence&.to_i
         amount = attrs[:amount].to_f
@@ -26,16 +26,10 @@ module Api
         errors << 'Valor do financiamento invalido' if amount <= 0
         errors << 'Prazo invalido' if months < 6 || months > 120
         errors << 'Entrada invalida' if entry.negative?
-        if project_amount && project_amount <= 0
-          errors << 'Valor do projeto invalido'
-        end
-        if project_amount && entry > project_amount
-          errors << 'Entrada invalida'
-        end
-        if project_amount && amount > project_amount
-          errors << 'Valor do financiamento invalido'
-        end
-        
+        errors << 'Valor do projeto invalido' if project_amount && project_amount <= 0
+        errors << 'Entrada invalida' if project_amount && entry > project_amount
+        errors << 'Valor do financiamento invalido' if project_amount && amount > project_amount
+
         if errors.any?
           Rails.logger.warn("[Financing] Proposal validation errors: #{errors.join(', ')}")
           return render json: { errors: errors }, status: :unprocessable_entity
@@ -66,8 +60,8 @@ module Api
         # Tentar enfileirar job, mas não falhar se Sidekiq não estiver disponível
         begin
           SubmitFinancingProposalJob.perform_later(lead.id, option_id)
-        rescue StandardError => job_error
-          Rails.logger.warn("[Financing] Could not enqueue job: #{job_error.message}")
+        rescue StandardError => e
+          Rails.logger.warn("[Financing] Could not enqueue job: #{e.message}")
         end
 
         Rails.logger.info("[Financing] Proposal SUCCESS company=#{@company.id} lead=#{lead.id} option=#{option_id}")

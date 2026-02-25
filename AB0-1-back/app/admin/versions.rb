@@ -1,6 +1,6 @@
-ActiveAdmin.register PaperTrail::Version, as: "AuditLog" do
+ActiveAdmin.register PaperTrail::Version, as: 'AuditLog' do
   menu parent: 'Sistema', label: 'Logs de Auditoria'
-  
+
   actions :index, :show
 
   index do
@@ -8,7 +8,11 @@ ActiveAdmin.register PaperTrail::Version, as: "AuditLog" do
     column :item_type
     column :item do |v|
       if v.item
-        link_to "#{v.item_type} ##{v.item_id}", auto_url_for(v.item) rescue "#{v.item_type} ##{v.item_id}"
+        begin
+          link_to "#{v.item_type} ##{v.item_id}", auto_url_for(v.item)
+        rescue StandardError
+          "#{v.item_type} ##{v.item_id}"
+        end
       else
         "#{v.item_type} ##{v.item_id} (Deleted)"
       end
@@ -40,7 +44,7 @@ ActiveAdmin.register PaperTrail::Version, as: "AuditLog" do
       end
     end
   end
-  
+
   csv do
     column :id
     column :item_type

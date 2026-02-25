@@ -18,7 +18,7 @@ ActiveAdmin.register Product do
       scope = super.includes(:company)
       # If we're in a nested route, super already filtered by parent
       return scope if parent?
-      
+
       if params[:company_id]
         company = Company.find_by_slug_or_id!(params[:company_id])
         scope.where(company_id: company.id)
@@ -52,7 +52,8 @@ ActiveAdmin.register Product do
       f.input :company, collection: Company.all
 
       # Add categories select2
-      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Category.all.order(:name)
+      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
+                           collection: Category.all.order(:name)
     end
     f.actions
   end

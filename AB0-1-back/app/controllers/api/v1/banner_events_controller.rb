@@ -10,7 +10,8 @@ module Api
       ALLOWED_METADATA_KEYS = %w[slot_key position page_path category_id banner_id title link].freeze
 
       def create
-        event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {}, metadata: {})
+        event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {},
+                                                                                                               metadata: {})
 
         banner_id = event_params[:banner_id]
         event_type = event_params[:event_type].to_s
@@ -40,7 +41,12 @@ module Api
 
       def sanitized_referrer
         return nil if request.referer.blank?
-        uri = URI.parse(request.referer) rescue nil
+
+        uri = begin
+          URI.parse(request.referer)
+        rescue StandardError
+          nil
+        end
         uri&.host
       end
 
@@ -70,6 +76,7 @@ module Api
 
       def safe_hash(value)
         return nil if value.blank?
+
         require 'digest'
         Digest::SHA256.hexdigest(value)
       end

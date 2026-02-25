@@ -37,6 +37,7 @@ class CompanyFinancingProfilePolicy < ApplicationPolicy
 
   def allowed?
     return true if admin?
+
     can_manage_company_id?(record_company_id)
   end
 

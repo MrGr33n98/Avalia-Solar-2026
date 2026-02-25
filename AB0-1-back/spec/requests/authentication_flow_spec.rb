@@ -37,10 +37,8 @@ RSpec.describe 'Authentication Flow', type: :request do
           company_id: company.id
         }
       }
-      
-      if response.status == 422
-        puts "Validation Errors: #{JSON.parse(response.body)['details']}"
-      end
+
+      puts "Validation Errors: #{JSON.parse(response.body)['details']}" if response.status == 422
       expect(response).to have_http_status(:success)
       user = User.find_by(email: 'new@solartech.com')
       expect(user).to be_present
@@ -50,7 +48,7 @@ RSpec.describe 'Authentication Flow', type: :request do
   end
 
   describe 'Admin Approval' do
-    let(:user) { 
+    let(:user) do
       User.create!(
         name: 'Pending User',
         email: 'pending@solartech.com',
@@ -59,15 +57,15 @@ RSpec.describe 'Authentication Flow', type: :request do
         role: 'company',
         terms_accepted: true,
         status: :pending
-      ) 
-    }
+      )
+    end
 
     it 'allows login after approval' do
       user.confirm # Ensure the user is confirmed, otherwise Devise blocks them anyway
       expect(user.active_for_authentication?).to be false
-      
+
       user.update(status: :active)
-      
+
       expect(user.active_for_authentication?).to be true
     end
 
@@ -79,7 +77,7 @@ RSpec.describe 'Authentication Flow', type: :request do
   end
 
   describe 'Email Confirmation Flow' do
-    let(:user) { 
+    let(:user) do
       User.create!(
         name: 'Unconfirmed User',
         email: 'unconfirmed@solartech.com',
@@ -88,8 +86,8 @@ RSpec.describe 'Authentication Flow', type: :request do
         terms_accepted: true,
         status: :pending,
         city: 'Florianópolis'
-      ) 
-    }
+      )
+    end
 
     it 'activates the user and allows login after confirmation' do
       # Gera o token de confirmação
@@ -102,7 +100,7 @@ RSpec.describe 'Authentication Flow', type: :request do
 
       # Tenta confirmar via API
       post '/api/v1/auth/confirm_email', headers: { 'Authorization' => "Bearer #{raw_token}" }
-      
+
       expect(response).to have_http_status(:success)
       user.reload
       expect(user.confirmed?).to be true

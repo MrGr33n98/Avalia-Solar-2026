@@ -41,8 +41,6 @@ class Api::V1::ProductsController < Api::V1::BaseController
           { min: specs_scope.minimum(:value_number), max: specs_scope.maximum(:value_number) }
         when 'range', 'json'
           nil
-        else
-          nil
         end
 
       {
@@ -57,7 +55,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
     end
 
     render json: { filters: payload }
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Products#filters] #{e.message}")
     render json: { error: 'Erro ao carregar filtros' }, status: :internal_server_error
   end
@@ -87,7 +85,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
       products: products.map { |p| p.as_json(include_specs: true) },
       comparisons: comparisons
     }
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Products#compare] #{e.message}")
     render json: { error: 'Erro ao comparar produtos' }, status: :internal_server_error
   end
@@ -148,12 +146,12 @@ class Api::V1::ProductsController < Api::V1::BaseController
     return if payload.blank?
 
     ProductSpecifications::UpsertService.call(product: product, specs_payload: payload)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Products#upsert_specs] #{e.message}")
   end
 
   def specs_payload
-    permitted = params.permit(specifications: [:key, :value, :value_number, :value_boolean, value_json: {}])
+    permitted = params.permit(specifications: [:key, :value, :value_number, :value_boolean, { value_json: {} }])
     permitted[:specifications] || []
   end
 end

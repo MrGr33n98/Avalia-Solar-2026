@@ -2,7 +2,7 @@ module Api
   module V1
     class FinancingOptionsController < BaseController
       before_action :set_company
-      before_action :set_financing_option, only: [:update, :destroy]
+      before_action :set_financing_option, only: %i[update destroy]
 
       def index
         options = @company.financing_options
@@ -39,7 +39,7 @@ module Api
       def compare
         ids = Array(params[:ids]).map(&:to_i).uniq
         options = @company.financing_options.where(id: ids)
-        sorted = options.sort_by { |o| [(o.interest_rate_percent || Float::INFINITY), -(o.max_term_months || 0)] }
+        sorted = options.sort_by { |o| [o.interest_rate_percent || Float::INFINITY, -(o.max_term_months || 0)] }
         render json: { options: sorted.map { |o| FinancingOptionSerializer.new(o).as_json } }
       end
 
@@ -47,9 +47,9 @@ module Api
         amount = params[:amount].to_f
         months_param = params[:months].to_i
         audience_param = params[:audience]
-        
+
         Rails.logger.info("[Financing] simulate START company_id=#{params[:company_id]} amount=#{amount} months=#{months_param} audience=#{audience_param}")
-        
+
         audience = normalize_audience(audience_param)
 
         errors = []
@@ -65,66 +65,64 @@ module Api
 
         scope = @company.financing_options
         Rails.logger.info("[Financing] Total financing_options for company: #{scope.count}")
-        
+
         scope = scope.active_only
         Rails.logger.info("[Financing] Active financing_options: #{scope.count}")
-        
+
         if audience.present?
           scope = scope.where(target_audience: audience)
           Rails.logger.info("[Financing] After audience filter (#{audience}): #{scope.count}")
         end
 
         cache_key = [
-          "company", @company.id, "financing_simulation",
-          audience.presence || "all", amount.round(2), months_param
-        ].join(":")
+          'company', @company.id, 'financing_simulation',
+          audience.presence || 'all', amount.round(2), months_param
+        ].join(':')
 
         payload = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
           options = scope.to_a
           Rails.logger.info("[Financing] Options to simulate: #{options.count}")
-          
+
           if options.empty?
-            Rails.logger.warn("[Financing] No financing options available for simulation")
+            Rails.logger.warn('[Financing] No financing options available for simulation')
             { best: nil, options: [], ranking: [], message: 'Nenhuma opção de financiamento disponível' }
           else
             results = options.map do |o|
-              begin
-                months = months_param.positive? ? months_param : (o.max_term_months || 12)
-                rate_percent = (o.interest_rate_percent || 0).to_f
-                i = rate_percent / 100.0
-                monthly_payment =
-                  if i.positive?
-                    denom = (1 - (1 + i) ** (-months))
-                    denom.zero? ? 0.0 : (amount * i / denom)
-                  else
-                    months.zero? ? 0.0 : (amount / months.to_f)
-                  end
-                total_cost = monthly_payment * months
-                cet_annual_percent = i.positive? ? (((1 + i) ** 12) - 1) * 100.0 : 0.0
+              months = months_param.positive? ? months_param : (o.max_term_months || 12)
+              rate_percent = (o.interest_rate_percent || 0).to_f
+              i = rate_percent / 100.0
+              monthly_payment =
+                if i.positive?
+                  denom = (1 - ((1 + i)**(-months)))
+                  denom.zero? ? 0.0 : (amount * i / denom)
+                else
+                  months.zero? ? 0.0 : (amount / months.to_f)
+                end
+              total_cost = monthly_payment * months
+              cet_annual_percent = i.positive? ? (((1 + i)**12) - 1) * 100.0 : 0.0
 
-                {
-                  id: o.id,
-                  company_id: o.company_id,
-                  institution_name: o.institution_name,
-                  credit_line: o.credit_line,
-                  target_audience: o.target_audience,
-                  max_term_months: o.max_term_months,
-                  grace_period_months: o.grace_period_months,
-                  interest_rate_percent: o.interest_rate_percent,
-                  interest_rate_details: o.interest_rate_details,
-                  active: o.active,
-                  monthly_payment: monthly_payment.round(2),
-                  total_cost: total_cost.round(2),
-                  cet_annual_percent: cet_annual_percent.round(2)
-                }
-              rescue StandardError => calc_error
-                Rails.logger.error("[Financing] Error calculating option #{o.id}: #{calc_error.message}")
-                nil
-              end
+              {
+                id: o.id,
+                company_id: o.company_id,
+                institution_name: o.institution_name,
+                credit_line: o.credit_line,
+                target_audience: o.target_audience,
+                max_term_months: o.max_term_months,
+                grace_period_months: o.grace_period_months,
+                interest_rate_percent: o.interest_rate_percent,
+                interest_rate_details: o.interest_rate_details,
+                active: o.active,
+                monthly_payment: monthly_payment.round(2),
+                total_cost: total_cost.round(2),
+                cet_annual_percent: cet_annual_percent.round(2)
+              }
+            rescue StandardError => e
+              Rails.logger.error("[Financing] Error calculating option #{o.id}: #{e.message}")
+              nil
             end.compact
 
             if results.empty?
-              Rails.logger.error("[Financing] All calculations failed")
+              Rails.logger.error('[Financing] All calculations failed')
               return { best: nil, options: [], ranking: [], error: 'Erro ao calcular simulações' }
             end
 
@@ -138,9 +136,9 @@ module Api
               carencia = (r[:grace_period_months] || 0).to_i
               score = (0.7 * rate) - (0.2 * prazo) - (0.1 * carencia)
               reason = []
-              reason << "Taxa baixa" if min_rate && rate <= min_rate
-              reason << "Parcela menor" if min_payment && r[:monthly_payment] <= min_payment
-              reason << "Prazo longo" if max_term && prazo >= max_term
+              reason << 'Taxa baixa' if min_rate && rate <= min_rate
+              reason << 'Parcela menor' if min_payment && r[:monthly_payment] <= min_payment
+              reason << 'Prazo longo' if max_term && prazo >= max_term
               { id: r[:id], score: score.round(3), reason: reason.join(', ') }
             end.sort_by { |x| x[:score] }
 
@@ -193,6 +191,7 @@ module Api
         return 'PF' if %w[pf pessoa_fisica fisica].include?(v)
         return 'PJ' if %w[pj pessoa_juridica juridica].include?(v)
         return 'Rural' if %w[rural campo agro].include?(v)
+
         value
       end
     end

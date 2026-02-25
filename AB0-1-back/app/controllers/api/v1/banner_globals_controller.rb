@@ -25,7 +25,7 @@ class Api::V1::BannerGlobalsController < ApplicationController
     banners_with_images = banners.map do |banner|
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      
+
       banner.as_json.merge(
         image_url: banner.image.attached? ? rails_storage_proxy_url(banner.image, options) : nil
       )

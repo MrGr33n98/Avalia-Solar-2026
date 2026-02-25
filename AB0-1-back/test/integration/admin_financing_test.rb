@@ -8,27 +8,27 @@ class AdminFinancingTest < ActionDispatch::IntegrationTest
     sign_in @admin
   end
 
-  test "can access financing dashboard" do
-    get "/financiamentos/dashboard"
+  test 'can access financing dashboard' do
+    get '/financiamentos/dashboard'
     assert_response :success
-    assert_select "h2", "Dashboard"
+    assert_select 'h2', 'Dashboard'
   end
 
-  test "can access financing configurations" do
-    get "/financiamentos/financing_configurations"
+  test 'can access financing configurations' do
+    get '/financiamentos/financing_configurations'
     assert_response :success
-    assert_select "h2", "Parâmetros Globais"
+    assert_select 'h2', 'Parâmetros Globais'
   end
 
-  test "can access financing options" do
-    get "/financiamentos/financing_options"
+  test 'can access financing options' do
+    get '/financiamentos/financing_options'
     assert_response :success
-    assert_select "h2", "Opções de Financiamento"
+    assert_select 'h2', 'Opções de Financiamento'
   end
 
-  test "non-admin cannot access financing dashboard" do
+  test 'non-admin cannot access financing dashboard' do
     sign_out @admin
-    get "/financiamentos/dashboard"
+    get '/financiamentos/dashboard'
     assert_response :redirect
   end
 end

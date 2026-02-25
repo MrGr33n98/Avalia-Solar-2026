@@ -4,7 +4,6 @@ ActiveAdmin.register_page 'Dashboard' do
   menu priority: 1, label: proc { I18n.t('active_admin.dashboard') }
 
   content title: proc { I18n.t('active_admin.dashboard') } do
-    
     # Metrics Cards
     columns do
       column do
@@ -42,7 +41,11 @@ ActiveAdmin.register_page 'Dashboard' do
       column do
         panel 'Leads Gerados' do
           div class: 'dashboard-metric', style: 'text-align: center; padding: 20px;' do
-            h1 Lead.count, style: 'font-size: 3em; margin-bottom: 10px;' rescue h1 'N/A'
+            begin
+              h1 Lead.count, style: 'font-size: 3em; margin-bottom: 10px;'
+            rescue StandardError
+              h1 'N/A'
+            end
             span 'Leads totais'
           end
         end
@@ -86,10 +89,14 @@ ActiveAdmin.register_page 'Dashboard' do
       column do
         panel 'Ações Rápidas' do
           div class: 'quick-actions', style: 'display: flex; flex-direction: column; gap: 10px; padding: 20px;' do
-            div link_to 'Moderar Empresas', admin_companies_path(scope: 'pending_review'), class: 'button', style: 'width: 100%; text-align: center;'
-            div link_to 'Solicitações de Acesso', admin_company_access_requests_path(scope: 'pending'), class: 'button', style: 'width: 100%; text-align: center;'
-            div link_to 'Nova Categoria', new_admin_category_path, class: 'button', style: 'width: 100%; text-align: center;'
-            div link_to 'Gerenciar Usuários', admin_users_path, class: 'button', style: 'width: 100%; text-align: center;'
+            div link_to 'Moderar Empresas', admin_companies_path(scope: 'pending_review'), class: 'button',
+                                                                                           style: 'width: 100%; text-align: center;'
+            div link_to 'Solicitações de Acesso', admin_company_access_requests_path(scope: 'pending'),
+                        class: 'button', style: 'width: 100%; text-align: center;'
+            div link_to 'Nova Categoria', new_admin_category_path, class: 'button',
+                                                                   style: 'width: 100%; text-align: center;'
+            div link_to 'Gerenciar Usuários', admin_users_path, class: 'button',
+                                                                style: 'width: 100%; text-align: center;'
           end
         end
       end

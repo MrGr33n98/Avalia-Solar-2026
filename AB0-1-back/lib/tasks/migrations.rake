@@ -2,50 +2,50 @@
 
 namespace :db do
   namespace :migrate do
-    desc "Test migration reversibility"
+    desc 'Test migration reversibility'
     task test_reversibility: :environment do
-      puts "🧪 Testing Migration Reversibility"
-      puts "=" * 60
-      
+      puts '🧪 Testing Migration Reversibility'
+      puts '=' * 60
+
       steps = ENV.fetch('STEPS', 5).to_i
-      
+
       # Get current version
       current_version = ActiveRecord::Migrator.current_version
       puts "Current version: #{current_version}"
-      
+
       # Backup
       puts "\n📦 Creating backup..."
       schema_before = File.read('db/schema.rb')
-      
+
       # Rollback
       puts "\n⏪ Rolling back #{steps} step(s)..."
       Rake::Task['db:rollback'].invoke
       ENV['STEP'] = steps.to_s
-      
+
       after_rollback = ActiveRecord::Migrator.current_version
       puts "Version after rollback: #{after_rollback}"
-      
+
       # Re-migrate
       puts "\n⏩ Re-applying migrations..."
       Rake::Task['db:migrate'].reenable
       Rake::Task['db:migrate'].invoke
-      
+
       after_migrate = ActiveRecord::Migrator.current_version
       puts "Version after re-migrate: #{after_migrate}"
-      
+
       # Compare
       puts "\n🔍 Comparing schemas..."
       schema_after = File.read('db/schema.rb')
-      
+
       if schema_before == schema_after
-        puts "✅ SUCCESS: Schema is identical!"
-        puts "   Migrations are properly reversible"
+        puts '✅ SUCCESS: Schema is identical!'
+        puts '   Migrations are properly reversible'
       else
-        puts "⚠️  WARNING: Schema differs"
-        puts "   This might be expected for data migrations"
-        puts "   Run: git diff db/schema.rb"
+        puts '⚠️  WARNING: Schema differs'
+        puts '   This might be expected for data migrations'
+        puts '   Run: git diff db/schema.rb'
       end
-      
+
       if current_version == after_migrate
         puts "\n✅ Version restored correctly"
       else
@@ -54,122 +54,120 @@ namespace :db do
         puts "   Got: #{after_migrate}"
       end
     end
-    
-    desc "Audit all migrations for reversibility"
+
+    desc 'Audit all migrations for reversibility'
     task audit: :environment do
-      puts "📋 Migration Reversibility Audit"
-      puts "=" * 60
-      
-      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb')).sort
-      
+      puts '📋 Migration Reversibility Audit'
+      puts '=' * 60
+
+      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb'))
+
       stats = {
         total: 0,
         with_change: 0,
         with_up_down: 0,
         problematic: []
       }
-      
+
       migration_files.each do |file|
         stats[:total] += 1
         content = File.read(file)
         filename = File.basename(file)
-        
+
         has_change = content.match?(/^\s*def change/)
         has_up = content.match?(/^\s*def up/)
         has_down = content.match?(/^\s*def down/)
-        
+
         if has_change
           stats[:with_change] += 1
-          
+
           # Check for problematic patterns in change method
           problematic_patterns = [
             { pattern: /change_column(?!_null|_default)/, name: 'change_column' },
             { pattern: /execute/, name: 'execute' },
             { pattern: /remove_column/, name: 'remove_column without type' }
           ]
-          
+
           problematic_patterns.each do |check|
-            if content.match?(check[:pattern])
-              stats[:problematic] << {
-                file: filename,
-                issue: "Uses #{check[:name]} in 'def change'"
-              }
-            end
+            next unless content.match?(check[:pattern])
+
+            stats[:problematic] << {
+              file: filename,
+              issue: "Uses #{check[:name]} in 'def change'"
+            }
           end
         elsif has_up && has_down
           stats[:with_up_down] += 1
         else
           stats[:problematic] << {
             file: filename,
-            issue: "No change, up, or down method found"
+            issue: 'No change, up, or down method found'
           }
         end
       end
-      
+
       puts "\n📊 Statistics:"
-      puts "-" * 60
+      puts '-' * 60
       puts "Total migrations:              #{stats[:total]}"
       puts "Using 'def change':            #{stats[:with_change]} (#{(stats[:with_change] * 100.0 / stats[:total]).round}%)"
       puts "Using 'def up/down':           #{stats[:with_up_down]} (#{(stats[:with_up_down] * 100.0 / stats[:total]).round}%)"
       puts "Potentially problematic:       #{stats[:problematic].size}"
-      
+
       if stats[:problematic].any?
         puts "\n⚠️  Problematic Migrations:"
-        puts "-" * 60
+        puts '-' * 60
         stats[:problematic].each do |item|
-          puts "#{item[:file]}"
+          puts(item[:file])
           puts "  → #{item[:issue]}"
         end
-        
+
         puts "\n💡 Recommendations:"
-        puts "  1. Review these migrations manually"
+        puts '  1. Review these migrations manually'
         puts "  2. Convert 'def change' to 'def up/down' for irreversible operations"
-        puts "  3. Test rollback: rails db:rollback"
-        puts "  4. See docs/MIGRATION_BEST_PRACTICES.md for guidance"
+        puts '  3. Test rollback: rails db:rollback'
+        puts '  4. See docs/MIGRATION_BEST_PRACTICES.md for guidance'
       else
         puts "\n✅ All migrations follow best practices!"
       end
-      
+
       puts "\n📚 Resources:"
-      puts "  • Best practices: docs/MIGRATION_BEST_PRACTICES.md"
-      puts "  • Full audit: docs/MIGRATIONS_AUDIT.md"
-      puts "  • Test reversibility: bin/test_migrations"
+      puts '  • Best practices: docs/MIGRATION_BEST_PRACTICES.md'
+      puts '  • Full audit: docs/MIGRATIONS_AUDIT.md'
+      puts '  • Test reversibility: bin/test_migrations'
     end
-    
-    desc "List migrations with def down"
+
+    desc 'List migrations with def down'
     task list_reversible: :environment do
       puts "📋 Migrations with explicit 'def down'"
-      puts "=" * 60
-      
-      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb')).sort
+      puts '=' * 60
+
+      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb'))
       count = 0
-      
+
       migration_files.each do |file|
         content = File.read(file)
-        if content.match?(/^\s*def down/)
-          count += 1
-          filename = File.basename(file)
-          puts "✓ #{filename}"
-          
-          # Show the down method
-          down_method = content.scan(/def down.*?^  end/m).first
-          if down_method && down_method.lines.count < 10
-            puts down_method.lines.map { |l| "    #{l}" }.join
-          end
-          puts
-        end
+        next unless content.match?(/^\s*def down/)
+
+        count += 1
+        filename = File.basename(file)
+        puts "✓ #{filename}"
+
+        # Show the down method
+        down_method = content.scan(/def down.*?^  end/m).first
+        puts down_method.lines.map { |l| "    #{l}" }.join if down_method && down_method.lines.count < 10
+        puts
       end
-      
+
       puts "Total: #{count} migrations with explicit down method"
     end
-    
-    desc "Check for unsafe migration patterns"
+
+    desc 'Check for unsafe migration patterns'
     task check_unsafe: :environment do
-      puts "🔍 Checking for Unsafe Migration Patterns"
-      puts "=" * 60
-      
-      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb')).sort
-      
+      puts '🔍 Checking for Unsafe Migration Patterns'
+      puts '=' * 60
+
+      migration_files = Dir.glob(Rails.root.join('db/migrate/*.rb'))
+
       unsafe_patterns = [
         {
           name: 'Adding column with default on large table',
@@ -202,64 +200,64 @@ namespace :db do
           advice: 'For large tables, use algorithm: :concurrently with disable_ddl_transaction!'
         }
       ]
-      
+
       issues_found = []
-      
+
       migration_files.each do |file|
         content = File.read(file)
         filename = File.basename(file)
-        
+
         unsafe_patterns.each do |check|
-          if content.match?(check[:pattern])
-            issues_found << {
-              file: filename,
-              issue: check[:name],
-              severity: check[:severity],
-              advice: check[:advice]
-            }
-          end
+          next unless content.match?(check[:pattern])
+
+          issues_found << {
+            file: filename,
+            issue: check[:name],
+            severity: check[:severity],
+            advice: check[:advice]
+          }
         end
       end
-      
+
       if issues_found.any?
         # Group by severity
         errors = issues_found.select { |i| i[:severity] == :error }
         warnings = issues_found.select { |i| i[:severity] == :warning }
         infos = issues_found.select { |i| i[:severity] == :info }
-        
+
         if errors.any?
           puts "\n🔴 ERRORS (#{errors.size}):"
-          puts "-" * 60
+          puts '-' * 60
           errors.each do |issue|
-            puts "#{issue[:file]}"
+            puts(issue[:file])
             puts "  ❌ #{issue[:issue]}"
             puts "  💡 #{issue[:advice]}"
             puts
           end
         end
-        
+
         if warnings.any?
           puts "\n⚠️  WARNINGS (#{warnings.size}):"
-          puts "-" * 60
+          puts '-' * 60
           warnings.each do |issue|
-            puts "#{issue[:file]}"
+            puts(issue[:file])
             puts "  ⚠️  #{issue[:issue]}"
             puts "  💡 #{issue[:advice]}"
             puts
           end
         end
-        
+
         if infos.any?
           puts "\n💡 INFO (#{infos.size}):"
-          puts "-" * 60
+          puts '-' * 60
           infos.each do |issue|
-            puts "#{issue[:file]}"
+            puts(issue[:file])
             puts "  ℹ️  #{issue[:issue]}"
             puts "  💡 #{issue[:advice]}"
             puts
           end
         end
-        
+
         puts "\n📊 Summary:"
         puts "  Errors:   #{errors.size}"
         puts "  Warnings: #{warnings.size}"
@@ -267,10 +265,10 @@ namespace :db do
       else
         puts "\n✅ No unsafe patterns detected!"
       end
-      
+
       puts "\n📚 Learn more:"
-      puts "  • docs/MIGRATION_BEST_PRACTICES.md"
-      puts "  • https://github.com/ankane/strong_migrations"
+      puts '  • docs/MIGRATION_BEST_PRACTICES.md'
+      puts '  • https://github.com/ankane/strong_migrations'
     end
   end
 end

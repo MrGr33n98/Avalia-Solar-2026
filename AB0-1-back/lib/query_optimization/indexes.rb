@@ -21,21 +21,21 @@ module QueryOptimization
 
     def self.missing_foreign_key_indexes
       suggestions = []
-      
+
       ActiveRecord::Base.connection.tables.each do |table|
         columns = ActiveRecord::Base.connection.columns(table)
         indexes = ActiveRecord::Base.connection.indexes(table)
         index_columns = indexes.flat_map(&:columns)
 
         columns.each do |column|
-          if column.name.end_with?('_id') && !index_columns.include?(column.name)
-            suggestions << {
-              table: table,
-              column: column.name,
-              type: :foreign_key,
-              migration: "add_index :#{table}, :#{column.name}"
-            }
-          end
+          next unless column.name.end_with?('_id') && !index_columns.include?(column.name)
+
+          suggestions << {
+            table: table,
+            column: column.name,
+            type: :foreign_key,
+            migration: "add_index :#{table}, :#{column.name}"
+          }
         end
       end
 
@@ -55,17 +55,15 @@ module QueryOptimization
     # Generate migration file
     def self.generate_migration
       suggestions = analyze
-      return "No indexes needed" if suggestions.empty?
+      return 'No indexes needed' if suggestions.empty?
 
-      migration = <<~RUBY
+      <<~RUBY
         class AddMissingIndexes < ActiveRecord::Migration[7.0]
           def change
         #{suggestions.map { |s| "    #{s[:migration]}" }.join("\n")}
           end
         end
       RUBY
-
-      migration
     end
   end
 end

@@ -1,8 +1,7 @@
 module Dashboard
   class AccessController < ApplicationController
-    layout "dashboard"
+    layout 'dashboard'
 
-    def waiting_approval
-    end
+    def waiting_approval; end
   end
 end

@@ -34,7 +34,8 @@ module Analytics
     PUBLIC_COMPANY_EVENTS = %w[profile_view cta_click whatsapp_click].freeze
 
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
-      new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
+      new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at,
+          event_id: event_id).call
     end
 
     def initialize(company_id:, event_type:, metadata: {}, user: nil, occurred_at: nil, event_id: nil, user_id: nil)
@@ -77,13 +78,13 @@ module Analytics
         increment_company_counters(company) if company
         increment_yabeda_metrics(event)
         broadcast!(event)
-        
+
         # Send to Mixpanel (async)
         track_mixpanel(event) if should_track_mixpanel?
 
         return Result.new(ok: true, event: event)
       end
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("[Analytics] TrackEventService error: #{e.class} #{e.message}")
       Result.new(ok: false, error: e.message)
     end
@@ -113,9 +114,7 @@ module Analytics
       sanitized = meta.slice(*WHITELIST_KEYS).compact
       sanitized.merge!(sanitize_utm_hash(sanitized))
 
-      if sanitized['attribution'].present?
-        sanitized['attribution'] = sanitize_attribution(sanitized['attribution'])
-      end
+      sanitized['attribution'] = sanitize_attribution(sanitized['attribution']) if sanitized['attribution'].present?
 
       sanitized['landing_path'] = strip_path(sanitized['landing_path'])
       sanitized['referrer_host'] = strip_host(sanitized['referrer_host'])
@@ -161,15 +160,27 @@ module Analytics
 
     def strip_path(value)
       return nil if value.blank?
-      uri = URI.parse(value) rescue nil
+
+      uri = begin
+        URI.parse(value)
+      rescue StandardError
+        nil
+      end
       return value if uri.nil?
+
       uri.path.presence || '/'
     end
 
     def strip_host(value)
       return nil if value.blank?
-      uri = URI.parse(value) rescue nil
+
+      uri = begin
+        URI.parse(value)
+      rescue StandardError
+        nil
+      end
       return value.to_s if uri.nil?
+
       uri.host
     end
 
@@ -205,7 +216,7 @@ module Analytics
       raise if e.is_a?(Pundit::NotAuthorizedError)
 
       Rails.logger.warn("[Analytics] authorize! fallback allow due error=#{e.class}: #{e.message}")
-      return
+      nil
     end
 
     def normalized_event_type
@@ -214,11 +225,12 @@ module Analytics
 
     def increment_daily_stat!(event)
       return if event.company_id.blank?
+
       col = EVENT_TO_DAILY_COLUMN[normalized_event_type]
       return unless col
 
       day = event.tracked_at.to_date
-      
+
       CompanyDailyStat.transaction do
         stat = CompanyDailyStat.lock.find_or_create_by!(company_id: event.company_id, day: day)
         stat.update_column(col, stat.public_send(col).to_i + 1)
@@ -236,15 +248,15 @@ module Analytics
       return unless defined?(Yabeda)
 
       Yabeda.ab0.analytics_events_total.increment({ event_type: normalized_event_type }, by: 1)
-      
-      if normalized_event_type == 'profile_view'
-        Yabeda.ab0.company_views_total.increment({ company_id: event.company_id }, by: 1)
-      end
+
+      return unless normalized_event_type == 'profile_view'
+
+      Yabeda.ab0.company_views_total.increment({ company_id: event.company_id }, by: 1)
     end
 
     def broadcast!(event)
       return unless event.company_id.present?
-      
+
       ActionCable.server.broadcast(
         "company:#{event.company_id}:dashboard",
         {
@@ -258,7 +270,7 @@ module Analytics
     rescue StandardError => e
       Rails.logger.warn("[Analytics] broadcast failed: #{e.message}")
     end
-    
+
     def generate_event_id
       "evt_#{Time.current.to_i}_#{SecureRandom.hex(6)}"
     end
@@ -266,10 +278,10 @@ module Analytics
     def should_track_mixpanel?
       Rails.env.production? || ENV['MIXPANEL_ENABLED'] == 'true'
     end
-    
+
     def track_mixpanel(event)
       return unless ENV['MIXPANEL_PROJECT_TOKEN'].present?
-      
+
       # Use the nested MixpanelJob if it exists, otherwise skip
       return unless defined?(Analytics::MixpanelJob)
 
@@ -285,7 +297,7 @@ module Analytics
           **event.metadata
         }
       )
-    rescue => e
+    rescue StandardError => e
       Rails.logger.warn("[Analytics] Mixpanel job enqueue failed: #{e.message}")
     end
   end

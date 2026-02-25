@@ -68,7 +68,7 @@ module QueryCacheable
     # @return [ActiveRecord::Base, nil]
     def cached_find(id, includes: [], expires_in: 1.hour)
       cache_key = "#{name.underscore}/find/#{id}"
-      
+
       Rails.cache.fetch(cache_key, expires_in: expires_in) do
         relation = includes.any? ? self.includes(*includes) : self
         relation.find_by(id: id)
@@ -82,7 +82,7 @@ module QueryCacheable
     # @return [ActiveRecord::Base, nil]
     def cached_find_by(conditions, includes: [], expires_in: 15.minutes)
       cache_key = "#{name.underscore}/find_by/#{Digest::MD5.hexdigest(conditions.to_json)}"
-      
+
       Rails.cache.fetch(cache_key, expires_in: expires_in) do
         relation = includes.any? ? self.includes(*includes) : self
         relation.find_by(conditions)
@@ -111,7 +111,7 @@ module QueryCacheable
     # @return [Boolean]
     def cached_exists?(conditions, expires_in: 15.minutes)
       cache_key = "#{name.underscore}/exists/#{Digest::MD5.hexdigest(conditions.to_json)}"
-      
+
       Rails.cache.fetch(cache_key, expires_in: expires_in) do
         exists?(conditions)
       end
@@ -142,10 +142,10 @@ module QueryCacheable
     def clear_related_caches
       # Clear model-level caches
       self.class.clear_model_cache if respond_to?(:clear_model_cache)
-      
+
       # Clear instance cache
       clear_instance_cache
-      
+
       Rails.logger.info("🗑️  Cleared caches for #{self.class.name}##{id}")
     end
 
@@ -168,16 +168,16 @@ module QueryCacheable
   # @param expires_in [ActiveSupport::Duration] Expiration time
   # @yield Block that returns the value to cache
   # @return [Object] Cached or calculated value
-  def cache_method(method_name, expires_in: 1.hour, &block)
+  def cache_method(method_name, expires_in: 1.hour, &)
     cache_key = "#{self.class.name.underscore}/#{id}/#{method_name}/#{updated_at.to_i}"
-    
-    Rails.cache.fetch(cache_key, expires_in: expires_in, &block)
+
+    Rails.cache.fetch(cache_key, expires_in: expires_in, &)
   end
 
   # Clear cache for this specific instance
   def clear_cache!
     pattern = "#{self.class.name.underscore}/#{id}"
-    
+
     if defined?(REDIS) && REDIS
       keys = REDIS.keys("cache:#{pattern}*")
       keys.each { |key| Rails.cache.delete(key.sub('cache:', '')) }

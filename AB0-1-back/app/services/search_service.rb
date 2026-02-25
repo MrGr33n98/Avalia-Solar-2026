@@ -28,9 +28,13 @@ class SearchService
     adapter = ActiveRecord::Base.connection.adapter_name.downcase
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
-      scope = Company.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(state) LIKE :q OR LOWER(city) LIKE :q OR LOWER(address) LIKE :q', q: "%#{q_lower}%")
+      scope = Company.where(
+        'LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(state) LIKE :q OR LOWER(city) LIKE :q OR LOWER(address) LIKE :q', q: "%#{q_lower}%"
+      )
     else
-      scope = Company.where('name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q', q: "%#{@query}%")
+      scope = Company.where(
+        'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q', q: "%#{@query}%"
+      )
     end
     scope = scope.by_state(@state).by_city(@city)
     scope = scope.joins(:categories).where(categories: { id: @category_id }) if @category_id.present?
@@ -51,7 +55,8 @@ class SearchService
     adapter = ActiveRecord::Base.connection.adapter_name.downcase
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
-      Category.where('LOWER(name) LIKE :q OR LOWER(short_description) LIKE :q OR LOWER(description) LIKE :q', q: "%#{q_lower}%")
+      Category.where('LOWER(name) LIKE :q OR LOWER(short_description) LIKE :q OR LOWER(description) LIKE :q',
+                     q: "%#{q_lower}%")
     else
       Category.where('name ILIKE :q OR short_description ILIKE :q OR description ILIKE :q', q: "%#{@query}%")
     end

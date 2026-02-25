@@ -7,19 +7,23 @@ class ContentFeedServiceTest < ActiveSupport::TestCase
 
     # Organic articles
     3.times do |i|
-      Article.create!(title: "Organic #{i}", content: 'Body', category: @category, companies: [@company], sponsored: false)
+      Article.create!(title: "Organic #{i}", content: 'Body', category: @category, companies: [@company],
+                      sponsored: false)
     end
     # Sponsored articles
     2.times do |i|
-      Article.create!(title: "Sponsored #{i}", content: 'Body', category: @category, companies: [@company], sponsored: true, sponsored_label: 'AD')
+      Article.create!(title: "Sponsored #{i}", content: 'Body', category: @category, companies: [@company],
+                      sponsored: true, sponsored_label: 'AD')
     end
 
     # Organic campaign reviews
     2.times do |i|
-      CampaignReview.create!(title: "CampOrg #{i}", campaign: Campaign.create!(name: "Camp #{i}"), company: @company, sponsored: false)
+      CampaignReview.create!(title: "CampOrg #{i}", campaign: Campaign.create!(name: "Camp #{i}"), company: @company,
+                             sponsored: false)
     end
     # Sponsored campaign review
-    CampaignReview.create!(title: 'CampSponsored', campaign: Campaign.create!(name: 'Camp S'), company: @company, sponsored: true)
+    CampaignReview.create!(title: 'CampSponsored', campaign: Campaign.create!(name: 'Camp S'), company: @company,
+                           sponsored: true)
   end
 
   test 'feed returns mixed organic and sponsored respecting limit' do
@@ -34,12 +38,16 @@ class ContentFeedServiceTest < ActiveSupport::TestCase
     other_company = Company.create!(name: 'OtherCo', description: 'Other')
     Article.create!(title: 'Other article', content: 'X', category: @category, companies: [other_company])
     feed = ContentFeedService.new(company_id: @company.id, limit: 5).build
-    refute feed.any? { |i| i.is_a?(Article) && i.companies.exists?(other_company.id) }, 'Feed should exclude other company content'
+    refute feed.any? { |i|
+      i.is_a?(Article) && i.companies.exists?(other_company.id)
+    }, 'Feed should exclude other company content'
   end
 
   test 'sponsored interval logic interleaves sponsored items' do
     feed = ContentFeedService.new(company_id: @company.id, limit: 8, sponsored_interval: 2).build
-    sponsored_positions = feed.each_with_index.select { |(item, _)| item.respond_to?(:sponsored) && item.sponsored }.map(&:last)
+    sponsored_positions = feed.each_with_index.select do |(item, _)|
+      item.respond_to?(:sponsored) && item.sponsored
+    end.map(&:last)
     refute sponsored_positions.sort == sponsored_positions.reverse, 'Sponsored items should be interleaved'
   end
 end

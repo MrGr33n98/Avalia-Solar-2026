@@ -11,8 +11,8 @@ class SubmitFinancingProposalJob < ApplicationJob
     Rails.logger.error("[Financing] proposal job error lead=#{lead_id} #{e.message}")
     begin
       lead = Lead.find_by(id: lead_id)
-      lead.update!(wizard_status: 'proposal_failed') if lead
-    rescue
+      lead&.update!(wizard_status: 'proposal_failed')
+    rescue StandardError
     end
   end
 end

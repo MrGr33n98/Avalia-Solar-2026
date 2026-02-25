@@ -1,7 +1,7 @@
 ActiveAdmin.register CompanyAccessRequest do
   menu priority: 11, label: proc {
     pending_count = CompanyAccessRequest.pending.count
-    if pending_count > 0
+    if pending_count.positive?
       "Solicitacoes de Acesso <span class='count'>#{pending_count}</span>".html_safe
     else
       'Solicitacoes de Acesso'
@@ -52,27 +52,25 @@ ActiveAdmin.register CompanyAccessRequest do
 
   action_item :approve, only: :show, if: proc { resource.pending? } do
     link_to 'Approve', '#', class: 'member_link',
-            onclick: build_member_action_form_js.call(
-              path: approve_admin_company_access_request_path(resource),
-              prompt_label: 'Nota opcional para aprovacao:',
-              param_name: 'note'
-            )
+                            onclick: build_member_action_form_js.call(
+                              path: approve_admin_company_access_request_path(resource),
+                              prompt_label: 'Nota opcional para aprovacao:',
+                              param_name: 'note'
+                            )
   end
 
   action_item :reject, only: :show, if: proc { resource.pending? } do
     link_to 'Reject', '#', class: 'member_link',
-            onclick: build_member_action_form_js.call(
-              path: reject_admin_company_access_request_path(resource),
-              prompt_label: 'Motivo da rejeicao (obrigatorio):',
-              param_name: 'reason',
-              required: true
-            )
+                           onclick: build_member_action_form_js.call(
+                             path: reject_admin_company_access_request_path(resource),
+                             prompt_label: 'Motivo da rejeicao (obrigatorio):',
+                             param_name: 'reason',
+                             required: true
+                           )
   end
 
   member_action :approve, method: :put do
-    if resource.approved?
-      redirect_to resource_path, notice: 'Solicitacao ja aprovada.' and return
-    end
+    redirect_to resource_path, notice: 'Solicitacao ja aprovada.' and return if resource.approved?
 
     begin
       # O callback 'handle_approval' no modelo CompanyAccessRequest agora:
@@ -87,17 +85,15 @@ ActiveAdmin.register CompanyAccessRequest do
 
       # Atualizacoes adicionais de usuario se necessario
       user = resource.user
-      if user.respond_to?(:role) && user.role != 'admin'
-        user.update(role: 'company')
-      end
+      user.update(role: 'company') if user.respond_to?(:role) && user.role != 'admin'
 
       # Notificacao via email
       begin
         CompanyAccessMailer.access_granted(resource.user, resource.company).deliver_later
-      rescue => e
+      rescue StandardError => e
         Rails.logger.warn("[Admin::CompanyAccessRequest] mailer failed: #{e.message}")
       end
-      
+
       redirect_to resource_path, notice: 'Acesso aprovado e empresa verificada com sucesso.'
     rescue StandardError => e
       Rails.logger.error("[Admin::CompanyAccessRequest] approve failed id=#{resource.id}: #{e.message}")
@@ -106,9 +102,7 @@ ActiveAdmin.register CompanyAccessRequest do
   end
 
   member_action :reject, method: :put do
-    if resource.rejected?
-      redirect_to resource_path, notice: 'Solicitacao ja rejeitada.' and return
-    end
+    redirect_to resource_path, notice: 'Solicitacao ja rejeitada.' and return if resource.rejected?
 
     reason = params[:reason].presence || 'Motivo nao informado'
     resource.update!(
@@ -151,13 +145,13 @@ ActiveAdmin.register CompanyAccessRequest do
       row :requested_at
       row :reviewed_at
       row :reviewed_by_admin_user
-      
+
       if resource.documents.attached?
         row :documents do
           ul do
             resource.documents.each do |doc|
               li do
-                link_to(doc.filename.to_s, rails_blob_path(doc, disposition: "attachment"), target: "_blank")
+                link_to(doc.filename.to_s, rails_blob_path(doc, disposition: 'attachment'), target: '_blank')
               end
             end
           end

@@ -7,8 +7,9 @@ ActiveAdmin.register AdminUser do
     column :avatar do |admin|
       if admin.avatar_photo.attached?
         begin
-          image_tag url_for(admin.avatar_photo), style: 'border-radius:50%;max-height:50px;max-width:50px;object-fit:cover;'
-        rescue
+          image_tag url_for(admin.avatar_photo),
+                    style: 'border-radius:50%;max-height:50px;max-width:50px;object-fit:cover;'
+        rescue StandardError
           status_tag 'sem avatar', class: 'warning'
         end
       end
@@ -16,7 +17,8 @@ ActiveAdmin.register AdminUser do
     column :name
     column :email
     column :otp_enabled? do |admin|
-      status_tag (admin.otp_required_for_login ? "Habilitado" : "Desabilitado"), (admin.otp_required_for_login ? :ok : :warning)
+      status_tag (admin.otp_required_for_login ? 'Habilitado' : 'Desabilitado'),
+                 (admin.otp_required_for_login ? :ok : :warning)
     end
     column :current_sign_in_at
     column :created_at
@@ -33,9 +35,9 @@ ActiveAdmin.register AdminUser do
       f.input :name
       f.input :email
       f.input :bio
-      f.input :avatar_photo, as: :file, 
-              input_html: { accept: 'image/jpeg,image/png,image/webp' }, 
-              hint: f.object.avatar_photo.attached? ? image_tag(url_for(f.object.avatar_photo), style: 'border-radius:50%;max-height:100px;max-width:100px;object-fit:cover;') : 'Upload JPG/PNG/WebP até 2MB'
+      f.input :avatar_photo, as: :file,
+                             input_html: { accept: 'image/jpeg,image/png,image/webp' },
+                             hint: f.object.avatar_photo.attached? ? image_tag(url_for(f.object.avatar_photo), style: 'border-radius:50%;max-height:100px;max-width:100px;object-fit:cover;') : 'Upload JPG/PNG/WebP até 2MB'
     end
     f.inputs 'Segurança' do
       f.input :password

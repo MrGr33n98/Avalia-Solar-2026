@@ -10,4 +10,3 @@ class CompanyVideo < ApplicationRecord
   validates :provider, inclusion: { in: %w[youtube] }
   validates :video_id, presence: true
 end
-

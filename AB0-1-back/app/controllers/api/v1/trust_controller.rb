@@ -15,7 +15,7 @@ module Api
             badges: [] # To be implemented
           },
           metrics: {
-            response_time_sla: "2h",
+            response_time_sla: '2h',
             roi_accuracy_index: 0.98
           }
         }
@@ -24,9 +24,9 @@ module Api
       # GET /api/v1/trust/widgets/config
       def widgets_config
         render json: {
-          widget_type: "badge",
-          theme: "light",
-          position: "bottom-right",
+          widget_type: 'badge',
+          theme: 'light',
+          position: 'bottom-right',
           api_key: params[:api_key],
           installer_id: @current_company.id
         }
@@ -38,9 +38,9 @@ module Api
         api_key = request.headers['X-Api-Key'] || params[:api_key]
         @current_company = Company.find_by(api_key: api_key)
 
-        unless @current_company
-          render json: { error: 'Unauthorized: Invalid API Key' }, status: :unauthorized
-        end
+        return if @current_company
+
+        render json: { error: 'Unauthorized: Invalid API Key' }, status: :unauthorized
       end
     end
   end

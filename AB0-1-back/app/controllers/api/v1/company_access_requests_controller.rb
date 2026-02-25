@@ -42,7 +42,10 @@ module Api
           )
         end
 
-        existing = current_user.company_access_requests.where(company_id: company.id, status: %w[pending approved]).first
+        existing = current_user.company_access_requests.where(company_id: company.id,
+                                                              status: %w[
+                                                                pending approved
+                                                              ]).first
         if existing
           return render_error_response(
             message: 'SolicitaÃ§Ã£o jÃ¡ existe para esta empresa',

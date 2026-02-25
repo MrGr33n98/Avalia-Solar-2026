@@ -14,10 +14,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return if performed? || @leads.nil?
 
     # Check if status column exists before filtering
-    if params[:status].present? && ::Lead.column_names.include?('status')
-      @leads = @leads.where(status: params[:status])
-    end
-    
+    @leads = @leads.where(status: params[:status]) if params[:status].present? && ::Lead.column_names.include?('status')
+
     if current_user&.admin? && (params[:company_id].present? || params[:company_name].present?)
       cid = params[:company_id].presence && params[:company_id].to_i
       cname = params[:company_name].presence
@@ -32,12 +30,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
         @leads = @leads.where(company: cname)
       end
     end
-    
+
     # Only order by created_at if the column exists
-    if ::Lead.column_names.include?('created_at')
-      @leads = @leads.order(created_at: :desc)
-    end
-    
+    @leads = @leads.order(created_at: :desc) if ::Lead.column_names.include?('created_at')
+
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
@@ -55,7 +51,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
     # For review users, list leads matching their email
     @leads = ::Lead.where(email: current_user.email).order(created_at: :desc)
-    
+
     render json: {
       data: @leads.map { |l| serialize_lead(l) },
       meta: { page: 1, total_pages: 1, total_count: @leads.count }
@@ -90,12 +86,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def create
     @lead = ::Lead.new(lead_params)
-    
+
     # Injeta localização da borda (Cloudflare) se não fornecida
     if @edge_location.present?
       @lead.city = @edge_location[:city] if @lead.respond_to?(:city) && @lead.city.blank?
@@ -128,7 +125,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     lead = ::Lead.new(payload.except(:full_name, :consent))
     utm_data = extract_utm_payload
     attribution = sanitize_attribution_payload(params[:attribution] || params.dig(:lead, :attribution))
-    
+
     # Injeta localização da borda (Cloudflare) se não fornecida
     if @edge_location.present?
       lead.city = @edge_location[:city] if lead.respond_to?(:city) && lead.city.blank?
@@ -139,9 +136,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     lead.wizard_status = 'pending_otp'
     lead.consent_at = Time.current if truthy?(payload[:consent])
     lead.consent_ip = request.remote_ip if lead.consent_at.present?
-    if lead.address_full.present? && lead.respond_to?(:location=)
-      lead.location = lead.address_full
-    end
+    lead.location = lead.address_full if lead.address_full.present? && lead.respond_to?(:location=)
 
     lead.bill_value = parse_decimal(lead.bill_value)
     lead.monthly_kwh = parse_decimal(lead.monthly_kwh)
@@ -198,7 +193,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
     unless @lead.otp_can_resend?
       retry_in = ::Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
-      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i }, status: :too_many_requests
+      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i },
+                    status: :too_many_requests
     end
 
     otp_code = @lead.generate_otp!
@@ -232,14 +228,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
       return render json: { error: 'Verification attempts exceeded' }, status: :unprocessable_entity
     end
 
-    if @lead.otp_expired?
-      return render json: { error: 'Verification code expired' }, status: :unprocessable_entity
-    end
+    return render json: { error: 'Verification code expired' }, status: :unprocessable_entity if @lead.otp_expired?
 
     otp_code = params[:otp_code].presence || params.dig(:lead, :otp_code)
-    if otp_code.blank?
-      return render json: { error: 'Verification code is required' }, status: :unprocessable_entity
-    end
+    return render json: { error: 'Verification code is required' }, status: :unprocessable_entity if otp_code.blank?
 
     unless @lead.valid_otp?(otp_code)
       @lead.increment_otp_attempts!
@@ -249,7 +241,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     companies = []
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
-      
+
       Analytics::TrackEventService.call(
         event_type: 'lead_verified',
         company_id: @lead.company_id,
@@ -303,7 +295,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def destroy
@@ -313,7 +306,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   private
@@ -351,6 +345,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def ensure_leads_access!
     return if performed? || current_user.nil?
+
     scoped_leads
   end
 
@@ -382,7 +377,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def lead_params
-    base_keys = [:name, :email, :phone, :message]
+    base_keys = %i[name email phone message]
     optional_keys = []
     columns = ::Lead.column_names
     optional_keys << :project_type if columns.include?('project_type')
@@ -515,36 +510,49 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def sanitize_utm_value(val)
     return nil if val.blank?
+
     val.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
   end
 
   def strip_path(path)
     return nil if path.blank?
-    uri = URI.parse(path) rescue nil
+
+    uri = begin
+      URI.parse(path)
+    rescue StandardError
+      nil
+    end
     uri&.path.presence || path
   end
 
   def strip_host(ref)
     return nil if ref.blank?
-    uri = URI.parse(ref) rescue nil
+
+    uri = begin
+      URI.parse(ref)
+    rescue StandardError
+      nil
+    end
     uri&.host || ref
   end
 
   def apply_utm_to_lead(lead, utm_data, attribution)
     return if lead.nil?
+
     utm_data.each do |key, value|
       next if value.blank?
+
       lead.send("#{key}=", value) if lead.respond_to?("#{key}=")
     end
 
-    if attribution.present?
-      landing = attribution.dig('last_touch', 'landing_path') || attribution.dig(:last_touch, :landing_path)
-      ref_host = attribution.dig('last_touch', 'referrer_host') || attribution.dig(:last_touch, :referrer_host)
+    return unless attribution.present?
 
-      lead.landing_path = strip_path(landing) if lead.respond_to?(:landing_path=)
-      lead.referrer_host = strip_host(ref_host) if lead.respond_to?(:referrer_host=)
-      lead.attribution_json = attribution if lead.respond_to?(:attribution_json=)
-    end
+    landing = attribution.dig('last_touch', 'landing_path') || attribution.dig(:last_touch, :landing_path)
+    ref_host = attribution.dig('last_touch', 'referrer_host') || attribution.dig(:last_touch, :referrer_host)
+
+    lead.landing_path = strip_path(landing) if lead.respond_to?(:landing_path=)
+    lead.referrer_host = strip_host(ref_host) if lead.respond_to?(:referrer_host=)
+    lead.attribution_json = attribution if lead.respond_to?(:attribution_json=)
   end
 
   def truthy?(value)

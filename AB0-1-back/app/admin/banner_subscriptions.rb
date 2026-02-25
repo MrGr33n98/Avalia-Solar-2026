@@ -1,5 +1,6 @@
 ActiveAdmin.register BannerSubscription do
-  permit_params :company_id, :banner_offer_id, :status, :provider, :checkout_session_id, :payment_reference, :starts_at, :ends_at
+  permit_params :company_id, :banner_offer_id, :status, :provider, :checkout_session_id, :payment_reference,
+                :starts_at, :ends_at
 
   index do
     selectable_column

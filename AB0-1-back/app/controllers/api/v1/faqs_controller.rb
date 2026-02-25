@@ -15,7 +15,8 @@ class Api::V1::FaqsController < Api::V1::BaseController
     faqs = faqs.limit(per_page).offset(offset)
 
     render json: {
-      faqs: faqs.as_json(only: %i[id question answer category position active], methods: %i[helpful_total helpful_yes helpful_no]),
+      faqs: faqs.as_json(only: %i[id question answer category position active],
+                         methods: %i[helpful_total helpful_yes helpful_no]),
       pagination: pagination_meta(faqs)
     }
   end

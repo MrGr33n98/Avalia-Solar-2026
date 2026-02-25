@@ -22,6 +22,7 @@ class CompanySectorQuestion < ApplicationRecord
 
   def assign_default_order
     return if order.present?
+
     self.order = (company.company_sector_questions.maximum(:order) || 0) + 1
   end
 

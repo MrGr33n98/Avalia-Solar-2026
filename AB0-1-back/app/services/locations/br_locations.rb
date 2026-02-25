@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'set'
 
 module Locations
   class BrLocations
@@ -68,7 +67,7 @@ module Locations
           @states_by_acronym[acronym] = state
           cities = Array(state['cities']).map { |city| normalize_city_value(city) }.compact
           @cities_by_state[acronym] = cities
-          @cities_by_state_normalized[acronym] = cities.map { |city| normalize_city_key(city) }.to_set
+          @cities_by_state_normalized[acronym] = cities.to_set { |city| normalize_city_key(city) }
         end
 
         @indexed = true

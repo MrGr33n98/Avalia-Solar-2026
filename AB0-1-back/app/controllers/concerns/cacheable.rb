@@ -25,7 +25,7 @@ module Cacheable
   # @param options [Hash] Options including :expires_in, :skip_cache
   # @yield Block that returns the data to cache
   # @return [void] Renders JSON response
-  def cached_json(key, options = {}, &block)
+  def cached_json(key, options = {})
     skip_cache = options[:skip_cache] || params[:skip_cache].present?
     expires_in = options[:expires_in] || 15.minutes
 
@@ -63,10 +63,11 @@ module Cacheable
                    params_hash.to_h
                  end
 
-    cache_params = raw_params.symbolize_keys.slice(:company_id, :category_id, :product_id, :status, :featured, :limit, :page)
-                          .compact
-                          .sort
-                          .to_h
+    cache_params = raw_params.symbolize_keys.slice(:company_id, :category_id, :product_id, :status, :featured, :limit,
+                                                   :page)
+                             .compact
+                             .sort
+                             .to_h
 
     # Generate key
     key_parts = [controller_name, action, resource]
@@ -119,8 +120,8 @@ module Cacheable
   # @param expires_in [ActiveSupport::Duration] Expiration time
   # @yield Block that returns the data to cache
   # @return [Object] Cached or computed result
-  def cache_fetch(key, expires_in: 1.hour, &block)
-    Rails.cache.fetch(key, expires_in: expires_in, race_condition_ttl: 5.seconds, &block)
+  def cache_fetch(key, expires_in: 1.hour, &)
+    Rails.cache.fetch(key, expires_in: expires_in, race_condition_ttl: 5.seconds, &)
   end
 
   # Check if caching is enabled for current environment

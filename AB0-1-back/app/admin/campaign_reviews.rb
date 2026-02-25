@@ -1,5 +1,6 @@
 ActiveAdmin.register CampaignReview do
-  permit_params :product_id, :company_id, :title, :code, :member_id, :share_code, :goal, :achieved, :debutants, :shares, :prize, :start_at, :end_at, :sponsored
+  permit_params :product_id, :company_id, :title, :code, :member_id, :share_code, :goal, :achieved, :debutants,
+                :shares, :prize, :start_at, :end_at, :sponsored
 
   filter :title
   filter :company

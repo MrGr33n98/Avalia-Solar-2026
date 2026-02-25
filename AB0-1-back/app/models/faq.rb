@@ -8,6 +8,7 @@ class Faq < ApplicationRecord
   scope :by_category, ->(category) { where(category: category) if category.present? }
   scope :search, lambda { |query|
     return all if query.blank?
+
     where('question ILIKE :q OR answer ILIKE :q OR category ILIKE :q', q: "%#{query}%")
   }
 

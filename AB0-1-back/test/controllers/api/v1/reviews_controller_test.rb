@@ -30,4 +30,3 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
     refute_includes ids, @rev_a2.id
   end
 end
-

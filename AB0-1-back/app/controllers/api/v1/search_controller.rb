@@ -112,7 +112,8 @@ module Api
         adapter = ActiveRecord::Base.connection.adapter_name.downcase
         if adapter.include?('sqlite')
           q_lower = query.downcase
-          companies = Company.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(address) LIKE :q', q: "%#{q_lower}%")
+          companies = Company.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(address) LIKE :q',
+                                    q: "%#{q_lower}%")
                              .by_state(state)
                              .by_city(city)
                              .limit(10)

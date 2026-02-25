@@ -5,7 +5,7 @@ class NotificationMailer < ApplicationMailer
   # Generic notification email
   def notify(recipient_email, subject, message)
     @message = message
-    
+
     mail(
       to: recipient_email,
       subject: subject

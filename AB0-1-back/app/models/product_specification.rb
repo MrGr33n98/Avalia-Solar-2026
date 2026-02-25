@@ -42,6 +42,7 @@ class ProductSpecification < ApplicationRecord
 
   def value_presence_for_required
     return unless spec_template&.required?
+
     errors.add(:base, "value required for #{spec_template.key}") if value.blank?
   end
 end

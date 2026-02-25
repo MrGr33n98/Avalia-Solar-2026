@@ -13,7 +13,8 @@ RSpec.describe Review, type: :model do
 
     context 'when review status transitions to approved' do
       it 'instruments review.published event' do
-        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published', hash_including(review_id: review.id))
+        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published',
+                                                                          hash_including(review_id: review.id))
 
         review.update!(status: :approved)
       end
@@ -22,7 +23,8 @@ RSpec.describe Review, type: :model do
     context 'when review is created as approved' do
       it 'instruments review.published event' do
         review_approved = build(:review, status: :approved)
-        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published', hash_including(review_id: anything))
+        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published',
+                                                                          hash_including(review_id: anything))
 
         review_approved.save!
       end

@@ -23,7 +23,7 @@ class WelcomeEmailJobTest < ActiveJob::TestCase
 
   test 'should send email to correct recipient' do
     WelcomeEmailJob.perform_now(@user.id)
-    
+
     email = ActionMailer::Base.deliveries.last
     assert_equal [@user.email], email.to
     assert_match(/Bem-vindo/, email.subject)
@@ -32,24 +32,24 @@ class WelcomeEmailJobTest < ActiveJob::TestCase
   test 'should log success' do
     logger_mock = Minitest::Mock.new
     logger_mock.expect :info, nil, [String]
-    
+
     Rails.stub :logger, logger_mock do
       WelcomeEmailJob.perform_now(@user.id)
     end
-    
+
     logger_mock.verify
   end
 
   test 'should handle missing user' do
     assert_raises(ActiveRecord::RecordNotFound) do
-      WelcomeEmailJob.perform_now(99999)
+      WelcomeEmailJob.perform_now(99_999)
     end
   end
 
   test 'should be discarded on RecordNotFound' do
     # Test that job is configured to discard on missing records
-    job = WelcomeEmailJob.new(99999)
-    
+    job = WelcomeEmailJob.new(99_999)
+
     assert_nothing_raised do
       # This should be caught by discard_on
       job.rescue_with_handler(ActiveRecord::RecordNotFound.new)

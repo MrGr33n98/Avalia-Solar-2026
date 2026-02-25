@@ -26,6 +26,6 @@ module Notifiable
 
   # Check if has unread notifications
   def has_unread_notifications?
-    unread_notifications_count > 0
+    unread_notifications_count.positive?
   end
 end

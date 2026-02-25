@@ -11,7 +11,7 @@ module Api
 
         def set_company
           @company =
-            if current_user&.respond_to?(:admin?) && current_user.admin? && params[:company_id].present?
+            if current_user.respond_to?(:admin?) && current_user.admin? && params[:company_id].present?
               ::Company.find(params[:company_id])
             else
               current_user&.company

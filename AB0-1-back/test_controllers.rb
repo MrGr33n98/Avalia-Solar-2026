@@ -1,7 +1,7 @@
 # Testar endpoints diretamente no Rails console
 require_relative 'config/environment'
 
-puts "Testing LeadsController..."
+puts 'Testing LeadsController...'
 
 # Simular uma requisição para leads
 begin
@@ -9,7 +9,7 @@ begin
   controller.params = { status: 'pending' }
   result = controller.index
   puts "✅ LeadsController#index result: #{result}"
-rescue => e
+rescue StandardError => e
   puts "❌ LeadsController#index error: #{e.message}"
   puts e.backtrace[0..5]
 end
@@ -22,7 +22,7 @@ begin
   controller.params = { id: '5' }
   result = controller.analytics_traffic
   puts "✅ CompaniesController#analytics_traffic result: #{result}"
-rescue => e
+rescue StandardError => e
   puts "❌ CompaniesController#analytics_traffic error: #{e.message}"
   puts e.backtrace[0..5]
 end

@@ -1,5 +1,6 @@
 class AiModerationWorker
   include Sidekiq::Job
+
   sidekiq_options queue: 'default'
 
   def perform(review_id)

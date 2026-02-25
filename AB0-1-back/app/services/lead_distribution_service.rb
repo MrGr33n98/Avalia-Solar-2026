@@ -70,6 +70,7 @@ class LeadDistributionService
 
     candidates.each do |company|
       next if selected.include?(company)
+
       selected << company
       break if selected.size >= 3
     end
@@ -104,13 +105,9 @@ class LeadDistributionService
     state = lead.state.to_s.strip.upcase
     city = lead.city.to_s.strip.downcase
 
-    if require_state && state.present?
-      return false unless state_match?(company, state)
-    end
+    return false if require_state && state.present? && !state_match?(company, state)
 
-    if require_city && city.present?
-      return false unless city_match?(company, city)
-    end
+    return false if require_city && city.present? && !city_match?(company, city)
 
     true
   end

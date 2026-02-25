@@ -26,7 +26,7 @@ ActiveAdmin.register FinancingOption, namespace: :financiamentos do
 
   form do |f|
     f.semantic_errors
-    
+
     f.inputs 'Empresa e Instituição' do
       f.input :company
       f.input :institution_name
@@ -58,26 +58,26 @@ ActiveAdmin.register FinancingOption, namespace: :financiamentos do
       row :credit_line
       row :target_audience
       row :active
-      
+
       row 'Taxas' do |o|
         "#{o.interest_rate_percent}% (#{o.interest_rate_details})"
       end
-      
+
       row 'Prazos' do |o|
         "Até #{o.max_term_months} meses (Carência: #{o.grace_period_months} meses)"
       end
 
       row 'Filtros' do |o|
         div do
-          strong "Serviços: "
+          strong 'Serviços: '
           span o.service_filters
         end
         div do
-          strong "Projetos: "
+          strong 'Projetos: '
           span o.project_filters
         end
         div do
-          strong "Categorias: "
+          strong 'Categorias: '
           span o.category_filters
         end
       end

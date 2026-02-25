@@ -4,8 +4,8 @@ require 'json'
 
 module FinancialGatewayService
   def self.submit_proposal(lead, option_id)
-    url = ENV['FINANCIAL_GATEWAY_URL']
-    token = ENV['FINANCIAL_GATEWAY_TOKEN']
+    url = ENV.fetch('FINANCIAL_GATEWAY_URL', nil)
+    token = ENV.fetch('FINANCIAL_GATEWAY_TOKEN', nil)
     return true if url.to_s.strip.empty? || token.to_s.strip.empty?
 
     uri = URI.parse("#{url}/proposals")

@@ -63,7 +63,7 @@ class Lead < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    ["company", "lead_distributions"]
+    %w[company lead_distributions]
   end
 
   def wizard_validation_required?
@@ -102,6 +102,7 @@ class Lead < ApplicationRecord
 
   def valid_otp?(code)
     return false if otp_code_digest.blank?
+
     BCrypt::Password.new(otp_code_digest).is_password?(code.to_s)
   end
 
@@ -155,9 +156,7 @@ class Lead < ApplicationRecord
   def apply_address_fallbacks
     return if address_full.blank?
 
-    if respond_to?(:location) && respond_to?(:location=) && location.blank?
-      self.location = address_full
-    end
+    self.location = address_full if respond_to?(:location) && respond_to?(:location=) && location.blank?
     return if city.present? && state.present? && zipcode.present?
 
     extracted = self.class.extract_address_parts(address_full)
@@ -172,6 +171,7 @@ class Lead < ApplicationRecord
 
   def track_analytics_event
     return if company_id.blank?
+
     estimated_budget_value = has_attribute?(:estimated_budget) ? self[:estimated_budget] : nil
     project_type_value = has_attribute?(:project_type) ? self[:project_type] : nil
 

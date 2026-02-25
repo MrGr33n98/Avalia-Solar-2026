@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  skip_before_action :verify_authenticity_token, only: [:google_oauth2, :linkedin]
+  skip_before_action :verify_authenticity_token, only: %i[google_oauth2 linkedin]
 
   def google_oauth2
     handle_oauth('Google')
@@ -24,17 +24,17 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       # Check if user needs admin approval
       if @user.company_user? && !@user.approved_by_admin?
         # User exists but needs approval
-        flash[:notice] = "Sua conta foi criada e está aguardando aprovação do administrador."
+        flash[:notice] = 'Sua conta foi criada e está aguardando aprovação do administrador.'
         redirect_to new_user_session_path
       elsif !@user.active?
         # User is rejected or blocked
         flash[:alert] = case @user.status
                         when 'rejected'
-                          "Sua conta foi rejeitada. Entre em contato com o suporte."
+                          'Sua conta foi rejeitada. Entre em contato com o suporte.'
                         when 'blocked'
-                          "Sua conta foi bloqueada. Entre em contato com o suporte."
+                          'Sua conta foi bloqueada. Entre em contato com o suporte.'
                         else
-                          "Sua conta está inativa. Entre em contato com o suporte."
+                          'Sua conta está inativa. Entre em contato com o suporte.'
                         end
         redirect_to new_user_session_path
       else

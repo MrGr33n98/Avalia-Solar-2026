@@ -4,7 +4,8 @@ RSpec.describe 'Faqs API', type: :request do
   describe 'GET /api/v1/faqs' do
     it 'returns active faqs filtered by category' do
       create(:company) # ensure deps
-      faq_a = Faq.create!(question: 'Como contratar?', answer: 'Pelo site', category: 'geral', position: 1, active: true)
+      faq_a = Faq.create!(question: 'Como contratar?', answer: 'Pelo site', category: 'geral', position: 1,
+                          active: true)
       Faq.create!(question: 'Inativo', answer: 'N/A', category: 'geral', active: false)
       faq_b = Faq.create!(question: 'Garantia', answer: '12 meses', category: 'pos-venda', active: true)
 
@@ -19,7 +20,8 @@ RSpec.describe 'Faqs API', type: :request do
 
   describe 'POST /api/v1/faqs/:id/vote' do
     it 'increments helpful counters' do
-      faq = Faq.create!(question: 'Entrega', answer: 'Em ate 7 dias', category: 'logistica', helpful_yes: 1, helpful_no: 0)
+      faq = Faq.create!(question: 'Entrega', answer: 'Em ate 7 dias', category: 'logistica', helpful_yes: 1,
+                        helpful_no: 0)
 
       post "/api/v1/faqs/#{faq.id}/vote", params: { helpful: true }
 

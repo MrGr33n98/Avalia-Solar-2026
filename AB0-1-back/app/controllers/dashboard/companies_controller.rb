@@ -15,7 +15,7 @@ module Dashboard
             updated_fields: company_params.keys
           }
         )
-        redirect_to edit_dashboard_company_path, notice: "Empresa atualizada com sucesso."
+        redirect_to edit_dashboard_company_path, notice: 'Empresa atualizada com sucesso.'
       else
         render :edit, status: :unprocessable_entity
       end

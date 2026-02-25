@@ -35,7 +35,7 @@ module Paginatable
   def per_page_param
     per_page = params[:per_page].to_i
     return DEFAULT_PER_PAGE if per_page <= 0
-    
+
     [per_page, MAX_PER_PAGE].min
   end
 
@@ -47,33 +47,33 @@ module Paginatable
   # Add pagination metadata to response headers
   def set_pagination_headers(collection = nil)
     collection ||= @pagy || @collection
-    return unless collection&.respond_to?(:current_page)
+    return unless collection.respond_to?(:current_page)
 
     headers['X-Page'] = collection.current_page.to_s
     headers['X-Per-Page'] = collection.limit_value.to_s
     headers['X-Total'] = collection.total_count.to_s
     headers['X-Total-Pages'] = collection.total_pages.to_s
-    
+
     # Link header for API navigation
     links = []
     base_url = request.base_url + request.path
-    
+
     # First page
     links << %(<#{base_url}?page=1&per_page=#{collection.limit_value}>; rel="first")
-    
+
     # Previous page
     if collection.prev_page
       links << %(<#{base_url}?page=#{collection.prev_page}&per_page=#{collection.limit_value}>; rel="prev")
     end
-    
+
     # Next page
     if collection.next_page
       links << %(<#{base_url}?page=#{collection.next_page}&per_page=#{collection.limit_value}>; rel="next")
     end
-    
+
     # Last page
     links << %(<#{base_url}?page=#{collection.total_pages}&per_page=#{collection.limit_value}>; rel="last")
-    
+
     headers['Link'] = links.join(', ') if links.any?
   end
 
@@ -92,17 +92,17 @@ module Paginatable
   end
 
   # Render paginated JSON response
-  def render_paginated(collection, serializer: nil, **options)
+  def render_paginated(collection, serializer: nil, **)
     paginated = paginate(collection)
     @collection = paginated
-    
+
     response_data = {
       data: serializer ? paginated.map { |item| serializer.new(item) } : paginated,
       meta: {
         pagination: pagination_metadata(paginated)
       }
     }
-    
-    render json: response_data, **options
+
+    render(json: response_data, **)
   end
 end

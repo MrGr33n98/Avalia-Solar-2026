@@ -129,7 +129,7 @@ RSpec.describe 'Admin Companies Edit', type: :request do
 
   describe 'POST /admin/companies' do
     it 'creates a company without CNPJ' do
-      expect {
+      expect do
         post admin_companies_path, params: {
           company: {
             name: 'Empresa Sem CNPJ via Admin',
@@ -138,7 +138,7 @@ RSpec.describe 'Admin Companies Edit', type: :request do
             cnpj: ''
           }
         }
-      }.to change(Company, :count).by(1)
+      end.to change(Company, :count).by(1)
 
       created_company = Company.order(:id).last
 

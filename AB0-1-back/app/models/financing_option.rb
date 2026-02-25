@@ -11,7 +11,8 @@ class FinancingOption < ApplicationRecord
   validates :target_audience, presence: true, if: :active?
   validates :max_term_months, numericality: { only_integer: true, greater_than_or_equal_to: 1 }, allow_nil: true
   validates :grace_period_months, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :interest_rate_percent, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 50 }, allow_nil: true
+  validates :interest_rate_percent, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 50 },
+                                    allow_nil: true
   validate :validate_grace_period_within_term
 
   def filters

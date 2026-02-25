@@ -1,4 +1,3 @@
-
 require 'active_record'
 
 # Conecta ao banco de dados

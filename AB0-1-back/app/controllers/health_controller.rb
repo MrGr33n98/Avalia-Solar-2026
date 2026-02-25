@@ -135,7 +135,7 @@ class HealthController < ActionController::API
     processes = Sidekiq::ProcessSet.new.size
 
     {
-      status: processes > 0 ? 'ok' : 'warning',
+      status: processes.positive? ? 'ok' : 'warning',
       processes: processes,
       enqueued: stats.enqueued,
       busy: stats.processed,
@@ -170,7 +170,11 @@ class HealthController < ActionController::API
 
   # Calculate application uptime
   def calculate_uptime
-    start_time = Rails.application.config.app_start_time rescue nil
+    start_time = begin
+      Rails.application.config.app_start_time
+    rescue StandardError
+      nil
+    end
     return 'N/A' unless start_time
 
     seconds = Time.current - start_time
@@ -202,7 +206,7 @@ class HealthController < ActionController::API
 
     df_output = `df -h #{Rails.root}`.lines.last
     parts = df_output.split
-    
+
     {
       filesystem: parts[0],
       size: parts[1],

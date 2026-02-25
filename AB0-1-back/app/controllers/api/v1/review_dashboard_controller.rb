@@ -13,7 +13,8 @@ module Api
 
         # KPIs
         quotes_total = Lead.where(email: current_user.email).count
-        quotes_open = Lead.where(email: current_user.email).where(wizard_status: ['draft', 'pending_otp', 'verified']).count
+        quotes_open = Lead.where(email: current_user.email).where(wizard_status: %w[draft pending_otp
+                                                                                    verified]).count
         quotes_replied = Lead.where(email: current_user.email).where(wizard_status: 'proposal_sent').count
         reviews_published = Review.where(user_id: current_user.id, status: :approved).count
 
@@ -22,13 +23,13 @@ module Api
         # For simplicity, we'll return daily counts of their leads and reviews created
         daily_leads = Lead.where(email: current_user.email)
                           .where(created_at: start_date..end_date)
-                          .group("DATE(created_at)")
+                          .group('DATE(created_at)')
                           .count
 
-        daily_reviews = Review.where(user_id: current_user.id)
-                             .where(created_at: start_date..end_date)
-                             .group("DATE(created_at)")
-                             .count
+        Review.where(user_id: current_user.id)
+              .where(created_at: start_date..end_date)
+              .group('DATE(created_at)')
+              .count
 
         # Format chart data
         chart_data = (start_date.to_date..end_date.to_date).map do |date|
@@ -45,7 +46,7 @@ module Api
         missing_fields << 'avatar' unless current_user.avatar.attached?
         missing_fields << 'city' if current_user.city.blank?
         missing_fields << 'state' if current_user.state.blank?
-        
+
         completion_percent = 100
         completion_percent -= 20 if current_user.avatar.blank?
         completion_percent -= 20 if current_user.city.blank?

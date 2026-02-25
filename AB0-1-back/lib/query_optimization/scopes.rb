@@ -8,7 +8,7 @@ module QueryOptimization
 
     included do
       # Paginate with default per_page
-      scope :paginated, ->(page = 1, per_page = 25) {
+      scope :paginated, lambda { |page = 1, per_page = 25|
         page(page).per(per_page)
       }
 
@@ -41,7 +41,7 @@ module QueryOptimization
 
       # Check existence efficiently (faster than .exists?)
       def self.any?
-        limit(1).size > 0
+        limit(1).size.positive?
       end
     end
 

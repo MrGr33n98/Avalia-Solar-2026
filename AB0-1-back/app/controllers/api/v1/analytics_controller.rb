@@ -16,7 +16,8 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     end
 
     raw_type = params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence
-    company_id = params[:company_id].presence || params.dig(:company, :id).presence || params.dig(:analytic, :company_id).presence
+    company_id = params[:company_id].presence || params.dig(:company,
+                                                            :id).presence || params.dig(:analytic, :company_id).presence
     event_id = params[:event_id].presence || params.dig(:analytic, :event_id).presence
     metadata =
       normalize_hash_param(params[:metadata]) ||
@@ -60,7 +61,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     scope = scope.where(company_id: company_id) if company_id.present?
 
     grouped = scope.group(:event_type).count
-    daily = scope.group("DATE(tracked_at)").count
+    daily = scope.group('DATE(tracked_at)').count
 
     render json: {
       metrics: grouped,
@@ -103,8 +104,6 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       value.to_unsafe_h
     when Hash
       value
-    else
-      nil
     end
   end
 end

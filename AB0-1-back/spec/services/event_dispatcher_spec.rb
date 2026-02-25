@@ -10,10 +10,10 @@ RSpec.describe EventDispatcher do
 
     context 'when event is review.published' do
       it 'enqueues TrustScoreRecalculationWorker and AiModerationWorker' do
-        expect {
+        expect do
           described_class.dispatch('review.published', nil, nil, nil, payload)
-        }.to change(TrustScoreRecalculationWorker.jobs, :size).by(1)
-        .and change(AiModerationWorker.jobs, :size).by(1)
+        end.to change(TrustScoreRecalculationWorker.jobs, :size).by(1)
+                                                                .and change(AiModerationWorker.jobs, :size).by(1)
 
         expect(TrustScoreRecalculationWorker.jobs.last['args']).to eq([review_id])
         expect(AiModerationWorker.jobs.last['args']).to eq([review_id])
@@ -22,9 +22,9 @@ RSpec.describe EventDispatcher do
 
     context 'when event is unknown' do
       it 'does nothing' do
-        expect {
+        expect do
           described_class.dispatch('unknown.event', nil, nil, nil, payload)
-        }.not_to change(TrustScoreRecalculationWorker.jobs, :size)
+        end.not_to change(TrustScoreRecalculationWorker.jobs, :size)
       end
     end
   end

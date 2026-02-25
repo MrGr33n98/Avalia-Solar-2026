@@ -3,7 +3,7 @@
 # Send notification via email - TASK-019
 class NotificationEmailJob < ApplicationJob
   queue_as :mailers
-  
+
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
   discard_on ActiveRecord::RecordNotFound
 

@@ -10,12 +10,12 @@ module Scripts
 end
 
 # CORREÇÃO: Impede a execução automática durante o boot do Rails
-if __FILE__ == $0 || defined?(Rails::Console)
+if __FILE__ == $PROGRAM_NAME || defined?(Rails::Console)
 
-puts "🔧 Configurando botão WhatsApp para empresas..."
-puts "=" * 60
+  puts '🔧 Configurando botão WhatsApp para empresas...'
+  puts '=' * 60
 
-# Perguntar qual empresa configurar
-print "\nDigite o ID da empresa (ou 'all' para todas): "
-# ... resto do seu código original continua igual abaixo ...
+  # Perguntar qual empresa configurar
+  print "\nDigite o ID da empresa (ou 'all' para todas): "
+  # ... resto do seu código original continua igual abaixo ...
 end

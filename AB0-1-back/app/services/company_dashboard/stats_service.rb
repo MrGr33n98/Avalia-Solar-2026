@@ -24,6 +24,7 @@ module CompanyDashboard
 
     def analytics_count(event_type)
       return 0 unless @company&.id
+
       AnalyticsEvent.where(company_id: @company.id, event_type: event_type).count
     end
 
@@ -32,7 +33,7 @@ module CompanyDashboard
     end
 
     def reviews_count
-      @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : (@company.reviews.size)
+      @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : @company.reviews.size
     end
 
     def pending_approvals_count
@@ -44,7 +45,7 @@ module CompanyDashboard
     end
 
     def active_campaigns_count
-      if @company&.campaigns&.respond_to?(:active)
+      if @company&.campaigns.respond_to?(:active)
         @company.campaigns.active.count
       else
         @company&.campaigns&.count || 0
@@ -55,7 +56,7 @@ module CompanyDashboard
       views = safe_count(:profile_views_count) + analytics_count('view')
       leads = @company.leads.count
       return 0 if views.zero?
-      
+
       ((leads.to_f / views) * 100).round(2)
     end
 

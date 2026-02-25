@@ -17,9 +17,9 @@
 def analytics_historical
   @company = Company.find(params[:id])
   days = params[:days]&.to_i || 30
-  
+
   data = generate_historical_data(@company, days)
-  
+
   render json: { data: data }
 rescue ActiveRecord::RecordNotFound
   render json: { error: 'Company not found' }, status: :not_found
@@ -29,9 +29,9 @@ end
 def analytics_reviews
   @company = Company.find(params[:id])
   reviews = @company.reviews.includes(:user)
-  
+
   distribution = reviews.group(:rating).count
-  
+
   render json: {
     total_reviews: reviews.count,
     average_rating: @company.rating_avg || 0,
@@ -62,19 +62,19 @@ end
 def analytics_competitors
   @company = Company.find(params[:id])
   category_id = params[:category_id]
-  
+
   # Get competitors in the same category
   competitors = Company
-    .joins(:categories)
-    .where(categories: { id: category_id })
-    .where.not(id: @company.id)
-    .where(status: 'active')
-    .order(rating_avg: :desc)
-    .limit(10)
-  
+                .joins(:categories)
+                .where(categories: { id: category_id })
+                .where.not(id: @company.id)
+                .where(status: 'active')
+                .order(rating_avg: :desc)
+                .limit(10)
+
   total_companies = competitors.count
   company_position = competitors.index { |c| c.rating_avg <= @company.rating_avg } || total_companies
-  
+
   render json: {
     competitors: competitors.map.with_index(1) do |competitor, index|
       {
@@ -97,33 +97,39 @@ end
 def analytics_traffic
   @company = Company.find(params[:id])
   days = params[:days]&.to_i || 30
-  
+
   # Mock data - replace with real tracking data
   sources = generate_traffic_sources(@company, days)
-  
+
   render json: { sources: sources }
 rescue ActiveRecord::RecordNotFound
   render json: { error: 'Company not found' }, status: :not_found
 end
 
-private
-
 def generate_historical_data(company, days)
   data = []
-  
+
   (days - 1).downto(0).each do |i|
     date = i.days.ago.to_date
-    
+
     # Get actual data from database
-    views = company.profile_views_on(date) rescue 0
-    clicks = company.cta_clicks_on(date) rescue 0
+    views = begin
+      company.profile_views_on(date)
+    rescue StandardError
+      0
+    end
+    clicks = begin
+      company.cta_clicks_on(date)
+    rescue StandardError
+      0
+    end
     leads = company.leads.where(
       created_at: date.beginning_of_day..date.end_of_day
     ).count
-    
-    total_views = views > 0 ? views : 1
+
+    total_views = views.positive? ? views : 1
     conversion = ((leads.to_f / total_views) * 100).round(2)
-    
+
     data << {
       date: date.iso8601,
       views: views,
@@ -132,18 +138,18 @@ def generate_historical_data(company, days)
       conversion: conversion
     }
   end
-  
+
   data
 end
 
 def calculate_sentiment(reviews)
   return { positive: 0, neutral: 0, negative: 0 } if reviews.empty?
-  
+
   total = reviews.count.to_f
   positive = reviews.where('rating >= ?', 4).count
   neutral = reviews.where(rating: 3).count
   negative = reviews.where('rating < ?', 3).count
-  
+
   {
     positive: ((positive / total) * 100).round(1),
     neutral: ((neutral / total) * 100).round(1),
@@ -153,19 +159,19 @@ end
 
 def calculate_market_share(company, category_id)
   total_reviews = Review.joins(company: :categories)
-    .where(categories: { id: category_id })
-    .count
-    
+                        .where(categories: { id: category_id })
+                        .count
+
   return 0 if total_reviews.zero?
-  
+
   company_reviews = company.reviews.count
   ((company_reviews.to_f / total_reviews) * 100).round(2)
 end
 
-def generate_traffic_sources(company, days)
+def generate_traffic_sources(company, _days)
   # Mock data - replace with real tracking from analytics service
   total_views = company.profile_views_count || 0
-  
+
   [
     {
       source: 'Busca Orgânica',
@@ -207,7 +213,7 @@ module Api
         company = Company.find(params[:company_id])
         event_type = params[:event_type]
         metadata = params[:metadata] || {}
-        
+
         # Increment counters
         case event_type
         when 'view'
@@ -219,7 +225,7 @@ module Api
         when 'lead'
           # Already tracked via Lead creation
         end
-        
+
         # Optional: Store detailed event log
         AnalyticsEvent.create!(
           company: company,
@@ -227,7 +233,7 @@ module Api
           metadata: metadata,
           tracked_at: Time.current
         )
-        
+
         head :ok
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Company not found' }, status: :not_found
@@ -235,16 +241,16 @@ module Api
         Rails.logger.error "Analytics tracking error: #{e.message}"
         head :ok # Don't fail the request even if tracking fails
       end
-      
+
       private
-      
+
       def increment_counter(company, counter_name)
         # Use Redis for real-time counting if available
         if defined?(Redis) && Rails.cache.respond_to?(:redis)
           date_key = Time.current.to_date.to_s
           redis_key = "company:#{company.id}:#{counter_name}:#{date_key}"
           Rails.cache.increment(redis_key, 1)
-          
+
           # Async job to sync to database
           SyncAnalyticsCounterJob.perform_later(company.id, counter_name, date_key)
         else
@@ -263,30 +269,30 @@ end
 
 class AnalyticsEvent < ApplicationRecord
   belongs_to :company
-  
+
   validates :event_type, presence: true
   validates :tracked_at, presence: true
-  
+
   # Scopes
   scope :recent, -> { where('tracked_at >= ?', 30.days.ago) }
   scope :by_type, ->(type) { where(event_type: type) }
-  scope :by_date_range, ->(start_date, end_date) {
+  scope :by_date_range, lambda { |start_date, end_date|
     where(tracked_at: start_date..end_date)
   }
-  
+
   # Class methods
   def self.aggregate_by_date(company_id, event_type, days = 30)
     by_type(event_type)
       .where(company_id: company_id)
       .where('tracked_at >= ?', days.days.ago)
-      .group("DATE(tracked_at)")
+      .group('DATE(tracked_at)')
       .count
   end
 end
 
 # Migration:
 # rails g migration CreateAnalyticsEvents company:references event_type:string metadata:jsonb tracked_at:datetime
-# 
+#
 # class CreateAnalyticsEvents < ActiveRecord::Migration[7.0]
 #   def change
 #     create_table :analytics_events do |t|
@@ -294,10 +300,10 @@ end
 #       t.string :event_type, null: false
 #       t.jsonb :metadata, default: {}
 #       t.datetime :tracked_at, null: false
-#       
+#
 #       t.timestamps
 #     end
-#     
+#
 #     add_index :analytics_events, :event_type
 #     add_index :analytics_events, :tracked_at
 #     add_index :analytics_events, [:company_id, :event_type]
@@ -311,7 +317,7 @@ end
 
 class Company < ApplicationRecord
   # ... existing code ...
-  
+
   # Analytics methods
   def profile_views_on(date)
     analytics_events
@@ -319,22 +325,22 @@ class Company < ApplicationRecord
       .where(tracked_at: date.beginning_of_day..date.end_of_day)
       .count
   end
-  
+
   def cta_clicks_on(date)
     analytics_events
       .by_type('click')
       .where(tracked_at: date.beginning_of_day..date.end_of_day)
       .count
   end
-  
+
   def historical_stats(days = 30)
     Rails.cache.fetch("company_#{id}_historical_#{days}_days", expires_in: 1.hour) do
       calculate_historical_stats(days)
     end
   end
-  
+
   private
-  
+
   def calculate_historical_stats(days)
     # Implementation...
   end
@@ -349,10 +355,10 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       # ... existing routes ...
-      
+
       # Analytics tracking
       post 'analytics/track', to: 'analytics#track'
-      
+
       # Company analytics
       resources :companies do
         member do
@@ -373,17 +379,17 @@ end
 
 class SyncAnalyticsCounterJob < ApplicationJob
   queue_as :default
-  
+
   def perform(company_id, counter_name, date_key)
     company = Company.find(company_id)
     redis_key = "company:#{company_id}:#{counter_name}:#{date_key}"
-    
+
     # Get count from Redis
     count = Rails.cache.read(redis_key) || 0
-    
+
     # Update database
     company.update_column(counter_name, company[counter_name] + count)
-    
+
     # Clear Redis counter
     Rails.cache.delete(redis_key)
   rescue ActiveRecord::RecordNotFound
@@ -402,7 +408,7 @@ class AddAnalyticsCountersToCompanies < ActiveRecord::Migration[7.0]
     add_column :companies, :profile_views_count, :integer, default: 0
     add_column :companies, :cta_clicks_count, :integer, default: 0
     add_column :companies, :whatsapp_clicks_count, :integer, default: 0
-    
+
     add_index :companies, :profile_views_count
     add_index :companies, :cta_clicks_count
   end

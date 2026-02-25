@@ -3,11 +3,16 @@ module Api
   module V1
     class CompaniesController < BaseController
       include Paginatable # TASK-017: Enable pagination
-      
-      before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories social_proof]
-      before_action :authenticate_api_user, only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors analytics_traffic mine]
+
+      before_action :set_company,
+                    only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories
+                             social_proof]
+      before_action :authenticate_api_user,
+                    only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
+                             analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
-      before_action :authorize_company_scope!, only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
+      before_action :authorize_company_scope!,
+                    only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
 
       # GET /api/v1/companies
       def index
@@ -44,7 +49,8 @@ module Api
               when 'created_at', 'newest'
                 @companies = @companies.reorder(created_at: :desc)
               when 'recommended'
-                @companies = @companies.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc, created_at: :desc)
+                @companies = @companies.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc,
+                                                created_at: :desc)
               end
             else
               Rails.logger.warn "[Classification] Invalid sort parameter: #{params[:sort]}"
@@ -59,16 +65,17 @@ module Api
           # Filtra por empresas do usuário autenticado
           if ActiveModel::Type::Boolean.new.cast(params[:mine])
             return if authenticate_api_user == false
+
             @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
           end
 
           # Filtros
-          if params[:status].present?
-            @companies = @companies.where(status: params[:status])
-          else
-            # Default: listar apenas empresas ativas
-            @companies = @companies.where(status: ::Company.statuses[:active])
-          end
+          @companies = if params[:status].present?
+                         @companies.where(status: params[:status])
+                       else
+                         # Default: listar apenas empresas ativas
+                         @companies.where(status: ::Company.statuses[:active])
+                       end
 
           if params[:q].present?
             term = params[:q].to_s.strip
@@ -91,7 +98,9 @@ module Api
           end
 
           if params[:state].present?
-            states = Array(params[:state]).flat_map { |v| v.to_s.split(',') }.map { |s| s.strip.upcase }.reject(&:blank?)
+            states = Array(params[:state]).flat_map do |v|
+              v.to_s.split(',')
+            end.map { |s| s.strip.upcase }.reject(&:blank?)
             @companies = @companies.where(state: states) if states.any?
           end
 
@@ -100,35 +109,33 @@ module Api
             @companies = @companies.where(city: cities) if cities.any?
           end
 
-          if params[:min_rating].present?
-            @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f)
-          end
+          @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
 
           if params[:category_id].present?
             @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
           end
 
           if params[:category_ids].present?
-            category_ids = Array(params[:category_ids]).flat_map { |v| v.to_s.split(',') }.map(&:to_i).select(&:positive?)
+            category_ids = Array(params[:category_ids]).flat_map do |v|
+              v.to_s.split(',')
+            end.map(&:to_i).select(&:positive?)
             @companies = @companies.joins(:categories).where(categories: { id: category_ids }) if category_ids.any?
           end
-          
+
           # Apply manual limit only if not using pagination
-          if params[:limit].present? && !params[:page].present?
-            @companies = @companies.limit(params[:limit].to_i)
-          end
+          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present? && !params[:page].present?
 
           # Apply pagination if page parameter is present
           if params[:page].present?
             paginated = paginate(@companies)
             set_pagination_headers(paginated)
             expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
-            
+
             companies_json = paginated.map do |company|
               company_json_attributes(company)
             end
 
-            render json: { 
+            render json: {
               data: companies_json,
               meta: { pagination: pagination_metadata(paginated) }
             }, status: :ok
@@ -147,10 +154,10 @@ module Api
             retry
           end
           raise e
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error("Error in CompaniesController#index: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
-          render json: { 
-            error: 'Internal Server Error', 
+          render json: {
+            error: 'Internal Server Error',
             message: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.'
           }, status: :internal_server_error
         end
@@ -166,20 +173,22 @@ module Api
       def mine
         # Use a relation directly to avoid loading everything into memory at once
         companies_scope = current_user.active_member_companies.includes(:categories)
-        
+
         if params[:q].present?
           term = params[:q].to_s.strip
-          companies_scope = companies_scope.where('LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.city) LIKE LOWER(:q)', q: "%#{term}%")
+          companies_scope = companies_scope.where(
+            'LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.city) LIKE LOWER(:q)', q: "%#{term}%"
+          )
         end
 
         # Cache for 5 minutes as requested, handle cache failures gracefully
         cache_key = "user_#{current_user.id}_companies_mine_#{Digest::SHA1.hexdigest(params[:q].to_s)}"
-        
+
         begin
           companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
             fetch_mine_companies_data(companies_scope)
           end
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error("[CompaniesController#mine] Cache error: #{e.message}")
           companies_data = fetch_mine_companies_data(companies_scope)
         end
@@ -206,6 +215,7 @@ module Api
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company
+
         render json: { company: company_detail_payload(@company) }, status: :ok
       end
 
@@ -249,12 +259,12 @@ module Api
       def create
         Rails.logger.info "[Audit] Initing company creation. Params: #{company_params.except(:logo).inspect}"
         @company = ::Company.new(company_params)
-        
+
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada
         if @edge_location.present?
           @company.city = @edge_location[:city] if @company.city.blank?
           @company.state = @edge_location[:state] if @company.state.blank?
-          
+
           # Log para auditoria se a localização foi injetada pela borda
           if @edge_verified
             Rails.logger.info "[Audit] Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
@@ -283,7 +293,7 @@ module Api
               )
 
               Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
-              
+
               if @company.logo.attached?
                 Rails.logger.info "[Audit] Photo Flow: Company logo attached successfully for ID #{@company.id}"
               end
@@ -313,10 +323,10 @@ module Api
                     "Empresa #{@company.name} criada com status pendente em #{Time.current}"
                   ).deliver_later
                 end
-                
+
                 # Send confirmation email to company
                 ::CompanyMailer.registration_received(@company).deliver_later
-              rescue => e
+              rescue StandardError => e
                 Rails.logger.warn "[Audit] Notification failure: #{e.message}"
               end
 
@@ -343,7 +353,7 @@ module Api
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "[Audit] RecordInvalid during company creation: #{e.message}"
           render json: { errors: [e.message] }, status: :unprocessable_entity
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error "[Audit] Critical error creating company: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
           render json: { error: 'Internal Server Error' }, status: :internal_server_error
         end
@@ -352,7 +362,7 @@ module Api
       # PATCH/PUT /api/v1/companies/:id
       def update
         Rails.logger.info "[Audit] Updating company ID #{@company.id}. User: #{current_user&.id}"
-        
+
         if params[:company][:logo].present?
           Rails.logger.info "[Audit] Photo Flow: New logo upload detected for Company ID #{@company.id}"
         end
@@ -361,7 +371,7 @@ module Api
           if @company.logo.attached? && params[:company][:logo].present?
             Rails.logger.info "[Audit] Photo Flow: Company logo updated successfully for ID #{@company.id}"
           end
-          
+
           company_json = {
             id: @company.id,
             slug: @company.slug,
@@ -405,8 +415,8 @@ module Api
       # GET /api/v1/companies/locations
       def locations
         locations = ::Company.distinct.pluck(:state, :city).compact
-                           .map { |state, city| { state: state, city: city } }
-                           .sort_by { |loc| [loc[:state], loc[:city]] }
+                             .map { |state, city| { state: state, city: city } }
+                             .sort_by { |loc| [loc[:state], loc[:city]] }
         render json: { locations: locations }
       end
 
@@ -414,9 +424,9 @@ module Api
 
       def set_company
         @company = find_company_by_id_or_slug(params[:id])
-        unless @company
-          render json: { error: 'Company not found' }, status: :not_found and return
-        end
+        return if @company
+
+        render json: { error: 'Company not found' }, status: :not_found and return
       end
 
       def company_json_attributes(company)
@@ -473,8 +483,10 @@ module Api
           linkedin: company.linkedin,
           working_hours: company.working_hours,
           payment_methods: company.payment_methods,
-          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}", expires_in: 5.minutes) do
-            company.company_buttons.active.ordered.select(:label, :url, :button_type, :active, :position).as_json(only: [:label, :url, :button_type])
+          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}",
+                                     expires_in: 5.minutes) do
+            company.company_buttons.active.ordered.select(:label, :url, :button_type, :active,
+                                                          :position).as_json(only: %i[label url button_type])
           end,
           ctas: [],
           cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
@@ -499,8 +511,10 @@ module Api
           certifications: company.certifications,
           working_hours: company.working_hours,
           payment_methods: company.payment_methods,
-          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}", expires_in: 5.minutes) do
-            company.company_buttons.active.ordered.select(:label, :url, :button_type).as_json(only: [:label, :url, :button_type])
+          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}",
+                                     expires_in: 5.minutes) do
+            company.company_buttons.active.ordered.select(:label, :url,
+                                                          :button_type).as_json(only: %i[label url button_type])
           end,
           ctas: [],
           cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
@@ -508,7 +522,7 @@ module Api
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
-          has_paid_plan: (company.respond_to?(:plan_status) && company.respond_to?(:plan)) ? company.has_paid_plan? : false,
+          has_paid_plan: company.respond_to?(:plan_status) && company.respond_to?(:plan) ? company.has_paid_plan? : false,
           social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
           can_use_social_proof: company.can_use_social_proof?,
           project_types: company.project_types || [],
@@ -524,16 +538,14 @@ module Api
           :working_hours, :payment_methods, :certifications,
           :cta_whatsapp_enabled, :cta_whatsapp_url,
           :logo,
-          whatsapp_button_style_json: [
-            :variant, :bg_color, :text_color, :border_color,
-            :hover_bg_color, :icon_color, :rounded_px
-          ],
-          project_types: [], services_offered: []
+          { whatsapp_button_style_json: %i[
+              variant bg_color text_color border_color
+              hover_bg_color icon_color rounded_px
+            ],
+            project_types: [], services_offered: [] }
         ]
 
-        if current_user&.admin?
-          permitted += [:featured, :status, :verified, :plan_id, :plan_status, :social_proof_enabled]
-        end
+        permitted += %i[featured status verified plan_id plan_status social_proof_enabled] if current_user&.admin?
 
         params.require(:company).permit(*permitted)
       end
@@ -549,7 +561,7 @@ module Api
         end
 
         render json: { data: data }, status: :ok
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error("analytics_historical error: #{e.message}")
         render json: { data: [] }, status: :ok
       end
@@ -571,7 +583,7 @@ module Api
         end
 
         render json: { sources: sources }, status: :ok
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error("analytics_traffic error: #{e.message}")
         render json: { sources: [] }, status: :ok
       end
@@ -593,89 +605,91 @@ module Api
 
       private
 
-       def historical_data
-         company = find_company_by_id_or_slug(params[:id])
-         return { error: 'Company not found' } unless company
-         days = params[:days]&.to_i || 30
-         data = generate_historical_data(company, days)
-         { data: data }
-       rescue ActiveRecord::RecordNotFound
-         { error: 'Company not found' }
-       end
+      def historical_data
+        company = find_company_by_id_or_slug(params[:id])
+        return { error: 'Company not found' } unless company
 
-       def reviews_data
-         company = find_company_by_id_or_slug(params[:id])
-         return { error: 'Company not found' } unless company
-         reviews = company.reviews.includes(:user)
-         distribution = reviews.group(:rating).count
-         {
-           total_reviews: reviews.count,
-           average_rating: company.rating_avg || 0,
-           rating_distribution: {
-             5 => distribution[5.0] || 0,
-             4 => distribution[4.0] || 0,
-             3 => distribution[3.0] || 0,
-             2 => distribution[2.0] || 0,
-             1 => distribution[1.0] || 0
-           },
-           recent_reviews: reviews.order(created_at: :desc).limit(10).map do |review|
-             {
-               id: review.id,
-               rating: review.rating,
-               comment: review.comment,
-               user_name: review.user&.name || 'Anônimo',
-               created_at: review.created_at,
-               verified: review.verified
-             }
-           end,
-           sentiment_analysis: calculate_sentiment(reviews)
-         }
-       rescue ActiveRecord::RecordNotFound
-         { error: 'Company not found' }
-       end
+        days = params[:days]&.to_i || 30
+        data = generate_historical_data(company, days)
+        { data: data }
+      rescue ActiveRecord::RecordNotFound
+        { error: 'Company not found' }
+      end
 
-       def competitors_data
-         company = Company.find(params[:id])
-         category_id = params[:category_id]
-         competitors = Company
-           .joins(:categories)
-           .where(categories: { id: category_id })
-           .where.not(id: company.id)
-           .where(status: 'active')
-           .order(rating_avg: :desc)
-           .limit(10)
-         total_companies = competitors.count
-         company_position = competitors.index { |c| c.rating_avg <= company.rating_avg } || total_companies
-         collection_for_peers = ([company] + competitors).uniq { |c| c.id }
-         max_reviews = collection_for_peers.map { |c| c.try(:reviews_count).to_i }.max.to_f
-         max_reviews = 1.0 if max_reviews.zero?
-         {
-           competitors: competitors.map.with_index(1) do |competitor, index|
-             {
-               company_id: competitor.id,
-               company_name: competitor.name,
-               rating: competitor.rating_avg || 0,
-               reviews_count: competitor.reviews_count || 0,
-               market_position: index,
-               category_share: calculate_market_share(competitor, category_id)
-              }
-            end,
-           company_position: company_position + 1,
-           total_competitors: total_companies,
-           comparison_peers: collection_for_peers.map do |c|
-             {
-               company_id: c.id,
-               company_name: c.name,
-               execution: ((c.rating_avg || 0).to_f * 20).round(2),
-               innovation: (((c.try(:reviews_count) || 0).to_f / max_reviews) * 100).round(2),
-               presence: (c.try(:profile_views_count) || c.try(:reviews_count) || 0).to_i,
-               current: c.id == company.id
-             }
-           end
-         }
-       rescue ActiveRecord::RecordNotFound
-         { error: 'Company not found' }
-       end
+      def reviews_data
+        company = find_company_by_id_or_slug(params[:id])
+        return { error: 'Company not found' } unless company
+
+        reviews = company.reviews.includes(:user)
+        distribution = reviews.group(:rating).count
+        {
+          total_reviews: reviews.count,
+          average_rating: company.rating_avg || 0,
+          rating_distribution: {
+            5 => distribution[5.0] || 0,
+            4 => distribution[4.0] || 0,
+            3 => distribution[3.0] || 0,
+            2 => distribution[2.0] || 0,
+            1 => distribution[1.0] || 0
+          },
+          recent_reviews: reviews.order(created_at: :desc).limit(10).map do |review|
+            {
+              id: review.id,
+              rating: review.rating,
+              comment: review.comment,
+              user_name: review.user&.name || 'Anônimo',
+              created_at: review.created_at,
+              verified: review.verified
+            }
+          end,
+          sentiment_analysis: calculate_sentiment(reviews)
+        }
+      rescue ActiveRecord::RecordNotFound
+        { error: 'Company not found' }
+      end
+
+      def competitors_data
+        company = Company.find(params[:id])
+        category_id = params[:category_id]
+        competitors = Company
+                      .joins(:categories)
+                      .where(categories: { id: category_id })
+                      .where.not(id: company.id)
+                      .where(status: 'active')
+                      .order(rating_avg: :desc)
+                      .limit(10)
+        total_companies = competitors.count
+        company_position = competitors.index { |c| c.rating_avg <= company.rating_avg } || total_companies
+        collection_for_peers = ([company] + competitors).uniq(&:id)
+        max_reviews = collection_for_peers.map { |c| c.try(:reviews_count).to_i }.max.to_f
+        max_reviews = 1.0 if max_reviews.zero?
+        {
+          competitors: competitors.map.with_index(1) do |competitor, index|
+            {
+              company_id: competitor.id,
+              company_name: competitor.name,
+              rating: competitor.rating_avg || 0,
+              reviews_count: competitor.reviews_count || 0,
+              market_position: index,
+              category_share: calculate_market_share(competitor, category_id)
+            }
+          end,
+          company_position: company_position + 1,
+          total_competitors: total_companies,
+          comparison_peers: collection_for_peers.map do |c|
+            {
+              company_id: c.id,
+              company_name: c.name,
+              execution: ((c.rating_avg || 0).to_f * 20).round(2),
+              innovation: (((c.try(:reviews_count) || 0).to_f / max_reviews) * 100).round(2),
+              presence: (c.try(:profile_views_count) || c.try(:reviews_count) || 0).to_i,
+              current: c.id == company.id
+            }
+          end
+        }
+      rescue ActiveRecord::RecordNotFound
+        { error: 'Company not found' }
+      end
 
       def traffic_data
         days = params[:days]&.to_i || 30
@@ -683,28 +697,30 @@ module Api
         { sources: sources }
       end
 
-       def calculate_sentiment(reviews)
-         positive = reviews.where('rating >= ?', 4).count
-         negative = reviews.where('rating <= ?', 2).count
-         total = reviews.count
-         {
-           positive_percentage: total > 0 ? (positive.to_f / total * 100).round(2) : 0,
-           negative_percentage: total > 0 ? (negative.to_f / total * 100).round(2) : 0
-         }
-       end
+      def calculate_sentiment(reviews)
+        positive = reviews.where('rating >= ?', 4).count
+        negative = reviews.where('rating <= ?', 2).count
+        total = reviews.count
+        {
+          positive_percentage: total.positive? ? (positive.to_f / total * 100).round(2) : 0,
+          negative_percentage: total.positive? ? (negative.to_f / total * 100).round(2) : 0
+        }
+      end
 
-       def calculate_market_share(company, category_id)
-         total_reviews = ::Company.joins(:categories).where(categories: { id: category_id }).sum(:reviews_count)
-         company_reviews = company.reviews_count || 0
-         total_reviews > 0 ? (company_reviews.to_f / total_reviews * 100).round(2) : 0
-       end
+      def calculate_market_share(company, category_id)
+        total_reviews = ::Company.joins(:categories).where(categories: { id: category_id }).sum(:reviews_count)
+        company_reviews = company.reviews_count || 0
+        total_reviews.positive? ? (company_reviews.to_f / total_reviews * 100).round(2) : 0
+      end
 
       def generate_traffic_sources(company, days)
         from_time = days.to_i.days.ago.beginning_of_day
         to_time = Time.current.end_of_day
 
-        events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time, event_type: 'profile_view')
-        lead_events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time, event_type: 'lead_created')
+        events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time,
+                                      event_type: 'profile_view')
+        lead_events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time,
+                                           event_type: 'lead_created')
 
         visit_counts = Hash.new(0)
         lead_counts = Hash.new(0)
@@ -739,10 +755,10 @@ module Api
         to_day = Date.current
 
         by_day = CompanyDailyStat
-          .for_company(company.id)
-          .for_days(from_day, to_day)
-          .order(:day)
-          .index_by(&:day)
+                 .for_company(company.id)
+                 .for_days(from_day, to_day)
+                 .order(:day)
+                 .index_by(&:day)
 
         (from_day..to_day).map do |day|
           stat = by_day[day]
@@ -765,9 +781,15 @@ module Api
         ref = meta['referrer'].to_s
         return 'Direct' if ref.blank?
 
-        host = URI.parse(ref).host.to_s.downcase rescue ''
+        host = begin
+          URI.parse(ref).host.to_s.downcase
+        rescue StandardError
+          ''
+        end
         return 'Organic Search' if host.include?('google') || host.include?('bing') || host.include?('duckduckgo')
-        return 'Social Media' if host.include?('facebook') || host.include?('instagram') || host.include?('linkedin') || host.include?('t.co') || host.include?('x.com')
+        if host.include?('facebook') || host.include?('instagram') || host.include?('linkedin') || host.include?('t.co') || host.include?('x.com')
+          return 'Social Media'
+        end
 
         'Referral'
       end

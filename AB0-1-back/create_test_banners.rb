@@ -5,17 +5,17 @@ require_relative 'config/environment'
 require 'open-uri'
 require 'net/http'
 
-puts "=" * 80
-puts "CRIANDO BANNERS DE TESTE"
-puts "=" * 80
+puts '=' * 80
+puts 'CRIANDO BANNERS DE TESTE'
+puts '=' * 80
 
 def download_placeholder_image(width, height, text)
   url = "https://via.placeholder.com/#{width}x#{height}/4F46E5/FFFFFF?text=#{URI.encode_www_form_component(text)}"
   puts "   📥 Baixando imagem: #{url}"
-  
+
   begin
     URI.open(url).read
-  rescue => e
+  rescue StandardError => e
     puts "   ❌ Erro ao baixar imagem: #{e.message}"
     nil
   end
@@ -23,24 +23,22 @@ end
 
 def create_banner(title:, position:, width:, height:, category: nil)
   puts "\n🔨 Criando banner: #{title}"
-  
+
   # Verifica se já existe
   existing = Banner.find_by(title: title, position: position)
   if existing
     puts "   ⚠️  Banner já existe (ID: #{existing.id})"
-    
+
     # Ativa e aprova se não estiver
     if !existing.active || (Banner.column_names.include?('moderation_status') && existing.moderation_status != 'approved')
       existing.update!(active: true)
-      if Banner.column_names.include?('moderation_status')
-        existing.update!(moderation_status: 'approved')
-      end
-      puts "   ✅ Banner atualizado para ativo e aprovado"
+      existing.update!(moderation_status: 'approved') if Banner.column_names.include?('moderation_status')
+      puts '   ✅ Banner atualizado para ativo e aprovado'
     end
-    
+
     return existing
   end
-  
+
   # Cria novo banner
   banner = Banner.new(
     title: title,
@@ -51,15 +49,13 @@ def create_banner(title:, position:, width:, height:, category: nil)
     category_id: category&.id,
     sponsored: false
   )
-  
+
   # Define moderation_status se a coluna existir
-  if Banner.column_names.include?('moderation_status')
-    banner.moderation_status = 'approved'
-  end
-  
+  banner.moderation_status = 'approved' if Banner.column_names.include?('moderation_status')
+
   # Baixa e anexa imagem placeholder
   image_data = download_placeholder_image(width, height, title)
-  
+
   if image_data
     banner.image.attach(
       io: StringIO.new(image_data),
@@ -67,9 +63,9 @@ def create_banner(title:, position:, width:, height:, category: nil)
       content_type: 'image/png'
     )
   else
-    puts "   ⚠️  Não foi possível baixar a imagem, criando sem imagem"
+    puts '   ⚠️  Não foi possível baixar a imagem, criando sem imagem'
   end
-  
+
   if banner.save
     puts "   ✅ Banner criado com sucesso! (ID: #{banner.id})"
     banner
@@ -88,9 +84,9 @@ else
   puts "\n⚠️  Nenhuma categoria encontrada"
 end
 
-puts "\n" + "=" * 80
-puts "Criando banners para diferentes posições..."
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts 'Criando banners para diferentes posições...'
+puts '=' * 80
 
 # Criar banners para categories_top
 banners_created = []
@@ -137,9 +133,9 @@ banners_created << create_banner(
   category: category
 )
 
-puts "\n" + "=" * 80
-puts "RESUMO"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts 'RESUMO'
+puts '=' * 80
 
 successful_banners = banners_created.compact
 puts "✅ Banners criados/atualizados: #{successful_banners.count}"
@@ -151,9 +147,9 @@ puts "\n📊 Status dos banners por posição:"
   puts "   #{position}: #{active_count}/#{total_count} ativos"
 end
 
-puts "\n" + "=" * 80
-puts "TESTE DA API"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts 'TESTE DA API'
+puts '=' * 80
 
 # Testa a API para categories_top
 categories_banners = Banner.currently_active.where(position: 'categories_top')
@@ -161,36 +157,38 @@ puts "\n📍 Banners em 'categories_top' (como a API retorna):"
 puts "   Total: #{categories_banners.count}"
 
 if categories_banners.any?
-  puts "   Listando:"
+  puts '   Listando:'
   categories_banners.each do |banner|
     puts "   - ID: #{banner.id}, Título: #{banner.title}"
     puts "     Image attached: #{banner.image.attached?}"
     puts "     Image URL: #{banner.image_url.present? ? 'OK' : 'MISSING'}"
   end
 else
-  puts "   ⚠️  PROBLEMA: Ainda não há banners ativos!"
+  puts '   ⚠️  PROBLEMA: Ainda não há banners ativos!'
   puts "\n🔍 Debug:"
-  
+
   all_banners = Banner.where(position: 'categories_top')
   puts "   Total de banners (incluindo inativos): #{all_banners.count}"
-  
+
   if all_banners.any?
     all_banners.each do |banner|
       issues = []
-      issues << "inactive" unless banner.active
-      issues << "not approved (#{banner.moderation_status})" if Banner.column_names.include?('moderation_status') && banner.moderation_status != 'approved'
-      issues << "no image" unless banner.image.attached?
-      
+      issues << 'inactive' unless banner.active
+      if Banner.column_names.include?('moderation_status') && banner.moderation_status != 'approved'
+        issues << "not approved (#{banner.moderation_status})"
+      end
+      issues << 'no image' unless banner.image.attached?
+
       puts "   - ID #{banner.id}: #{banner.title}"
       puts "     Problemas: #{issues.join(', ')}" if issues.any?
     end
   end
 end
 
-puts "\n" + "=" * 80
-puts "PRÓXIMOS PASSOS"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts 'PRÓXIMOS PASSOS'
+puts '=' * 80
 puts "1. Teste a API: curl 'https://api.avaliasolar.com.br/api/v1/banners?position=categories_top'"
-puts "2. Acesse o frontend: https://avaliasolar.com.br/categories"
-puts "3. Verifique o admin panel: https://api.avaliasolar.com.br/admin/banners"
-puts "=" * 80
+puts '2. Acesse o frontend: https://avaliasolar.com.br/categories'
+puts '3. Verifique o admin panel: https://api.avaliasolar.com.br/admin/banners'
+puts '=' * 80

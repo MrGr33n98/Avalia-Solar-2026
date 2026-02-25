@@ -5,7 +5,7 @@ if company
   puts "Slug: #{company.slug}"
   puts "Status: #{company.status}"
 else
-  puts "Company not found with slug: ezvolt-brasil"
-  puts "Existing slugs (first 10):"
+  puts 'Company not found with slug: ezvolt-brasil'
+  puts 'Existing slugs (first 10):'
   puts Company.limit(10).pluck(:slug).join(', ')
 end

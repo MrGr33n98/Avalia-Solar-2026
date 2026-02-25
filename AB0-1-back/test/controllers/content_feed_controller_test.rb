@@ -13,6 +13,6 @@ class ContentFeedControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     body = JSON.parse(response.body)
     assert body.is_a?(Array)
-    assert body.any? { |item| item['type'] == 'article' }
+    assert(body.any? { |item| item['type'] == 'article' })
   end
 end

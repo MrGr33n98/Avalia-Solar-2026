@@ -8,7 +8,7 @@ class CategorySerializer < ActiveModel::Serializer
              :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url,
              :parent, :subcategories
-             # :banner_sponsored, :banners  # Temporarily commented out
+  # :banner_sponsored, :banners  # Temporarily commented out
 
   # Remove has_many associations that cause N+1 queries and complex serialization
   # has_many :companies
@@ -31,7 +31,7 @@ class CategorySerializer < ActiveModel::Serializer
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-    
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.banner, options)
   end
 
@@ -40,7 +40,7 @@ class CategorySerializer < ActiveModel::Serializer
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-    
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.icon, options)
   end
 

@@ -29,7 +29,8 @@ ActiveAdmin.register CompanyFinancingPartner do
       f.input :priority
       f.input :position
       f.input :active
-      f.input :logo, as: :file, hint: (f.object.logo.attached? ? image_tag(url_for(f.object.logo), style: 'max-width: 120px;') : nil)
+      f.input :logo, as: :file,
+                     hint: (f.object.logo.attached? ? image_tag(url_for(f.object.logo), style: 'max-width: 120px;') : nil)
     end
     f.actions
   end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Service responsável por montar um feed híbrido (orgânico + patrocinado)
 # Estratégia simples inicial: intercalar 1 patrocinado a cada N orgânicos
 # com prioridade para artigos e campanhas mais recentes.
@@ -79,13 +80,7 @@ class ContentFeedService
     duration = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round(2)
     sponsored_count = feed.count { |i| i.respond_to?(:sponsored) && i.sponsored }
     Rails.logger.info(
-      '[ContentFeedService] duration_ms=' + duration.to_s +
-      ' total=' + feed.size.to_s +
-      ' sponsored_in_feed=' + sponsored_count.to_s +
-      ' organic_pool=' + organic_size.to_s +
-      ' sponsored_pool=' + sponsored_size.to_s +
-      ' company_filter=' + (@company_id || 'nil').to_s +
-      ' category_filter=' + (@category_id || 'nil').to_s
+      "[ContentFeedService] duration_ms=#{duration} total=#{feed.size} sponsored_in_feed=#{sponsored_count} organic_pool=#{organic_size} sponsored_pool=#{sponsored_size} company_filter=#{@company_id || 'nil'} category_filter=#{@category_id || 'nil'}"
     )
   rescue StandardError => e
     Rails.logger.error("[ContentFeedService] metrics_log_failed=#{e.message}")

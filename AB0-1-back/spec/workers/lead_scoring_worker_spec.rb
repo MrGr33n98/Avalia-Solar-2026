@@ -7,7 +7,7 @@ RSpec.describe LeadScoringWorker, type: :worker do
     it 'calculates a score and updates attribution_json' do
       subject.perform(lead.id)
       lead.reload
-      
+
       expect(lead.attribution_json['lead_score']).to be_between(0, 100)
     end
   end

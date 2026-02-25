@@ -948,7 +948,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "answers", default: {}, null: false
-    t.index ["answers"], name: "index_sector_ratings_on_answers"
     t.index ["company_id", "user_id"], name: "index_sector_ratings_on_company_and_user", unique: true
     t.index ["company_id"], name: "index_sector_ratings_on_company_id"
     t.index ["user_id"], name: "index_sector_ratings_on_user_id"

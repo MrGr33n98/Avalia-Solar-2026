@@ -20,7 +20,7 @@ ActiveAdmin.register CompanySectorQuestion do
   end
 
   form do |f|
-    f.semantic_errors *f.object.errors.attribute_names
+    f.semantic_errors(*f.object.errors.attribute_names)
 
     f.inputs 'Pergunta setorial' do
       f.input :company

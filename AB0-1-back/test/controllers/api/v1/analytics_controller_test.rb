@@ -11,18 +11,18 @@ module Api
         }
       end
 
-      test "should get user stats" do
+      test 'should get user stats' do
         get api_v1_analytics_user_stats_url, headers: @headers
         assert_response :success
         assert_not_nil JSON.parse(response.body)
       end
 
-      test "should get content engagement" do
+      test 'should get content engagement' do
         get api_v1_analytics_content_engagement_url, headers: @headers
         assert_response :success
       end
 
-      test "should require authentication" do
+      test 'should require authentication' do
         get api_v1_analytics_user_stats_url
         assert_response :unauthorized
       end

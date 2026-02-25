@@ -3,7 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Companies mine endpoint', type: :request do
-  let(:user) { create(:user, email: 'mine@example.com', password: 'Password123', status: :active, role: 'company', confirmed_at: Time.current) }
+  let(:user) do
+    create(:user, email: 'mine@example.com', password: 'Password123', status: :active, role: 'company',
+                  confirmed_at: Time.current)
+  end
   let(:company) { create(:company, name: 'Minha Empresa Solar') }
   let(:other_company) { create(:company, name: 'Outra Empresa') }
   let(:headers) { { 'Content-Type' => 'application/json' } }
@@ -17,10 +20,10 @@ RSpec.describe 'Api::V1::Companies mine endpoint', type: :request do
     context 'when authenticated' do
       before do
         # Login para obter o token JWT
-        post '/api/v1/auth/login', 
-             params: { email: user.email, password: 'Password123' }.to_json, 
+        post '/api/v1/auth/login',
+             params: { email: user.email, password: 'Password123' }.to_json,
              headers: headers
-        
+
         @token = JSON.parse(response.body)['token']
         @auth_headers = headers.merge('Authorization' => "Bearer #{@token}")
       end
@@ -30,7 +33,7 @@ RSpec.describe 'Api::V1::Companies mine endpoint', type: :request do
 
         expect(response).to have_http_status(:ok)
         payload = JSON.parse(response.body)
-        
+
         expect(payload).to be_an(Array)
         expect(payload.size).to eq(1)
         expect(payload.first['name']).to eq('Minha Empresa Solar')
@@ -60,7 +63,7 @@ RSpec.describe 'Api::V1::Companies mine endpoint', type: :request do
           expect(Rails.cache).to receive(:fetch).at_least(:once).and_call_original
           get '/api/v1/companies/mine', headers: @auth_headers
           expect(response).to have_http_status(:ok)
-          
+
           # Segunda chamada
           get '/api/v1/companies/mine', headers: @auth_headers
           expect(response).to have_http_status(:ok)

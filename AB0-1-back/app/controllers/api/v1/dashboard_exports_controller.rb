@@ -39,8 +39,16 @@ module Api
       end
 
       def parse_range
-        from = Time.zone.parse(params[:from]) rescue 30.days.ago
-        to = Time.zone.parse(params[:to]) rescue Time.current
+        from = begin
+          Time.zone.parse(params[:from])
+        rescue StandardError
+          30.days.ago
+        end
+        to = begin
+          Time.zone.parse(params[:to])
+        rescue StandardError
+          Time.current
+        end
         [from, to]
       end
     end

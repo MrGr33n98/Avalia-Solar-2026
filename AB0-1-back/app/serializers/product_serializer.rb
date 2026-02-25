@@ -11,7 +11,7 @@ class ProductSerializer < ActiveModel::Serializer
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-    
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.image, options)
   end
 end

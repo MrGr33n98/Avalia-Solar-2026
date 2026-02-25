@@ -23,7 +23,8 @@ ActiveAdmin.register Plan do
       f.input :name
       f.input :description
       f.input :price
-      f.input :features_json, as: :text, input_html: { rows: 6 }, hint: 'JSON de funcionalidades (ex: {"max_products": 20, "has_analytics": true})'
+      f.input :features_json, as: :text, input_html: { rows: 6 },
+                              hint: 'JSON de funcionalidades (ex: {"max_products": 20, "has_analytics": true})'
     end
     f.actions
   end
@@ -32,19 +33,22 @@ ActiveAdmin.register Plan do
       coerce_features_json
       super
     end
+
     def create
       coerce_features_json
       super
     end
+
     private
+
     def coerce_features_json
       raw = params[:plan][:features_json]
-      if raw.is_a?(String) && raw.present?
-        begin
-          params[:plan][:features_json] = JSON.parse(raw)
-        rescue JSON::ParserError
-          params[:plan][:features_json] = {}
-        end
+      return unless raw.is_a?(String) && raw.present?
+
+      begin
+        params[:plan][:features_json] = JSON.parse(raw)
+      rescue JSON::ParserError
+        params[:plan][:features_json] = {}
       end
     end
   end

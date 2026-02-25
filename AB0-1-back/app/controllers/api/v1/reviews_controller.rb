@@ -10,20 +10,17 @@ class Api::V1::ReviewsController < Api::V1::BaseController
                      .order(created_at: :desc)
 
     # Filtra por company_id se fornecido
-    if params[:company_id].present?
-      @reviews = @reviews.where(company_id: params[:company_id].to_i)
-    end
+    @reviews = @reviews.where(company_id: params[:company_id].to_i) if params[:company_id].present?
 
-    if params[:user_id].present?
-      @reviews = @reviews.where(user_id: params[:user_id].to_i)
-    end
+    @reviews = @reviews.where(user_id: params[:user_id].to_i) if params[:user_id].present?
 
     # Filtra por reviews do usuário autenticado, se solicitado
     if ActiveModel::Type::Boolean.new.cast(params[:mine])
       return if authenticate_api_user == false
+
       @reviews = @reviews.where(user_id: current_user.id)
     end
-    
+
     # Filtra por status se fornecido (útil para dashboards)
     if params[:status].present?
       @reviews = @reviews.where(status: params[:status])
@@ -142,9 +139,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def ensure_owner
-    if @review.user_id != current_user.id
-      Rails.logger.warn("[AccessDenied] user #{current_user.id} tried to modify review #{params[:id]} owned by #{@review.user_id}")
-      return render json: { error: 'Forbidden' }, status: :forbidden
-    end
+    return unless @review.user_id != current_user.id
+
+    Rails.logger.warn("[AccessDenied] user #{current_user.id} tried to modify review #{params[:id]} owned by #{@review.user_id}")
+    render json: { error: 'Forbidden' }, status: :forbidden
   end
 end

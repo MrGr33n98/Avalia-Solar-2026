@@ -2,7 +2,8 @@ require 'test_helper'
 
 class CompanySerializerTest < ActiveSupport::TestCase
   def setup
-    @company = Company.create!(name: 'Comp', description: 'Desc', website: 'https://example.com', state: 'MG', city: 'BH', rating_avg: 4.5, rating_count: 10, featured: true, verified: true)
+    @company = Company.create!(name: 'Comp', description: 'Desc', website: 'https://example.com', state: 'MG',
+                               city: 'BH', rating_avg: 4.5, rating_count: 10, featured: true, verified: true)
   end
 
   test 'sanitized serializer excludes sensitive fields' do

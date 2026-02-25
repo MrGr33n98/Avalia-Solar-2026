@@ -23,11 +23,11 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         # Primeira chamada: cache miss
         get '/api/v1/banners', params: { position: 'navbar' }
         expect(response).to have_http_status(:ok)
-        
+
         # Verifica que cache foi criado
         cache_key = "banners/v1/#{Digest::MD5.hexdigest({ position: 'navbar' }.sort.to_h.to_json)}"
         expect(Rails.cache.exist?(cache_key)).to be true
-        
+
         # Segunda chamada: cache hit
         get '/api/v1/banners', params: { position: 'navbar' }
         expect(response).to have_http_status(:ok)
@@ -36,10 +36,10 @@ RSpec.describe 'Api::V1::Banners', type: :request do
       it 'returns same data from cache' do
         get '/api/v1/banners', params: { position: 'navbar' }
         first_response = JSON.parse(response.body)
-        
+
         get '/api/v1/banners', params: { position: 'navbar' }
         cached_response = JSON.parse(response.body)
-        
+
         expect(cached_response).to eq(first_response)
       end
     end
@@ -49,18 +49,18 @@ RSpec.describe 'Api::V1::Banners', type: :request do
 
       it 'filters by position' do
         create(:banner, :approved, active: true, position: 'sidebar')
-        
+
         get '/api/v1/banners', params: { position: 'navbar' }
-        
+
         json = JSON.parse(response.body)
         expect(json.all? { |b| b['position'] == 'navbar' }).to be true
       end
 
       it 'limits results' do
         create_list(:banner, 5, :approved, active: true)
-        
+
         get '/api/v1/banners', params: { limit: 2 }
-        
+
         json = JSON.parse(response.body)
         expect(json.length).to eq(2)
       end
@@ -74,7 +74,7 @@ RSpec.describe 'Api::V1::Banners', type: :request do
 
       it 'orders by priority ascending' do
         get '/api/v1/banners'
-        
+
         json = JSON.parse(response.body)
         expect(json.first['id']).to eq(high_priority.id)
       end
@@ -83,9 +83,9 @@ RSpec.describe 'Api::V1::Banners', type: :request do
     context 'error handling' do
       it 'returns empty array on error' do
         allow(Banner).to receive(:currently_active).and_raise(StandardError)
-        
+
         get '/api/v1/banners'
-        
+
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq([])
       end

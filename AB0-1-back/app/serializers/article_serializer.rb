@@ -15,7 +15,7 @@ class ArticleSerializer < ActiveModel::Serializer
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-    
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.banner, options)
   end
 
@@ -60,10 +60,10 @@ class ArticleSerializer < ActiveModel::Serializer
 
   def author_avatar_url
     return nil unless object.author&.avatar_photo&.attached?
-    
+
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-    
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(
       object.author.avatar_photo.variant(resize_to_fill: [150, 150]),
       options

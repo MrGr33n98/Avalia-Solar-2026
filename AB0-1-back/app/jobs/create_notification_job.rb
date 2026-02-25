@@ -3,7 +3,7 @@
 # Create and deliver notification - TASK-019
 class CreateNotificationJob < ApplicationJob
   queue_as :default
-  
+
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
   def perform(user_id, notification_type, title, options = {})
@@ -23,7 +23,7 @@ class CreateNotificationJob < ApplicationJob
 
     Rails.logger.info "✅ Notification created and delivered: #{notification.id}"
     notification
-  rescue ActiveRecord::RecordNotFound => e
+  rescue ActiveRecord::RecordNotFound
     Rails.logger.warn "User #{user_id} not found, skipping notification"
   end
 end

@@ -36,12 +36,12 @@ class SectorRating < ApplicationRecord
 
   def validate_payload
     if custom_answers?
-      answers.each do |_, value|
+      answers.each_value do |value|
         val = value.to_i
         errors.add(:answers, 'precisa conter valores entre 1 e 5') unless val.between?(1, 5)
       end
     else
-      WEIGHTS.keys.each do |attr|
+      WEIGHTS.each_key do |attr|
         val = public_send(attr)
         errors.add(attr, 'não pode ficar em branco') if val.nil?
         errors.add(attr, 'deve ser entre 1 e 5') unless val.to_i.between?(1, 5)

@@ -25,7 +25,7 @@ RSpec.describe 'Authentication System', type: :model do
   before do
     # Bypass CNPJ validation for test simplicity if needed, or provide valid one.
     # Actually, let's use a mock or a simple valid User for unit tests.
-    allow(CNPJ).to receive(:valid?).and_return(true) 
+    allow(CNPJ).to receive(:valid?).and_return(true)
   end
 
   describe 'Corporate Email Validation' do
@@ -58,7 +58,7 @@ RSpec.describe 'Authentication System', type: :model do
   end
 
   describe 'Approval Flow' do
-    let(:user) { 
+    let(:user) do
       User.create!(
         name: 'Test User',
         email: 'employee@solartech.com',
@@ -67,8 +67,8 @@ RSpec.describe 'Authentication System', type: :model do
         role: 'company',
         terms_accepted: true,
         approved_by_admin: false
-      ) 
-    }
+      )
+    end
 
     it 'is not active for authentication when not approved' do
       expect(user.active_for_authentication?).to be false

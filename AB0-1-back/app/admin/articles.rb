@@ -7,7 +7,8 @@ ActiveAdmin.register Article do
   controller do
     rescue_from ActiveRecord::RecordNotFound do |e|
       Rails.logger.error("ActiveAdmin Article Not Found: #{e.message} | ID: #{params[:id]}")
-      redirect_to admin_articles_path, alert: "Artigo não encontrado. O ID fornecido (#{params[:id]}) é inválido ou o artigo foi excluído."
+      redirect_to admin_articles_path,
+                  alert: "Artigo não encontrado. O ID fornecido (#{params[:id]}) é inválido ou o artigo foi excluído."
     end
 
     def find_resource
@@ -16,7 +17,7 @@ ActiveAdmin.register Article do
   end
 
   filter :title
-  filter :status, as: :select, collection: [['Rascunho', 'draft'], ['Publicado', 'published']]
+  filter :status, as: :select, collection: [%w[Rascunho draft], %w[Publicado published]]
   filter :category
   filter :created_at
 
@@ -34,9 +35,7 @@ ActiveAdmin.register Article do
     column :published_at
     column :views_count
     column :banner do |article|
-      if article.banner.attached?
-        image_tag article.banner.variant(resize_to_limit: [120, 80])
-      end
+      image_tag article.banner.variant(resize_to_limit: [120, 80]) if article.banner.attached?
     end
     actions
   end
@@ -78,17 +77,25 @@ ActiveAdmin.register Article do
           f.input :title
           f.input :banner,
                   as: :file,
-                  hint: f.object.banner.attached? ? image_tag(f.object.banner.variant(resize_to_limit: [320, 180]), height: '100') : 'Upload de imagem (JPEG, PNG ou GIF) até 5MB. Sugerido 1200x630px',
+                  hint: if f.object.banner.attached?
+                          image_tag(f.object.banner.variant(resize_to_limit: [320, 180]),
+                                    height: '100')
+                        else
+                          'Upload de imagem (JPEG, PNG ou GIF) até 5MB. Sugerido 1200x630px'
+                        end,
                   input_html: { accept: 'image/jpeg,image/png,image/gif' }
           f.input :slug, hint: 'Deixe em branco para gerar automaticamente a partir do título'
           f.input :category, as: :select, input_html: { class: 'select2-input' }
           f.input :product, as: :select, input_html: { class: 'select2-input' }
-          f.input :status, as: :select, collection: [['Rascunho', 'draft'], ['Publicado', 'published']], include_blank: false
+          f.input :status, as: :select, collection: [%w[Rascunho draft], %w[Publicado published]],
+                           include_blank: false
           f.input :published_at, as: :datepicker
           f.input :featured, label: 'Destaque?'
           f.input :sponsored, label: 'Patrocinado?'
           f.input :sponsored_label, hint: 'Ex.: Oferta patrocinada, Conteúdo de marca'
-          f.input :author, as: :select, collection: AdminUser.all.collect { |u| [u.name || u.email, u.id] }, include_blank: true
+          f.input :author, as: :select, collection: AdminUser.all.collect { |u|
+            [u.name || u.email, u.id]
+          }, include_blank: true
         end
 
         f.inputs 'Texto' do
@@ -99,7 +106,8 @@ ActiveAdmin.register Article do
 
       tab 'Relacionamentos' do
         f.inputs 'Empresas Relacionadas' do
-          f.input :companies, as: :select, multiple: true, input_html: { class: 'select2-input' }, collection: Company.all
+          f.input :companies, as: :select, multiple: true, input_html: { class: 'select2-input' },
+                              collection: Company.all
         end
       end
 

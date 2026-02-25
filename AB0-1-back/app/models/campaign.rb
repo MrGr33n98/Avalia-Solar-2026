@@ -8,6 +8,6 @@ class Campaign < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    ['campaign_reviews', 'company']
+    %w[campaign_reviews company]
   end
 end

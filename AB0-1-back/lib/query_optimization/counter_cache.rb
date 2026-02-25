@@ -12,7 +12,7 @@ module QueryOptimization
         find_each do |record|
           association_name = association_name.to_s.pluralize.to_sym
           counter_name = "#{association_name.to_s.singularize}_count"
-          
+
           if column_names.include?(counter_name)
             count = record.public_send(association_name).count
             record.update_column(counter_name, count)

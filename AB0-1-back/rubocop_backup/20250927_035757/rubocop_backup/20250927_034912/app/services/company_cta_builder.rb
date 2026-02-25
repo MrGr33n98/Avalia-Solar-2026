@@ -119,7 +119,7 @@ class CompanyCtaBuilder
     type = params[:type].to_s.downcase
     url = params[:url]
     message_template = params[:message_template] || @company.cta_whatsapp_template
-    use_utm = params[:use_utm].nil? ? true : params[:use_utm]
+    use_utm = params[:use_utm].nil? || params[:use_utm]
 
     # Gera a URL final com base no tipo
     final_url = case type

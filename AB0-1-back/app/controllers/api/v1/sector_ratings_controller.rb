@@ -113,7 +113,7 @@ module Api
                            (valid_custom_scores.sum.to_f / valid_custom_scores.size).round.clamp(1, 5)
                          end
 
-        SectorRating::WEIGHTS.keys.each do |attribute|
+        SectorRating::WEIGHTS.each_key do |attribute|
           provided_score = payload[attribute].to_i
           score = provided_score.between?(1, 5) ? provided_score : fallback_score
           rating.public_send("#{attribute}=", score)
@@ -128,16 +128,16 @@ module Api
           created_at: rating.created_at
         }
 
-        if rating.answers.present?
-          base_payload[:answers] = rating.answers
-        else
-          base_payload[:answers] = {
-            homologation: rating.homologation,
-            technical_quality: rating.technical_quality,
-            safety: rating.safety,
-            consultancy: rating.consultancy
-          }
-        end
+        base_payload[:answers] = if rating.answers.present?
+                                   rating.answers
+                                 else
+                                   {
+                                     homologation: rating.homologation,
+                                     technical_quality: rating.technical_quality,
+                                     safety: rating.safety,
+                                     consultancy: rating.consultancy
+                                   }
+                                 end
 
         base_payload
       end

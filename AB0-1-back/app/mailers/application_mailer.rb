@@ -25,7 +25,7 @@ class ApplicationMailer < ActionMailer::Base
 
   def track_email_metrics
     return unless defined?(Yabeda)
-    
+
     # Track email sent metrics
     Yabeda.mailers.emails_sent.increment(
       { mailer: self.class.name, action: action_name },
@@ -44,7 +44,7 @@ class ApplicationMailer < ActionMailer::Base
   # Check if email should be sent based on user preferences
   def user_accepts_emails?(user, email_type)
     return true unless user.respond_to?(:email_preferences)
-    
+
     user.email_preferences.fetch(email_type, true)
   end
 end

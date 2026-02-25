@@ -42,11 +42,11 @@ RSpec.describe 'Company sector questions API', type: :request do
            company_id: company.id,
            company_sector_question: {
              prompt: prompt,
-              weight: 1,
-              order: next_order,
-              enabled: true,
-            },
-          }.to_json,
+             weight: 1,
+             order: next_order,
+             enabled: true
+           }
+         }.to_json,
          headers: headers
   end
 

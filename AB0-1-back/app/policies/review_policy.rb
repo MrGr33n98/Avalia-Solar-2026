@@ -17,9 +17,9 @@ class ReviewPolicy < ApplicationPolicy
     admin?
   end
 
-  alias_method :reject?, :approve?
-  alias_method :analyze?, :approve?
-  alias_method :batch_action?, :approve?
+  alias reject? approve?
+  alias analyze? approve?
+  alias batch_action? approve?
 
   private
 

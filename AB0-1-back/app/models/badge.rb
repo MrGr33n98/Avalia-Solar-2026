@@ -5,7 +5,7 @@ class Badge < ApplicationRecord
   MAX_IMAGE_SIZE = 2.megabytes
 
   has_one_attached :image
-  
+
   has_many :company_badges, dependent: :destroy
   has_many :companies, through: :company_badges
 
@@ -31,9 +31,9 @@ class Badge < ApplicationRecord
     begin
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      
+
       Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("Error generating image URL for badge #{id}: #{e.message}")
       nil
     end
@@ -43,18 +43,17 @@ class Badge < ApplicationRecord
 
   def generate_slug
     return if public_slug.present?
+
     self.public_slug = "#{name.parameterize}-#{SecureRandom.hex(4)}"
   end
 
   def image_constraints
     return unless image.attached?
 
-    if image.blob.byte_size > MAX_IMAGE_SIZE
-      errors.add(:image, "deve ter no máximo 2MB")
-    end
+    errors.add(:image, 'deve ter no máximo 2MB') if image.blob.byte_size > MAX_IMAGE_SIZE
 
-    unless ALLOWED_IMAGE_TYPES.include?(image.blob.content_type)
-      errors.add(:image, "deve ser PNG, JPG, JPEG ou WEBP")
-    end
+    return if ALLOWED_IMAGE_TYPES.include?(image.blob.content_type)
+
+    errors.add(:image, 'deve ser PNG, JPG, JPEG ou WEBP')
   end
 end

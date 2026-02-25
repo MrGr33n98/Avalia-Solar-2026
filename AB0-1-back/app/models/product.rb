@@ -9,6 +9,7 @@ class Product < ApplicationRecord
   has_many :product_price_histories, dependent: :destroy
 
   attr_accessor :category_ids_for_metrics_update
+
   before_save :capture_category_ids_for_metrics, prepend: true
   after_save :update_associated_categories_metrics
   after_save :track_price_history
@@ -33,12 +34,10 @@ class Product < ApplicationRecord
     return db_value if db_value.present?
 
     return nil unless image.attached?
-    
+
     options = Rails.application.routes.default_url_options.dup
-    if Rails.env.development? && options[:host] == 'localhost'
-      options[:port] = 3001
-    end
-    
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
     Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
   end
 
@@ -86,7 +85,7 @@ class Product < ApplicationRecord
         status: status
       }
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[Analytics] Failed to track product creation: #{e.message}")
   end
 
@@ -99,16 +98,17 @@ class Product < ApplicationRecord
       recorded_at: Time.current,
       metadata: { source: 'model_callback' }
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("[PriceHistory] Failed to track price history for product #{id}: #{e.message}")
   end
 
   # Impede retorno direto de disabled -> active para forcar ciclo de revisao
   def blocked_transition_guard
     return unless status_was.present? && status.present?
-    if status_was == 'disabled' && status == 'active'
-      errors.add(:status, 'nao pode voltar de disabled direto para active (use draft -> active)')
-    end
+
+    return unless status_was == 'disabled' && status == 'active'
+
+    errors.add(:status, 'nao pode voltar de disabled direto para active (use draft -> active)')
   end
 
   def capture_category_ids_for_metrics
@@ -123,12 +123,8 @@ class Product < ApplicationRecord
       ids_to_update = categories.pluck(:id)
     end
 
-    if ids_to_update.present?
-      Category.where(id: ids_to_update).find_each do |cat|
-        cat.update_metrics!
-      end
-    end
-  rescue => e
+    Category.where(id: ids_to_update).find_each(&:update_metrics!) if ids_to_update.present?
+  rescue StandardError => e
     Rails.logger.error("Failed to update categories metrics for product #{id}: #{e.message}")
   end
 

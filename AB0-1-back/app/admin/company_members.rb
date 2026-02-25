@@ -9,7 +9,7 @@ ActiveAdmin.register CompanyMember do
       version.reify.save!
       redirect_to resource_path, notice: "Vínculo restaurado para a versão de #{version.created_at}"
     else
-      redirect_to resource_path, alert: "Não foi possível restaurar esta versão."
+      redirect_to resource_path, alert: 'Não foi possível restaurar esta versão.'
     end
   end
 
@@ -38,17 +38,20 @@ ActiveAdmin.register CompanyMember do
       row :created_at
       row :updated_at
     end
-    
-    panel "Histórico de Alterações" do
+
+    panel 'Histórico de Alterações' do
       table_for resource.versions.order(created_at: :desc) do
         column :event
         column :whodunnit
         column :created_at
         column :changes do |version|
-          version.changeset.map { |k, v| "#{k}: #{v[0]} -> #{v[1]}" }.join(", ")
+          version.changeset.map { |k, v| "#{k}: #{v[0]} -> #{v[1]}" }.join(', ')
         end
         column :actions do |version|
-          link_to "Rollback", rollback_admin_company_member_path(resource, version_id: version.id), method: :post, data: { confirm: "Tem certeza que deseja restaurar esta versão?" } if version.event == "update"
+          if version.event == 'update'
+            link_to 'Rollback', rollback_admin_company_member_path(resource, version_id: version.id), method: :post,
+                                                                                                      data: { confirm: 'Tem certeza que deseja restaurar esta versão?' }
+          end
         end
       end
     end

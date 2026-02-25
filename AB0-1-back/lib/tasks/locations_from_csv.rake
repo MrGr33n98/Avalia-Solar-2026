@@ -10,9 +10,7 @@ namespace :locations do
     csv_path = Rails.root.join('db', 'data', 'municipios.csv')
     output_path = Rails.root.join('config', 'data', 'br_locations.json')
 
-    unless File.exist?(csv_path)
-      raise "CSV não encontrado em #{csv_path}. Verifique o caminho do arquivo."
-    end
+    raise "CSV não encontrado em #{csv_path}. Verifique o caminho do arquivo." unless File.exist?(csv_path)
 
     raw = File.binread(csv_path)
     data = raw.dup.force_encoding('UTF-8')
@@ -28,9 +26,9 @@ namespace :locations do
     headers = rows.headers.compact
     header_map = headers.each_with_object({}) do |header, acc|
       key = ActiveSupport::Inflector.transliterate(header.to_s)
-                                      .downcase
-                                      .gsub(/[^a-z0-9]+/, '_')
-                                      .gsub(/\A_+|_+\z/, '')
+                                    .downcase
+                                    .gsub(/[^a-z0-9]+/, '_')
+                                    .gsub(/\A_+|_+\z/, '')
       acc[key] = header
     end
 
@@ -100,10 +98,10 @@ namespace :locations do
 
     payload_states.each do |state|
       cities = state['cities']
-                    .map { |city| city.to_s.strip.gsub(/\s+/, ' ') }
-                    .reject(&:blank?)
-                    .uniq
-                    .sort_by { |city| ActiveSupport::Inflector.transliterate(city).downcase }
+               .map { |city| city.to_s.strip.gsub(/\s+/, ' ') }
+               .reject(&:blank?)
+               .uniq
+               .sort_by { |city| ActiveSupport::Inflector.transliterate(city).downcase }
       state['cities'] = cities
       total_cities += cities.length
     end

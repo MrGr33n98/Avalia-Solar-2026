@@ -54,4 +54,3 @@ class CompanyMailer < ApplicationMailer
     )
   end
 end
-

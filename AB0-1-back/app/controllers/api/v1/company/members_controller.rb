@@ -5,15 +5,13 @@ module Api
         before_action :authenticate_api_user
         before_action :require_company_user
         before_action :set_company
-        before_action :ensure_owner!, only: [:create, :invite, :update, :destroy]
-        before_action :set_member, only: [:show, :update, :destroy]
+        before_action :ensure_owner!, only: %i[create invite update destroy]
+        before_action :set_member, only: %i[show update destroy]
 
         def index
           members = @company.company_members.includes(:user).order(created_at: :desc)
-          
-          if params[:role].present?
-            members = members.where(role: params[:role])
-          end
+
+          members = members.where(role: params[:role]) if params[:role].present?
 
           members = members.page(params[:page]).per(params[:per_page] || 20)
 
@@ -89,10 +87,14 @@ module Api
               status: m.user.status
             }
           }
-          
+
           if full_details
             data[:permissions] = member_permissions(m)
-            data[:versions] = m.versions.last(5).map { |v| { event: v.event, created_at: v.created_at, whodunnit: v.whodunnit } } if defined?(PaperTrail)
+            if defined?(PaperTrail)
+              data[:versions] = m.versions.last(5).map do |v|
+                { event: v.event, created_at: v.created_at, whodunnit: v.whodunnit }
+              end
+            end
           end
 
           data
@@ -100,8 +102,8 @@ module Api
 
         def member_permissions(m)
           case m.role
-          when 'owner' then ['manage_company', 'manage_members', 'manage_billing', 'view_dashboard']
-          when 'manager' then ['manage_members', 'view_dashboard']
+          when 'owner' then %w[manage_company manage_members manage_billing view_dashboard]
+          when 'manager' then %w[manage_members view_dashboard]
           else ['view_dashboard']
           end
         end

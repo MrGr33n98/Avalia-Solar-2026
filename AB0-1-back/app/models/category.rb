@@ -1,8 +1,6 @@
-require 'set'
-
 class Category < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
-  
+
   # permissions_config is a native JSON column, no need to serialize manually in Rails 7+
   # serialize :permissions_config, JSON
   # Associations
@@ -11,14 +9,14 @@ class Category < ApplicationRecord
   has_many :children, class_name: 'Category', foreign_key: :parent_id, dependent: :nullify
   has_many :badges, dependent: :destroy
   accepts_nested_attributes_for :badges, allow_destroy: true
-  
+
   has_and_belongs_to_many :companies, join_table: :categories_companies,
-                          after_add: :update_metrics_on_change,
-                          after_remove: :update_metrics_on_change
+                                      after_add: :update_metrics_on_change,
+                                      after_remove: :update_metrics_on_change
 
   has_and_belongs_to_many :products, join_table: :categories_products,
-                          after_add: :update_metrics_on_change,
-                          after_remove: :update_metrics_on_change
+                                     after_add: :update_metrics_on_change,
+                                     after_remove: :update_metrics_on_change
   has_many :articles
   has_one_attached :banner
   has_one_attached :icon
@@ -39,9 +37,9 @@ class Category < ApplicationRecord
   scope :featured,  -> { where(featured: true) }
   scope :active,    -> { where(status: 'active') }
   scope :by_region, ->(state) { joins(:companies).where(companies: { state: state }).distinct }
-  scope :by_min_rating, ->(rating) { where("average_rating >= ?", rating) }
-  scope :by_max_price, ->(price) { where("average_price <= ?", price) }
-  scope :containing_products_by_price, ->(price) { joins(:products).where("products.price <= ?", price).distinct }
+  scope :by_min_rating, ->(rating) { where('average_rating >= ?', rating) }
+  scope :by_max_price, ->(price) { where('average_price <= ?', price) }
+  scope :containing_products_by_price, ->(price) { joins(:products).where('products.price <= ?', price).distinct }
 
   # =========================
   # Cacheable Queries - TASK-016
@@ -75,7 +73,7 @@ class Category < ApplicationRecord
   # =========================
   # Instance Methods
   # =========================
-  
+
   def tags
     t = []
     t << 'Destaque' if featured?
@@ -86,11 +84,12 @@ class Category < ApplicationRecord
 
   def banner_url
     return nil unless banner.attached?
+
     begin
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       Rails.application.routes.url_helpers.rails_storage_proxy_url(banner, options)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("Error generating category banner URL: #{e.message}")
       nil
     end
@@ -98,11 +97,12 @@ class Category < ApplicationRecord
 
   def icon_url
     return nil unless icon.attached?
+
     begin
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       Rails.application.routes.url_helpers.rails_storage_proxy_url(icon, options)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("Error generating category icon URL: #{e.message}")
       nil
     end
@@ -131,7 +131,7 @@ class Category < ApplicationRecord
   def update_metrics!
     active_companies = companies.where(status: 'active').count
     active_products = products.where(status: 'active')
-    
+
     update_columns(
       companies_count: active_companies,
       products_count: active_products.count,
@@ -170,7 +170,7 @@ class Category < ApplicationRecord
 
   def validate_banner_technical_requirements
     return unless banner.attached?
-    
+
     blob = if attachment_changes['banner']
              attachment_changes['banner'].attachment.blob
            else
@@ -179,12 +179,10 @@ class Category < ApplicationRecord
 
     return unless blob
 
-    unless blob.content_type.in?(%w[image/png image/jpeg image/jpg])
-      errors.add(:banner, 'deve ser PNG ou JPG')
-    end
+    errors.add(:banner, 'deve ser PNG ou JPG') unless blob.content_type.in?(%w[image/png image/jpeg image/jpg])
 
-    if blob.byte_size > 500.kilobytes
-      errors.add(:banner, 'deve ter no máximo 500KB')
-    end
+    return unless blob.byte_size > 500.kilobytes
+
+    errors.add(:banner, 'deve ter no máximo 500KB')
   end
 end

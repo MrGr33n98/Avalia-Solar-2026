@@ -1,11 +1,12 @@
 class Article < ApplicationRecord
   extend FriendlyId
+
   friendly_id :title, use: :slugged
 
   belongs_to :category
   belongs_to :product, optional: true
   belongs_to :author, class_name: 'AdminUser', optional: true
-  
+
   # Companies relationship (Many-to-Many)
   has_and_belongs_to_many :companies
 
@@ -19,7 +20,7 @@ class Article < ApplicationRecord
   validate :banner_mime_type, if: -> { banner.attached? }
   validate :banner_file_size, if: -> { banner.attached? }
   validate :banner_dimensions, if: -> { banner.attached? }
-  validates :status, inclusion: { in: %w[draft published], message: "%{value} is not a valid status" }, allow_nil: true
+  validates :status, inclusion: { in: %w[draft published], message: '%{value} is not a valid status' }, allow_nil: true
 
   # Defaults
   after_initialize :set_defaults, if: :new_record?
@@ -38,7 +39,8 @@ class Article < ApplicationRecord
 
   # Add these methods for Ransack
   def self.ransackable_attributes(_auth_object = nil)
-    %w[category_id content created_at id product_id title updated_at sponsored sponsored_label slug status featured views_count published_at author_id]
+    %w[category_id content created_at id product_id title updated_at sponsored sponsored_label slug status featured
+       views_count published_at author_id]
   end
 
   def self.ransackable_associations(_auth_object = nil)

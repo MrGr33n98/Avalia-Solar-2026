@@ -57,7 +57,8 @@ module Api
         end
 
         def partner_params
-          params.require(:financing_partner).permit(:name, :partner_type, :website, :priority, :position, :active, :badge, :logo)
+          params.require(:financing_partner).permit(:name, :partner_type, :website, :priority, :position, :active,
+                                                    :badge, :logo)
         end
 
         def attach_logo(partner)
@@ -78,7 +79,7 @@ module Api
 
           Rails.application.routes.url_helpers.rails_storage_proxy_url(
             partner.logo,
-            **default_url_options.merge(only_path: false)
+            **default_url_options, only_path: false
           )
         rescue StandardError => e
           Rails.logger.warn("Logo URL generation failed for partner #{partner.id}: #{e.message}")

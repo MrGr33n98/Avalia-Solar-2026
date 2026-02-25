@@ -85,7 +85,7 @@ RSpec.describe 'Authentication Error Responses', type: :request do
       # Set a specific IP to ensure consistency
       ip = '1.2.3.4'
       6.times do
-        post '/api/v1/auth/login', 
+        post '/api/v1/auth/login',
              params: { email: 'test@example.com', password: 'password' },
              headers: { 'REMOTE_ADDR' => ip }
       end

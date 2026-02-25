@@ -36,10 +36,10 @@ class ApplicationJob < ActiveJob::Base
     Rails.logger.error "Job failed: #{self.class.name}"
     Rails.logger.error "Error: #{exception.message}"
     Rails.logger.error exception.backtrace.join("\n")
-    
+
     # TODO: Send to Sentry when TASK-006 is implemented
     # Sentry.capture_exception(exception) if defined?(Sentry)
-    
+
     raise exception # Re-raise to trigger retry logic
   end
 end

@@ -9,9 +9,16 @@ RSpec.describe 'Categories cards view', type: :request do
     )
   end
 
-  let!(:cat_expensive) { create(:category, name: 'Solar Panels', average_price: 10000.0, average_rating: 4.5, views_count: 100, featured: true) }
-  let!(:cat_cheap) { create(:category, name: 'Cables', average_price: 50.0, average_rating: 3.0, views_count: 500, featured: false) }
-  let!(:cat_popular) { create(:category, name: 'Inverters', average_price: 5000.0, average_rating: 5.0, views_count: 1000, featured: true) }
+  let!(:cat_expensive) do
+    create(:category, name: 'Solar Panels', average_price: 10_000.0, average_rating: 4.5, views_count: 100,
+                      featured: true)
+  end
+  let!(:cat_cheap) do
+    create(:category, name: 'Cables', average_price: 50.0, average_rating: 3.0, views_count: 500, featured: false)
+  end
+  let!(:cat_popular) do
+    create(:category, name: 'Inverters', average_price: 5000.0, average_rating: 5.0, views_count: 1000, featured: true)
+  end
 
   before do
     # Add badges
@@ -22,10 +29,10 @@ RSpec.describe 'Categories cards view', type: :request do
     context 'Basic Fields' do
       it 'returns correct fields including metrics' do
         get '/api/v1/categories', params: { view: 'cards' }
-        
+
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        
+
         popular = body.find { |c| c['id'] == cat_popular.id }
         expect(popular['average_price']).to eq(5000.0)
         expect(popular['views_count']).to eq(1000)
@@ -40,7 +47,7 @@ RSpec.describe 'Categories cards view', type: :request do
         get '/api/v1/categories', params: { view: 'cards', max_price: 100.0 }
         body = JSON.parse(response.body)
         ids = body.map { |c| c['id'] }
-        
+
         expect(ids).to include(cat_cheap.id)
         expect(ids).not_to include(cat_expensive.id)
         expect(ids).not_to include(cat_popular.id)
@@ -50,12 +57,12 @@ RSpec.describe 'Categories cards view', type: :request do
         get '/api/v1/categories', params: { view: 'cards', min_rating: 4.0 }
         body = JSON.parse(response.body)
         ids = body.map { |c| c['id'] }
-        
+
         expect(ids).to include(cat_expensive.id)
         expect(ids).to include(cat_popular.id)
         expect(ids).not_to include(cat_cheap.id)
       end
-      
+
       it 'filters by search term' do
         get '/api/v1/categories', params: { view: 'cards', search: 'Solar' }
         body = JSON.parse(response.body)
@@ -69,7 +76,7 @@ RSpec.describe 'Categories cards view', type: :request do
         get '/api/v1/categories', params: { view: 'cards', sort_by: 'price_desc' }
         body = JSON.parse(response.body)
         prices = body.map { |c| c['average_price'] }
-        expect(prices).to eq([10000.0, 5000.0, 50.0])
+        expect(prices).to eq([10_000.0, 5000.0, 50.0])
       end
 
       it 'sorts by views_desc' do
@@ -90,10 +97,10 @@ RSpec.describe 'Categories cards view', type: :request do
     context 'Pagination' do
       it 'returns metadata when page is present' do
         get '/api/v1/categories', params: { view: 'cards', page: 1, per_page: 1 }
-        
+
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
-        
+
         expect(json).to have_key('data')
         expect(json).to have_key('meta')
         expect(json['data'].length).to eq(1)

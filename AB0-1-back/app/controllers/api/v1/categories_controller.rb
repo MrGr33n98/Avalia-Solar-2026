@@ -30,12 +30,10 @@ module Api
       # =========================
       def index
         # MODO NOVO: Visualização otimizada para Cards
-        if params[:view] == 'cards'
-          return render_cards_view
-        end
+        return render_cards_view if params[:view] == 'cards'
 
         # MODO LEGADO: Mantém compatibilidade com código existente
-        articles_ts = ::Article.maximum(:updated_at)&.to_i || 0
+        articles_ts = ::Article.maximum(:updated_at).to_i
         cache_key = "#{cache_key_for('categories', params.except(:page, :per_page))}/articles/#{articles_ts}"
 
         cached_json(cache_key, expires_in: 1.hour) do
@@ -48,7 +46,7 @@ module Api
             :products,
             :banner_attachment, :banner_blob,
             :icon_attachment, :icon_blob,
-            companies: [:logo_attachment, :logo_blob]
+            companies: %i[logo_attachment logo_blob]
           )
 
           articles_count_map = ::Article.published.group(:category_id).count
@@ -96,26 +94,22 @@ module Api
         # Filtro de Busca (Search Term)
         if params[:searchTerm].present?
           term = "%#{params[:searchTerm].downcase}%"
-          companies_scope = companies_scope.where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", term, term)
+          companies_scope = companies_scope.where('LOWER(name) LIKE ? OR LOWER(description) LIKE ?', term, term)
         end
 
         # Filtro de Estado
-        if params[:state].present?
-          companies_scope = companies_scope.where(state: params[:state])
-        end
+        companies_scope = companies_scope.where(state: params[:state]) if params[:state].present?
 
         # Filtro de Cidade
-        if params[:city].present?
-          companies_scope = companies_scope.where(city: params[:city])
-        end
+        companies_scope = companies_scope.where(city: params[:city]) if params[:city].present?
 
         # Filtro de Avaliação (Rating)
-        if params[:rating].present? && params[:rating].to_f > 0
+        if params[:rating].present? && params[:rating].to_f.positive?
           # Assumindo que temos rating_avg ou similar. Se não tiver, ignoramos por enquanto.
           if ::Company.column_names.include?('rating_avg')
-            companies_scope = companies_scope.where("rating_avg >= ?", params[:rating].to_f)
+            companies_scope = companies_scope.where('rating_avg >= ?', params[:rating].to_f)
           elsif ::Company.column_names.include?('average_rating')
-            companies_scope = companies_scope.where("average_rating >= ?", params[:rating].to_f)
+            companies_scope = companies_scope.where('average_rating >= ?', params[:rating].to_f)
           end
         end
 
@@ -132,20 +126,20 @@ module Api
         if params[:page].present?
           companies_scope = paginate(companies_scope)
           set_pagination_headers(companies_scope)
-          
+
           # Optimization: Eager load associations
           companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
-          
+
           render json: {
             companies: companies_scope.map { |c| ::CompanySerializer.new(c).as_json },
             meta: pagination_metadata(companies_scope)
           }, status: :ok
         else
           companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
-          
+
           # Optimization: Eager load associations
           companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
-          
+
           render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
         end
       end
@@ -168,7 +162,7 @@ module Api
         banners_scope = banners_scope.where(position: params[:position]) if params[:position].present?
         banners_scope = banners_scope.limit(params[:limit].to_i) if limit_present?
 
-        max_updated_at = banners_scope.maximum(:updated_at)&.to_i || 0
+        max_updated_at = banners_scope.maximum(:updated_at).to_i
         cache_key = "categories/#{@category.id}/banners/#{max_updated_at}"
 
         cached_json(cache_key, expires_in: 30.minutes) do
@@ -257,8 +251,8 @@ module Api
         cached_json(cache_key, expires_in: 1.hour) do
           # Busca apenas categorias raízes (parent_id: nil) e inclui os filhos e ícones
           roots = ::Category.where(status: 'active', parent_id: nil)
-                           .order(:name)
-                           .includes(:icon_attachment, children: :icon_attachment)
+                            .order(:name)
+                            .includes(:icon_attachment, children: :icon_attachment)
 
           roots.map { |root| category_tree_json(root) }
         end
@@ -291,8 +285,8 @@ module Api
           icon_url: category.icon_url,
           companies_count: category.companies_count || 0,
           children: category.children.select { |c| c.status == 'active' }
-                                     .sort_by(&:name)
-                                     .map { |child| category_tree_json(child) }
+                    .sort_by(&:name)
+                    .map { |child| category_tree_json(child) }
         }
       end
 
@@ -351,19 +345,19 @@ module Api
         end
 
         fallback = fallback.limit(params[:limit].to_i) if limit_present?
-        
+
         # Optimization: Eager load associations to avoid N+1 queries in fallback
         includes_list = []
         includes_list << :products if ::Category.reflect_on_association(:products)
         includes_list << :banner_attachment if ::Category.reflect_on_association(:banner_attachment)
         includes_list << :icon_attachment if ::Category.reflect_on_association(:icon_attachment)
-        
+
         if ::Category.reflect_on_association(:companies)
-           if ::Company.reflect_on_association(:logo_attachment)
-              includes_list << { companies: :logo_attachment }
-           else
-              includes_list << :companies
-           end
+          includes_list << if ::Company.reflect_on_association(:logo_attachment)
+                             { companies: :logo_attachment }
+                           else
+                             :companies
+                           end
         end
 
         fallback = fallback.includes(includes_list) if includes_list.any?
@@ -374,7 +368,7 @@ module Api
       # Expire all category caches when data changes
       def expire_categories_cache
         expire_cache('categories')
-        Rails.logger.info("🗑️  Expired all category caches")
+        Rails.logger.info('🗑️  Expired all category caches')
       end
 
       # -------------------------
@@ -389,28 +383,28 @@ module Api
         @categories = @categories.by_min_rating(params[:min_rating]) if params[:min_rating].present?
         @categories = @categories.by_max_price(params[:max_price]) if params[:max_price].present?
         @categories = @categories.where(kind: params[:kind]) if params[:kind].present?
-        
+
         # Busca textual
         if params[:search].present?
           term = "%#{params[:search].downcase}%"
-          @categories = @categories.where("LOWER(name) LIKE ? OR LOWER(short_description) LIKE ?", term, term)
+          @categories = @categories.where('LOWER(name) LIKE ? OR LOWER(short_description) LIKE ?', term, term)
         end
-        
+
         # Ordenação (Destaques primeiro ou A-Z)
-        case params[:sort_by]
-        when 'rating_desc'
-          @categories = @categories.order(average_rating: :desc)
-        when 'views_desc'
-          @categories = @categories.order(views_count: :desc)
-        when 'price_desc'
-          @categories = @categories.order(average_price: :desc)
-        when 'name_asc'
-          @categories = @categories.order(name: :asc)
-        when 'companies_count_desc'
-          @categories = @categories.order(companies_count: :desc)
-        else
-          @categories = @categories.order(featured: :desc, name: :asc)
-        end
+        @categories = case params[:sort_by]
+                      when 'rating_desc'
+                        @categories.order(average_rating: :desc)
+                      when 'views_desc'
+                        @categories.order(views_count: :desc)
+                      when 'price_desc'
+                        @categories.order(average_price: :desc)
+                      when 'name_asc'
+                        @categories.order(name: :asc)
+                      when 'companies_count_desc'
+                        @categories.order(companies_count: :desc)
+                      else
+                        @categories.order(featured: :desc, name: :asc)
+                      end
 
         # Otimização: removemos includes de companies/products pois usamos counter columns
         @categories = @categories.includes(:badges, banner_attachment: :blob, icon_attachment: :blob)
@@ -446,8 +440,6 @@ module Api
         end
       end
 
-      private
-
       def map_categories_data(categories, articles_count_map = {})
         categories.map do |category|
           {
@@ -470,10 +462,13 @@ module Api
             badges: category.badges.map do |b|
               options = Rails.application.routes.default_url_options.dup
               options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-              
+
               {
                 name: b.name,
-                image_url: (Rails.application.routes.url_helpers.rails_storage_proxy_url(b.badge_image, options) if b.badge_image.attached?)
+                image_url: (if b.badge_image.attached?
+                              Rails.application.routes.url_helpers.rails_storage_proxy_url(b.badge_image,
+                                                                                           options)
+                            end)
               }
             end
           }

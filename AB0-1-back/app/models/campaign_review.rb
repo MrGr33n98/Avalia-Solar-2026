@@ -48,6 +48,7 @@ class CampaignReview < ApplicationRecord
 
   def end_after_start
     return if start_at.blank? || end_at.blank?
+
     errors.add(:end_at, 'deve ser maior ou igual a start_at') if end_at < start_at
   end
 end

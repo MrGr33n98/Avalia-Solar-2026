@@ -22,9 +22,7 @@ class IdempotencyMiddleware
     # Otimização: Ignora verificação para métodos não-idempotentes (GET, HEAD, OPTIONS)
     # Isso evita criar ActionDispatch::Request para requests de assets/imagens (ActiveStorage)
     # que são muito frequentes e causavam overhead desnecessário.
-    unless IDEMPOTENT_METHODS.include?(env['REQUEST_METHOD'])
-      return @app.call(env)
-    end
+    return @app.call(env) unless IDEMPOTENT_METHODS.include?(env['REQUEST_METHOD'])
 
     request = ActionDispatch::Request.new(env)
 
@@ -98,7 +96,7 @@ class IdempotencyMiddleware
 
   def extract_user_id(request)
     # Tenta extrair o user_id do JWT token
-    token = request.headers['Authorization']&.split(' ')&.last
+    token = request.headers['Authorization']&.split&.last
     return 'anonymous' if token.blank?
 
     begin
@@ -110,8 +108,7 @@ class IdempotencyMiddleware
   end
 
   def extract_body(response_body)
-    body_content = []
-    response_body.each { |part| body_content << part }
+    body_content = response_body.map { |part| part }
     body_content.join
   end
 

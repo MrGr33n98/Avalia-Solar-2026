@@ -39,9 +39,6 @@ class CompanySerializer < ActiveModel::Serializer
     }
   end
 
-
-
-
   def banner_url
     generate_attachment_url(object.banner)
   end
@@ -56,21 +53,25 @@ class CompanySerializer < ActiveModel::Serializer
 
   def cta_whatsapp_enabled
     return false unless quote_feature_enabled?
+
     object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
   end
 
   def cta_whatsapp_url
     return nil unless quote_feature_enabled?
+
     object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
   end
 
   def whatsapp_enabled
     return false unless quote_feature_enabled?
+
     object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
   end
 
   def whatsapp_url
     return nil unless quote_feature_enabled?
+
     object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
   end
 
@@ -136,6 +137,7 @@ class CompanySerializer < ActiveModel::Serializer
 
   def financing_profile
     return unless financing_tab_visible
+
     profile = object.company_financing_profile
     return unless profile
 
@@ -184,7 +186,7 @@ class CompanySerializer < ActiveModel::Serializer
       # Use rails_storage_proxy_url to serve images through the app instead of direct S3 redirects
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      
+
       Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
     rescue StandardError => e
       Rails.logger.error("Error generating attachment URL for company #{object.id}: #{e.message}")

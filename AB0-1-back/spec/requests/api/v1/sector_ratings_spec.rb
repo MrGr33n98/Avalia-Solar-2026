@@ -33,7 +33,8 @@ RSpec.describe 'Sector Ratings API', type: :request do
 
   describe 'GET /companies/:id/sector_ratings/questions' do
     it 'allows review users to fetch custom questions without membership' do
-      question = CompanySectorQuestion.create!(company: company, prompt: 'Tempo de resposta', weight: 2, order: 1, enabled: true)
+      question = CompanySectorQuestion.create!(company: company, prompt: 'Tempo de resposta', weight: 2, order: 1,
+                                               enabled: true)
       get "/api/v1/companies/#{company.id}/sector_ratings/questions", headers: auth_headers(review_user)
 
       expect(response).to have_http_status(:ok)
@@ -43,7 +44,8 @@ RSpec.describe 'Sector Ratings API', type: :request do
     end
 
     it 'supports legacy route without /api/v1 prefix' do
-      question = CompanySectorQuestion.create!(company: company, prompt: 'Qualidade tecnica', weight: 1, order: 1, enabled: true)
+      question = CompanySectorQuestion.create!(company: company, prompt: 'Qualidade tecnica', weight: 1, order: 1,
+                                               enabled: true)
       get "/companies/#{company.id}/sector_ratings/questions", headers: auth_headers(review_user)
 
       expect(response).to have_http_status(:ok)
@@ -54,7 +56,8 @@ RSpec.describe 'Sector Ratings API', type: :request do
 
   describe 'POST /companies/:id/sector_ratings' do
     it 'persists answers json and computes weighted score' do
-      q1 = CompanySectorQuestion.create!(company: company, prompt: 'Tempo de resposta', weight: 2, order: 1, enabled: true)
+      q1 = CompanySectorQuestion.create!(company: company, prompt: 'Tempo de resposta', weight: 2, order: 1,
+                                         enabled: true)
       q2 = CompanySectorQuestion.create!(company: company, prompt: 'Qualidade', weight: 1, order: 2, enabled: true)
 
       payload = {

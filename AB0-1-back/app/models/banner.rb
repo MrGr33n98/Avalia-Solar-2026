@@ -19,32 +19,32 @@ class Banner < ApplicationRecord
   validates :banner_type, inclusion: { in: ALLOWED_BANNER_TYPES }
   validates :position, inclusion: { in: ALLOWED_POSITIONS }
   validates :image, presence: true
-  validates :moderation_status, inclusion: { in: MODERATION_STATUSES }, 
-            if: -> { self.class.column_names.include?('moderation_status') }
+  validates :moderation_status, inclusion: { in: MODERATION_STATUSES },
+                                if: -> { self.class.column_names.include?('moderation_status') }
 
   # === Validações de Dimensões (Fase 1) ===
   # Garante que width e height sejam obrigatórias e válidas
-  validates :width, presence: true, 
-            numericality: { only_integer: true, greater_than: 0 }
+  validates :width, presence: true,
+                    numericality: { only_integer: true, greater_than: 0 }
   validates :height, presence: true,
-            numericality: { only_integer: true, greater_than: 0 }
+                     numericality: { only_integer: true, greater_than: 0 }
 
   # === Validação de Prioridade (Fase 1) ===
   # Priority deve estar entre 1 e 1000, ou nil (usa default 100)
-  validates :priority, numericality: { 
-    only_integer: true, 
+  validates :priority, numericality: {
+    only_integer: true,
     greater_than: 0,
     less_than_or_equal_to: 1000
   }, allow_nil: true
 
   # === Validações de Datas (Fase 1 - CRÍTICO) ===
   # Garante que end_date seja posterior a start_date
-  validate :end_date_must_be_after_start_date, 
+  validate :end_date_must_be_after_start_date,
            if: -> { start_date.present? && end_date.present? }
 
   # === Validação de Limite por Empresa (Fase 1) ===
   # Garante que empresa respeita limite de banners ativos conforme sua assinatura
-  validate :respect_company_active_banners_limit, 
+  validate :respect_company_active_banners_limit,
            on: :create,
            if: -> { company_id.present? && active == true }
 
@@ -55,8 +55,9 @@ class Banner < ApplicationRecord
   after_destroy :invalidate_cache
 
   def self.banner_variants_enabled?
-    flag = ENV['BANNER_VARIANTS_ENABLED']
+    flag = ENV.fetch('BANNER_VARIANTS_ENABLED', nil)
     return false if flag&.casecmp('false')&.zero?
+
     variants_supported?
   end
 
@@ -126,15 +127,9 @@ class Banner < ApplicationRecord
 
   scope :currently_active, lambda {
     scope = where(active: true)
-    if column_names.include?('moderation_status')
-      scope = scope.where(moderation_status: 'approved')
-    end
-    if column_names.include?('start_date')
-      scope = scope.where('start_date IS NULL OR start_date <= ?', Time.current)
-    end
-    if column_names.include?('end_date')
-      scope = scope.where('end_date IS NULL OR end_date >= ?', Time.current)
-    end
+    scope = scope.where(moderation_status: 'approved') if column_names.include?('moderation_status')
+    scope = scope.where('start_date IS NULL OR start_date <= ?', Time.current) if column_names.include?('start_date')
+    scope = scope.where('end_date IS NULL OR end_date >= ?', Time.current) if column_names.include?('end_date')
     scope
   }
 
@@ -157,7 +152,7 @@ class Banner < ApplicationRecord
   end
 
   def as_json(options = {})
-    super(options).merge(image_url: image_url)
+    super.merge(image_url: image_url)
   end
 
   private
@@ -213,8 +208,8 @@ class Banner < ApplicationRecord
 
     # Extrai regras do offer
     offer = active_subscription.banner_offer
-    max_total = offer.rules.dig('max_total_active')&.to_i
-    max_per_position = offer.rules.dig('max_active_per_position')&.to_i
+    max_total = offer.rules['max_total_active']&.to_i
+    max_per_position = offer.rules['max_active_per_position']&.to_i
 
     # Valida limite total de banners ativos
     if max_total.present?
@@ -230,16 +225,16 @@ class Banner < ApplicationRecord
     end
 
     # Valida limite por posição
-    if max_per_position.present? && position.present?
-      current_position_count = company.banners
-                                      .where(active: true, position: position)
-                                      .where.not(id: id)
-                                      .count
+    return unless max_per_position.present? && position.present?
 
-      if current_position_count >= max_per_position
-        errors.add(:position, "Limite de #{max_per_position} banners ativos na posição '#{position}' atingido.")
-      end
-    end
+    current_position_count = company.banners
+                                    .where(active: true, position: position)
+                                    .where.not(id: id)
+                                    .count
+
+    return unless current_position_count >= max_per_position
+
+    errors.add(:position, "Limite de #{max_per_position} banners ativos na posição '#{position}' atingido.")
   end
 
   # Invalida cache quando banner é alterado
@@ -260,7 +255,7 @@ class Banner < ApplicationRecord
     {
       host: uri.host || app_host,
       protocol: uri.scheme || 'http',
-      port: uri.port && ![80, 443].include?(uri.port) ? uri.port : nil,
+      port: uri.port && ![80, 443].include?(uri.port) ? uri.port : nil
     }.compact
   rescue StandardError
     { host: 'localhost', protocol: 'http' }

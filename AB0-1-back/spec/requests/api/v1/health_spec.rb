@@ -12,7 +12,7 @@ RSpec.describe 'api/v1/health', type: :request do
                  status: { type: :string, example: 'ok' },
                  timestamp: { type: :string, format: :date_time }
                },
-               required: [ 'status' ]
+               required: ['status']
 
         run_test!
       end

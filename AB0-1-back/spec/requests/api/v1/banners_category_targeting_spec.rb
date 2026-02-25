@@ -51,4 +51,3 @@ RSpec.describe 'Banners category targeting', type: :request do
     end
   end
 end
-

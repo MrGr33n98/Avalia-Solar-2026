@@ -1,6 +1,7 @@
 ActiveAdmin.register Review do
   menu label: 'Reviews', priority: 3
-  permit_params :company_id, :user_id, :rating, :comment, :status, :featured, :display_order, :verified, :reply, :replied_at
+  permit_params :company_id, :user_id, :rating, :comment, :status, :featured, :display_order, :verified, :reply,
+                :replied_at
 
   scope :all, default: true
   scope :pending
@@ -44,17 +45,17 @@ ActiveAdmin.register Review do
 
   action_item :approve, only: :show, if: proc { !resource.approved? } do
     link_to 'Aprovar', approve_admin_review_path(resource), method: :patch,
-            data: { confirm: 'Confirma a aprovação desta avaliação?' }
+                                                            data: { confirm: 'Confirma a aprovação desta avaliação?' }
   end
 
   action_item :reject, only: :show, if: proc { !resource.rejected? } do
     link_to 'Rejeitar', reject_admin_review_path(resource), method: :patch,
-            data: { confirm: 'Deseja rejeitar esta avaliação?' }
+                                                            data: { confirm: 'Deseja rejeitar esta avaliação?' }
   end
 
   action_item :analyze, only: :show, if: proc { !resource.in_analysis? } do
     link_to 'Enviar para análise', analyze_admin_review_path(resource), method: :patch,
-            data: { confirm: 'Mover esta avaliação para análise?' }
+                                                                        data: { confirm: 'Mover esta avaliação para análise?' }
   end
 
   index do
@@ -74,12 +75,18 @@ ActiveAdmin.register Review do
     column :created_at
     column :updated_at
     actions defaults: true do |review|
-      item 'Aprovar', approve_admin_review_path(review), method: :patch,
-           data: { confirm: 'Confirma a aprovação desta avaliação?' } unless review.approved?
-      item 'Rejeitar', reject_admin_review_path(review), method: :patch,
-           data: { confirm: 'Deseja rejeitar esta avaliação?' } unless review.rejected?
-      item 'Enviar para análise', analyze_admin_review_path(review), method: :patch,
-           data: { confirm: 'Deseja mover esta avaliação para análise?' } unless review.in_analysis?
+      unless review.approved?
+        item 'Aprovar', approve_admin_review_path(review), method: :patch,
+                                                           data: { confirm: 'Confirma a aprovação desta avaliação?' }
+      end
+      unless review.rejected?
+        item 'Rejeitar', reject_admin_review_path(review), method: :patch,
+                                                           data: { confirm: 'Deseja rejeitar esta avaliação?' }
+      end
+      unless review.in_analysis?
+        item 'Enviar para análise', analyze_admin_review_path(review), method: :patch,
+                                                                       data: { confirm: 'Deseja mover esta avaliação para análise?' }
+      end
     end
   end
 
@@ -173,12 +180,10 @@ ActiveAdmin.register Review do
       errors = []
 
       Review.where(id: ids).order(:id).find_each do |review|
-        begin
-          ReviewDecisionService.new(review: review, admin_user: current_admin_user).public_send("#{action}!")
-          processed += 1
-        rescue StandardError => e
-          errors << "##{review.id}: #{e.message}"
-        end
+        ReviewDecisionService.new(review: review, admin_user: current_admin_user).public_send("#{action}!")
+        processed += 1
+      rescue StandardError => e
+        errors << "##{review.id}: #{e.message}"
       end
 
       { processed: processed, errors: errors }

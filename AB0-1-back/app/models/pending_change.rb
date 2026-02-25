@@ -42,14 +42,12 @@ class PendingChange < ApplicationRecord
     # Optionally tailor by auth_object
     case auth_object
     when AdminUser
-      allowed
-    else
-      allowed
     end
+    allowed
   end
 
   # Ransack allowlist for attributes
-  def self.ransackable_attributes(auth_object = nil)
+  def self.ransackable_attributes(_auth_object = nil)
     %w[
       id change_type status created_at updated_at approved_at rejected_at applied_at
       company_id user_id approved_by_id
@@ -104,10 +102,11 @@ class PendingChange < ApplicationRecord
   def apply_banner_changes
     sid = data['signed_id'] || Array(data['signed_ids']).first
     return if sid.blank?
+
     begin
       blob = ActiveStorage::Blob.find_signed!(sid)
       company.banner.attach(blob)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Failed to attach banner blob: #{e.message}"
     end
   end
@@ -115,10 +114,11 @@ class PendingChange < ApplicationRecord
   def apply_logo_changes
     sid = data['signed_id'] || Array(data['signed_ids']).first
     return if sid.blank?
+
     begin
       blob = ActiveStorage::Blob.find_signed!(sid)
       company.logo.attach(blob)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Failed to attach logo blob: #{e.message}"
     end
   end
@@ -130,13 +130,12 @@ class PendingChange < ApplicationRecord
   def apply_media_changes
     signed_ids = Array(data['signed_ids'])
     return if signed_ids.empty?
+
     signed_ids.each do |sid|
-      begin
-        blob = ActiveStorage::Blob.find_signed!(sid)
-        company.media_assets.attach(blob)
-      rescue => e
-        Rails.logger.error "Failed to attach media blob: #{e.message}"
-      end
+      blob = ActiveStorage::Blob.find_signed!(sid)
+      company.media_assets.attach(blob)
+    rescue StandardError => e
+      Rails.logger.error "Failed to attach media blob: #{e.message}"
     end
   end
 
@@ -170,6 +169,7 @@ class PendingChange < ApplicationRecord
 
   def apply_access_request
     return unless user
+
     user.update!(company: company)
   end
 end

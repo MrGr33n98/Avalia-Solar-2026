@@ -2,7 +2,7 @@ require 'base64'
 
 FactoryBot.define do
   factory :plan do
-    name { "Basic Plan" }
+    name { 'Basic Plan' }
     price { 99.90 }
     features { { max_products: 50, dashboard_access: true } }
   end
@@ -14,7 +14,7 @@ FactoryBot.define do
     status { :pending }
     active_admin { true }
     association :plan
-    
+
     # Initialize JSON columns
     profile_views_count { 0 }
     cta_clicks_count { 0 }
@@ -31,7 +31,7 @@ FactoryBot.define do
   factory :user do
     name { Faker::Name.name }
     email { Faker::Internet.email }
-    password { "Password123" } # Meets complexity: Upper, lower, number, 8+
+    password { 'Password123' } # Meets complexity: Upper, lower, number, 8+
     association :company
     status { :active }
     role { :company }
@@ -59,7 +59,7 @@ FactoryBot.define do
     status { 'pending' }
     requested_at { Time.current }
   end
-  
+
   factory :lead do
     name { Faker::Name.name }
     email { Faker::Internet.email }

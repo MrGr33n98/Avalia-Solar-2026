@@ -11,28 +11,28 @@ module Api
         }
       end
 
-      test "should get dashboard data" do
+      test 'should get dashboard data' do
         get api_v1_dashboard_url, headers: @headers
         assert_response :success
-        
+
         json_response = JSON.parse(response.body)
         assert_not_nil json_response
       end
 
-      test "should get user dashboard stats" do
+      test 'should get user dashboard stats' do
         get api_v1_dashboard_stats_url, headers: @headers
         assert_response :success
       end
 
-      test "should require authentication for dashboard" do
+      test 'should require authentication for dashboard' do
         get api_v1_dashboard_url
         assert_response :unauthorized
       end
 
-      test "should get recent activities" do
+      test 'should get recent activities' do
         get api_v1_dashboard_activities_url, headers: @headers
         assert_response :success
-        
+
         json_response = JSON.parse(response.body)
         assert json_response.is_a?(Array)
       end

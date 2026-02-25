@@ -1,11 +1,12 @@
 class CompanyButton < ApplicationRecord
   belongs_to :company, touch: true
-  
+
   validates :label, presence: true
   validates :url, presence: true
-  validates :button_type, inclusion: { in: %w[primary secondary whatsapp custom], message: "%{value} is not a valid button type" }
+  validates :button_type,
+            inclusion: { in: %w[primary secondary whatsapp custom], message: '%{value} is not a valid button type' }
   validate :validate_url_scheme
-  
+
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(position: :asc) }
 
@@ -29,7 +30,7 @@ class CompanyButton < ApplicationRecord
 
     if uri.host.to_s.strip.empty?
       errors.add(:url, 'deve ser uma URL http/https válida')
-      return
+      nil
     end
 
     # Permite hosts customizados para WhatsApp para manter compatibilidade.
