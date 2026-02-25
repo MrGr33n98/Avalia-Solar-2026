@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_25_185130) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -131,12 +131,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
     t.integer "position"
     t.integer "year"
     t.string "edition"
-    t.integer "category_id", null: false
-    t.string "products"
     t.string "image"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["category_id"], name: "index_badges_on_category_id"
+    t.boolean "active", default: true, null: false
+    t.string "category_label"
+    t.string "public_slug"
+    t.index ["public_slug"], name: "index_badges_on_public_slug", unique: true
   end
 
   create_table "banner_daily_stats", force: :cascade do |t|
@@ -441,6 +442,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
     t.index ["status"], name: "index_company_access_requests_on_status"
     t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "status IN ('pending','approved') /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
+  end
+
+  create_table "company_badges", force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.integer "badge_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["badge_id"], name: "index_company_badges_on_badge_id"
+    t.index ["company_id", "badge_id"], name: "index_company_badges_on_company_id_and_badge_id", unique: true
+    t.index ["company_id"], name: "index_company_badges_on_company_id"
   end
 
   create_table "company_buttons", force: :cascade do |t|
@@ -948,6 +959,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "answers", default: {}, null: false
+    t.index ["answers"], name: "index_sector_ratings_on_answers"
     t.index ["company_id", "user_id"], name: "index_sector_ratings_on_company_and_user", unique: true
     t.index ["company_id"], name: "index_sector_ratings_on_company_id"
     t.index ["user_id"], name: "index_sector_ratings_on_user_id"
@@ -1058,7 +1070,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
   add_foreign_key "articles", "admin_users", column: "author_id"
   add_foreign_key "articles", "categories"
   add_foreign_key "articles", "products"
-  add_foreign_key "badges", "categories"
   add_foreign_key "banner_daily_stats", "banners"
   add_foreign_key "banner_events", "banners"
   add_foreign_key "banner_events", "companies"
@@ -1081,6 +1092,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_25_003544) do
   add_foreign_key "company_access_requests", "admin_users", column: "reviewed_by_admin_user_id"
   add_foreign_key "company_access_requests", "companies"
   add_foreign_key "company_access_requests", "users"
+  add_foreign_key "company_badges", "badges"
+  add_foreign_key "company_badges", "companies"
   add_foreign_key "company_buttons", "companies"
   add_foreign_key "company_faqs", "companies"
   add_foreign_key "company_financing_offers", "companies"

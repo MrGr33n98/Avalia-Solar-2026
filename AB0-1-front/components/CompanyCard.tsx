@@ -321,6 +321,19 @@ export default function CompanyCard({
             className={cn('relative rounded-full overflow-hidden bg-white')}
             style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
           >
+            {company.verified && company.verified_badge_url && (
+              <div className="absolute -top-3 -left-3 w-8 h-8 z-20" title="Selo de Verificação">
+                <Image
+                  src={company.verified_badge_url}
+                  alt="Verified Badge"
+                  fill
+                  sizes="32px"
+                  className="object-contain"
+                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                  priority
+                />
+              </div>
+            )}
             {logoUrl && !logoError ? (
               <Image
                 src={logoUrl}
