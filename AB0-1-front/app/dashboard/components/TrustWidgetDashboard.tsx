@@ -135,7 +135,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
           <Card className="sticky top-6">
             <CardHeader>
               <CardTitle>Preview</CardTitle>
-              <CardDescription>Como aparecer� no seu site.</CardDescription>
+              <CardDescription>Como aparecerá no seu site.</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center py-8 bg-slate-50 dark:bg-slate-950 rounded-b-xl border-t">
               <WidgetBadge companyData={mockCompanyData} theme={theme} />

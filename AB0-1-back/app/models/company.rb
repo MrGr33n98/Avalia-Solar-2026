@@ -28,10 +28,7 @@ class Company < ApplicationRecord
   has_one_attached :verified_badge # TASK: Trust Widget Badge
   has_many_attached :media_assets
 
-  validates :verified_badge,
-            content_type: ALLOWED_LOGO_CONTENT_TYPES,
-            size: { less_than: 2.megabytes },
-            if: -> { verified_badge.attached? }
+  validate :verified_badge_validation
 
   # =========================
   # Associations
@@ -653,6 +650,19 @@ class Company < ApplicationRecord
     )
   rescue => e
     Rails.logger.error("[Analytics] Failed to track company activation: #{e.message}")
+  end
+
+  def verified_badge_validation
+    return unless verified_badge.attached?
+
+    allowed = ALLOWED_LOGO_CONTENT_TYPES
+    unless allowed.include?(verified_badge.blob.content_type)
+      errors.add(:verified_badge, "deve ser PNG, JPG, SVG ou WEBP")
+    end
+
+    if verified_badge.blob.byte_size > 2.megabytes
+      errors.add(:verified_badge, "deve ter no máximo 2MB")
+    end
   end
 
   def ensure_slug
