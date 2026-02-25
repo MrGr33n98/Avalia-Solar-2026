@@ -22,13 +22,13 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
   const apiKey = company?.api_key || 'SUA_API_KEY';
   const companyId = company?.id || 'ID';
 
-  const snippet = <div 
-  data-avalia-solar-widget 
-  data-company-id="\" 
-  data-api-key="\"
-  data-theme="\"
-></div>
-<script src="\/trust-widget-embed.js" async></script>;
+  const snippet = `<div 
+    data-avalia-solar-widget 
+    data-company-id="${companyId}" 
+    data-api-key="${apiKey}"
+    data-theme="${theme}"
+  ></div>
+  <script src="${apiBaseUrl}/trust-widget-embed.js" async></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(snippet);

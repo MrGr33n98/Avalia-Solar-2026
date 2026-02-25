@@ -48,41 +48,26 @@ jobs:
       - name: Resolve Server Actions key
         if: matrix.component == 'frontend'
         run: |
-          KEY="${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || vars.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}"
-          if [ -z "$KEY" ] && [ -f .env ]; then
-            KEY=$(grep -E '^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=' .env | head -n1 | cut -d= -f2- | tr -d '\r')
-          fi
-          if [ -z "$KEY" ]; then
-            echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is required but not set in secrets, vars, or .env."
+          if [ -z "${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}" ]; then
+            echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY é obrigatório mas não foi definido."
             exit 1
           fi
-          echo "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$KEY" >> $GITHUB_ENV
 
       - name: Validate Rails master key
         if: matrix.component == 'backend'
         run: |
-          KEY="${{ secrets.RAILS_MASTER_KEY || vars.RAILS_MASTER_KEY }}"
-          if [ -z "$KEY" ] && [ -f .env ]; then
-            KEY=$(grep -E '^RAILS_MASTER_KEY=' .env | head -n1 | cut -d= -f2- | tr -d '\r')
-          fi
-          if [ -z "$KEY" ]; then
-            echo "::error::RAILS_MASTER_KEY está faltando nos Secrets do GitHub! O build do backend falhará sem ela."
+          if [ -z "${{ secrets.RAILS_MASTER_KEY }}" ]; then
+            echo "::error::RAILS_MASTER_KEY é obrigatório mas não foi definido no GitHub Secrets."
             exit 1
           fi
-          echo "RAILS_MASTER_KEY=$KEY" >> $GITHUB_ENV
 
       - name: Validate Better Auth secret
         if: matrix.component == 'frontend'
         run: |
-          SECRET="${{ secrets.BETTER_AUTH_SECRET || vars.BETTER_AUTH_SECRET }}"
-          if [ -z "$SECRET" ] && [ -f .env ]; then
-            SECRET=$(grep -E '^BETTER_AUTH_SECRET=' .env | head -n1 | cut -d= -f2- | tr -d '\r')
-          fi
-          if [ -z "$SECRET" ]; then
-            echo "::error::BETTER_AUTH_SECRET is required but not set in secrets, vars, or .env."
+          if [ -z "${{ secrets.BETTER_AUTH_SECRET }}" ]; then
+            echo "::error::BETTER_AUTH_SECRET é obrigatório mas não foi definido."
             exit 1
           fi
-          echo "BETTER_AUTH_SECRET=$SECRET" >> $GITHUB_ENV
 
       - name: Build and Push Backend
         if: matrix.component == 'backend'
@@ -101,19 +86,6 @@ jobs:
           cache-to: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache,mode=max
             type=gha,scope=backend,mode=max
-
-      - name: Build Frontend Secrets String
-        if: matrix.component == 'frontend'
-        id: frontend_secrets
-        run: |
-          SECRETS="NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}"
-          SECRETS="${SECRETS}"$'\n'"BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}"
-          if [ -n "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then
-            SECRETS="${SECRETS}"$'\n'"SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}"
-          fi
-          echo "secrets<<EOF" >> $GITHUB_OUTPUT
-          echo "$SECRETS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build and Push Frontend
         if: matrix.component == 'frontend'
@@ -134,7 +106,9 @@ jobs:
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
-          secrets: ${{ steps.frontend_secrets.outputs.secrets }}
+          secrets: |
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
