@@ -170,18 +170,49 @@ jobs:
             echo "?? Aguardando db/redis ficarem healthy..."
             sleep 5
 
-            echo "?? Reiniciando apenas o que mudou..."
-            docker compose up -d backend frontend
+            echo "?? Reiniciando backend..."
+            docker compose up -d backend
+
+            BACKEND_CID=$(docker compose ps -q backend)
+            if [ -z "$BACKEND_CID" ]; then
+              echo "!! ERRO: nao foi possivel obter o container ID do backend"
+              docker compose ps || true
+              exit 1
+            fi
 
             echo "?? Aguardando backend ficar healthy..."
-            for i in $(seq 1 30); do
-              if docker compose ps backend | grep -q "healthy"; then
+            BACKEND_STATUS=""
+            for i in $(seq 1 90); do
+              BACKEND_STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$BACKEND_CID" 2>/dev/null || echo "missing")
+              BACKEND_STATE=$(docker inspect --format='{{.State.Status}}' "$BACKEND_CID" 2>/dev/null || echo "missing")
+
+              if [ "$BACKEND_STATUS" = "healthy" ]; then
                 echo "?? backend healthy"
                 break
               fi
-              echo "Aguardando backend... ($i/30)"
+
+              if [ "$BACKEND_STATE" = "exited" ] || [ "$BACKEND_STATUS" = "unhealthy" ] || [ "$BACKEND_STATUS" = "missing" ]; then
+                echo "!! backend nao ficou saudavel (state=$BACKEND_STATE, health=$BACKEND_STATUS)"
+                echo "?? docker compose ps backend:"
+                docker compose ps backend || true
+                echo "?? ultimos logs do backend:"
+                docker compose logs --tail=200 backend || true
+                exit 1
+              fi
+
+              echo "Aguardando backend... ($i/90) state=$BACKEND_STATE health=$BACKEND_STATUS"
               sleep 2
             done
+
+            if [ "$BACKEND_STATUS" != "healthy" ]; then
+              echo "!! Timeout aguardando backend healthy"
+              docker compose ps backend || true
+              docker compose logs --tail=200 backend || true
+              exit 1
+            fi
+
+            echo "?? Reiniciando frontend..."
+            docker compose up -d frontend
 
             echo "?? Migracoes de banco..."
             docker compose exec -T backend bundle exec rails db:migrate
