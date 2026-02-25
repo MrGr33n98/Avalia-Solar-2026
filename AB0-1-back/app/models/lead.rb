@@ -33,6 +33,7 @@ class Lead < ApplicationRecord
 
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
+  after_create_commit :instrument_lead_captured
 
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
             :decision_timeline, :address_full,
@@ -191,5 +192,9 @@ class Lead < ApplicationRecord
 
   def notify_slack
     SlackNotificationService.notify_lead(self)
+  end
+
+  def instrument_lead_captured
+    ActiveSupport::Notifications.instrument('lead.captured', lead_id: id)
   end
 end
