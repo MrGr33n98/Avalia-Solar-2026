@@ -149,6 +149,27 @@ jobs:
             set -ex
             cd ~/Avalia-Solar-2026
 
+            echo "?? Padronizando Git para SSH..."
+            # 1. Verificar e trocar remote para SSH se necessário
+            CURRENT_REMOTE=$(git remote get-url origin)
+            TARGET_REMOTE="git@github.com:MrGr33n98/Avalia-Solar-2026.git"
+            
+            if [[ "$CURRENT_REMOTE" == *"https://"* ]]; then
+              echo "?? Detectado remote HTTPS ($CURRENT_REMOTE). Trocando para SSH..."
+              git remote set-url origin "$TARGET_REMOTE"
+            else
+              echo "?? Remote ja esta configurado como SSH ou outro formato nao-HTTPS."
+            fi
+
+            # 2. Garantir known_hosts para github.com
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+            sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
+
+            # 3. Validar acesso SSH ao GitHub (sem falhar o script se retornar 1, pois o SSH -T do GitHub sempre retorna 1)
+            echo "?? Validando acesso SSH ao GitHub..."
+            ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || echo "!! Aviso: Autenticacao SSH pode falhar. Se o proximo passo falhar, verifique a Deploy Key."
+
             echo "?? Atualizando codigo local..."
             git fetch origin main
             git reset --hard origin/main
