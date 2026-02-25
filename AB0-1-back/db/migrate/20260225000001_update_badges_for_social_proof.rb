@@ -1,12 +1,10 @@
 class UpdateBadgesForSocialProof < ActiveRecord::Migration[7.0]
   def up
-    # 1. Adicionar novas colunas à tabela badges
-    change_table :badges, bulk: true do |t|
-      t.boolean :active, default: true, null: false
-      t.string :category_label
-      t.integer :edition
-      t.string :public_slug
-    end
+    # 1. Adicionar novas colunas à tabela badges (de forma idempotente)
+    add_column :badges, :active, :boolean, default: true, null: false unless column_exists?(:badges, :active)
+    add_column :badges, :category_label, :string unless column_exists?(:badges, :category_label)
+    add_column :badges, :edition, :integer unless column_exists?(:badges, :edition)
+    add_column :badges, :public_slug, :string unless column_exists?(:badges, :public_slug)
 
     # 2. Criar tabela de junção company_badges se não existir
     unless table_exists?(:company_badges)
@@ -30,11 +28,13 @@ class UpdateBadgesForSocialProof < ActiveRecord::Migration[7.0]
   def down
     remove_index :badges, :public_slug if index_exists?(:badges, :public_slug)
     
-    change_table :badges, bulk: true do |t|
-      t.remove :active, :category_label, :edition, :public_slug
-      t.references :category, optional: true
-      t.string :products
-    end
+    remove_column :badges, :active if column_exists?(:badges, :active)
+    remove_column :badges, :category_label if column_exists?(:badges, :category_label)
+    remove_column :badges, :edition if column_exists?(:badges, :edition)
+    remove_column :badges, :public_slug if column_exists?(:badges, :public_slug)
+    
+    add_reference :badges, :category, null: true unless column_exists?(:badges, :category_id)
+    add_column :badges, :products, :string unless column_exists?(:badges, :products)
 
     drop_table :company_badges if table_exists?(:company_badges)
   end
