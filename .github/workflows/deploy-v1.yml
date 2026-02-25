@@ -169,9 +169,11 @@ jobs:
             esac
 
             # 2. Garantir known_hosts para github.com
-            mkdir -p ~/.ssh
+            [ -d ~/.ssh ] || mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
             sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
+            chmod 600 ~/.ssh/known_hosts
 
             # 3. Validar acesso SSH ao GitHub
             echo "?? Validando acesso SSH ao GitHub..."
@@ -209,7 +211,11 @@ jobs:
             echo "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
 
             echo "?? Pulling novas imagens de ghcr.io..."
-            docker compose pull
+            docker compose pull --quiet
+
+            echo "?? Status dos recursos no servidor:"
+            free -h
+            df -h
 
             echo "?? Garantindo dependencias (db/redis) ativas..."
             docker compose up -d db redis
