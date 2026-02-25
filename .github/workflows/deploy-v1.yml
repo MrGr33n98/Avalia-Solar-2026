@@ -153,6 +153,25 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            echo "?? Ajustando limite de upload no Nginx (413 safeguard)..."
+            UPLOAD_LIMIT="${NGINX_CLIENT_MAX_BODY_SIZE:-25m}"
+            NGINX_LIMIT_FILE="/etc/nginx/conf.d/zz-avalia-upload-limits.conf"
+            NGINX_SNIPPET="client_max_body_size ${UPLOAD_LIMIT};"
+
+            if [ -d /etc/nginx/conf.d ]; then
+              if [ "$(id -u)" = "0" ]; then
+                printf "%s\n" "$NGINX_SNIPPET" > "$NGINX_LIMIT_FILE"
+                nginx -t && (systemctl reload nginx || service nginx reload || true)
+              elif command -v sudo >/dev/null 2>&1; then
+                printf "%s\n" "$NGINX_SNIPPET" | sudo tee "$NGINX_LIMIT_FILE" >/dev/null
+                sudo nginx -t && (sudo systemctl reload nginx || sudo service nginx reload || true)
+              else
+                echo "!! Aviso: sem permissao para atualizar Nginx automaticamente. Ajuste manual necessario: client_max_body_size ${UPLOAD_LIMIT};"
+              fi
+            else
+              echo "?? /etc/nginx/conf.d nao encontrado neste host; pulando ajuste automatico de upload."
+            fi
+
             echo "?? Login no GitHub Container Registry (ghcr.io)..."
             if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
               echo "!! ERRO: DOCKER_USER ou DOCKER_TOKEN vazios no ambiente SSH"

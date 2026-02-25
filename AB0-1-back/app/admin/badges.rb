@@ -13,7 +13,7 @@ ActiveAdmin.register Badge do
       f.input :badge_image, as: :file, hint: if f.object.badge_image.attached?
                                                image_tag(f.object.badge_image.variant(resize_to_limit: [100, 100]))
                                              else
-                                               'Nenhuma imagem de selo anexada'
+                                               'Nenhuma imagem de selo anexada (PNG/JPG/WEBP/GIF/SVG, até 5MB)'
                                              end
     end
     f.actions
