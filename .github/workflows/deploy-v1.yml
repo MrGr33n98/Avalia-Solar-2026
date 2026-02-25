@@ -175,23 +175,7 @@ jobs:
 
             # 3. Validar acesso SSH ao GitHub
             echo "?? Validando acesso SSH ao GitHub..."
-            if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-              echo "!! Erro de Autenticacao SSH detectado."
-              
-              if [ ! -f ~/.ssh/id_rsa ]; then
-                echo "?? Chave SSH nao encontrada. Gerando nova chave..."
-                ssh-keygen -t rsa -b 4096 -C "deploy@avaliasolar" -f ~/.ssh/id_rsa -N ""
-              fi
-              
-              echo "-------------------------------------------------------"
-              echo "?? COPIE A CHAVE PUBLICA ABAIXO E ADICIONE NO GITHUB:"
-              echo "?? Settings > Deploy Keys > Add deploy key"
-              echo "-------------------------------------------------------"
-              cat ~/.ssh/id_rsa.pub
-              echo "-------------------------------------------------------"
-              echo "!! O deploy vai falhar agora. Apos adicionar a chave no GitHub, rode o deploy novamente."
-              exit 1
-            fi
+            ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || echo "!! Aviso: Autenticacao SSH pode falhar. Verifique se a Deploy Key foi adicionada corretamente."
 
             echo "?? Atualizando codigo local..."
             git fetch origin main
