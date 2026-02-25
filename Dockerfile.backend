@@ -39,14 +39,24 @@ ENV RAILS_ENV=production \
     REDIS_ENABLED=false \
     SECRET_KEY_BASE=dummy_value_for_assets_precompile_only
 
-RUN --mount=type=secret,id=rails_master_key \
+RUN --mount=type=secret,id=rails_master_key,required=false \
+    --mount=type=secret,id=RAILS_MASTER_KEY,required=false \
     set -eux; \
+    # Compatibilidade com IDs diferentes de secret no BuildKit
+    KEY_FILE=""; \
+    for CANDIDATE in /run/secrets/rails_master_key /run/secrets/RAILS_MASTER_KEY; do \
+      if [ -f "$CANDIDATE" ] && [ -s "$CANDIDATE" ]; then \
+        KEY_FILE="$CANDIDATE"; \
+        break; \
+      fi; \
+    done; \
+    \
     # Validação rigorosa da Master Key
-    if [ ! -f /run/secrets/rails_master_key ] || [ ! -s /run/secrets/rails_master_key ]; then \
+    if [ -z "$KEY_FILE" ]; then \
       echo "::error::RAILS_MASTER_KEY não encontrada ou vazia! Verifique os secrets do GitHub."; \
       exit 1; \
     fi; \
-    cp /run/secrets/rails_master_key config/master.key; \
+    cp "$KEY_FILE" config/master.key; \
     chmod 600 config/master.key; \
     \
     # Execução do precompile com stubs para evitar conexões externas
