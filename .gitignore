@@ -111,3 +111,13 @@ register_modal.png
 # Optional: backups
 ############################
 backup_limpeza_*/
+
+# Dependencies (AIOS)
+node_modules
+
+# AIOS Local (AIOS)
+.aios-core/local/
+.claude/settings.local.json
+.aios/install-log.txt
+*.backup.*
+AGENTS.md.backup*
