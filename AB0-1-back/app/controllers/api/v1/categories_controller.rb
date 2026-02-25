@@ -407,7 +407,7 @@ module Api
                       end
 
         # Otimização: removemos includes de companies/products pois usamos counter columns
-        @categories = @categories.includes(:badges, banner_attachment: :blob, icon_attachment: :blob)
+        @categories = @categories.includes(banner_attachment: :blob, icon_attachment: :blob)
         articles_count_map = ::Article.published.group(:category_id).count
 
         # Paginação (se parâmetros fornecidos)
@@ -458,19 +458,7 @@ module Api
             average_rating: (category.respond_to?(:average_rating) ? category.average_rating : 0.0).to_f,
             average_price: (category.respond_to?(:average_price) ? category.average_price : 0.0).to_f,
             views_count: (category.respond_to?(:views_count) ? category.views_count : 0).to_i,
-            tags: category.tags,
-            badges: category.badges.map do |b|
-              options = Rails.application.routes.default_url_options.dup
-              options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-
-              {
-                name: b.name,
-                image_url: (if b.badge_image.attached?
-                              Rails.application.routes.url_helpers.rails_storage_proxy_url(b.badge_image,
-                                                                                           options)
-                            end)
-              }
-            end
+            tags: category.tags
           }
         end
       end
