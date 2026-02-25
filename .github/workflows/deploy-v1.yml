@@ -92,6 +92,8 @@ jobs:
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
+          build-contexts: |
+            .=.
           secrets: |
             rails_master_key=${{ secrets.RAILS_MASTER_KEY }}
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
@@ -101,6 +103,19 @@ jobs:
           cache-to: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache,mode=max
             type=gha,scope=backend,mode=max
+
+      - name: Build Frontend Secrets String
+        if: matrix.component == 'frontend'
+        id: frontend_secrets
+        run: |
+          SECRETS="NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}"
+          SECRETS="${SECRETS}"$'\n'"BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}"
+          if [ -n "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then
+            SECRETS="${SECRETS}"$'\n'"SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}"
+          fi
+          echo "secrets<<EOF" >> $GITHUB_OUTPUT
+          echo "$SECRETS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build and Push Frontend
         if: matrix.component == 'frontend'
@@ -119,12 +134,9 @@ jobs:
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://avaliasolar.com.br' }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' }}
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
-            SENTRY_ORG=${{ secrets.SENTRY_ORG || '' }}
-            SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT || '' }}
-          secrets: |
-            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
-            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN || '' }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
+          secrets: ${{ steps.frontend_secrets.outputs.secrets }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
