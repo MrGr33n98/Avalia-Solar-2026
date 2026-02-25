@@ -27,6 +27,9 @@ Metrics/BlockLength:
     - 'test/**/*'
     - 'config/routes.rb'
 
+Layout/EndOfLine:
+  EnforcedStyle: lf
+
 Layout/LineLength:
   Max: 120
 

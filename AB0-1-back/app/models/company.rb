@@ -97,7 +97,7 @@ class Company < ApplicationRecord
             allow_blank: true
   validates :phone,
             format: { with: /\A\d{10,15}\z/,
-                      message: 'must contain only digits (DDD + número)' },
+                      message: 'must contain only digits (DDD + nÃƒÂºmero)' },
             allow_blank: true
 
   validates :whatsapp,
@@ -120,7 +120,7 @@ class Company < ApplicationRecord
   validates :whatsapp_url,
             presence: true,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
-                      message: 'deve ser uma URL válida (ex: https://wa.me/)' },
+                      message: 'deve ser uma URL vÃƒÂ¡lida (ex: https://wa.me/)' },
             if: :whatsapp_enabled?,
             allow_blank: false
 
@@ -138,7 +138,7 @@ class Company < ApplicationRecord
 
     return unless minimum_ticket > maximum_ticket
 
-    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
+    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket mÃƒÂ¡ximo')
   end
 
   # Scopes
@@ -213,29 +213,29 @@ class Company < ApplicationRecord
   end
 
   def validate_ready_for_activation
-    errors.add(:name, 'é obrigatório para ativação (mínimo 2 caracteres)') if name.blank? || name.length < 2
+    errors.add(:name, 'ÃƒÂ© obrigatÃƒÂ³rio para ativaÃƒÂ§ÃƒÂ£o (mÃƒÂ­nimo 2 caracteres)') if name.blank? || name.length < 2
 
-    errors.add(:email, 'inválido ou ausente para ativação') if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+    errors.add(:email, 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o') if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
 
-    errors.add(:state, 'inválido ou ausente para ativação') unless Locations::BrLocations.valid_state?(state)
+    errors.add(:state, 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_state?(state)
 
-    errors.add(:city, 'inválida ou ausente para ativação') unless Locations::BrLocations.valid_city?(state, city)
+    errors.add(:city, 'invÃƒÂ¡lida ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_city?(state, city)
 
-    errors.add(:categories, 'pelo menos uma categoria é necessária para ativação') unless categories.any?
+    errors.add(:categories, 'pelo menos uma categoria ÃƒÂ© necessÃƒÂ¡ria para ativaÃƒÂ§ÃƒÂ£o') unless categories.any?
 
     return if phone.present? || whatsapp.present? || email_public.present?
 
-    errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email Público) é necessário para ativação')
+    errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email PÃƒÂºblico) ÃƒÂ© necessÃƒÂ¡rio para ativaÃƒÂ§ÃƒÂ£o')
   end
 
   def validate_featured_requires_active
     return unless featured
     return if status == 'active'
 
-    errors.add(:featured, 'só pode ser verdadeiro quando o status é active')
+    errors.add(:featured, 'sÃƒÂ³ pode ser verdadeiro quando o status ÃƒÂ© active')
   end
 
-  # FIX #6: Adicionar validação robusta de category_ids format em Company
+  # FIX #6: Adicionar validaÃƒÂ§ÃƒÂ£o robusta de category_ids format em Company
   def validate_category_ids_format
     # We use raw category_ids if available, or just check the association
     # Active Record's category_ids usually returns an array.
@@ -245,19 +245,19 @@ class Company < ApplicationRecord
     return if category_ids.nil?
 
     unless category_ids.is_a?(Array)
-      errors.add(:category_ids, 'formato inválido: deve ser um array')
+      errors.add(:category_ids, 'formato invÃƒÂ¡lido: deve ser um array')
       return
     end
 
     return unless category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
 
-    errors.add(:category_ids, 'contém identificadores inválidos')
+    errors.add(:category_ids, 'contÃƒÂ©m identificadores invÃƒÂ¡lidos')
   end
 
   def validate_corporate_email
     return if email.blank?
 
-    # Se a empresa não tem website, não validamos domínio corporativo
+    # Se a empresa nÃƒÂ£o tem website, nÃƒÂ£o validamos domÃƒÂ­nio corporativo
     return if website.blank?
 
     domain = begin
@@ -268,10 +268,10 @@ class Company < ApplicationRecord
 
     return if domain.blank?
 
-    # Permite emails que contenham o domínio ou subdomínios
+    # Permite emails que contenham o domÃƒÂ­nio ou subdomÃƒÂ­nios
     return if email.downcase.include?(domain.downcase)
 
-    errors.add(:email, "deve ser um e-mail corporativo (domínio #{domain})")
+    errors.add(:email, "deve ser um e-mail corporativo (domÃƒÂ­nio #{domain})")
   end
 
   def normalize_company_fields
@@ -351,7 +351,7 @@ class Company < ApplicationRecord
       allowed_types: ALLOWED_LOGO_CONTENT_TYPES,
       max_size: LOGO_MAX_SIZE,
       invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
-      invalid_size_message: 'tamanho máximo é 5MB'
+      invalid_size_message: 'tamanho mÃƒÂ¡ximo ÃƒÂ© 5MB'
     )
     validate_minimum_dimensions(
       attribute: :logo,
@@ -371,7 +371,7 @@ class Company < ApplicationRecord
       allowed_types: ALLOWED_BANNER_CONTENT_TYPES,
       max_size: BANNER_MAX_SIZE,
       invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
-      invalid_size_message: 'tamanho máximo é 10MB'
+      invalid_size_message: 'tamanho mÃƒÂ¡ximo ÃƒÂ© 10MB'
     )
     validate_minimum_dimensions(
       attribute: :banner,
@@ -385,11 +385,11 @@ class Company < ApplicationRecord
   # Constantes (mantidas no modelo)
   PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
   SERVICES_OFFERED = [
-    'Instalação Residencial',
-    'Instalação Comercial',
-    'Instalação Industrial',
-    'Manutenção e Suporte',
-    'Consultoria Energética'
+    'InstalaÃƒÂ§ÃƒÂ£o Residencial',
+    'InstalaÃƒÂ§ÃƒÂ£o Comercial',
+    'InstalaÃƒÂ§ÃƒÂ£o Industrial',
+    'ManutenÃƒÂ§ÃƒÂ£o e Suporte',
+    'Consultoria EnergÃƒÂ©tica'
   ].freeze
 
   before_validation :normalize_company_fields
@@ -397,21 +397,21 @@ class Company < ApplicationRecord
   before_validation :ensure_slug
   validate :validate_project_types, :validate_services_offered
 
-  # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
+  # MÃƒâ€°TODOS DE VALIDAÃƒâ€¡ÃƒÆ’O (Corrigidos para usar self.)
   def validate_project_types
-    # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
+    # O erro 'undefined local variable' acontece aqui se nÃƒÂ£o usarmos 'self.' ou se o atributo nÃƒÂ£o estiver definido.
     # Usando 'self.project_types' resolve o escopo.
     return if project_types.blank?
 
     invalid = Array(project_types) - PROJECT_TYPES
-    errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+    errors.add(:project_types, "valores invÃƒÂ¡lidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
     return if services_offered.blank?
 
     invalid = Array(services_offered) - SERVICES_OFFERED
-    errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+    errors.add(:services_offered, "valores invÃƒÂ¡lidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_cnpj_format
@@ -419,27 +419,27 @@ class Company < ApplicationRecord
 
     return if CNPJ.valid?(cnpj)
 
-    errors.add(:cnpj, 'inválido')
+    errors.add(:cnpj, 'invÃƒÂ¡lido')
   end
 
   def validate_state_in_dataset
     return if state.blank?
     return if Locations::BrLocations.valid_state?(state)
 
-    errors.add(:state, 'inválido')
+    errors.add(:state, 'invÃƒÂ¡lido')
   end
 
   def validate_city_in_dataset
     return if city.blank?
 
     if state.blank?
-      errors.add(:city, 'requer um estado válido')
+      errors.add(:city, 'requer um estado vÃƒÂ¡lido')
       return
     end
 
     return if Locations::BrLocations.valid_city?(state, city)
 
-    errors.add(:city, 'inválida para o estado selecionado')
+    errors.add(:city, 'invÃƒÂ¡lida para o estado selecionado')
   end
 
   def has_paid_plan?
@@ -659,7 +659,7 @@ class Company < ApplicationRecord
 
     return unless verified_badge.blob.byte_size > 2.megabytes
 
-    errors.add(:verified_badge, 'deve ter no máximo 2MB')
+    errors.add(:verified_badge, 'deve ter no mÃƒÂ¡ximo 2MB')
   end
 
   def ensure_slug
@@ -759,7 +759,7 @@ class Company < ApplicationRecord
     errors.add(attribute, invalid_size_message) if blob.byte_size.to_i > max_size
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar blob atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
-    errors.add(attribute, 'arquivo inválido ou corrompido')
+    errors.add(attribute, 'arquivo invÃƒÂ¡lido ou corrompido')
   end
 
   def validate_minimum_dimensions(attribute:, blob:, min_width:, min_height:, recommendation:)
@@ -773,7 +773,7 @@ class Company < ApplicationRecord
     return if width.blank? || height.blank?
     return if width >= min_width && height >= min_height
 
-    errors.add(attribute, "dimensões muito pequenas (#{width}x#{height}px). Mínimo recomendado: #{recommendation}")
+    errors.add(attribute, "dimensÃƒÂµes muito pequenas (#{width}x#{height}px). MÃƒÂ­nimo recomendado: #{recommendation}")
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar dimensoes atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
   end
