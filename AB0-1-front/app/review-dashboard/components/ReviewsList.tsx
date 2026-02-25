@@ -128,7 +128,7 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
                       <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
                       <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resposta da Empresa</span>
                     </div>
-                    <p className="text-sm text-gray-600 italic">"{review.reply}"</p>
+                    <p className="text-sm text-gray-600 italic">&quot;{review.reply}&quot;</p>
                   </div>
                 )}
               </div>

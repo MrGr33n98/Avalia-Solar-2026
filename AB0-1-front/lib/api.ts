@@ -196,7 +196,6 @@ export interface Company {
   faqs?: CompanyFaq[];
   financing_enabled?: boolean;
   financing_feature_allowed?: boolean;
-  financing_tab_visible?: boolean;
   financing_profile?: CompanyFinancingProfile | null;
   financing_partners?: CompanyFinancingPartner[];
   financing_offers?: CompanyFinancingOffer[];
@@ -445,14 +444,18 @@ export interface Badge {
   id: number;
   name: string;
   description: string;
-  position: number;
+  position?: number;
   year: number;
-  edition: string;
-  category_id: number;
-  products: string;
-  image: string;
-  created_at: string;
-  updated_at: string;
+  edition: string | number;
+  category_id?: number;
+  category?: string;
+  products?: string;
+  image?: string;
+  image_url?: string;
+  public_slug?: string;
+  verifiable_url?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DashboardStats {
@@ -965,24 +968,6 @@ export async function fetchApi<T = any>(
 // =======================
 // API Endpoints
 // =======================
-export interface Badge {
-  id: number;
-  name: string;
-  description?: string;
-  category?: string;
-  year?: number;
-  edition?: number;
-  public_slug: string;
-  image_url: string;
-  verifiable_url: string;
-}
-
-export const badgesApi = {
-  getByCompany: (companyId: number | string) => 
-    fetchApi<Badge[]>(`/companies/${companyId}/badges`),
-  getBySlug: (slug: string) =>
-    fetchApi<{ badge: Badge; featured_companies: any[] }>(`/badges/${slug}`),
-};
 
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
@@ -1400,6 +1385,10 @@ export const articlesApi = {
 export const badgesApi = {
   getAll: () => fetchApi('/badges'),
   getById: (id: number) => fetchApi(`/badges/${id}`),
+  getByCompany: (companyId: number | string) => 
+    fetchApi<Badge[]>(`/companies/${companyId}/badges`),
+  getBySlug: (slug: string) =>
+    fetchApi<{ badge: Badge; featured_companies: any[] }>(`/badges/${slug}`),
   create: (badge: Partial<Badge>) =>
     fetchApi('/badges', {
       method: 'POST',
