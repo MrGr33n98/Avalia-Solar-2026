@@ -1,7 +1,7 @@
 module Api
   module V1
     class BadgesController < BaseController
-      skip_before_action :authenticate_api_user, only: [:show]
+      skip_before_action :authenticate_api_user, only: [:show], raise: false
 
       # GET /api/v1/companies/:id/badges
       def index
