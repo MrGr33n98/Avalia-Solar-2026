@@ -93,8 +93,8 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
           secrets: |
-            rails_master_key=${{ env.RAILS_MASTER_KEY }}
-            RAILS_MASTER_KEY=${{ env.RAILS_MASTER_KEY }}
+            rails_master_key=${{ secrets.RAILS_MASTER_KEY }}
+            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
             type=gha,scope=backend
@@ -122,9 +122,9 @@ jobs:
             SENTRY_ORG=${{ secrets.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT || '' }}
           secrets: |
-            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
-            BETTER_AUTH_SECRET=${{ env.BETTER_AUTH_SECRET }}
-            ${{ secrets.SENTRY_AUTH_TOKEN && format('SENTRY_AUTH_TOKEN={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN || '' }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
