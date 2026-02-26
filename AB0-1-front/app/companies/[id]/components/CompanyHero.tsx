@@ -130,9 +130,9 @@ export default function CompanyHero({
         </Button>
       </div>
 
-      {/* Banner - Altura Reduzida */}
+      {/* Banner - Altura Reduzida e Aspect Ratio Fixo */}
       <div className="relative w-full mb-6">
-        <div className="relative w-full h-[140px] sm:h-[160px] md:h-[200px]">
+        <div className="relative w-full aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1] max-h-64 lg:max-h-72">
           <OptimizedImage
             src={bannerUrl || '/images/banner-avalia-solar.png'}
             alt={`${company.name} banner`}
@@ -153,9 +153,9 @@ export default function CompanyHero({
         </div>
       </div>
 
-      {/* Info da empresa - Z-Pattern Hierarchy */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-12 z-10 relative px-4 sm:px-0">
-        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
+      {/* Info da empresa - Z-Pattern Hierarchy - Mais Denso */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-10 md:-mt-14 z-10 relative px-4 sm:px-0">
+        <div className="bg-white p-4 md:p-5 rounded-2xl shadow-xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
           {heroBadgeUrl && !badgeImageError && (
             <div
               className="absolute -top-2 left-2 md:-top-3 md:left-3 z-30 rounded-md bg-white/95 shadow-sm"

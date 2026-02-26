@@ -30,7 +30,7 @@ export default function SavingsCalculator() {
   };
 
   return (
-    <section className="py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden relative">
+    <section className="py-8 md:py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden relative">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
         <Zap className="absolute -top-10 -right-10 w-48 h-48 text-primary rotate-12" />
         <TrendingDown className="absolute -bottom-10 -left-10 w-56 h-56 text-primary -rotate-12" />
@@ -43,7 +43,7 @@ export default function SavingsCalculator() {
               <Calculator className="h-3 w-3" />
               Calculadora de Economia
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-3 leading-tight">
               Quanto você pode <span className="text-primary">economizar</span> com energia solar?
             </h2>
             <p className="text-slate-400 text-sm mb-6 leading-snug">

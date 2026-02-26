@@ -64,7 +64,7 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section className={[zebra ? 'bg-gray-50' : '', 'py-10 md:py-14'].join(' ')}>
+    <section className={[zebra ? 'bg-gray-50' : '', 'py-8 md:py-12'].join(' ')}>
       <div className={['container mx-auto', 'px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
     </section>
   );
@@ -72,10 +72,10 @@ function SectionShell({
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: ReactNode }) {
   return (
-    <div className="mb-8 md:mb-10">
+    <div className="mb-6 md:mb-8">
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{title}</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">{title}</h2>
           {subtitle ? <p className="text-gray-600 max-w-2xl leading-relaxed">{subtitle}</p> : null}
         </div>
         {right ? <div className="hidden md:block">{right}</div> : null}
@@ -298,7 +298,7 @@ async function CategoriesSectionWrapper({
 
       {safeCategories.length > 0 ? (
         <CategoryCardsErrorBoundary>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
             {safeCategories.map((category) => (
               <LandingCategoryCard key={category.id} category={category} />
             ))}
@@ -348,7 +348,7 @@ async function CompaniesSectionWrapper({
       />
 
       {companies.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
           {companies.slice(0, 8).map((company) => (
             <CompanyCard key={company.id} company={company} />
           ))}

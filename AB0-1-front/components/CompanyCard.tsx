@@ -392,11 +392,11 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-8')}>
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-3.5 pb-3.5 pt-7')}>
         <div className={cn("flex flex-col mb-2", compact ? "gap-1.5" : "gap-3")}>
           <div className="flex flex-col gap-1">
             <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('font-extrabold tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-xl md:text-2xl')}>
+              <h3 className={cn('font-black tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-xl md:text-2xl')}>
                 {name}
               </h3>
             </Link>

@@ -27,10 +27,10 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-12 bg-white">
+    <section className="py-8 md:py-10 bg-white">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+        <div className="text-center max-w-2xl mx-auto mb-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">
             Como o Avalia Solar funciona?
           </h2>
           <p className="text-sm text-slate-600">

@@ -10,7 +10,7 @@ type LandingHeroProps = {
 
 export default function LandingHero({ categories = [] }: LandingHeroProps) {
   return (
-    <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32 min-h-[500px] md:min-h-[600px] flex items-center">
+    <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 min-h-[400px] md:min-h-[500px] flex items-center">
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/banner-landing-page-avalia-solar.jpg"
@@ -32,7 +32,7 @@ export default function LandingHero({ categories = [] }: LandingHeroProps) {
             +1.500 Empresas Verificadas
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight mb-6">
             Encontre as melhores empresas de <span className="text-brand-blue">energia solar e mobilidade eletrica</span> perto de voce.
           </h1>
 
