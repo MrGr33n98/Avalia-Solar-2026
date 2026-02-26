@@ -17,10 +17,8 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
 
   return (
     <div className="space-y-6 sticky top-24">
-      {/* Claim Profile Card - Visible only if NOT verified */}
-      {!company.verified && (
-        <ClaimCompanyCard company={company} />
-      )}
+      {/* Claim Profile Card - Always visible */}
+      <ClaimCompanyCard company={company} />
 
       {/* Sponsored Square Banner */}
       <SponsoredBanner
