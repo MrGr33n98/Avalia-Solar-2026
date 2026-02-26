@@ -26,7 +26,8 @@ class CompanySerializer < ActiveModel::Serializer
              :category_info,
              :sector_ratings_enabled,
              :sector_rating_avg,
-             :sector_rating_count
+             :sector_rating_count,
+             :badges
 
   def category_info
     category = object.categories.first
@@ -37,6 +38,21 @@ class CompanySerializer < ActiveModel::Serializer
       name: category.name,
       seo_url: category.seo_url
     }
+  end
+
+  def badges
+    object.badges.active.order(position: :asc).map do |badge|
+      {
+        id: badge.id,
+        name: badge.name,
+        description: badge.description,
+        category: badge.category_label,
+        year: badge.year,
+        edition: badge.edition,
+        public_slug: badge.public_slug,
+        image_url: generate_attachment_url(badge.badge_image)
+      }
+    end
   end
 
   def banner_url

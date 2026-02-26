@@ -20,7 +20,7 @@ module Api
 
         retries = 0
         begin
-          @companies = ::Company.includes(:categories)
+        @companies = ::Company.includes(:categories, :badges)
 
           # Ordenação (Classificação)
           if params[:sort].present?
@@ -874,18 +874,18 @@ module Api
 
         candidate_id = raw_id.to_s[/\A\d+/]
         if candidate_id.present?
-          company = ::Company.find_by(id: candidate_id)
+          company = ::Company.includes(:badges).find_by(id: candidate_id)
           Rails.logger.info "[CompaniesController] Found by ID (#{candidate_id}): #{company&.name}" if company
         end
 
         if company.nil? && ::Company.column_names.include?('slug')
-          company = ::Company.find_by(slug: raw_id)
+          company = ::Company.includes(:badges).find_by(slug: raw_id)
           Rails.logger.info "[CompaniesController] Found by slug (#{raw_id}): #{company&.name}" if company
         end
 
         if company.nil?
           # Try lowercase just in case
-          company = ::Company.find_by(slug: raw_id.to_s.downcase)
+          company = ::Company.includes(:badges).find_by(slug: raw_id.to_s.downcase)
           Rails.logger.info "[CompaniesController] Found by lowercase slug: #{company&.name}" if company
         end
 
