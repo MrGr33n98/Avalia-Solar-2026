@@ -348,9 +348,9 @@ async function CompaniesSectionWrapper({
       />
 
       {companies.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
           {companies.slice(0, 8).map((company) => (
-            <CompanyCard key={company.id} company={company} compact={true} />
+            <CompanyCard key={company.id} company={company} />
           ))}
         </div>
       ) : (
