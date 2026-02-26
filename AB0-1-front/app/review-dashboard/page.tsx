@@ -12,7 +12,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCcw, AlertCircle } from 'lucide-react';
+import { Loader2, RefreshCcw, AlertCircle, Bell, ChevronRight } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
 
@@ -25,7 +25,7 @@ import { QuotesPanel } from './components/QuotesPanel';
 import { ReviewsList } from './components/ReviewsList';
 
 const ActivityChart = dynamic(() => import('./components/ActivityChart').then(mod => mod.ActivityChart), {
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 rounded-lg" />,
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-slate-50 rounded-2xl" />,
   ssr: false
 });
 
@@ -99,14 +99,8 @@ export default function ReviewDashboardPage() {
         return;
       }
       
-      const errorMessage = err.message || 'Não foi possível carregar os dados do painel. Tente novamente mais tarde.';
+      const errorMessage = err.message || 'Não foi possível carregar os dados do painel.';
       setError(errorMessage);
-      
-      if (err?.status === 404) {
-        toast.error(errorMessage, {
-          duration: 10000, // Show longer for 404s to allow reading the instructions
-        });
-      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -127,8 +121,6 @@ export default function ReviewDashboardPage() {
 
   const handleCancelQuote = async (id: string) => {
     try {
-      // Assuming leadsApi has a cancel method, or using fetchApi directly
-      // For now, let's just log and toast as we'd need to add this to lib/api.ts if not present
       toast.info('Solicitação de cancelamento enviada.');
       track('quote_cancel_click', { quote_id: id });
     } catch (err) {
@@ -149,80 +141,96 @@ export default function ReviewDashboardPage() {
     }
   };
 
-  const handleTabChange = (tabId: string) => {
-    track('quote_tab_change', { tab_id: tabId });
-  };
-
   if (authLoading || isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* Hero Header */}
-      <div className="bg-white border-b border-gray-100 mb-8">
-        <div className="mx-auto max-w-[1200px] px-6 py-10">
+    <div className="min-h-screen bg-slate-50/50 pb-12">
+      {/* Hero Header - Compact & Strong Hierarchy */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 md:py-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Meu Painel</h1>
-              <p className="text-gray-500">Acompanhe suas avaliações, orçamentos e métricas.</p>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-950 uppercase">
+                Bem-vindo, {user?.name?.split(' ')[0] || 'Usuário'}!
+              </h1>
+              <p className="text-slate-500 font-medium">Acompanhe suas economias, avaliações e orçamentos em tempo real.</p>
             </div>
+            
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">
-                <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
-                <span className="text-sm font-medium text-gray-700">{user?.name}</span>
-                <span className="text-xs text-gray-400 border-l border-gray-200 pl-2">Reviewer</span>
+              {/* Notification Badge Quick Win */}
+              <div className="relative">
+                <Button variant="outline" size="icon" className="rounded-2xl h-11 w-11 border-slate-200">
+                  <Bell className="h-5 w-5 text-slate-600" />
+                </Button>
+                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 text-[10px] font-black text-white items-center justify-center">3</span>
+                </span>
               </div>
+
               <Button 
                 variant="outline" 
                 size="icon" 
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="rounded-full h-10 w-10"
+                className="rounded-2xl h-11 w-11 border-slate-200"
               >
-                <RefreshCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCcw className={`h-5 w-5 text-slate-600 ${refreshing ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1200px] px-6 space-y-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 md:mt-10 space-y-6 md:space-y-10">
         {error && (
-          <Card className="border-red-100 bg-red-50">
+          <Card className="border-red-100 bg-red-50 rounded-2xl">
             <CardContent className="flex items-center gap-3 py-4 text-red-800">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm font-medium">{error}</p>
+              <p className="text-sm font-bold">{error}</p>
             </CardContent>
           </Card>
         )}
 
-        {/* KPI Cards Section */}
-        <section className="space-y-4">
+        {/* KPI Cards Section - Density Intelligence */}
+        <section>
           <KpiCards data={summary?.kpis} loading={loading} />
         </section>
 
-        {/* Main Grid: Quotes + Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-8 space-y-8">
+        {/* Main Content Grid - Vertical Rhythm */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          <div className="lg:col-span-8 space-y-6 md:space-y-10">
+            {/* Urgent Notification Action */}
+            <div className="bg-blue-600 rounded-3xl p-5 md:p-6 text-white shadow-xl shadow-blue-100 flex items-center justify-between group cursor-pointer hover:bg-blue-700 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                   <Bell className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-tight text-lg">Novo Orçamento Recebido!</h3>
+                  <p className="text-blue-100 text-sm font-medium">Empresa Solar Tech enviou uma proposta para você.</p>
+                </div>
+              </div>
+              <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+            </div>
+
             <section id="quotes">
               <QuotesPanel 
                 data={leads} 
                 loading={loading} 
-                onTabChange={handleTabChange}
                 onCancel={handleCancelQuote}
                 onViewDetails={(id) => {
                   track('quote_open_details', { quote_id: id });
-                  // Implementation for drawer would go here
                 }}
               />
             </section>
 
-            {/* Charts Section */}
             <section id="charts">
               <ActivityChart 
                 data={summary?.charts?.activity_30d} 
@@ -230,7 +238,6 @@ export default function ReviewDashboardPage() {
               />
             </section>
 
-            {/* Reviews Section */}
             <section id="reviews">
               <ReviewsList 
                 data={reviews} 
@@ -244,19 +251,19 @@ export default function ReviewDashboardPage() {
             </section>
           </div>
 
-          {/* Quick Actions Panel (Sticky on Desktop) */}
-          <aside className="lg:col-span-4 h-fit lg:sticky lg:top-8">
-            <QuickActionsPanel 
-              profileCompletion={summary?.profile?.completion_percent || 0}
-              onActionClick={(actionId) => {
-                track('Quick Action Clicked', { action_id: actionId });
-                if (actionId === 'new_review') track('review_create_click');
-              }}
-            />
+          {/* Quick Actions Panel - Sticky & Compact */}
+          <aside className="lg:col-span-4 space-y-6">
+            <div className="sticky top-24">
+              <QuickActionsPanel 
+                profileCompletion={summary?.profile?.completion_percent || 0}
+                onActionClick={(actionId) => {
+                  track('Quick Action Clicked', { action_id: actionId });
+                }}
+              />
+            </div>
           </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
-

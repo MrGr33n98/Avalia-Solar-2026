@@ -28,14 +28,14 @@ interface ActivityChartProps {
 export function ActivityChart({ data = [], loading }: ActivityChartProps) {
   if (loading) {
     return (
-      <Card className="rounded-2xl shadow-sm border overflow-hidden">
-        <CardHeader>
+      <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+        <CardHeader className="pb-2">
           <Skeleton className="h-6 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
         </CardHeader>
-        <CardContent className="h-[300px] flex items-end gap-2 px-6 pb-6">
+        <CardContent className="h-[280px] flex items-end gap-2 px-6 pb-6">
           {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="flex-1" style={{ height: `${Math.random() * 60 + 20}%` }} />
+            <Skeleton key={i} className="flex-1 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }} />     
           ))}
         </CardContent>
       </Card>
@@ -45,70 +45,78 @@ export function ActivityChart({ data = [], loading }: ActivityChartProps) {
   const isEmpty = data.length === 0 || data.every(d => d.profile_views === 0 && d.whatsapp_clicks === 0 && d.cta_clicks === 0);
 
   return (
-    <Card className="rounded-2xl shadow-sm border overflow-hidden">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Atividade (últimos 30 dias)</CardTitle>
-        <CardDescription>Visualizações e interações com seu perfil e orçamentos.</CardDescription>
+    <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+      <CardHeader className="pb-2 border-b border-slate-50">
+        <CardTitle className="text-xl font-black text-slate-950 uppercase tracking-tight">Estatísticas de Impacto</CardTitle>
+        <CardDescription className="text-xs font-medium text-slate-400">Suas interações e orçamentos nos últimos 30 dias.</CardDescription>   
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {isEmpty ? (
-          <div className="h-[300px] flex flex-col items-center justify-center text-center px-6">
-            <p className="text-gray-500 font-medium">Sem dados ainda</p>
-            <p className="text-sm text-gray-400 max-w-[280px]">
-              Quando você interagir com empresas e solicitar orçamentos, os gráficos aparecem aqui.
-            </p>
+          <div className="h-[260px] flex flex-col items-center justify-center text-center px-6 space-y-4">
+            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
+               <LineChart className="h-8 w-8" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-slate-950 font-black uppercase text-sm">Gráficos em breve</p>
+              <p className="text-xs text-slate-400 font-medium max-w-[240px] mx-auto">
+                Inicie sua jornada solicitando orçamentos para visualizar seu impacto aqui.
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="h-[300px] w-full mt-4">
+          <div className="h-[280px] w-full mt-2">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#94a3b8' }}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
                   tickFormatter={(value) => {
                     const date = new Date(value);
                     return `${date.getDate()}/${date.getMonth() + 1}`;
                   }}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#94a3b8' }}
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
                 />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                <Tooltip
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: '1px solid #f1f5f9', 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                    padding: '12px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
                   labelFormatter={(value) => new Date(value).toLocaleDateString('pt-BR')}
                 />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                <Legend 
+                  iconType="circle" 
+                  verticalAlign="top" 
+                  align="right" 
+                  wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} 
+                />
                 <Line
                   name="Visitas"
                   type="monotone"
                   dataKey="profile_views"
-                  stroke="#0D9488"
-                  strokeWidth={2}
+                  stroke="#3b82f6"
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
                 <Line
-                  name="Cliques WhatsApp"
+                  name="Cliques"
                   type="monotone"
                   dataKey="whatsapp_clicks"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
+                  stroke="#10b981"
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 4, strokeWidth: 0 }}
-                />
-                <Line
-                  name="Cliques CTA"
-                  type="monotone"
-                  dataKey="cta_clicks"
-                  stroke="#6366F1"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
               </LineChart>
             </ResponsiveContainer>

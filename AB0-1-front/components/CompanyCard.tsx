@@ -51,6 +51,8 @@ const DICTIONARY = {
 } as const;
 
 const VERIFIED_BADGE_SIZE_PX = 26;
+const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
+const ACTIVE_STORAGE_RE = /\/rails\/active_storage\//i;
 
 export default function CompanyCard({
   company: rawCompany,
@@ -132,19 +134,23 @@ export default function CompanyCard({
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
   const verifiedBadgeUrl = useMemo(() => {
+    const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
     const companyBadges = Array.isArray(company.badges) ? company.badges : [];
-    const candidates: string[] = [
-      ...companyBadges.map((badge) => badge?.image_url),
-      company.verified_badge_url,
-      company.verified_badge_image_url,
-    ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
-    if (candidates.length === 0) return '';
+    const badgeImageFromBadges = companyBadges
+      .map((badge) => badge?.image_url)
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((url) => getFullImageUrl(url))
+      .find((url) => isValidImageUrl(url));
+    if (badgeImageFromBadges) return badgeImageFromBadges;
 
-    const normalized = candidates.map((url) => getFullImageUrl(url));
-    const nonSvg = normalized.find((url) => !url.toLowerCase().endsWith('.svg'));
-    return nonSvg || '';
-  }, [company]);
+    const fallbackVerifiedBadge = [company.verified_badge_image_url, company.verified_badge_url]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((url) => getFullImageUrl(url))
+      .find((url) => isValidImageUrl(url) && !url.toLowerCase().endsWith('.svg'));
+
+    return fallbackVerifiedBadge || '';
+  }, [company.badges, company.verified_badge_image_url, company.verified_badge_url]);
 
   useEffect(() => {
     setVerifiedBadgeError(false);
@@ -248,8 +254,8 @@ export default function CompanyCard({
     <Card
       className={cn(
         'relative flex flex-col bg-white border border-gray-200 transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-primary/20 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
-        'overflow-hidden',
-        compact ? 'rounded-2xl h-[240px]' : 'rounded-3xl',
+        'overflow-hidden h-full', // Changed from h-[240px] to h-full to allow dynamic growth or container control
+        compact ? 'rounded-2xl min-h-[280px]' : 'rounded-3xl',
         className
       )}
       onClick={handleCardClick}
@@ -335,31 +341,31 @@ export default function CompanyCard({
         </AspectRatio>
 
         <div
-          className={cn('absolute left-4', compact ? '-bottom-6' : '-bottom-7')}
+          className={cn('absolute left-4 relative', compact ? '-bottom-6' : '-bottom-7')}
           style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
         >
+          {verifiedBadgeUrl && !verifiedBadgeError && (
+            <div
+              className="absolute -top-2 -left-2 z-30 rounded-md bg-white/95 shadow-sm"
+              style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
+              title="Selo de conquista"
+            >
+              <Image
+                src={verifiedBadgeUrl}
+                alt="Selo de conquista"
+                fill
+                sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
+                className="object-contain rounded-md"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                onError={() => setVerifiedBadgeError(true)}
+                priority
+              />
+            </div>
+          )}
           <div
             className={cn('relative rounded-full overflow-hidden bg-white')}
             style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
           >
-            {company.verified && verifiedBadgeUrl && !verifiedBadgeError && (
-              <div
-                className="absolute -top-1 -left-6 z-20"
-                style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
-                title="Selo de Verificação"
-              >
-                <Image
-                  src={verifiedBadgeUrl}
-                  alt="Selo verificado"
-                  fill
-                  sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                  className="object-contain"
-                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                  onError={() => setVerifiedBadgeError(true)}
-                  priority
-                />
-              </div>
-            )}
             {logoUrl && !logoError ? (
               <Image
                 src={logoUrl}
@@ -384,8 +390,8 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-6')}>
-        <div className="flex flex-col gap-3 mb-4">
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-6')}>
+        <div className={cn("flex flex-col mb-2", compact ? "gap-1.5" : "gap-3")}>
           <div className="flex flex-col gap-1">
             <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
               <h3 className={cn('font-extrabold tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-xl md:text-2xl')}>
@@ -393,21 +399,13 @@ export default function CompanyCard({
               </h3>
             </Link>
             
-            <div className="flex flex-wrap items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
               {company.verified && (
                 <Badge 
                   variant="secondary" 
-                  className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                  className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm px-1.5 py-0 rounded-full font-bold uppercase tracking-wider"
                 >
                   {text.verified}
-                </Badge>
-              )}
-              {/* Selo de Conquista (Mocked logic for top performers) */}
-              {(totalReviews > 20 || average_rating >= 4.8) && (
-                <Badge 
-                  className="text-[10px] bg-amber-50 text-amber-700 border-2 border-amber-400/50 shadow-md px-2 py-0.5 rounded-full font-black"
-                >
-                  TOP PERFORMANCE
                 </Badge>
               )}
             </div>
@@ -415,9 +413,9 @@ export default function CompanyCard({
 
           <div className="flex items-center gap-2">
             <div className="flex-shrink-0">
-              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={true} lang={lang} />}
+              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={!compact} lang={lang} />}
             </div>
-            {category_name && (
+            {category_name && !compact && (
               <span className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded-full truncate">
                 {category_name}
               </span>
@@ -426,7 +424,7 @@ export default function CompanyCard({
         </div>
 
         {(!compact || (city || state)) && (
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-500 truncate">
+          <div className="mt-auto flex items-center gap-1 text-[10px] text-gray-500 truncate pb-2">
             <MapPin className="w-3 h-3 text-gray-400" />
             <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
           </div>
@@ -442,9 +440,9 @@ export default function CompanyCard({
           </p>
         )}
 
-        {/* Footer Actions */}
+        {/* Footer Actions - Anchored to bottom with mt-auto */}
         <div className={cn(
-          "mt-4 print:hidden",
+          "mt-auto pt-2 print:hidden",
           compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
         )}>
           {canRequestQuote && (
@@ -458,7 +456,7 @@ export default function CompanyCard({
                     label={text.whatsapp}
                     className={cn(
                       'w-full shadow-sm font-bold rounded-xl transition-all',
-                      compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
+                      compact ? 'h-9 text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
                     )}
                   />
                 )
@@ -473,7 +471,7 @@ export default function CompanyCard({
                     onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
                     className={cn(
                       'w-full shadow-sm font-bold rounded-xl transition-all',
-                      compact ? 'h-11 lg:h-9 text-[13px] lg:text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                      compact ? 'h-9 text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
                     )}
                   />
                 )
@@ -486,13 +484,13 @@ export default function CompanyCard({
             className={cn(
               'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium transition-all',
               compact
-                ? (canRequestQuote ? 'h-11 w-11 p-0 flex-shrink-0 lg:h-9 lg:w-9' : 'h-11 w-full lg:h-10')
+                ? (canRequestQuote ? 'h-9 w-9 p-0 flex-shrink-0' : 'h-9 w-full')
                 : 'w-full h-11 lg:h-10'
             )}
             asChild
           >
           <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact && canRequestQuote ? 'w-5 h-5 lg:w-4 lg:h-4' : 'w-4 h-4 mr-1')} />
+            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact && canRequestQuote ? 'w-4 h-4' : 'w-4 h-4 mr-1')} />
             {(!compact || !canRequestQuote) && text.review}
           </Link>
           </Button>

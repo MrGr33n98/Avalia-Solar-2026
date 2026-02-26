@@ -1,11 +1,14 @@
+'use client';
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, Edit2, Trash2, MessageSquare } from 'lucide-react';
+import { Star, Edit2, Trash2, MessageSquare, ChevronDown } from 'lucide-react';
 import { Review } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface ReviewsListProps {
   data: Review[];
@@ -14,10 +17,10 @@ interface ReviewsListProps {
   onDelete?: (id: string) => void;
 }
 
-const statusMap: Record<string, { label: string; color: string }> = {
-  approved: { label: 'Publicada', color: 'bg-green-100 text-green-800' },
-  pending: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
-  draft: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
+const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+  approved: { label: 'Publicada', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  pending: { label: 'Em Análise', color: 'text-amber-700', bg: 'bg-amber-50' },
+  draft: { label: 'Rascunho', color: 'text-slate-500', bg: 'bg-slate-100' },
 };
 
 export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProps) {
@@ -28,22 +31,21 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
     return review.status === filter;
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   return (
-    <Card className="rounded-2xl shadow-sm border overflow-hidden">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
-        <CardTitle className="text-lg font-semibold">Minhas Reviews</CardTitle>
-        <div className="flex flex-wrap gap-2">
-          {['all', 'approved', 'pending', 'draft'].map((f) => (
+    <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-50">       
+        <CardTitle className="text-xl font-black text-slate-950 uppercase tracking-tight">Minhas Avaliações</CardTitle>
+        <div className="flex flex-wrap gap-1.5">
+          {['all', 'approved', 'pending'].map((f) => (
             <Button
               key={f}
               variant={filter === f ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter(f)}
-              className="rounded-full text-xs h-8"
+              className={cn(
+                "rounded-xl text-[10px] font-black uppercase tracking-widest h-8 px-3",
+                filter === f ? "bg-slate-900 text-white" : "border-slate-100 text-slate-400"
+              )}
             >
               {f === 'all' ? 'Todas' : statusMap[f]?.label || f}
             </Button>
@@ -51,84 +53,89 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
         </div>
       </CardHeader>
       <CardContent className="px-0">
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-slate-50">
           {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
+            Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="p-6 space-y-4">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-12 w-12 rounded-2xl" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-24" />
                   </div>
                 </div>
                 <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
               </div>
             ))
           ) : filteredData.length === 0 ? (
-            <div className="p-12 text-center space-y-3">
-              <MessageSquare className="h-12 w-12 text-gray-200 mx-auto" />
-              <div className="space-y-1">
-                <p className="text-gray-500 font-medium">Nenhuma review encontrada</p>
-                <p className="text-sm text-gray-400">Suas avaliações ajudam outras pessoas a escolherem integradores.</p>
+            <div className="py-20 text-center space-y-4 px-6">
+              <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+                 <MessageSquare className="h-10 w-10 text-slate-200" />
               </div>
-              <Button variant="outline" size="sm" asChild className="mt-2">
-                <a href="/empresas">Escrever primeira avaliação</a>
+              <div className="space-y-1">
+                <p className="text-slate-950 font-black uppercase text-sm">Sua voz faz a diferença</p>
+                <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">Sua primeira avaliação ajuda milhares de pessoas a escolherem o integrador certo.</p>
+              </div>
+              <Button variant="default" className="bg-blue-600 hover:bg-blue-700 font-black rounded-xl px-8 shadow-lg shadow-blue-100 h-11" asChild>
+                <a href="/empresas">Escrever Avaliação</a>
               </Button>
             </div>
           ) : (
             filteredData.map((review) => (
-              <div key={review.id} className="p-6 hover:bg-gray-50/50 transition-colors">
+              <div key={review.id} className="p-5 md:p-6 hover:bg-slate-50/50 transition-all group">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between">
                   <div className="flex gap-4">
-                    <Avatar className="h-12 w-12 border border-gray-100 shrink-0">
-                      <AvatarImage src={review.company?.logo_url || ''} />
-                      <AvatarFallback className="bg-teal-50 text-teal-700 font-bold">
+                    <Avatar className="h-14 w-14 rounded-2xl border border-slate-100 shadow-sm shrink-0">
+                      <AvatarImage src={review.company?.logo_url || ''} className="object-cover" />
+                      <AvatarFallback className="bg-slate-50 text-slate-300 font-black">
                         {review.company?.name?.substring(0, 2).toUpperCase() || 'EM'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-gray-900">{review.company?.name || 'Empresa'}</h4>
-                        <Badge variant="secondary" className={`text-[10px] py-0 h-4 ${statusMap[review.status || '']?.color || 'bg-gray-100 text-gray-800'}`}>
+                        <h4 className="font-black text-slate-950 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                          {review.company?.name || 'Empresa'}
+                        </h4>  
+                        <Badge variant="secondary" className={cn("text-[10px] font-black uppercase px-2 py-0 h-4 rounded-md tracking-tighter", statusMap[review.status || '']?.bg, statusMap[review.status || '']?.color)}>
                           {statusMap[review.status || '']?.label || review.status}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3.5 w-3.5 ${
-                              i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'
-                            }`}
-                          />
-                        ))}
-                        <span className="text-xs text-gray-400 ml-1">{formatDate(review.created_at)}</span>
+                        <div className="flex items-center gap-0.5 mr-2">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={cn("h-3.5 w-3.5", i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-200')}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                           {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 self-start">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-teal-600" onClick={() => onEdit?.(review.id.toString())}>
+                  <div className="flex gap-1.5 self-start">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-white" onClick={() => onEdit?.(review.id.toString())}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600" onClick={() => onDelete?.(review.id.toString())}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-white" onClick={() => onDelete?.(review.id.toString())}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                  <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     {review.comment || review.body || 'Sem comentário.'}
                   </p>
                 </div>
                 {review.reply && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 border-l-4 border-l-blue-500">
                     <div className="flex items-center gap-2 mb-2">
-                      <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resposta da Empresa</span>
+                      <div className="h-1 w-1 rounded-full bg-blue-500" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resposta da Empresa</span>
                     </div>
-                    <p className="text-sm text-gray-600 italic">&quot;{review.reply}&quot;</p>
+                    <p className="text-xs text-slate-600 font-bold leading-relaxed italic">&quot;{review.reply}&quot;</p>
                   </div>
                 )}
               </div>

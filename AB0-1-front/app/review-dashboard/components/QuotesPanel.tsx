@@ -1,19 +1,13 @@
+'use client';
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, MessageCircle, Eye, XCircle } from 'lucide-react';
+import { MessageCircle, Eye, XCircle, ChevronRight, Building2, Star } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Lead } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface QuotesPanelProps {
   data: Lead[];
@@ -31,12 +26,12 @@ interface QuotesPanelProps {
   onTabChange?: (tabId: string) => void;
 }
 
-const statusMap: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
-  pending_otp: { label: 'Aguardando Validação', color: 'bg-yellow-100 text-yellow-800' },
-  verified: { label: 'Verificado', color: 'bg-blue-100 text-blue-800' },
-  proposal_sent: { label: 'Proposta Enviada', color: 'bg-green-100 text-green-800' },
-  canceled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
+const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+  draft: { label: 'Rascunho', color: 'text-slate-500', bg: 'bg-slate-100' },
+  pending_otp: { label: 'Aguardando', color: 'text-amber-700', bg: 'bg-amber-100' },
+  verified: { label: 'Verificado', color: 'text-blue-700', bg: 'bg-blue-100' },
+  proposal_sent: { label: 'Respondido', color: 'text-emerald-700', bg: 'bg-emerald-100' },
+  canceled: { label: 'Cancelado', color: 'text-red-700', bg: 'bg-red-100' },
 };
 
 export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChange }: QuotesPanelProps) {
@@ -44,7 +39,7 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
 
   const filteredData = data.filter((item) => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'open') return ['draft', 'pending_otp', 'verified'].includes(item.status || '');
+    if (activeTab === 'open') return ['draft', 'pending_otp', 'verified'].includes(item.status || '');    
     if (activeTab === 'replied') return item.status === 'proposal_sent';
     if (activeTab === 'closed') return item.status === 'canceled';
     return true;
@@ -55,113 +50,116 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
     onTabChange?.(value);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   return (
-    <Card className="rounded-2xl shadow-sm border overflow-hidden">
-      <CardHeader className="pb-0">
+    <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+      <CardHeader className="pb-4 bg-slate-50/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-lg font-semibold">Meus Orçamentos</CardTitle>
+          <CardTitle className="text-xl font-black text-slate-950 uppercase tracking-tight">Meus Orçamentos</CardTitle>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
-            <TabsList className="grid w-full grid-cols-4 sm:w-auto">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              <TabsTrigger value="open">Abertos</TabsTrigger>
-              <TabsTrigger value="replied">Respondidos</TabsTrigger>
-              <TabsTrigger value="closed">Finalizados</TabsTrigger>
+            <TabsList className="bg-white border border-slate-100 p-1 rounded-xl h-10">
+              <TabsTrigger value="all" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Todos</TabsTrigger>
+              <TabsTrigger value="open" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Abertos</TabsTrigger>
+              <TabsTrigger value="replied" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Respondidos</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[300px]">Empresa</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-10 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
-                  </TableRow>
-                ))
-              ) : filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-48 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <p className="text-gray-500 font-medium">Nenhum orçamento encontrado</p>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href="/empresas">Solicitar novo orçamento</a>
-                      </Button>
+        <div className="divide-y divide-slate-50">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-2xl" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-24 rounded-lg" />
+              </div>
+            ))
+          ) : filteredData.length === 0 ? (
+            <div className="py-16 text-center space-y-4">
+              <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto">
+                <Building2 className="h-8 w-8 text-slate-300" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-slate-900 font-black uppercase text-sm">Nenhum orçamento ainda</p>
+                <p className="text-slate-500 text-xs font-medium">Economize agora solicitando orçamentos para integradores.</p>
+              </div>
+              <Button variant="default" className="bg-blue-600 hover:bg-blue-700 font-black rounded-xl px-8 shadow-lg shadow-blue-100" asChild>
+                <a href="/empresas">Começar Agora</a>
+              </Button>
+            </div>
+          ) : (
+            filteredData.map((quote) => (
+              <div key={quote.id} className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-all group">
+                {/* Z-PATTERN: Left (Company) */}
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Avatar className="h-12 w-12 rounded-2xl border border-slate-100 shadow-sm">
+                      <AvatarImage src={quote.company_logo_url || ''} className="object-cover" />
+                      <AvatarFallback className="bg-slate-100 text-slate-400 font-black">
+                        {quote.company?.substring(0, 2).toUpperCase() || 'ES'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-50" title="Verificada">
+                       <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((quote) => (
-                  <TableRow key={quote.id} className="group transition-colors hover:bg-gray-50/50">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-gray-100">
-                          <AvatarImage src={quote.company_logo_url || ''} />
-                          <AvatarFallback className="bg-teal-50 text-teal-700 font-semibold">
-                            {quote.company?.substring(0, 2).toUpperCase() || 'ES'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-gray-900">{quote.company || 'Empresa não identificada'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-gray-600">{quote.product_vertical || 'Energia Solar'}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={`font-medium ${statusMap[quote.status || '']?.color || 'bg-gray-100 text-gray-800'}`}>
-                        {statusMap[quote.status || '']?.label || quote.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-sm">{formatDate(quote.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => onViewDetails?.(quote.id.toString())}>
-                            <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a href={`/messages?quoteId=${quote.id}`}>
-                              <MessageCircle className="mr-2 h-4 w-4" /> Mensagens
-                            </a>
-                          </DropdownMenuItem>
-                          {['draft', 'pending_otp', 'verified'].includes(quote.status || '') && (
-                            <DropdownMenuItem 
-                              className="text-red-600 focus:text-red-600"
-                              onClick={() => onCancel?.(quote.id.toString())}
-                            >
-                              <XCircle className="mr-2 h-4 w-4" /> Cancelar
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                      {quote.company || 'Empresa não identificada'}
+                    </h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {quote.product_vertical || 'Energia Solar'} • {new Date(quote.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Z-PATTERN: Center (Status) */}
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary" className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full", statusMap[quote.status || '']?.bg, statusMap[quote.status || '']?.color)}>
+                    {statusMap[quote.status || '']?.label || quote.status}
+                  </Badge>
+                </div>
+
+                {/* Z-PATTERN: Right (CTA) */}
+                <div className="flex items-center gap-2">
+                   <Button variant="outline" size="sm" className="h-10 rounded-xl font-bold border-slate-200 text-slate-600 px-4 hidden sm:flex" onClick={() => onViewDetails?.(quote.id.toString())}>
+                     Ver Detalhes
+                   </Button>
+                   <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-sm">
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 rounded-2xl border-slate-100 shadow-xl">
+                      <DropdownMenuLabel className="text-[10px] font-black uppercase text-slate-400">Ações</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onViewDetails?.(quote.id.toString())} className="rounded-xl font-bold">
+                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="rounded-xl font-bold">
+                        <a href={`/messages?quoteId=${quote.id}`}>
+                          <MessageCircle className="mr-2 h-4 w-4" /> Mensagens
+                        </a>
+                      </DropdownMenuItem>
+                      {['draft', 'pending_otp', 'verified'].includes(quote.status || '') && (
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 rounded-xl font-bold"
+                          onClick={() => onCancel?.(quote.id.toString())}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" /> Cancelar
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

@@ -2,7 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, Star } from 'lucide-react';
+import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
 import { RatingStars } from '@/components/RatingStars';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 
 const HERO_BADGE_SIZE_PX = 48;
+const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
+const ACTIVE_STORAGE_RE = /\/rails\/active_storage\//i;
 
 interface CompanyHeroProps {
   company: Company;
@@ -57,19 +59,23 @@ export default function CompanyHero({
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
   const heroBadgeUrl = useMemo(() => {
+    const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
     const companyBadges = Array.isArray(company.badges) ? company.badges : [];
-    const candidates: string[] = [
-      ...companyBadges.map((badge) => badge?.image_url),
-      company.verified_badge_url,
-      company.verified_badge_image_url,
-    ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
-    if (candidates.length === 0) return null;
+    const badgeImageFromBadges = companyBadges
+      .map((badge) => badge?.image_url)
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((url) => getFullImageUrl(url))
+      .find((url) => isValidImageUrl(url));
+    if (badgeImageFromBadges) return badgeImageFromBadges;
 
-    const normalized = candidates.map((url) => getFullImageUrl(url));
-    const nonSvg = normalized.find((url) => !url.toLowerCase().endsWith('.svg'));
-    return nonSvg || null;
-  }, [company]);
+    const fallbackVerifiedBadge = [company.verified_badge_image_url, company.verified_badge_url]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((url) => getFullImageUrl(url))
+      .find((url) => isValidImageUrl(url) && !url.toLowerCase().endsWith('.svg'));
+
+    return fallbackVerifiedBadge || null;
+  }, [company.badges, company.verified_badge_image_url, company.verified_badge_url]);
 
   useEffect(() => {
     setBadgeImageError(false);
@@ -100,8 +106,6 @@ export default function CompanyHero({
       setIsSharing(false);
     }
   };
-
-  const isTopPerformance = companyStats.reviewCount > 20 || companyStats.rating >= 4.8;
 
   return (
     <div className="relative w-full">
@@ -152,14 +156,22 @@ export default function CompanyHero({
       {/* Info da empresa - Z-Pattern Hierarchy */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-12 z-10 relative px-4 sm:px-0">
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
-          
-          {/* Selo de Conquista - Top Left Highlight */}
-          {isTopPerformance && (
-            <div className="absolute -top-3 -left-3 z-30 transform rotate-[-5deg]">
-              <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-3 py-1 rounded-lg shadow-lg border-2 border-amber-200 flex items-center gap-1">
-                <Star className="w-3 h-3 fill-current" />
-                TOP PERFORMANCE
-              </div>
+          {heroBadgeUrl && !badgeImageError && (
+            <div
+              className="absolute -top-2 left-2 md:-top-3 md:left-3 z-30 rounded-md bg-white/95 shadow-sm"
+              style={{ width: HERO_BADGE_SIZE_PX, height: HERO_BADGE_SIZE_PX }}
+              title="Selo de conquista"
+            >
+              <OptimizedImage
+                src={heroBadgeUrl}
+                alt="Selo de conquista"
+                fill
+                sizes={`${HERO_BADGE_SIZE_PX}px`}
+                objectFit="contain"
+                className="rounded-md"
+                containerClassName="h-full w-full"
+                onError={() => setBadgeImageError(true)}
+              />
             </div>
           )}
 
