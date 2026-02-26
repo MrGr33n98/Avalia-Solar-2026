@@ -1,20 +1,28 @@
 import { Badge } from '@/components/ui/badge';
-import { Company } from '@/lib/api';
+import { Company, Review } from '@/lib/api';
 import { CheckCircle2, Award, Zap, ShieldCheck, MessageSquare } from 'lucide-react';
 import SponsoredBanner from './SponsoredBanner';
 import { RatingStars } from '@/components/RatingStars';
 
 interface CompanyOverviewProps {
   company: Company;
+  reviews?: Review[];
+  reviewsLoading?: boolean;
 }
 
-export default function CompanyOverview({ company }: CompanyOverviewProps) {
+export default function CompanyOverview({ company, reviews = [], reviewsLoading = false }: CompanyOverviewProps) {
   const averageRating = Number(
     (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0
   );
   const ratingCount = Number(
     (company as any).rating_count ?? (company as any).total_reviews ?? (company as any).reviews_count ?? 0
   );
+  const recentReviews = reviews
+    .filter((review) => {
+      const content = String((review as any)?.comment ?? (review as any)?.body ?? '').trim();
+      return content.length > 0;
+    })
+    .slice(0, 2);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -70,19 +78,40 @@ export default function CompanyOverview({ company }: CompanyOverviewProps) {
         </h3>
         <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
           {ratingCount > 0 ? (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <RatingStars
-                rating={averageRating}
-                count={ratingCount}
-                showCount={true}
-                showRatingValue={true}
-                starClassName="h-4 w-4"
-                ratingValueClassName="text-base font-extrabold text-slate-900"
-                countClassName="text-sm font-semibold text-slate-500"
-              />
-              <span className="text-sm font-semibold text-slate-600">
-                {ratingCount} avaliações publicadas
-              </span>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <RatingStars
+                  rating={averageRating}
+                  count={ratingCount}
+                  showCount={true}
+                  showRatingValue={true}
+                  starClassName="h-4 w-4"
+                  ratingValueClassName="text-base font-extrabold text-slate-900"
+                  countClassName="text-sm font-semibold text-slate-500"
+                />
+                <span className="text-sm font-semibold text-slate-600">
+                  {ratingCount} avaliações publicadas
+                </span>
+              </div>
+
+              {reviewsLoading ? (
+                <p className="text-sm text-slate-500">Carregando avaliações...</p>
+              ) : recentReviews.length > 0 ? (
+                <div className="space-y-2">
+                  {recentReviews.map((review) => {
+                    const authorName = (review as any)?.user?.name || 'Usuário';
+                    const content = String((review as any)?.comment ?? (review as any)?.body ?? '').trim();
+                    return (
+                      <div key={review.id} className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-slate-700">{authorName}</p>
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-2">{content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Ainda não há comentários de avaliações para exibir.</p>
+              )}
             </div>
           ) : (
             <p className="text-sm text-slate-500">Esta empresa ainda não possui avaliações publicadas.</p>
