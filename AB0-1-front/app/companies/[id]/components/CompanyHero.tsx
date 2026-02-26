@@ -17,7 +17,6 @@ import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
-import CompanyBadgeSelo, { hasCompanyBadgeSelo } from '@/components/badges/CompanyBadgeSelo';
 
 const HERO_BADGE_SIZE_PX = 38;
 
@@ -156,13 +155,7 @@ export default function CompanyHero({
 
       {/* Info da empresa */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
-        <div className="bg-card p-4 pt-8 sm:pt-9 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
-          {hasCompanyBadgeSelo(company) && (
-            <div className="absolute -top-4 left-4 md:-top-5 md:left-6 z-30">
-              <CompanyBadgeSelo company={company} variant="detail" className="shadow-sm" />
-            </div>
-          )}
-
+        <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
           <div className="mr-4 mb-3 sm:mb-0 relative">
             {company.verified && heroBadgeUrl && !badgeImageError && (
               <div
