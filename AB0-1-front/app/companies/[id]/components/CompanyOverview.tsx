@@ -1,8 +1,10 @@
+import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Company, Review } from '@/lib/api';
 import { CheckCircle2, Award, Zap, ShieldCheck, MessageSquare } from 'lucide-react';
 import SponsoredBanner from './SponsoredBanner';
 import { RatingStars } from '@/components/RatingStars';
+import { getFullImageUrl } from '@/utils/image';
 
 interface CompanyOverviewProps {
   company: Company;
@@ -100,11 +102,38 @@ export default function CompanyOverview({ company, reviews = [], reviewsLoading 
                 <div className="space-y-2">
                   {recentReviews.map((review) => {
                     const authorName = (review as any)?.user?.name || 'Usuário';
+                    const avatarRaw = (review as any)?.user?.avatar_url;
+                    const avatarUrl = avatarRaw ? getFullImageUrl(avatarRaw) : null;
+                    const initials = authorName
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((token: string) => token.charAt(0).toUpperCase())
+                      .join('');
                     const content = String((review as any)?.comment ?? (review as any)?.body ?? '').trim();
                     return (
                       <div key={review.id} className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
-                        <p className="text-xs font-semibold text-slate-700">{authorName}</p>
-                        <p className="mt-1 text-sm text-slate-600 line-clamp-2">{content}</p>
+                        <div className="flex items-start gap-2.5">
+                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white">
+                            {avatarUrl ? (
+                              <Image
+                                src={avatarUrl}
+                                alt={`Avatar de ${authorName}`}
+                                fill
+                                sizes="32px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-slate-600">
+                                {initials || 'U'}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-700">{authorName}</p>
+                            <p className="mt-1 text-sm text-slate-600 line-clamp-2">{content}</p>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
