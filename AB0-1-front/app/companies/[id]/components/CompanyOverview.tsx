@@ -1,13 +1,21 @@
 import { Badge } from '@/components/ui/badge';
-import { Company } from '@/api';
-import { CheckCircle2, Award, Zap, ShieldCheck } from 'lucide-react';
+import { Company } from '@/lib/api';
+import { CheckCircle2, Award, Zap, ShieldCheck, MessageSquare } from 'lucide-react';
 import SponsoredBanner from './SponsoredBanner';
+import { RatingStars } from '@/components/RatingStars';
 
 interface CompanyOverviewProps {
   company: Company;
 }
 
 export default function CompanyOverview({ company }: CompanyOverviewProps) {
+  const averageRating = Number(
+    (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0
+  );
+  const ratingCount = Number(
+    (company as any).rating_count ?? (company as any).total_reviews ?? (company as any).reviews_count ?? 0
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Sobre a Empresa */}
@@ -54,6 +62,33 @@ export default function CompanyOverview({ company }: CompanyOverviewProps) {
           </div>
         </section>
       )}
+
+      <section>
+        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-blue-500" />
+          Avaliações
+        </h3>
+        <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          {ratingCount > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <RatingStars
+                rating={averageRating}
+                count={ratingCount}
+                showCount={true}
+                showRatingValue={true}
+                starClassName="h-4 w-4"
+                ratingValueClassName="text-base font-extrabold text-slate-900"
+                countClassName="text-sm font-semibold text-slate-500"
+              />
+              <span className="text-sm font-semibold text-slate-600">
+                {ratingCount} avaliações publicadas
+              </span>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Esta empresa ainda não possui avaliações publicadas.</p>
+          )}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Serviços Oferecidos */}

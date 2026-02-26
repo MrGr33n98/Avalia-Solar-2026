@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
+import CompanyAwardsCard from './CompanyAwardsCard';
 
 interface CompanySidebarProps {
   company: Company;
@@ -19,6 +20,9 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
     <div className="space-y-6 sticky top-24">
       {/* Claim Profile Card - Always visible */}
       <ClaimCompanyCard company={company} />
+
+      {/* Awards Card - Visible when company has Avalia Solar awards */}
+      <CompanyAwardsCard company={company} />
 
       {/* Sponsored Square Banner */}
       <SponsoredBanner
