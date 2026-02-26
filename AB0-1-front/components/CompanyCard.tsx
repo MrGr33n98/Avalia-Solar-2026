@@ -341,56 +341,58 @@ export default function CompanyCard({
         </AspectRatio>
 
         <div
-          className={cn('absolute left-4 relative', compact ? '-bottom-6' : '-bottom-7')}
+          className={cn('absolute left-4 z-20', compact ? '-bottom-5' : '-bottom-6')}
           style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
         >
-          {verifiedBadgeUrl && !verifiedBadgeError && (
+          <div className="relative">
+            {verifiedBadgeUrl && !verifiedBadgeError && (
+              <div
+                className="absolute -top-2 -left-2 z-30 rounded-md bg-white/95 shadow-sm"
+                style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
+                title="Selo de conquista"
+              >
+                <Image
+                  src={verifiedBadgeUrl}
+                  alt="Selo de conquista"
+                  fill
+                  sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
+                  className="object-contain rounded-md"
+                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                  onError={() => setVerifiedBadgeError(true)}
+                  priority
+                />
+              </div>
+            )}
             <div
-              className="absolute -top-2 -left-2 z-30 rounded-md bg-white/95 shadow-sm"
-              style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
-              title="Selo de conquista"
+              className={cn('relative rounded-full overflow-hidden bg-white')}
+              style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
             >
-              <Image
-                src={verifiedBadgeUrl}
-                alt="Selo de conquista"
-                fill
-                sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                className="object-contain rounded-md"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                onError={() => setVerifiedBadgeError(true)}
-                priority
-              />
+              {logoUrl && !logoError ? (
+                <Image
+                  src={logoUrl}
+                  alt={`Logo ${name}`}
+                  fill
+                  sizes="80px"
+                  onError={() => setLogoError(true)}
+                  className="object-cover object-center"
+                  data-testid="company-logo"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
+                  <Building2 className="text-gray-300 w-8 h-8" />
+                </div>
+              )}
+              {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
+                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
+                </div>
+              )}
             </div>
-          )}
-          <div
-            className={cn('relative rounded-full overflow-hidden bg-white')}
-            style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
-          >
-            {logoUrl && !logoError ? (
-              <Image
-                src={logoUrl}
-                alt={`Logo ${name}`}
-                fill
-                sizes="80px"
-                onError={() => setLogoError(true)}
-                className="object-cover object-center"
-                data-testid="company-logo"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
-                <Building2 className="text-gray-300 w-8 h-8" />
-              </div>
-            )}
-            {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
-              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
-                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-6')}>
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-8')}>
         <div className={cn("flex flex-col mb-2", compact ? "gap-1.5" : "gap-3")}>
           <div className="flex flex-col gap-1">
             <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
