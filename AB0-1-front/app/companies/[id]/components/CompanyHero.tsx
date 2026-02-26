@@ -2,7 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
+import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, Star } from 'lucide-react';
 import { RatingStars } from '@/components/RatingStars';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 
-const HERO_BADGE_SIZE_PX = 38;
+const HERO_BADGE_SIZE_PX = 48;
 
 interface CompanyHeroProps {
   company: Company;
@@ -53,7 +53,6 @@ export default function CompanyHero({
   const [badgeImageError, setBadgeImageError] = useState(false);
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
-  // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
   const canRequestQuote = (company as any).active_admin === true;
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
@@ -102,13 +101,16 @@ export default function CompanyHero({
     }
   };
 
+  const isTopPerformance = companyStats.reviewCount > 20 || companyStats.rating >= 4.8;
+
   return (
     <div className="relative w-full">
-      {/* Botão de Voltar */}
-      <div className="mb-4">
+      {/* Botão de Voltar - Compacto */}
+      <div className="mb-3">
         <Button
-          variant="outline"
-          className="group text-muted-foreground hover:text-foreground border-border hover:bg-muted transition-colors"
+          variant="ghost"
+          size="sm"
+          className="group text-muted-foreground hover:text-foreground transition-colors p-0 h-auto"
           onClick={() => {
             track('company_back_click', {
               company_id: company.id,
@@ -119,107 +121,103 @@ export default function CompanyHero({
             router.back();
           }}
         >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1" />
           Voltar
         </Button>
       </div>
 
-      {/* Banner */}
-      <div className="relative w-full mb-8">
-        <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px]">
+      {/* Banner - Altura Reduzida */}
+      <div className="relative w-full mb-6">
+        <div className="relative w-full h-[140px] sm:h-[160px] md:h-[200px]">
           <OptimizedImage
             src={bannerUrl || '/images/banner-avalia-solar.png'}
             alt={`${company.name} banner`}
             fill
             priority
             quality={90}
-            className="object-cover rounded-2xl shadow-lg"
+            className="object-cover rounded-2xl shadow-md"
             containerClassName="h-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             fallbackSrc="/images/banner-avalia-solar.png"
-            onError={() => {
-              console.warn('[CompanyHero] Banner failed to load', {
-                company_id: company.id,
-                bannerUrl,
-              });
-              setBannerError(true);
-            }}
+            onError={() => setBannerError(true)}
           />
           {(!bannerUrl || bannerError) && (
             <div className="absolute inset-0 rounded-2xl ring-1 ring-border/50 pointer-events-none">
-              <span className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-white/70 backdrop-blur px-2 py-1 rounded">Imagem ilustrativa</span>
+              <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground bg-white/70 backdrop-blur px-1.5 py-0.5 rounded">Imagem ilustrativa</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Info da empresa */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
-        <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
-          {company.verified && heroBadgeUrl && !badgeImageError && (
-            <div className="absolute -top-16 left-3 md:-top-14 md:left-3 z-30" title="Selo de Verificação">
-              <OptimizedImage
-                src={heroBadgeUrl}
-                alt="Selo verificado"
-                width={HERO_BADGE_SIZE_PX}
-                height={HERO_BADGE_SIZE_PX}
-                className="object-contain drop-shadow-md"
-                priority
-                onError={() => setBadgeImageError(true)}
-              />
+      {/* Info da empresa - Z-Pattern Hierarchy */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-12 z-10 relative px-4 sm:px-0">
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
+          
+          {/* Selo de Conquista - Top Left Highlight */}
+          {isTopPerformance && (
+            <div className="absolute -top-3 -left-3 z-30 transform rotate-[-5deg]">
+              <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-3 py-1 rounded-lg shadow-lg border-2 border-amber-200 flex items-center gap-1">
+                <Star className="w-3 h-3 fill-current" />
+                TOP PERFORMANCE
+              </div>
             </div>
           )}
 
-          <div className="mr-4 mb-3 sm:mb-0 relative">
-            <OptimizedImage
-              src={logoUrl || "/images/logo-placeholder.svg"}
-              alt={company.name}
-              width={64}
-              height={64}
-              className="w-16 h-16 rounded-full border-2 border-white object-cover bg-white shadow-sm"
-              fallbackSrc="/images/logo-placeholder.svg"
-              onError={() => setLogoError(true)}
-            />
-            {company.verified && (!heroBadgeUrl || badgeImageError) && (
-              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
-                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
-              </div>
-            )}
+          <div className="mr-5 mb-4 sm:mb-0 relative">
+            <div className="relative">
+              <OptimizedImage
+                src={logoUrl || "/images/logo-placeholder.svg"}
+                alt={company.name}
+                width={80}
+                height={80}
+                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white object-cover bg-white shadow-md"
+                fallbackSrc="/images/logo-placeholder.svg"
+                onError={() => setLogoError(true)}
+              />
+              {company.verified && (
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md border border-slate-50" title="Empresa Verificada">
+                  <BadgeCheck className="w-5 h-5 text-blue-600 fill-blue-50" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center flex-wrap gap-2 mb-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate max-w-[250px] sm:max-w-xs" title={company.name}>
+            <div className="flex flex-col gap-1 mb-2">
+              <h1 className="text-2xl md:text-4xl font-extrabold text-slate-950 tracking-tight leading-tight truncate max-w-full" title={company.name}>
                 {company.name}
               </h1>
-              {company.verified && (
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200/50 flex items-center gap-1 px-2 py-0.5 h-6">
-                  <BadgeCheck className="w-3.5 h-3.5 fill-blue-600 text-white" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Verificado</span>
-                </Badge>
-              )}
+              <div className="flex items-center flex-wrap gap-2">
+                {company.verified && (
+                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100/50 flex items-center gap-1 px-2 py-0.5 h-6">
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Verificado</span>
+                  </Badge>
+                )}
+                <div className="flex items-center bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+                  <RatingStars 
+                    rating={companyStats.rating} 
+                    count={companyStats.reviewCount} 
+                    showRatingValue={true}
+                    starClassName="w-3.5 h-3.5"
+                    countClassName="text-[11px] font-bold text-slate-400"
+                    ratingValueClassName="text-sm font-black text-slate-700"
+                  />
+                </div>
+              </div>
             </div>
              
-            <p className="text-sm text-muted-foreground line-clamp-1 max-w-md mb-2">
+            <p className="text-sm text-slate-500 line-clamp-2 max-w-md leading-relaxed">
               {company.description}
             </p>
-            
-            <div className="flex items-center space-x-3">
-              <RatingStars 
-                 rating={companyStats.rating} 
-                 count={companyStats.reviewCount} 
-                 showRatingValue={true}
-                 starClassName="w-4 h-4"
-                 countClassName="text-sm"
-               />
-            </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-3 md:mt-0">
+        {/* Action Buttons - Consistent Weight */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-2 md:mt-0">
           <Button
             variant="outline"
-            className="flex-1 sm:flex-none border-border hover:bg-muted"
+            size="sm"
+            className="flex-1 sm:flex-none h-10 border-slate-200 text-slate-600 hover:bg-slate-50"
             onClick={handleShare}
             disabled={isSharing}
           >
@@ -229,8 +227,9 @@ export default function CompanyHero({
 
           <Button
             variant="outline"
+            size="sm"
             className={cn(
-              "flex-1 sm:flex-none border-border hover:bg-muted",
+              "flex-1 sm:flex-none h-10 border-slate-200 text-slate-600 hover:bg-slate-50",
               inComp && "text-primary border-primary/20 bg-primary/5"
             )}
             onClick={() => {
@@ -239,87 +238,21 @@ export default function CompanyHero({
               } else {
                 addToComparison(company);
               }
-              track('company_hero_comparison_toggle', {
-                company_id: company.id,
-                company_name: company.name,
-                status: !inComp ? 'added' : 'removed'
-              });
             }}
           >
             <Scale className={cn("h-4 w-4 mr-2", inComp && "fill-current")} />
             {inComp ? 'Comparando' : 'Comparar'}
           </Button>
 
-          {canRequestQuote && company.buttons && company.buttons.length > 0 ? (
-            company.buttons.map((btn, idx) => {
-              if (btn.button_type === 'whatsapp') {
-                return (
-                  <div key={idx} className="flex-1 sm:flex-none">
-                    <WhatsappButton
-                      size="default"
-                      enabled
-                      href={btn.url}
-                      styles={{ variant: 'solid' }}
-                      preset="brandSolid"
-                      className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
-                      label={btn.label}
-                      companyId={company.id}
-                    />
-                  </div>
-                );
-              }
-              
-              const isPrimary = btn.button_type === 'primary';
-              return (
-                <Button
-                  key={idx}
-                  size="default"
-                  variant={isPrimary ? 'default' : 'outline'}
-                  className={`flex-1 sm:flex-none transition-all shadow-sm hover:shadow-md gap-1.5 font-medium text-sm ${
-                    isPrimary 
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                      : 'bg-background hover:bg-muted text-foreground border-input'
-                  }`}
-                  onClick={() => {
-                     track('company_custom_button_click', {
-                       company_id: company.id,
-                       company_name: company.name,
-                       button_label: btn.label,
-                       button_type: btn.button_type,
-                       element_type: 'button',
-                       action_type: 'click',
-                       destination_url: btn.url
-                     });
-                     if (btn.url.startsWith('/')) {
-                       router.push(btn.url);
-                     } else {
-                       window.open(btn.url, '_blank');
-                     }
-                  }}
-                >
-                  {isPrimary ? <MessageCircle className="h-4 w-4" /> : null}
-                  {btn.label}
-                </Button>
-              );
-            })
-          ) : canRequestQuote ? (
+          {canRequestQuote ? (
             <>
               <Button
                 size="default"
-                className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-primary-foreground gap-1.5 font-medium text-sm"
-                onClick={() => {
-                  track('company_quote_click', {
-                    company_id: company.id,
-                    company_name: company.name,
-                    source: 'company-hero',
-                    element_type: 'button',
-                    action_type: 'click'
-                  });
-                  openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' });
-                }}
+                className="flex-1 sm:flex-none h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all gap-2 font-bold px-6"
+                onClick={() => openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' })}
               >
                 <MessageCircle className="h-4 w-4" />
-                Orcamento
+                Orçamento
               </Button>
               {ctaEnabled && ctaUrl && (
                 <div className="flex-1 sm:flex-none">
@@ -327,9 +260,7 @@ export default function CompanyHero({
                     size="default"
                     enabled
                     href={ctaUrl}
-                    styles={{ variant: 'solid' }}
-                    preset="brandSolid"
-                    className="w-full text-foreground shadow-sm hover:shadow-md transition-all font-medium text-sm"
+                    className="w-full h-10 font-bold px-6 shadow-lg"
                     label="WhatsApp"
                     companyId={company.id}
                   />
@@ -340,21 +271,10 @@ export default function CompanyHero({
             <Button
               size="default"
               variant="outline"
-              className="flex-1 sm:flex-none border-border hover:bg-muted"
+              className="flex-1 sm:flex-none h-10 border-blue-200 text-blue-700 hover:bg-blue-50 font-bold px-6"
               asChild
             >
-              <Link
-                href={reviewPath}
-                onClick={() => {
-                  track('company_review_click', {
-                    company_id: company.id,
-                    company_name: company.name,
-                    source: 'company-hero',
-                    element_type: 'button',
-                    action_type: 'click'
-                  });
-                }}
-              >
+              <Link href={reviewPath}>
                 Avaliar
               </Link>
             </Button>

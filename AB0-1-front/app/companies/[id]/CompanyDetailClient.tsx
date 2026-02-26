@@ -48,7 +48,7 @@ import CompanyHero from "./components/CompanyHero";
 import CompanySidebar from "./components/CompanySidebar";
 import CompanyOverview from "./components/CompanyOverview";
 
-// Dynamic Components for Performance (TBT Reduction)
+// Dynamic Components for Performance
 const CompanyProducts = dynamic(() => import("./components/CompanyProducts"), {
   loading: () => <div className="space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-48 w-full" /></div>
 });
@@ -110,8 +110,7 @@ export default function CompanyDetailClient({
 }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
-  const inComp = isInComparison(company.id);
-
+  
   // GTM Page Tracking
   usePageTracking({
     type: 'company',
@@ -130,9 +129,7 @@ export default function CompanyDetailClient({
     },
   });
 
-  // Estados (mantidos)
-  const [currentCompany, setCurrentCompany] = useState<Company>(company);
-
+  const [currentCompany] = useState<Company>(company);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [productsLoading, setProductsLoading] = useState<boolean>(true);
@@ -143,8 +140,6 @@ export default function CompanyDetailClient({
   const [reviewAnalytics, setReviewAnalytics] = useState<ReviewAnalytics | null>(null);
   const [trafficSources, setTrafficSources] = useState<TrafficSource[] | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalData[] | null>(null);
-  // mantido para compatibilidade
-  const [analyticsSettings, setAnalyticsSettings] = useState<CompanyAnalyticsSettings | null>(null);
 
   const [bannerError, setBannerError] = useState<boolean>(false);
   const [logoError, setLogoError] = useState<boolean>(false);
@@ -152,19 +147,16 @@ export default function CompanyDetailClient({
 
   const [activeTab, setActiveTab] = useState<string>("overview");
 
-  // Breadcrumb
   const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
     const items: BreadcrumbItemData[] = [
       { label: 'Empresas', href: '/companies' }
     ];
-
     if (company.category_info) {
       items.push({ 
         label: company.category_info.name, 
         href: `/categories/${company.category_info.seo_url}` 
       });
     }
-
     items.push({ label: company.name, active: true });
     return items;
   }, [company]);
@@ -174,41 +166,26 @@ export default function CompanyDetailClient({
       { name: 'Home', item: '/' },
       { name: 'Empresas', item: '/companies' }
     ];
-
     if (company.category_info) {
       items.push({ 
         name: company.category_info.name, 
         item: `/categories/${company.category_info.seo_url}` 
       });
     }
-
     items.push({ name: company.name, item: `/companies/${company.slug}` });
     return items;
   }, [company]);
 
-  const [timeRange, setTimeRange] = useState<number>(30);
-
+  const timeRange = 30;
   const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
-
-  const companyId = useMemo(() => {
-    const id = currentCompany?.id || company?.id;
-    return Number(id);
-  }, [currentCompany?.id, company?.id]);
-
+  const companyId = Number(currentCompany?.id || company?.id);
+  
   const isAdmin = user?.role === 'admin';
   const isReviewer = user?.role === 'review';
 
   const canEdit = useMemo(() => {
     return isAuthenticated && user?.role === "company" && user?.company_id === companyId;
   }, [isAuthenticated, user?.role, user?.company_id, companyId]);
-
-  const mediaUploadAllowed = useMemo(() => {
-    return Boolean(
-      (currentCompany as any)?.media_upload_allowed ||
-      currentCompany?.featured ||
-      currentCompany?.verified
-    );
-  }, [currentCompany?.featured, currentCompany?.verified, currentCompany]);
 
   const canViewAnalytics = useMemo(() => {
     const companyIsActive = currentCompany?.status === 'active';
@@ -219,8 +196,8 @@ export default function CompanyDetailClient({
   const canManageMedia = useMemo(() => {
     if (!isAuthenticated) return false;
     if (user?.role === 'admin') return true;
-    return user?.role === 'company' && user?.company_id === companyId && mediaUploadAllowed;
-  }, [companyId, isAuthenticated, mediaUploadAllowed, user?.company_id, user?.role]);
+    return user?.role === 'company' && user?.company_id === companyId;
+  }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
   const canRequestQuote = extendedCompany.active_admin === true;
@@ -231,186 +208,91 @@ export default function CompanyDetailClient({
     : false;
 
   const ctaUrl = canRequestQuote
-    ? (
-        extendedCompany.cta_whatsapp_url ||
-        extendedCompany.whatsapp_url ||
-        (currentCompany as any)?.whatsapp ||
-        null
-      )
+    ? (extendedCompany.cta_whatsapp_url || extendedCompany.whatsapp_url || (currentCompany as any)?.whatsapp || null)
     : null;
 
   const tabs = useMemo(() => {
     const baseTabs = [
-      { id: "overview", label: "Visão Geral", icon: LayoutDashboard, iconColor: "text-slate-900" },
-      { id: "products", label: "Produtos", icon: Package, iconColor: "text-slate-900" },
-      { id: "reviews", label: "Avaliações", icon: MessageCircle, iconColor: "text-slate-900" },
-      { id: "financing", label: "Financiamento", icon: Banknote, iconColor: "text-slate-900" },
-      { id: "gallery", label: "Galeria", icon: ImageIcon, iconColor: "text-slate-900" },
-      { id: "faq", label: "FAQ", icon: HelpCircle, iconColor: "text-slate-900" },
-      { id: "stats", label: "Estatísticas", icon: BarChart3, iconColor: "text-slate-900" },
+      { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
+      { id: "products", label: "Produtos", icon: Package },
+      { id: "reviews", label: "Avaliações", icon: MessageCircle },
+      { id: "financing", label: "Financiamento", icon: Banknote },
+      { id: "gallery", label: "Galeria", icon: ImageIcon },
+      { id: "faq", label: "FAQ", icon: HelpCircle },
+      { id: "stats", label: "Estatísticas", icon: BarChart3 },
     ].filter(tab => {
       if (tab.id === "financing") return !!currentCompany?.financing_tab_visible;
       return true;
     });
-    if (canEdit) baseTabs.push({ id: "edit", label: "Editar", icon: Edit, iconColor: "text-slate-900" });
+    if (canEdit) baseTabs.push({ id: "edit", label: "Editar", icon: Edit });
     return baseTabs;
   }, [canEdit, currentCompany?.financing_tab_visible]);
 
   const companyStats = useMemo(() => {
     const normalizedRatings = reviews.map((rev) => toSafeRating((rev as any)?.rating, 0));
-    const fallbackCompanyRating = toSafeRating(
-      (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating,
-      0
-    );
-    const avgRating =
-      normalizedRatings.length > 0
+    const fallbackCompanyRating = toSafeRating((company as any).rating_avg || (company as any).rating, 0);
+    const avgRating = normalizedRatings.length > 0
         ? normalizedRatings.reduce((acc, value) => acc + value, 0) / normalizedRatings.length
         : fallbackCompanyRating;
-    const rating = reviewAnalytics?.average_rating != null
-      ? toSafeRating(reviewAnalytics.average_rating, avgRating)
-      : avgRating;
-    const reviewCount = reviewAnalytics?.total_reviews != null
-      ? toSafeCount(reviewAnalytics.total_reviews, 0)
-      : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
-
-    const createdYear = company.created_at
-      ? new Date(company.created_at).getFullYear()
-      : new Date().getFullYear();
-
-    const yearsInBusiness = Math.max(0, new Date().getFullYear() - createdYear);
-
+    const rating = reviewAnalytics?.average_rating != null ? toSafeRating(reviewAnalytics.average_rating, avgRating) : avgRating;
+    const reviewCount = reviewAnalytics?.total_reviews != null ? toSafeCount(reviewAnalytics.total_reviews, 0) : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
+    const createdYear = company.created_at ? new Date(company.created_at).getFullYear() : new Date().getFullYear();
     return {
-      rating,
+      rating: rating.toFixed(1),
       reviewCount,
       productCount: products.length,
-      completedProjects: products.length * 10,
-      yearsInBusiness,
-      responseRate: "92%",
-      satisfaction: "95%",
+      yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
-  }, [reviews, reviewAnalytics, products, company.created_at, company.average_rating, company.rating_count]);
-
-  const shouldFetchReviews = !reviewsLoaded;
+  }, [reviews, reviewAnalytics, products, company.created_at, company.rating_avg, company.rating, company.rating_count]);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
-      if (!companyId) {
-        setError("ID da empresa inválido");
-        setProductsLoading(false);
-        setReviewsLoading(false);
-        return;
-      }
-
+      if (!companyId) return;
       try {
-        setError(null);
-
         const [pData, rData] = await Promise.all([
           productsApiSafe.getByCompany(companyId),
-          shouldFetchReviews
-            ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 })
-            : Promise.resolve(initialReviews),
+          !reviewsLoaded ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 }) : Promise.resolve(initialReviews),
         ]);
-
         setProducts(pData || []);
-        if (shouldFetchReviews) {
-          setReviews(rData || []);
-        }
-
+        if (!reviewsLoaded) setReviews(rData || []);
         if (analyticsEnabled && canViewAnalytics) {
-          try {
-            const routesAvailable = await analyticsApi.validateRoutes(companyId);
-            if (!routesAvailable) {
-              console.warn('[CompanyDetail] Analytics routes unavailable, skipping analytics fetch', {
-                company_id: companyId,
-              });
-              setReviewAnalytics({
-                total_reviews: 0,
-                average_rating: 0,
-                rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-                recent_reviews: [],
-              });
-              setTrafficSources([]);
-              setHistoricalData([]);
-            } else {
-              const [rAnalytics, tSources, hData] = await Promise.all([
-                analyticsApi.getReviewAnalytics(companyId),
-                analyticsApi.getTrafficSources(companyId),
-                analyticsApi.getHistoricalData(companyId, timeRange),
-              ]);
-              setReviewAnalytics(rAnalytics);
-              setTrafficSources(tSources);
-              setHistoricalData(hData);
-            }
-          } catch (analyticsError) {
-            console.error("Erro ao carregar analytics:", analyticsError);
-            setReviewAnalytics(null);
-            setTrafficSources(null);
-            setHistoricalData(null);
+          const routesAvailable = await analyticsApi.validateRoutes(companyId);
+          if (routesAvailable) {
+            const [rAnalytics, tSources, hData] = await Promise.all([
+              analyticsApi.getReviewAnalytics(companyId),
+              analyticsApi.getTrafficSources(companyId),
+              analyticsApi.getHistoricalData(companyId, timeRange),
+            ]);
+            setReviewAnalytics(rAnalytics);
+            setTrafficSources(tSources);
+            setHistoricalData(hData);
           }
         }
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
-        setError("Erro ao carregar dados da empresa. Por favor, tente novamente.");
       } finally {
         setProductsLoading(false);
         setReviewsLoading(false);
       }
     };
-
     fetchData();
-  }, [companyId, analyticsEnabled, canViewAnalytics, timeRange, shouldFetchReviews, initialReviews]);
+  }, [companyId, analyticsEnabled, canViewAnalytics, reviewsLoaded, initialReviews]);
 
   const bannerUrl = useMemo(() => {
     if (!currentCompany?.banner_url) return null;
-    if (currentCompany.banner_url.startsWith("http")) return currentCompany.banner_url;
-
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
-    return `${base}${currentCompany.banner_url.startsWith("/") ? "" : "/"}${currentCompany.banner_url}`;
+    return currentCompany.banner_url.startsWith("http") ? currentCompany.banner_url : `${base}${currentCompany.banner_url.startsWith("/") ? "" : "/"}${currentCompany.banner_url}`;
   }, [currentCompany?.banner_url]);
 
   const logoUrl = useMemo(() => {
     if (!currentCompany?.logo_url) return null;
-    if (currentCompany.logo_url.startsWith("http")) return currentCompany.logo_url;
-
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
-    return `${base}${currentCompany.logo_url.startsWith("/") ? "" : "/"}${currentCompany.logo_url}`;
+    return currentCompany.logo_url.startsWith("http") ? currentCompany.logo_url : `${base}${currentCompany.logo_url.startsWith("/") ? "" : "/"}${currentCompany.logo_url}`;
   }, [currentCompany?.logo_url]);
-
-  useEffect(() => {
-    const key = `${companyId}|${bannerUrl || 'no-banner'}|${logoUrl || 'no-logo'}`;
-    if (coverLogRef.current === key) return;
-    coverLogRef.current = key;
-    console.info('[CompanyDetail] Cover assets resolved', {
-      company_id: companyId,
-      bannerUrl,
-      logoUrl,
-      bannerError,
-      logoError,
-    });
-  }, [companyId, bannerUrl, logoUrl, bannerError, logoError]);
-
-  if (error && !products.length && !reviews.length) {
-    return (
-      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
 
   const handleTabChange = (value: string) => {
     const tab = tabs.find(t => t.id === value);
-    track('company_tab_change', {
-      company_id: companyId,
-      company_name: company.name,
-      tab_id: value,
-      tab_label: tab?.label || value,
-      element_type: 'tab',
-      action_type: 'click'
-    });
+    track('company_tab_change', { company_id: companyId, company_name: company.name, tab_id: value, tab_label: tab?.label || value });
     setActiveTab(value);
   };
 
@@ -418,24 +300,17 @@ export default function CompanyDetailClient({
     <div className="min-h-screen bg-slate-50/50">
       <BreadcrumbJsonLd items={jsonLdItems} />
       
-      {/* HERO (ALINHADO COM AS ABAS) */}
+      {/* HEADER SECTION - Redução de Espaços */}
       <div className="w-full bg-white border-b">
-        <div className="container mx-auto px-4 py-2 md:py-4">
-          {/* Breadcrumb Desktop */}
-          <div className="hidden md:block mb-4">
+        <div className="container mx-auto px-4 py-2 md:py-3">
+          <div className="mb-2">
             <AppBreadcrumb items={breadcrumbItems} />
           </div>
 
-          {/* Breadcrumb Mobile */}
-          <div className="md:hidden mb-2">
-            <AppBreadcrumb items={breadcrumbItems} />
-          </div>
-
-          {/* Mantém dimensões do banner; o CompanyCard (logo+infos) foi reduzido no CompanyHero.tsx */}
           <div className="relative rounded-2xl overflow-visible">
             <CompanyHero
               company={currentCompany}
-              companyStats={companyStats}
+              companyStats={companyStats as any}
               bannerUrl={bannerUrl}
               bannerError={bannerError}
               setBannerError={setBannerError}
@@ -449,28 +324,27 @@ export default function CompanyDetailClient({
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* CONTEÚDO PRINCIPAL - Gap Reduzido */}
+      <main className="container mx-auto px-4 py-6 md:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           {/* ESQUERDA */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              {/* Abas */}
-              <div className="sticky top-4 z-30 mb-6">
-                <ScrollArea className="w-full rounded-xl border bg-white/80 backdrop-blur-md shadow-sm p-1">
+              {/* Abas Compactas e Sticky */}
+              <div className="sticky top-4 z-30 mb-5">
+                <ScrollArea className="w-full rounded-xl border bg-white/90 backdrop-blur-md shadow-sm p-1">
                   <TabsList className="inline-flex w-full items-center justify-start gap-1 bg-transparent border-none">
                     {tabs.map((tab) => (
                       <TabsTrigger
                         key={tab.id}
                         value={tab.id}
                         className={cn(
-                          "h-10 px-4 rounded-lg text-sm font-medium transition-all",
-                          "text-slate-900 hover:bg-slate-100",
-                          "data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md"
+                          "h-9 px-4 rounded-lg text-xs font-bold transition-all",
+                          "text-slate-600 hover:bg-slate-100",
+                          "data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md"
                         )}
-                        aria-label={`Aba ${tab.label}`}
                       >
-                        <tab.icon className={cn("mr-2 h-4 w-4", tab.iconColor)} aria-hidden="true" />
+                        <tab.icon className="mr-2 h-3.5 w-3.5" />
                         {tab.label}
                       </TabsTrigger>
                     ))}
@@ -479,7 +353,7 @@ export default function CompanyDetailClient({
                 </ScrollArea>
               </div>
 
-              {/* Conteúdo */}
+              {/* Conteúdo com Transição Suave */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -487,8 +361,9 @@ export default function CompanyDetailClient({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
+                  className="space-y-6"
                 >
-                  <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-8">
+                  <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-6">
                     <CompanyOverview company={currentCompany} />
                     <SocialProof companyId={companyId} companyName={currentCompany.name} />
                   </TabsContent>
@@ -505,19 +380,15 @@ export default function CompanyDetailClient({
                       companySlug={currentCompany?.slug}
                       companyName={currentCompany?.name}
                     />
-                    {isAuthenticated ? (
-                      currentCompany?.sector_ratings_enabled ? (
-                        <SectorRatingForm companyId={companyId} sectorRatingsEnabled />
+                    <div className="pt-2">
+                      {isAuthenticated ? (
+                        <SectorRatingForm companyId={companyId} sectorRatingsEnabled={currentCompany?.sector_ratings_enabled} />
                       ) : (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-500">
-                          Esta empresa ainda não habilitou as perguntas setoriais.
+                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-6 text-center text-sm text-slate-500">
+                          Faça login para enviar sua avaliação técnica.
                         </div>
-                      )
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-slate-200/70 bg-slate-50 px-6 py-5 text-center text-sm text-slate-500">
-                        Faça login para enviar sua avaliação ponderada.
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
@@ -538,57 +409,46 @@ export default function CompanyDetailClient({
 
                   <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
                     <Card className="rounded-2xl shadow-sm border-none bg-white">
-                      <CardHeader>
-                        <CardTitle>Métricas de Desempenho</CardTitle>
-                        <CardDescription>Dados consolidados da empresa</CardDescription>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl">Métricas de Desempenho</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {Object.entries(companyStats).map(([key, value]) => (
-                            <div key={key} className="rounded-xl border bg-slate-50 p-4">
-                              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                                {key}
+                            <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:shadow-md">
+                              <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                {key.replace(/([A-Z])/g, ' $1')}
                               </p>
-                              <p className="mt-1 text-xl font-bold text-slate-900">{String(value)}</p>
+                              <p className="mt-1 text-2xl font-black text-slate-950">{String(value)}</p>
                             </div>
                           ))}
                         </div>
                       </CardContent>
                     </Card>
                   </TabsContent>
-
-                  {canEdit && (
-                    <TabsContent value="edit" className="mt-0 focus-visible:outline-none">
-                      <Card className="rounded-2xl shadow-sm">
-                        <CardHeader>
-                          <CardTitle>Editar Empresa</CardTitle>
-                          <CardDescription>Painel de configuração</CardDescription>
-                        </CardHeader>
-                      </Card>
-                    </TabsContent>
-                  )}
                 </motion.div>
               </AnimatePresence>
             </Tabs>
           </div>
 
-          {/* DIREITA */}
+          {/* DIREITA - Sidebar */}
           <aside className="lg:col-span-4 space-y-6">
             <CompanySidebar company={currentCompany} />
 
-            <Card className="rounded-2xl shadow-sm border-none bg-blue-50/50 overflow-hidden">
-              <div className="bg-blue-600 h-1 w-full" />
-              <CardHeader>
-                <CardTitle className="text-md flex items-center gap-2 text-blue-800">
-                  <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <Card className="rounded-2xl shadow-lg border-none bg-blue-600 text-white overflow-hidden relative group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <ShieldCheck className="w-24 h-24" />
+              </div>
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5" />
                   Selo de Confiança AB0-1
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-blue-700/80 leading-relaxed">
+              <CardContent className="space-y-4 relative z-10">
+                <p className="text-sm text-blue-50 leading-relaxed font-medium">
                   Esta empresa passou pelo nosso rigoroso processo de curadoria técnica e documental.
                 </p>
-                
                 <ul className="space-y-2">
                   {[
                     "Documentação em dia",
@@ -596,8 +456,8 @@ export default function CompanyDetailClient({
                     "Qualidade técnica validada",
                     "Suporte pós-venda garantido"
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-blue-800/70 font-medium">
-                      <div className="h-1 w-1 rounded-full bg-blue-400" />
+                    <li key={i} className="flex items-center gap-2 text-xs text-white/90 font-bold">
+                      <div className="h-1.5 w-1.5 rounded-full bg-blue-300" />
                       {item}
                     </li>
                   ))}
@@ -606,12 +466,12 @@ export default function CompanyDetailClient({
             </Card>
 
             {canRequestQuote && (
-              <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-transparent">
+              <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-white">
                 <CardContent className="p-6 text-center">
                   <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                  <h4 className="font-bold text-slate-900 mb-1">Precisa de ajuda?</h4>
-                  <p className="text-xs text-slate-500 mb-4">Nossos especialistas podem te ajudar a escolher a melhor empresa.</p>
-                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
+                  <h4 className="font-bold text-slate-950 mb-1">Precisa de ajuda?</h4>
+                  <p className="text-xs text-slate-500 mb-4">Fale com nossos especialistas para garantir a melhor escolha.</p>
+                  <Button variant="outline" size="sm" className="w-full text-xs font-bold" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
                     Falar com especialista
                   </Button>
                 </CardContent>

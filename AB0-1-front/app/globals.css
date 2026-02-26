@@ -26,6 +26,8 @@
 
 @layer base {
   :root {
+    --spacing-section-mobile: 2.5rem;
+    --spacing-section-desktop: 4rem;
     --background: 0 0% 98%; /* Clean White Background - Enterprise */
     --foreground: 0 0% 10%; /* Deep Dark Gray - Professional */
 

@@ -247,9 +247,9 @@ export default function CompanyCard({
   return (
     <Card
       className={cn(
-        'relative flex flex-col bg-white border border-gray-200 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+        'relative flex flex-col bg-white border border-gray-200 transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-primary/20 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden',
-        compact ? 'rounded-2xl h-[240px]' : 'rounded-2xl',
+        compact ? 'rounded-2xl h-[240px]' : 'rounded-3xl',
         className
       )}
       onClick={handleCardClick}
@@ -384,32 +384,41 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-5 pb-5 pt-7')}>
-        <div className="flex flex-col gap-1 mb-2">
-          <div className="flex items-center gap-1.5 flex-wrap min-h-[20px]">
-            <Link href={companyPath} className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('font-bold leading-tight line-clamp-1 text-slate-900', compact ? 'text-xs' : 'text-base')}>
+      <CardContent className={cn(compact ? 'pt-6 px-3 pb-3' : 'px-4 pb-4 pt-6')}>
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-col gap-1">
+            <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
+              <h3 className={cn('font-extrabold tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-xl md:text-2xl')}>
                 {name}
-                {totalReviews > 0 && (
-                  <span className="ml-1 text-gray-400 font-bold">
-                    ({totalReviews})
-                  </span>
-                )}
               </h3>
             </Link>
-            <div className="flex-shrink-0">
-              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={false} lang={lang} />}
+            
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {company.verified && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                >
+                  {text.verified}
+                </Badge>
+              )}
+              {/* Selo de Conquista (Mocked logic for top performers) */}
+              {(totalReviews > 20 || average_rating >= 4.8) && (
+                <Badge 
+                  className="text-[10px] bg-amber-50 text-amber-700 border-2 border-amber-400/50 shadow-md px-2 py-0.5 rounded-full font-black"
+                >
+                  TOP PERFORMANCE
+                </Badge>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {company.verified && (
-              <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-200 px-1 py-0 rounded-md font-semibold">
-                {text.verified}
-              </Badge>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="flex-shrink-0">
+              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={true} lang={lang} />}
+            </div>
             {category_name && (
-              <span className="text-[10px] text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
+              <span className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded-full truncate">
                 {category_name}
               </span>
             )}
@@ -424,7 +433,7 @@ export default function CompanyCard({
         )}
 
         {!compact && (
-          <p className="mt-2 text-xs text-slate-600 leading-relaxed line-clamp-2 min-h-[2.5rem]">
+          <p className="mt-1 text-xs text-slate-600 leading-relaxed line-clamp-2 min-h-[2.5rem]">
             {description || (
               <span className="text-gray-400 italic font-light">
                 Visite o perfil para saber mais sobre nossos serviços.
@@ -433,11 +442,9 @@ export default function CompanyCard({
           </p>
         )}
 
-        <div className={cn('w-full my-3', compact ? 'hidden' : 'h-px bg-gray-100')} />
-
         {/* Footer Actions */}
         <div className={cn(
-          "mt-auto print:hidden",
+          "mt-4 print:hidden",
           compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
         )}>
           {canRequestQuote && (

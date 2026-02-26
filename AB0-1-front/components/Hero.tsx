@@ -11,31 +11,31 @@ export default function Hero() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <section className="relative bg-white py-16 lg:py-24 overflow-hidden">
+    <section className="relative bg-white py-12 lg:py-16 overflow-hidden">
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-      <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-primary-light to-accent rounded-full opacity-20 blur-3xl"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-br from-accent to-primary-light rounded-full opacity-20 blur-3xl"></div>
+      <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-primary-light to-accent rounded-full opacity-20 blur-3xl"></div>
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-accent to-primary-light rounded-full opacity-20 blur-3xl"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           {/* Main Heading */}
           <div
-            className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-700"
+            className="space-y-4 animate-in fade-in slide-in-from-bottom-12 duration-700"
           >
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              <span className="text-foreground">Compare e Encontre a</span>{' '}
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-950">
+              Compare e Encontre a <br className="hidden md:block" />
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Melhor Empresa Solar
               </span>
-            </h2>
-            <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed line-clamp-2">
-              Conecte-se com as melhores empresas de energia solar do Brasil. Compare preços, avaliações e encontre a solução perfeita para sua casa ou empresa.
+            </h1>
+            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Conecte-se com instaladores certificados. Economize tempo e garanta a melhor escolha para sua energia solar.
             </p>
           </div>
 
           {/* Search Bar */}
           <div
-            className="mt-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both"
+            className="mt-8 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both"
           >
             <div className="relative">
               <SearchBar placeholder="Busque empresas, produtos ou serviços..." />
@@ -56,7 +56,7 @@ export default function Hero() {
 
           {/* CTA Buttons */}
           <div
-            className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both"
+            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both"
           >
             {isAuthenticated ? (
               <>
@@ -66,7 +66,7 @@ export default function Hero() {
                   onClick={() => openQuoteWizard({ source: 'home-hero' })}
                 >
                   <Zap className="mr-2 h-5 w-5" />
-                  Fazer Orcamento Gratis
+                  Fazer Orçamento Grátis
                 </Button>
                 <Button
                   variant="outline"
@@ -84,7 +84,7 @@ export default function Hero() {
                   onClick={() => openQuoteWizard({ source: 'home-hero' })}
                 >
                   <Zap className="mr-2 h-5 w-5" />
-                  Fazer Orcamento Gratis
+                  Fazer Orçamento Grátis
                 </Button>
                 <Link href="/register">
                   <Button
@@ -113,4 +113,3 @@ export default function Hero() {
     </section>
   );
 }
-
