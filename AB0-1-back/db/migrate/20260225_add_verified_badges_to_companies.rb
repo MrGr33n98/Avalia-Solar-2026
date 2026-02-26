@@ -1,4 +1,4 @@
-class AddVerifiedBadgesToVerifiedCompanies < ActiveRecord::Migration[7.0]
+class AddVerifiedBadgesToCompanies < ActiveRecord::Migration[7.0]
   def up
     # SVG de um selo simples
     badge_svg = <<~SVG
