@@ -41,7 +41,7 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def badges
-    object.badges.active.order(position: :asc).map do |badge|
+    object.badges.active.order(position: :asc).filter_map do |badge|
       {
         id: badge.id,
         name: badge.name,
@@ -50,8 +50,11 @@ class CompanySerializer < ActiveModel::Serializer
         year: badge.year,
         edition: badge.edition,
         public_slug: badge.public_slug,
-        image_url: generate_attachment_url(badge.badge_image)
+        image_url: badge.image_url
       }
+    rescue StandardError => e
+      Rails.logger.error("Error serializing badge #{badge&.id} for company #{object.id}: #{e.message}")
+      nil
     end
   end
 

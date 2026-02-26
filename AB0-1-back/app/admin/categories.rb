@@ -2,8 +2,7 @@ require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :permissions_config, company_ids: [], product_ids: [],
-                                                     badges_attributes: %i[id name description year badge_image _destroy]
+                :banner, :icon, :permissions_config, company_ids: [], product_ids: []
 
   # Custom action to clear cache after update
   after_save do |category|
@@ -107,16 +106,6 @@ ActiveAdmin.register Category, namespace: :admin do
           hint_text
         end
       ).html_safe
-    end
-
-    f.inputs 'Badges' do
-      f.has_many :badges, allow_destroy: true, new_record: true do |b|
-        b.input :name
-        b.input :description
-        b.input :year
-        b.input :badge_image, as: :file,
-                              hint: (b.object&.badge_image&.attached? ? image_tag(url_for(b.object.badge_image), size: '50x50') : 'No image')
-      end
     end
 
     f.inputs 'Associações' do
