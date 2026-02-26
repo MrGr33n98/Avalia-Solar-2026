@@ -48,10 +48,9 @@ RUN --mount=type=secret,id=RAILS_MASTER_KEY \
     elif [ -n "$RAILS_MASTER_KEY" ]; then \
         echo "$RAILS_MASTER_KEY" > config/master.key; \
     else \
-        echo "Erro: RAILS_MASTER_KEY não disponível via secret ou ARG"; \
-        exit 1; \
+        echo "Aviso: RAILS_MASTER_KEY não encontrada. Tentando precompile com SECRET_KEY_BASE dummy."; \
     fi; \
-    chmod 600 config/master.key; \
+    if [ -f config/master.key ]; then chmod 600 config/master.key; fi; \
     DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
     rm -f config/master.key
 

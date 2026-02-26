@@ -147,8 +147,7 @@ ActiveAdmin.register Company do
               f.input :verified
               f.input :sponsored, label: 'Patrocinado (Topo do ranking)'
               f.input :priority_score, label: 'Score de Prioridade', hint: 'Maior score = topo do ranking'
-              f.input :active_admin, as: :boolean
-      , label: 'Ativar orçamentos (recurso pago)'
+              f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
       if Company.column_names.include?('effect')
         f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: {
           'data-controller': 'effect',
