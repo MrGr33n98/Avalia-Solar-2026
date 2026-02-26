@@ -42,7 +42,7 @@ ENV RAILS_ENV=production \
 RUN --mount=type=secret,id=rails_master_key,required=false \
     --mount=type=secret,id=RAILS_MASTER_KEY,required=false \
     set -eux; \
-    # Compatibilidade com IDs diferentes de secret no BuildKit
+    # Detecta a chave: Prioridade para o mount do secret, Fallback para variável de ambiente
     KEY_FILE=""; \
     for CANDIDATE in /run/secrets/rails_master_key /run/secrets/RAILS_MASTER_KEY; do \
       if [ -f "$CANDIDATE" ] && [ -s "$CANDIDATE" ]; then \
@@ -51,21 +51,22 @@ RUN --mount=type=secret,id=rails_master_key,required=false \
       fi; \
     done; \
     \
-    # Validação rigorosa da Master Key
-    if [ -z "$KEY_FILE" ]; then \
-      echo "::error::RAILS_MASTER_KEY não encontrada ou vazia! Verifique os secrets do GitHub."; \
+    if [ -n "$KEY_FILE" ]; then \
+      cp "$KEY_FILE" config/master.key; \
+    elif [ -n "${RAILS_MASTER_KEY:-}" ]; then \
+      echo "$RAILS_MASTER_KEY" > config/master.key; \
+    else \
+      echo "::error::RAILS_MASTER_KEY não encontrada ou vazia! Verifique os secrets do seu GitHub."; \
       exit 1; \
     fi; \
-    cp "$KEY_FILE" config/master.key; \
+    \
     chmod 600 config/master.key; \
     \
-    # Execução do precompile com stubs para evitar conexões externas
-    # DATABASE_URL dummy evita que o Rails tente conectar no Postgres real durante o boot
-    # O assets:precompile no Rails 7 (Sprockets/Importmap) carrega o environment.
+    # Assets precompile (precisa da master key para carregar o environment produção)
     DATABASE_URL=postgresql://localhost/dummy \
     bundle exec rake assets:precompile --trace; \
     \
-    # Limpeza imediata da master key para não vazar na imagem (mesmo sendo estágio builder)
+    # Remove a chave após o uso para segurança
     rm -f config/master.key
 
 # --- Estágio Final ---
