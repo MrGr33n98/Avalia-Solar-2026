@@ -39,34 +39,20 @@ ENV RAILS_ENV=production \
     REDIS_ENABLED=false \
     SECRET_KEY_BASE=dummy_value_for_assets_precompile_only
 
-RUN --mount=type=secret,id=rails_master_key,required=false \
-    --mount=type=secret,id=RAILS_MASTER_KEY,required=false \
+ARG RAILS_MASTER_KEY
+
+RUN --mount=type=secret,id=RAILS_MASTER_KEY \
     set -eux; \
-    # Detecta a chave: Prioridade para o mount do secret, Fallback para variável de ambiente
-    KEY_FILE=""; \
-    for CANDIDATE in /run/secrets/rails_master_key /run/secrets/RAILS_MASTER_KEY; do \
-      if [ -f "$CANDIDATE" ] && [ -s "$CANDIDATE" ]; then \
-        KEY_FILE="$CANDIDATE"; \
-        break; \
-      fi; \
-    done; \
-    \
-    if [ -n "$KEY_FILE" ]; then \
-      cp "$KEY_FILE" config/master.key; \
-    elif [ -n "${RAILS_MASTER_KEY:-}" ]; then \
-      echo "$RAILS_MASTER_KEY" > config/master.key; \
+    if [ -f /run/secrets/RAILS_MASTER_KEY ]; then \
+        cp /run/secrets/RAILS_MASTER_KEY config/master.key; \
+    elif [ -n "$RAILS_MASTER_KEY" ]; then \
+        echo "$RAILS_MASTER_KEY" > config/master.key; \
     else \
-      echo "::error::RAILS_MASTER_KEY não encontrada ou vazia! Verifique os secrets do seu GitHub."; \
-      exit 1; \
+        echo "Erro: RAILS_MASTER_KEY não disponível via secret ou ARG"; \
+        exit 1; \
     fi; \
-    \
     chmod 600 config/master.key; \
-    \
-    # Assets precompile (precisa da master key para carregar o environment produção)
-    DATABASE_URL=postgresql://localhost/dummy \
-    bundle exec rake assets:precompile --trace; \
-    \
-    # Remove a chave após o uso para segurança
+    DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
     rm -f config/master.key
 
 # --- Estágio Final ---

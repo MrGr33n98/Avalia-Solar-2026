@@ -77,9 +77,10 @@ jobs:
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
-          secrets: |
-            rails_master_key=${{ secrets.RAILS_MASTER_KEY }}
+          build-args: |
             RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          secrets: |
+            "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
             type=gha,scope=backend
