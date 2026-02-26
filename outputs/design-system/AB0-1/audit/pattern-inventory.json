@@ -1,0 +1,53 @@
+{
+  "scan_metadata": {
+    "timestamp": "2026-02-25T23:00:00Z",
+    "scan_path": "./AB0-1-front",
+    "total_files": 69372,
+    "ui_files": 456,
+    "frameworks_detected": {
+      "react": true,
+      "nextjs": true,
+      "tailwind": true,
+      "shadcn": true
+    }
+  },
+  "patterns": {
+    "buttons": {
+      "base_component": "components/ui/button.tsx",
+      "redundant_logic": "detected in CompanyCard and WidgetBadge",
+      "unconsolidated_variants": ["CTAPrimaryButton", "WhatsAppCTAButton"]
+    },
+    "colors": {
+      "unique_tokens": 15,
+      "hardcoded_hex": [
+        "#004996",
+        "#00AFEF",
+        "#8DC63F",
+        "#FCEE21",
+        "#6D6E71",
+        "#004791",
+        "#00f2fe"
+      ],
+      "contrast_risks": ["#FCEE21 (Yellow)", "#00AFEF (Cyan) on Light"]
+    },
+    "spacing": {
+      "standardized": "Tailwind utility scale",
+      "redundant_arbitrary": [
+        "h-[80vh]",
+        "w-[300px]",
+        "h-[240px]",
+        "max-h-[320px]"
+      ]
+    },
+    "accessibility": {
+      "rating_stars": "Missing aria-labels",
+      "contrast": "Chart colors need validation",
+      "responsive": "Mobile-first but some fixed widths detected (w-[300px])"
+    }
+  },
+  "quick_wins": [
+    "Refactor Hero microcopy for empathy and conquest",
+    "Add ARIA labels to RatingStars",
+    "Tokenize hardcoded brand colors in tailwind.config.ts"
+  ]
+}

@@ -137,6 +137,9 @@ export interface Company {
   sector_rating_count?: number;
   certifications?: string | string[];
   awards?: string;
+  topBadge?: string | { title?: string; subtitle?: string; label?: string; description?: string } | null;
+  top_badge?: string | { title?: string; subtitle?: string; label?: string; description?: string } | null;
+  isTopRated?: boolean;
   partner_brands?: string;
   coverage_states?: string;
   coverage_cities?: string;

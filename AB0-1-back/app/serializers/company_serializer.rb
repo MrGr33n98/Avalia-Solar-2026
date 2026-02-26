@@ -27,6 +27,7 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_ratings_enabled,
              :sector_rating_avg,
              :sector_rating_count,
+             :awards,
              :badges
 
   def category_info

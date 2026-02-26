@@ -20,6 +20,7 @@ import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
+import CompanyBadgeSelo, { hasCompanyBadgeSelo } from '@/components/badges/CompanyBadgeSelo';
 import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useComparison } from '@/hooks/useComparison';
@@ -267,6 +268,12 @@ export default function CompanyCard({
       )}
 
       <div className="relative">
+        {hasCompanyBadgeSelo(company) && (
+          <div className="absolute top-2 left-2 z-10 pointer-events-none">
+            <CompanyBadgeSelo company={company} variant="card" />
+          </div>
+        )}
+
         <div className={cn(
           "absolute right-2 flex flex-col gap-2 z-10 transition-all duration-200",
           compact ? "top-2" : "top-2",
