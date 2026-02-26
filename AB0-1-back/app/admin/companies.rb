@@ -51,6 +51,7 @@ ActiveAdmin.register Company do
     permitted = [
       :name, :website, :phone, :address,
       :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
+      :priority_score, :sponsored,
       :cnpj, :email, :whatsapp,
       :working_hours, :payment_methods,
       :certifications, :status, :founded_year, :employees_count,
@@ -96,6 +97,8 @@ ActiveAdmin.register Company do
     column :status do |company|
       status_tag company.status
     end
+    column :priority_score
+    column :sponsored
     column :moderation_status do |company|
       status_tag company.moderation_status, class: "status_#{company.moderation_status}"
     end
@@ -140,9 +143,12 @@ ActiveAdmin.register Company do
       f.input :moderation_status, as: :select, collection: Company.moderation_statuses.keys
       f.input :rejected_reason, input_html: { rows: 3 }
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
-      f.input :featured
-      f.input :verified
-      f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
+              f.input :featured
+              f.input :verified
+              f.input :sponsored, label: 'Patrocinado (Topo do ranking)'
+              f.input :priority_score, label: 'Score de Prioridade', hint: 'Maior score = topo do ranking'
+              f.input :active_admin, as: :boolean
+      , label: 'Ativar orçamentos (recurso pago)'
       if Company.column_names.include?('effect')
         f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: {
           'data-controller': 'effect',

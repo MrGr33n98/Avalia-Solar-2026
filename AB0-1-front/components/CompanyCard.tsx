@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck } from 'lucide-react';
+import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck, Info } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
 
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
@@ -31,6 +32,7 @@ interface ExtendedCompany extends Company {
   whatsapp_enabled?: boolean;
   effect?: boolean;
   active_admin?: boolean;
+  sponsored?: boolean;
 }
 
 interface Props {
@@ -270,6 +272,24 @@ export default function CompanyCard({
     >
       {jsonLdStr && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
+      )}
+
+      {/* Sponsored Badge with Tooltip (US05) */}
+      {company.sponsored && (
+        <div className="absolute top-2 right-2 z-30">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[9px] font-bold py-0 h-5 border-gray-100 text-gray-500 cursor-help shadow-sm">
+                  PATROCINADO <Info className="ml-1 w-3 h-3" />
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
+                <p>Destaque Patrocinado – empresa que investe na qualidade e visibilidade no AvaliaSolar.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       )}
 
       <div className="relative">

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath } from '@/lib/slug';
