@@ -106,6 +106,16 @@ export interface Company {
   logo_url?: string | null;
   verified_badge_url?: string | null;
   verified_badge_image_url?: string | null;
+  badges?: Array<{
+    id?: number;
+    name?: string;
+    description?: string;
+    category?: string;
+    year?: number | string;
+    edition?: number | string;
+    public_slug?: string;
+    image_url?: string | null;
+  }>;
   buttons?: CompanyButton[];
   rating?: number;
   total_reviews?: number;

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Share2, Check, Scale } from 'lucide-react';
+import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
 
@@ -68,6 +68,7 @@ export default function CompanyCard({
 
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [verifiedBadgeError, setVerifiedBadgeError] = useState(false);
   const [selected, setSelected] = useState(false);
   const [shared, setShared] = useState(false);
 
@@ -128,6 +129,24 @@ export default function CompanyCard({
   };
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
+  const verifiedBadgeUrl = useMemo(() => {
+    const companyBadges = Array.isArray(company.badges) ? company.badges : [];
+    const candidates: string[] = [
+      ...companyBadges.map((badge) => badge?.image_url),
+      company.verified_badge_url,
+      company.verified_badge_image_url,
+    ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+    if (candidates.length === 0) return '';
+
+    const normalized = candidates.map((url) => getFullImageUrl(url));
+    const nonSvg = normalized.find((url) => !url.toLowerCase().endsWith('.svg'));
+    return nonSvg || '';
+  }, [company]);
+
+  useEffect(() => {
+    setVerifiedBadgeError(false);
+  }, [id, verifiedBadgeUrl]);
 
   const whatsappLinkRaw = (company as any).cta_whatsapp_url || (company as any).whatsapp_url || company.whatsapp;
   const hasWhatsapp = Boolean(whatsappLinkRaw);
@@ -321,15 +340,16 @@ export default function CompanyCard({
             className={cn('relative rounded-full overflow-hidden bg-white')}
             style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
           >
-            {company.verified && company.verified_badge_url && (
+            {company.verified && verifiedBadgeUrl && !verifiedBadgeError && (
               <div className="absolute -top-3 -left-3 w-8 h-8 z-20" title="Selo de Verificação">
                 <Image
-                  src={company.verified_badge_url}
-                  alt="Verified Badge"
+                  src={verifiedBadgeUrl}
+                  alt="Selo verificado"
                   fill
                   sizes="32px"
                   className="object-contain"
                   style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                  onError={() => setVerifiedBadgeError(true)}
                   priority
                 />
               </div>
@@ -347,6 +367,11 @@ export default function CompanyCard({
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
                 <Building2 className="text-gray-300 w-8 h-8" />
+              </div>
+            )}
+            {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
+              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
+                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
               </div>
             )}
           </div>

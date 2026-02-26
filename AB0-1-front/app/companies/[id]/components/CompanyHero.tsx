@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
@@ -10,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
+import { getFullImageUrl } from '@/utils/image';
 
 interface CompanyHeroProps {
   company: Company;
@@ -48,11 +48,31 @@ export default function CompanyHero({
 }: CompanyHeroProps) {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
+  const [badgeImageError, setBadgeImageError] = useState(false);
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
   // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
   const canRequestQuote = (company as any).active_admin === true;
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
+
+  const heroBadgeUrl = useMemo(() => {
+    const companyBadges = Array.isArray(company.badges) ? company.badges : [];
+    const candidates: string[] = [
+      ...companyBadges.map((badge) => badge?.image_url),
+      company.verified_badge_url,
+      company.verified_badge_image_url,
+    ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+    if (candidates.length === 0) return null;
+
+    const normalized = candidates.map((url) => getFullImageUrl(url));
+    const nonSvg = normalized.find((url) => !url.toLowerCase().endsWith('.svg'));
+    return nonSvg || null;
+  }, [company]);
+
+  useEffect(() => {
+    setBadgeImageError(false);
+  }, [company.id, heroBadgeUrl]);
 
   const handleShare = async () => {
     track('company_share_click', {
@@ -135,15 +155,16 @@ export default function CompanyHero({
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
         <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
           <div className="mr-4 mb-3 sm:mb-0 relative">
-            {company.verified && company.verified_badge_url && (
+            {company.verified && heroBadgeUrl && !badgeImageError && (
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 z-20" title="Selo de Verificação">
                 <OptimizedImage
-                  src={company.verified_badge_url}
-                  alt="Verified Badge"
+                  src={heroBadgeUrl}
+                  alt="Selo verificado"
                   width={48}
                   height={48}
                   className="object-contain drop-shadow-md"
                   priority
+                  onError={() => setBadgeImageError(true)}
                 />
               </div>
             )}
@@ -156,7 +177,7 @@ export default function CompanyHero({
               fallbackSrc="/images/logo-placeholder.svg"
               onError={() => setLogoError(true)}
             />
-            {company.verified && !company.verified_badge_url && (
+            {company.verified && (!heroBadgeUrl || badgeImageError) && (
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
                 <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
               </div>
