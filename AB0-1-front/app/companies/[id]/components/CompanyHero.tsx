@@ -156,24 +156,21 @@ export default function CompanyHero({
       {/* Info da empresa */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-16 z-10 relative px-4 sm:px-0">
         <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
+          {company.verified && heroBadgeUrl && !badgeImageError && (
+            <div className="absolute -top-16 left-3 md:-top-14 md:left-3 z-30" title="Selo de Verificação">
+              <OptimizedImage
+                src={heroBadgeUrl}
+                alt="Selo verificado"
+                width={HERO_BADGE_SIZE_PX}
+                height={HERO_BADGE_SIZE_PX}
+                className="object-contain drop-shadow-md"
+                priority
+                onError={() => setBadgeImageError(true)}
+              />
+            </div>
+          )}
+
           <div className="mr-4 mb-3 sm:mb-0 relative">
-            {company.verified && heroBadgeUrl && !badgeImageError && (
-              <div
-                className="absolute -top-5 left-1/2 -translate-x-[58%] z-20"
-                style={{ width: HERO_BADGE_SIZE_PX, height: HERO_BADGE_SIZE_PX }}
-                title="Selo de Verificação"
-              >
-                <OptimizedImage
-                  src={heroBadgeUrl}
-                  alt="Selo verificado"
-                  width={HERO_BADGE_SIZE_PX}
-                  height={HERO_BADGE_SIZE_PX}
-                  className="object-contain drop-shadow-md"
-                  priority
-                  onError={() => setBadgeImageError(true)}
-                />
-              </div>
-            )}
             <OptimizedImage
               src={logoUrl || "/images/logo-placeholder.svg"}
               alt={company.name}

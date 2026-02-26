@@ -344,7 +344,7 @@ export default function CompanyCard({
           >
             {company.verified && verifiedBadgeUrl && !verifiedBadgeError && (
               <div
-                className="absolute -top-[10px] -left-[14px] z-20"
+                className="absolute -top-1 -left-6 z-20"
                 style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
                 title="Selo de Verificação"
               >
