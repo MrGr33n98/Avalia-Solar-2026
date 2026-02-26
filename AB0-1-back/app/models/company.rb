@@ -589,6 +589,14 @@ class Company < ApplicationRecord
     generate_attachment_url(logo)
   end
 
+  def verified_badge_image_url
+    generate_attachment_url(verified_badge)
+  end
+
+  def verified_badge_url
+    verified_badge_image_url
+  end
+
   def media_urls
     return [] unless media_assets.attached?
 

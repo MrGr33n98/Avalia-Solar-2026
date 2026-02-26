@@ -50,6 +50,8 @@ const DICTIONARY = {
   'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones' },
 } as const;
 
+const VERIFIED_BADGE_SIZE_PX = 26;
+
 export default function CompanyCard({
   company: rawCompany,
   className = '',
@@ -341,12 +343,16 @@ export default function CompanyCard({
             style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
           >
             {company.verified && verifiedBadgeUrl && !verifiedBadgeError && (
-              <div className="absolute -top-3 -left-3 w-8 h-8 z-20" title="Selo de Verificação">
+              <div
+                className="absolute -top-[10px] -left-[14px] z-20"
+                style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
+                title="Selo de Verificação"
+              >
                 <Image
                   src={verifiedBadgeUrl}
                   alt="Selo verificado"
                   fill
-                  sizes="32px"
+                  sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
                   className="object-contain"
                   style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
                   onError={() => setVerifiedBadgeError(true)}

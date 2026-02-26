@@ -430,6 +430,9 @@ module Api
       end
 
       def company_json_attributes(company)
+        badge_payload = company_badges_payload(company)
+        verified_badge_url = company_verified_badge_url(company)
+
         if params[:fields].to_s == 'card'
           return {
             id: company.id,
@@ -449,6 +452,9 @@ module Api
             status: company.status,
             featured: company.featured,
             verified: company.verified,
+            verified_badge_url: verified_badge_url,
+            verified_badge_image_url: verified_badge_url,
+            badges: badge_payload,
             financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
             active_admin: company.respond_to?(:active_admin) ? company.active_admin : false,
             whatsapp: company.respond_to?(:whatsapp) ? company.whatsapp : nil
@@ -474,6 +480,9 @@ module Api
           status: company.status,
           featured: company.featured,
           verified: company.verified,
+          verified_badge_url: verified_badge_url,
+          verified_badge_image_url: verified_badge_url,
+          badges: badge_payload,
           founded_year: company.founded_year,
           employees_count: company.employees_count,
           certifications: company.certifications,
@@ -528,6 +537,37 @@ module Api
           project_types: company.project_types || [],
           services_offered: company.services_offered || []
         )
+      end
+
+      def company_verified_badge_url(company)
+        return nil unless company.respond_to?(:verified_badge_url)
+
+        company.verified_badge_url
+      rescue StandardError => e
+        Rails.logger.error("Error serializing verified badge URL for company #{company.id}: #{e.message}")
+        nil
+      end
+
+      def company_badges_payload(company)
+        badges = if company.association(:badges).loaded?
+                   company.badges.select(&:active?).sort_by { |badge| badge.position || Float::INFINITY }
+                 else
+                   company.badges.active.order(position: :asc)
+                 end
+
+        badges.filter_map do |badge|
+          {
+            id: badge.id,
+            name: badge.name,
+            year: badge.year,
+            edition: badge.edition,
+            public_slug: badge.public_slug,
+            image_url: badge.image_url
+          }
+        rescue StandardError => e
+          Rails.logger.error("Error serializing badge #{badge&.id} for company #{company.id}: #{e.message}")
+          nil
+        end
       end
 
       def company_params

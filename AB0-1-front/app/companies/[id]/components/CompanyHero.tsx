@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 
+const HERO_BADGE_SIZE_PX = 38;
+
 interface CompanyHeroProps {
   company: Company;
   companyStats: {
@@ -156,12 +158,16 @@ export default function CompanyHero({
         <div className="bg-card p-4 rounded-xl shadow-lg border border-border flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-xl">
           <div className="mr-4 mb-3 sm:mb-0 relative">
             {company.verified && heroBadgeUrl && !badgeImageError && (
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 z-20" title="Selo de Verificação">
+              <div
+                className="absolute -top-5 left-1/2 -translate-x-[58%] z-20"
+                style={{ width: HERO_BADGE_SIZE_PX, height: HERO_BADGE_SIZE_PX }}
+                title="Selo de Verificação"
+              >
                 <OptimizedImage
                   src={heroBadgeUrl}
                   alt="Selo verificado"
-                  width={48}
-                  height={48}
+                  width={HERO_BADGE_SIZE_PX}
+                  height={HERO_BADGE_SIZE_PX}
                   className="object-contain drop-shadow-md"
                   priority
                   onError={() => setBadgeImageError(true)}

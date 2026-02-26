@@ -151,7 +151,7 @@ const getHomeDataCached = unstable_cache(
 
 const getCompaniesDataCached = unstable_cache(
   async () => getCompaniesData(),
-  ['home-companies-section-v1'],
+  ['home-companies-section-v2'],
   { revalidate: 600, tags: ['home-data', 'home-companies'] }
 );
 
