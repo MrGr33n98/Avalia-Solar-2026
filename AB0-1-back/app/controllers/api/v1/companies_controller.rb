@@ -535,13 +535,26 @@ module Api
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
           has_paid_plan: company.respond_to?(:plan_status) && company.respond_to?(:plan) ? company.has_paid_plan? : false,
           social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
-          can_use_social_proof: company.can_use_social_proof?,
-          project_types: company.project_types || [],
-          services_offered: company.services_offered || []
-        )
-      end
-
-      def company_verified_badge_url(company)
+                      can_use_social_proof: company.can_use_social_proof?,
+                      project_types: company.project_types || [],
+                      services_offered: company.services_offered || [],
+                      seo_metadata: {
+                        json_ld: {
+                          "@context": "https://schema.org",
+                          "@type": "Organization",
+                          "name": company.name,
+                          "aggregateRating": {
+                            "@type": "AggregateRating",
+                            "ratingValue": company.rating_avg.to_f > 0 ? company.rating_avg.to_f : 5.0,
+                            "reviewCount": company.rating_count.to_i > 0 ? company.rating_count.to_i : 1,
+                            "bestRating": "5",
+                            "worstRating": "1"
+                          }
+                        }
+                      }
+                    )
+                  end
+                def company_verified_badge_url(company)
         return nil unless company.respond_to?(:verified_badge_url)
 
         company.verified_badge_url

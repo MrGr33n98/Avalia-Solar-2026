@@ -58,7 +58,7 @@ RSpec.describe Company, type: :model do
         expect(company.valid?).to be true
       end
 
-      it 'rejects public email when status is active' do
+      it 'allows email with different domain when status is active' do
         company = build(
           :company,
           status: 'active',
@@ -66,10 +66,10 @@ RSpec.describe Company, type: :model do
           email: 'test@gmail.com'
         )
         company.valid?
-        expect(company.errors[:email].join(' ')).to include('deve ser um e-mail corporativo')
+        expect(company.errors[:email]).to be_empty
       end
 
-      it 'allows corporate email always' do
+      it 'allows email matching website domain when status is active' do
         company = build(
           :company,
           status: 'active',

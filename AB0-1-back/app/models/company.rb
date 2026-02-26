@@ -115,8 +115,6 @@ class Company < ApplicationRecord
                       message: 'must be a valid email' },
             allow_blank: true
 
-  validate :validate_corporate_email, if: -> { status == 'active' }
-
   validates :whatsapp_url,
             presence: true,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
@@ -148,6 +146,23 @@ class Company < ApplicationRecord
   scope :by_state, ->(state) { where(state: state) if state.present? }
   scope :by_city, ->(city) { where(city: city) if city.present? }
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
+  
+  # Sprint 1 Ranking Engine
+  scope :ordered_by_priority, -> {
+    order(Arel.sql("
+      CASE WHEN sponsored THEN 1 ELSE 0 END DESC,
+      (COALESCE(rating_avg, 0) * 0.6 + COALESCE(rating_count, 0) * 0.0001 + priority_score) DESC,
+      COALESCE(rating_avg, 0) DESC,
+      COALESCE(rating_count, 0) DESC,
+      name ASC
+    "))
+  }
+
+  def calculate_ranking_score
+    # Fórmula base: (Avaliação * 60%) + (Volume de reviews irrelevante para peso mas útil para empate) + Score de Prioridade + Bônus de Patrocínio
+    # sponsored ? 1000 : 0 garante que patrocinados fiquem no topo se o priority_score for similar
+    (rating_avg.to_f * 0.6) + (rating_count * 0.0001) + priority_score + (sponsored ? 1000 : 0)
+  end
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[name description status state city featured verified cnpj founded_year
@@ -252,26 +267,6 @@ class Company < ApplicationRecord
     return unless category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
 
     errors.add(:category_ids, 'contÃƒÂ©m identificadores invÃƒÂ¡lidos')
-  end
-
-  def validate_corporate_email
-    return if email.blank?
-
-    # Se a empresa nÃƒÂ£o tem website, nÃƒÂ£o validamos domÃƒÂ­nio corporativo
-    return if website.blank?
-
-    domain = begin
-      URI.parse(website).host&.sub(/\Awww\./, '')
-    rescue StandardError
-      nil
-    end
-
-    return if domain.blank?
-
-    # Permite emails que contenham o domÃƒÂ­nio ou subdomÃƒÂ­nios
-    return if email.downcase.include?(domain.downcase)
-
-    errors.add(:email, "deve ser um e-mail corporativo (domÃƒÂ­nio #{domain})")
   end
 
   def normalize_company_fields

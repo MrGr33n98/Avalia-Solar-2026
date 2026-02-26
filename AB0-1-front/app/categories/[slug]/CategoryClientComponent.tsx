@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyCard from '@/components/CompanyCard';
+import TopCompaniesGrid from '@/components/company/TopCompaniesGrid';
 import SidebarFilter from '@/components/SidebarFilter';
 import { Category, Company, Banner, categoriesApi } from '@/lib/api';
 // ... Lucide icons ...
@@ -775,6 +776,15 @@ export default function CategoryClientComponent({
             handleFilterChange={handleFilterChange}
           />
 
+          {/* Top Ranking Section (Sprint 1) */}
+          {filteredCompanies.length > 0 && currentPage === 1 && !loadingCompanies && (
+            <TopCompaniesGrid 
+              companies={filteredCompanies} 
+              title={`Top ${category.name}`} 
+              className="px-0"
+            />
+          )}
+
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -917,6 +927,14 @@ export default function CategoryClientComponent({
                     <ActiveFilters filters={filters} handleFilterChange={handleFilterChange} />
                   </div>
                 </div>
+
+                {/* Top Ranking Section (Sprint 1) */}
+                {filteredCompanies.length > 0 && currentPage === 1 && !loadingCompanies && (
+                  <TopCompaniesGrid 
+                    companies={filteredCompanies} 
+                    title={`Ranking: Melhores em ${category.name}`}
+                  />
+                )}
 
                 <AnimatePresence mode="wait">
                   {loadingCompanies ? (
