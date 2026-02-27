@@ -26,6 +26,18 @@ jest.mock('framer-motion', () => ({
   },
 }));
 
+jest.mock('@/components/ui/optimized-image', () => ({
+  OptimizedImage: ({ src, alt, className, width, height }: any) => (
+    <img
+      src={src}
+      alt={alt || 'img'}
+      className={className}
+      width={width}
+      height={height}
+    />
+  ),
+}));
+
 describe('Analytics Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -62,23 +74,17 @@ describe('Analytics Integration Tests', () => {
         category_id: 1,
         category_name: 'Painéis Solares',
         element_type: 'card',
-        action_type: 'click',
       }));
     });
 
-    it('should track category_card_hover when hovered', () => {
+    it('should not emit hover analytics when the card is only hovered', () => {
       render(<CategoryCard category={mockCategory} />);
       
-      const card = screen.getByText('Painéis Solares').closest('.rounded-xl');
+      const card = screen.getByText('Painéis Solares').closest('.rounded-2xl');
       if (card) {
         fireEvent.mouseEnter(card);
-        
-        expect(track).toHaveBeenCalledWith('category_card_hover', expect.objectContaining({
-          category_id: 1,
-          category_name: 'Painéis Solares',
-          element_type: 'card',
-          action_type: 'hover',
-        }));
+
+        expect(track).not.toHaveBeenCalled();
       }
     });
   });

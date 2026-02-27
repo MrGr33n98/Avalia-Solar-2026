@@ -18,7 +18,15 @@ jest.mock('@/lib/analytics/lazy', () => ({
 }));
 
 jest.mock('@/components/ui/optimized-image', () => ({
-  OptimizedImage: (props: any) => <img {...props} alt={props.alt || 'img'} />,
+  OptimizedImage: ({ src, alt, className, width, height }: any) => (
+    <img
+      src={src}
+      alt={alt || 'img'}
+      className={className}
+      width={width}
+      height={height}
+    />
+  ),
 }));
 
 jest.mock('@/components/RatingStars', () => ({
@@ -59,7 +67,7 @@ describe('CompanyHero', () => {
     );
 
     expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /orcamento/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /orçamento/i })).not.toBeInTheDocument();
   });
 
   it('mostra Orcamento quando active_admin esta true', () => {
@@ -70,7 +78,20 @@ describe('CompanyHero', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /orcamento/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /solicitar orçamento/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Avaliar/i })).not.toBeInTheDocument();
+  });
+
+  it('renderiza o card flutuante de perfil com nome e descricao da empresa', () => {
+    render(
+      <CompanyHero
+        {...baseProps}
+        company={{ ...(baseCompany as any), active_admin: true, verified: true }}
+      />
+    );
+
+    expect(screen.getByLabelText('Card de perfil da empresa')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
+    expect(screen.getByText('Descricao')).toBeInTheDocument();
   });
 });

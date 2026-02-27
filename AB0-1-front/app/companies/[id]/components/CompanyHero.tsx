@@ -2,11 +2,10 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale } from 'lucide-react';
+import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, MapPin } from 'lucide-react';
 import { RatingStars } from '@/components/RatingStars';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import { useEffect, useMemo, useState } from 'react';
@@ -57,6 +56,10 @@ export default function CompanyHero({
   const inComp = isInComparison(company.id);
   const canRequestQuote = (company as any).active_admin === true;
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
+  const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
+  const companyDescription =
+    company.description?.trim() || 'Perfil sem descrição detalhada cadastrada até o momento.';
+  const hasLogo = Boolean(logoUrl) && !logoError;
 
   const heroBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
@@ -109,12 +112,11 @@ export default function CompanyHero({
 
   return (
     <div className="relative w-full">
-      {/* Botão de Voltar - Compacto */}
-      <div className="mb-3">
+      <div className="mb-2">
         <Button
           variant="ghost"
           size="sm"
-          className="group text-muted-foreground hover:text-foreground transition-colors p-0 h-auto"
+          className="group h-auto p-0 text-xs font-medium text-slate-500 transition-colors hover:bg-transparent hover:text-slate-900"
           onClick={() => {
             track('company_back_click', {
               company_id: company.id,
@@ -125,172 +127,205 @@ export default function CompanyHero({
             router.back();
           }}
         >
-          <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="mr-1 h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
           Voltar
         </Button>
       </div>
 
-      {/* Banner - Altura Reduzida e Aspect Ratio Fixo */}
-      <div className="relative w-full mb-6">
-        <div className="relative w-full aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1] max-h-64 lg:max-h-72">
-          <OptimizedImage
-            src={bannerUrl || '/images/banner-avalia-solar.png'}
-            alt={`${company.name} banner`}
-            fill
-            priority
-            quality={90}
-            className="object-cover rounded-2xl shadow-md"
-            containerClassName="h-full"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-            fallbackSrc="/images/banner-avalia-solar.png"
-            onError={() => setBannerError(true)}
-          />
-          {(!bannerUrl || bannerError) && (
-            <div className="absolute inset-0 rounded-2xl ring-1 ring-border/50 pointer-events-none">
-              <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground bg-white/70 backdrop-blur px-1.5 py-0.5 rounded">Imagem ilustrativa</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Info da empresa - Z-Pattern Hierarchy - Mais Denso */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4 -mt-10 md:-mt-14 z-10 relative px-4 sm:px-0">
-        <div className="bg-white p-4 md:p-5 rounded-2xl shadow-xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto relative group transition-all hover:shadow-2xl">
-          {heroBadgeUrl && !badgeImageError && (
-            <div
-              className="absolute -top-2 left-2 md:-top-3 md:left-3 z-30 rounded-md bg-white/95 shadow-sm"
-              style={{ width: HERO_BADGE_SIZE_PX, height: HERO_BADGE_SIZE_PX }}
-              title="Selo de conquista"
-            >
-              <OptimizedImage
-                src={heroBadgeUrl}
-                alt="Selo de conquista"
-                fill
-                sizes={`${HERO_BADGE_SIZE_PX}px`}
-                objectFit="contain"
-                className="rounded-md"
-                containerClassName="h-full w-full"
-                onError={() => setBadgeImageError(true)}
-              />
-            </div>
-          )}
-
-          <div className="mr-5 mb-4 sm:mb-0 relative">
-            <div className="relative">
-              <OptimizedImage
-                src={logoUrl || "/images/logo-placeholder.svg"}
-                alt={company.name}
-                width={80}
-                height={80}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white object-cover bg-white shadow-md"
-                fallbackSrc="/images/logo-placeholder.svg"
-                onError={() => setLogoError(true)}
-              />
-              {company.verified && (
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md border border-slate-50" title="Empresa Verificada">
-                  <BadgeCheck className="w-5 h-5 text-blue-600 fill-blue-50" />
-                </div>
-              )}
-            </div>
+      <div className="rounded-[28px] border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
+        <div className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-slate-200">
+          <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
+            <OptimizedImage
+              src={bannerUrl || '/images/banner-avalia-solar.png'}
+              alt={`${company.name} banner`}
+              fill
+              priority
+              quality={90}
+              className="object-cover"
+              containerClassName="h-full w-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              fallbackSrc="/images/banner-avalia-solar.png"
+              onError={() => setBannerError(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />
+            {(!bannerUrl || bannerError) && (
+              <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
+                <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-medium text-slate-500 backdrop-blur">
+                  Imagem ilustrativa
+                </span>
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col gap-1 mb-2">
-              <h1 className="text-2xl md:text-4xl font-extrabold text-slate-950 tracking-tight leading-tight truncate max-w-full" title={company.name}>
-                {company.name}
-              </h1>
-              <div className="flex items-center flex-wrap gap-2">
-                {company.verified && (
-                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100/50 flex items-center gap-1 px-2 py-0.5 h-6">
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Verificado</span>
-                  </Badge>
-                )}
-                <div className="flex items-center bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
-                  <RatingStars 
-                    rating={companyStats.rating} 
-                    count={companyStats.reviewCount} 
-                    showRatingValue={true}
-                    starClassName="w-3.5 h-3.5"
-                    countClassName="text-[11px] font-bold text-slate-400"
-                    ratingValueClassName="text-sm font-black text-slate-700"
-                  />
+        <div className="relative z-10 -mt-8 px-1 sm:-mt-10 sm:px-5 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <section
+              aria-label="Card de perfil da empresa"
+              className="relative max-w-[780px] rounded-[26px] border border-slate-200 bg-white px-4 py-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="relative shrink-0">
+                  {heroBadgeUrl && !badgeImageError && (
+                    <div
+                      className="absolute -left-2 -top-2 z-20 rounded-xl border border-slate-200 bg-white shadow-sm"
+                      style={{ width: HERO_BADGE_SIZE_PX, height: HERO_BADGE_SIZE_PX }}
+                      title="Selo de conquista"
+                    >
+                      <OptimizedImage
+                        src={heroBadgeUrl}
+                        alt="Selo de conquista"
+                        fill
+                        sizes={`${HERO_BADGE_SIZE_PX}px`}
+                        objectFit="contain"
+                        className="rounded-xl"
+                        containerClassName="h-full w-full"
+                        onError={() => setBadgeImageError(true)}
+                      />
+                    </div>
+                  )}
+
+                  <div
+                    className={cn(
+                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 p-3 shadow-sm sm:h-24 sm:w-24',
+                      hasLogo ? 'bg-white' : 'bg-slate-50'
+                    )}
+                  >
+                    <OptimizedImage
+                      src={logoUrl || '/images/logo-placeholder.svg'}
+                      alt={company.name}
+                      width={96}
+                      height={96}
+                      className="h-full w-full object-contain"
+                      fallbackSrc="/images/logo-placeholder.svg"
+                      onError={() => setLogoError(true)}
+                    />
+                  </div>
+
+                  {company.verified && (
+                    <div
+                      className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border border-white bg-blue-600 shadow-md"
+                      title="Empresa verificada"
+                    >
+                      <BadgeCheck className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1
+                      className="max-w-full text-[1.9rem] font-semibold leading-none tracking-[-0.045em] text-slate-950 sm:text-[2.15rem]"
+                      title={company.name}
+                    >
+                      {company.name}
+                    </h1>
+                    {company.verified && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                        <BadgeCheck className="h-3.5 w-3.5" />
+                        Verificado
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <RatingStars
+                        rating={companyStats.rating}
+                        count={companyStats.reviewCount}
+                        showRatingValue={true}
+                        starClassName="h-3.5 w-3.5"
+                        countClassName="text-[12px] font-semibold text-slate-400"
+                        ratingValueClassName="text-sm font-bold text-slate-900"
+                      />
+                    </div>
+
+                    {locationLabel && (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {locationLabel}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-3 max-w-[42rem] text-sm leading-6 text-slate-600 line-clamp-2">
+                    {companyDescription}
+                  </p>
                 </div>
               </div>
-            </div>
-             
-            <p className="text-sm text-slate-500 line-clamp-2 max-w-md leading-relaxed">
-              {company.description}
-            </p>
-          </div>
-        </div>
+            </section>
 
-        {/* Action Buttons - Consistent Weight */}
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-2 md:mt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 sm:flex-none h-10 border-slate-200 text-slate-600 hover:bg-slate-50"
-            onClick={handleShare}
-            disabled={isSharing}
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Compartilhar
-          </Button>
+            <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px] lg:items-end">
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  title="Compartilhar perfil"
+                  aria-label="Compartilhar perfil"
+                  className="h-10 rounded-xl border-slate-200 bg-white px-4 text-slate-600 hover:bg-slate-50"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Compartilhar
+                </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "flex-1 sm:flex-none h-10 border-slate-200 text-slate-600 hover:bg-slate-50",
-              inComp && "text-primary border-primary/20 bg-primary/5"
-            )}
-            onClick={() => {
-              if (inComp) {
-                removeFromComparison(company.id);
-              } else {
-                addToComparison(company);
-              }
-            }}
-          >
-            <Scale className={cn("h-4 w-4 mr-2", inComp && "fill-current")} />
-            {inComp ? 'Comparando' : 'Comparar'}
-          </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-10 rounded-xl border-slate-200 bg-white px-4 text-slate-600 hover:bg-slate-50',
+                    inComp && 'border-blue-200 bg-blue-50 text-blue-700'
+                  )}
+                  onClick={() => {
+                    if (inComp) {
+                      removeFromComparison(company.id);
+                    } else {
+                      addToComparison(company);
+                    }
+                  }}
+                >
+                  <Scale className={cn('mr-2 h-4 w-4', inComp && 'fill-current')} />
+                  {inComp ? 'Comparando' : 'Comparar'}
+                </Button>
+              </div>
 
-          {canRequestQuote ? (
-            <>
-              <Button
-                size="default"
-                className="flex-1 sm:flex-none h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all gap-2 font-bold px-6"
-                onClick={() => openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' })}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Orçamento
-              </Button>
-              {ctaEnabled && ctaUrl && (
-                <div className="flex-1 sm:flex-none">
-                  <WhatsappButton
+              <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                {ctaEnabled && ctaUrl && (
+                  <div className="w-full sm:w-auto">
+                    <WhatsappButton
+                      size="default"
+                      enabled
+                      href={ctaUrl}
+                      className="h-11 w-full rounded-xl border border-emerald-500 bg-white px-6 font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:min-w-[170px]"
+                      label="WhatsApp"
+                      companyId={company.id}
+                    />
+                  </div>
+                )}
+
+                {canRequestQuote ? (
+                  <Button
                     size="default"
-                    enabled
-                    href={ctaUrl}
-                    className="w-full h-10 font-bold px-6 shadow-lg"
-                    label="WhatsApp"
-                    companyId={company.id}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <Button
-              size="default"
-              variant="outline"
-              className="flex-1 sm:flex-none h-10 border-blue-200 text-blue-700 hover:bg-blue-50 font-bold px-6"
-              asChild
-            >
-              <Link href={reviewPath}>
-                Avaliar
-              </Link>
-            </Button>
-          )}
+                    className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-none hover:bg-blue-800 sm:min-w-[190px]"
+                    onClick={() => openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' })}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Solicitar orçamento
+                  </Button>
+                ) : (
+                  <Button
+                    size="default"
+                    variant="outline"
+                    className="h-11 rounded-xl border-blue-200 bg-white px-6 font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:min-w-[190px]"
+                    asChild
+                  >
+                    <Link href={reviewPath}>Avaliar empresa</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

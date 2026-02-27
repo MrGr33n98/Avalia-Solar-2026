@@ -299,17 +299,13 @@ export default function CompanyDetailClient({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen bg-[#f3f4f6]">
       <BreadcrumbJsonLd items={jsonLdItems} />
-      
-      {/* HEADER SECTION - Redução de Espaços */}
-      <div className="w-full bg-white border-b">
-        <div className="container mx-auto px-4 py-2 md:py-3">
-          <div className="mb-2">
-            <AppBreadcrumb items={breadcrumbItems} />
-          </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <header className="border-b border-slate-200 bg-[#f3f4f6]">
+          <div className="mx-auto max-w-[1280px] px-4 py-3 md:px-6 md:py-5">
+            <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
-          <div className="relative rounded-2xl overflow-visible">
             <CompanyHero
               company={currentCompany}
               companyStats={companyStats as any}
@@ -322,40 +318,34 @@ export default function CompanyDetailClient({
               ctaEnabled={ctaEnabled}
               ctaUrl={ctaUrl}
             />
+
+            <div className="mt-5 border-b border-slate-200">
+              <ScrollArea className="w-full">
+                <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 text-slate-500">
+                  {tabs.map((tab) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className={cn(
+                        'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
+                        'text-slate-500 hover:bg-transparent hover:text-slate-900',
+                        'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
+                      )}
+                    >
+                      <tab.icon className="mr-2 h-4 w-4" />
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* CONTEÚDO PRINCIPAL - Gap Reduzido */}
-      <main className="container mx-auto px-4 py-6 md:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
-          {/* ESQUERDA */}
-          <div className="lg:col-span-8 space-y-6">
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              {/* Abas Compactas e Sticky */}
-              <div className="sticky top-4 z-30 mb-5">
-                <ScrollArea className="w-full rounded-xl border bg-white/90 backdrop-blur-md shadow-sm p-1">
-                  <TabsList className="inline-flex w-full items-center justify-start gap-1 bg-transparent border-none">
-                    {tabs.map((tab) => (
-                      <TabsTrigger
-                        key={tab.id}
-                        value={tab.id}
-                        className={cn(
-                          "h-9 px-4 rounded-lg text-xs font-bold transition-all",
-                          "text-slate-600 hover:bg-slate-100",
-                          "data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md"
-                        )}
-                      >
-                        <tab.icon className="mr-2 h-3.5 w-3.5" />
-                        {tab.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </div>
-
-              {/* Conteúdo com Transição Suave */}
+        <main className="mx-auto max-w-[1280px] px-4 py-8 md:px-6 md:py-10">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
+            <div className="space-y-6 lg:col-span-8">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -365,13 +355,12 @@ export default function CompanyDetailClient({
                   transition={{ duration: 0.2 }}
                   className="space-y-6"
                 >
-                  <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-6">
-                    {/* Winner Badge Section (Sprint 2) */}
+                  <TabsContent value="overview" className="mt-0 space-y-6 focus-visible:outline-none">
                     {(currentCompany as any).priority_score >= 100 && (
-                      <WinnerBadge 
-                        companyName={currentCompany.name} 
-                        rank={1} 
-                        city={currentCompany.city || 'Sua Região'} 
+                      <WinnerBadge
+                        companyName={currentCompany.name}
+                        rank={1}
+                        city={currentCompany.city || 'Sua Região'}
                       />
                     )}
                     <CompanyOverview company={currentCompany} reviews={reviews} reviewsLoading={reviewsLoading} />
@@ -382,7 +371,7 @@ export default function CompanyDetailClient({
                     <CompanyProducts products={products} loading={productsLoading} />
                   </TabsContent>
 
-                  <TabsContent value="reviews" className="mt-0 focus-visible:outline-none space-y-6">
+                  <TabsContent value="reviews" className="mt-0 space-y-6 focus-visible:outline-none">
                     <CompanyReviews
                       reviews={reviews}
                       loading={reviewsLoading}
@@ -418,15 +407,15 @@ export default function CompanyDetailClient({
                   </TabsContent>
 
                   <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
-                    <Card className="rounded-2xl shadow-sm border-none bg-white">
+                    <Card className="rounded-2xl border-none bg-white shadow-sm">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl">Métricas de Desempenho</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                           {Object.entries(companyStats).map(([key, value]) => (
                             <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:shadow-md">
-                              <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                 {key.replace(/([A-Z])/g, ' $1')}
                               </p>
                               <p className="mt-1 text-2xl font-black text-slate-950">{String(value)}</p>
@@ -438,58 +427,64 @@ export default function CompanyDetailClient({
                   </TabsContent>
                 </motion.div>
               </AnimatePresence>
-            </Tabs>
-          </div>
+            </div>
 
-          {/* DIREITA - Sidebar */}
-          <aside className="lg:col-span-4 space-y-6">
-            <CompanySidebar company={currentCompany} />
+            <aside className="space-y-6 lg:col-span-4">
+              <CompanySidebar company={currentCompany} />
 
-            <Card className="rounded-2xl shadow-lg border-none bg-blue-600 text-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <ShieldCheck className="w-24 h-24" />
-              </div>
-              <CardHeader className="relative z-10">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5" />
-                  Selo de Confiança AB0-1
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 relative z-10">
-                <p className="text-sm text-blue-50 leading-relaxed font-medium">
-                  Esta empresa passou pelo nosso rigoroso processo de curadoria técnica e documental.
-                </p>
-                <ul className="space-y-2">
-                  {[
-                    "Documentação em dia",
-                    "Histórico de instalações",
-                    "Qualidade técnica validada",
-                    "Suporte pós-venda garantido"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-white/90 font-bold">
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-300" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {canRequestQuote && (
-              <Card className="rounded-2xl shadow-sm border-dashed border-2 border-slate-200 bg-white">
-                <CardContent className="p-6 text-center">
-                  <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                  <h4 className="font-bold text-slate-950 mb-1">Precisa de ajuda?</h4>
-                  <p className="text-xs text-slate-500 mb-4">Fale com nossos especialistas para garantir a melhor escolha.</p>
-                  <Button variant="outline" size="sm" className="w-full text-xs font-bold" onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}>
-                    Falar com especialista
-                  </Button>
+              <Card className="group relative overflow-hidden border-none bg-blue-600 text-white shadow-lg">
+                <div className="absolute right-0 top-0 p-4 opacity-10 transition-opacity group-hover:opacity-20">
+                  <ShieldCheck className="h-24 w-24" />
+                </div>
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <ShieldCheck className="h-5 w-5" />
+                    Selo de Confiança AB0-1
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10 space-y-4">
+                  <p className="text-sm font-medium leading-relaxed text-blue-50">
+                    Esta empresa passou pelo nosso rigoroso processo de curadoria técnica e documental.
+                  </p>
+                  <ul className="space-y-2">
+                    {[
+                      'Documentação em dia',
+                      'Histórico de instalações',
+                      'Qualidade técnica validada',
+                      'Suporte pós-venda garantido',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs font-bold text-white/90">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-300" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
-            )}
-          </aside>
-        </div>
-      </main>
+
+              {canRequestQuote && (
+                <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-white shadow-sm">
+                  <CardContent className="p-6 text-center">
+                    <HelpCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+                    <h4 className="mb-1 font-bold text-slate-950">Precisa de ajuda?</h4>
+                    <p className="mb-4 text-xs text-slate-500">
+                      Fale com nossos especialistas para garantir a melhor escolha.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs font-bold"
+                      onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}
+                    >
+                      Falar com especialista
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </aside>
+          </div>
+        </main>
+      </Tabs>
 
       <Top1StickyCTA 
         company={currentCompany} 

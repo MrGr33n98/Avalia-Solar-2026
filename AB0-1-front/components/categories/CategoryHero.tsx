@@ -107,9 +107,9 @@ export default function CategoryHero({
                 </p>
               </div>
 
-              <div className="hidden rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-right text-[9px] font-bold text-white/90 backdrop-blur-md lg:block">
-                Ranking baseado em
-                <span className="block text-white">dados reais e confiança</span>
+              <div className="hidden rounded-full border border-amber-200/80 bg-amber-300/95 px-3.5 py-2 text-right text-[9px] font-black leading-tight text-slate-950 shadow-[0_18px_40px_-24px_rgba(146,64,14,0.95)] lg:block">
+                <span className="block">Ranking baseado em</span>
+                <span className="block text-slate-950">dados reais e confiança</span>
               </div>
             </div>
 
