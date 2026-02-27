@@ -12,6 +12,19 @@ class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
       SET email = NULL 
       WHERE email IS NOT NULL 
         AND email !~ '^[^@]+@[^@]+\\.[^@]+$';
+
+      -- Cleanup orphan analytics events to allow NOT NULL constraint
+      DELETE FROM analytics_events WHERE company_id IS NULL;
+
+      -- Cleanup invalid ratings
+      UPDATE reviews SET rating = 5.0 WHERE rating > 5;
+      UPDATE reviews SET rating = 1.0 WHERE rating < 1;
+      
+      -- Cleanup invalid plan prices
+      UPDATE plans SET price = 0 WHERE price < 0;
+
+      -- Cleanup invalid banner subscription dates
+      UPDATE banner_subscriptions SET ends_at = created_at WHERE ends_at < created_at;
     SQL
 
     # 1. Companies: Valid CNPJ format
