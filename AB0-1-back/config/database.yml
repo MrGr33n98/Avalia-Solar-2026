@@ -14,9 +14,12 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 15 } %>
+  timeout: <%= ENV.fetch("POSTGRES_TIMEOUT") { 30000 } %>
   host: <%= ENV.fetch("POSTGRES_HOST") { "localhost" } %>
   username: <%= ENV.fetch("POSTGRES_USER") { "postgres" } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { "password" } %>
   port: <%= ENV.fetch("POSTGRES_PORT") { 5432 } %>
   database: <%= ENV['POSTGRES_DB'] %>
+  prepared_statements: true
+  statement_timeout: <%= ENV.fetch("POSTGRES_STATEMENT_TIMEOUT") { 30000 } %>

@@ -1,18 +1,27 @@
 # Sidekiq configuration - TASK-017
 # https://github.com/sidekiq/sidekiq/wiki/Advanced-Options
 
+:server_middleware:
+  - [Sidekiq::Middleware::Server::Logging]
+  - [Sidekiq::Middleware::Server::Status]
+  - [Sidekiq::Middleware::Server::RetryJobs]
+  - [Sidekiq::Middleware::Server::ActiveRecord]
+
+:client_middleware:
+  - [Sidekiq::Middleware::Client::Logging]
+
 # Concurrency (number of threads)
-# Start with CPU cores * 2
-:concurrency: 5
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 25 } %>
 
 # Queues with priority (higher number = higher priority)
 :queues:
-  - [critical, 10]  # Critical jobs (e.g., payments, urgent notifications)
-  - [mailers, 5]    # Email jobs
-  - [default, 3]    # Default queue
-  - [low, 1]        # Low priority (cleanup, reports)
+  - [critical, 100]   # Critical jobs (payments, urgent notifications)
+  - [mailers, 40]     # Email delivery
+  - [default, 20]     # Default queue
+  - [analytics, 15]   # Analytics processing
+  - [low, 5]          # Low priority (cleanup, reports)
 
-# Timeout for jobs (30s reduces false positives on heavier processing)
+# Timeout for jobs (30s for standard, override per job if needed)
 :timeout: 30
 
 # Verbose logging (disable in production)
@@ -24,20 +33,25 @@
 # PID file
 :pidfile: ./tmp/pids/sidekiq.pid
 
-# Max retries (default is 25)
-:max_retries: 25
+# Max retries
+:max_retries: 5
 
-# Dead job queue size (default is 10,000)
-:dead_max_jobs: 10000
+# Dead letter queue
+:dead_max_jobs: 1000
+:dead_max_age: 2592000
 
-# How long to keep dead jobs (in seconds, default is 180 days)
-:dead_timeout_in_seconds: 15552000
+# Heartbeat timeout
+:heartbeat_timeout: 30
+
+# Strict argument checking
+:strict: false
 
 # Environment-specific settings
 production:
-  :concurrency: 10
+  :concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 25 } %>
   :verbose: false
   :timeout: 30
+  :max_retries: 5
 
 development:
   :concurrency: 2

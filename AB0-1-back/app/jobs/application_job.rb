@@ -2,6 +2,24 @@
 
 # Base class for all jobs - TASK-017
 class ApplicationJob < ActiveJob::Base
+  include Sidekiq::Worker
+
+  # Retry strategy: exponential backoff with max 5 attempts
+  sidekiq_retry_in do |count|
+    case count
+    when 0 then 1.minute         # 1m
+    when 1 then 5.minutes        # 5m
+    when 2 then 30.minutes       # 30m
+    when 3 then 2.hours          # 2h
+    when 4 then 6.hours          # 6h
+    else
+      :kill  # Stop trying after 5 attempts
+    end
+  end
+
+  # Deadletter configuration
+  sidekiq_options dead: true, retry: 5
+
   # Automatically retry jobs that encounter a DeadlockDetected exception.
   retry_on ActiveRecord::Deadlocked, wait: 5.seconds, attempts: 3
 
@@ -14,6 +32,13 @@ class ApplicationJob < ActiveJob::Base
 
   # Default queue
   queue_as :default
+
+  # Structured error handling
+  rescue_from StandardError do |exception|
+    log_job_failure(exception)
+    notify_error_tracking(exception)
+    raise exception # Re-raise to trigger retry logic
+  end
 
   # Instrumentation
   before_perform do |job|
@@ -31,15 +56,21 @@ class ApplicationJob < ActiveJob::Base
     Rails.logger.info "Job #{job.class.name} took #{duration.round(2)}s"
   end
 
-  # Error handling
-  rescue_from(StandardError) do |exception|
-    Rails.logger.error "Job failed: #{self.class.name}"
-    Rails.logger.error "Error: #{exception.message}"
-    Rails.logger.error exception.backtrace.join("\n")
+  private
 
-    # TODO: Send to Sentry when TASK-006 is implemented
-    # Sentry.capture_exception(exception) if defined?(Sentry)
+  def log_job_failure(exception)
+    Rails.logger.error({
+      job_class: self.class.name,
+      job_id: job_id,
+      error_class: exception.class.name,
+      error_message: exception.message,
+      backtrace: exception.backtrace&.first(3)
+    }.to_json)
+  end
 
-    raise exception # Re-raise to trigger retry logic
+  def notify_error_tracking(exception)
+    # Sentry/Rollbar integration
+    Sentry.capture_exception(exception, tags: { job: self.class.name }) if defined?(Sentry)
   end
 end
+

@@ -69,6 +69,7 @@ export default function CategoryPageClient({
     verified: searchParams.get('verified') === 'true',
     minRating: searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : 0,
     state: searchParams.get('state') || '',
+    projectType: searchParams.get('projectType') || undefined,
   });
   const [isLoading] = useState(false);
 
@@ -98,6 +99,12 @@ export default function CategoryPageClient({
     if (activeQuickFilters.has('rated')) {
       result = result.filter((c) => (c.rating || 0) >= 4.5);
     }
+    if (activeQuickFilters.has('industrial')) {
+      result = result.filter((c) => c.project_types?.includes('Industrial') || c.services?.includes('Industrial'));
+    }
+    if (activeQuickFilters.has('my_state') && sidebarFilters.state) {
+        result = result.filter((c) => c.state === sidebarFilters.state);
+    }
 
     // Filtros sidebar
     if (sidebarFilters.verified) {
@@ -105,6 +112,17 @@ export default function CategoryPageClient({
     }
     if (sidebarFilters.minRating > 0) {
       result = result.filter((c) => (c.rating || 0) >= sidebarFilters.minRating);
+    }
+    if (sidebarFilters.state) {
+      result = result.filter((c) => c.state === sidebarFilters.state);
+    }
+    if (sidebarFilters.projectType) {
+      result = result.filter((c) => 
+        c.project_types?.includes(sidebarFilters.projectType!) || 
+        c.services?.includes(sidebarFilters.projectType!) ||
+        // Fallback for V1 data structure if needed
+        c.description?.toLowerCase().includes(sidebarFilters.projectType!.toLowerCase())
+      );
     }
 
     // Ordenação
@@ -145,7 +163,7 @@ export default function CategoryPageClient({
   const handleClearFilters = () => {
     setSearchTerm('');
     setActiveQuickFilters(new Set());
-    setSidebarFilters({ verified: false, minRating: 0, state: '' });
+    setSidebarFilters({ verified: false, minRating: 0, state: '', projectType: undefined });
     setSortBy('rating_desc');
   };
 
@@ -154,7 +172,8 @@ export default function CategoryPageClient({
     activeQuickFilters.size > 0 ||
     sidebarFilters.verified ||
     sidebarFilters.minRating > 0 ||
-    sidebarFilters.state
+    sidebarFilters.state ||
+    sidebarFilters.projectType
   );
 
   const quickFilterChips = QUICK_FILTER_CHIPS.map((chip) => ({
