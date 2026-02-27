@@ -2,8 +2,6 @@
 
 # Base class for all jobs - TASK-017
 class ApplicationJob < ActiveJob::Base
-  include Sidekiq::Worker
-
   # Retry strategy: exponential backoff with max 5 attempts
   sidekiq_retry_in do |count|
     case count
