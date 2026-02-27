@@ -36,7 +36,7 @@ export default function CategoryHero({
   onMethodologyClick,
 }: CategoryHeroProps) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 py-6 md:py-12">
+    <section className="relative overflow-hidden border-b border-slate-200 py-6 md:py-12 bg-slate-50">
       {bannerUrl ? (
         <>
           <div className="absolute inset-0 z-0">
@@ -45,9 +45,10 @@ export default function CategoryHero({
               alt={name}
               fill
               priority
-              className="object-cover opacity-30"
+              className="object-cover object-center opacity-80"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-blue-50/90" />
+            {/* Gradiente refinado: Protege o texto (escuro no light mode) mas deixa a imagem nítida */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent md:from-white/90 md:via-white/40 md:to-transparent" />
           </div>
         </>
       ) : (
