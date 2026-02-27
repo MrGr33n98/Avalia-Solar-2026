@@ -2,47 +2,8 @@ class AddCriticalIndexes < ActiveRecord::Migration[7.0]
   disable_ddl_transaction!
 
   def change
-    # Remove referencing records from categories_companies for duplicate companies
-    execute <<-SQL
-      DELETE FROM categories_companies
-      WHERE company_id IN (
-        SELECT c1.id FROM companies c1
-        WHERE c1.id > (
-          SELECT MIN(id) FROM companies c2 
-          WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
-        )
-      );
-    SQL
-
-    # Remove duplicate CNPJs (keep first, delete duplicates)
-    execute <<-SQL
-      DELETE FROM companies c1
-      WHERE c1.id > (
-        SELECT MIN(id) FROM companies c2 
-        WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
-      )
-    SQL
-
-    # Remove referencing records from categories_companies for duplicate api_key companies
-    execute <<-SQL
-      DELETE FROM categories_companies
-      WHERE company_id IN (
-        SELECT c1.id FROM companies c1
-        WHERE c1.id > (
-          SELECT MIN(id) FROM companies c2 
-          WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
-        )
-      );
-    SQL
-
-    # Remove duplicate API keys (keep first, delete duplicates)
-    execute <<-SQL
-      DELETE FROM companies c1
-      WHERE c1.id > (
-        SELECT MIN(id) FROM companies c2 
-        WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
-      )
-    SQL
+    # Skip duplicate cleanup - data quality issues should be handled separately
+    # This migration ONLY creates indexes for performance
 
     # Busca por CNPJ (autenticação SolarData/integração)
     add_index :companies, :cnpj, unique: true, where: "cnpj IS NOT NULL", algorithm: :concurrently, if_not_exists: true
