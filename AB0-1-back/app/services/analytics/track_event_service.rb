@@ -31,7 +31,7 @@ module Analytics
       performance_metric
       error_occurred
     ].freeze
-    PUBLIC_COMPANY_EVENTS = %w[profile_view cta_click whatsapp_click].freeze
+    PUBLIC_COMPANY_EVENTS = %w[profile_view cta_click whatsapp_click ranking_click winner_badge_download].freeze
 
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at,

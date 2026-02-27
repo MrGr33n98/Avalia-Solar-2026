@@ -62,8 +62,7 @@ ActiveAdmin.register Company do
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
       :active_admin,
-      { project_types: [], services_offered: [], category_ids: [], badge_ids: [], media_assets: [],
-        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
+              { project_types: [], services_offered: [], niche_tags: [], category_ids: [], badge_ids: [], media_assets: [],        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
         company_members_attributes: %i[id user_id role _destroy],
@@ -201,6 +200,7 @@ ActiveAdmin.register Company do
       f.input :founded_year
       f.input :employees_count
       f.input :project_types, as: :check_boxes, collection: Company::PROJECT_TYPES, label: 'Tipos de Projetos'
+      f.input :niche_tags, as: :check_boxes, collection: Company::NICHE_TAGS, label: 'Tags de Nicho'
       f.input :services_offered, as: :check_boxes, collection: Company::SERVICES_OFFERED, label: 'Serviços Oferecidos'
       f.input :working_hours
       f.input :payment_methods

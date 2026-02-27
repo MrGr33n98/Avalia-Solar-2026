@@ -43,6 +43,7 @@ interface Props {
   isLoading?: boolean;
   avatarRingColor?: string;
   schemaEnabled?: boolean;
+  rank?: number; // US07: Posição no ranking atual
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
 }
 
@@ -64,6 +65,7 @@ export default function CompanyCard({
   isLoading = false,
   avatarRingColor = '#ffffff',
   schemaEnabled = true,
+  rank,
   onAnalyticsEvent,
 }: Props) {
   const router = useRouter();
@@ -289,6 +291,19 @@ export default function CompanyCard({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+        </div>
+      )}
+
+      {/* Rank Badge (US07) */}
+      {rank && rank <= 3 && (
+        <div className={cn(
+          "absolute top-2 left-2 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm border",
+          rank === 1 ? "bg-amber-100 text-amber-700 border-amber-200" : 
+          rank === 2 ? "bg-slate-100 text-slate-700 border-slate-200" : 
+          "bg-orange-100 text-orange-700 border-orange-200"
+        )}>
+          <Trophy className="w-3 h-3 fill-current" />
+          Top {rank}
         </div>
       )}
 

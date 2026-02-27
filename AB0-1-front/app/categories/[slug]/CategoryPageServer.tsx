@@ -144,6 +144,7 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
       city: (searchParams.city as string) || undefined,
       rating: (searchParams.rating as string) || undefined,
       verified: searchParams.verified === 'true' ? true : undefined,
+      niche_tag: (searchParams.niche_tag as string) || undefined,
       // Always request paginated data (page/per_page) so the client can "load more" without SSR navigation.
       page: Number((searchParams.page as string) || 1),
       per_page: 20,

@@ -530,6 +530,7 @@ export default function CategoryClientComponent({
     city: searchParams.get('city') || '',
     rating: Number(searchParams.get('rating')) || 0,
     verified: searchParams.get('verified') === 'true',
+    niche_tag: searchParams.get('niche_tag') || '',
   }), [searchParams]);
 
   const createQueryString = useCallback(
@@ -614,6 +615,7 @@ export default function CategoryClientComponent({
         city: filters.city || undefined,
         rating: filters.rating > 0 ? String(filters.rating) : undefined,
         verified: filters.verified ? true : undefined,
+        niche_tag: filters.niche_tag || undefined,
       });
 
       const nextCompanies = resp.companies || [];
@@ -818,7 +820,7 @@ export default function CategoryClientComponent({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
                     >
-                      <CompanyCard company={company} />
+                      <CompanyCard company={company} rank={index + 1} />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -965,7 +967,7 @@ export default function CategoryClientComponent({
                           whileHover={{ y: -5 }}
                           className="transition-all duration-300 hover:shadow-xl rounded-xl"
                         >
-                          <CompanyCard company={company} />
+                          <CompanyCard company={company} rank={index + 1} />
                         </motion.div>
                       ))}
                     </motion.div>

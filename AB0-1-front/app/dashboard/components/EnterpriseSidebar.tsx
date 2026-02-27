@@ -11,6 +11,7 @@ import {
   Link2,
   ShieldCheck,
   Star,
+  Trophy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +100,7 @@ function SidebarContent({
   const leafItems: SidebarLeafItem[] = useMemo(
     () => [
       { id: 'overview', label: 'Home', icon: Home },
+      { id: 'ranking-performance', label: 'Ranking Performance', icon: Trophy },
       { id: 'sector-questions', label: 'Perguntas', icon: Edit3 },
       { id: 'integrations', label: 'Integrações', icon: Link2 },
       { id: 'trust-widget', label: 'Selo de Confiança', icon: ShieldCheck },

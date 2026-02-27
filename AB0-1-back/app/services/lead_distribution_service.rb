@@ -85,7 +85,7 @@ class LeadDistributionService
   end
 
   def filter_companies(require_verified:, require_state:, require_city:)
-    scope = Company.where(status: 'active')
+    scope = Company.where(status: 'active', active_admin: true)
     scope = scope.where(verified: true) if require_verified
 
     scope
@@ -145,7 +145,8 @@ class LeadDistributionService
 
   def sort_key(company)
     [
-      plan_active?(company) ? 0 : 1,
+      company.sponsored? ? 0 : 1,
+      -company.priority_score.to_i,
       company.featured? ? 0 : 1,
       -company.rating_avg.to_f,
       -company.reviews_count.to_i,

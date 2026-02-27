@@ -14,7 +14,8 @@ import {
   Filter,
   X,
   Sliders,
-  Zap
+  Zap,
+  Tag
 } from 'lucide-react';
 import { useLocationData } from '@/hooks/useLocationData';
 
@@ -24,6 +25,7 @@ interface SidebarFilterProps {
     city: string;
     rating: number;
     verified: boolean;
+    niche_tag?: string;
   };
   onFilterChange: (filterType: string, value: any) => void;
   locationsData?: Record<string, string[]>;
@@ -386,21 +388,46 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
       </FilterSection>
 
       {/* Verified Companies Filter */}
-      <FilterSection 
-        title="Empresas Verificadas" 
-        icon={<Zap className="h-4 w-4" />}
-        isOpen={openSections.has('verified')} 
-        onToggle={() => toggleSection('verified')}
-      >
-        <FilterButton
-          active={filters.verified}
-          onClick={() => handleFilterClick('verified', true)}
-          icon={<Zap className="h-3 w-3" />}
-        >
-          Apenas empresas verificadas
-        </FilterButton>
-      </FilterSection>
-
+              <FilterSection
+                title="Empresas Verificadas"
+                icon={<Zap className="h-4 w-4" />}
+                isOpen={openSections.has('verified')}
+                onToggle={() => toggleSection('verified')}
+              >
+                <FilterButton
+                  active={filters.verified}
+                  onClick={() => handleFilterClick('verified', true)}
+                  icon={<Zap className="h-3 w-3" />}
+                >
+                  Apenas empresas verificadas
+                </FilterButton>
+              </FilterSection>
+      
+              {/* Niche Tags Filter (US13) */}
+              <FilterSection
+                title="Especialidades"
+                icon={<Tag className="h-4 w-4" />}
+                isOpen={openSections.has('niche')}
+                onToggle={() => toggleSection('niche')}
+              >
+                <div className="space-y-1.5">
+                  {[
+                    'Especialista em Condomínios',
+                    'Projetos Rurais',
+                    'Industrial e Usinas',
+                    'Mobilidade Elétrica',
+                    'Baterias e Off-Grid'
+                  ].map(tag => (
+                    <FilterButton
+                      key={tag}
+                      active={filters.niche_tag === tag}
+                      onClick={() => handleFilterClick('niche_tag', tag)}
+                    >
+                      {tag}
+                    </FilterButton>
+                  ))}
+                </div>
+              </FilterSection>
       {/* Active Filters Summary */}
       {activeFiltersCount > 0 && (
         <motion.div

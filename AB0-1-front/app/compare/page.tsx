@@ -3,11 +3,12 @@
 import { useComparison } from '@/hooks/useComparison';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Star, MapPin, Check, X, ArrowLeft, MessageCircle, Scale } from 'lucide-react';
+import { Star, MapPin, Check, X, ArrowLeft, MessageCircle, Scale, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
+import { cn } from '@/lib/utils';
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
@@ -84,6 +85,19 @@ export default function ComparePage() {
                   />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-br from-slate-800 to-slate-900" />
+                )}
+
+                {/* Ranking Badge US18 */}
+                {(company as any).priority_score >= 60 && (
+                  <div className={cn(
+                    "absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg border-2",
+                    (company as any).priority_score >= 100 ? "bg-amber-400 text-slate-900 border-amber-300" : 
+                    (company as any).priority_score >= 80 ? "bg-slate-300 text-slate-800 border-slate-200" : 
+                    "bg-orange-400 text-slate-900 border-orange-300"
+                  )}>
+                    <Trophy className="w-3.5 h-3.5 fill-current" />
+                    Top {(company as any).priority_score >= 100 ? "1" : (company as any).priority_score >= 80 ? "2" : "3"}
+                  </div>
                 )}
                 <div className="absolute -bottom-8 left-6">
                   <div className="h-16 w-16 rounded-2xl bg-white p-2 shadow-xl border border-slate-100">

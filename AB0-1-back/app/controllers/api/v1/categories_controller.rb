@@ -113,11 +113,16 @@ module Api
           end
         end
 
-        # Filtro de Verificadas
-        if params[:verified] == 'true' && ::Company.column_names.include?('verified')
-          companies_scope = companies_scope.where(verified: true)
-        end
-
+                  # Filtro de Verificadas
+                  if params[:verified] == 'true' && ::Company.column_names.include?('verified')
+                    companies_scope = companies_scope.where(verified: true)
+                  end
+        
+                  # Filtro de Nicho (Tags) - US13
+                  if params[:niche_tag].present? && ::Company.column_names.include?('niche_tags')
+                    # Busca se o array jsonb contém a tag
+                    companies_scope = companies_scope.where("niche_tags @> ?", [params[:niche_tag]].to_json)
+                  end
         # Log count before limit/pagination
         total_count = companies_scope.count
         Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit/pagination)")

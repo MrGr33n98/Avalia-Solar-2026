@@ -47,6 +47,8 @@ import { cn } from "@/lib/utils";
 import CompanyHero from "./components/CompanyHero";
 import CompanySidebar from "./components/CompanySidebar";
 import CompanyOverview from "./components/CompanyOverview";
+import WinnerBadge from "@/components/company/WinnerBadge";
+import Top1StickyCTA from "@/components/company/Top1StickyCTA";
 
 // Dynamic Components for Performance
 const CompanyProducts = dynamic(() => import("./components/CompanyProducts"), {
@@ -364,6 +366,14 @@ export default function CompanyDetailClient({
                   className="space-y-6"
                 >
                   <TabsContent value="overview" className="mt-0 focus-visible:outline-none space-y-6">
+                    {/* Winner Badge Section (Sprint 2) */}
+                    {(currentCompany as any).priority_score >= 100 && (
+                      <WinnerBadge 
+                        companyName={currentCompany.name} 
+                        rank={1} 
+                        city={currentCompany.city || 'Sua Região'} 
+                      />
+                    )}
                     <CompanyOverview company={currentCompany} reviews={reviews} reviewsLoading={reviewsLoading} />
                     <SocialProof companyId={companyId} companyName={currentCompany.name} />
                   </TabsContent>
@@ -480,6 +490,11 @@ export default function CompanyDetailClient({
           </aside>
         </div>
       </main>
+
+      <Top1StickyCTA 
+        company={currentCompany} 
+        rank={(currentCompany as any).priority_score >= 100 ? 1 : 0} 
+      />
 
       <StickyCTA 
         company={currentCompany} 

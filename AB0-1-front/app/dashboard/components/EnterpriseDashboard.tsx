@@ -39,6 +39,7 @@ const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => 
 const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), { loading: () => <DashboardTabSkeleton /> });
 const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), { loading: () => <DashboardTabSkeleton /> });
 const BadgesManagement = dynamic(() => import('./BadgesManagement'), { loading: () => <DashboardTabSkeleton /> });
+const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), { loading: () => <DashboardTabSkeleton /> });
 
 function DashboardTabSkeleton() {
   return (
@@ -203,6 +204,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   themeMode={themeMode}
                   onNavigateToReviews={() => handleTabChange('reviews')}
                 />
+              </TabsContent>
+
+              {/* Sprint 5: Ranking Performance Tab */}
+              <TabsContent value="ranking-performance" className="mt-0 focus-visible:outline-none">
+                <RankingPerformanceTab company={company} stats={stats} />
               </TabsContent>
 
               <TabsContent value="style-analysis" className="mt-0 focus-visible:outline-none">

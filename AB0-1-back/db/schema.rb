@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_26_120000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -415,10 +415,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_120000) do
     t.decimal "trust_score"
     t.integer "priority_score", default: 0, null: false
     t.boolean "sponsored", default: false, null: false
+    t.json "niche_tags", default: []
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["niche_tags"], name: "index_companies_on_niche_tags"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["priority_score"], name: "index_companies_on_priority_score"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"

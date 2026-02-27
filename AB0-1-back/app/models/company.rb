@@ -292,6 +292,7 @@ class Company < ApplicationRecord
 
   def normalize_multiselects
     self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:project_types)
+    self.niche_tags = Array(niche_tags).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:niche_tags)
     return unless respond_to?(:services_offered)
 
     self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
@@ -390,7 +391,21 @@ class Company < ApplicationRecord
   before_validation :normalize_company_fields
   before_validation :normalize_multiselects
   before_validation :ensure_slug
-  validate :validate_project_types, :validate_services_offered
+  validate :validate_project_types, :validate_services_offered, :validate_niche_tags
+
+  NICHE_TAGS = [
+    'Especialista em Condomínios',
+    'Projetos Rurais',
+    'Industrial e Usinas',
+    'Mobilidade Elétrica',
+    'Baterias e Off-Grid'
+  ].freeze
+
+  def validate_niche_tags
+    return if niche_tags.blank?
+    invalid = Array(niche_tags) - NICHE_TAGS
+    errors.add(:niche_tags, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
+  end
 
   # MÃƒâ€°TODOS DE VALIDAÃƒâ€¡ÃƒÆ’O (Corrigidos para usar self.)
   def validate_project_types

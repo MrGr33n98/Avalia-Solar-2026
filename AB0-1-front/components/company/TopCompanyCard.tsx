@@ -14,6 +14,7 @@ import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath } from '@/lib/slug';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -38,10 +39,20 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
+  const handleRankingClick = () => {
+    track('ranking_click', {
+      company_id: id,
+      rank: rank,
+      company_name: name,
+      source: 'top_ranking_card'
+    });
+  };
+
   return (
     <Card
+      onClick={handleRankingClick}
       className={cn(
-        'group relative flex flex-col h-full bg-white transition-all duration-300 hover:shadow-xl hover:scale-[1.05] border-2',
+        'group relative flex flex-col h-full bg-white transition-all duration-300 hover:shadow-xl hover:scale-[1.05] border-2 cursor-pointer',
         rankStyle.border,
         className
       )}
