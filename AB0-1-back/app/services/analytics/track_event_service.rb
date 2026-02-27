@@ -47,55 +47,146 @@ module Analytics
       @event_id = event_id || generate_event_id
     end
 
-    def call
-      return Result.new(ok: false, error: 'event_type missing') if @event_type.blank?
-
-      company = Company.find(@company_id) if @company_id.present?
-
-      if skip_persistence_for_global_event?
-        increment_global_event_metric!
-        Rails.logger.info("[Analytics] Skipping DB persistence for global event without company_id: #{normalized_event_type}")
-        return Result.new(ok: true, event: nil, error: 'global_event_without_company_skipped')
-      end
-
-      if @company_id.blank?
-        return Result.new(ok: false, error: 'company_id missing for event')
-      end
-
-      authorize!(company) if company
-
-      # Check for duplicate event_id (dedupe)
-      if AnalyticsEvent.exists?(event_id: @event_id)
-        Rails.logger.debug("[Analytics] Dedupe: #{@event_type} (#{@event_id})")
-        return Result.new(ok: true, event: nil, error: 'duplicate_event')
-      end
-
-      ActiveRecord::Base.transaction do
-        event = AnalyticsEvent.create!(
-          event_id: @event_id,
-          company_id: @company_id,
-          user_id: @user&.id,
-          event_type: @event_type,
-          metadata: @metadata,
-          tracked_at: @occurred_at
-        )
-
-        increment_daily_stat!(event)
-        increment_company_counters(company) if company
-        increment_yabeda_metrics(event)
-        broadcast!(event)
-
-        # Send to Mixpanel (async)
-        track_mixpanel(event) if should_track_mixpanel?
-
-        return Result.new(ok: true, event: event)
-      end
-    rescue StandardError => e
-      Rails.logger.error("[Analytics] TrackEventService error: #{e.class} #{e.message}")
-      Result.new(ok: false, error: e.message)
-    end
-
-    private
+        def call
+          return Result.new(ok: false, error: 'event_type missing') if @event_type.blank?
+    
+          company = Company.find(@company_id) if @company_id.present?
+    
+          if skip_persistence_for_global_event?
+            increment_global_event_metric!
+            Rails.logger.info("[Analytics] Skipping DB persistence for global event without company_id: #{normalized_event_type}")
+            return Result.new(ok: true, event: nil, error: 'global_event_without_company_skipped')  
+          end
+    
+          if @company_id.blank?
+            return Result.new(ok: false, error: 'company_id missing for event')
+          end
+    
+          authorize!(company) if company
+    
+          unless ensure_unique_event!
+            Rails.logger.debug("[Analytics] Dedupe: #{@event_type} (#{@event_id})")
+            return Result.new(ok: true, event: nil, error: 'duplicate_event')
+          end
+    
+          persist_platform_event!
+    
+          if dual_write_active?
+            persist_legacy_analytics_event! if should_dual_write?
+          end
+    
+          increment_company_counters(company) if company
+          increment_yabeda_metrics_for_event
+          broadcast_realtime
+          track_mixpanel_async
+    
+          Result.new(ok: true)
+        rescue StandardError => e
+          Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")        
+          Result.new(ok: false, error: e.message)
+        end
+    
+        private
+    
+        def dual_write_active?
+          is_active = ENV['G4_ANALYTICS_DUAL_WRITE'] == 'true' || Time.current < Time.zone.parse('2026-03-06')
+          Rails.logger.debug("[G4-Analytics] Dual-write status: #{is_active ? 'ON' : 'OFF'}")
+          is_active
+        end
+    
+        def should_dual_write?
+          @company_id.present? || INTERNAL_SYSTEM_EVENTS.include?(normalized_event_type)
+        end
+    
+        def ensure_unique_event!
+          return true unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+          
+          sql = "INSERT INTO analytics_event_dedup (event_id) VALUES (    ) ON CONFLICT DO NOTHING RETURNING 1"
+          res = ActiveRecord::Base.connection.exec_query(sql, 'Dedupe', [[nil, @event_id]])
+          res.any?
+        end
+    
+        def persist_platform_event!
+          return unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+    
+          payload = @metadata.except('source', 'anonymous_id', 'session_id', 'subject_type', 'subject_id')
+          context = { 
+            ip: @metadata['ip'], 
+            user_agent: @metadata['user_agent'],
+            referrer: @metadata['referrer']
+          }.compact
+    
+          sql = <<~SQL
+            INSERT INTO platform_events (
+              event_id, event_type, schema_version, source, anonymous_id, session_id,
+              user_id, company_id, subject_type, subject_id, payload, context, occurred_at
+            ) VALUES (    , $2, $3, $4, $5, $6, $7, $8, $9,     0,     1::jsonb,     2::jsonb,     3)
+          SQL
+          
+          ActiveRecord::Base.connection.exec_query(sql, 'PlatformEventInsert', [
+            [nil, @event_id], [nil, @event_type], [nil, 1],
+            [nil, @metadata['source'] || @metadata['utm_source']],
+            [nil, @metadata['anonymous_id']], [nil, @metadata['session_id']],
+            [nil, @user&.id], [nil, @company_id],
+            [nil, @metadata['subject_type']], [nil, @metadata['subject_id']],
+            [nil, payload.to_json], [nil, context.to_json], [nil, @occurred_at]
+          ])
+        end
+    
+        def persist_legacy_analytics_event!
+          AnalyticsEvent.create!(
+            event_id: @event_id,
+            company_id: @company_id,
+            user_id: @user&.id,
+            event_type: @event_type,
+            metadata: @metadata,
+            tracked_at: @occurred_at
+          )
+        end
+    
+        def increment_yabeda_metrics_for_event
+          return unless defined?(Yabeda)
+          Yabeda.ab0.analytics_events_total.increment({ event_type: normalized_event_type }, by: 1) 
+          return unless normalized_event_type == 'profile_view'
+          Yabeda.ab0.company_views_total.increment({ company_id: @company_id }, by: 1)
+        end
+    
+        def broadcast_realtime
+          return unless @company_id.present?
+    
+          ActionCable.server.broadcast(
+            "company:#{@company_id}:dashboard",
+            {
+              type: 'analytics_event',
+              event_type: @event_type,
+              tracked_at: @occurred_at,
+              company_id: @company_id,
+              metadata: @metadata
+            }
+          )
+        rescue StandardError => e
+          Rails.logger.warn("[Analytics] broadcast failed: #{e.message}")
+        end
+    
+        def track_mixpanel_async
+          return unless should_track_mixpanel? && ENV['MIXPANEL_PROJECT_TOKEN'].present?
+          return unless defined?(Analytics::MixpanelJob)
+    
+          Analytics::MixpanelJob.perform_later(
+            distinct_id: @user&.id || "comp_#{@company_id}" || "anon_#{SecureRandom.hex(8)}",
+            event_name: @event_type,
+            properties: {
+              company_id: @company_id,
+              user_id: @user&.id,
+              environment: Rails.env.to_s,
+              platform: 'backend',
+              server_timestamp: @occurred_at.to_i,
+              **@metadata
+            }
+          )
+        rescue StandardError => e
+          Rails.logger.warn("[Analytics] Mixpanel job enqueue failed: #{e.message}")
+        end
 
     WHITELIST_KEYS = %w[
       utm_source utm_medium utm_campaign utm_term utm_content

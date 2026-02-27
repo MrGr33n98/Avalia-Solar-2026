@@ -160,9 +160,9 @@ export default function CompanyHero({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <section
               aria-label="Card de perfil da empresa"
-              className="relative max-w-[780px] rounded-[26px] border border-slate-200 bg-white px-4 py-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5"
+              className="relative max-w-[760px] rounded-[26px] border border-slate-200 bg-white px-5 py-5 pl-[92px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:px-6 sm:py-5 sm:pl-[116px]"
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-5 sm:-translate-x-[10%]">
                 <div className="relative shrink-0">
                   {heroBadgeUrl && !badgeImageError && (
                     <div
@@ -201,46 +201,40 @@ export default function CompanyHero({
                       />
                     </div>
                   </div>
+                </div>
+              </div>
 
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1
+                    className="max-w-full text-[1.75rem] font-semibold leading-none tracking-[-0.05em] text-slate-950 sm:text-[2rem]"
+                    title={company.name}
+                  >
+                    {company.name}
+                  </h1>
                   {company.verified && (
-                    <div
-                      className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-blue-600 shadow-[0_12px_24px_-12px_rgba(37,99,235,0.9)]"
+                    <span
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600 shadow-sm"
                       title="Empresa verificada"
+                      aria-label="Empresa verificada"
                     >
-                      <BadgeCheck className="h-[18px] w-[18px] text-white" />
-                    </div>
+                      <BadgeCheck className="h-4 w-4" />
+                    </span>
                   )}
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1
-                      className="max-w-full text-[1.9rem] font-semibold leading-none tracking-[-0.045em] text-slate-950 sm:text-[2.15rem]"
-                      title={company.name}
-                    >
-                      {company.name}
-                    </h1>
-                    {company.verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                        <BadgeCheck className="h-3.5 w-3.5" />
-                        Verificado
-                      </span>
-                    )}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-600">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                    <span className="text-sm font-bold text-slate-900">{ratingLabel}</span>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                      <span className="text-sm font-bold text-slate-900">{ratingLabel}</span>
-                    </div>
-
-                    {locationLabel && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {locationLabel}
-                      </span>
-                    )}
-                  </div>
+                  {locationLabel && (
+                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {locationLabel}
+                    </span>
+                  )}
                 </div>
               </div>
             </section>
