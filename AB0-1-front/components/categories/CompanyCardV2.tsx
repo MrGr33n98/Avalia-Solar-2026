@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, Building2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
@@ -38,7 +38,7 @@ export default function CompanyCardV2({
   const [imageError, setImageError] = useState(false);
 
   const imageUrl = !imageError ? (company.logo_url || company.banner_url) : null;
-  const height = variant === 'rich' ? 'h-[220px]' : 'h-[160px]';
+  const height = variant === 'rich' ? 'h-[180px]' : 'h-[120px]';
 
   return (
     <article
@@ -72,14 +72,14 @@ export default function CompanyCardV2({
       </div>
 
       {/* Content */}
-      <CardContent className="flex-grow p-3 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm md:text-base font-bold text-slate-950 line-clamp-2">
+      <CardContent className="flex-grow p-2 space-y-1">
+        <div className="flex items-start justify-between gap-1">
+          <h3 className="text-xs md:text-sm font-bold text-slate-950 line-clamp-2">
             {company.name}
           </h3>
           {company.verified && (
             <Badge className="bg-emerald-100 text-emerald-800 text-xs font-bold whitespace-nowrap" aria-label="Empresa verificada">
-              ✓ Verificada
+              ✓
             </Badge>
           )}
         </div>
@@ -90,16 +90,16 @@ export default function CompanyCardV2({
 
         {/* Rating */}
         {company.rating && (
-          <div className="flex items-center gap-2" aria-label={`Avaliação: ${company.rating.toFixed(1)} de 5 estrelas`}>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="text-sm font-bold text-slate-900">
+          <div className="flex items-center gap-1 text-xs" aria-label={`Avaliação: ${company.rating.toFixed(1)} de 5 estrelas`}>
+            <div className="flex items-center gap-0.5">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="text-xs font-bold text-slate-900">
                 {company.rating.toFixed(1)}
               </span>
             </div>
             {company.rating_count && (
               <span className="text-xs text-slate-500">
-                ({company.rating_count} {company.rating_count === 1 ? 'avaliação' : 'avaliações'})
+                ({company.rating_count})
               </span>
             )}
           </div>
@@ -107,7 +107,7 @@ export default function CompanyCardV2({
       </CardContent>
 
       {/* CTA */}
-      <CardFooter className="p-3 bg-slate-50 border-t border-slate-100">
+      <CardFooter className="p-2 bg-slate-50 border-t border-slate-100">
         <LeadCTA
           company={company}
           category={category}
@@ -115,6 +115,6 @@ export default function CompanyCardV2({
           onLeadModalOpen={onLeadModalOpen}
         />
       </CardFooter>
-    </Card>
+    </article>
   );
 }

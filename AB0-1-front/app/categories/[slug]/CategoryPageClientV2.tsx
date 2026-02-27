@@ -236,75 +236,77 @@ export default function CategoryPageClient({
           />
 
           {/* Main Content */}
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex gap-6">
-              {/* Sidebar */}
-              <CategoryFilterSidebar
-                filters={sidebarFilters}
-                onFilterChange={handleSidebarFilterChange}
-                onClearFilters={handleClearFilters}
-                hasActiveFilters={hasActiveFilters}
-              />
+          <div className="py-8">
+            <div className="container mx-auto px-4">
+              <div className="flex gap-6">
+                {/* Sidebar */}
+                <CategoryFilterSidebar
+                  filters={sidebarFilters}
+                  onFilterChange={handleSidebarFilterChange}
+                  onClearFilters={handleClearFilters}
+                  hasActiveFilters={hasActiveFilters}
+                />
 
-              {/* Main */}
-              <main className="flex-1">
-                {/* Toolbar */}
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 sticky top-20 z-10">
-                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <div className="relative w-full sm:max-w-md">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        placeholder="Buscar empresas..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
+                {/* Main */}
+                <main className="flex-1">
+                  {/* Toolbar */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 sticky top-20 z-10">
+                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                      <div className="relative w-full sm:max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          placeholder="Buscar empresas..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
 
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
-                          <SelectItem value="reviews_desc">Mais Avaliadas</SelectItem>
-                          <SelectItem value="name_asc">A-Z</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                          <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
+                            <SelectItem value="reviews_desc">Mais Avaliadas</SelectItem>
+                            <SelectItem value="name_asc">A-Z</SelectItem>
+                          </SelectContent>
+                        </Select>
 
-                      {hasActiveFilters && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleClearFilters}
-                        >
-                          <Filter className="w-4 h-4 mr-1" />
-                          Limpar
-                        </Button>
-                      )}
+                        {hasActiveFilters && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleClearFilters}
+                          >
+                            <Filter className="w-4 h-4 mr-1" />
+                            Limpar
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Grid */}
-                <div>
-                  <h2 className="text-xl font-bold text-slate-950 mb-4">
-                    {hasActiveFilters ? 'Resultados Filtrados' : 'Todas as Empresas'}
-                    <span className="text-sm font-normal text-slate-500 ml-2">
-                      ({filteredCompanies.length})
-                    </span>
-                  </h2>
-                  <CompaniesGrid
-                    companies={filteredCompanies}
-                    category={slug}
-                    onLeadModalOpen={(company) => {
-                      setSelectedCompanyForLead(company);
-                      setLeadModalOpen(true);
-                    }}
-                  />
-                </div>
-              </main>
+                  {/* Grid */}
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950 mb-4">
+                      {hasActiveFilters ? 'Resultados Filtrados' : 'Todas as Empresas'}
+                      <span className="text-sm font-normal text-slate-500 ml-2">
+                        ({filteredCompanies.length})
+                      </span>
+                    </h2>
+                    <CompaniesGrid
+                      companies={filteredCompanies}
+                      category={slug}
+                      onLeadModalOpen={(company) => {
+                        setSelectedCompanyForLead(company);
+                        setLeadModalOpen(true);
+                      }}
+                    />
+                  </div>
+                </main>
+              </div>
             </div>
           </div>
 
