@@ -1,34 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Info, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-
-interface Subcategory {
-  id: number;
-  name: string;
-  slug?: string;
-  seo_url: string;
-}
-
-interface CategoryHeroProps {
-  name: string;
-  companiesCount: number;
-  reviewsCount: number;
-  verifiedPct: number;
-  bannerUrl?: string;
-  parentCategory?: { name: string; slug: string };
-  subcategories?: Subcategory[];
-  onLeadClick?: () => void;
-  onMethodologyClick?: () => void;
-}
-
-import { Button } from '@/components/ui/button';
 import { Info, ChevronRight, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 interface Subcategory {
   id: number;
