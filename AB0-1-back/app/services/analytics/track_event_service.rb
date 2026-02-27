@@ -20,7 +20,7 @@ module Analytics
       'whatsapp_click' => :whatsapp_clicks_count
     }.freeze
 
-    GLOBAL_EVENTS = %w[page_view search landing_view].freeze
+    GLOBAL_EVENTS = %w[page_view search landing_view web_vital].freeze
     INTERNAL_SYSTEM_EVENTS = %w[
       page_view
       search
@@ -52,7 +52,13 @@ module Analytics
 
       company = Company.find(@company_id) if @company_id.present?
 
-      if @company_id.blank? && !GLOBAL_EVENTS.include?(normalized_event_type)
+      if skip_persistence_for_global_event?
+        increment_global_event_metric!
+        Rails.logger.info("[Analytics] Skipping DB persistence for global event without company_id: #{normalized_event_type}")
+        return Result.new(ok: true, event: nil, error: 'global_event_without_company_skipped')
+      end
+
+      if @company_id.blank?
         return Result.new(ok: false, error: 'company_id missing for event')
       end
 
@@ -223,6 +229,10 @@ module Analytics
       @normalized_event_type ||= @event_type.to_s.downcase.gsub(/\s+/, '_')
     end
 
+    def skip_persistence_for_global_event?
+      @company_id.blank? && GLOBAL_EVENTS.include?(normalized_event_type)
+    end
+
     def increment_daily_stat!(event)
       return if event.company_id.blank?
 
@@ -252,6 +262,14 @@ module Analytics
       return unless normalized_event_type == 'profile_view'
 
       Yabeda.ab0.company_views_total.increment({ company_id: event.company_id }, by: 1)
+    end
+
+    def increment_global_event_metric!
+      return unless defined?(Yabeda)
+
+      Yabeda.ab0.analytics_events_total.increment({ event_type: normalized_event_type }, by: 1)
+    rescue StandardError => e
+      Rails.logger.warn("[Analytics] global metric increment failed: #{e.message}")
     end
 
     def broadcast!(event)

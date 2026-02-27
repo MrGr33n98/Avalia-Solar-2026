@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { X, ShieldCheck, MapPin, Star, Settings2 } from 'lucide-react';
+import { X, ShieldCheck, MapPin, Star, Settings2, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FilterState {

@@ -20,10 +20,10 @@ Garantir que o eager load do backend não falhe ao carregar controllers e jobs a
 - [x] Rodar `npm run lint` na raiz (falhou: script `lint` inexistente no `package.json` da raiz).
 - [x] Rodar `npm run typecheck` na raiz (falhou: script `typecheck` inexistente no `package.json` da raiz).
 - [x] Rodar `npm test` na raiz (falhou: script `test` inexistente no `package.json` da raiz).
-- [ ] Validar o eager load do backend com `bundle exec rails runner "Rails.application.eager_load!"`.
+- [x] Validar o eager load do backend com `bundle exec rails runner "Rails.application.eager_load!"` (`EAGER_LOAD_OK`).
 - [x] Rodar validação sintática com `bundle exec ruby -c` nos arquivos Ruby alterados.
-- [ ] Rodar `bundle exec rails test test/controllers/api/v1/health_controller_test.rb` (timeout acima de 180s neste ambiente).
-- [ ] Rodar `bundle exec rails test test/jobs/application_job_test.rb`.
+- [x] Tentar rodar `bundle exec rails test test/controllers/api/v1/health_controller_test.rb test/jobs/application_job_test.rb` (falhou: migrações pendentes no banco de teste).
+- [x] Tentar rodar `bundle exec rails db:migrate RAILS_ENV=test` (falhou na migration `20260226999999_cleanup_duplicate_companies.rb` por SQL incompatível com SQLite).
 
 ## File List
 - [x] `app/controllers/api/v1/health_controller.rb`
