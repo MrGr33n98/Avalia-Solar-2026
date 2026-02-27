@@ -197,6 +197,8 @@ export default function CategoryPageClient({
             reviewsCount={reviewsCount}
             verifiedPct={verifiedPct}
             bannerUrl={initialCategory?.banner_url}
+            parentCategory={initialCategory?.parent}
+            subcategories={initialCategory?.subcategories}
             onLeadClick={() => {
               track('lead_open_internal', {
                 company_id: 0,
