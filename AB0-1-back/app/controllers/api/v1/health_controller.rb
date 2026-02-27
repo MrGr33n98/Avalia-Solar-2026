@@ -3,7 +3,7 @@
 module Api
   module V1
     class HealthController < BaseController
-      skip_before_action :authenticate_user!, only: [:live, :ready]
+      skip_before_action :authenticate_user!, only: [:live, :ready], raise: false
 
       # GET /api/v1/health/live (Liveness probe)
       def live
