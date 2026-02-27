@@ -55,9 +55,9 @@ class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
       "price >= 0",
       name: "ck_plans_valid_price"
 
-    # 7. Banner subscriptions: created_at <= expires_at
+    # 7. Banner subscriptions: created_at <= ends_at
     add_check_constraint :banner_subscriptions,
-      "created_at <= expires_at",
+      "created_at <= ends_at",
       name: "ck_banner_subs_valid_dates"
   end
 end
