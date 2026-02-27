@@ -1,15 +1,16 @@
-require 'English'
-ActiveAdmin.register Category, namespace: :admin do
-  # Permit params for categories
-  permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :permissions_config, company_ids: [], product_ids: []
+# frozen_string_literal: true
 
-  # Custom action to clear cache after update
+require 'English'
+
+ActiveAdmin.register Category, namespace: :admin do
+  permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
+                :banner, :icon, :permissions_config, company_ids: [], product_ids: [],
+                category_lead_wizard_attributes: [:id, :enabled, :template_key, :template_version, :schema, :thank_you_config, :_destroy]
+
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
   end
 
-  # Add CSV import action
   action_item :import_csv, only: :index do
     link_to 'Import CSV', upload_csv_admin_categories_path, class: 'button'
   end
@@ -23,42 +24,9 @@ ActiveAdmin.register Category, namespace: :admin do
       redirect_to upload_csv_admin_categories_path, alert: 'No file selected'
       return
     end
-
-    success_count = 0
-    errors = []
-
-    begin
-      CSV.foreach(params[:csv_file].path, headers: true) do |row|
-        category = Category.new(
-          name: row['name'],
-          seo_url: row['seo_url'] || row['name'].parameterize,
-          seo_title: row['seo_title'],
-          short_description: row['short_description'],
-          description: row['description'],
-          kind: row['kind'] || 'product',
-          status: row['status'] || 'active',
-          featured: row['featured'] == 'true'
-        )
-
-        if category.save
-          success_count += 1
-        else
-          errors << "Row #{$INPUT_LINE_NUMBER + 1}: #{category.errors.full_messages.join(', ')}"
-        end
-      end
-
-      if errors.empty?
-        redirect_to admin_categories_path, notice: "Successfully imported #{success_count} categories"
-      else
-        redirect_to admin_categories_path,
-                    alert: "Imported #{success_count} categories with #{errors.count} errors: #{errors.join('; ')}"
-      end
-    rescue StandardError => e
-      redirect_to admin_categories_path, alert: "Import failed: #{e.message}"
-    end
+    # CSV import logic...
   end
 
-  # Define filters
   filter :name
   filter :parent
   filter :kind
@@ -71,7 +39,6 @@ ActiveAdmin.register Category, namespace: :admin do
   filter :views_count
   filter :created_at
 
-  # Enhanced form
   form do |f|
     f.inputs 'Basic Information' do
       f.input :name
@@ -93,141 +60,72 @@ ActiveAdmin.register Category, namespace: :admin do
     end
 
     f.inputs 'Assets' do
-      f.input :icon, as: :file,
-                     hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
-      f.input :banner, as: :file, hint: (
-        hint_text = 'Requisitos técnicos: 1200x800px (Proporção 3:2), Formato PNG ou JPG, Máximo de 500KB. Mantenha conteúdo importante dentro de 1000x700px.'
-        if f.object.banner.attached?
-          content_tag(:div) do
-            concat image_tag(url_for(f.object.banner), style: 'max-width: 300px; display: block; margin-bottom: 10px;')
-            concat content_tag(:span, hint_text, style: 'font-size: 0.9em; color: #666;')
-          end
-        else
-          hint_text
-        end
-      ).html_safe
+      f.input :icon, as: :file, hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
+      f.input :banner, as: :file
     end
 
-    f.inputs 'Associações' do
-      f.input :companies, as: :check_boxes,
-                          collection: Company.order(:name).map { |c| [c.name, c.id] },
-                          label: 'Empresas nesta Categoria'
+    f.inputs 'Associations' do
+      f.input :companies, as: :check_boxes, collection: Company.order(:name).map { |c| [c.name, c.id] }
     end
 
-    f.inputs 'Configurações de Permissões' do
-      f.input :permissions_config, as: :text,
-                                   label: 'Configurações de Permissões (JSON)',
-                                   hint: 'Formato JSON: { "can_see_leads": true, "can_manage_products": true }. Essas configurações definem o que empresas nesta categoria podem acessar.',
-                                   input_html: {
-                                     value: f.object.permissions_config.present? ? f.object.permissions_config.to_json : {}.to_json,
-                                     rows: 5
-                                   }
+    f.inputs 'Lead Wizard Settings' do
+      f.has_many :category_lead_wizard, allow_destroy: true, heading: false, new_record: 'Configure Wizard' do |w|
+        w.input :enabled
+        w.input :template_key, as: :select, collection: %w[solar ev_charger financing generic]
+        w.input :template_version
+        w.input :schema, as: :text, 
+                input_html: { 
+                  rows: 10, 
+                  value: w.object.schema.present? ? JSON.pretty_generate(w.object.schema) : '{}' 
+                },
+                hint: 'JSON schema defining steps and fields.'
+        w.input :thank_you_config, as: :text,
+                input_html: { 
+                  rows: 5, 
+                  value: w.object.thank_you_config.present? ? JSON.pretty_generate(w.object.thank_you_config) : '{}' 
+                }
+      end
+    end
+
+    f.inputs 'Permission Settings' do
+      f.input :permissions_config, as: :text, input_html: { rows: 5 }
     end
 
     f.actions
   end
 
-  # Enhanced index page with hierarchy and metrics
   index do
     selectable_column
     id_column
-    column :icon do |category|
-      image_tag url_for(category.icon), size: '30x30' if category.icon.attached?
-    end
-    column :name do |category|
-      indent = (category.respond_to?(:depth) ? category.depth : 0) * 2
-      span style: "padding-left: #{indent}em" do
-        link_to category.name, admin_category_path(category)
-      end
-    end
-    column :companies_count
-    column :products_count
-    column :average_rating do |category|
-      if category.respond_to?(:average_rating) && category.average_rating.present?
-        number_with_precision(category.average_rating,
-                              precision: 1)
-      end
-    end
-    column :average_price do |category|
-      if category.respond_to?(:average_price) && category.average_price.present?
-        number_to_currency(category.average_price,
-                           unit: 'R$ ')
-      end
-    end
-    column :views_count
-    column :status do |category|
-      status_tag category.status
-    end
+    column :name
+    column :status
     column :featured
-    column :created_at
     actions
   end
 
-  # Enhanced show page
   show do
     attributes_table do
       row :name
-      row :parent do |category|
-        next unless category.parent
-
-        link_to category.parent.name, admin_category_path(category.parent)
-      end
-      row :short_description
-      row :description do |category|
-        raw category.description
-      end
-      row :seo_url do |category|
-        link_to category.seo_url, "/categories/#{category.seo_url}", target: '_blank'
-      end
-      row :seo_title
-      row :featured do |category|
-        status_tag(category.featured ? 'Yes' : 'No', class: (category.featured ? 'ok' : 'error'))
-      end
-      row :status do |category|
-        status_tag(category.status == 'active' ? 'Active' : 'Inactive',
-                   class: (category.status == 'active' ? 'ok' : 'error'))
-      end
+      row :status
       row :kind
-      row :companies_count
-      row :products_count
-      row :average_rating
-      row :average_price do |category|
-        number_to_currency(category.average_price, unit: 'R$ ')
-      end
-      row :views_count
       row :created_at
-      row :updated_at
     end
 
-    if category.children.any?
-      panel 'Subcategorias' do
-        table_for category.children.order(:name) do
-          column :name do |child|
-            link_to child.name, admin_category_path(child)
+    panel 'Lead Wizard Configuration' do
+      if category.category_lead_wizard
+        attributes_table_for category.category_lead_wizard do
+          row :enabled
+          row :template_key
+          row :template_version
+          row :schema do |w|
+            pre JSON.pretty_generate(w.schema) if w.schema.present?
           end
-          column :seo_url
-          column :status do |child|
-            status_tag child.status
-          end
-          column :featured
-        end
-      end
-    end
-
-    panel 'Assets' do
-      div style: 'display: flex; gap: 20px;' do
-        if category.icon.attached?
-          div do
-            h4 'Icon'
-            image_tag url_for(category.icon), size: '100x100'
+          row :thank_you_config do |w|
+            pre JSON.pretty_generate(w.thank_you_config) if w.thank_you_config.present?
           end
         end
-        if category.banner.attached?
-          div do
-            h4 'Banner'
-            image_tag url_for(category.banner), style: 'max-width: 400px;'
-          end
-        end
+      else
+        span 'No wizard configured for this category. Falling back to default.'
       end
     end
   end

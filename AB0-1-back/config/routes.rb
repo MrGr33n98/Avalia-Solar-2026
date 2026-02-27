@@ -97,6 +97,8 @@ Rails.application.routes.draw do
       post 'events/track', to: 'analytics#events_track'
       get 'analytics/conversions', to: 'analytics#conversions'
 
+      get 'lead_wizards/resolve', to: 'lead_wizards#resolve'
+
       resources :banner_offers, only: [:index]
       resources :banner_events, only: [:create]
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'

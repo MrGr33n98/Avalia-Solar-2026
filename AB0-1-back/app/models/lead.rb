@@ -2,6 +2,7 @@ require 'bcrypt'
 class Lead < ApplicationRecord
   # Make company association optional since the database might not have company_id column
   belongs_to :company, optional: true
+  belongs_to :category, optional: true
   has_many :lead_distributions, dependent: :destroy
   has_many :distributed_companies, through: :lead_distributions, source: :company
 
