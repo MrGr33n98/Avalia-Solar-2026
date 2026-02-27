@@ -27,6 +27,6 @@ class AddCriticalIndexes < ActiveRecord::Migration[7.0]
     add_index :company_members, [:company_id, :user_id], unique: true, algorithm: :concurrently, if_not_exists: true
 
     # External cache dedup
-    add_index :external_tariffs_cache, [:company_id, :cache_key], unique: true, algorithm: :concurrently, if_not_exists: true
+    add_index :external_tariffs_caches, [:company_id, :cache_key], unique: true, algorithm: :concurrently, if_not_exists: true
   end
 end
