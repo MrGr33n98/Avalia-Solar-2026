@@ -55,9 +55,6 @@ export default function CategoryPageClient({
 
   const slug = initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
-  const companiesCount = initialCategory?.companies_count || initialCompanies.length;
-  const reviewsCount = initialCategory?.reviews_count || 0;
-  const verifiedPct = initialCategory?.verified_pct || 0;
 
   // Estado de busca e filtros
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -217,9 +214,6 @@ export default function CategoryPageClient({
               initialCategory?.description ||
               undefined
             }
-            companiesCount={companiesCount}
-            reviewsCount={reviewsCount}
-            verifiedPct={verifiedPct}
             bannerUrl={initialCategory?.banner_url}
             parentCategory={initialCategory?.parent}
             subcategories={initialCategory?.subcategories}

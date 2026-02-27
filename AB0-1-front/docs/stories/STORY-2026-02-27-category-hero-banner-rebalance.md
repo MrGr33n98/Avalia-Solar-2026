@@ -17,6 +17,8 @@ Combinar o melhor dos dois layouts: manter a clareza do hero novo, mas com banne
 - [x] Passar descrição real da categoria a partir da página cliente.
 - [x] Reduzir a escala visual dos elementos internos do hero sem perder legibilidade.
 - [x] Compactar o espaçamento vertical entre hero, chips e conteúdo principal.
+- [x] Alinhar a faixa de filtros rápidos com o mesmo grid do hero.
+- [x] Remover os stats do hero enquanto os dados da categoria ainda não sustentam esse bloco.
 - [x] Rodar lint do frontend.
 - [x] Rodar validação adicional disponível para o frontend ou documentar bloqueio.
 
@@ -29,5 +31,5 @@ Combinar o melhor dos dois layouts: manter a clareza do hero novo, mas com banne
 
 ## Validation
 - [x] `npm run lint`
-- [x] `npx tsc --noEmit`
-- [ ] `npm test -- category-client-banners --runInBand` (bloqueado por configuração atual do Jest com ESM em `better-auth`)
+- [x] `node --max-old-space-size=4096 .\node_modules\typescript\bin\tsc --noEmit`
+- [ ] `npm test -- category-client-banners --runInBand` (continua bloqueado por configuração atual do Jest com ESM em `better-auth`)

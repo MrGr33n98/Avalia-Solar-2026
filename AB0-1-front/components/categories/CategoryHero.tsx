@@ -1,18 +1,9 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import {
-  ArrowRight,
-  Building2,
-  ChevronRight,
-  Info,
-  MessageSquareText,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, ChevronRight, Info, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface Subcategory {
@@ -25,9 +16,6 @@ interface Subcategory {
 interface CategoryHeroProps {
   name: string;
   description?: string;
-  companiesCount: number;
-  reviewsCount: number;
-  verifiedPct: number;
   bannerUrl?: string;
   parentCategory?: { name: string; slug: string };
   subcategories?: Subcategory[];
@@ -38,9 +26,6 @@ interface CategoryHeroProps {
 export default function CategoryHero({
   name,
   description,
-  companiesCount,
-  reviewsCount,
-  verifiedPct,
   bannerUrl,
   parentCategory,
   subcategories = [],
@@ -128,26 +113,7 @@ export default function CategoryHero({
               </div>
             </div>
 
-            <div className="mt-2.5 flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="grid max-w-[28rem] grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
-                <StatPill
-                  icon={<Building2 className="h-3 w-3 text-emerald-300" />}
-                  value={companiesCount}
-                  label="empresas"
-                />
-                <StatPill
-                  icon={<MessageSquareText className="h-3 w-3 text-sky-300" />}
-                  value={reviewsCount}
-                  label="avaliações"
-                />
-                <StatPill
-                  icon={<ShieldCheck className="h-3 w-3 text-amber-300" />}
-                  value={`${verifiedPct}%`}
-                  label="verificadas"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button
                   onClick={onLeadClick}
                   size="lg"
@@ -166,7 +132,6 @@ export default function CategoryHero({
                   <Info className="mr-1.5 h-3.5 w-3.5" />
                   Método do ranking
                 </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -191,30 +156,6 @@ export default function CategoryHero({
         )}
       </div>
     </section>
-  );
-}
-
-function StatPill({
-  icon,
-  value,
-  label,
-}: {
-  icon: ReactNode;
-  value: string | number;
-  label: string;
-}) {
-  return (
-    <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/14 bg-white/10 px-2 py-1.5 text-white backdrop-blur-md sm:gap-2 sm:px-2.5 sm:py-2">
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 sm:h-7 sm:w-7">
-        {icon}
-      </div>
-      <div className="flex min-w-0 flex-col leading-none">
-        <span className="text-xs font-black tracking-tight sm:text-sm">{value}</span>
-        <span className="mt-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-white/72 sm:text-[8px]">
-          {label}
-        </span>
-      </div>
-    </div>
   );
 }
 
