@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import CategoryClientComponent from '../../CategoryClientComponent'
+import CategoryClientComponent from '../CategoryClientComponent'
 
 describe('CategoryClientComponent banners', () => {
   it('exibe CompanyCard para empresas iniciais com banner_url', () => {

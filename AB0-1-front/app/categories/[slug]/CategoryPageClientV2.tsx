@@ -212,6 +212,11 @@ export default function CategoryPageClient({
           {/* Hero - Full width header */}
           <CategoryHero
             name={categoryName}
+            description={
+              initialCategory?.short_description ||
+              initialCategory?.description ||
+              undefined
+            }
             companiesCount={companiesCount}
             reviewsCount={reviewsCount}
             verifiedPct={verifiedPct}

@@ -1,8 +1,18 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Info, ChevronRight, Zap } from 'lucide-react';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { getFullImageUrl } from '@/utils/image';
+import {
+  ArrowRight,
+  Building2,
+  ChevronRight,
+  Info,
+  MessageSquareText,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface Subcategory {
@@ -14,6 +24,7 @@ interface Subcategory {
 
 interface CategoryHeroProps {
   name: string;
+  description?: string;
   companiesCount: number;
   reviewsCount: number;
   verifiedPct: number;
@@ -26,6 +37,7 @@ interface CategoryHeroProps {
 
 export default function CategoryHero({
   name,
+  description,
   companiesCount,
   reviewsCount,
   verifiedPct,
@@ -35,108 +47,140 @@ export default function CategoryHero({
   onLeadClick,
   onMethodologyClick,
 }: CategoryHeroProps) {
+  const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : '';
+  const heroDescription =
+    description?.trim() ||
+    `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
+
   return (
-    <section className="bg-white border-b border-slate-100 py-6 md:py-10">
-      <div className="max-w-[1280px] mx-auto px-6">
-        {/* Breadcrumb Navigation - Sutil e funcional */}
-        <nav className="flex items-center gap-2 mb-8 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
-          <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3 opacity-50" />
-          <Link href="/categories" className="hover:text-blue-600 transition-colors">Categorias</Link>
+    <section className="border-b border-slate-100 bg-white py-5 md:py-7">
+      <div className="mx-auto max-w-[1280px] px-6">
+        <nav className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 md:mb-5 md:text-[11px]">
+          <Link href="/" className="transition-colors hover:text-blue-600">
+            Home
+          </Link>
+          <ChevronRight className="h-3 w-3 opacity-50" />
+          <Link href="/categories" className="transition-colors hover:text-blue-600">
+            Categorias
+          </Link>
           {parentCategory && (
             <>
-              <ChevronRight className="w-3 h-3 opacity-50" />
-              <Link href={`/categories/${parentCategory.slug}`} className="hover:text-blue-600 transition-colors">
+              <ChevronRight className="h-3 w-3 opacity-50" />
+              <Link
+                href={`/categories/${parentCategory.slug}`}
+                className="transition-colors hover:text-blue-600"
+              >
                 {parentCategory.name}
               </Link>
             </>
           )}
-          <ChevronRight className="w-3 h-3 opacity-50" />
+          <ChevronRight className="h-3 w-3 opacity-50" />
           <span className="text-slate-900">{name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Coluna de Texto (7 colunas) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                <Zap className="w-3 h-3 fill-current" />
-                Guia Especializado {new Date().getFullYear()}
-              </div>
-              
-              <h1 className="text-4xl md:text-6xl font-black text-slate-950 tracking-tight leading-[0.95]">
-                {name}
-              </h1>
-              
-              <p className="text-lg md:text-xl text-slate-500 max-w-xl font-medium leading-relaxed">
-                Encontre as melhores empresas verificadas do Brasil. Ranking baseado em <span className="text-slate-900 underline decoration-blue-500 underline-offset-4">confiança e dados reais</span>.
-              </p>
-            </div>
-
-            {/* Estatísticas de Confiança - Organismos Atômicos */}
-            <div className="flex flex-wrap gap-8 py-2">
-              <StatItem value={companiesCount} label="empresas" />
-              <StatItem value={reviewsCount} label="avaliações" />
-              <StatItem value={`${verifiedPct}%`} label="verificadas" />
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Button
-                onClick={onLeadClick}
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black h-14 px-10 text-lg shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] rounded-2xl"
-              >
-                Solicitar Orçamentos
-              </Button>
-              <Button
-                onClick={onMethodologyClick}
-                variant="outline"
-                size="lg"
-                className="border-slate-200 text-slate-700 font-bold h-14 px-8 rounded-2xl hover:bg-slate-50 transition-colors"
-              >
-                <Info className="w-4 h-4 mr-2" />
-                Método do Ranking
-              </Button>
-            </div>
+        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.45)]">
+          <div className="absolute inset-0">
+            {resolvedBannerUrl ? (
+              <OptimizedImage
+                src={resolvedBannerUrl}
+                alt={name}
+                fill
+                priority
+                quality={92}
+                sizes="(max-width: 768px) 100vw, 1280px"
+                className="object-cover object-center"
+                fallbackSrc="/images/default-banner.svg"
+              />
+            ) : (
+              <div className="h-full w-full bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.35),_transparent_30%),linear-gradient(120deg,_#0f172a,_#1e293b_55%,_#111827)]" />
+            )}
           </div>
 
-          {/* Coluna da Imagem (5 colunas) - Enquadrada e nítida */}
-          <div className="lg:col-span-5 relative">
-            {bannerUrl ? (
-              <div className="relative aspect-[4/3] md:aspect-square lg:aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 ring-8 ring-slate-50">
-                <Image
-                  src={bannerUrl}
-                  alt={name}
-                  fill
-                  priority
-                  className="object-cover transition-transform duration-700 hover:scale-105"
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/76 to-slate-950/18" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/18 to-transparent" />
+
+          <div className="relative z-10 flex min-h-[200px] flex-col justify-between p-5 sm:min-h-[220px] sm:p-6 md:min-h-[240px] md:p-8 lg:min-h-[250px]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="max-w-3xl">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/92 backdrop-blur-md">
+                    <Sparkles className="h-3 w-3" />
+                    Guia {new Date().getFullYear()}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-amber-400/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-950">
+                    Categoria estratégica
+                  </span>
+                </div>
+
+                <h1 className="max-w-4xl text-3xl font-black tracking-[-0.04em] text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-[3.25rem]">
+                  {name}
+                </h1>
+
+                <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-slate-200/95 drop-shadow-sm sm:text-[15px] md:text-base">
+                  {heroDescription}
+                </p>
+              </div>
+
+              <div className="hidden rounded-full border border-white/15 bg-white/10 px-4 py-2 text-right text-[11px] font-bold text-white/90 backdrop-blur-md lg:block">
+                Ranking baseado em
+                <span className="block text-white">dados reais e confiança</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex flex-wrap gap-2.5">
+                <StatPill
+                  icon={<Building2 className="h-4 w-4 text-emerald-300" />}
+                  value={companiesCount}
+                  label="empresas"
+                />
+                <StatPill
+                  icon={<MessageSquareText className="h-4 w-4 text-sky-300" />}
+                  value={reviewsCount}
+                  label="avaliações"
+                />
+                <StatPill
+                  icon={<ShieldCheck className="h-4 w-4 text-amber-300" />}
+                  value={`${verifiedPct}%`}
+                  label="verificadas"
                 />
               </div>
-            ) : (
-              <div className="aspect-square rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-12 text-white/20">
-                <Zap className="w-full h-full opacity-10" />
-              </div>
-            )}
 
-            {/* Floating Badge */}
-            <div className="absolute -bottom-6 -right-6 md:-right-10 bg-white p-5 rounded-3xl shadow-2xl border border-slate-100 hidden md:block max-w-[180px]">
-               <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Destaque</p>
-               <p className="text-xs font-bold text-slate-800 leading-tight">Empresas com selo de verificação ativa nesta categoria.</p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  onClick={onLeadClick}
+                  size="lg"
+                  className="h-12 rounded-xl bg-emerald-500 px-7 text-sm font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400"
+                >
+                  Solicitar orçamento
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+
+                <Button
+                  onClick={onMethodologyClick}
+                  variant="outline"
+                  size="lg"
+                  className="h-12 rounded-xl border-white/20 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/18 hover:text-white"
+                >
+                  <Info className="mr-2 h-4 w-4" />
+                  Método do ranking
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Subcategories Navigation - Abaixo do fold do hero */}
         {subcategories.length > 0 && (
-          <div className="mt-12 flex items-center gap-4">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Explorar Nichos:</span>
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+            <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+              Explorar nichos
+            </span>
             <div className="flex flex-wrap gap-2">
               {subcategories.map((sub) => (
                 <Link
                   key={sub.id}
                   href={`/categories/${sub.seo_url || sub.slug}`}
-                  className="bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                 >
                   {sub.name}
                 </Link>
@@ -149,15 +193,26 @@ export default function CategoryHero({
   );
 }
 
-function StatItem({ value, label }: { value: string | number; label: string }) {
+function StatPill({
+  icon,
+  value,
+  label,
+}: {
+  icon: ReactNode;
+  value: string | number;
+  label: string;
+}) {
   return (
-    <div className="flex flex-col">
-      <span className="text-3xl md:text-4xl font-black text-slate-950 tracking-tighter">
-        {value}
-      </span>
-      <span className="text-[10px] md:text-[11px] text-slate-400 font-black uppercase tracking-[0.15em]">
-        {label}
-      </span>
+    <div className="inline-flex items-center gap-3 rounded-2xl border border-white/14 bg-white/10 px-4 py-2.5 text-white backdrop-blur-md">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+        {icon}
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className="text-lg font-black tracking-tight">{value}</span>
+        <span className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/72">
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
