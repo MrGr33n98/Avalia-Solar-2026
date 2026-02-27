@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CategoryHero from '@/components/categories/CategoryHero';
+import { BannerCarousel } from '@/components/categories/BannerCarousel';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar';
 import CompaniesGrid from '@/components/categories/CompaniesGrid';
@@ -182,12 +183,20 @@ export default function CategoryPageClient({
         </>
       ) : (
         <>
+          {/* Banner da Categoria */}
+          {initialBanners && initialBanners.length > 0 && (
+            <div className="container mx-auto px-6 pt-6">
+              <BannerCarousel banners={initialBanners} />
+            </div>
+          )}
+
           {/* Hero - Full width header */}
           <CategoryHero
             name={categoryName}
             companiesCount={companiesCount}
             reviewsCount={reviewsCount}
             verifiedPct={verifiedPct}
+            bannerUrl={initialCategory?.banner_url}
             onLeadClick={() => {
               track('lead_open_internal', {
                 company_id: 0,

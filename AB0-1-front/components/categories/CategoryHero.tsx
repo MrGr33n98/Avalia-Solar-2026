@@ -2,12 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
+import Image from 'next/image';
 
 interface CategoryHeroProps {
   name: string;
   companiesCount: number;
   reviewsCount: number;
   verifiedPct: number;
+  bannerUrl?: string;
   onLeadClick?: () => void;
   onMethodologyClick?: () => void;
 }
@@ -17,12 +19,30 @@ export default function CategoryHero({
   companiesCount,
   reviewsCount,
   verifiedPct,
+  bannerUrl,
   onLeadClick,
   onMethodologyClick,
 }: CategoryHeroProps) {
   return (
-    <section className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200 py-8 md:py-12">
-      <div className="container mx-auto px-4">
+    <section className="relative overflow-hidden border-b border-slate-200 py-8 md:py-16">
+      {bannerUrl ? (
+        <>
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={bannerUrl}
+              alt={name}
+              fill
+              priority
+              className="object-cover opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-blue-50/80" />
+          </div>
+        </>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-slate-50 to-blue-50" />
+      )}
+      
+      <div className="container mx-auto px-6 relative z-10">
         {/* H1 + Subheadline */}
         <div className="mb-6">
           <h1 className="text-3xl md:text-4xl font-black text-slate-950 mb-2">
