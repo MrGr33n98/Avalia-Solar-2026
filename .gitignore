@@ -87,6 +87,21 @@ Thumbs.db
 ############################
 AGENTS.md
 QUICKSTART_MARKETPLACE.md
+ANALISE_CRITICA_CATEGORIES.md
+CATEGORY_PAGE_V2_EXECUTIVE_SUMMARY.md
+CATEGORY_PAGE_V2_IMPLEMENTATION_PLAN.md
+CATEGORY_PAGE_V2_INDEX.md
+CATEGORY_PAGE_V2_MANIFEST.json
+CATEGORY_PAGE_V2_ROADMAP.md
+CATEGORY_PAGE_V2_STORIES.md
+DEV_TEAM_CHECKLIST.md
+IMPLEMENTATION_SUMMARY.md
+README_CATEGORY_PAGE_V2.md
+RESPONSIVIDADE_TABLET_FIX_REPORT.md
+SPRINT_3_SUMMARY.md
+SPRINT_4_SUMMARY.md
+STORY_VALIDATION_CHECKLIST.md
+WCAG_ACCESSIBILITY_REPORT.md
 
 ############################
 # Local test artifacts
@@ -106,6 +121,8 @@ dashboard.png
 homepage.png
 login_modal.png
 register_modal.png
+/AB0-1-front/components/categories/LeadCTA.test.tsx
+/AB0-1-front/e2e/
 
 ############################
 # Optional: backups
