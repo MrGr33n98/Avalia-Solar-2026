@@ -29,10 +29,6 @@ jest.mock('@/components/ui/optimized-image', () => ({
   ),
 }));
 
-jest.mock('@/components/RatingStars', () => ({
-  RatingStars: () => <div data-testid="rating-stars" />,
-}));
-
 jest.mock('@/components/WhatsappButton', () => (props: any) => (
   <button type="button">{props.label || 'WhatsApp'}</button>
 ));
@@ -93,6 +89,7 @@ describe('CompanyHero', () => {
     expect(screen.getByLabelText('Card de perfil da empresa')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
     expect(screen.queryByText('Descricao')).not.toBeInTheDocument();
+    expect(screen.getByText('4.5/5.0')).toBeInTheDocument();
     expect(screen.getByAltText('Empresa Teste')).toHaveClass('rounded-full');
     expect(screen.getByAltText('Empresa Teste')).toHaveClass('object-cover');
   });

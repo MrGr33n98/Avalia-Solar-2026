@@ -2,8 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, MapPin } from 'lucide-react';
-import { RatingStars } from '@/components/RatingStars';
+import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
@@ -58,6 +57,7 @@ export default function CompanyHero({
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const hasLogo = Boolean(logoUrl) && !logoError;
+  const ratingLabel = `${Number(companyStats.rating).toFixed(1)}/5.0`;
 
   const heroBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
@@ -229,15 +229,9 @@ export default function CompanyHero({
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <RatingStars
-                        rating={companyStats.rating}
-                        count={companyStats.reviewCount}
-                        showRatingValue={true}
-                        starClassName="h-3.5 w-3.5"
-                        countClassName="text-[12px] font-semibold text-slate-400"
-                        ratingValueClassName="text-sm font-bold text-slate-900"
-                      />
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                      <span className="text-sm font-bold text-slate-900">{ratingLabel}</span>
                     </div>
 
                     {locationLabel && (
