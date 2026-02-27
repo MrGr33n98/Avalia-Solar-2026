@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import { ArrowRight, ChevronRight, Info, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface Subcategory {
@@ -30,7 +30,6 @@ export default function CategoryHero({
   parentCategory,
   subcategories = [],
   onLeadClick,
-  onMethodologyClick,
 }: CategoryHeroProps) {
   const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : '';
   const heroDescription =
@@ -86,15 +85,18 @@ export default function CategoryHero({
           <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-black/20 to-transparent" />
 
           <div className="relative z-10 flex min-h-[184px] flex-col justify-between p-4 sm:min-h-[205px] sm:p-5 md:min-h-[214px] md:p-5 lg:min-h-[228px] lg:p-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
               <div className="max-w-[34rem]">
                 <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white/92 backdrop-blur-md sm:px-2.5 sm:text-[9px]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-slate-950 sm:px-2.5 sm:text-[9px]">
                     <Sparkles className="h-2.5 w-2.5" />
                     Guia {new Date().getFullYear()}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-slate-950 sm:px-2.5 sm:text-[9px]">
                     Categoria estratégica
+                  </span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black tracking-[0.02em] text-slate-950 sm:px-2.5 sm:text-[9px]">
+                    Ranking baseado em dados reais e confiança
                   </span>
                 </div>
 
@@ -106,11 +108,6 @@ export default function CategoryHero({
                   {heroDescription}
                 </p>
               </div>
-
-              <div className="hidden rounded-full border border-amber-200/80 bg-amber-300/95 px-3.5 py-2 text-right text-[9px] font-black leading-tight text-slate-950 shadow-[0_18px_40px_-24px_rgba(146,64,14,0.95)] lg:block">
-                <span className="block">Ranking baseado em</span>
-                <span className="block text-slate-950">dados reais e confiança</span>
-              </div>
             </div>
 
             <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -121,16 +118,6 @@ export default function CategoryHero({
                 >
                   Solicitar orçamento
                   <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Button>
-
-                <Button
-                  onClick={onMethodologyClick}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-lg border-white/12 bg-white/10 px-3 text-[10px] font-bold text-white/92 backdrop-blur-md transition-all hover:bg-white/15 hover:text-white sm:h-9 sm:px-4"
-                >
-                  <Info className="mr-1.5 h-3.5 w-3.5" />
-                  Método do ranking
                 </Button>
             </div>
           </div>

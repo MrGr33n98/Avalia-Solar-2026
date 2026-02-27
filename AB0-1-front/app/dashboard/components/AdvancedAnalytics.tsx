@@ -61,17 +61,18 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
   const days = Number(timeRange) || 30;
 
   const statsQuery = useQuery({
-    queryKey: ['company-analytics-stats', companyId],
-    queryFn: async () => analyticsApi.getStats(Number(companyId)),
+    queryKey: ['company-analytics-overview', companyId],
+    queryFn: async () => fetchApi<any>('/company_dashboard/analytics/overview', { params: { company_id: companyId } }),
     enabled: Boolean(companyId),
   });
 
   const historicalQuery = useQuery({
-    queryKey: ['company-analytics-historical', companyId, days],
-    queryFn: async () => analyticsApi.getHistoricalData(Number(companyId), days),
+    queryKey: ['company-analytics-timeseries', companyId, days],
+    queryFn: async () => fetchApi<{ data: any[] }>('/company_dashboard/analytics/timeseries', { params: { company_id: companyId, days } }),
     enabled: Boolean(companyId) && Number.isFinite(days),
   });
 
+  // Usar traffic antigo por enquanto ou mock até FASE 2
   const trafficQuery = useQuery({
     queryKey: ['company-analytics-traffic', companyId, days],
     queryFn: async () => analyticsApi.getTrafficSources(Number(companyId), days),
@@ -79,13 +80,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
   });
 
   const historicalData = useMemo(() => {
-    const hist = historicalQuery.data || [];
-    return hist.map((d) => ({
+    const hist = historicalQuery.data?.data || [];
+    return hist.map((d: any) => ({
       date: new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
       views: d.views ?? 0,
       clicks: d.clicks ?? 0,
       leads: d.leads ?? 0,
-      conversion: d.conversion ?? 0,
+      conversion: d.views ? ((d.leads / d.views) * 100) : 0,
     }));
   }, [historicalQuery.data]);
 
@@ -101,10 +102,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
 
   const conversionFunnelData = useMemo(() => {
     const stats = statsQuery.data;
-    const views = stats?.profile_views ?? 0;
-    const engagement = (stats?.cta_clicks ?? 0) + (stats?.whatsapp_clicks ?? 0);
-    const ctas = stats?.cta_clicks ?? 0;
-    const leads = stats?.leads_received ?? 0;
+    const views = stats?.views_30d ?? 0;
+    const engagement = (stats?.cta_clicks_30d ?? 0) + (stats?.whatsapp_clicks_30d ?? 0);
+    const ctas = stats?.cta_clicks_30d ?? 0;
+    const leads = stats?.leads_30d ?? 0;
     return [
       { name: 'Visualizações', value: views, percentage: views ? 100 : 0, color: colorPalette[0] },
       { name: 'Engajamento', value: engagement, percentage: views ? Math.round((engagement / views) * 100) : 0, color: colorPalette[1] },
@@ -401,13 +402,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                     'text-xs font-medium',
                     isDark ? 'text-emerald-400' : 'text-emerald-700'
                   )}>
-                    Taxa de Conversão: 2.3%
+                    Taxa de Conversão: {statsQuery.data?.conversion_rate || 0}%
                   </p>
                   <p className={cn(
                     'text-xs mt-1',
                     isDark ? 'text-emerald-500/70' : 'text-emerald-600'
                   )}>
-                    45% acima da média da categoria (1.6%)
+                    Acompanhe a eficácia do seu perfil
                   </p>
                 </div>
               </div>
@@ -493,13 +494,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                     'text-xs font-medium',
                     isDark ? 'text-blue-400' : 'text-blue-700'
                   )}>
-                    Orgânico crescendo 28%
+                    Evolução das Fontes de Tráfego
                   </p>
                   <p className={cn(
                     'text-xs mt-1',
                     isDark ? 'text-blue-500/70' : 'text-blue-600'
                   )}>
-                    Seu SEO está funcionando muito bem!
+                    Dados analíticos em processo de captura (Beta)
                   </p>
                 </div>
               </div>

@@ -1,18 +1,24 @@
 class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
   def change
+    is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+
     # 0. Data Cleanup: Ensure existing data follows the rules before applying constraints
     # This prevents migration failure on production data
-    execute <<-SQL
-      UPDATE companies 
-      SET cnpj = NULL 
-      WHERE cnpj IS NOT NULL 
-        AND (LENGTH(cnpj) != 14 OR cnpj !~ '^[0-9]+$');
-      
-      UPDATE companies 
-      SET email = NULL 
-      WHERE email IS NOT NULL 
-        AND email !~ '^[^@]+@[^@]+\\.[^@]+$';
+    if is_pg
+      execute <<-SQL
+        UPDATE companies 
+        SET cnpj = NULL 
+        WHERE cnpj IS NOT NULL 
+          AND (LENGTH(cnpj) != 14 OR cnpj !~ '^[0-9]+$');
+        
+        UPDATE companies 
+        SET email = NULL 
+        WHERE email IS NOT NULL 
+          AND email !~ '^[^@]+@[^@]+\\.[^@]+$';
+      SQL
+    end
 
+    execute <<-SQL
       -- Cleanup orphan analytics events to allow NOT NULL constraint
       DELETE FROM analytics_events WHERE company_id IS NULL;
 
@@ -27,15 +33,17 @@ class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
       UPDATE banner_subscriptions SET ends_at = created_at WHERE ends_at < created_at;
     SQL
 
-    # 1. Companies: Valid CNPJ format
-    add_check_constraint :companies,
-      "cnpj IS NULL OR (LENGTH(cnpj) = 14 AND cnpj ~ '^[0-9]+$')",
-      name: "ck_companies_valid_cnpj"
+    if is_pg
+      # 1. Companies: Valid CNPJ format
+      add_check_constraint :companies,
+        "cnpj IS NULL OR (LENGTH(cnpj) = 14 AND cnpj ~ '^[0-9]+$')",
+        name: "ck_companies_valid_cnpj"
 
-    # 2. Companies: Valid email
-    add_check_constraint :companies,
-      "email IS NULL OR email ~ '^[^@]+@[^@]+\\.[^@]+$'",
-      name: "ck_companies_valid_email"
+      # 2. Companies: Valid email
+      add_check_constraint :companies,
+        "email IS NULL OR email ~ '^[^@]+@[^@]+\\.[^@]+$'",
+        name: "ck_companies_valid_email"
+    end
 
     # 3. Analytics: company_id required
     change_column_null :analytics_events, :company_id, false
@@ -56,8 +64,11 @@ class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
       name: "ck_plans_valid_price"
 
     # 7. Banner subscriptions: created_at <= ends_at
-    add_check_constraint :banner_subscriptions,
-      "created_at <= ends_at",
-      name: "ck_banner_subs_valid_dates"
+    # SQLite logic might differ, but simple date comparisons usually work in check constraints for SQLite > 3.24
+    if is_pg
+      add_check_constraint :banner_subscriptions,
+        "created_at <= ends_at",
+        name: "ck_banner_subs_valid_dates"
+    end
   end
 end

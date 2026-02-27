@@ -94,6 +94,7 @@ Rails.application.routes.draw do
       end
 
       post 'analytics/track', to: 'analytics#track'
+      post 'events/track', to: 'analytics#events_track'
       get 'analytics/conversions', to: 'analytics#conversions'
 
       resources :banner_offers, only: [:index]
@@ -104,6 +105,13 @@ Rails.application.routes.draw do
       get 'dashboard/export', to: 'dashboard_exports#export'
 
       scope :company_dashboard do
+        # New derived-only analytics endpoints
+        get 'analytics/overview', to: 'company_dashboard#analytics_overview'
+        get 'analytics/timeseries', to: 'company_dashboard#analytics_timeseries'
+        get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
+        get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
+        get 'assets', to: 'company_dashboard#assets'
+
         get 'stats', to: 'company_dashboard#stats'
         get 'banner_subscriptions', to: 'company_dashboard#banner_subscriptions'
         post 'banner_checkout', to: 'company_dashboard#banner_checkout'

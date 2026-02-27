@@ -1,8 +1,48 @@
 # frozen_string_literal: true
 
 class Api::V1::AnalyticsController < Api::V1::BaseController
-  before_action :authenticate_api_user, except: %i[track conversions]
+  before_action :authenticate_api_user, except: %i[track conversions events_track]
   ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital].freeze
+
+  # POST /api/v1/events/track
+  def events_track
+    if request.raw_post.to_s.strip.blank?
+      return head :no_content
+    end
+
+    event_type = params[:event_name] || params[:event_type]
+    company_id = params[:company_id]
+    metadata = normalize_hash_param(params[:properties]) || normalize_hash_param(params[:metadata]) || {}
+    
+    return render json: { error: 'event_type is required' }, status: :bad_request if event_type.blank?
+
+    # Handle session_id persistence
+    session_id = cookies.signed[:as_sid] || SecureRandom.uuid
+    cookies.signed[:as_sid] = {
+      value: session_id,
+      expires: 1.year.from_now,
+      httponly: true,
+      same_site: :lax
+    }
+
+    metadata['session_id'] ||= session_id
+
+    result = Analytics::TrackEventService.call(
+      company_id: company_id,
+      event_type: event_type,
+      metadata: metadata.merge(request_metadata),
+      user: current_user
+    )
+
+    if result.ok
+      render json: { status: 'success' }
+    else
+      render json: { status: 'error', message: result.error }, status: :unprocessable_entity
+    end
+  rescue StandardError => e
+    Rails.logger.error("[EventsTrack] error: #{e.class}: #{e.message}")
+    render json: { status: 'error', message: 'Internal Server Error' }, status: :internal_server_error
+  end
 
   # POST /api/v1/analytics/track
   # Body: { company_id, event_type, metadata }

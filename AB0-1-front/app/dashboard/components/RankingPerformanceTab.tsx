@@ -1,43 +1,43 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Trophy, TrendingUp, Users, MousePointerClick, Zap } from 'lucide-react';
-import { Company } from '@/lib/api';
+import { Company, fetchApi } from '@/lib/api';
 import MagicQuadrant from './MagicQuadrant';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, BarChart, Bar } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
   company: Company;
   stats?: any;
 }
 
-const mockHistoricalData = [
-  { week: 'Semana 1', position: 5, leads: 4, clicks: 120 },
-  { week: 'Semana 2', position: 4, leads: 5, clicks: 150 },
-  { week: 'Semana 3', position: 4, leads: 6, clicks: 180 },
-  { week: 'Semana 4', position: 2, leads: 12, clicks: 350 },
-  { week: 'Atual', position: 1, leads: 18, clicks: 520 },
-];
-
 export default function RankingPerformanceTab({ company, stats }: Props) {
-  // Mock data for the Magic Quadrant
-  const myData = {
-    id: company.id,
-    name: company.name,
-    completenessOfVision: Math.min(100, ((company.rating_count || 10) * 2) + ((company.rating_avg || 4.5) * 10)), // 0-100 scale
-    abilityToExecute: 85, // Mocked execution score (response rate, etc)
-    isCurrentCompany: true,
-  };
+  const rankingQuery = useQuery({
+    queryKey: ['company-analytics-ranking', company.id],
+    queryFn: async () => {
+      return fetchApi<any>('/company_dashboard/analytics/ranking', { params: { company_id: company.id } });
+    },
+    enabled: Boolean(company.id),
+  });
 
-  const competitors = [
-    { id: 991, name: 'Competidor A', completenessOfVision: 60, abilityToExecute: 70, isCurrentCompany: false },
-    { id: 992, name: 'Competidor B', completenessOfVision: 80, abilityToExecute: 50, isCurrentCompany: false },
-    { id: 993, name: 'Competidor C', completenessOfVision: 40, abilityToExecute: 40, isCurrentCompany: false },
-    { id: 994, name: 'Competidor D', completenessOfVision: 90, abilityToExecute: 90, isCurrentCompany: false },
+  const { data, isLoading } = rankingQuery;
+
+  const quadrantData = useMemo(() => {
+    if (!data?.magic_quadrant_points) return [];
+    return data.magic_quadrant_points;
+  }, [data]);
+
+  // Fallback para histórico se não tivermos o timeseries integrado aqui ainda
+  const mockHistoricalData = [
+    { week: 'Semana 1', position: 5, leads: 4, clicks: 120 },
+    { week: 'Semana 2', position: 4, leads: 5, clicks: 150 },
+    { week: 'Semana 3', position: 4, leads: 6, clicks: 180 },
+    { week: 'Semana 4', position: 2, leads: 12, clicks: 350 },
+    { week: 'Atual', position: data?.rank_position || 1, leads: stats?.leads_received || 0, clicks: stats?.cta_clicks || 0 },
   ];
-
-  const quadrantData = [myData, ...competitors];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -51,6 +51,10 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
     }
     return null;
   };
+
+  if (isLoading) {
+    return <div className="space-y-6"><Skeleton className="h-[400px] w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -67,10 +71,9 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Posição Atual</p>
+                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Score Ranking</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-black text-amber-900">1º</h3>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-200/50 px-2 py-0.5 rounded-full">Ouro</span>
+                  <h3 className="text-3xl font-black text-amber-900">{data?.ranking_score ? data.ranking_score.toFixed(1) : 'N/A'}</h3>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
@@ -84,10 +87,9 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Leads Prioritários</p>
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Leads (Visão Geral)</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-black text-blue-900">18</h3>
-                  <span className="text-xs font-bold text-emerald-600 flex items-center"><TrendingUp className="w-3 h-3 mr-1"/> +50%</span>
+                  <h3 className="text-3xl font-black text-blue-900">{stats?.leads_received || 0}</h3>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700">
@@ -101,10 +103,11 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Taxa de Resposta</p>
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Reputação (Trust)</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-black text-emerald-900">92%</h3>
-                  <span className="text-xs font-bold text-emerald-600">Ótimo</span>
+                  <h3 className="text-3xl font-black text-emerald-900">
+                    {quadrantData.find((q: any) => q.isCurrentCompany)?.completenessOfVision?.toFixed(1) || '0'}
+                  </h3>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700">
@@ -118,10 +121,9 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">Cliques no Selo</p>
+                <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">Visualizações de Perfil</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-black text-indigo-900">520</h3>
-                  <span className="text-xs font-bold text-indigo-600 flex items-center"><TrendingUp className="w-3 h-3 mr-1"/> +12%</span>
+                  <h3 className="text-3xl font-black text-indigo-900">{stats?.profile_views || 0}</h3>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700">
@@ -136,8 +138,8 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         {/* Gráfico de Evolução */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Evolução do Ranking e Leads</CardTitle>
-            <CardDescription>Acompanhe a correlação entre sua posição e o volume de leads recebidos nas últimas semanas.</CardDescription>
+            <CardTitle className="text-lg">Evolução de Leads e CTAs</CardTitle>
+            <CardDescription>Acompanhe a geração de oportunidades nas últimas semanas.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -163,7 +165,13 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
             <CardDescription>Sua posição relativa à concorrência na categoria principal.</CardDescription>
           </CardHeader>
           <CardContent>
-            <MagicQuadrant data={quadrantData} />
+            {quadrantData.length > 0 ? (
+              <MagicQuadrant data={quadrantData} />
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-slate-500 bg-slate-50 rounded-lg">
+                Sem dados suficientes de concorrentes para gerar o quadrante ainda.
+              </div>
+            )}
             <div className="mt-4 text-xs text-slate-500 text-center bg-slate-50 p-3 rounded-lg">
               <span className="font-bold text-slate-700">Dica:</span> Aumente seu número de avaliações 5 estrelas para mover-se mais à direita (Líderes). Responda aos leads rapidamente para subir (Execução).
             </div>

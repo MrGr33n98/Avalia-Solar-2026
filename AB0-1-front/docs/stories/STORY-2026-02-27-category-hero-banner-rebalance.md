@@ -10,7 +10,7 @@ Combinar o melhor dos dois layouts: manter a clareza do hero novo, mas com banne
 - [x] O hero de categoria usa um banner panorâmico com proporção mais horizontal.
 - [x] A imagem da categoria ganha mais presença visual sem deixar o topo excessivamente alto.
 - [x] O conteúdo do hero usa a descrição real da categoria quando disponível.
-- [x] O selo de ranking no canto direito mantém contraste alto e o mesmo destaque amarelo do hero.
+- [x] O selo de ranking fica integrado à fileira de badges do topo, com o mesmo destaque amarelo dos demais selos.
 - [x] As validações relevantes foram executadas e qualquer bloqueio remanescente foi documentado.
 
 ## Checklist de Implementação
@@ -20,7 +20,7 @@ Combinar o melhor dos dois layouts: manter a clareza do hero novo, mas com banne
 - [x] Compactar o espaçamento vertical entre hero, chips e conteúdo principal.
 - [x] Alinhar a faixa de filtros rápidos com o mesmo grid do hero.
 - [x] Remover os stats do hero enquanto os dados da categoria ainda não sustentam esse bloco.
-- [x] Ajustar o selo de ranking para o mesmo destaque amarelo e melhorar a legibilidade no banner.
+- [x] Ajustar os badges do topo para o mesmo destaque amarelo, mover o ranking para a mesma fileira e remover o CTA de metodologia.
 - [x] Rodar lint do frontend.
 - [x] Rodar validação adicional disponível para o frontend ou documentar bloqueio.
 

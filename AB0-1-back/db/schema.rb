@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -82,7 +82,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
   end
 
   create_table "analytics_events", force: :cascade do |t|
-    t.integer "company_id"
+    t.integer "company_id", null: false
     t.integer "user_id"
     t.string "event_type", null: false
     t.json "metadata", default: {}, null: false
@@ -90,6 +90,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "event_id"
+    t.index ["company_id", "created_at"], name: "idx_analytics_company_time", order: { created_at: :desc }
     t.index ["company_id", "event_type", "tracked_at"], name: "index_analytics_events_company_event_time"
     t.index ["company_id", "tracked_at"], name: "index_analytics_events_on_company_id_and_tracked_at"
     t.index ["event_id"], name: "index_analytics_events_on_event_id", unique: true
@@ -416,18 +417,27 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
     t.integer "priority_score", default: 0, null: false
     t.boolean "sponsored", default: false, null: false
     t.json "niche_tags", default: []
+    t.integer "financing_partners_count", default: 0
+    t.integer "company_members_count", default: 0
+    t.integer "leads_count", default: 0
     t.index ["api_key"], name: "index_companies_on_api_key"
+    t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "cnpj IS NOT NULL /*application:RailsBlogDemo*/"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["effect"], name: "index_companies_on_effect"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
+    t.index ["financing_partners_count"], name: "index_companies_on_financing_partners_count"
+    t.index ["leads_count"], name: "index_companies_on_leads_count"
     t.index ["niche_tags"], name: "index_companies_on_niche_tags"
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["priority_score"], name: "index_companies_on_priority_score"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
+    t.index ["reviews_count"], name: "index_companies_on_reviews_count"
+    t.index ["sector_rating_avg"], name: "index_companies_on_sector_rating_avg", where: "sector_rating_avg IS NOT NULL /*application:RailsBlogDemo*/"
     t.index ["slug"], name: "index_companies_on_slug", unique: true
     t.index ["social_proof_enabled"], name: "index_companies_on_social_proof_enabled"
     t.index ["sponsored"], name: "index_companies_on_sponsored"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
+    t.index ["status", "active_admin"], name: "index_companies_on_status_and_active_admin"
     t.index ["verified"], name: "index_companies_on_verified_true", where: "verified = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
   end
@@ -770,11 +780,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
     t.string "landing_path"
     t.string "referrer_host"
     t.json "attribution_json", default: {}
+    t.index ["company_id", "created_at"], name: "index_leads_on_company_id_and_created_at", order: { created_at: :desc }
     t.index ["company_id", "utm_campaign"], name: "index_leads_on_company_id_and_utm_campaign"
+    t.index ["company_id", "wizard_status", "created_at"], name: "index_leads_on_company_id_and_wizard_status_and_created_at"
     t.index ["company_id"], name: "index_leads_on_company_id"
     t.index ["created_at"], name: "index_leads_on_created_at"
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
+    t.check_constraint "wizard_status IN ('draft', 'pending_otp', 'verified', 'distributed', 'proposal_submitted', 'proposal_processing', 'proposal_sent', 'proposal_failed')", name: "ck_leads_valid_status"
   end
 
   create_table "noticed_events", force: :cascade do |t|
@@ -834,6 +847,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "features_json", default: "{}"
+    t.check_constraint "price >= 0", name: "ck_plans_valid_price"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -946,10 +960,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_26_225502) do
     t.integer "display_order", default: 0, null: false
     t.integer "lock_version", default: 0, null: false
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
+    t.index ["company_id", "rating"], name: "index_reviews_on_company_id_and_rating", order: { rating: :desc }
     t.index ["company_id", "status", "featured", "display_order"], name: "idx_reviews_social_proof"
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
     t.index ["user_id"], name: "index_reviews_on_user_id"
+    t.check_constraint "rating >= 1 AND rating <= 5", name: "ck_reviews_valid_rating"
   end
 
   create_table "sector_ratings", force: :cascade do |t|

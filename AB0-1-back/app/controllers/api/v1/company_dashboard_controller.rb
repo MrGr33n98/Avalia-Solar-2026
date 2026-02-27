@@ -5,6 +5,125 @@ module Api
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
 
+      # GET /api/v1/company_dashboard/analytics/overview
+      def analytics_overview
+        return render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+
+        sql = <<~SQL
+          SELECT 
+            COALESCE(SUM(profile_views), 0) as views_30d,
+            COALESCE(SUM(cta_clicks), 0) as cta_clicks_30d,
+            COALESCE(SUM(whatsapp_clicks), 0) as whatsapp_clicks_30d,
+            COALESCE(SUM(leads), 0) as leads_30d
+          FROM company_daily_stats
+          WHERE company_id = $1 AND day >= CURRENT_DATE - 30
+        SQL
+        
+        stats = ActiveRecord::Base.connection.exec_query(sql, 'Overview', [[nil, @company.id]]).first || {}
+        views = stats['views_30d'].to_i
+        leads = stats['leads_30d'].to_i
+        conversion = views > 0 ? ((leads.to_f / views) * 100).round(2) : 0
+
+        render json: {
+          views_30d: views,
+          cta_clicks_30d: stats['cta_clicks_30d'].to_i,
+          whatsapp_clicks_30d: stats['whatsapp_clicks_30d'].to_i,
+          leads_30d: leads,
+          conversion_rate: conversion
+        }
+      end
+
+      # GET /api/v1/company_dashboard/analytics/timeseries
+      def analytics_timeseries
+        days = [(params[:days] || 90).to_i, 365].min
+        return render json: { data: [] } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+
+        sql = <<~SQL
+          SELECT day as date, profile_views as views, cta_clicks as clicks, whatsapp_clicks as whatsapp, leads
+          FROM company_daily_stats
+          WHERE company_id = $1 AND day >= CURRENT_DATE - $2::int
+          ORDER BY day ASC
+        SQL
+        
+        series = ActiveRecord::Base.connection.exec_query(sql, 'Timeseries', [[nil, @company.id], [nil, days]])
+        
+        render json: { data: series.to_a }
+      end
+
+      # GET /api/v1/company_dashboard/analytics/reputation
+      def analytics_reputation
+        return render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+
+        sql_trust = "SELECT score, components FROM company_trust_score WHERE company_id = $1"
+        trust = ActiveRecord::Base.connection.exec_query(sql_trust, 'Trust', [[nil, @company.id]]).first || {}
+
+        sql_reviews = "SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM reviews WHERE company_id = $1 AND status = 'approved'"
+        reviews = ActiveRecord::Base.connection.exec_query(sql_reviews, 'Reviews', [[nil, @company.id]]).first || {}
+
+        render json: {
+          total_reviews: reviews['total'].to_i,
+          avg_rating: reviews['avg_rating'].to_f.round(2),
+          trust_score: trust['score'].to_f.round(2),
+          trust_components: trust['components'] ? JSON.parse(trust['components']) : {}
+        }
+      end
+
+      # GET /api/v1/company_dashboard/analytics/ranking
+      def analytics_ranking
+        return render json: { rank_position: nil, score: 0, magic_quadrant_points: [] } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+
+        sql_rank = "SELECT score, breakdown FROM company_ranking_score WHERE company_id = $1"
+        rank = ActiveRecord::Base.connection.exec_query(sql_rank, 'Rank', [[nil, @company.id]]).first || {}
+
+        # Magic Quadrant base data (Top 20 in any of the company's categories)
+        # Assuming we just need competitors based on the first category for MVP
+        category_id = @company.categories.first&.id
+        quadrant_data = []
+        
+        if category_id
+          sql_quadrant = <<~SQL
+            SELECT c.id, c.name, ts.score AS trust_score, COALESCE(rs.total_leads, 0) AS leads_30d
+            FROM companies c
+            JOIN categories_companies cc ON cc.company_id = c.id
+            LEFT JOIN company_trust_score ts ON ts.company_id = c.id
+            LEFT JOIN company_feature_rolling_30d rs ON rs.company_id = c.id
+            WHERE cc.category_id = $1
+            ORDER BY ts.score DESC NULLS LAST
+            LIMIT 20
+          SQL
+          
+          competitors = ActiveRecord::Base.connection.exec_query(sql_quadrant, 'Quadrant', [[nil, category_id]])
+          
+          quadrant_data = competitors.map do |c|
+            {
+              id: c['id'],
+              name: c['id'] == @company.id ? c['name'] : "Competidor #{c['id']}", # Anonymize others
+              completenessOfVision: c['trust_score'].to_f,
+              abilityToExecute: c['leads_30d'].to_i,
+              isCurrentCompany: c['id'] == @company.id
+            }
+          end
+        end
+
+        render json: {
+          rank_position: nil, # Hard to calculate absolute position efficiently without dense ranking materialized view
+          ranking_score: rank['score'].to_f,
+          magic_quadrant_points: quadrant_data
+        }
+      end
+
+      # GET /api/v1/company_dashboard/assets
+      def assets
+        render json: {
+          public_profile_url: "https://avaliasolar.com.br/empresas/#{@company.slug}",
+          logo_url: @company.logo&.url,
+          banner_url: @company.banner&.url,
+          badge_url: "https://avaliasolar.com.br/api/v1/badges/#{@company.slug}.svg",
+          badge_embed_code: "<a href=\"https://avaliasolar.com.br/empresas/#{@company.slug}?utm_source=badge&utm_medium=referral&utm_campaign=trust_badge\"><img src=\"https://avaliasolar.com.br/api/v1/badges/#{@company.slug}.svg\" alt=\"Selo AvaliaSolar\" /></a>",
+          utm_ready_link: "https://avaliasolar.com.br/empresas/#{@company.slug}?utm_source=badge&utm_medium=referral&utm_campaign=trust_badge"
+        }
+      end
+
       # GET /api/v1/company_dashboard/stats
       def stats
         stats_service = CompanyDashboard::StatsService.new(@company)

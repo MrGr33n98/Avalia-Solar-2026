@@ -9,11 +9,16 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
+  Copy,
+  Link,
+  ShieldCheck,
+  Check
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { fetchApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 import MetricCard from './MetricCard';
@@ -22,25 +27,12 @@ import OnboardingIncentive from '@/components/ui/OnboardingIncentive';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
 import RankingTable, { type RankingRow } from '@/components/ui/RankingTable';
 import dynamic from 'next/dynamic';
+import { useToast } from '@/hooks/use-toast';
 
 const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 rounded-lg" />,
   ssr: false
 });
-
-type DashboardStats = {
-  profileViews: number;
-  ctaClicks: number;
-  whatsappClicks: number;
-  leadsReceived: number;
-  reviewsCount: number;
-  averageRating: number;
-  pendingApprovals: number;
-  activeCampaigns: number;
-  conversionRate: number;
-  averageResponseTime?: number; // em horas
-  profileCompletion?: number;   // em percentual
-};
 
 type OverviewTabProps = {
   companyId: string;
@@ -49,88 +41,68 @@ type OverviewTabProps = {
   onNavigateToReviews?: () => void;
 };
 
-type RealtimeSubscription =
-  | (() => void)
-  | {
-      unsubscribe?: () => void;
-    }
-  | null
-  | undefined;
-
-const cleanupRealtimeSubscription = (subscription: RealtimeSubscription) => {
-  if (!subscription) return;
-  if (typeof subscription === 'function') {
-    subscription();
-    return;
-  }
-  if (typeof subscription.unsubscribe === 'function') {
-    subscription.unsubscribe();
-  }
-};
-
-const mapStats = (raw: any, company?: any): DashboardStats => {
-  const s = raw?.stats || raw || {};
-  
-  // Cálculo de Completude do Perfil (Exemplo de lógica determinística)
-  const profileFields = [
-    company?.name,
-    company?.description,
-    company?.logo_url,
-    company?.city,
-    company?.state,
-    company?.website_url,
-    company?.phone
-  ];
-  const filledFields = profileFields.filter(Boolean).length;
-  const profileCompletion = Math.round((filledFields / profileFields.length) * 100);
-
-  // Cálculo de Conversão de Avaliações
-  const conversionRate = s.profile_views > 0 
-    ? ((s.reviews_count || 0) / s.profile_views) * 100 
-    : 0;
-
-  return {
-    profileViews: s.profile_views ?? 0,
-    ctaClicks: s.cta_clicks ?? 0,
-    whatsappClicks: s.whatsapp_clicks ?? 0,
-    leadsReceived: s.leads_received ?? 0,
-    reviewsCount: s.reviews_count ?? 0,
-    averageRating: s.average_rating ?? 0,
-    pendingApprovals: s.pending_approvals ?? 0,
-    activeCampaigns: s.active_campaigns ?? 0,
-    conversionRate: s.conversion_rate || conversionRate,
-    averageResponseTime: s.average_response_time || 0,
-    profileCompletion: s.profile_completion || profileCompletion,
-  };
-};
-
 export default function OverviewTab({ companyId, company, themeMode = 'light', onNavigateToReviews }: OverviewTabProps) {
   const queryClient = useQueryClient();
   const [reviewLink, setReviewLink] = useState<string>('');
+  const { toast } = useToast();
 
   useEffect(() => {
     setReviewLink(`${window.location.origin}/companies/${companyId}/review`);
   }, [companyId]);
 
   const statsQuery = useQuery({
-    queryKey: ['company-dashboard-stats', companyId],
+    queryKey: ['company-analytics-overview', companyId],
     queryFn: async () => {
-      const data = await fetchApi<{ stats: any }>('/company_dashboard/stats', { params: { company_id: companyId } });
-      return mapStats(data, company);
+      const data = await fetchApi<any>('/company_dashboard/analytics/overview', { params: { company_id: companyId } });
+      
+      const profileFields = [
+        company?.name,
+        company?.description,
+        company?.logo?.url || company?.logo_url,
+        company?.banner?.url || company?.banner_url,
+        company?.city,
+        company?.state,
+        company?.website_url || company?.website,
+        company?.phone || company?.whatsapp,
+      ];
+      const filledFields = profileFields.filter(Boolean).length;
+      const profileCompletion = Math.round((filledFields / profileFields.length) * 100);
+
+      return {
+        profileViews: data.views_30d ?? 0,
+        ctaClicks: data.cta_clicks_30d ?? 0,
+        whatsappClicks: data.whatsapp_clicks_30d ?? 0,
+        leadsReceived: data.leads_30d ?? 0,
+        conversionRate: data.conversion_rate ?? 0,
+        reviewsCount: company?.reviews_count ?? 0,
+        averageRating: company?.rating_avg ?? 0,
+        pendingApprovals: 0,
+        averageResponseTime: 0,
+        profileCompletion,
+      };
     },
+    enabled: Boolean(companyId),
+  });
+
+  const assetsQuery = useQuery({
+    queryKey: ['company-analytics-assets', companyId],
+    queryFn: async () => fetchApi<any>('/company_dashboard/assets', { params: { company_id: companyId } }),
     enabled: Boolean(companyId),
   });
 
   useEffect(() => {
     if (!companyId) return;
     const subscription = subscribeCompanyDashboard(companyId, () => {
-      queryClient.invalidateQueries({ queryKey: ['company-dashboard-stats', companyId] });
+      queryClient.invalidateQueries({ queryKey: ['company-analytics-overview', companyId] });
     });
-    return () => cleanupRealtimeSubscription(subscription);
+    return () => {
+      if (!subscription) return;
+      if (typeof subscription === 'function') subscription();
+      else if (typeof subscription.unsubscribe === 'function') subscription.unsubscribe();
+    };
   }, [companyId, queryClient]);
 
   const stats = statsQuery.data;
-
   const companyName = (company?.name as string) || 'sua empresa';
 
   const rankingRows: RankingRow[] = useMemo(() => {
@@ -147,17 +119,72 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
     ];
   }, [company, companyId, stats?.averageRating, stats?.reviewsCount]);
 
+  const copyToClipboard = async (text: string, description: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Copiado!', description: `${description} copiado para a área de transferência.` });
+    } catch (err) {
+      toast({ title: 'Erro', description: 'Falha ao copiar.', variant: 'destructive' });
+    }
+  };
+
+  const hasNoData = stats && stats.profileViews === 0 && stats.leadsReceived === 0;
+  
+  const checklist = [
+    { label: 'Completar Perfil', done: (stats?.profileCompletion || 0) >= 80, impact: '+ ranking local' },
+    { label: 'Configurar CTAs', done: Boolean(company?.website || company?.whatsapp), impact: '+ conversão' },
+    { label: 'Obter 5 Avaliações', done: (stats?.reviewsCount || 0) >= 5, impact: '+ confiança' },
+    { label: 'Instalar Selo de Confiança', done: false, impact: '+ cliques orgânicos' }
+  ];
+
   return (
     <div className="space-y-5">
-      {statsQuery.isLoading ? (
-        <Skeleton className="h-16 w-full rounded-xl" />
-      ) : stats && stats.reviewsCount < 5 ? (
-        <OnboardingIncentive reviewLink={reviewLink} onStart={onNavigateToReviews} />
-      ) : null}
+      {hasNoData && (
+        <Card className="border-blue-200 bg-blue-50/50 shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-blue-900 text-lg flex items-center gap-2">
+              <Zap className="w-5 h-5 text-blue-600" />
+              Sua jornada começa aqui!
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              Parece que seu perfil ainda não recebeu interações suficientes. Siga o checklist abaixo para ativar seu dashboard e começar a capturar leads.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                {checklist.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-100 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${item.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                        <Check className="w-4 h-4" />
+                      </div>
+                      <span className={`font-medium ${item.done ? 'text-slate-900 line-through opacity-70' : 'text-slate-900'}`}>{item.label}</span>
+                    </div>
+                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{item.impact}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col justify-center space-y-4 p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+                <h4 className="font-semibold text-slate-800">1. Compartilhe seu Link Público (Rastreado)</h4>
+                <div className="flex items-center gap-2">
+                  <input type="text" readOnly value={assetsQuery.data?.utm_ready_link || ''} className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" />
+                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}><Copy className="w-4 h-4" /></Button>
+                </div>
+                <h4 className="font-semibold text-slate-800 mt-2">2. Instale o Selo no seu Site</h4>
+                <div className="flex items-center gap-2">
+                  <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" />
+                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}><Copy className="w-4 h-4" /></Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {statsQuery.isLoading ? (
         <Skeleton className="h-[150px] w-full rounded-xl" />
-      ) : stats ? (
+      ) : stats && !hasNoData ? (
         <OpportunitiesCard
           leftLabel="Para a categoria"
           leftValue={stats.pendingApprovals}

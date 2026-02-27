@@ -2,31 +2,26 @@ class AddCriticalIndexes < ActiveRecord::Migration[7.0]
   disable_ddl_transaction!
 
   def change
-    # Skip duplicate cleanup - data quality issues should be handled separately
-    # This migration ONLY creates indexes for performance
+    is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
 
-    # Busca por CNPJ (autenticação SolarData/integração)
-    add_index :companies, :cnpj, unique: true, where: "cnpj IS NOT NULL", algorithm: :concurrently, if_not_exists: true
+    # Busca por CNPJ
+    add_index_safe :companies, :cnpj, unique: true, where: "cnpj IS NOT NULL", is_pg: is_pg
+    # Busca por API key
+    add_index_safe :companies, :api_key, unique: true, where: "api_key IS NOT NULL", is_pg: is_pg
+    # Dashboard stats
+    add_index_safe :leads, [:company_id, :created_at], order: { created_at: :desc }, is_pg: is_pg
+    add_index_safe :reviews, [:company_id, :rating], order: { rating: :desc }, is_pg: is_pg
+    # Analytics
+    add_index_safe :analytics_events, [:company_id, :created_at], order: { created_at: :desc }, name: :idx_analytics_company_time, is_pg: is_pg
+    # Member validation
+    add_index_safe :company_members, [:company_id, :user_id], unique: true, is_pg: is_pg
+  end
 
-    # Busca por API key (endpoints autenticados)
-    add_index :companies, :api_key, unique: true, where: "api_key IS NOT NULL", algorithm: :concurrently, if_not_exists: true
+  private
 
-    # Dashboard stats (leads count/avg rating)
-    add_index :leads, [:company_id, :created_at], order: { created_at: :desc }, algorithm: :concurrently, if_not_exists: true
-    add_index :reviews, [:company_id, :rating], order: { rating: :desc }, algorithm: :concurrently, if_not_exists: true
-
-    # Analytics (telemetria do dashboard)
-    add_index :analytics_events, 
-      [:company_id, :created_at], 
-      order: { created_at: :desc },
-      name: :idx_analytics_company_time,
-      algorithm: :concurrently,
-      if_not_exists: true
-
-    # Member validation (prevents N+1)
-    add_index :company_members, [:company_id, :user_id], unique: true, algorithm: :concurrently, if_not_exists: true
-
-    # External cache dedup (Note: Currently disabled as columns don't exist in current schema)
-    # add_index :external_tariffs_caches, [:company_id, :cache_key], unique: true, algorithm: :concurrently, if_not_exists: true
+  def add_index_safe(table_name, column_name, is_pg:, **options)
+    options[:if_not_exists] = true
+    options[:algorithm] = :concurrently if is_pg
+    add_index table_name, column_name, **options
   end
 end
