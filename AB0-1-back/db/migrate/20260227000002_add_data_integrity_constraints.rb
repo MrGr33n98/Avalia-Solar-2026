@@ -18,9 +18,9 @@ class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
       "rating >= 1 AND rating <= 5",
       name: "ck_reviews_valid_rating"
 
-    # 5. Leads: Valid status
+    # 5. Leads: Valid status (using wizard_status as the status column)
     add_check_constraint :leads,
-      "status IN ('new', 'contacted', 'qualified', 'closed', 'lost')",
+      "wizard_status IN ('draft', 'pending_otp', 'verified', 'distributed', 'proposal_submitted', 'proposal_processing', 'proposal_sent', 'proposal_failed')",
       name: "ck_leads_valid_status"
 
     # 6. Plans: Valid pricing
