@@ -204,7 +204,7 @@ export default function CategoryPageClient({
         <>
           {/* Banner da Categoria */}
           {initialBanners && initialBanners.length > 0 && (
-            <div className="container mx-auto px-6 pt-6">
+            <div className="container mx-auto px-6 pt-4 md:pt-5">
               <BannerCarousel banners={initialBanners} />
             </div>
           )}
@@ -244,8 +244,8 @@ export default function CategoryPageClient({
           </div>
 
           {/* Main Layout Container */}
-          <div className="max-w-[1280px] mx-auto px-6 py-10">
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="max-w-[1280px] mx-auto px-6 py-6 md:py-7">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
               
               {/* Sidebar - Fixed width 280px */}
               <CategoryFilterSidebar
@@ -256,7 +256,7 @@ export default function CategoryPageClient({
               />
 
               {/* Content Column - Fluid */}
-              <main className="flex-1 w-full space-y-10">
+              <main className="flex-1 w-full space-y-7 md:space-y-8">
                 
                 {/* 🏆 Top Ranking Section - Inside the column */}
                 {!hasActiveFilters && filteredCompanies.length > 0 && (

@@ -15,11 +15,14 @@ Combinar o melhor dos dois layouts: manter a clareza do hero novo, mas com banne
 ## Checklist de Implementação
 - [x] Refatorar `components/categories/CategoryHero.tsx`.
 - [x] Passar descrição real da categoria a partir da página cliente.
+- [x] Reduzir a escala visual dos elementos internos do hero sem perder legibilidade.
+- [x] Compactar o espaçamento vertical entre hero, chips e conteúdo principal.
 - [x] Rodar lint do frontend.
 - [x] Rodar validação adicional disponível para o frontend ou documentar bloqueio.
 
 ## File List
 - [x] `components/categories/CategoryHero.tsx`
+- [x] `components/categories/DecisionChips.tsx`
 - [x] `app/categories/[slug]/CategoryPageClientV2.tsx`
 - [x] `app/categories/[slug]/__tests__/category-client-banners.test.tsx`
 - [x] `docs/stories/STORY-2026-02-27-category-hero-banner-rebalance.md`

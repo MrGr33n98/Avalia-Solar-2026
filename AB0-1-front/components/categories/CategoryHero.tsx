@@ -51,11 +51,12 @@ export default function CategoryHero({
   const heroDescription =
     description?.trim() ||
     `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
+  const bannerImageClass = getBannerImageClass(name);
 
   return (
-    <section className="border-b border-slate-100 bg-white py-5 md:py-7">
+    <section className="border-b border-slate-100 bg-white py-4 md:py-5">
       <div className="mx-auto max-w-[1280px] px-6">
-        <nav className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 md:mb-5 md:text-[11px]">
+        <nav className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 md:mb-4 md:text-[11px]">
           <Link href="/" className="transition-colors hover:text-blue-600">
             Home
           </Link>
@@ -88,7 +89,7 @@ export default function CategoryHero({
                 priority
                 quality={92}
                 sizes="(max-width: 768px) 100vw, 1280px"
-                className="object-cover object-center"
+                className={bannerImageClass}
                 fallbackSrc="/images/default-banner.svg"
               />
             ) : (
@@ -96,73 +97,73 @@ export default function CategoryHero({
             )}
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/76 to-slate-950/18" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/18 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/72 to-slate-950/14" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-black/20 to-transparent" />
 
-          <div className="relative z-10 flex min-h-[200px] flex-col justify-between p-5 sm:min-h-[220px] sm:p-6 md:min-h-[240px] md:p-8 lg:min-h-[250px]">
+          <div className="relative z-10 flex min-h-[184px] flex-col justify-between p-4 sm:min-h-[205px] sm:p-5 md:min-h-[214px] md:p-5 lg:min-h-[228px] lg:p-6">
             <div className="flex items-start justify-between gap-4">
-              <div className="max-w-3xl">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/92 backdrop-blur-md">
-                    <Sparkles className="h-3 w-3" />
+              <div className="max-w-[34rem]">
+                <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white/92 backdrop-blur-md sm:px-2.5 sm:text-[9px]">
+                    <Sparkles className="h-2.5 w-2.5" />
                     Guia {new Date().getFullYear()}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-amber-400/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-950">
+                  <span className="inline-flex items-center rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-slate-950 sm:px-2.5 sm:text-[9px]">
                     Categoria estratégica
                   </span>
                 </div>
 
-                <h1 className="max-w-4xl text-3xl font-black tracking-[-0.04em] text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-[3.25rem]">
+                <h1 className="max-w-3xl text-[1.1rem] font-black tracking-[-0.05em] text-white drop-shadow-md sm:text-[1.35rem] md:text-[1.7rem] lg:text-[1.95rem]">
                   {name}
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-slate-200/95 drop-shadow-sm sm:text-[15px] md:text-base">
+                <p className="mt-1.5 max-w-[28rem] text-[10px] font-medium leading-relaxed text-slate-200/95 drop-shadow-sm sm:text-[11px] md:text-[12px]">
                   {heroDescription}
                 </p>
               </div>
 
-              <div className="hidden rounded-full border border-white/15 bg-white/10 px-4 py-2 text-right text-[11px] font-bold text-white/90 backdrop-blur-md lg:block">
+              <div className="hidden rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-right text-[9px] font-bold text-white/90 backdrop-blur-md lg:block">
                 Ranking baseado em
                 <span className="block text-white">dados reais e confiança</span>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex flex-wrap gap-2.5">
+            <div className="mt-2.5 flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid max-w-[28rem] grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
                 <StatPill
-                  icon={<Building2 className="h-4 w-4 text-emerald-300" />}
+                  icon={<Building2 className="h-3 w-3 text-emerald-300" />}
                   value={companiesCount}
                   label="empresas"
                 />
                 <StatPill
-                  icon={<MessageSquareText className="h-4 w-4 text-sky-300" />}
+                  icon={<MessageSquareText className="h-3 w-3 text-sky-300" />}
                   value={reviewsCount}
                   label="avaliações"
                 />
                 <StatPill
-                  icon={<ShieldCheck className="h-4 w-4 text-amber-300" />}
+                  icon={<ShieldCheck className="h-3 w-3 text-amber-300" />}
                   value={`${verifiedPct}%`}
                   label="verificadas"
                 />
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button
                   onClick={onLeadClick}
                   size="lg"
-                  className="h-12 rounded-xl bg-emerald-500 px-7 text-sm font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400"
+                  className="h-9 rounded-lg bg-emerald-500 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400 sm:h-10 sm:px-5 sm:text-[11px]"
                 >
                   Solicitar orçamento
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
 
                 <Button
                   onClick={onMethodologyClick}
                   variant="outline"
-                  size="lg"
-                  className="h-12 rounded-xl border-white/20 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/18 hover:text-white"
+                  size="sm"
+                  className="h-8 rounded-lg border-white/12 bg-white/10 px-3 text-[10px] font-bold text-white/92 backdrop-blur-md transition-all hover:bg-white/15 hover:text-white sm:h-9 sm:px-4"
                 >
-                  <Info className="mr-2 h-4 w-4" />
+                  <Info className="mr-1.5 h-3.5 w-3.5" />
                   Método do ranking
                 </Button>
               </div>
@@ -171,7 +172,7 @@ export default function CategoryHero({
         </div>
 
         {subcategories.length > 0 && (
-          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="mt-3 flex flex-col gap-2.5 lg:flex-row lg:items-center">
             <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
               Explorar nichos
             </span>
@@ -203,16 +204,30 @@ function StatPill({
   label: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-3 rounded-2xl border border-white/14 bg-white/10 px-4 py-2.5 text-white backdrop-blur-md">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+    <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/14 bg-white/10 px-2 py-1.5 text-white backdrop-blur-md sm:gap-2 sm:px-2.5 sm:py-2">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 sm:h-7 sm:w-7">
         {icon}
       </div>
-      <div className="flex flex-col leading-none">
-        <span className="text-lg font-black tracking-tight">{value}</span>
-        <span className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/72">
+      <div className="flex min-w-0 flex-col leading-none">
+        <span className="text-xs font-black tracking-tight sm:text-sm">{value}</span>
+        <span className="mt-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-white/72 sm:text-[8px]">
           {label}
         </span>
       </div>
     </div>
   );
+}
+
+function getBannerImageClass(name: string) {
+  const normalized = name.toLowerCase();
+
+  if (normalized.includes('mobilidade') || normalized.includes('elétrica')) {
+    return 'object-cover object-[center_60%] sm:object-[center_56%] lg:object-[center_54%]';
+  }
+
+  if (normalized.includes('solar')) {
+    return 'object-cover object-[center_46%] sm:object-[center_48%] lg:object-[center_50%]';
+  }
+
+  return 'object-cover object-center';
 }
