@@ -185,19 +185,21 @@ export default function CompanyHero({
 
                   <div
                     className={cn(
-                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[4px] border-white p-3 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-24 sm:w-24',
+                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[4px] border-white shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-24 sm:w-24',
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
-                    <OptimizedImage
-                      src={logoUrl || '/images/logo-placeholder.svg'}
-                      alt={company.name}
-                      width={96}
-                      height={96}
-                      className="h-full w-full object-contain"
-                      fallbackSrc="/images/logo-placeholder.svg"
-                      onError={() => setLogoError(true)}
-                    />
+                    <div className="h-full w-full overflow-hidden rounded-full bg-white">
+                      <OptimizedImage
+                        src={logoUrl || '/images/logo-placeholder.svg'}
+                        alt={company.name}
+                        width={96}
+                        height={96}
+                        className="h-full w-full rounded-full object-cover"
+                        fallbackSrc="/images/logo-placeholder.svg"
+                        onError={() => setLogoError(true)}
+                      />
+                    </div>
                   </div>
 
                   {company.verified && (

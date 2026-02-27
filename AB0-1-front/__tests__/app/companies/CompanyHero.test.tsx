@@ -93,5 +93,7 @@ describe('CompanyHero', () => {
     expect(screen.getByLabelText('Card de perfil da empresa')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
     expect(screen.queryByText('Descricao')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Empresa Teste')).toHaveClass('rounded-full');
+    expect(screen.getByAltText('Empresa Teste')).toHaveClass('object-cover');
   });
 });
