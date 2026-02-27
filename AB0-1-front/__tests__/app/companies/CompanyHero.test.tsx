@@ -30,7 +30,9 @@ jest.mock('@/components/ui/optimized-image', () => ({
 }));
 
 jest.mock('@/components/WhatsappButton', () => (props: any) => (
-  <button type="button">{props.label || 'WhatsApp'}</button>
+  <button type="button" className={props.className}>
+    {props.label || 'WhatsApp'}
+  </button>
 ));
 
 const baseCompany = {
@@ -76,6 +78,31 @@ describe('CompanyHero', () => {
 
     expect(screen.getByRole('button', { name: /solicitar orçamento/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Avaliar/i })).not.toBeInTheDocument();
+  });
+
+  it('aplica hierarquia visual de ctas com utilitarios ghost e whatsapp outline', () => {
+    render(
+      <CompanyHero
+        {...baseProps}
+        ctaEnabled
+        ctaUrl="https://wa.me/5511999999999"
+        company={{ ...(baseCompany as any), active_admin: true, verified: true }}
+      />
+    );
+
+    const shareButton = screen.getByRole('button', { name: /compartilhar perfil/i });
+    const compareButton = screen.getByRole('button', { name: /comparar/i });
+    const whatsappButton = screen.getByRole('button', { name: /whatsapp/i });
+    const quoteButton = screen.getByRole('button', { name: /solicitar orçamento/i });
+
+    expect(shareButton).toHaveClass('bg-transparent');
+    expect(shareButton).toHaveClass('border-none');
+    expect(compareButton).toHaveClass('bg-transparent');
+    expect(compareButton).toHaveClass('border-none');
+    expect(whatsappButton).toHaveClass('border-emerald-500');
+    expect(whatsappButton).toHaveClass('text-emerald-700');
+    expect(quoteButton).toHaveClass('bg-blue-700');
+    expect(quoteButton).toHaveClass('text-white');
   });
 
   it('renderiza o card flutuante de perfil com nome e sem descricao interna', () => {

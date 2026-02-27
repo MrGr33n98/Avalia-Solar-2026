@@ -11,7 +11,7 @@ Transformar o header da página de detalhe da empresa para seguir a hierarquia v
 - [x] O card branco flutuante destaca logo circular, nome, selo de verificação e rating.
 - [x] Os breadcrumbs ficam menores e menos pesados visualmente.
 - [x] As abas da página passam a usar navegação linear com underline ativo, em vez do estilo pill atual.
-- [x] Os CTAs principais ficam visualmente agrupados à direita do header, com prioridade clara.
+- [x] Os CTAs principais ficam visualmente agrupados à direita do header, com prioridade clara, usando utilitários ghost, WhatsApp outline e orçamento sólido.
 - [x] Os dados reais da empresa permanecem intactos.
 - [x] As validações relevantes foram executadas e qualquer bloqueio remanescente foi documentado.
 

@@ -246,26 +246,26 @@ export default function CompanyHero({
             </section>
 
             <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px] lg:items-end">
-              <div className="flex flex-wrap gap-2 lg:justify-end">
+              <div className="flex flex-wrap gap-1 lg:justify-end">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   title="Compartilhar perfil"
                   aria-label="Compartilhar perfil"
-                  className="h-10 rounded-xl border-slate-200 bg-white px-4 text-slate-600 hover:bg-slate-50"
+                  className="h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-500 shadow-none hover:bg-transparent hover:text-slate-900"
                   onClick={handleShare}
                   disabled={isSharing}
                 >
-                  <Share2 className="mr-2 h-4 w-4" />
+                  <Share2 className="mr-1.5 h-3.5 w-3.5" />
                   Compartilhar
                 </Button>
 
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   className={cn(
-                    'h-10 rounded-xl border-slate-200 bg-white px-4 text-slate-600 hover:bg-slate-50',
-                    inComp && 'border-blue-200 bg-blue-50 text-blue-700'
+                    'h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-500 shadow-none hover:bg-transparent hover:text-slate-900',
+                    inComp && 'text-blue-700'
                   )}
                   onClick={() => {
                     if (inComp) {
@@ -275,7 +275,7 @@ export default function CompanyHero({
                     }
                   }}
                 >
-                  <Scale className={cn('mr-2 h-4 w-4', inComp && 'fill-current')} />
+                  <Scale className={cn('mr-1.5 h-3.5 w-3.5', inComp && 'fill-current')} />
                   {inComp ? 'Comparando' : 'Comparar'}
                 </Button>
               </div>
@@ -287,7 +287,7 @@ export default function CompanyHero({
                       size="default"
                       enabled
                       href={ctaUrl}
-                      className="h-11 w-full rounded-xl border border-emerald-500 bg-white px-6 font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:min-w-[170px]"
+                      className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-6 font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:min-w-[170px]"
                       label="WhatsApp"
                       companyId={company.id}
                     />
@@ -297,7 +297,7 @@ export default function CompanyHero({
                 {canRequestQuote ? (
                   <Button
                     size="default"
-                    className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-none hover:bg-blue-800 sm:min-w-[190px]"
+                    className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"
                     onClick={() => openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' })}
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
