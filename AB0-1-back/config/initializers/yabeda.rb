@@ -58,23 +58,29 @@ end
 Yabeda.configure do
   # Update gauges every time they're collected
   collect do
-    # Active users in last 24 hours
-    if defined?(User)
-      active_count = User.where('last_sign_in_at > ?', 24.hours.ago).count
-      ab0_active_users.set({}, active_count)
-    end
-    
-    # Pending donations
-    if defined?(Donation)
-      pending_count = Donation.where(status: 'pending').count
-      ab0_pending_donations.set({}, pending_count)
-    end
-    
-    # Database connection pool metrics
-    if defined?(ActiveRecord::Base)
-      pool = ActiveRecord::Base.connection_pool
-      ab0_database_connection_pool_size.set({}, pool.size)
-      ab0_database_active_connections.set({}, pool.connections.size)
+    begin
+      # Active users in last 24 hours
+      if defined?(User)
+        active_count = User.where('last_sign_in_at > ?', 24.hours.ago).count
+        ab0_active_users.set({}, active_count)
+      end
+      
+      # Pending donations
+      if defined?(Donation)
+        pending_count = Donation.where(status: 'pending').count
+        ab0_pending_donations.set({}, pending_count)
+      end
+      
+      # Database connection pool metrics
+      if defined?(ActiveRecord::Base)
+        pool = ActiveRecord::Base.connection_pool
+        if pool
+          ab0_database_connection_pool_size.set({}, pool.size)
+          ab0_database_active_connections.set({}, pool.connections.size)
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.warn "⚠️  Yabeda collection failed: #{e.message}"
     end
   end
 end
