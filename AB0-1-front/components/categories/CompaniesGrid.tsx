@@ -1,21 +1,19 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import CompanyCardV2 from './CompanyCardV2';
+import CompanyCard from '@/components/CompanyCard';
 import { Company } from '@/lib/api';
 
 interface CompaniesGridProps {
   companies: Company[];
   loading?: boolean;
   category: string;
-  onLeadModalOpen?: (company: Company) => void;
 }
 
 export default function CompaniesGrid({
   companies,
   loading = false,
   category,
-  onLeadModalOpen,
 }: CompaniesGridProps) {
   if (loading) {
     return (
@@ -43,12 +41,11 @@ export default function CompaniesGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {companies.map((company) => (
-        <CompanyCardV2
+        <CompanyCard
           key={company.id}
           company={company}
+          compact={true}
           category={category}
-          variant="compact"
-          onLeadModalOpen={onLeadModalOpen}
         />
       ))}
     </div>

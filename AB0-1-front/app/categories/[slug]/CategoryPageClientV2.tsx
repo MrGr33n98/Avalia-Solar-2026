@@ -8,7 +8,6 @@ import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar
 import CompaniesGrid from '@/components/categories/CompaniesGrid';
 import TopRankingSection from '@/components/categories/TopRankingSection';
 import SponsoredSection from '@/components/categories/SponsoredSection';
-import LeadModalInternal from '@/components/categories/LeadModalInternal';
 import {
   HeroSkeleton,
   ChipsSkeleton,
@@ -28,6 +27,7 @@ import {
 import { Search, Filter, X } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { Company } from '@/lib/api';
+import { openLeadModal } from '@/lib/lead-engine';
 
 interface CategoryPageClientProps {
   initialCategory: any;
@@ -69,8 +69,6 @@ export default function CategoryPageClient({
     minRating: searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : 0,
     state: searchParams.get('state') || '',
   });
-  const [leadModalOpen, setLeadModalOpen] = useState(false);
-  const [selectedCompanyForLead, setSelectedCompanyForLead] = useState<Company | null>(null);
   const [isLoading] = useState(false);
 
   // Track page view
@@ -196,6 +194,7 @@ export default function CategoryPageClient({
                 placement: 'hero',
                 category: slug,
               });
+              openLeadModal({ source: 'category-hero', type: 'quick' });
             }}
             onMethodologyClick={() => console.log('Methodology modal')}
           />
@@ -229,10 +228,6 @@ export default function CategoryPageClient({
                   <TopRankingSection
                     companies={filteredCompanies.slice(0, 3)}
                     category={slug}
-                    onLeadModalOpen={(company) => {
-                      setSelectedCompanyForLead(company);
-                      setLeadModalOpen(true);
-                    }}
                     onMethodologyClick={() => console.log('Methodology')}
                   />
                 )}
@@ -243,10 +238,6 @@ export default function CategoryPageClient({
                     .filter((c) => (c as any).sponsored || initialBanners.some((b: any) => b.company_id === c.id))
                     .slice(0, 4)}
                   category={slug}
-                  onLeadModalOpen={(company) => {
-                    setSelectedCompanyForLead(company);
-                    setLeadModalOpen(true);
-                  }}
                 />
 
                 {/* Toolbar & Grid */}
@@ -305,25 +296,11 @@ export default function CategoryPageClient({
                   <CompaniesGrid
                     companies={filteredCompanies}
                     category={slug}
-                    onLeadModalOpen={(company) => {
-                      setSelectedCompanyForLead(company);
-                      setLeadModalOpen(true);
-                    }}
                   />
                 </div>
               </main>
             </div>
           </div>
-
-          {/* Lead Modal */}
-          {selectedCompanyForLead && (
-            <LeadModalInternal
-              company={selectedCompanyForLead}
-              category={slug}
-              open={leadModalOpen}
-              onOpenChange={setLeadModalOpen}
-            />
-          )}
         </>
       )}
     </div>

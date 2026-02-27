@@ -1,19 +1,17 @@
 'use client';
 
-import CompanyCardV2 from './CompanyCardV2';
+import CompanyCard from '@/components/CompanyCard';
 import { Sparkles } from 'lucide-react';
 import { Company } from '@/lib/api';
 
 interface SponsoredSectionProps {
   companies: Company[];
   category: string;
-  onLeadModalOpen?: (company: Company) => void;
 }
 
 export default function SponsoredSection({
   companies,
   category,
-  onLeadModalOpen,
 }: SponsoredSectionProps) {
   // Limitar a máximo 4 patrocinados
   const sponsoredCompanies = companies.slice(0, 4);
@@ -36,21 +34,12 @@ export default function SponsoredSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {sponsoredCompanies.map((company) => (
           <div key={company.id} className="relative">
-            {/* Sponsored Badge */}
-            <div className="absolute top-2 right-2 z-10">
-              <div className="inline-flex items-center gap-1 bg-amber-100/90 backdrop-blur-sm text-amber-800 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-200 shadow-sm">
-                <Sparkles className="w-2.5 h-2.5 fill-current" />
-                Patrocinado
-              </div>
-            </div>
-
-            {/* Card with premium styling */}
-            <div className="border border-amber-100 rounded-2xl overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-              <CompanyCardV2
-                company={company}
-                variant="compact"
+            {/* Card with premium styling - relying on CompanyCard built-in sponsored badge */}
+            <div className="border border-amber-100 rounded-2xl overflow-hidden shadow-sm transition-shadow hover:shadow-md h-full">
+              <CompanyCard
+                company={{ ...company, sponsored: true } as Company}
+                compact={true}
                 category={category}
-                onLeadModalOpen={onLeadModalOpen}
               />
             </div>
           </div>

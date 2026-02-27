@@ -44,6 +44,7 @@ interface Props {
   avatarRingColor?: string;
   schemaEnabled?: boolean;
   rank?: number; // US07: Posição no ranking atual
+  category?: string; // Optional category slug for tracking
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
 }
 
@@ -66,6 +67,7 @@ export default function CompanyCard({
   avatarRingColor = '#ffffff',
   schemaEnabled = true,
   rank,
+  category,
   onAnalyticsEvent,
 }: Props) {
   const router = useRouter();
@@ -92,10 +94,11 @@ export default function CompanyCard({
       track('company_card_impression', {
         company_id: id,
         company_name: name,
-        company_slug: company.slug
+        company_slug: company.slug,
+        category: category
       });
     }
-  }, [id, name, company.slug]);
+  }, [id, name, company.slug, category]);
 
   const rating = average_rating?.toFixed(1) ?? '0.0';
   const totalReviews = rating_count || 0;
