@@ -1,5 +1,19 @@
 class AddDataIntegrityConstraints < ActiveRecord::Migration[7.0]
   def change
+    # 0. Data Cleanup: Ensure existing data follows the rules before applying constraints
+    # This prevents migration failure on production data
+    execute <<-SQL
+      UPDATE companies 
+      SET cnpj = NULL 
+      WHERE cnpj IS NOT NULL 
+        AND (LENGTH(cnpj) != 14 OR cnpj !~ '^[0-9]+$');
+      
+      UPDATE companies 
+      SET email = NULL 
+      WHERE email IS NOT NULL 
+        AND email !~ '^[^@]+@[^@]+\\.[^@]+$';
+    SQL
+
     # 1. Companies: Valid CNPJ format
     add_check_constraint :companies,
       "cnpj IS NULL OR (LENGTH(cnpj) = 14 AND cnpj ~ '^[0-9]+$')",
