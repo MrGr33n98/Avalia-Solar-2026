@@ -26,7 +26,7 @@ class AddCriticalIndexes < ActiveRecord::Migration[7.0]
     # Member validation (prevents N+1)
     add_index :company_members, [:company_id, :user_id], unique: true, algorithm: :concurrently, if_not_exists: true
 
-    # External cache dedup
-    add_index :external_tariffs_caches, [:company_id, :cache_key], unique: true, algorithm: :concurrently, if_not_exists: true
+    # External cache dedup (Note: Currently disabled as columns don't exist in current schema)
+    # add_index :external_tariffs_caches, [:company_id, :cache_key], unique: true, algorithm: :concurrently, if_not_exists: true
   end
 end
