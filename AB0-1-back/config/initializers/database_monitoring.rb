@@ -1,8 +1,15 @@
 # config/initializers/database_monitoring.rb
 
+require 'fileutils'
+
+# Ensure log directory exists before creating loggers
+log_dir = Rails.root.join('log')
+FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
+
 # Enable slow query logging in production
 if Rails.env.production?
-  ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', 'sql.log'))
+  sql_log_path = log_dir.join('sql.log')
+  ActiveRecord::Base.logger = Logger.new(sql_log_path)
 
   # Custom slow query detector
   ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
