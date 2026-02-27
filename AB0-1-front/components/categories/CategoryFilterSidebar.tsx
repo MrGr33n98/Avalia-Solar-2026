@@ -26,10 +26,10 @@ export default function CategoryFilterSidebar({
   hasActiveFilters,
 }: CategoryFilterSidebarProps) {
   return (
-    <aside className="hidden lg:block w-64 sticky top-24 space-y-4">
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-950 uppercase text-sm tracking-wider">
+    <aside className="hidden lg:block w-[280px] sticky top-24 space-y-4 shrink-0">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-black text-slate-950 uppercase text-xs tracking-widest">
             Filtros
           </h3>
           {hasActiveFilters && (
@@ -37,7 +37,7 @@ export default function CategoryFilterSidebar({
               variant="ghost"
               size="sm"
               onClick={onClearFilters}
-              className="h-6 px-2 text-xs text-slate-500 hover:text-red-600"
+              className="h-6 px-2 text-[10px] font-black uppercase text-slate-400 hover:text-red-600 tracking-tighter"
             >
               <X className="w-3 h-3 mr-1" />
               Limpar

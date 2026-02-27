@@ -3,19 +3,7 @@
 import CompanyCardV2 from './CompanyCardV2';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface Company {
-  id: number;
-  name: string;
-  logo_url?: string;
-  banner_url?: string;
-  rating?: number;
-  rating_count?: number;
-  verified?: boolean;
-  segment?: string;
-  direct_lead_enabled?: boolean;
-  direct_lead_url?: string;
-}
+import { Company } from '@/lib/api';
 
 interface TopRankingSectionProps {
   companies: Company[];
@@ -37,58 +25,56 @@ export default function TopRankingSection({
   }
 
   return (
-    <section className="py-8 px-4 bg-gradient-to-br from-blue-50 to-slate-50 border-b border-slate-200">
-      <div className="container mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-black text-slate-950">
-              🏆 Top {topCompanies.length} desta Categoria
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Ranking baseado em avaliações verificadas e confiabilidade
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onMethodologyClick}
-            className="text-slate-600 hover:text-blue-600"
-          >
-            <Info className="w-4 h-4 mr-1" />
-            Metodologia
-          </Button>
+    <section className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight">
+            🏆 Top {topCompanies.length} da Categoria
+          </h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">
+            Ranking baseado em confiabilidade
+          </p>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onMethodologyClick}
+          className="text-slate-400 hover:text-blue-600 font-bold text-xs"
+        >
+          <Info className="w-4 h-4 mr-1" />
+          MÉTODO
+        </Button>
+      </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {topCompanies.map((company, index) => (
-            <div key={company.id} className="relative">
-              {/* Rank Badge */}
-              <div className="absolute -top-3 -left-2 z-10">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-white text-sm ${
-                    index === 0
-                      ? 'bg-yellow-500 shadow-lg'
-                      : index === 1
-                        ? 'bg-slate-400'
-                        : 'bg-amber-600'
-                  }`}
-                >
-                  {index + 1}
-                </div>
+      {/* Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {topCompanies.map((company, index) => (
+          <div key={company.id} className="relative">
+            {/* Rank Badge */}
+            <div className="absolute -top-3 -left-2 z-10">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-base shadow-lg ${
+                  index === 0
+                    ? 'bg-gradient-to-br from-yellow-400 to-amber-500'
+                    : index === 1
+                      ? 'bg-gradient-to-br from-slate-300 to-slate-400'
+                      : 'bg-gradient-to-br from-orange-500 to-amber-700'
+                }`}
+              >
+                {index + 1}
               </div>
-
-              {/* Card - Rich Variant */}
-              <CompanyCardV2
-                company={company}
-                variant="rich"
-                category={category}
-                onLeadModalOpen={onLeadModalOpen}
-              />
             </div>
-          ))}
-        </div>
+
+            {/* Card - Rich Variant */}
+            <CompanyCardV2
+              company={company}
+              variant="rich"
+              category={category}
+              onLeadModalOpen={onLeadModalOpen}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );

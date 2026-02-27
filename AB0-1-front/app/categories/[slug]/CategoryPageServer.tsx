@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
-import CategoryClientComponent from './CategoryClientComponent';
+import CategoryPageClientV2 from './CategoryPageClientV2';
 import { fetchCategoryBySlug, categoriesApi, api, Banner } from '@/lib/api';
 
 import { AlertCircle } from 'lucide-react';
@@ -190,7 +190,7 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
     return (
       <div className="relative">
         <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Carregando categoria...</div>}>
-          <CategoryClientComponent
+          <CategoryPageClientV2
             initialCategory={category}
             initialCompanies={companies || []}
             initialBanners={banners || []}

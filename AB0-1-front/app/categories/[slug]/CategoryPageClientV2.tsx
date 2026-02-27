@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 import CategoryHero from '@/components/categories/CategoryHero';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar';
@@ -26,29 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, X } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
-
-interface Company {
-  id: number;
-  name: string;
-  logo_url?: string;
-  banner_url?: string;
-  rating?: number;
-  rating_count?: number;
-  verified?: boolean;
-  segment?: string;
-  direct_lead_enabled?: boolean;
-  direct_lead_url?: string;
-}
+import { Company } from '@/lib/api';
 
 interface CategoryPageClientProps {
-  categoryName: string;
-  companiesCount: number;
-  reviewsCount: number;
-  verifiedPct: number;
-  companies: Company[];
-  slug: string;
+  initialCategory: any;
+  initialCompanies: Company[];
+  initialBanners: any[];
+  paginationMeta: any;
 }
 
 const QUICK_FILTER_CHIPS = [
@@ -59,15 +44,19 @@ const QUICK_FILTER_CHIPS = [
 ];
 
 export default function CategoryPageClient({
-  categoryName,
-  companiesCount,
-  reviewsCount,
-  verifiedPct,
-  companies: initialCompanies,
-  slug,
+  initialCategory,
+  initialCompanies,
+  initialBanners,
+  paginationMeta,
 }: CategoryPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const slug = initialCategory?.slug || '';
+  const categoryName = initialCategory?.name || '';
+  const companiesCount = initialCategory?.companies_count || initialCompanies.length;
+  const reviewsCount = initialCategory?.reviews_count || 0;
+  const verifiedPct = initialCategory?.verified_pct || 0;
 
   // Estado de busca e filtros
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -94,7 +83,7 @@ export default function CategoryPageClient({
 
   // Aplicar filtros
   const filteredCompanies = useMemo(() => {
-    let result = initialCompanies;
+    let result = [...initialCompanies];
 
     // Busca por nome
     if (searchTerm) {
@@ -161,12 +150,13 @@ export default function CategoryPageClient({
     setSortBy('rating_desc');
   };
 
-  const hasActiveFilters =
+  const hasActiveFilters = Boolean(
     searchTerm ||
     activeQuickFilters.size > 0 ||
     sidebarFilters.verified ||
     sidebarFilters.minRating > 0 ||
-    sidebarFilters.state;
+    sidebarFilters.state
+  );
 
   const quickFilterChips = QUICK_FILTER_CHIPS.map((chip) => ({
     id: chip.id,
@@ -181,15 +171,20 @@ export default function CategoryPageClient({
         <>
           <HeroSkeleton />
           <ChipsSkeleton />
-          <TopRankingSkeleton />
-          <SponsoredSkeleton />
-          <div className="container mx-auto px-4 py-8">
-            <GridSkeleton />
+          <div className="container mx-auto px-6 py-10">
+            <div className="flex gap-8">
+               <div className="hidden lg:block w-64 h-screen" />
+               <div className="flex-1 space-y-10">
+                  <TopRankingSkeleton />
+                  <SponsoredSkeleton />
+                  <GridSkeleton />
+               </div>
+            </div>
           </div>
         </>
       ) : (
         <>
-          {/* Hero */}
+          {/* Hero - Full width header */}
           <CategoryHero
             name={categoryName}
             companiesCount={companiesCount}
@@ -205,52 +200,59 @@ export default function CategoryPageClient({
             onMethodologyClick={() => console.log('Methodology modal')}
           />
 
-          {/* Decision Chips */}
-          <DecisionChips
-            chips={quickFilterChips}
-            onChipToggle={handleQuickFilterToggle}
-            onChipRemove={handleQuickFilterToggle}
-          />
+          {/* Decision Chips - Full width contextual helper */}
+          <div className="border-b border-slate-100 bg-slate-50/30">
+            <DecisionChips
+              chips={quickFilterChips}
+              onChipToggle={handleQuickFilterToggle}
+              onChipRemove={handleQuickFilterToggle}
+            />
+          </div>
 
-          {/* Top Ranking */}
-          <TopRankingSection
-            companies={filteredCompanies.slice(0, 3)}
-            category={slug}
-            onLeadModalOpen={(company) => {
-              setSelectedCompanyForLead(company);
-              setLeadModalOpen(true);
-            }}
-            onMethodologyClick={() => console.log('Methodology')}
-          />
+          {/* Main Layout Container */}
+          <div className="max-w-[1280px] mx-auto px-6 py-10">
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              
+              {/* Sidebar - Fixed width 280px */}
+              <CategoryFilterSidebar
+                filters={sidebarFilters}
+                onFilterChange={handleSidebarFilterChange}
+                onClearFilters={handleClearFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
 
-          {/* Sponsored */}
-          <SponsoredSection
-            companies={initialCompanies
-              .filter((c) => Math.random() > 0.7) // Demo: random companies as sponsored
-              .slice(0, 4)}
-            category={slug}
-            onLeadModalOpen={(company) => {
-              setSelectedCompanyForLead(company);
-              setLeadModalOpen(true);
-            }}
-          />
+              {/* Content Column - Fluid */}
+              <main className="flex-1 w-full space-y-10">
+                
+                {/* 🏆 Top Ranking Section - Inside the column */}
+                {!hasActiveFilters && filteredCompanies.length > 0 && (
+                  <TopRankingSection
+                    companies={filteredCompanies.slice(0, 3)}
+                    category={slug}
+                    onLeadModalOpen={(company) => {
+                      setSelectedCompanyForLead(company);
+                      setLeadModalOpen(true);
+                    }}
+                    onMethodologyClick={() => console.log('Methodology')}
+                  />
+                )}
 
-          {/* Main Content */}
-          <div className="py-8">
-            <div className="container mx-auto px-4">
-              <div className="flex gap-6">
-                {/* Sidebar */}
-                <CategoryFilterSidebar
-                  filters={sidebarFilters}
-                  onFilterChange={handleSidebarFilterChange}
-                  onClearFilters={handleClearFilters}
-                  hasActiveFilters={hasActiveFilters}
+                {/* ✨ Sponsored Section - Inside the column */}
+                <SponsoredSection
+                  companies={initialCompanies
+                    .filter((c) => (c as any).sponsored || initialBanners.some((b: any) => b.company_id === c.id))
+                    .slice(0, 4)}
+                  category={slug}
+                  onLeadModalOpen={(company) => {
+                    setSelectedCompanyForLead(company);
+                    setLeadModalOpen(true);
+                  }}
                 />
 
-                {/* Main */}
-                <main className="flex-1">
+                {/* Toolbar & Grid */}
+                <div className="space-y-6">
                   {/* Toolbar */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 sticky top-20 z-10">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm sticky top-24 z-10">
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                       <div className="relative w-full sm:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -258,16 +260,16 @@ export default function CategoryPageClient({
                           placeholder="Buscar empresas..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-9"
+                          className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
                         />
                       </div>
 
                       <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sortBy} onValueChange={setSortBy}>
-                          <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="rounded-xl">
                             <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
                             <SelectItem value="reviews_desc">Mais Avaliadas</SelectItem>
                             <SelectItem value="name_asc">A-Z</SelectItem>
@@ -277,36 +279,39 @@ export default function CategoryPageClient({
                         {hasActiveFilters && (
                           <Button
                             variant="outline"
-                            size="sm"
+                            size="icon"
                             onClick={handleClearFilters}
+                            className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600"
+                            title="Limpar filtros"
                           >
-                            <Filter className="w-4 h-4 mr-1" />
-                            Limpar
+                            <X className="w-4 h-4" />
                           </Button>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Grid */}
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950 mb-4">
+                  {/* Results Header */}
+                  <div className="flex items-center justify-between px-1">
+                    <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight">
                       {hasActiveFilters ? 'Resultados Filtrados' : 'Todas as Empresas'}
-                      <span className="text-sm font-normal text-slate-500 ml-2">
+                      <span className="text-sm font-bold text-slate-400 ml-2 normal-case">
                         ({filteredCompanies.length})
                       </span>
                     </h2>
-                    <CompaniesGrid
-                      companies={filteredCompanies}
-                      category={slug}
-                      onLeadModalOpen={(company) => {
-                        setSelectedCompanyForLead(company);
-                        setLeadModalOpen(true);
-                      }}
-                    />
                   </div>
-                </main>
-              </div>
+
+                  {/* Companies Grid */}
+                  <CompaniesGrid
+                    companies={filteredCompanies}
+                    category={slug}
+                    onLeadModalOpen={(company) => {
+                      setSelectedCompanyForLead(company);
+                      setLeadModalOpen(true);
+                    }}
+                  />
+                </div>
+              </main>
             </div>
           </div>
 

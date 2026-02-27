@@ -37,14 +37,12 @@ export function ChipsSkeleton() {
 
 export function TopRankingSkeleton() {
   return (
-    <div className="py-8 px-4 bg-gradient-to-br from-blue-50 to-slate-50 border-b border-slate-200">
-      <div className="container mx-auto space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[220px] rounded-lg" />
-          ))}
-        </div>
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-64 rounded-xl" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[280px] rounded-3xl" />
+        ))}
       </div>
     </div>
   );
@@ -52,14 +50,12 @@ export function TopRankingSkeleton() {
 
 export function SponsoredSkeleton() {
   return (
-    <div className="py-8 px-4 bg-white border-b border-slate-200">
-      <div className="container mx-auto space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[220px] rounded-lg" />
-          ))}
-        </div>
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-48 rounded-xl" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[240px] rounded-3xl" />
+        ))}
       </div>
     </div>
   );
@@ -67,10 +63,13 @@ export function SponsoredSkeleton() {
 
 export function GridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-[220px] rounded-lg" />
-      ))}
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-32 rounded-xl" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-[280px] rounded-3xl" />
+        ))}
+      </div>
     </div>
   );
 }
