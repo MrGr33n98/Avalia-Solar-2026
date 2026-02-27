@@ -4,11 +4,11 @@
 O topo atual da rota `/companies/[id]` usa um banner arredondado com card flutuante, mas a hierarquia visual, o peso dos elementos e a navegação por abas ainda estão distantes da referência enviada pelo usuário para a página da Deel. O objetivo é aproximar a experiência visual da referência sem trocar os dados reais de cada empresa.
 
 ## Requisito
-Transformar o header da página de detalhe da empresa para seguir a hierarquia visual da referência Deel: breadcrumbs mais discretos, banner principal mais limpo, card branco flutuante com logo/nome/verificação/rating/descrição e CTAs reposicionados no mesmo eixo visual. Manter informações, nomes, logos e textos reais da empresa atual.
+Transformar o header da página de detalhe da empresa para seguir a hierarquia visual da referência Deel: breadcrumbs mais discretos, banner principal mais limpo, card branco flutuante com logo/nome/verificação/rating e CTAs reposicionados no mesmo eixo visual. Manter informações, nomes, logos e textos reais da empresa atual.
 
 ## Acceptance Criteria
 - [x] O topo da página de empresa usa uma hierarquia visual próxima da referência Deel.
-- [x] O card branco flutuante destaca logo, nome, selo de verificação, rating e descrição resumida.
+- [x] O card branco flutuante destaca logo circular, nome, selo de verificação e rating.
 - [x] Os breadcrumbs ficam menores e menos pesados visualmente.
 - [x] As abas da página passam a usar navegação linear com underline ativo, em vez do estilo pill atual.
 - [x] Os CTAs principais ficam visualmente agrupados à direita do header, com prioridade clara.

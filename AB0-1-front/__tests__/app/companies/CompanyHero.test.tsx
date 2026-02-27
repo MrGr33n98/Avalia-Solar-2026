@@ -82,7 +82,7 @@ describe('CompanyHero', () => {
     expect(screen.queryByRole('link', { name: /Avaliar/i })).not.toBeInTheDocument();
   });
 
-  it('renderiza o card flutuante de perfil com nome e descricao da empresa', () => {
+  it('renderiza o card flutuante de perfil com nome e sem descricao interna', () => {
     render(
       <CompanyHero
         {...baseProps}
@@ -92,6 +92,6 @@ describe('CompanyHero', () => {
 
     expect(screen.getByLabelText('Card de perfil da empresa')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
-    expect(screen.getByText('Descricao')).toBeInTheDocument();
+    expect(screen.queryByText('Descricao')).not.toBeInTheDocument();
   });
 });

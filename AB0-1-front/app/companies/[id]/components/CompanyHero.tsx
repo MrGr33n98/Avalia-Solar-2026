@@ -57,8 +57,6 @@ export default function CompanyHero({
   const canRequestQuote = (company as any).active_admin === true;
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
-  const companyDescription =
-    company.description?.trim() || 'Perfil sem descrição detalhada cadastrada até o momento.';
   const hasLogo = Boolean(logoUrl) && !logoError;
 
   const heroBadgeUrl = useMemo(() => {
@@ -187,7 +185,7 @@ export default function CompanyHero({
 
                   <div
                     className={cn(
-                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 p-3 shadow-sm sm:h-24 sm:w-24',
+                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[4px] border-white p-3 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-24 sm:w-24',
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
@@ -204,10 +202,10 @@ export default function CompanyHero({
 
                   {company.verified && (
                     <div
-                      className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border border-white bg-blue-600 shadow-md"
+                      className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-blue-600 shadow-[0_12px_24px_-12px_rgba(37,99,235,0.9)]"
                       title="Empresa verificada"
                     >
-                      <BadgeCheck className="h-4 w-4 text-white" />
+                      <BadgeCheck className="h-[18px] w-[18px] text-white" />
                     </div>
                   )}
                 </div>
@@ -247,10 +245,6 @@ export default function CompanyHero({
                       </span>
                     )}
                   </div>
-
-                  <p className="mt-3 max-w-[42rem] text-sm leading-6 text-slate-600 line-clamp-2">
-                    {companyDescription}
-                  </p>
                 </div>
               </div>
             </section>
