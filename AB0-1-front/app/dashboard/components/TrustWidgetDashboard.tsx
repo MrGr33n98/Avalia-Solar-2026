@@ -3,12 +3,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Check, ExternalLink, ShieldCheck, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import WidgetBadge from './WidgetBadge';
+import { cn } from '@/lib/utils';
 
 interface TrustWidgetDashboardProps {
   company: any;
@@ -35,21 +34,23 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
   <script src="${apiBaseUrl}/trust-widget-embed.js" async></script>`;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    toast.success('Snippet copiado!');
-    setTimeout(() => setCopied(false), 2000);
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(snippet);
+      setCopied(true);
+      toast.success('Snippet copiado!');
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const mockCompanyData = {
     name: company?.name || 'Sua Empresa',
-    verified: company?.verified || true,
+    verified: company?.verified ?? true,
     trust_score: company?.trust_score || 95,
     rating_avg: company?.rating_avg || 4.8,
     reviews_count: company?.reviews_count || 124,
     verified_badge_image_url: company?.verified_badge_image_url,
     public_profile_url: '#',
-    priority_score: company?.priority_score || 100, // Mocked for rank
+    priority_score: company?.priority_score || 100,
   };
 
   return (
@@ -131,73 +132,6 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border-blue-100 shadow-lg shadow-blue-900/5">
-            <CardHeader className="bg-blue-50/50 rounded-t-xl pb-4 border-b border-blue-100">
-              <CardTitle className="text-sm text-blue-900 flex items-center gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Live Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 bg-slate-50 min-h-[300px] flex items-center justify-center rounded-b-xl">
-              {/* Preview Simulado do Widget */}
-              <div className={cn(
-                "rounded-xl shadow-xl transition-all duration-300 relative border overflow-hidden",
-                theme === 'dark' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-slate-200',
-                size === 'small' ? 'p-3 w-[200px]' : size === 'medium' ? 'p-5 w-[280px]' : 'p-6 w-[340px]'
-              )}>
-                {showRank && mockCompanyData.priority_score >= 100 && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-bl-lg shadow-sm">
-                    1º Lugar 2026
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm leading-none mb-1">{mockCompanyData.name}</p>
-                    <p className={cn("text-[10px] flex items-center gap-1", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                      Empresa Verificada
-                    </p>
-                  </div>
-                </div>
-
-                <div className={cn("flex items-center gap-2 p-2 rounded-lg", theme === 'dark' ? 'bg-slate-800/50' : 'bg-slate-50')}>
-                  <span className="font-black text-lg text-amber-500">{mockCompanyData.rating_avg}</span>
-                  <div className="flex text-amber-500">
-                    <Trophy className="w-4 h-4 fill-current" />
-                  </div>
-                  <span className={cn("text-[10px]", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                    ({mockCompanyData.reviews_count} reviews)
-                  </span>
-                </div>
-                
-                <div className="mt-3 text-center border-t pt-2 border-slate-200/50">
-                  <span className="text-[9px] font-medium text-slate-400">Powered by AvaliaSolar</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
-                    onClick={handleCopy}
-                  >
-                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Copie e cole este código no local do seu site onde deseja que o widget apareça.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
@@ -220,14 +154,16 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>Como aparecerá no seu site.</CardDescription>
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="border-blue-100 shadow-lg shadow-blue-900/5 sticky top-6">
+            <CardHeader className="bg-blue-50/50 rounded-t-xl pb-4 border-b border-blue-100">
+              <CardTitle className="text-sm text-blue-900 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Live Preview
+              </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center py-8 bg-slate-50 dark:bg-slate-950 rounded-b-xl border-t">
-              <WidgetBadge companyData={mockCompanyData} theme={theme} />
+            <CardContent className="p-6 bg-slate-50 dark:bg-slate-950 min-h-[300px] flex items-center justify-center rounded-b-xl border-t">
+               <WidgetBadge companyData={mockCompanyData} theme={theme} />
             </CardContent>
           </Card>
         </div>

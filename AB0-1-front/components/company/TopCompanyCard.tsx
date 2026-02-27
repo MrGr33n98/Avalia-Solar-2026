@@ -30,7 +30,8 @@ const RANK_COLORS = {
 } as const;
 
 export default function TopCompanyCard({ company, rank, className }: Props) {
-  const { id, name, city, state, description, sponsored } = company;
+  const { id, name, city, state, description } = company;
+  const sponsored = (company as any).sponsored;
   const rating_count = Number((company as any).rating_count || 0);
   const average_rating = parseFloat((company as any).rating_avg || 0);
   
@@ -123,7 +124,7 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
 
       <CardContent className="flex flex-col flex-1 p-4 gap-3">
         <div className="flex items-center justify-between gap-2">
-          <RatingStars rating={average_rating} count={rating_count} showCount={true} size="lg" />
+          <RatingStars rating={average_rating} count={rating_count} showCount={true} />
         </div>
 
         <p className="text-xs text-slate-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">

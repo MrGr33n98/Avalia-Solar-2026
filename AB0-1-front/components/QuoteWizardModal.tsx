@@ -12,7 +12,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
-import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
+import { toast } from 'sonner';
 
 type WizardCompany = {
   id: number;
@@ -86,6 +87,21 @@ export default function QuoteWizardModal() {
     setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
     setError(null); setSubmitting(false); setResendCooldown(0);
     setCompanies([]); setVerificationHint('');
+  };
+
+  const handleResend = async () => {
+    if (!leadId || resendCooldown > 0) return;
+    setSubmitting(true);
+    try {
+      await leadsWizardApi.resendEmailCode(leadId);
+      setResendCooldown(60);
+      toast.success('Código reenviado com sucesso!');
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao reenviar código.');
+      toast.error('Não foi possível reenviar o código.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const updateForm = (patch: Partial<WizardFormState>) => setForm((prev) => ({ ...prev, ...patch }));

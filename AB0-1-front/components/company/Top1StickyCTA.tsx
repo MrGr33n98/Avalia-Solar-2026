@@ -38,7 +38,7 @@ export default function Top1StickyCTA({ company, rank }: Props) {
           </div>
 
           <Button 
-            onClick={() => openLeadModal({ source: 'top1-sticky-cta', companyId: company.id })}
+            onClick={() => openLeadModal({ source: 'top1-sticky-cta', preferredCompanyId: company.id })}
             className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-xs px-4 h-10 rounded-xl shadow-lg transition-all active:scale-95"
           >
             <MessageSquare className="w-4 h-4 mr-2" />

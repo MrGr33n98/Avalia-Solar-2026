@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck, Info } from 'lucide-react';
+import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck, Info, Trophy } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
 
