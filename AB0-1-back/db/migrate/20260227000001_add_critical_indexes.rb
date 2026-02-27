@@ -1,4 +1,6 @@
 class AddCriticalIndexes < ActiveRecord::Migration[7.0]
+  disable_ddl_transaction!
+
   def change
     # Busca por CNPJ (autenticação SolarData/integração)
     add_index :companies, :cnpj, unique: true, where: "cnpj IS NOT NULL", algorithm: :concurrently
