@@ -102,6 +102,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.index ["event_type", "tracked_at"], name: "index_analytics_events_on_event_type_and_tracked_at"
   end
 
+  create_table "analytics_processing_state", primary_key: "pipeline_name", id: :text, force: :cascade do |t|
+    t.datetime "last_processed_at", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+  end
+
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.text "content"
@@ -477,6 +482,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
+  create_table "company_anomaly_daily", id: false, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.date "day", null: false
+    t.text "metric", null: false
+    t.decimal "zscore", precision: 8, scale: 4, null: false
+    t.boolean "flagged", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["company_id", "flagged"], name: "index_company_anomaly_daily_on_company_id_and_flagged"
+  end
+
   create_table "company_badges", force: :cascade do |t|
     t.integer "company_id", null: false
     t.integer "badge_id", null: false
@@ -524,6 +540,27 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.index ["company_id", "position"], name: "index_company_faqs_on_company_id_and_position"
     t.index ["company_id", "status"], name: "index_company_faqs_on_company_id_and_status"
     t.index ["company_id"], name: "index_company_faqs_on_company_id"
+  end
+
+  create_table "company_feature_daily", id: false, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.date "day", null: false
+    t.decimal "engagement_score", precision: 10, scale: 4, default: "0.0"
+    t.decimal "lead_conversion_rate", precision: 5, scale: 4, default: "0.0"
+    t.integer "review_velocity", default: 0
+    t.decimal "unique_session_ratio", precision: 5, scale: 4, default: "0.0"
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+  end
+
+  create_table "company_feature_rolling_30d", primary_key: "company_id", force: :cascade do |t|
+    t.datetime "computed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.decimal "avg_engagement", precision: 10, scale: 4, default: "0.0"
+    t.integer "total_leads", default: 0
+    t.integer "total_views", default: 0
+    t.decimal "conversion_trend", precision: 10, scale: 4, default: "0.0"
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
   end
 
   create_table "company_financing_offers", force: :cascade do |t|
@@ -605,6 +642,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.index ["user_id"], name: "index_company_members_on_user_id"
   end
 
+  create_table "company_ranking_score", primary_key: "company_id", force: :cascade do |t|
+    t.decimal "score", precision: 10, scale: 4, null: false
+    t.datetime "computed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.json "breakdown", default: "{}", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["score"], name: "index_company_ranking_score_on_score", order: :desc
+  end
+
   create_table "company_sector_questions", force: :cascade do |t|
     t.integer "company_id", null: false
     t.string "prompt", null: false
@@ -615,6 +661,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.datetime "updated_at", null: false
     t.index ["company_id", "order"], name: "index_company_sector_questions_on_company_and_order", unique: true
     t.index ["company_id"], name: "index_company_sector_questions_on_company_id"
+  end
+
+  create_table "company_trust_score", primary_key: "company_id", force: :cascade do |t|
+    t.decimal "score", precision: 5, scale: 2, null: false
+    t.json "components", null: false
+    t.datetime "computed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["score"], name: "index_company_trust_score_on_score", order: :desc
   end
 
   create_table "company_videos", force: :cascade do |t|
@@ -652,6 +707,29 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.integer "article_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "event_definitions", primary_key: "event_type", id: :text, force: :cascade do |t|
+    t.integer "schema_version", default: 1, null: false
+    t.json "required_keys", default: "[]", null: false
+    t.json "pii_keys", default: "[]", null: false
+    t.json "retention_policy", default: "{\"months\": 24}", null: false
+    t.boolean "enabled", default: true, null: false
+    t.text "description"
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+  end
+
+  create_table "event_ingest_errors", force: :cascade do |t|
+    t.text "event_id"
+    t.text "event_type"
+    t.json "payload"
+    t.text "error_reason"
+    t.datetime "occurred_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["event_type"], name: "index_event_ingest_errors_on_event_type"
+    t.index ["occurred_at"], name: "index_event_ingest_errors_on_occurred_at"
   end
 
   create_table "external_tariffs_caches", force: :cascade do |t|
