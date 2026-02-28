@@ -10,7 +10,7 @@ class AddBtreeIndexToPlatformEventsOccurredAt < ActiveRecord::Migration[7.0]
     execute "SET statement_timeout = '15min'"
 
     execute <<~SQL
-      CREATE INDEX CONCURRENTLY IF NOT EXISTS
+      CREATE INDEX IF NOT EXISTS
       idx_platform_events_occurred_at_btree
       ON platform_events (occurred_at);
     SQL
@@ -22,6 +22,6 @@ class AddBtreeIndexToPlatformEventsOccurredAt < ActiveRecord::Migration[7.0]
     execute "SET lock_timeout = '5s'"
     execute "SET statement_timeout = '15min'"
 
-    execute 'DROP INDEX CONCURRENTLY IF EXISTS idx_platform_events_occurred_at_btree;'
+    execute 'DROP INDEX IF EXISTS idx_platform_events_occurred_at_btree;'
   end
 end
