@@ -176,7 +176,8 @@ class Lead < ApplicationRecord
     estimated_budget_value = has_attribute?(:estimated_budget) ? self[:estimated_budget] : nil
     project_type_value = has_attribute?(:project_type) ? self[:project_type] : nil
 
-    Analytics::TrackEventService.call(
+    # Enqueue async job instead of synchronous call
+    Analytics::TrackEventJob.perform_later(
       company_id: company_id,
       event_type: 'lead_created',
       metadata: {
@@ -184,11 +185,11 @@ class Lead < ApplicationRecord
         estimated_budget: estimated_budget_value,
         project_type: project_type_value
       }.compact,
-      user: nil,
+      user_id: nil,
       tracked_at: created_at
     )
   rescue StandardError => e
-    Rails.logger.warn("[Analytics] lead tracking failed: #{e.message}")
+    Rails.logger.warn("[Analytics] Failed to enqueue lead tracking: #{e.message}")
   end
 
   def notify_slack

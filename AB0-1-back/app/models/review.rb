@@ -113,18 +113,19 @@ class Review < ApplicationRecord
   end
 
   def track_analytics_event
-    Analytics::TrackEventService.call(
+    # Enqueue async job instead of synchronous call
+    Analytics::TrackEventJob.perform_later(
       company_id: company_id,
       event_type: 'review_created',
       metadata: {
         source: 'review',
         rating: rating
       },
-      user: nil,
+      user_id: nil,
       tracked_at: created_at
     )
   rescue StandardError => e
-    Rails.logger.warn("[Analytics] review tracking failed: #{e.message}")
+    Rails.logger.warn("[Analytics] Failed to enqueue review tracking: #{e.message}")
   end
 
   def notify_slack

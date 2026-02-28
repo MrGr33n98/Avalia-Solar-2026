@@ -633,13 +633,14 @@ class Company < ApplicationRecord
     }
   end
 
-  after_update :track_activation_event, if: :saved_change_to_status?
-  after_update :track_plan_change_event, if: :saved_change_to_plan_id?
+  after_update_commit :track_activation_event, if: :saved_change_to_status?
+  after_update_commit :track_plan_change_event, if: :saved_change_to_plan_id?
 
   private
 
   def track_plan_change_event
-    Analytics::TrackEventService.call(
+    # Enqueue async job instead of synchronous call
+    Analytics::TrackEventJob.perform_later(
       company_id: id,
       event_type: 'plan_changed',
       metadata: {
@@ -649,13 +650,14 @@ class Company < ApplicationRecord
       }
     )
   rescue StandardError => e
-    Rails.logger.error("[Analytics] Failed to track plan change: #{e.message}")
+    Rails.logger.error("[Analytics] Failed to enqueue plan change tracking: #{e.message}")
   end
 
   def track_activation_event
     return unless status == 'active' && status_before_last_save != 'active'
 
-    Analytics::TrackEventService.call(
+    # Enqueue async job instead of synchronous call
+    Analytics::TrackEventJob.perform_later(
       company_id: id,
       event_type: 'company_activated',
       metadata: {
@@ -664,7 +666,7 @@ class Company < ApplicationRecord
       }
     )
   rescue StandardError => e
-    Rails.logger.error("[Analytics] Failed to track company activation: #{e.message}")
+    Rails.logger.error("[Analytics] Failed to enqueue company activation tracking: #{e.message}")
   end
 
   def verified_badge_validation
