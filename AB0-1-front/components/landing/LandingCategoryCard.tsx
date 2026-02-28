@@ -10,6 +10,7 @@ import { RatingStars } from '@/components/RatingStars';
 import type { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 
 type LandingCategoryCardProps = {
   category: Category;
@@ -19,7 +20,7 @@ type LandingCategoryCardProps = {
 function resolveCategoryImage(category: Category): string {
   const banner = category?.banner_url;
   const logo = category?.logo?.url;
-  return banner || logo || '/images/category-placeholder.jpg';
+  return getFullImageUrl(banner || logo) || '/images/category-placeholder.jpg';
 }
 
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {

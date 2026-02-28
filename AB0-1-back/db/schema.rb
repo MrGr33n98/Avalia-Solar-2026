@@ -438,7 +438,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.decimal "trust_score"
     t.integer "priority_score", default: 0, null: false
     t.boolean "sponsored", default: false, null: false
-    t.json "niche_tags", default: []
+    t.jsonb "niche_tags", default: [], null: false
     t.integer "financing_partners_count", default: 0
     t.integer "company_members_count", default: 0
     t.integer "leads_count", default: 0
@@ -449,7 +449,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.index ["featured"], name: "index_companies_on_featured_true", where: "featured = true /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/ /*application:RailsBlogDemo*/"
     t.index ["financing_partners_count"], name: "index_companies_on_financing_partners_count"
     t.index ["leads_count"], name: "index_companies_on_leads_count"
-    t.index ["niche_tags"], name: "index_companies_on_niche_tags"
+    t.index ["niche_tags"], name: "index_companies_on_niche_tags", using: :gin
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["priority_score"], name: "index_companies_on_priority_score"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
