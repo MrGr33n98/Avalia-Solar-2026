@@ -133,11 +133,19 @@ export default function QuoteWizardModal() {
       try {
         const payload = {
           lead: {
-            ...form,
+            product_vertical: form.productVertical,
+            project_profile: form.projectProfile,
+            quote_type: form.quoteType,
             system_size_band: computeSystemSizeBand(),
             bill_value: form.billValue || null,
             monthly_kwh: form.monthlyKwh || null,
-            full_name: form.fullName, // Adjust keys for API if needed
+            decision_timeline: form.decisionTimeline,
+            address_full: form.addressFull.trim(),
+            full_name: form.fullName,
+            email: form.email,
+            phone: form.phone,
+            consent: form.consent,
+            nickname: form.nickname
           },
           preferred_company_id: preferredCompanyId
         };
@@ -147,7 +155,7 @@ export default function QuoteWizardModal() {
         setResendCooldown(60);
         setStep(8);
       } catch (err: any) {
-        setError(err?.message || 'Erro ao iniciar orçãmento.');
+        setError(getWizardErrorMessage(err, 'Erro ao iniciar orçamento.'));
       } finally {
         setSubmitting(false);
       }
@@ -170,7 +178,7 @@ export default function QuoteWizardModal() {
         setStep(9);
       }
     } catch (err: any) {
-      setError(err?.message || 'Erro na validação.');
+      setError(getWizardErrorMessage(err, 'Erro na validação.'));
     } finally {
       setSubmitting(false);
     }
@@ -408,3 +416,42 @@ const parseNumber = (v: string) => {
 };
 
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+const FIELD_LABELS: Record<string, string> = {
+  company_id: 'Empresa selecionada',
+  product_vertical: 'Vertical do projeto',
+  project_profile: 'Perfil do projeto',
+  quote_type: 'Tipo de orçamento',
+  system_size_band: 'Tamanho do sistema',
+  decision_timeline: 'Prazo de decisão',
+  address_full: 'Endereço completo',
+  name: 'Nome completo',
+  email: 'E-mail',
+  phone: 'Telefone',
+  consent_at: 'Consentimento'
+};
+
+const normalizeFieldMessage = (message: string) => {
+  if (message === 'is required') return 'é obrigatório.';
+  return message;
+};
+
+const getWizardErrorMessage = (error: any, fallback: string) => {
+  const fields = error?.details?.fields;
+  if (fields && typeof fields === 'object') {
+    const [field, messages] = Object.entries(fields)[0] || [];
+    if (field) {
+      const label = FIELD_LABELS[field] || field;
+      const firstMessage = Array.isArray(messages) ? messages[0] : messages;
+      if (typeof firstMessage === 'string' && firstMessage.trim().length > 0) {
+        return `${label}: ${normalizeFieldMessage(firstMessage)}`;
+      }
+    }
+  }
+
+  if (typeof error?.message === 'string' && !error.message.includes('validation_failed')) {
+    return error.message;
+  }
+
+  return fallback;
+};

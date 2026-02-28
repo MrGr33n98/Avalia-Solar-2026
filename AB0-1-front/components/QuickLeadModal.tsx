@@ -10,7 +10,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
 import { Zap, ShieldCheck, Clock, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export default function QuickLeadModal() {
   const [open, setOpen] = useState(false);
@@ -103,7 +102,7 @@ export default function QuickLeadModal() {
       setStep(2);
       track('Quick Lead Created', { lead_id: response.lead_id });
     } catch (err: any) {
-      setError(err?.message || 'Erro ao enviar solicitação.');
+      setError(getWizardErrorMessage(err, 'Erro ao enviar solicitação.'));
     } finally {
       setSubmitting(false);
     }
@@ -272,3 +271,42 @@ export default function QuickLeadModal() {
 }
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+const FIELD_LABELS: Record<string, string> = {
+  company_id: 'Empresa selecionada',
+  product_vertical: 'Vertical do projeto',
+  project_profile: 'Perfil do projeto',
+  quote_type: 'Tipo de orçamento',
+  system_size_band: 'Tamanho do sistema',
+  decision_timeline: 'Prazo de decisão',
+  address_full: 'Endereço completo',
+  name: 'Nome completo',
+  email: 'E-mail',
+  phone: 'WhatsApp',
+  consent_at: 'Consentimento'
+};
+
+const normalizeFieldMessage = (message: string) => {
+  if (message === 'is required') return 'é obrigatório.';
+  return message;
+};
+
+const getWizardErrorMessage = (error: any, fallback: string) => {
+  const fields = error?.details?.fields;
+  if (fields && typeof fields === 'object') {
+    const [field, messages] = Object.entries(fields)[0] || [];
+    if (field) {
+      const label = FIELD_LABELS[field] || field;
+      const firstMessage = Array.isArray(messages) ? messages[0] : messages;
+      if (typeof firstMessage === 'string' && firstMessage.trim().length > 0) {
+        return `${label}: ${normalizeFieldMessage(firstMessage)}`;
+      }
+    }
+  }
+
+  if (typeof error?.message === 'string' && !error.message.includes('validation_failed')) {
+    return error.message;
+  }
+
+  return fallback;
+};

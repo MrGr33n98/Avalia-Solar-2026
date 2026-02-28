@@ -59,10 +59,17 @@ RSpec.describe 'Leads wizard API', type: :request do
     expect(response).to have_http_status(:created)
     create_payload = JSON.parse(response.body)
     lead_id = create_payload['lead_id']
+    created_lead = Lead.find(lead_id)
     expect(create_payload['verification_channel']).to eq('email')
     expect(create_payload['email_hint']).to be_present
     expect(ActionMailer::Base.deliveries.size).to eq(1)
     expect(ActionMailer::Base.deliveries.last.to).to include('lead@example.com')
+    expect(created_lead.product_vertical).to eq('Energia Solar')
+    expect(created_lead.project_profile).to eq('Residencial')
+    expect(created_lead.quote_type).to eq('Energia Solar')
+    expect(created_lead.system_size_band).to eq('Ate 7 kWp')
+    expect(created_lead.decision_timeline).to eq('Agora')
+    expect(created_lead.address_full).to eq('Rua C, 50 - Rio de Janeiro/RJ')
     Lead.find(lead_id).update_column(:otp_sent_at, 2.minutes.ago)
 
     post "/api/v1/leads/#{lead_id}/send_otp"
@@ -79,5 +86,36 @@ RSpec.describe 'Leads wizard API', type: :request do
     payload = JSON.parse(response.body)
     expect(payload['companies'].size).to eq(3)
     expect(payload['companies'].first['id']).to eq(company_b.id)
+  end
+
+  it 'accepts camelCase wizard payloads from the multi-step modal' do
+    allow(Lead).to receive(:generate_otp_code).and_return('123456')
+
+    post '/api/v1/leads/wizard_create', params: {
+      lead: {
+        productVertical: 'Energia Solar',
+        projectProfile: 'Residencial',
+        quoteType: 'Energia Solar',
+        systemSizeBand: 'Ate 7 kWp',
+        decisionTimeline: 'Agora',
+        addressFull: 'Rua D, 75 - Rio de Janeiro/RJ',
+        fullName: 'Lead Camel',
+        email: 'camel@example.com',
+        phone: '21988887777',
+        consent: true
+      },
+      preferred_company_id: company_a.id
+    }
+
+    expect(response).to have_http_status(:created)
+
+    lead = Lead.order(:created_at).last
+    expect(lead.name).to eq('Lead Camel')
+    expect(lead.product_vertical).to eq('Energia Solar')
+    expect(lead.project_profile).to eq('Residencial')
+    expect(lead.quote_type).to eq('Energia Solar')
+    expect(lead.system_size_band).to eq('Ate 7 kWp')
+    expect(lead.decision_timeline).to eq('Agora')
+    expect(lead.address_full).to eq('Rua D, 75 - Rio de Janeiro/RJ')
   end
 end
