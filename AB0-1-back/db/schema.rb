@@ -950,6 +950,25 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
     t.check_constraint "price >= 0", name: "ck_plans_valid_price"
   end
 
+  create_table "platform_events", force: :cascade do |t|
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.json "payload", default: {}
+    t.json "context", default: {}
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["event_id"], name: "index_platform_events_on_event_id"
+    t.index ["event_type", "occurred_at"], name: "index_platform_events_on_event_type_and_occurred_at"
+  end
+
   create_table "posts", force: :cascade do |t|
     t.string "title"
     t.text "body"
