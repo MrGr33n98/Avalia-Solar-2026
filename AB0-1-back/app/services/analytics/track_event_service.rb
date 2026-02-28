@@ -12,16 +12,17 @@ module Analytics
     
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       # FEATURE FLAG & KILL SWITCH GLOBAL
-      # Se a variável não estiver explicitamente 'true', aborta silenciosamente com sucesso.
-      unless ENV['G4_ANALYTICS_ENABLED'] == 'true'
+      # Permite execução em testes ou se a flag estiver explicitamente 'true'
+      unless Rails.env.test? || ENV['G4_ANALYTICS_ENABLED'] == 'true'
+        Rails.logger.info("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED")
         return Result.new(ok: true, error: 'analytics_disabled_by_flag')
       end
 
       new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
     rescue StandardError => e
       # Garantia final: NUNCA quebrar o chamador por erro de Analytics
-      Rails.logger.error("[G4-Analytics] Critical Failure in Service: #{e.message}")
-      Result.new(ok: false, error: e.message)
+      Rails.logger.error("[G4-Analytics] Critical Failure in Service: #{e.class} - #{e.message}")
+      Result.new(ok: false, error: 'analytics_service_error')
     end
 
     def initialize(company_id:, event_type:, metadata: {}, user: nil, occurred_at: nil, event_id: nil, user_id: nil)
@@ -57,7 +58,7 @@ module Analytics
       Result.new(ok: true)
     rescue StandardError => e
       Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")        
-      Result.new(ok: false, error: e.message)
+      Result.new(ok: false, error: 'analytics_processing_error')
     end
 
     private
@@ -74,12 +75,29 @@ module Analytics
     def ensure_unique_event!
       return true unless ActiveRecord::Base.connection.table_exists?('analytics_event_dedup')
       
-      conn = ActiveRecord::Base.connection
-      sql = "INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{conn.quote(@event_id)}, #{conn.quote(Time.current)}) ON CONFLICT DO NOTHING"
+      connection = ActiveRecord::Base.connection
+      adapter_name = connection.adapter_name.downcase
       
-      conn.execute(sql)
-      true 
+      if adapter_name.include?('postgresql')
+        # PostgreSQL: INSERT ... ON CONFLICT DO NOTHING com verificação de resultado
+        result = connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)}) ON CONFLICT (event_id) DO NOTHING")
+        result.cmd_tuples > 0
+      elsif adapter_name.include?('sqlite')
+        # SQLite: INSERT OR IGNORE com verificação em raw_connection.changes
+        connection.execute("INSERT OR IGNORE INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
+        connection.raw_connection.changes > 0
+      else
+        # Adapter não configurado - usar exception-based detection
+        begin
+          connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
+          true  # Inserção bem-sucedida
+        rescue ActiveRecord::RecordNotUnique
+          false  # Duplicate constraint violation
+        end
+        # Outros StatementInvalid propagam para rescue externo
+      end
     rescue ActiveRecord::RecordNotUnique
+      # Apenas constraint de unique violation = duplicata
       false
     end
 
