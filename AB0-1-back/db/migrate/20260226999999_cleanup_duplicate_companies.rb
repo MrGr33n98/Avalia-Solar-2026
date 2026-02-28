@@ -17,10 +17,9 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM reviews
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
+          SELECT id FROM companies
+          WHERE cnpj IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY cnpj HAVING cnpj IS NOT NULL
           )
         )
       SQL
@@ -29,10 +28,9 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM leads
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
+          SELECT id FROM companies
+          WHERE cnpj IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY cnpj HAVING cnpj IS NOT NULL
           )
         )
       SQL
@@ -41,10 +39,9 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM categories_companies
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
+          SELECT id FROM companies
+          WHERE cnpj IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY cnpj HAVING cnpj IS NOT NULL
           )
         )
       SQL
@@ -52,12 +49,8 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       # Now delete duplicate companies by CNPJ
       execute <<-SQL
         DELETE FROM companies
-        WHERE id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.cnpj = c2.cnpj AND c1.cnpj IS NOT NULL
-          )
+        WHERE cnpj IS NOT NULL AND id NOT IN (
+          SELECT MIN(id) FROM companies GROUP BY cnpj HAVING cnpj IS NOT NULL
         )
       SQL
 
@@ -65,10 +58,9 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM reviews
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
+          SELECT id FROM companies
+          WHERE api_key IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY api_key HAVING api_key IS NOT NULL
           )
         )
       SQL
@@ -76,10 +68,9 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM leads
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
+          SELECT id FROM companies
+          WHERE api_key IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY api_key HAVING api_key IS NOT NULL
           )
         )
       SQL
@@ -87,22 +78,17 @@ class CleanupDuplicateCompanies < ActiveRecord::Migration[7.0]
       execute <<-SQL
         DELETE FROM categories_companies
         WHERE company_id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
+          SELECT id FROM companies
+          WHERE api_key IS NOT NULL AND id NOT IN (
+            SELECT MIN(id) FROM companies GROUP BY api_key HAVING api_key IS NOT NULL
           )
         )
       SQL
 
       execute <<-SQL
         DELETE FROM companies
-        WHERE id IN (
-          SELECT c1.id FROM companies c1
-          WHERE c1.id > (
-            SELECT MIN(id) FROM companies c2 
-            WHERE c1.api_key = c2.api_key AND c1.api_key IS NOT NULL
-          )
+        WHERE api_key IS NOT NULL AND id NOT IN (
+          SELECT MIN(id) FROM companies GROUP BY api_key HAVING api_key IS NOT NULL
         )
       SQL
     ensure

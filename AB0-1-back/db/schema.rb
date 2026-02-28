@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_27_223544) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -79,6 +79,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
     t.boolean "two_factor_enabled", default: false
     t.index ["email"], name: "index_admin_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
+  end
+
+  create_table "analytics_event_dedup", primary_key: "event_id", id: :text, force: :cascade do |t|
+    t.datetime "inserted_at", default: -> { "NOW()" }, null: false
+    t.index ["inserted_at"], name: "index_analytics_event_dedup_on_inserted_at"
   end
 
   create_table "analytics_events", force: :cascade do |t|
@@ -326,6 +331,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
     t.integer "category_id", null: false
     t.index ["category_id", "product_id"], name: "index_categories_products_on_category_id_and_product_id"
     t.index ["product_id", "category_id"], name: "index_categories_products_on_product_id_and_category_id"
+  end
+
+  create_table "category_lead_wizards", force: :cascade do |t|
+    t.integer "category_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "template_key"
+    t.integer "template_version", default: 1
+    t.json "schema", default: {}
+    t.json "thank_you_config", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_category_lead_wizards_on_category_id", unique: true
   end
 
   create_table "comments", force: :cascade do |t|
@@ -780,6 +797,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
     t.string "landing_path"
     t.string "referrer_host"
     t.json "attribution_json", default: {}
+    t.json "wizard_answers", default: {}
+    t.string "template_key"
+    t.integer "template_version"
+    t.integer "category_id"
+    t.index ["category_id"], name: "index_leads_on_category_id"
     t.index ["company_id", "created_at"], name: "index_leads_on_company_id_and_created_at", order: { created_at: :desc }
     t.index ["company_id", "utm_campaign"], name: "index_leads_on_company_id_and_utm_campaign"
     t.index ["company_id", "wizard_status", "created_at"], name: "index_leads_on_company_id_and_wizard_status_and_created_at"
@@ -1108,6 +1130,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
   add_foreign_key "categories_companies", "companies"
   add_foreign_key "categories_products", "categories"
   add_foreign_key "categories_products", "products"
+  add_foreign_key "category_lead_wizards", "categories"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "companies", "plans"
@@ -1133,6 +1156,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_000004) do
   add_foreign_key "forum_questions", "users"
   add_foreign_key "lead_distributions", "companies"
   add_foreign_key "lead_distributions", "leads"
+  add_foreign_key "leads", "categories"
   add_foreign_key "leads", "companies"
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
   add_foreign_key "pending_changes", "companies"
