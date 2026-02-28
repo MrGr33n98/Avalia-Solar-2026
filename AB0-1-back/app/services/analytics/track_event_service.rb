@@ -11,7 +11,17 @@ module Analytics
     INTERNAL_SYSTEM_EVENTS = %w[page_view search landing_view theme_changed theme_changed_dashboard web_vital performance_metric error_occurred].freeze
     
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
+      # FEATURE FLAG & KILL SWITCH GLOBAL
+      # Se a variável não estiver explicitamente 'true', aborta silenciosamente com sucesso.
+      unless ENV['G4_ANALYTICS_ENABLED'] == 'true'
+        return Result.new(ok: true, error: 'analytics_disabled_by_flag')
+      end
+
       new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
+    rescue StandardError => e
+      # Garantia final: NUNCA quebrar o chamador por erro de Analytics
+      Rails.logger.error("[G4-Analytics] Critical Failure in Service: #{e.message}")
+      Result.new(ok: false, error: e.message)
     end
 
     def initialize(company_id:, event_type:, metadata: {}, user: nil, occurred_at: nil, event_id: nil, user_id: nil)
