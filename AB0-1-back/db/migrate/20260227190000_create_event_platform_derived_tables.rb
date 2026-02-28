@@ -102,8 +102,23 @@ class CreateEventPlatformDerivedTables < ActiveRecord::Migration[7.0]
     end
 
     pipelines = %w[feature_store_daily feature_store_rolling_30d anomaly_daily trust_score ranking_score main_aggregation]
+    default_watermark = connection.quote('2026-01-01 00:00:00+00')
+
     pipelines.each do |pipeline|
-      execute "INSERT OR IGNORE INTO analytics_processing_state (pipeline_name, last_processed_at) VALUES ('#{pipeline}', '2026-01-01 00:00:00+00')"
+      quoted_pipeline = connection.quote(pipeline)
+
+      if is_pg
+        execute <<~SQL.squish
+          INSERT INTO analytics_processing_state (pipeline_name, last_processed_at)
+          VALUES (#{quoted_pipeline}, #{default_watermark})
+          ON CONFLICT (pipeline_name) DO NOTHING
+        SQL
+      else
+        execute <<~SQL.squish
+          INSERT OR IGNORE INTO analytics_processing_state (pipeline_name, last_processed_at)
+          VALUES (#{quoted_pipeline}, #{default_watermark})
+        SQL
+      end
     end
   end
 
