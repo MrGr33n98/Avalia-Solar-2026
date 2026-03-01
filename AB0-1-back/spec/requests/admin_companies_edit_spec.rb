@@ -125,6 +125,71 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       expect(company.reload.verified).to be(true)
       expect(company.reload.cnpj).to be_blank
     end
+
+    it 'allows updating from the full ActiveAdmin form payload with blank CNPJ' do
+      category = create(:category)
+
+      patch admin_company_path(company), params: {
+        company: {
+          name: company.name,
+          description: 'Descricao atualizada com payload completo',
+          moderation_status: 'approved',
+          rejected_reason: '',
+          status: 'active',
+          featured: '1',
+          verified: '1',
+          sponsored: '0',
+          priority_score: '0',
+          active_admin: '0',
+          effect: '1',
+          email: 'cliente@empresa.com',
+          email_public: 'cliente@empresa.com',
+          phone: '2139008070',
+          phone_alt: '',
+          whatsapp: '',
+          address: 'Av. Paulista, 1000',
+          state: 'SP',
+          city: 'São Paulo',
+          latitude: '',
+          longitude: '',
+          cnpj: '',
+          founded_year: '',
+          employees_count: '',
+          project_types: ['', 'Residenciais', 'Comerciais'],
+          niche_tags: [''],
+          services_offered: [''],
+          working_hours: 'Seg-Sex 9h-18h',
+          payment_methods: 'Boleto, Transferência',
+          minimum_ticket: '1000',
+          maximum_ticket: '5000',
+          response_time_sla: '24h',
+          languages: 'Português',
+          financing_enabled: '0',
+          financing_tab_visible: '0',
+          coverage_states: 'SP',
+          coverage_cities: 'São Paulo',
+          certifications: '',
+          awards: '',
+          partner_brands: '',
+          website: 'https://empresa.com.br',
+          facebook: '',
+          instagram: '',
+          linkedin: '',
+          media_assets: [''],
+          whatsapp_enabled: '0',
+          whatsapp_url: '',
+          social_proof_enabled: '0',
+          sector_ratings_enabled: '0',
+          plan_id: '',
+          category_ids: ['', category.id.to_s],
+          badge_ids: ['']
+        }
+      }
+
+      expect(response).to redirect_to(admin_company_path(company))
+      expect(company.reload.cnpj).to be_blank
+      expect(company.description).to eq('Descricao atualizada com payload completo')
+    end
   end
 
   describe 'POST /admin/companies' do

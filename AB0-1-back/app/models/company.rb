@@ -274,6 +274,7 @@ class Company < ApplicationRecord
     self.city = city.to_s.strip.gsub(/\s+/, ' ') if city.present?
     self.email = email.to_s.strip.downcase if email.present?
     self.email_public = email_public.to_s.strip.downcase if email_public.present?
+    self.cnpj = normalize_cnpj_value(cnpj)
     self.phone = normalize_phone_value(phone)
     self.phone_alt = normalize_phone_value(phone_alt)
     self.whatsapp = normalize_phone_value(whatsapp)
@@ -286,6 +287,11 @@ class Company < ApplicationRecord
   end
 
   def normalize_phone_value(value)
+    digits = value.to_s.gsub(/\D/, '')
+    digits.presence
+  end
+
+  def normalize_cnpj_value(value)
     digits = value.to_s.gsub(/\D/, '')
     digits.presence
   end
