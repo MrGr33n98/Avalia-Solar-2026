@@ -8,8 +8,8 @@ export interface Banner {
   link?: string | null;
   link_url?: string | null;
   sponsored?: boolean;
-  banner_type?: 'rectangular_large' | 'rectangular_small';
-  position?: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top';
+  banner_type?: string;
+  position?: string;
   width?: number | null;
   height?: number | null;
   active?: boolean;
@@ -18,7 +18,11 @@ export interface Banner {
 interface UseBannersQueryOptions {
   position?: string;
   limit?: number;
+  category_id?: number | string;
+  company_id?: number | string;
+  slot_key?: string;
   enabled?: boolean;
+  initialData?: Banner[];
 }
 
 /**
@@ -26,27 +30,29 @@ interface UseBannersQueryOptions {
  * 
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
- * 
- * @example
- * // Banners da página de categorias
- * const { data, isLoading } = useBannersQuery({ position: 'categories_top' });
- * 
- * @example
- * // Banners com limite
- * const { data } = useBannersQuery({ position: 'categories_top', limit: 3 });
  */
 export function useBannersQuery(options: UseBannersQueryOptions = {}) {
-  const { position, limit, enabled = true } = options;
+  const { 
+    position, 
+    limit, 
+    category_id, 
+    company_id, 
+    slot_key, 
+    enabled = true,
+    initialData 
+  } = options;
 
   return useQuery<Banner[]>({
-    queryKey: ['banners', { position, limit }],
+    queryKey: ['banners', { position, limit, category_id, company_id, slot_key }],
     queryFn: async () => {
       const params = new URLSearchParams();
       
       if (position) params.append('position', position);
       if (limit) params.append('limit', String(limit));
+      if (category_id) params.append('category_id', String(category_id));
+      if (company_id) params.append('company_id', String(company_id));
+      if (slot_key) params.append('slot_key', slot_key);
 
-      // Usar api.request ao invés de api.get
       const response = await api.request<Banner[]>({
         url: `/banners?${params.toString()}`,
         method: 'GET'
@@ -54,8 +60,9 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       return response.data;
     },
     enabled,
-    staleTime: 10 * 60 * 1000, // 10 minutos - banners mudam menos
-    gcTime: 30 * 60 * 1000, // 30 minutos em cache
+    initialData,
+    staleTime: 5 * 60 * 1000, 
+    gcTime: 15 * 60 * 1000, 
     retry: (failureCount, error: any) => {
       const status = error?.status ?? error?.context?.status;
       if (status === 429) return false;
@@ -68,8 +75,9 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
 /**
  * Hook para buscar banners da página de categorias
  */
-export function useCategoriesBannersQuery() {
+export function useCategoriesBannersQuery(categoryId?: number | string) {
   return useBannersQuery({
     position: 'categories_top',
+    category_id: categoryId
   });
 }

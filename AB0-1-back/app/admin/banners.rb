@@ -1,155 +1,126 @@
 ActiveAdmin.register Banner do
   permit_params :title, :image, :company_id, :link, :active, :sponsored, :banner_type, :position,
                 :start_date, :end_date, :moderation_status, :priority, :rejected_reason,
-                :width, :height, category_ids: []
+                :width, :height, :slot_key, category_ids: []
 
-  index do
+  index title: 'Gerenciamento de Banners' do
     selectable_column
     id_column
     column :title
     column :image do |banner|
       if banner.image.attached?
         image_tag url_for(banner.image),
-                  style: "max-height: #{[banner.height || 100,
-                                         120].min}px; max-width: 240px; object-fit: contain; background: #f8fafc; border-radius: 8px;"
+                  style: "max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;"
       end
     end
-    column :company
-    column :moderation_status
-    column :banner_type
+    column 'Status Operacional' do |banner|
+      if !banner.active
+        status_tag 'Inativo', class: 'important'
+      elsif banner.moderation_status != 'approved'
+        status_tag banner.moderation_status, class: 'warning'
+      elsif banner.start_date && banner.start_date > Time.current
+        status_tag 'Agendado', class: 'yes'
+      elsif banner.end_date && banner.end_date < Time.current
+        status_tag 'Expirado', class: 'important'
+      else
+        status_tag 'Ativo Agora', class: 'ok'
+      end
+    end
     column :position
+    column :slot_key
+    column :company
     column 'Tamanho' do |banner|
       "#{banner.width || '-'}x#{banner.height || '-'}"
     end
-    column :start_date
-    column :end_date
-    column :active
-    column :sponsored
-    column :categories do |banner|
-      banner.categories.order(:name).pluck(:name).join(', ')
-    end
-    column :link
-    column :created_at
+    column :priority
     actions
   end
 
   form do |f|
-    f.inputs 'Detalhes do Banner' do
-      f.input :title
-      f.input :image, as: :file,
-                      hint: f.object.image.attached? ? image_tag(url_for(f.object.image), style: 'max-height: 100px') : 'Arraste e solte a imagem aqui ou clique para selecionar',
-                      input_html: {
-                        direct_upload: true,
-                        accept: 'image/*'
-                      }
-      f.input :banner_type, as: :select, collection: [
-        ['Retangular Grande', 'rectangular_large'],
-        ['Retangular Pequeno', 'rectangular_small']
-      ]
-      f.input :position, as: :select, collection: [
-        %w[Navbar navbar],
-        %w[Sidebar sidebar],
-        ['Topo Categorias', 'categories_top'],
-        ['Topo Home', 'home_top'],
-        ['Topo Empresas', 'companies_top']
-      ]
+    tabs do
+      tab 'Geral & Criativo' do
+        f.inputs 'Identificação' do
+          f.input :title, label: 'Título do Banner (Interno)'
+          f.input :link, label: 'Link de Destino', placeholder: 'https://...'
+          f.input :image, as: :file,
+                          hint: f.object.image.attached? ? image_tag(url_for(f.object.image), style: 'max-height: 100px') : 'Upload da imagem (PNG, JPG, WebP)',
+                          input_html: { direct_upload: true, accept: 'image/*' }
+        end
 
-      f.inputs 'Tamanho (px)' do
-        f.input :width, as: :number, input_html: { min: 1, step: 1, id: 'banner_width' },
-                        hint: 'Largura máxima de exibição (padrão = metade do tamanho anterior).'
-        f.input :height, as: :number, input_html: { min: 1, step: 1, id: 'banner_height' },
-                         hint: 'Altura máxima de exibição (padrão = metade do tamanho anterior).'
+        f.inputs 'Configurações de Layout' do
+          f.input :banner_type, as: :select, collection: [
+            ['Retangular Grande (6:1 / 4:1)', 'rectangular_large'],
+            ['Retangular Pequeno', 'rectangular_small']
+          ], include_blank: false
+          
+          f.input :position, as: :select, collection: [
+            ['Navbar (Topo Global)', 'navbar'],
+            ['Sidebar (Lateral)', 'sidebar'],
+            ['Topo Categorias', 'categories_top'],
+            ['Topo Home', 'home_top'],
+            ['Topo Empresas', 'companies_top'],
+            ['Rodapé Empresas', 'companies_footer']
+          ], include_blank: false
+
+          f.input :slot_key, label: 'Slot Key (Opcional)', 
+                  hint: 'Chave técnica para injeção em locais específicos (ex: home_hero, sponsored_v2)'
+          
+          f.inputs 'Dimensões (px)' do
+            f.input :width, input_html: { id: 'banner_width' }, hint: 'Padrão sugerido pela posição'
+            f.input :height, input_html: { id: 'banner_height' }, hint: 'Padrão sugerido pela posição'
+          end
+        end
       end
 
-      f.input :company
-      if Banner.const_defined?(:MODERATION_STATUSES)
-        f.input :moderation_status, as: :select, collection: Banner::MODERATION_STATUSES,
-                                    include_blank: false
+      tab 'Targeting (Segmentação)' do
+        f.inputs 'Audiência' do
+          f.input :company, label: 'Empresa Proprietária (Opcional)', 
+                  hint: 'Se selecionado, o banner será vinculado à performance desta empresa.'
+          f.input :categories, as: :check_boxes, collection: Category.order(:name),
+                               label: 'Exibir nestas categorias',
+                               hint: 'Deixe vazio para exibição global (se a posição permitir).'
+          f.input :sponsored, label: 'Banner Patrocinado?'
+          f.input :priority, label: 'Prioridade (1-1000)', hint: 'Valores menores aparecem primeiro (ex: 1 > 10).'
+        end
       end
-      f.input :priority
 
-      f.inputs 'Exibir em categorias' do
-        f.input :categories, as: :check_boxes, collection: Category.order(:name),
-                             hint: 'Se nenhuma categoria for selecionada, o banner pode ser tratado como global (dependendo do endpoint).'
+      tab 'Agendamento & Moderação' do
+        f.inputs 'Controle' do
+          f.input :moderation_status, as: :select, collection: Banner::MODERATION_STATUSES, include_blank: false
+          f.input :active, label: 'Ativo (Visível se aprovado)'
+          f.input :start_date, as: :datetime_picker, label: 'Início da Exibição'
+          f.input :end_date, as: :datetime_picker, label: 'Fim da Exibição'
+        end
       end
-
-      f.input :link
-      f.input :start_date, as: :datetime_select
-      f.input :end_date, as: :datetime_select
-      f.input :active
-      f.input :sponsored
     end
 
-    f.inputs 'Pré-visualização' do
-      if f.object.image.attached?
-        div id: 'banner_preview_wrapper',
-            style: 'padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc;' do
-          para 'Prévia respeitando o tamanho configurado (sem corte).', style: 'margin: 0 0 8px 0; color: #475569;'
-          img id: 'banner_preview_image',
-              src: url_for(f.object.image),
-              style: "display:block; max-width: #{f.object.width || 600}px; max-height: #{f.object.height || 200}px; width: 100%; height: auto; object-fit: contain; border-radius: 10px; background: #ffffff;"
-        end
-      else
-        para 'Faça upload de uma imagem para ver a prévia.', style: 'color: #64748b;'
-      end
+    script do
+      raw <<~JS
+        (function() {
+          function setDefaultsForPosition(position) {
+            if (position === 'navbar') return { w: 960, h: 100 };
+            if (position === 'sidebar') return { w: 150, h: 125 };
+            if (position === 'companies_footer') return { w: 1200, h: 160 };
+            return { w: 600, h: 200 };
+          }
 
-      script do
-        raw <<~JS
-          (function() {
-            function setDefaultsForPosition(position) {
-              // Defaults = half of previous sizes used historically in the project
-              if (position === 'navbar') return { w: 960, h: 100 };
-              if (position === 'sidebar') return { w: 150, h: 125 };
-              return { w: 600, h: 200 }; // categories_top/home_top/companies_top and fallback
+          document.addEventListener('DOMContentLoaded', function() {
+            var pos = document.getElementById('banner_position');
+            var w = document.getElementById('banner_width');
+            var h = document.getElementById('banner_height');
+
+            if (pos) {
+              pos.addEventListener('change', function() {
+                if (w && h) {
+                  var d = setDefaultsForPosition(pos.value);
+                  w.value = d.w;
+                  h.value = d.h;
+                }
+              });
             }
-
-            function syncPreview() {
-              var img = document.getElementById('banner_preview_image');
-              if (!img) return;
-              var w = document.getElementById('banner_width');
-              var h = document.getElementById('banner_height');
-              var width = w && w.value ? parseInt(w.value, 10) : null;
-              var height = h && h.value ? parseInt(h.value, 10) : null;
-              if (width) img.style.maxWidth = width + 'px';
-              if (height) img.style.maxHeight = height + 'px';
-            }
-
-            function maybeSetDefaultDimensions() {
-              var pos = document.getElementById('banner_position');
-              var w = document.getElementById('banner_width');
-              var h = document.getElementById('banner_height');
-              if (!pos || !w || !h) return;
-              if (w.value || h.value) return; // don't override user input
-              var d = setDefaultsForPosition(pos.value);
-              w.value = d.w;
-              h.value = d.h;
-              syncPreview();
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-              maybeSetDefaultDimensions();
-
-              var pos = document.getElementById('banner_position');
-              var w = document.getElementById('banner_width');
-              var h = document.getElementById('banner_height');
-
-              if (pos) {
-                pos.addEventListener('change', function() {
-                  // only set defaults when fields are empty to keep it predictable
-                  if (w && h && !w.value && !h.value) {
-                    var d = setDefaultsForPosition(pos.value);
-                    w.value = d.w;
-                    h.value = d.h;
-                  }
-                  syncPreview();
-                });
-              }
-              if (w) w.addEventListener('input', syncPreview);
-              if (h) h.addEventListener('input', syncPreview);
-            });
-          })();
-        JS
-      end
+          });
+        })();
+      JS
     end
     f.actions
   end
@@ -158,29 +129,45 @@ ActiveAdmin.register Banner do
     attributes_table do
       row :id
       row :title
+      row 'Status Operacional' do |banner|
+        if !banner.active
+          status_tag 'Inativo', class: 'important'
+        elsif banner.moderation_status != 'approved'
+          status_tag banner.moderation_status, class: 'warning'
+        elsif banner.start_date && banner.start_date > Time.current
+          status_tag 'Agendado', class: 'yes'
+        elsif banner.end_date && banner.end_date < Time.current
+          status_tag 'Expirado', class: 'important'
+        else
+          status_tag 'Ativo Agora', class: 'ok'
+        end
+      end
       row :image do |banner|
         if banner.image.attached?
           image_tag url_for(banner.image),
-                    style: "max-width: #{banner.width || 600}px; max-height: #{banner.height || 200}px; width: 100%; height: auto; object-fit: contain; background: #f8fafc; border-radius: 12px; padding: 8px;"
+                    style: "max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;"
         end
       end
+      row :link do |banner|
+        link_to banner.link, banner.link, target: '_blank' if banner.link.present?
+      end
+      row :position
+      row :slot_key
       row :company
+      row :categories do |banner|
+        banner.categories.pluck(:name).join(', ')
+      end
+      row :banner_type
+      row :dimensions do |banner|
+        "#{banner.width}x#{banner.height} px"
+      end
+      row :start_date
+      row :end_date
+      row :priority
       row :moderation_status
       row :approved_by_admin_user
       row :approved_at
-      row :rejected_reason
-      row :banner_type
-      row :position
-      row(:width) { |banner| banner.width || '-' }
-      row(:height) { |banner| banner.height || '-' }
-      row :start_date
-      row :end_date
-      row :categories do |banner|
-        banner.categories.order(:name).pluck(:name).join(', ')
-      end
-      row :link
-      row :active
-      row :sponsored
+      row :rejected_reason if resource.moderation_status == 'rejected'
       row :created_at
       row :updated_at
     end

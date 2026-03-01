@@ -12,14 +12,16 @@ import {
   CarouselNext,
 } from '@/components/ui/carousel';
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 interface BannerData {
   id: number | string;
-  type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top' | 'companies_footer';
-  image_url: string;
+  banner_type?: string;
+  position?: string;
+  image_url: string | null;
   title: string;
-  link?: string;
+  link?: string | null;
+  link_url?: string | null;
   sponsored?: boolean;
   width?: number | null;
   height?: number | null;
@@ -27,10 +29,12 @@ interface BannerData {
 
 interface BannerContainerProps {
   banners: BannerData[];
+  position?: string;
+  className?: string;
 }
 
-// Use brand-friendly fallback instead of the orange default
-const FALLBACK_BANNER_SRC = '/images/banner-avalia-solar.png';
+// Use brand-friendly fallback instead of the missing placeholder-banner.png
+const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
 
 function BannerImage({
   banner,
@@ -61,18 +65,28 @@ function BannerImage({
   );
 }
 
-export function BannerContainer({ banners }: BannerContainerProps) {
+export function BannerContainer({ banners, position, className }: BannerContainerProps) {
   // Validação de props e blindagem contra null/undefined
-  if (!banners || !Array.isArray(banners)) {
-    console.warn('[BannerContainer] banners prop is invalid:', banners);
+  if (!banners || !Array.isArray(banners) || banners.length === 0) {
     return null;
   }
 
   try {
     const displayBanners = banners;
 
+    // Helper para definir aspect ratio baseado na posição
+    const getAspectClass = (pos?: string) => {
+      switch (pos) {
+        case 'navbar': return 'aspect-[10/1]';
+        case 'sidebar': return 'aspect-[1/1]';
+        case 'companies_footer': return 'aspect-[6/1] sm:aspect-[8/1]';
+        default: return 'aspect-[6/1] sm:aspect-[4/1]';
+      }
+    };
+
     const dimsStyle = (banner: BannerData): React.CSSProperties => {
       const style: React.CSSProperties = {};
+      // Se tiver dimensões explícitas vindas do admin, respeitamos como maxWidth/Height
       if (typeof banner.width === 'number' && banner.width > 0) {
         style.maxWidth = `${banner.width}px`;
       }
@@ -82,81 +96,72 @@ export function BannerContainer({ banners }: BannerContainerProps) {
       return style;
     };
 
-  // Se houver apenas 1 banner, exiba-o estaticamente
-  if (displayBanners.length === 1) {
-    const banner = displayBanners[0];
-    return (
-      <div className="p-1">
-        <Card className="overflow-hidden">
-          <CardContent
-            className="relative flex items-center justify-center p-0 w-full mx-auto bg-white aspect-[6/1] sm:aspect-[4/1]"
-            style={dimsStyle(banner)}
+    const aspectClass = getAspectClass(position);
+
+    // Renderizador de item único para reaproveitamento
+    const renderBannerItem = (banner: BannerData, isPriority = false) => (
+      <Card className="overflow-hidden border-none bg-transparent shadow-none">
+        <CardContent
+          className={cn(
+            "relative flex items-center justify-center p-0 w-full mx-auto bg-muted/20 overflow-hidden rounded-lg",
+            aspectClass
+          )}
+          style={dimsStyle(banner)}
+        >
+          <Link 
+            href={banner.link_url || banner.link || '#'} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block w-full h-full"
           >
-            <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-              <BannerImage
-                banner={banner}
-                priority
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-              />
-              {banner.sponsored && (
-                  <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                      Patrocinado
-                  </span>
-              )}
-            </Link>
-          </CardContent>
-        </Card>
+            <BannerImage
+              banner={banner}
+              priority={isPriority}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+            />
+            {banner.sponsored && (
+              <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
+                Patrocinado
+              </span>
+            )}
+          </Link>
+        </CardContent>
+      </Card>
+    );
+
+    if (displayBanners.length === 1) {
+      return (
+        <div className={cn("w-full py-2", className)}>
+          {renderBannerItem(displayBanners[0], true)}
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn("w-full py-2", className)}>
+        <Carousel
+          plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
+          className="w-full"
+          opts={{ loop: true }}
+        >
+          <CarouselContent>
+            {displayBanners.map((banner, idx) => (
+              <CarouselItem key={banner.id || idx}>
+                {renderBannerItem(banner, idx === 0)}
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          {displayBanners.length > 1 && (
+            <>
+              <CarouselPrevious className="left-2 bg-white/50 border-none hover:bg-white" />
+              <CarouselNext className="right-2 bg-white/50 border-none hover:bg-white" />
+            </>
+          )}
+        </Carousel>
       </div>
     );
-  }
 
-  // Se houver 2 ou mais banners, use o carrossel
-  if (displayBanners.length > 1) {
-    return (
-      <Carousel
-        plugins={[Autoplay({ delay: 2000, stopOnInteraction: true })]}
-        className="w-full"
-        opts={{
-          loop: true,
-        }}
-      >
-        <CarouselContent>
-          {displayBanners.map((banner) => (
-            <CarouselItem key={banner.id}>
-              <div className="p-1">
-                <Card className="overflow-hidden">
-                  <CardContent
-                    className="relative flex items-center justify-center p-0 w-full mx-auto bg-white aspect-[6/1] sm:aspect-[4/1]"
-                    style={dimsStyle(banner)}
-                  >
-                    <Link href={banner.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                      <BannerImage
-                        banner={banner}
-                        priority
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                      {banner.sponsored && (
-                          <span className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                              Patrocinado
-                          </span>
-                      )}
-                    </Link>
-                  </CardContent>
-                </Card>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/70 hover:bg-white text-gray-800" />
-        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/70 hover:bg-white text-gray-800" />
-      </Carousel>
-    );
-  }
-
-    // Se não houver banners para a navbar, não renderize nada
-    return null;
   } catch (error) {
-    // Silenciosamente retorna null em vez de quebrar a página
     console.error('[BannerContainer] Error rendering banners:', error);
     return null;
   }
