@@ -129,6 +129,71 @@ describe('CompanyCard', () => {
     expect(screen.queryByRole('button', { name: /WhatsApp/i })).not.toBeInTheDocument();
   });
 
+  it('displays rating in x.x/5.0 format', () => {
+    const companyWithRating: Company = {
+      id: 4,
+      name: 'Rated Company',
+      average_rating: 4.2,
+      rating_count: 25,
+      city: 'Rio de Janeiro',
+      state: 'RJ'
+    };
+
+    render(<CompanyCard company={companyWithRating} />);
+
+    // Check for the new rating format
+    expect(screen.getByText('4.2/5.0')).toBeInTheDocument();
+    expect(screen.getByText('(25)')).toBeInTheDocument();
+  });
+
+  it('displays "Sem avaliações" for companies without rating', () => {
+    const companyWithoutRating: Company = {
+      id: 5,
+      name: 'Unrated Company',
+      average_rating: 0,
+      rating_count: 0,
+      city: 'Brasília',
+      state: 'DF'
+    };
+
+    render(<CompanyCard company={companyWithoutRating} />);
+
+    expect(screen.getByText('Sem avaliações')).toBeInTheDocument();
+  });
+
+  it('handles different rating field names correctly', () => {
+    const companyWithRatingAvg: Company = {
+      id: 6,
+      name: 'Rating Avg Company',
+      rating_avg: 3.8,
+      rating_count: 12,
+      city: 'Salvador',
+      state: 'BA'
+    };
+
+    render(<CompanyCard company={companyWithRatingAvg} />);
+
+    expect(screen.getByText('3.8/5.0')).toBeInTheDocument();
+    expect(screen.getByText('(12)')).toBeInTheDocument();
+  });
+
+  it('displays rating without count in compact mode', () => {
+    const companyWithRating: Company = {
+      id: 7,
+      name: 'Compact Company',
+      average_rating: 4.7,
+      rating_count: 88,
+      city: 'Fortaleza',
+      state: 'CE'
+    };
+
+    render(<CompanyCard company={companyWithRating} compact />);
+
+    expect(screen.getByText('4.7/5.0')).toBeInTheDocument();
+    // In compact mode, rating count should not be displayed
+    expect(screen.queryByText('(88)')).not.toBeInTheDocument();
+  });
+
   it('esconde WhatsApp/Orcamento quando active_admin esta desativado', () => {
     const inactiveCompany: Company = {
       ...mockCompany,

@@ -75,12 +75,12 @@ export default function CompanyCardV2({
         </div>
 
         {/* Rating */}
-        {company.rating && (
-          <div className="flex items-center gap-2" aria-label={`Avaliação: ${company.rating.toFixed(1)} de 5 estrelas`}>
-            <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="text-xs font-black text-amber-700">
-                {company.rating.toFixed(1)}
+        {(company.rating || company.rating_avg || company.average_rating) ? (
+          <div className="flex items-center gap-2" aria-label={`Avaliação: ${(company.rating || company.rating_avg || company.average_rating).toFixed(1)} de 5 estrelas`}>
+            <div className="flex items-center gap-1.5">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" strokeWidth={0} aria-hidden="true" />
+              <span className="text-sm font-bold text-slate-900">
+                {Number(company.rating || company.rating_avg || company.average_rating).toFixed(1)}/5.0
               </span>
             </div>
             {company.rating_count && (
@@ -88,6 +88,10 @@ export default function CompanyCardV2({
                 ({company.rating_count} {company.rating_count === 1 ? 'avaliação' : 'avaliações'})
               </span>
             )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-gray-400 font-bold">Sem avaliações</span>
           </div>
         )}
       </CardContent>

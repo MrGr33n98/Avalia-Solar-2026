@@ -33,6 +33,8 @@ interface ExtendedCompany extends Company {
   effect?: boolean;
   active_admin?: boolean;
   sponsored?: boolean;
+  whatsapp?: string;
+  email?: string;
 }
 
 interface Props {
@@ -453,7 +455,21 @@ export default function CompanyCard({
 
           <div className="flex items-center gap-2">
             <div className="flex-shrink-0">
-              {RatingStars && <RatingStars rating={average_rating} count={rating_count} showCount={!compact} lang={lang} />}
+              {average_rating > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                  <span className="text-sm font-bold text-slate-900">
+                    {Number(average_rating).toFixed(1)}/5.0
+                  </span>
+                  {!compact && rating_count > 0 && (
+                    <span className="text-[11px] text-gray-400 font-bold">
+                      ({rating_count.toLocaleString(lang)})
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-[11px] text-gray-400 font-bold">Sem avaliações</span>
+              )}
             </div>
             {category_name && !compact && (
               <span className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded-full truncate">
