@@ -96,10 +96,12 @@ function EmptyState({ message }: { message: string }) {
 async function getHomeData(): Promise<{
   featuredCategories: Category[];
   categoriesBanners: Banner[];
+  homeBanners: Banner[];
 }> {
-  const [featuredCategoriesRaw, categoriesBanners] = await Promise.all([
+  const [featuredCategoriesRaw, categoriesBanners, homeBanners] = await Promise.all([
     getCachedFeaturedCategories(),
     getCachedBanners('categories_top'),
+    getCachedBanners('home_top'),
   ]);
 
   const featuredCategories = Array.isArray(featuredCategoriesRaw) ? featuredCategoriesRaw : [];
@@ -111,6 +113,7 @@ async function getHomeData(): Promise<{
   return {
     featuredCategories: categoriesForHome,
     categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
+    homeBanners: Array.isArray(homeBanners) ? homeBanners : [],
   };
 }
 
@@ -136,10 +139,16 @@ async function getCompaniesData(): Promise<{
 
 const getHeroDataCached = unstable_cache(
   async () => {
-    const allCategories = await getCachedActiveCategories();
-    return { allCategories };
+    const [allCategories, homeBanners] = await Promise.all([
+      getCachedActiveCategories(),
+      getCachedBanners('home_top'),
+    ]);
+    return { 
+      allCategories, 
+      homeBanners: Array.isArray(homeBanners) ? homeBanners : [] 
+    };
   },
-  ['home-hero-data-v1'],
+  ['home-hero-data-v2'],
   { revalidate: 600, tags: ['home-data', 'home-hero'] }
 );
 
@@ -230,16 +239,16 @@ async function LandingHeroWrapper({
   dataPromise: ReturnType<typeof getHeroDataCached>;
 }) {
   try {
-    const { allCategories } = await dataPromise;
+    const { allCategories, homeBanners } = await dataPromise;
     const safeCategories =
       Array.isArray(allCategories) && allCategories.length > 0
         ? allCategories
         : getFallbackCategories(8);
 
-    return <LandingHero categories={safeCategories} />;
+    return <LandingHero categories={safeCategories} banners={homeBanners} />;
   } catch (error) {
     console.error('[Home] LandingHeroWrapper fallback triggered:', error);
-    return <LandingHero categories={getFallbackCategories(8)} />;
+    return <LandingHero categories={getFallbackCategories(8)} banners={[]} />;
   }
 }
 
