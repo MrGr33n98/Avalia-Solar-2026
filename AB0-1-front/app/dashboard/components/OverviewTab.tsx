@@ -138,9 +138,10 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Onboarding Section - Preserved */}
       {hasNoData && (
-        <Card className="border-blue-200 bg-blue-50/50 shadow-sm mb-6">
+        <Card className="border-blue-200 bg-blue-50/50 shadow-sm">
           <CardHeader>
             <CardTitle className="text-blue-900 text-lg flex items-center gap-2">
               <Zap className="w-5 h-5 text-blue-600" />
@@ -182,31 +183,8 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         </Card>
       )}
 
-      {statsQuery.isLoading ? (
-        <Skeleton className="h-[150px] w-full rounded-xl" />
-      ) : stats && !hasNoData ? (
-        <OpportunitiesCard
-          leftLabel="Para a categoria"
-          leftValue={stats.pendingApprovals}
-          rightLabel={`Para ${companyName}`}
-          rightValue={stats.leadsReceived}
-        />
-      ) : null}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {statsQuery.isLoading ? (
-          <Skeleton className="h-[340px] w-full rounded-xl" />
-        ) : (
-          <NPSDetailedCard averageRating={Number(stats?.averageRating || 0)} reviewsCount={Number(stats?.reviewsCount || 0)} />
-        )}
-        {statsQuery.isLoading ? (
-          <Skeleton className="h-[340px] w-full rounded-xl" />
-        ) : (
-          <RankingTable rows={rankingRows} />
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* TOP SECTION: Main KPIs - Moved to absolute top for value-first hierarchy */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsQuery.isLoading ? (
           <>
             {Array.from({ length: 4 }).map((_, idx) => (
@@ -223,23 +201,23 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Tempo Médio de Resposta</p>
-              <h4 className="text-lg font-bold text-foreground">{stats?.averageResponseTime || 0} horas</h4>
-              <p className="text-[10px] text-green-600 flex items-center gap-0.5 mt-0.5">
-                <TrendingUp className="h-3 w-3" />
-                15% mais rápido que o mês anterior
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* MIDDLE SECTION: Analytics Dashboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {statsQuery.isLoading ? (
+          <Skeleton className="h-[340px] w-full rounded-xl" />
+        ) : (
+          <NPSDetailedCard averageRating={Number(stats?.averageRating || 0)} reviewsCount={Number(stats?.reviewsCount || 0)} />
+        )}
+        {statsQuery.isLoading ? (
+          <Skeleton className="h-[340px] w-full rounded-xl" />
+        ) : (
+          <RankingTable rows={rankingRows} />
+        )}
+      </div>
 
+      {/* SIDE/SECONDARY SECTION: Operational Metrics & Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Profile Health & Action Items */}
         <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-green-50 rounded-xl">
@@ -255,13 +233,14 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
           </CardContent>
         </Card>
 
+        {/* Conversion Performance */}
         <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-purple-50 rounded-xl">
               <Star className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Taxa de Conversão de Avaliações</p>
+              <p className="text-xs text-muted-foreground font-medium">Taxa de Conversão</p>
               <h4 className="text-lg font-bold text-foreground">{stats?.conversionRate?.toFixed(1) || 0}%</h4>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Visitantes que deixaram avaliação
@@ -269,35 +248,37 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             </div>
           </CardContent>
         </Card>
+
+        {/* Opportunities Card - Repositioned */}
+        {statsQuery.isLoading ? (
+          <Skeleton className="h-[88px] w-full rounded-xl" />
+        ) : stats && !hasNoData ? (
+          <OpportunitiesCard
+            leftLabel="Para a categoria"
+            leftValue={stats.pendingApprovals}
+            rightLabel={`Para ${companyName}`}
+            rightValue={stats.leadsReceived}
+          />
+        ) : (
+          <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <Clock className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Tempo de Resposta</p>
+                <h4 className="text-lg font-bold text-foreground">{stats?.averageResponseTime || 0}h</h4>
+                <p className="text-[10px] text-green-600 flex items-center gap-0.5 mt-0.5">
+                  <TrendingUp className="h-3 w-3" />
+                  Otimizado
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Card className="border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
-          <CardContent className="p-4">
-            <div className="text-xs font-semibold text-gray-800 mb-1">Crescimento</div>
-            <div className="text-xs text-gray-600 leading-relaxed">
-              Evolução consistente das métricas do seu perfil no Avaliasolar.
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-gray-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50">
-          <CardContent className="p-4">
-            <div className="text-xs font-semibold text-gray-800 mb-1">Engajamento</div>
-            <div className="text-xs text-gray-600 leading-relaxed">
-              Acompanhe cliques em CTA e contatos via WhatsApp para otimizar conversão.
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-gray-200 bg-gradient-to-br from-purple-50 to-purple-100/50">
-          <CardContent className="p-4">
-            <div className="text-xs font-semibold text-gray-800 mb-1">Posicionamento</div>
-            <div className="text-xs text-gray-600 leading-relaxed">
-              Melhore sua reputação com avaliações e informações completas do produto.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* BOTTOM SECTION: Advanced Analytics */}
       <AdvancedAnalytics themeMode={themeMode} companyId={companyId} />
     </div>
   );
