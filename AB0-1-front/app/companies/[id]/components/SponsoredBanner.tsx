@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import analyticsApi from '@/lib/api-analytics';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 type SponsoredBannerProps = {
   slotKey: string;
@@ -78,7 +79,12 @@ export default function SponsoredBanner({
   if (loading) {
     return (
       <div className={className}>
-        <div className="animate-pulse rounded-xl bg-muted h-24" />
+        <div
+          className={cn(
+            'animate-pulse rounded-xl bg-muted',
+            variant === 'square' ? 'aspect-[4/3]' : 'aspect-[4/1] md:aspect-[5/1]'
+          )}
+        />
       </div>
     );
   }
@@ -100,14 +106,19 @@ export default function SponsoredBanner({
     }
   };
 
+  const aspectClass =
+    variant === 'square'
+      ? 'aspect-[4/3]'
+      : 'aspect-[4/1] md:aspect-[5/1]';
+
   const content = (
-    <div className="relative w-full overflow-hidden rounded-xl">
+    <div className={cn('relative w-full overflow-hidden rounded-xl bg-muted/20', aspectClass)}>
       <Image
         src={imageSrc}
         alt={imageAlt}
-        width={banner?.width || 600}
-        height={banner?.height || (variant === 'square' ? 250 : 180)}
-        className="w-full h-auto object-cover"
+        fill
+        sizes={variant === 'square' ? '(max-width: 1024px) 100vw, 360px' : '(max-width: 1024px) 100vw, 900px'}
+        className="object-cover object-center"
         onError={() => setImageFailed(true)}
       />
     </div>

@@ -79,16 +79,23 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       switch (pos) {
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
-        case 'categories_top': return 'aspect-[8/1] sm:aspect-[12/1]'; // Redução de ~65% na altura comparado ao 4:1
+        case 'categories_top': return 'aspect-[4/1] sm:aspect-[6/1]';
         case 'companies_footer': 
         case 'article_footer_cta':
-          return 'aspect-[6/1] sm:aspect-[8/1]';
+          return 'aspect-[4/1] sm:aspect-[6/1]';
         default: return 'aspect-[6/1] sm:aspect-[4/1]';
       }
     };
 
     const dimsStyle = (banner: BannerData): React.CSSProperties => {
       const style: React.CSSProperties = {};
+      const fullWidthPositions = new Set(['categories_top', 'companies_footer', 'article_footer_cta']);
+
+      if (position && fullWidthPositions.has(position)) {
+        style.width = '100%';
+        return style;
+      }
+
       // Se tiver dimensões explícitas vindas do admin, respeitamos como maxWidth/Height
       if (typeof banner.width === 'number' && banner.width > 0) {
         style.maxWidth = `${banner.width}px`;
