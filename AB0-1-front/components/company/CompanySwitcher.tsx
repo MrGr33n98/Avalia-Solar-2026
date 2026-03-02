@@ -131,7 +131,7 @@ export function CompanySwitcher({ className }: CompanySwitcherProps) {
             </DropdownMenuItem>
 
             <DropdownMenuItem 
-              onSelect={() => router.push('/dashboard')}
+              onSelect={() => router.push('/dashboard/company')}
               className="gap-2 cursor-pointer"
             >
               <LayoutDashboard className="h-4 w-4" />

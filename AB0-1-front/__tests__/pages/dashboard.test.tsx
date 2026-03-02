@@ -16,33 +16,12 @@ jest.mock('@/context/CompanyContext', () => ({
   useCompanyContext: jest.fn(),
 }));
 
-jest.mock('next/dynamic', () => {
-  return () => {
-    const MockDynamicComponent = (props: { companyId?: number | string }) => (
-      <div data-testid="realtime-dashboard">Realtime dashboard {props.companyId}</div>
-    );
-    return MockDynamicComponent;
-  };
-});
-
-jest.mock('next/link', () => ({
-  __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
-}));
-
 describe('DashboardPage', () => {
-  const mockPush = jest.fn();
+  const mockReplace = jest.fn();
 
   beforeEach(() => {
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-    mockPush.mockClear();
-
-    jest.spyOn(console, 'debug').mockImplementation(() => {});
-    jest.spyOn(console, 'info').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    (useRouter as jest.Mock).mockReturnValue({ replace: mockReplace });
+    mockReplace.mockClear();
   });
 
   afterEach(() => {
@@ -64,7 +43,7 @@ describe('DashboardPage', () => {
     const { container } = render(<DashboardPage />);
 
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('redirects unauthenticated users to login', async () => {
@@ -82,7 +61,7 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/login?return_to=%2Fdashboard');
+      expect(mockReplace).toHaveBeenCalledWith('/login?return_to=%2Fdashboard');
     });
   });
 
@@ -101,11 +80,11 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/select-company');
+      expect(mockReplace).toHaveBeenCalledWith('/select-company');
     });
   });
 
-  it('renders dashboard content when user is authenticated with active company', () => {
+  it('redirects company users with active company to /dashboard/company', async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 1, name: 'WEG Admin', role: 'company' },
       loading: false,
@@ -119,10 +98,28 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByText(/Bem-vindo de volta, WEG Admin!/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Acessar Dashboard da Empresa/i })).toBeInTheDocument();
-    expect(screen.getByTestId('realtime-dashboard')).toBeInTheDocument();
-    expect(mockPush).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/dashboard/company');
+    });
+  });
+
+  it('redirects review users to the review dashboard', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 9, name: 'Reviewer', role: 'review' },
+      loading: false,
+      error: null,
+    });
+
+    (useCompanyContext as jest.Mock).mockReturnValue({
+      activeCompany: null,
+      isLoading: false,
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/review-dashboard');
+    });
   });
 
   it('renders fallback UI when auth context reports error', () => {

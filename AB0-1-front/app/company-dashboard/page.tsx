@@ -1,8 +1,8 @@
-import CompanyDashboardPage from '@/app/dashboard/company/page';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default function CompanyDashboardWrapper() {
-  return <CompanyDashboardPage />;
+export default function CompanyDashboardLegacyPage() {
+  redirect('/dashboard/company');
 }

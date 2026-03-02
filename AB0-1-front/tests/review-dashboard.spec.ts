@@ -226,7 +226,7 @@ test.describe('Review Dashboard functionality', () => {
 
     await page.goto('/review-dashboard', { waitUntil: 'domcontentloaded', timeout: 60000 });
     
-    // Should redirect to company-dashboard
-    await expect(page).toHaveURL(/\/company-dashboard/, { timeout: 20000 });
+    // Should redirect to canonical company dashboard route
+    await expect(page).toHaveURL(/\/dashboard\/company/, { timeout: 20000 });
   });
 });

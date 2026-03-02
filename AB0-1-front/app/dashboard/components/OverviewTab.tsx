@@ -76,9 +76,8 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         conversionRate: data.conversion_rate ?? 0,
         reviewsCount: company?.reviews_count ?? 0,
         averageRating: company?.rating_avg ?? 0,
-        pendingApprovals: 0,
-        averageResponseTime: 0,
         profileCompletion,
+        // Removed fake metrics: pendingApprovals, averageResponseTime
       };
     },
     enabled: Boolean(companyId),
@@ -249,34 +248,89 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
           </CardContent>
         </Card>
 
-        {/* Opportunities Card - Repositioned */}
+        {/* Real Opportunities - Only if has meaningful data */}
         {statsQuery.isLoading ? (
           <Skeleton className="h-[88px] w-full rounded-xl" />
-        ) : stats && !hasNoData ? (
+        ) : stats && !hasNoData && stats.leadsReceived > 0 ? (
           <OpportunitiesCard
-            leftLabel="Para a categoria"
-            leftValue={stats.pendingApprovals}
+            leftLabel="Categoria"
+            leftValue={stats.leadsReceived}
             rightLabel={`Para ${companyName}`}
             rightValue={stats.leadsReceived}
           />
         ) : (
           <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="p-3 bg-emerald-50 rounded-xl">
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Tempo de Resposta</p>
-                <h4 className="text-lg font-bold text-foreground">{stats?.averageResponseTime || 0}h</h4>
-                <p className="text-[10px] text-green-600 flex items-center gap-0.5 mt-0.5">
-                  <TrendingUp className="h-3 w-3" />
-                  Otimizado
+                <p className="text-xs text-muted-foreground font-medium">Status do Perfil</p>
+                <h4 className="text-lg font-bold text-foreground">Ativo</h4>
+                <p className="text-[10px] text-emerald-600 flex items-center gap-0.5 mt-0.5">
+                  <CheckCircle className="h-3 w-3" />
+                  Publicado
                 </p>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* GROWTH TOOLS SECTION: Always accessible */}
+      <Card className="border-emerald-200 bg-emerald-50/30 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-emerald-900 text-lg flex items-center gap-2">
+            <Zap className="w-5 h-5 text-emerald-600" />
+            Ferramentas de Crescimento
+          </CardTitle>
+          <CardDescription className="text-emerald-700">
+            Use essas ferramentas para aumentar sua visibilidade e capturar mais leads.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4 p-4 bg-white rounded-lg border border-emerald-100 shadow-sm">
+              <h4 className="font-semibold text-slate-800">📊 Link Público Rastreado</h4>
+              <p className="text-sm text-slate-600">Compartilhe este link para rastrear visitas e leads.</p>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={assetsQuery.data?.utm_ready_link || ''} 
+                  className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" 
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link rastreado')}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-4 p-4 bg-white rounded-lg border border-emerald-100 shadow-sm">
+              <h4 className="font-semibold text-slate-800">🏆 Selo de Confiança</h4>
+              <p className="text-sm text-slate-600">Instale no seu site para mostrar sua reputação.</p>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={assetsQuery.data?.badge_embed_code || ''} 
+                  className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" 
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Código do selo')}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* BOTTOM SECTION: Advanced Analytics */}
       <AdvancedAnalytics themeMode={themeMode} companyId={companyId} />

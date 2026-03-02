@@ -182,7 +182,7 @@ export default function SelectCompanyPage() {
       setSelectingId(company.id);
 
       await selectCompany(company);
-      router.push(`/company-dashboard?company_id=${company.id}`);
+      router.push(`/dashboard/company?company_id=${company.id}`);
     } catch (error) {
       setActionError(
         extractErrorMessage(error, 'Nao foi possivel selecionar a empresa. Tente novamente.')
