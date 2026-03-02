@@ -11,7 +11,7 @@ class Banner < ApplicationRecord
   has_one_attached :image
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
-  ALLOWED_POSITIONS = %w[navbar sidebar categories_top home_top companies_top companies_footer].freeze
+  ALLOWED_POSITIONS = %w[navbar sidebar categories_top home_top companies_top companies_footer article_footer_cta].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
 
   # === Validações Básicas ===
@@ -170,7 +170,7 @@ class Banner < ApplicationRecord
       [960, 100]
     when 'sidebar'
       [150, 125]
-    when 'companies_footer'
+    when 'companies_footer', 'article_footer_cta'
       [1200, 160]
     else
       [600, 200]

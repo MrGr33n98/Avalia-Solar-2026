@@ -80,7 +80,9 @@ export function BannerContainer({ banners, position, className }: BannerContaine
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
         case 'categories_top': return 'aspect-[8/1] sm:aspect-[12/1]'; // Redução de ~65% na altura comparado ao 4:1
-        case 'companies_footer': return 'aspect-[6/1] sm:aspect-[8/1]';
+        case 'companies_footer': 
+        case 'article_footer_cta':
+          return 'aspect-[6/1] sm:aspect-[8/1]';
         default: return 'aspect-[6/1] sm:aspect-[4/1]';
       }
     };

@@ -75,7 +75,7 @@ export default function ArticleConversionSection({ article }: { article: any }) 
     <div className="my-12">
       {/* Monetization Block */}
       <div className="mb-8 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50/50">
-        <BannerByLocation location="categories_top" limit={1} categoryId={article?.category_id} />
+        <BannerByLocation location="article_footer_cta" limit={1} categoryId={article?.category_id} />
       </div>
 
       <section className="bg-slate-50 rounded-xl p-6 sm:p-8 border border-slate-100">

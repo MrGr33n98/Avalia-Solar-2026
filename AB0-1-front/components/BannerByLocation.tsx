@@ -12,7 +12,8 @@ type BannerLocation =
   | 'categories_top' 
   | 'home_top' 
   | 'companies_top' 
-  | 'companies_footer';
+  | 'companies_footer'
+  | 'article_footer_cta';
 
 interface BannerByLocationProps {
   location: BannerLocation;

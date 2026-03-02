@@ -59,7 +59,8 @@ ActiveAdmin.register Banner do
             ['Topo Categorias', 'categories_top'],
             ['Topo Home', 'home_top'],
             ['Topo Empresas', 'companies_top'],
-            ['Rodapé Empresas', 'companies_footer']
+            ['Rodapé Empresas', 'companies_footer'],
+            ['Rodapé Artigo (Blog)', 'article_footer_cta']
           ], include_blank: false
 
           f.input :slot_key, label: 'Slot Key (Opcional)', 
@@ -100,7 +101,7 @@ ActiveAdmin.register Banner do
           function setDefaultsForPosition(position) {
             if (position === 'navbar') return { w: 960, h: 100 };
             if (position === 'sidebar') return { w: 150, h: 125 };
-            if (position === 'companies_footer') return { w: 1200, h: 160 };
+            if (position === 'companies_footer' || position === 'article_footer_cta') return { w: 1200, h: 160 };
             return { w: 600, h: 200 };
           }
 

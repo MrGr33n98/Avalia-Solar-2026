@@ -70,8 +70,8 @@ function resolveImageSrc(url?: string | null): string | null {
 export default function SponsorCarousel({
   banners,
   className,
-  // ✅ 20% menor que antes (era h-48 sm:h-56 md:h-64)
-  height = 'h-[128px] sm:h-[149px] md:h-[171px]',
+  // ✅ Altura aproximadamente dobrada para melhor presença visual
+  height = 'h-[200px] sm:h-[240px] md:h-[280px]',
   allowUpload = true,
   onUploaded,
 }: SponsorCarouselProps) {

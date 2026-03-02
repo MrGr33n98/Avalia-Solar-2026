@@ -7,6 +7,7 @@ A plataforma de banners sofria com inconsistências entre o que o ActiveAdmin pe
 
 ### Backend & Admin
 - **Unificação de Posições:** Habilitada a posição `companies_footer` no backend, alinhando com o frontend.
+- **Novo Placement Blog:** Criada a posição `article_footer_cta` dedicada para banners no rodapé de artigos, evitando conflito com o inventário de categorias.
 - **Gestão de Slot Key:** Campo `slot_key` agora é editável no ActiveAdmin, permitindo injeção técnica de banners em locais específicos sem depender de Dev.
 - **Status Operacional Unificado:** Implementada lógica visual no `index` e `show` do ActiveAdmin para distinguir banners:
   - `Ativo Agora` (Aprovado + Dentro da janela de data + Ativo)
@@ -21,7 +22,8 @@ A plataforma de banners sofria com inconsistências entre o que o ActiveAdmin pe
 - **Fallback de Imagem:** Corrigido o caminho do placeholder para `/images/banner-placeholder.svg` (evita 404).
 - **Suporte a Hydration:** Hook `useBannersQuery` agora aceita `initialData`, permitindo que a Home renderize banners via SSR sem flashes de conteúdo.
 - **Flexibilidade de Props:** `BannerByLocation` agora suporta `slotKey`, `categoryId` e `companyId` como filtros.
-- **Aspect Ratio Dinâmico:** `BannerContainer` agora ajusta o formato automaticamente baseado na posição (`navbar` 10:1, `sidebar` 1:1, etc).
+- **Aspect Ratio Dinâmico:** `BannerContainer` agora ajusta o formato automaticamente baseado na posição (`navbar` 10:1, `sidebar` 1:1, `categories_top` 12:1).
+- **Correção de Links:** Corrigido link quebrado em `CategoryHighlights` do blog para apontar para o slug real de financiamento.
 
 ## Gaps Identificados (Para Fase 2)
 - **Cache Server-Side da Home:** A Home utiliza `unstable_cache` do Next.js com `revalidate: 600` (10 minutos). Mudanças no Admin não refletem instantaneamente no servidor.

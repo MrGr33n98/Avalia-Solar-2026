@@ -200,7 +200,7 @@ export default function CategoryPageClient({
       ) : (
         <>
           {/* Banner da Categoria */}
-          <div className="container mx-auto px-6 pt-4 md:pt-5">
+          <div className="max-w-[1280px] mx-auto px-6 pt-4 md:pt-5">
             <BannerByLocation 
               location="categories_top" 
               initialBanners={initialBanners} 

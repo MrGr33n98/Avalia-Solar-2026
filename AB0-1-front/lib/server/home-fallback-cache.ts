@@ -262,7 +262,7 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
   return result.data.length > 0 ? result.data : DEFAULT_HOME_CATEGORY_FALLBACK;
 }
 
-export async function getCachedBanners(position: 'categories_top' | 'companies_top'): Promise<Banner[]> {
+export async function getCachedBanners(position: 'categories_top' | 'companies_top' | 'article_footer_cta'): Promise<Banner[]> {
   const cache = await getCache();
   const result = await cache.get<Banner[]>(
     `home.banners.${position}`,

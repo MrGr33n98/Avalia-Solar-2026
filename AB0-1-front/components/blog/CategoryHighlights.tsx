@@ -13,7 +13,7 @@ const HIGHLIGHTS = [
     icon: Wallet,
     color: 'text-green-500',
     bg: 'bg-green-50',
-    href: '/categories/financiamento-solar' 
+    href: '/categories/financiamento-energia-solar' 
   },
   {
     id: 'installation',
