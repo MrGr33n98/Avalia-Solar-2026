@@ -11,17 +11,26 @@ Os placements de banner largos estavam respeitando `width` e `height` crus do ad
 - O banner de categoria ganhou mais altura visual:
   - mobile: `4:1`
   - desktop: `6:1`
+- Na Home, o banner de `categories_top` passou a ocupar a linha inteira do grid de categorias, em vez de ficar preso a meia largura.
 - `SponsoredBanner` do company detail passou a usar aspect ratios responsivos fixos:
-  - inline: `4:1` mobile / `5:1` desktop
-  - sidebar: `4:3`
+  - inline: `3:1` mobile / `4:1` desktop
+  - sidebar: `16:10`
 - Os banners patrocinados agora não dependem mais do tamanho bruto da imagem para definir presença visual na página.
+- Os slots patrocinados do company detail ganharam borda e sombra leves para se integrarem melhor ao layout.
 
 ## Arquivos alterados
+- `app/page.tsx`
 - `components/BannerContainer.tsx`
 - `app/companies/[id]/components/SponsoredBanner.tsx`
 
 ## Checklist
 - [x] Banner de categoria ocupa a largura do layout
 - [x] Banner de categoria ganhou altura visual
+- [x] Banner da Home deixou de ficar preso a meia largura no grid de categorias
 - [x] Banners patrocinados do company detail ficaram mais legíveis
 - [ ] Validar visualmente em produção após deploy
+
+## File List
+- `app/page.tsx`
+- `components/BannerContainer.tsx`
+- `app/companies/[id]/components/SponsoredBanner.tsx`

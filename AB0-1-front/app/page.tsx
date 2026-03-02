@@ -289,8 +289,6 @@ async function CategoriesSectionWrapper({
 
   return (
     <SectionShell zebra>
-      <BannerByLocationLazy location="categories_top" className="mb-8" initialBanners={categoriesBanners} />
-
       <SectionHeader
         title="Soluções por Categoria"
         subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
@@ -299,6 +297,17 @@ async function CategoriesSectionWrapper({
       {safeCategories.length > 0 ? (
         <CategoryCardsErrorBoundary>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            {/* Editorial Banner Integrated in Grid */}
+            {categoriesBanners.length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-4">
+                <BannerByLocationLazy 
+                  location="categories_top" 
+                  initialBanners={categoriesBanners.slice(0, 1)} 
+                  className="h-full rounded-3xl overflow-hidden border border-slate-100 shadow-xl"
+                />
+              </div>
+            )}
+            
             {safeCategories.map((category) => (
               <LandingCategoryCard key={category.id} category={category} />
             ))}
@@ -333,8 +342,6 @@ async function CompaniesSectionWrapper({
   const { companies, companiesBanners } = await dataPromise;
   return (
     <SectionShell>
-      <BannerByLocationLazy location="companies_top" className="mb-8" initialBanners={companiesBanners} />
-
       <SectionHeader
         title="Empresas em Destaque"
         subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
@@ -347,15 +354,26 @@ async function CompaniesSectionWrapper({
         }
       />
 
-      {companies.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
-          {companies.slice(0, 8).map((company) => (
-            <CompanyCard key={company.id} company={company} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState message="Nenhuma empresa em destaque encontrada." />
-      )}
+      <div className="flex flex-col gap-8">
+        {/* Native Featured Banner linked to Section Header */}
+        {companiesBanners.length > 0 && (
+          <BannerByLocationLazy 
+            location="companies_top" 
+            initialBanners={companiesBanners.slice(0, 1)} 
+            className="rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+          />
+        )}
+
+        {companies.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+            {companies.slice(0, 8).map((company) => (
+              <CompanyCard key={company.id} company={company} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState message="Nenhuma empresa em destaque encontrada." />
+        )}
+      </div>
 
       <div className="mt-12 text-center">
         <CTAPrimaryButton 

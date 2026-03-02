@@ -82,7 +82,7 @@ export default function SponsoredBanner({
         <div
           className={cn(
             'animate-pulse rounded-xl bg-muted',
-            variant === 'square' ? 'aspect-[4/3]' : 'aspect-[4/1] md:aspect-[5/1]'
+            variant === 'square' ? 'aspect-[16/10]' : 'aspect-[3/1] md:aspect-[4/1]'
           )}
         />
       </div>
@@ -108,8 +108,8 @@ export default function SponsoredBanner({
 
   const aspectClass =
     variant === 'square'
-      ? 'aspect-[4/3]'
-      : 'aspect-[4/1] md:aspect-[5/1]';
+      ? 'aspect-[16/10]'
+      : 'aspect-[3/1] md:aspect-[4/1]';
 
   const content = (
     <div className={cn('relative w-full overflow-hidden rounded-xl bg-muted/20', aspectClass)}>
@@ -126,7 +126,7 @@ export default function SponsoredBanner({
 
   if (variant === 'square') {
     return (
-      <Card className={className}>
+      <Card className={cn('overflow-hidden border border-slate-100 shadow-sm', className)}>
         <CardContent className="p-3">
           {banner?.link_url ? (
             <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
@@ -150,7 +150,7 @@ export default function SponsoredBanner({
   }
 
   return (
-    <div className={className}>
+    <div className={cn('overflow-hidden rounded-2xl border border-slate-100 shadow-sm', className)}>
       {banner?.link_url ? (
         <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
           {content}
