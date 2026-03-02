@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, MapPin, ArrowRight, Mail, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import BannerByLocation from '@/components/BannerByLocation';
 
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -46,30 +47,10 @@ function PostSidebarContent() {
         </CardContent>
       </Card>
 
-      {/* Verified Companies Placeholder */}
-      <Card className="border-slate-100 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold text-slate-900">Empresas Verificadas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
-              <div className="w-10 h-10 rounded bg-slate-200 animate-pulse" />
-              <div className="flex-1 min-w-0">
-                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-1" />
-                <div className="flex items-center gap-1 text-xs text-amber-500">
-                  <div className="flex">★★★★★</div>
-                  <span className="text-slate-400 text-[10px]">(4.{8+i})</span>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
-            </div>
-          ))}
-          <Button variant="outline" className="w-full text-xs h-8" asChild>
-             <Link href="/companies">Ver todas</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Monetization: Sidebar Banner */}
+      <div className="rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50/50">
+        <BannerByLocation location="sidebar" limit={1} />
+      </div>
 
       {/* Newsletter */}
       <Card className="bg-slate-900 text-white border-none shadow-md">

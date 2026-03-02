@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CategoryHero from '@/components/categories/CategoryHero';
-import { BannerCarousel } from '@/components/categories/BannerCarousel';
+import BannerByLocation from '@/components/BannerByLocation';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar';
 import CompaniesGrid from '@/components/categories/CompaniesGrid';
@@ -200,11 +200,14 @@ export default function CategoryPageClient({
       ) : (
         <>
           {/* Banner da Categoria */}
-          {initialBanners && initialBanners.length > 0 && (
-            <div className="container mx-auto px-6 pt-4 md:pt-5">
-              <BannerCarousel banners={initialBanners} />
-            </div>
-          )}
+          <div className="container mx-auto px-6 pt-4 md:pt-5">
+            <BannerByLocation 
+              location="categories_top" 
+              initialBanners={initialBanners} 
+              categoryId={initialCategory?.id}
+              limit={5}
+            />
+          </div>
 
           {/* Hero - Full width header */}
           <CategoryHero

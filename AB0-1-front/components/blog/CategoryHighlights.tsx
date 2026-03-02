@@ -8,20 +8,20 @@ import { track } from '@/lib/analytics/lazy';
 
 const HIGHLIGHTS = [
   {
-    id: 'economy',
-    title: 'Economia',
+    id: 'economia',
+    title: 'Economia e Tarifas',
     icon: Wallet,
     color: 'text-green-500',
     bg: 'bg-green-50',
-    href: '/blog?category=1' // Adjust ID based on real data if needed
+    href: '/categories/financiamento-solar' 
   },
   {
     id: 'installation',
-    title: 'Instalação',
+    title: 'Instalação Solar',
     icon: Sun,
     color: 'text-amber-500',
     bg: 'bg-amber-50',
-    href: '/blog?category=2'
+    href: '/categories/energia-solar-residencial'
   },
   {
     id: 'maintenance',
@@ -29,15 +29,15 @@ const HIGHLIGHTS = [
     icon: Wrench,
     color: 'text-slate-500',
     bg: 'bg-slate-50',
-    href: '/blog?category=3'
+    href: '/categories/limpeza-e-manutencao'
   },
   {
     id: 'financing',
-    title: 'Financiamento',
+    title: 'Empresas Top Rated',
     icon: Banknote,
     color: 'text-blue-500',
     bg: 'bg-blue-50',
-    href: '/blog?category=4'
+    href: '/companies?sort=rating'
   }
 ];
 

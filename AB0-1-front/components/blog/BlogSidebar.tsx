@@ -10,6 +10,7 @@ import { Calculator, MessageCircle, Mail } from 'lucide-react';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { VerifiedCompaniesMiniList } from '@/components/blog/VerifiedCompaniesMiniList';
 import { ChecklistCard } from '@/components/blog/ChecklistCard';
+import BannerByLocation from '@/components/BannerByLocation';
 
 interface BlogSidebarProps {
   verifiedCompanies?: any[]; // Using any[] to match VerifiedCompaniesMiniListProps loosely or define properly
@@ -18,6 +19,11 @@ interface BlogSidebarProps {
 export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
   return (
     <aside className="space-y-8">
+      {/* Monetization: Top Sidebar Banner */}
+      <div className="rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50/50">
+        <BannerByLocation location="sidebar" limit={1} />
+      </div>
+
       {/* 1. QuoteCard */}
       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-md">
         <CardHeader className="pb-3">
