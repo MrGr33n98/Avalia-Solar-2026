@@ -199,17 +199,7 @@ export default function CategoryPageClient({
         </>
       ) : (
         <>
-          {/* Banner da Categoria */}
-          <div className="max-w-[1280px] mx-auto px-6 pt-4 md:pt-5">
-            <BannerByLocation 
-              location="categories_top" 
-              initialBanners={initialBanners} 
-              categoryId={initialCategory?.id}
-              limit={5}
-            />
-          </div>
-
-          {/* Hero - Full width header */}
+          {/* Hero - Full width header (Agora Integrado com Banners) */}
           <CategoryHero
             name={categoryName}
             description={
@@ -220,6 +210,7 @@ export default function CategoryPageClient({
             bannerUrl={initialCategory?.banner_url}
             parentCategory={initialCategory?.parent}
             subcategories={initialCategory?.subcategories}
+            banners={initialBanners}
             onLeadClick={() => {
               track('lead_open_internal', {
                 company_id: 0,
