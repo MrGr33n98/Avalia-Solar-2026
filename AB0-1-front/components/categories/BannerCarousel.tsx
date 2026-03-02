@@ -37,7 +37,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
 
   if (loading) {
     return (
-      <div className={cn("w-full h-[280px] md:h-[400px] rounded-xl overflow-hidden", className)}>
+      <div className={cn("w-full h-[180px] md:h-[240px] rounded-xl overflow-hidden", className)}>
         <Skeleton className="w-full h-full" />
       </div>
     );
@@ -61,7 +61,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
       <CarouselContent>
         {banners.map((banner, index) => (
           <CarouselItem key={banner.id}>
-            <div className="relative w-full h-[280px] md:h-[400px] group">
+            <div className="relative w-full h-[180px] md:h-[240px] group">
               {banner.link_url ? (
                 <a
                   href={banner.link_url}
@@ -128,10 +128,10 @@ function BannerImage({ banner, isFirst }: { banner: Banner; isFirst: boolean }) 
         onError={() => setError(true)}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 p-6 md:p-10 text-white pointer-events-none w-full">
-        <h3 className="text-xl md:text-3xl font-bold mb-2 drop-shadow-lg tracking-tight">{banner.title}</h3>
+      <div className="absolute bottom-0 left-0 p-4 md:p-6 text-white pointer-events-none w-full">
+        <h3 className="text-lg md:text-2xl font-bold mb-1 drop-shadow-lg tracking-tight">{banner.title}</h3>
         {banner.description && (
-          <p className="text-sm md:text-lg text-white/90 drop-shadow-md max-w-2xl line-clamp-2">
+          <p className="text-sm md:text-base text-white/90 drop-shadow-md max-w-2xl line-clamp-1">
             {banner.description}
           </p>
         )}
