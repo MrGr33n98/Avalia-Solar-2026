@@ -17,7 +17,7 @@ const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod
   loading: () => null,
 });
 
-import { useCallback, useEffect, useRef } from 'react';
+import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { initializeAnalytics, page } from '@/lib/analytics/lazy';
 import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
@@ -45,8 +45,11 @@ export default function ClientBody({
     window.addEventListener('pointerdown', handleInteraction, { once: true });
     window.addEventListener('keydown', handleInteraction, { once: true });
 
-    // Increased timeout to 5s to reduce initial bundle impact
-    const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), 5000);
+    // Load analytics faster if consent is already given to ensure initial page_view is caught
+    // For new users without consent, we wait 5s to prioritize initial LCP
+    const timeoutDelay = hasAnalyticsConsent() ? 1500 : 5000;
+    const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), timeoutDelay);
+    
     return () => {
       window.removeEventListener('pointerdown', handleInteraction);
       window.removeEventListener('keydown', handleInteraction);

@@ -12,8 +12,11 @@ module Analytics
     
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       # FEATURE FLAG & KILL SWITCH GLOBAL
-      # Permite execução em testes ou se a flag estiver explicitamente 'true'
-      unless Rails.env.test? || ENV['G4_ANALYTICS_ENABLED'] == 'true'
+      # Must be explicitly 'true' to run, otherwise it's disabled for safety.
+      # We allow it in tests by default unless explicitly mocked.
+      is_enabled = ENV['G4_ANALYTICS_ENABLED'] == 'true' || Rails.env.test?
+
+      unless is_enabled
         Rails.logger.info("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED")
         return Result.new(ok: true, error: 'analytics_disabled_by_flag')
       end
