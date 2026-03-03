@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Star, ArrowLeft } from 'lucide-react';
@@ -9,10 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { reviewsApi } from '@/lib/api';
+import { reviewsApi, fetchApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
-import { SectorRatingForm } from '@/components/company/SectorRatingForm';
 
 import {
   Dialog,
@@ -24,16 +23,27 @@ import {
 } from '@/components/ui/dialog';
 
 interface ReviewFormProps {
-  companyId: number;
+  company: any;
   companyPath: string;
 }
 
-function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
+interface Criterion {
+  id: number;
+  slug: string;
+  title: string;
+  help_text: string | null;
+  required: boolean;
+}
+
+function ReviewForm({ company, companyPath }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  const [criteria, setCriteria] = useState<Criterion[]>([]);
+  const [criterionScores, setCriterionScores] = useState<Record<number, number>>({});
   
   const router = useRouter();
   const { user } = useAuth();
@@ -45,6 +55,28 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
     return encodeURIComponent(fullPath || '/');
   })();
 
+  useEffect(() => {
+    // Resolve categoryId with priority: category_info.id (from serializer) -> category_id -> direct id
+    const categoryId = company?.category_info?.id || company?.category_id;
+    
+    if (categoryId) {
+      fetchApi(`/categories/${categoryId}/evaluation_context`)
+        .then((data: any) => {
+          // Render whenever criteria exists, even if has_granular_criteria boolean is missing
+          if (data?.criteria && Array.isArray(data.criteria) && data.criteria.length > 0) {
+            setCriteria(data.criteria);
+          }
+        })
+        .catch(err => {
+          console.error('[ReviewForm] Failed to fetch evaluation context:', err);
+        });
+    }
+  }, [company]);
+
+  const handleCriterionScoreChange = (criterionId: number, score: number) => {
+    setCriterionScores(prev => ({ ...prev, [criterionId]: score }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -54,7 +86,13 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
     }
     
     if (rating === 0) {
-      setSubmitError('Por favor, selecione uma classificação.');
+      setSubmitError('Por favor, selecione uma classificação geral.');
+      return;
+    }
+
+    const missingRequired = criteria.some(c => c.required && !criterionScores[c.id]);
+    if (missingRequired) {
+      setSubmitError('Por favor, avalie todos os critérios obrigatórios.');
       return;
     }
     
@@ -67,16 +105,22 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
     setSubmitError(null);
     
     try {
-      // Enviar avaliação para aprovação
+      const review_criterion_scores_attributes = Object.entries(criterionScores).map(([id, score]) => ({
+        rating_criterion_id: Number(id),
+        score: score
+      }));
+
       await reviewsApi.create({
         rating,
         comment: comment.trim(),
-        company_id: companyId
-      });
+        company_id: company.id,
+        ...(review_criterion_scores_attributes.length > 0 && { review_criterion_scores_attributes })
+      } as any);
       
       setShowConfirmModal(true);
       setRating(0);
       setComment('');
+      setCriterionScores({});
     } catch (error) {
       console.error('Error submitting review:', error);
       setSubmitError('Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.');
@@ -109,7 +153,7 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
           </Button>
         </div>
         <div className="mt-3 text-sm text-gray-600">
-          Voce e uma empresa?{' '}
+          Você é uma empresa?{' '}
           <Link href="/register" className="text-blue-600 hover:underline">
             Cadastre sua empresa
           </Link>
@@ -140,8 +184,9 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label className="text-base">Classificação</Label>
+            {/* Avaliação Geral */}
+            <div className="p-4 bg-muted/20 rounded-lg border border-border/50">
+              <Label className="text-base font-semibold">Nota Geral</Label>
               <div className="flex gap-1 mt-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -151,7 +196,7 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
                     className="focus:outline-none transition-transform hover:scale-110"
                   >
                     <Star
-                      className={`h-8 w-8 ${
+                      className={`h-10 w-10 ${
                         star <= rating
                           ? 'text-yellow-400 fill-yellow-400'
                           : 'text-gray-300 hover:text-yellow-200'
@@ -162,14 +207,51 @@ function ReviewForm({ companyId, companyPath }: ReviewFormProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="comment">Seu Comentário</Label>
+            {/* Critérios Granulares */}
+            {criteria.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <Label className="text-base font-semibold">Avalie os detalhes do serviço</Label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {criteria.map(criterion => (
+                    <div key={criterion.id} className="p-3 bg-muted/10 rounded-md border border-border/30">
+                      <Label className="text-sm flex items-center justify-between">
+                        <span>{criterion.title} {criterion.required && <span className="text-red-500">*</span>}</span>
+                      </Label>
+                      {criterion.help_text && (
+                        <p className="text-xs text-muted-foreground mt-0.5 mb-2">{criterion.help_text}</p>
+                      )}
+                      <div className="flex gap-1 mt-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => handleCriterionScoreChange(criterion.id, star)}
+                            className="focus:outline-none transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`h-6 w-6 ${
+                                star <= (criterionScores[criterion.id] || 0)
+                                  ? 'text-yellow-400 fill-yellow-400'
+                                  : 'text-gray-300 hover:text-yellow-200'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 pt-4 border-t border-border/50">
+              <Label htmlFor="comment" className="text-base font-semibold">Seu Comentário</Label>
               <Textarea
                 id="comment"
-                placeholder="Conte-nos como foi sua experiência..."
+                placeholder="Conte-nos os detalhes da sua experiência (ex: prazo, atendimento, qualidade)..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="min-h-[150px]"
+                className="min-h-[120px]"
               />
               <p className="text-xs text-gray-500 text-right">
                 Mínimo de 10 caracteres
@@ -233,9 +315,9 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Empresa nao encontrada</h3>
+              <h3 className="text-xl font-semibold mb-2">Empresa não encontrada</h3>
               <p className="text-gray-600 mb-4">
-                Nao foi possivel identificar a empresa solicitada.
+                Não foi possível identificar a empresa solicitada.
               </p>
               <Button onClick={() => router.back()}>
                 Voltar
@@ -294,13 +376,10 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
         </div>
 
         <Suspense fallback={<div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">Carregando formulário...</div>}>
-          <ReviewForm companyId={company.id} companyPath={companyPath} />
+          <ReviewForm company={company} companyPath={companyPath} />
         </Suspense>
-
-        <SectorRatingForm companyId={company.id} sectorRatingsEnabled={Boolean(company.sector_ratings_enabled)} />
       </div>
     </div>
   );
 }
-
 

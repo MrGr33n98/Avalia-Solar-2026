@@ -73,7 +73,6 @@ const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false }
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { track } from "@/lib/analytics/lazy";
-import { SectorRatingForm } from "@/components/company/SectorRatingForm";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -378,15 +377,6 @@ export default function CompanyDetailClient({
                       companySlug={currentCompany?.slug}
                       companyName={currentCompany?.name}
                     />
-                    <div className="pt-2">
-                      {isAuthenticated ? (
-                        <SectorRatingForm companyId={companyId} sectorRatingsEnabled={currentCompany?.sector_ratings_enabled} />
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-6 text-center text-sm text-slate-500">
-                          Faça login para enviar sua avaliação técnica.
-                        </div>
-                      )}
-                    </div>
                   </TabsContent>
 
                   <TabsContent value="financing" className="mt-0 focus-visible:outline-none">

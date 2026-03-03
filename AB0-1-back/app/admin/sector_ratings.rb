@@ -4,8 +4,8 @@ ActiveAdmin.register SectorRating do
   actions :index, :show, :destroy
   permit_params :status, :comment
 
-  filter :company
-  filter :user
+  filter :company_name, as: :string, label: 'Nome da Empresa'
+  filter :user_email, as: :string, label: 'Email do Usuário'
   filter :status, as: :select, collection: SectorRating.statuses.keys
   filter :created_at
 
