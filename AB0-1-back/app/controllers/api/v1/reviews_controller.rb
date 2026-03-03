@@ -73,6 +73,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     else
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique => e
+    raise e unless duplicate_review_constraint?(e)
+
+    render json: { errors: ['Voce ja avaliou esta empresa.'] }, status: :unprocessable_entity
   end
 
   def update
@@ -188,5 +192,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       rating_criterion_id: score.rating_criterion_id,
       title: score.rating_criterion&.title
     }
+  end
+
+  def duplicate_review_constraint?(error)
+    error.message.to_s.include?('index_reviews_on_company_id_and_user_id')
   end
 end

@@ -146,6 +146,19 @@ RSpec.describe 'Reviews API', type: :request do
         )
       )
     end
+
+    it 'returns unprocessable entity when the user already reviewed the company' do
+      auth = auth_headers(review_user)
+      create(:review, company: company, user: review_user, status: :approved)
+
+      expect do
+        post '/api/v1/reviews', params: review_payload.to_json, headers: auth
+      end.not_to change(Review, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json['errors']).to include('Voce ja avaliou esta empresa.')
+    end
   end
 
   describe 'GET /api/v1/reviews' do

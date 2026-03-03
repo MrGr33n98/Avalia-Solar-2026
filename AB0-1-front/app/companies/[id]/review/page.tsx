@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
 import { reviewsApi, fetchApi } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
 
@@ -34,6 +35,12 @@ interface Criterion {
   help_text: string | null;
   required: boolean;
 }
+
+const formatSubmitErrorMessage = (error: unknown) => {
+  const fallback = 'Ocorreu um erro ao enviar sua avaliacao. Por favor, tente novamente.';
+  const message = getApiErrorMessage(error, fallback).replace(/^\[\d{3}\]\s*/, '').trim();
+  return message || fallback;
+};
 
 function ReviewForm({ company, companyPath }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
@@ -123,7 +130,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
       setCriterionScores({});
     } catch (error) {
       console.error('Error submitting review:', error);
-      setSubmitError('Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.');
+      setSubmitError(formatSubmitErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

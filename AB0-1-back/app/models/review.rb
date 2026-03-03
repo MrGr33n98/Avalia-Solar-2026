@@ -25,6 +25,7 @@ class Review < ApplicationRecord
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
   validates :comment, presence: true, length: { minimum: 10 }
   validates :display_order, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validate :validate_single_review_per_company
   validate :validate_featured_requires_paid_plan
   validate :validate_featured_limit_per_company
   validate :validate_featured_requires_approved_status
@@ -64,6 +65,13 @@ class Review < ApplicationRecord
   def invalidate_social_proof_cache
     ids = [company_id, company_id_before_last_save].compact.uniq
     ids.each { |id| self.class.invalidate_social_proof_cache_for_company(id) }
+  end
+
+  def validate_single_review_per_company
+    return if company_id.blank? || user_id.blank?
+    return unless self.class.where(company_id: company_id, user_id: user_id).where.not(id: id).exists?
+
+    errors.add(:base, 'Voce ja avaliou esta empresa.')
   end
 
   def validate_featured_requires_paid_plan
