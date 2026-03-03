@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,9 +40,7 @@ export default function SponsoredBanner({
   useEffect(() => {
     let mounted = true;
     async function loadBanners() {
-      if (mounted) {
-        setLoading(true);
-      }
+      if (mounted) setLoading(true);
       try {
         const response = await api.request<Banner[]>({
           url: '/banners',
@@ -68,37 +66,26 @@ export default function SponsoredBanner({
       }
     }
     loadBanners();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [slotKey, companyId]);
+
+  const aspectClass = useMemo(() => 
+    variant === 'square' ? 'aspect-[16/10]' : 'aspect-[3/1] md:aspect-[4/1]',
+    [variant]
+  );
 
   if (loading) {
     return (
-      <div className={className}>
-        <div
-          className={cn(
-            'animate-pulse rounded-xl bg-muted',
-            variant === 'square' ? 'aspect-[16/10]' : 'aspect-[3/1] md:aspect-[4/1]'
-          )}
-        />
-      </div>
+      <div className={cn("w-full overflow-hidden rounded-2xl bg-muted animate-pulse", aspectClass, className)} />
     );
   }
 
-  if (error || banners.length === 0) {
-    return null;
-  }
-
-  const aspectClass =
-    variant === 'square'
-      ? 'aspect-[16/10]'
-      : 'aspect-[3/1] md:aspect-[4/1]';
+  if (error || banners.length === 0) return null;
 
   const renderBannerContent = (banner: Banner) => {
     const imageSrc = banner.image_url || '/images/banner-avalia-solar.png';
     const imageAlt = banner.title || 'Banner';
-
+    
     const onClick = () => {
       analyticsApi.trackBannerEvent({
         banner_id: banner.id,
@@ -133,9 +120,7 @@ export default function SponsoredBanner({
                 <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick} className="block w-full h-full">
                   {content}
                 </a>
-              ) : (
-                content
-              )}
+              ) : content}
             </div>
             {banner.link_url && (
               <div className="mt-3">
@@ -157,9 +142,7 @@ export default function SponsoredBanner({
           <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick} className="block w-full h-full">
             {content}
           </a>
-        ) : (
-          content
-        )}
+        ) : content}
       </div>
     );
   };

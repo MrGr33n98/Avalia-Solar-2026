@@ -30,13 +30,23 @@ export function PremiumBannerCarousel({
 }: PremiumBannerCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
   const [isPaused, setIsPaused] = React.useState(false);
   
+  // FIX: Pre-initialize scrollSnaps based on item count to avoid hydration/first-frame flicker
+  const scrollSnaps = React.useMemo(() => items.map((_, i) => i), [items.length]);
+  
   const controls = useAnimation();
+  
+  // FIX: Stable plugins reference
   const plugin = React.useRef(
     Autoplay({ delay: autoplayDelay, stopOnInteraction: false, stopOnMouseEnter: true })
   );
+
+  // FIX: Stable options object to prevent Embla re-initialization
+  const carouselOpts = React.useMemo(() => ({
+    loop: true,
+    align: "start" as const,
+  }), []);
 
   const onSelect = React.useCallback((api: CarouselApi) => {
     if (!api) return;
@@ -45,18 +55,13 @@ export function PremiumBannerCarousel({
 
   React.useEffect(() => {
     if (!api) return;
-
     onSelect(api);
-    setScrollSnaps(api.scrollSnapList());
     api.on('select', onSelect);
     api.on('reInit', onSelect);
-
-    return () => {
-      api.off('select', onSelect);
-    };
+    return () => { api.off('select', onSelect); };
   }, [api, onSelect]);
 
-  // Progress bar animation
+  // Progress bar animation control
   React.useEffect(() => {
     if (!api || items.length <= 1) return;
 
@@ -96,10 +101,7 @@ export function PremiumBannerCarousel({
         setApi={setApi}
         plugins={[plugin.current]}
         className="w-full"
-        opts={{
-          loop: true,
-          align: "start",
-        }}
+        opts={carouselOpts}
       >
         <CarouselContent className="-ml-0">
           {items.map((item, index) => (
@@ -117,13 +119,15 @@ export function PremiumBannerCarousel({
 
         {items.length > 1 && (
           <>
+            {/* Arrows: Always visible on mobile, hover on desktop */}
             <div className="absolute inset-y-0 left-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselPrevious className="relative left-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50 hover:text-white" />
+              <CarouselPrevious className="relative left-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
             <div className="absolute inset-y-0 right-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselNext className="relative right-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50 hover:text-white" />
+              <CarouselNext className="relative right-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
 
+            {/* Progress Indicators */}
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full z-10">
               {scrollSnaps.map((_, index) => (
                 <button

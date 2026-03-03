@@ -311,7 +311,7 @@ async function CategoriesSectionWrapper({
               <div className="sm:col-span-2 lg:col-span-4">
                 <BannerByLocationLazy 
                   location="categories_top" 
-                  initialBanners={categoriesBanners.slice(0, 1)} 
+                  initialBanners={categoriesBanners} 
                   className="h-full rounded-3xl overflow-hidden border border-slate-100 shadow-xl"
                 />
               </div>
