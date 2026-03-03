@@ -10,9 +10,15 @@ module ReviewCallbacks
   private
 
   def recalculate_company_rating
-    return unless company_id_changed_for_commit? || saved_change_to_rating? || destroyed?
+    company_ids = []
+    company_ids.concat([company_id, company_id_before_last_save]) if destroyed? || saved_change_to_company_id?
+    company_ids << company_id if saved_change_to_rating?
 
-    company&.recalculate_rating_cache!
+    return if company_ids.compact.empty?
+
+    company_ids.compact.uniq.each do |id|
+      Company.find_by(id: id)&.recalculate_rating_cache!
+    end
   rescue StandardError => e
     Rails.logger.error("Failed to recalculate rating cache for company #{company_id}: #{e.message}")
   end

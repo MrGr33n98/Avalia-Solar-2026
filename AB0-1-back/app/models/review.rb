@@ -121,7 +121,7 @@ class Review < ApplicationRecord
       event_type: 'review_created',
       metadata: {
         source: 'review',
-        rating: rating
+        rating: rating.to_f
       },
       user_id: nil,
       tracked_at: created_at

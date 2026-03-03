@@ -60,6 +60,17 @@ class User < ApplicationRecord
     company
   end
 
+  def avatar_url
+    return unless avatar.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(avatar, options)
+  rescue StandardError
+    nil
+  end
+
   def active?
     return false unless active_status?
     return true if review_user?

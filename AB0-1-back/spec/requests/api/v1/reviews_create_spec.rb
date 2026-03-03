@@ -66,6 +66,8 @@ RSpec.describe 'Reviews API', type: :request do
   before do
     allow(Analytics::TrackEventService).to receive(:call)
     allow(SlackNotificationService).to receive(:notify_review)
+    allow(TrustScoreRecalculationWorker).to receive(:perform_async)
+    allow(AiModerationWorker).to receive(:perform_async)
   end
 
   describe 'POST /api/v1/reviews' do
@@ -79,6 +81,9 @@ RSpec.describe 'Reviews API', type: :request do
       expect(response).to have_http_status(:created)
       expect(Review.last.user_id).to eq(review_user.id)
       expect(Review.last.company_id).to eq(company.id)
+      json = JSON.parse(response.body)
+      expect(json['user']).to include('id' => review_user.id, 'name' => review_user.name, 'avatar_url' => nil)
+      expect(json['company']).to include('id' => company.id, 'name' => company.name)
     end
 
     it 'creates a review for a company user' do
@@ -132,6 +137,39 @@ RSpec.describe 'Reviews API', type: :request do
       review = Review.last
       expect(review.review_criterion_scores.first.score).to eq(5)
       expect(review.review_criterion_scores.first.rating_criterion_id).to eq(criterion.id)
+      json = JSON.parse(response.body)
+      expect(json['review_criterion_scores']).to contain_exactly(
+        include(
+          'rating_criterion_id' => criterion.id,
+          'score' => 5.0,
+          'title' => criterion.title
+        )
+      )
+    end
+  end
+
+  describe 'GET /api/v1/reviews' do
+    it 'returns approved reviews with nested user payload even without avatar attachment' do
+      review = create(:review, company: company, user: review_user, status: :approved)
+
+      get '/api/v1/reviews', params: { company_id: company.id, limit: 10 }, headers: headers
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json).to contain_exactly(
+        include(
+          'id' => review.id,
+          'user' => include(
+            'id' => review_user.id,
+            'name' => review_user.name,
+            'avatar_url' => nil
+          ),
+          'company' => include(
+            'id' => company.id,
+            'name' => company.name
+          )
+        )
+      )
     end
   end
 end

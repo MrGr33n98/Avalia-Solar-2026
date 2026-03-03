@@ -44,7 +44,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def mine
-    @reviews = current_user.reviews.includes(:company, review_criterion_scores: :rating_criterion).order(created_at: :desc)
+    @reviews = current_user.reviews.includes(:user, :company, review_criterion_scores: :rating_criterion).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
     }
@@ -108,53 +108,37 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   def serialize_review(review)
     {
       id: review.id,
-      user_id: review.user_id,
-      company_id: review.company_id,
-      company: {
-        id: review.company.id,
-        name: review.company.name,
-        logo_url: review.company.logo_url,
-        slug: review.company.slug
-      },
-      user: {
-        id: review.user.id,
-        name: review.user.name,
-        avatar_url: review.user.avatar_url
-      },
-      rating: review.rating,
+      rating: review.rating.to_f,
       comment: review.comment,
       body: review.comment,
+      user_id: review.user_id,
+      company_id: review.company_id,
+      status: review.status,
+      created_at: review.created_at,
+      updated_at: review.updated_at,
       reply: review.reply,
       replied_at: review.replied_at,
-      status: review.status,
       featured: review.featured,
       display_order: review.display_order,
       verified: review.verified,
-      created_at: review.created_at,
-      updated_at: review.updated_at,
+      user: serialize_user(review.user),
+      company: serialize_company(review.company),
       review_criterion_scores: serialize_review_criterion_scores(review)
     }
   end
 
   def serialize_review_criterion_scores(review)
-    return [] unless ReviewCriterionScore.table_exists?
+    return [] unless ActiveRecord::Base.connection.data_source_exists?('review_criterion_scores')
+    return [] unless ActiveRecord::Base.connection.data_source_exists?('rating_criteria')
 
-    review.review_criterion_scores.includes(:rating_criterion).map do |score|
-      {
-        id: score.id,
-        score: score.score&.to_f,
-        not_applicable: score.not_applicable,
-        rating_criterion_id: score.rating_criterion_id,
-        title: score.rating_criterion&.title
-      }
-    end
-  rescue ActiveRecord::StatementInvalid => e
-    Rails.logger.warn("[ReviewsController] failed to serialize review_criterion_scores for review=#{review.id}: #{e.message}")
+    review.review_criterion_scores.map { |score| serialize_review_criterion_score(score) }
+  rescue StandardError => e
+    Rails.logger.warn("[ReviewsController] failed to serialize criterion scores for review #{review.id}: #{e.message}")
     []
   end
 
   def set_review
-    @review = Review.find(params[:id])
+    @review = Review.includes(:user, :company, review_criterion_scores: :rating_criterion).find(params[:id])
   end
 
   def review_params
@@ -173,5 +157,36 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
     Rails.logger.warn("[AccessDenied] user #{current_user.id} tried to modify review #{params[:id]} owned by #{@review.user_id}")
     render json: { error: 'Forbidden' }, status: :forbidden
+  end
+
+  def serialize_user(user)
+    return nil unless user
+
+    {
+      id: user.id,
+      name: user.name,
+      avatar_url: user.avatar_url
+    }
+  end
+
+  def serialize_company(company)
+    return nil unless company
+
+    {
+      id: company.id,
+      name: company.name,
+      logo_url: company.logo_url,
+      slug: company.slug
+    }
+  end
+
+  def serialize_review_criterion_score(score)
+    {
+      id: score.id,
+      score: score.score.to_f,
+      not_applicable: score.not_applicable,
+      rating_criterion_id: score.rating_criterion_id,
+      title: score.rating_criterion&.title
+    }
   end
 end
