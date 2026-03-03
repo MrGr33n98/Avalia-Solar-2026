@@ -1,19 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import Autoplay from 'embla-carousel-autoplay';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { track } from '@/lib/analytics/lazy';
+import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 
 export interface Banner {
   id: number;
@@ -31,10 +24,6 @@ interface BannerCarouselProps {
 }
 
 export function BannerCarousel({ banners, loading, className }: BannerCarouselProps) {
-  const plugin = React.useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true })
-  );
-
   if (loading) {
     return (
       <div className={cn("w-full h-[180px] md:h-[240px] rounded-xl overflow-hidden", className)}>
@@ -47,71 +36,58 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
     return null;
   }
 
-  return (
-    <Carousel
-      plugins={[plugin.current]}
-      className={cn("w-full rounded-xl overflow-hidden shadow-lg", className)}
-      onMouseEnter={plugin.current.stop}
-      onMouseLeave={plugin.current.reset}
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-    >
-      <CarouselContent>
-        {banners.map((banner, index) => (
-          <CarouselItem key={banner.id}>
-            <div className="relative w-full h-[180px] md:h-[240px] group">
-              {banner.link_url ? (
-                <a
-                  href={banner.link_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full h-full"
-                  onClick={() => {
-                    track('banner_click', {
-                      banner_id: banner.id,
-                      banner_title: banner.title,
-                      banner_position: banner.position || 'categories_hero',
-                      element_type: 'banner',
-                      action_type: 'click',
-                      destination_url: banner.link_url
-                    });
-                  }}
-                >
-                  <BannerImage banner={banner} isFirst={index === 0} />
-                </a>
-              ) : (
-                <div 
-                  className="w-full h-full"
-                  onMouseEnter={() => {
-                    track('banner_hover', {
-                      banner_id: banner.id,
-                      banner_title: banner.title,
-                      banner_position: banner.position || 'categories_hero',
-                      element_type: 'banner',
-                      action_type: 'hover'
-                    });
-                  }}
-                >
-                  <BannerImage banner={banner} isFirst={index === 0} />
-                </div>
-              )}
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      {banners.length > 1 && (
-        <>
-          <CarouselPrevious className="left-4 bg-white/20 hover:bg-white/40 border-none text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CarouselNext className="right-4 bg-white/20 hover:bg-white/40 border-none text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-        </>
+  const items = banners.map((banner, index) => (
+    <div key={banner.id} className="relative w-full h-full group">
+      {banner.link_url ? (
+        <a
+          href={banner.link_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full h-full"
+          onClick={() => {
+            track('banner_click', {
+              banner_id: banner.id,
+              banner_title: banner.title,
+              banner_position: banner.position || 'categories_hero',
+              element_type: 'banner',
+              action_type: 'click',
+              destination_url: banner.link_url
+            });
+          }}
+        >
+          <BannerImageContent banner={banner} isFirst={index === 0} />
+        </a>
+      ) : (
+        <div 
+          className="w-full h-full"
+          onMouseEnter={() => {
+            track('banner_hover', {
+              banner_id: banner.id,
+              banner_title: banner.title,
+              banner_position: banner.position || 'categories_hero',
+              element_type: 'banner',
+              action_type: 'hover'
+            });
+          }}
+        >
+          <BannerImageContent banner={banner} isFirst={index === 0} />
+        </div>
       )}
-    </Carousel>
+    </div>
+  ));
+
+  return (
+    <div className={cn("w-full py-2", className)}>
+      <PremiumBannerCarousel 
+        items={items}
+        aspectRatio="aspect-[16/10] md:aspect-[4/1]"
+        autoplayDelay={5000}
+      />
+    </div>
   );
 }
 
-function BannerImage({ banner, isFirst }: { banner: Banner; isFirst: boolean }) {
+function BannerImageContent({ banner, isFirst }: { banner: Banner; isFirst: boolean }) {
   const imageUrl = getFullImageUrl(banner.image_url);
   const [error, setError] = React.useState(false);
 

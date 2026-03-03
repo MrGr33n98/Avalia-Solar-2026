@@ -6,13 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
 } from '@/components/ui/carousel';
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
+import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 
 interface BannerData {
   id: number | string;
@@ -33,7 +30,6 @@ interface BannerContainerProps {
   className?: string;
 }
 
-// Use brand-friendly fallback instead of the missing placeholder-banner.png
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
 
 function BannerImage({
@@ -66,7 +62,6 @@ function BannerImage({
 }
 
 export function BannerContainer({ banners, position, className }: BannerContainerProps) {
-  // Validação de props e blindagem contra null/undefined
   if (!banners || !Array.isArray(banners) || banners.length === 0) {
     return null;
   }
@@ -74,8 +69,7 @@ export function BannerContainer({ banners, position, className }: BannerContaine
   try {
     const displayBanners = banners;
 
-    // Helper para definir aspect ratio baseado na posição
-    const getAspectClass = (pos?: string) => {
+    const getAspectRatio = (pos?: string) => {
       switch (pos) {
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
@@ -87,87 +81,49 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       }
     };
 
-    const dimsStyle = (banner: BannerData): React.CSSProperties => {
-      const style: React.CSSProperties = {};
-      const fullWidthPositions = new Set(['categories_top', 'companies_footer', 'article_footer_cta']);
+    const aspectRatio = getAspectRatio(position);
 
-      if (position && fullWidthPositions.has(position)) {
-        style.width = '100%';
-        return style;
-      }
-
-      // Se tiver dimensões explícitas vindas do admin, respeitamos como maxWidth/Height
-      if (typeof banner.width === 'number' && banner.width > 0) {
-        style.maxWidth = `${banner.width}px`;
-      }
-      if (typeof banner.height === 'number' && banner.height > 0) {
-        style.maxHeight = `${banner.height}px`;
-      }
-      return style;
-    };
-
-    const aspectClass = getAspectClass(position);
-
-    // Renderizador de item único para reaproveitamento
     const renderBannerItem = (banner: BannerData, isPriority = false) => (
-      <Card className="overflow-hidden border-none bg-transparent shadow-none">
-        <CardContent
-          className={cn(
-            "relative flex items-center justify-center p-0 w-full mx-auto bg-muted/20 overflow-hidden rounded-lg",
-            aspectClass
-          )}
-          style={dimsStyle(banner)}
+      <div className="relative w-full h-full bg-muted/20">
+        <Link 
+          href={banner.link_url || banner.link || '#'} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="block w-full h-full"
         >
-          <Link 
-            href={banner.link_url || banner.link || '#'} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="block w-full h-full"
-          >
-            <BannerImage
-              banner={banner}
-              priority={isPriority}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-            />
-            {banner.sponsored && (
-              <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
-                Patrocinado
-              </span>
-            )}
-          </Link>
-        </CardContent>
-      </Card>
+          <BannerImage
+            banner={banner}
+            priority={isPriority}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+          />
+          {banner.sponsored && (
+            <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
+              Patrocinado
+            </span>
+          )}
+        </Link>
+      </div>
     );
 
     if (displayBanners.length === 1) {
       return (
         <div className={cn("w-full py-2", className)}>
-          {renderBannerItem(displayBanners[0], true)}
+          <div className={cn("relative overflow-hidden rounded-xl", aspectRatio)}>
+            {renderBannerItem(displayBanners[0], true)}
+          </div>
         </div>
       );
     }
 
+    const items = displayBanners.map((banner, idx) => renderBannerItem(banner, idx === 0));
+
     return (
       <div className={cn("w-full py-2", className)}>
-        <Carousel
-          plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
-          className="w-full"
-          opts={{ loop: true }}
-        >
-          <CarouselContent>
-            {displayBanners.map((banner, idx) => (
-              <CarouselItem key={banner.id || idx}>
-                {renderBannerItem(banner, idx === 0)}
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          {displayBanners.length > 1 && (
-            <>
-              <CarouselPrevious className="left-2 bg-white/50 border-none hover:bg-white" />
-              <CarouselNext className="right-2 bg-white/50 border-none hover:bg-white" />
-            </>
-          )}
-        </Carousel>
+        <PremiumBannerCarousel 
+          items={items}
+          aspectRatio={aspectRatio}
+          autoplayDelay={4000}
+        />
       </div>
     );
 

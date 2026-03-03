@@ -1,0 +1,150 @@
+'use client';
+
+import * as React from 'react';
+import Autoplay from 'embla-carousel-autoplay';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from '@/components/ui/carousel';
+import { cn } from '@/lib/utils';
+import { motion, useAnimation } from 'framer-motion';
+
+interface PremiumBannerCarouselProps {
+  items: React.ReactNode[];
+  autoplayDelay?: number;
+  className?: string;
+  aspectRatio?: string;
+  onItemClick?: (index: number) => void;
+}
+
+export function PremiumBannerCarousel({
+  items,
+  autoplayDelay = 5000,
+  className,
+  aspectRatio = "aspect-[3/1] md:aspect-[4/1]",
+  onItemClick,
+}: PremiumBannerCarouselProps) {
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
+  const [isPaused, setIsPaused] = React.useState(false);
+  
+  const controls = useAnimation();
+  const plugin = React.useRef(
+    Autoplay({ delay: autoplayDelay, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+
+  const onSelect = React.useCallback((api: CarouselApi) => {
+    if (!api) return;
+    setSelectedIndex(api.selectedScrollSnap());
+  }, []);
+
+  React.useEffect(() => {
+    if (!api) return;
+
+    onSelect(api);
+    setScrollSnaps(api.scrollSnapList());
+    api.on('select', onSelect);
+    api.on('reInit', onSelect);
+
+    return () => {
+      api.off('select', onSelect);
+    };
+  }, [api, onSelect]);
+
+  // Progress bar animation
+  React.useEffect(() => {
+    if (!api || items.length <= 1) return;
+
+    const startAnimation = async () => {
+      await (controls as any).set({ width: "0%" });
+      if (!isPaused) {
+        await (controls as any).start({
+          width: "100%",
+          transition: { duration: autoplayDelay / 1000, ease: "linear" },
+        });
+      }
+    };
+
+    startAnimation();
+    
+    const handleSelect = () => {
+      (controls as any).stop();
+      startAnimation();
+    };
+
+    api.on('select', handleSelect);
+    return () => {
+      api.off('select', handleSelect);
+      (controls as any).stop();
+    };
+  }, [api, controls, autoplayDelay, items.length, isPaused]);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div 
+      className={cn("group relative w-full overflow-hidden rounded-2xl shadow-md transition-shadow hover:shadow-lg", className)}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <Carousel
+        setApi={setApi}
+        plugins={[plugin.current]}
+        className="w-full"
+        opts={{
+          loop: true,
+          align: "start",
+        }}
+      >
+        <CarouselContent className="-ml-0">
+          {items.map((item, index) => (
+            <CarouselItem 
+              key={index} 
+              className="pl-0 cursor-pointer"
+              onClick={() => onItemClick?.(index)}
+            >
+              <div className={cn("relative w-full overflow-hidden", aspectRatio)}>
+                {item}
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+
+        {items.length > 1 && (
+          <>
+            <div className="absolute inset-y-0 left-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+              <CarouselPrevious className="relative left-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50 hover:text-white" />
+            </div>
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+              <CarouselNext className="relative right-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50 hover:text-white" />
+            </div>
+
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full z-10">
+              {scrollSnaps.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  className="relative h-1 w-8 md:w-12 overflow-hidden rounded-full bg-white/30 transition-all"
+                  aria-label={`Go to slide ${index + 1}`}
+                >
+                  {index === selectedIndex && (
+                    <motion.div
+                      animate={controls}
+                      className="absolute inset-y-0 left-0 bg-white"
+                      style={{ width: "0%" }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </Carousel>
+    </div>
+  );
+}
