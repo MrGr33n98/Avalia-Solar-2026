@@ -193,21 +193,44 @@ ActiveAdmin.register Company do
     end
 
     f.inputs 'Business Details' do
-      f.input :cnpj,
-              required: false,
-              input_html: { required: false, autocomplete: 'off' },
-              hint: 'Opcional'
-      f.input :founded_year
-      f.input :employees_count
-      f.input :project_types, as: :check_boxes, collection: Company::PROJECT_TYPES, label: 'Tipos de Projetos'
-      f.input :niche_tags, as: :check_boxes, collection: Company::NICHE_TAGS, label: 'Tags de Nicho'
-      f.input :services_offered, as: :check_boxes, collection: Company::SERVICES_OFFERED, label: 'Serviços Oferecidos'
-      f.input :working_hours
-      f.input :payment_methods
-      f.input :minimum_ticket
-      f.input :maximum_ticket
-      f.input :response_time_sla
-      f.input :languages
+      columns do
+        column do
+          f.input :cnpj,
+                  required: false,
+                  input_html: { required: false, autocomplete: 'off', style: 'width: 90%' },
+                  hint: 'Opcional'
+          f.input :founded_year, input_html: { style: 'width: 90%' }
+          f.input :employees_count, input_html: { style: 'width: 90%' }
+        end
+        column do
+          f.input :working_hours, input_html: { placeholder: 'ex: Seg a Sex, 08h às 18h', style: 'width: 90%' }
+          f.input :response_time_sla, label: 'SLA de Resposta', input_html: { placeholder: 'ex: 24h', style: 'width: 90%' }
+          f.input :payment_methods, label: 'Formas de Pagamento', input_html: { placeholder: 'ex: Cartão, Pix, Boleto', style: 'width: 90%' }
+          f.input :languages, as: :string, label: 'Idiomas', input_html: { placeholder: 'ex: Português, Inglês', style: 'width: 90%' }
+          columns do
+            column do
+              f.input :minimum_ticket, as: :number, label: 'Ticket Mínimo (R$)', input_html: { style: 'width: 80%' }
+            end
+            column do
+              f.input :maximum_ticket, as: :number, label: 'Ticket Máximo (R$)', input_html: { style: 'width: 80%' }
+            end
+          end
+        end
+      end
+    end
+
+    f.inputs 'Especialidades & Tags' do
+      columns do
+        column span: 1 do
+          f.input :project_types, as: :check_boxes, collection: Company::PROJECT_TYPES, label: 'Tipos de Projetos'
+        end
+        column span: 1 do
+          f.input :niche_tags, as: :check_boxes, collection: Company::NICHE_TAGS, label: 'Tags de Nicho'
+        end
+        column span: 2 do
+          f.input :services_offered, as: :check_boxes, collection: Company::SERVICES_OFFERED, label: 'Serviços Oferecidos'
+        end
+      end
     end
 
     f.inputs 'Opções de Financiamento' do
