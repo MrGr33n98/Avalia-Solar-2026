@@ -387,11 +387,12 @@ class Company < ApplicationRecord
   # Constantes (mantidas no modelo)
   PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
   SERVICES_OFFERED = [
-    'InstalaÃƒÂ§ÃƒÂ£o Residencial',
-    'InstalaÃƒÂ§ÃƒÂ£o Comercial',
-    'InstalaÃƒÂ§ÃƒÂ£o Industrial',
-    'ManutenÃƒÂ§ÃƒÂ£o e Suporte',
-    'Consultoria EnergÃƒÂ©tica'
+    'Estudo Econômico',
+    'Projeto',
+    'Instalação',
+    'Homologação',
+    'Monitoramento',
+    'Manutenção e Assistência Técnica'
   ].freeze
 
   before_validation :normalize_company_fields
@@ -420,14 +421,14 @@ class Company < ApplicationRecord
     return if project_types.blank?
 
     invalid = Array(project_types) - PROJECT_TYPES
-    errors.add(:project_types, "valores invÃƒÂ¡lidos: #{invalid.join(', ')}") if invalid.any?
+    errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
     return if services_offered.blank?
 
     invalid = Array(services_offered) - SERVICES_OFFERED
-    errors.add(:services_offered, "valores invÃƒÂ¡lidos: #{invalid.join(', ')}") if invalid.any?
+    errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_cnpj_format

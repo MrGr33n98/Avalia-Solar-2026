@@ -538,6 +538,7 @@ module Api
                       can_use_social_proof: company.can_use_social_proof?,
                       project_types: company.project_types || [],
                       services_offered: company.services_offered || [],
+                      services: company.services_offered || [],
                       seo_metadata: {
                         json_ld: {
                           "@context": "https://schema.org",

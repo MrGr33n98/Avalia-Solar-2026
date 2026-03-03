@@ -230,12 +230,20 @@ ActiveAdmin.register Company do
       )
     end
 
-    f.inputs 'Coverage & Certifications' do
-      f.input :coverage_states
-      f.input :coverage_cities
-      f.input :certifications
-      f.input :awards
-      f.input :partner_brands
+    columns do
+      column do
+        f.inputs 'Coverage' do
+          f.input :coverage_states, input_html: { rows: 2 }
+          f.input :coverage_cities, input_html: { rows: 2 }
+        end
+      end
+      column do
+        f.inputs 'Certifications & More' do
+          f.input :certifications, input_html: { rows: 2 }
+          f.input :awards, input_html: { rows: 2 }
+          f.input :partner_brands, input_html: { rows: 2 }
+        end
+      end
     end
 
     f.inputs 'Social Media' do
@@ -424,9 +432,29 @@ ActiveAdmin.register Company do
       row :city
       row :working_hours
       row :payment_methods
-      row :project_types
-      row :services_offered
-      row :certifications
+      row :project_types do |company|
+        if company.project_types.is_a?(Array)
+          div style: 'display: flex; gap: 5px; flex-wrap: wrap;' do
+            company.project_types.each do |pt|
+              span pt, class: 'status_tag', style: 'background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;'
+            end
+          end
+        else
+          company.project_types
+        end
+      end
+      row :services_offered do |company|
+        services = Array(company.services_offered).select { |s| Company::SERVICES_OFFERED.include?(s) }
+        if services.any?
+          div style: 'display: flex; gap: 5px; flex-wrap: wrap;' do
+            services.each do |service|
+              span service, class: 'status_tag', style: 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;'
+            end
+          end
+        else
+          span 'Nenhum serviço selecionado ou válido', style: 'color: #999; font-style: italic;'
+        end
+      end
       row :featured
       row :verified
       row :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
@@ -480,6 +508,30 @@ ActiveAdmin.register Company do
           end
         else
           content_tag(:span, 'Sem selo customizado')
+        end
+      end
+    end
+
+    panel 'Coverage & Certifications' do
+      columns do
+        column do
+          attributes_table_for resource do
+            row :coverage_states
+            row :coverage_cities
+          end
+        end
+        column do
+          attributes_table_for resource do
+            row :certifications do |c|
+              simple_format(c.certifications) if c.certifications.present?
+            end
+            row :awards do |c|
+              simple_format(c.awards) if c.awards.present?
+            end
+            row :partner_brands do |c|
+              simple_format(c.partner_brands) if c.partner_brands.present?
+            end
+          end
         end
       end
     end

@@ -12,7 +12,6 @@ import {
   Banknote,
   Edit,
   MessageCircle,
-  ShieldCheck,
   HelpCircle,
   AlertCircle,
   Scale,
@@ -431,36 +430,6 @@ export default function CompanyDetailClient({
 
             <aside className="space-y-6 lg:col-span-4">
               <CompanySidebar company={currentCompany} />
-
-              <Card className="group relative overflow-hidden border-none bg-blue-600 text-white shadow-lg">
-                <div className="absolute right-0 top-0 p-4 opacity-10 transition-opacity group-hover:opacity-20">
-                  <ShieldCheck className="h-24 w-24" />
-                </div>
-                <CardHeader className="relative z-10">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <ShieldCheck className="h-5 w-5" />
-                    Selo de Confiança AB0-1
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative z-10 space-y-4">
-                  <p className="text-sm font-medium leading-relaxed text-blue-50">
-                    Esta empresa passou pelo nosso rigoroso processo de curadoria técnica e documental.
-                  </p>
-                  <ul className="space-y-2">
-                    {[
-                      'Documentação em dia',
-                      'Histórico de instalações',
-                      'Qualidade técnica validada',
-                      'Suporte pós-venda garantido',
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs font-bold text-white/90">
-                        <div className="h-1.5 w-1.5 rounded-full bg-blue-300" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
 
               {canRequestQuote && (
                 <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-white shadow-sm">
