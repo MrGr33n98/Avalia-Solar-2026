@@ -16,8 +16,7 @@ declare global {
 export function initializeGTag(measurementId: string): void {
   if (typeof window === 'undefined') return;
   
-  // O script agora é carregado via Next.js Script no layout.tsx
-  // Apenas garantimos que o dataLayer e gtag funcionem corretamente
+  // Garantimos que dataLayer e gtag funcionem corretamente
   window.dataLayer = window.dataLayer || [];
   
   if (!window.gtag) {
@@ -26,8 +25,19 @@ export function initializeGTag(measurementId: string): void {
     };
   }
 
-  // Não chamamos 'js' e 'config' aqui novamente se já estiver no componente
-  // Mas garantimos que o tracking básico esteja pronto
+  // 🚨 CRITICAL FIX: Configura o GA4 measurement ID explicitamente
+  // Isso garante que o GA4 seja inicializado mesmo sem GTM container
+  window.gtag('config', measurementId, {
+    send_page_view: false, // Manual page view tracking
+    cookie_domain: 'auto',
+    custom_map: {
+      custom_parameter_1: 'company_id'
+    }
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[GA4] Configured with measurement ID:', measurementId);
+  }
 }
 
 /**
@@ -122,7 +132,15 @@ export function mapToGA4Event(
     'Login Completed': 'login',
     'Review Submitted': 'generate_lead',
     'Product Viewed': 'view_item',
-    'CTA Clicked': 'select_content'
+    'CTA Clicked': 'select_content',
+    'wizard_started': 'begin_checkout',
+    'wizard_step_completed': 'checkout_progress',
+    'wizard_step_viewed': 'view_item_list',
+    'wizard_submitted': 'purchase',
+    'wizard_abandoned': 'view_item',
+    'company_cta_impression': 'view_promotion',
+    'company_share_click': 'share',
+    'company_comparison_toggle': 'select_content'
   };
   
   const ga4EventName = eventMap[eventName] || eventName.toLowerCase().replace(/ /g, '_');
@@ -137,6 +155,8 @@ export function mapToGA4Event(
   if (properties.search_term || properties.query) params.search_term = properties.search_term || properties.query;
   if (properties.cta_type) params.content_type = properties.cta_type;
   if (properties.placement) params.creative_slot = properties.placement;
+  if (properties.step_index !== undefined) params.checkout_step = properties.step_index + 1;
+  if (properties.template_key) params.item_list_name = properties.template_key;
   
   // Pass through other properties
   for (const [key, value] of Object.entries(properties)) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WizardSchema, WizardStateStatus, WizardPayload, LeadCoreFields, FieldSchema } from '../types/wizard.types';
 import { wizardApi } from '../api/wizard.api';
-import { track } from '@/lib/analytics/gtag';
+import { track } from '@/lib/analytics';
 
 const SESSION_KEY = 'leadWizardSession';
 const CORE_KEYS = ['full_name', 'email', 'phone', 'zipcode', 'city', 'state', 'consent'];
@@ -43,6 +43,17 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
 
     if (categoryId) loadSchema();
   }, [categoryId, preferredCompanyId]);
+
+  // Track step views
+  useEffect(() => {
+    if (status === 'STEP_ACTIVE' && schema) {
+      track('wizard_step_viewed', { 
+        step_index: currentStepIndex,
+        step_name: schema.schema.steps[currentStepIndex]?.title,
+        category_id: categoryId 
+      });
+    }
+  }, [currentStepIndex, status, schema, categoryId]);
 
   // Autosave
   useEffect(() => {

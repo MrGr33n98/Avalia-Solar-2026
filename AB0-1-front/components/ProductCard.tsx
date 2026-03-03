@@ -9,6 +9,7 @@ import { Building2, Eye, MessageSquare, ShieldCheck, Tag } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
+import { track } from '@/lib/analytics/lazy';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,28 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  const [visible, setVisible] = useState(false);
+  const cardRef = React.useCallback((node: HTMLElement | null) => {
+    if (node !== null) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && !visible) {
+            setVisible(true);
+            track('product_impression', {
+              product_id: product.id,
+              product_name: product.name,
+              category: (product as any).categories?.[0]?.name || product.category?.name,
+              company_id: product.company?.id,
+              company_name: product.company?.name
+            });
+          }
+        },
+        { threshold: 0.5 }
+      );
+      observer.observe(node);
+    }
+  }, [product, visible]);
 
   const priceValue =
     typeof product.price === 'number'
@@ -90,7 +113,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       <article itemScope itemType="https://schema.org/Product" className="h-full group relative">
-        <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col overflow-hidden border-slate-200 hover:border-primary/30 bg-white">
+        <Card ref={cardRef} className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col overflow-hidden border-slate-200 hover:border-primary/30 bg-white">
           {/* Image Section */}
           <Link href={friendlyUrl} aria-label={`Ver detalhes de ${product.name}`} className="block relative cursor-pointer">
             <div className="relative w-full aspect-[4/3] bg-slate-50 overflow-hidden group-hover:bg-slate-100/50 transition-colors">
@@ -180,9 +203,26 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Footer Section - CTAs */}
           <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2 mt-auto">
             <Button asChild variant="outline" size="sm" className="w-full text-xs h-11 lg:h-9 border-slate-200">
-              <Link href={friendlyUrl}>Detalhes</Link>
+              <Link 
+                href={friendlyUrl}
+                onClick={() => track('product_click', {
+                  product_id: product.id,
+                  product_name: product.name,
+                  click_type: 'details'
+                })}
+              >
+                Detalhes
+              </Link>
             </Button>
-            <Button size="sm" className="w-full text-xs h-11 lg:h-9 gap-1 shadow-sm bg-primary hover:bg-primary/90">
+            <Button 
+              size="sm" 
+              className="w-full text-xs h-11 lg:h-9 gap-1 shadow-sm bg-primary hover:bg-primary/90"
+              onClick={() => track('product_click', {
+                product_id: product.id,
+                product_name: product.name,
+                click_type: 'budget'
+              })}
+            >
                <MessageSquare className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                Orçamento
             </Button>

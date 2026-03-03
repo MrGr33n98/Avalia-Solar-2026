@@ -90,6 +90,27 @@ export default function CompanyCard({
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(id);
 
+  const [ctaVisible, setCtaVisible] = useState(false);
+  const ctaRef = useCallback((node: HTMLDivElement | null) => {
+    if (node !== null) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && !ctaVisible) {
+            setCtaVisible(true);
+            track('company_cta_impression', {
+              company_id: id,
+              company_name: name,
+              company_slug: company.slug,
+              category: category
+            });
+          }
+        },
+        { threshold: 0.5 }
+      );
+      observer.observe(node);
+    }
+  }, [id, name, company.slug, category, ctaVisible]);
+
   // Track impression
   useEffect(() => {
     if (id) {
@@ -497,10 +518,13 @@ export default function CompanyCard({
         )}
 
         {/* Footer Actions - Anchored to bottom with mt-auto */}
-        <div className={cn(
-          "mt-auto pt-2 print:hidden",
-          compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
-        )}>
+        <div 
+          ref={ctaRef}
+          className={cn(
+            "mt-auto pt-2 print:hidden",
+            compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
+          )}
+        >
           {canRequestQuote && (
             <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
               {hasWhatsapp && whatsappEnabled ? (

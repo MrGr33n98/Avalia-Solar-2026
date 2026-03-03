@@ -34,7 +34,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
 
       <Script
         id="gtm-script"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
