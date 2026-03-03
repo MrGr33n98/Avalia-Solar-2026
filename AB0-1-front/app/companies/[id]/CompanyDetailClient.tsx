@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 import CompanyHero from "./components/CompanyHero";
 import CompanySidebar from "./components/CompanySidebar";
 import CompanyOverview from "./components/CompanyOverview";
+import CompanyComparisonSection from "./components/CompanyComparisonSection";
 import WinnerBadge from "@/components/company/WinnerBadge";
 import Top1StickyCTA from "@/components/company/Top1StickyCTA";
 
@@ -442,6 +443,8 @@ export default function CompanyDetailClient({
               )}
             </aside>
           </div>
+
+          <CompanyComparisonSection currentCompany={currentCompany} />
         </main>
       </Tabs>
 
