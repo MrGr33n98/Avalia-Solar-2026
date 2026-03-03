@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
