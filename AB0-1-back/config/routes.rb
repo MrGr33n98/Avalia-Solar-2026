@@ -1,11 +1,7 @@
 Rails.application.routes.draw do
-  if defined?(Rswag::Ui::Engine)
-    mount Rswag::Ui::Engine => '/api-docs'
-  end
+  mount Rswag::Ui::Engine => '/api-docs' if defined?(Rswag::Ui::Engine)
 
-  if defined?(Rswag::Api::Engine)
-    mount Rswag::Api::Engine => '/api-docs'
-  end
+  mount Rswag::Api::Engine => '/api-docs' if defined?(Rswag::Api::Engine)
 
   mount ActiveStorage::Engine => '/rails/active_storage'
   mount ActionCable.server => '/cable'
@@ -19,7 +15,7 @@ Rails.application.routes.draw do
   )
 
   namespace :admin do
-    resource :two_factor, only: [:show, :manage] do
+    resource :two_factor, only: %i[show manage] do
       post :enable
       post :disable
       get :backup_codes
@@ -79,14 +75,14 @@ Rails.application.routes.draw do
 
         resources :sector_ratings, only: [:create]
 
-        resources :financing_options, only: [:index, :create, :update, :destroy] do
+        resources :financing_options, only: %i[index create update destroy] do
           collection do
             get :compare
             get :simulate
           end
         end
 
-        resources :financing_proposals, only: [:create, :show] do
+        resources :financing_proposals, only: %i[create show] do
           member do
             get :status
           end
@@ -150,6 +146,7 @@ Rails.application.routes.draw do
           get :companies
           get :products
           get :banners
+          get :evaluation_context
         end
 
         collection do
@@ -163,7 +160,7 @@ Rails.application.routes.draw do
       resources :banner_globals, only: [:index]
       resources :badges, param: :slug, only: [:show]
 
-      resources :products, only: [:index, :show] do
+      resources :products, only: %i[index show] do
         member do
           get :reviews
         end
@@ -174,7 +171,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :reviews, only: [:index, :show, :create, :update, :destroy] do
+      resources :reviews, only: %i[index show create update destroy] do
         collection do
           get :mine
         end
@@ -189,7 +186,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :leads, only: [:create, :index, :show] do
+      resources :leads, only: %i[create index show] do
         collection do
           post :wizard_create
           get :mine
@@ -203,7 +200,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :users, only: [:show, :update, :create] do
+      resources :users, only: %i[show update create] do
         collection do
           get :me_companies
           post :switch_company
@@ -217,7 +214,7 @@ Rails.application.routes.draw do
 
       get 'company_access/context', to: 'company_access#context'
       post 'company_access/select_active_company', to: 'company_access#select_active_company'
-      resources :company_access_requests, only: [:create, :destroy]
+      resources :company_access_requests, only: %i[create destroy]
 
       get 'search', to: 'search#index'
       get 'search/all', to: 'search#all'
@@ -253,7 +250,7 @@ Rails.application.routes.draw do
             post :invite
           end
         end
-        resources :pending_changes, only: [:index, :show]
+        resources :pending_changes, only: %i[index show]
       end
 
       namespace :company_admin do
@@ -296,7 +293,7 @@ Rails.application.routes.draw do
   namespace :dashboard do
     root to: 'home#index'
     get 'analytics', to: 'analytics#index'
-    resource :company, only: [:edit, :update]
+    resource :company, only: %i[edit update]
     resources :categories, only: [:index] do
       collection do
         post :request_category

@@ -108,5 +108,30 @@ RSpec.describe 'Reviews API', type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it 'creates a review with granular criterion scores' do
+      auth = auth_headers(review_user)
+      criterion = create(:rating_criterion, title: 'Atendimento', slug: 'atendimento')
+
+      payload = {
+        review: {
+          company_id: company.id,
+          rating: 4,
+          comment: 'Gostei do atendimento.',
+          review_criterion_scores_attributes: [
+            { rating_criterion_id: criterion.id, score: 5 }
+          ]
+        }
+      }
+
+      expect do
+        post '/api/v1/reviews', params: payload.to_json, headers: auth
+      end.to change(ReviewCriterionScore, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      review = Review.last
+      expect(review.review_criterion_scores.first.score).to eq(5)
+      expect(review.review_criterion_scores.first.rating_criterion_id).to eq(criterion.id)
+    end
   end
 end

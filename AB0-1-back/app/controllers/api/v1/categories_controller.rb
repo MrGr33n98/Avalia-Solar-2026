@@ -11,7 +11,7 @@ module Api
 
       before_action :authenticate_api_user, only: %i[create update destroy]
       before_action :require_admin, only: %i[create update destroy]
-      before_action :set_category, only: %i[show update destroy companies products banners]
+      before_action :set_category, only: %i[show update destroy companies products banners evaluation_context]
 
       after_action :expire_categories_cache, only: %i[create update destroy]
 
@@ -197,6 +197,40 @@ module Api
         render json: products_scope.as_json(
           only: %i[id name description price company_id image_url]
         ), status: :ok
+      end
+
+      # =========================
+      # GET /categories/:id/evaluation_context
+      # =========================
+      def evaluation_context
+        criteria_ts = RatingCriterion.active.maximum(:updated_at).to_i
+        cache_key = "categories/#{@category.id}/evaluation_context/#{@category.updated_at.to_i}/#{criteria_ts}"
+
+        cached_json(cache_key, expires_in: 12.hours) do
+          criteria = @category.effective_rating_criteria
+          {
+            category_id: @category.id,
+            category_name: @category.name,
+            has_granular_criteria: criteria.any?,
+            total_criteria: criteria.size,
+            criteria: criteria.map { |rc| serialize_criterion(rc) }
+          }
+        end
+      end
+
+      private
+
+      def serialize_criterion(rc)
+        {
+          id: rc.id,
+          slug: rc.slug,
+          title: rc.title,
+          help_text: rc.help_text,
+          required: rc.required,
+          allow_na: rc.allow_na,
+          weight: rc.weight.to_f,
+          position: rc.position
+        }
       end
 
       # =========================

@@ -77,4 +77,19 @@ FactoryBot.define do
     verified { false }
     display_order { 0 }
   end
+
+  factory :rating_criterion do
+    association :category
+    sequence(:title) { |n| "Critério #{n}" }
+    sequence(:slug) { |n| "criterio_#{n}" }
+    weight { 1.0 }
+    position { 0 }
+    active { true }
+  end
+
+  factory :review_criterion_score do
+    association :review
+    association :rating_criterion
+    score { 5.0 }
+  end
 end

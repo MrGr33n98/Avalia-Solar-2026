@@ -4,6 +4,8 @@ class Review < ApplicationRecord
   belongs_to :company
   belongs_to :user
   has_many :review_decision_logs, dependent: :destroy
+  has_many :review_criterion_scores, dependent: :destroy
+  accepts_nested_attributes_for :review_criterion_scores, allow_destroy: true
 
   MAX_FEATURED_PER_COMPANY = 5
 

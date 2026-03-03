@@ -131,7 +131,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def review_params
-    params.require(:review).permit(:rating, :comment, :company_id)
+    params.require(:review).permit(
+      :rating, :comment, :company_id,
+      review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy]
+    )
   end
 
   def reply_params

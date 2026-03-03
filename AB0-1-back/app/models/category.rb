@@ -16,6 +16,7 @@ class Category < ApplicationRecord
                                      after_add: :update_metrics_on_change,
                                      after_remove: :update_metrics_on_change
   has_many :articles
+  has_many :rating_criteria, dependent: :destroy
   has_one_attached :banner
   has_one_attached :icon
   has_and_belongs_to_many :banners, join_table: :banners_categories
@@ -110,6 +111,40 @@ class Category < ApplicationRecord
 
   def total_reviews_count
     companies.joins(:reviews).count
+  end
+
+  def ancestor_ids
+    ids = []
+    current = parent
+    while current
+      break if ids.include?(current.id)
+
+      ids << current.id
+      current = current.parent
+    end
+    ids
+  end
+
+  def effective_rating_criteria
+    # Bubble-up sequence: Global (nil) -> Ancestors (root-to-parent) -> Self
+    # We use ancestor_ids.reverse to get root-to-parent order
+    path_ids = [nil] + ancestor_ids.reverse + [id]
+
+    # Pre-fetch all active criteria in the path
+    all_path_criteria = RatingCriterion.active.where(category_id: path_ids).to_a
+
+    # Group by category_id for efficient lookup during merge
+    grouped = all_path_criteria.group_by(&:category_id)
+
+    resolved = {}
+    path_ids.each do |cat_id|
+      (grouped[cat_id] || []).each do |rc|
+        resolved[rc.slug] = rc
+      end
+    end
+
+    # Return as array, sorted by position
+    resolved.values.sort_by(&:position)
   end
 
   def depth

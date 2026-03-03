@@ -409,8 +409,8 @@ class Company < ApplicationRecord
   ].freeze
 
   def validate_niche_tags
-    return if niche_tags.blank?
-    invalid = Array(niche_tags) - NICHE_TAGS
+    return if self.niche_tags.blank?
+    invalid = Array(self.niche_tags) - NICHE_TAGS
     errors.add(:niche_tags, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
@@ -418,16 +418,16 @@ class Company < ApplicationRecord
   def validate_project_types
     # O erro 'undefined local variable' acontece aqui se nÃƒÂ£o usarmos 'self.' ou se o atributo nÃƒÂ£o estiver definido.
     # Usando 'self.project_types' resolve o escopo.
-    return if project_types.blank?
+    return if self.project_types.blank?
 
-    invalid = Array(project_types) - PROJECT_TYPES
+    invalid = Array(self.project_types) - PROJECT_TYPES
     errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
-    return if services_offered.blank?
+    return if self.services_offered.blank?
 
-    invalid = Array(services_offered) - SERVICES_OFFERED
+    invalid = Array(self.services_offered) - SERVICES_OFFERED
     errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 

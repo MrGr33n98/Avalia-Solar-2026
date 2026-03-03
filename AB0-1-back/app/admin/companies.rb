@@ -222,13 +222,25 @@ ActiveAdmin.register Company do
     f.inputs 'Especialidades & Tags' do
       columns do
         column span: 1 do
-          f.input :project_types, as: :check_boxes, collection: Company::PROJECT_TYPES, label: 'Tipos de Projetos'
+          f.input :project_types,
+                  as: :check_boxes,
+                  collection: Company::PROJECT_TYPES,
+                  label: 'Tipos de Projetos',
+                  wrapper_html: { class: 'company-checkbox-group' }
         end
         column span: 1 do
-          f.input :niche_tags, as: :check_boxes, collection: Company::NICHE_TAGS, label: 'Tags de Nicho'
+          f.input :niche_tags,
+                  as: :check_boxes,
+                  collection: Company::NICHE_TAGS,
+                  label: 'Tags de Nicho',
+                  wrapper_html: { class: 'company-checkbox-group' }
         end
         column span: 2 do
-          f.input :services_offered, as: :check_boxes, collection: Company::SERVICES_OFFERED, label: 'Serviços Oferecidos'
+          f.input :services_offered,
+                  as: :check_boxes,
+                  collection: Company::SERVICES_OFFERED,
+                  label: 'Serviços Oferecidos',
+                  wrapper_html: { class: 'company-checkbox-group' }
         end
       end
     end

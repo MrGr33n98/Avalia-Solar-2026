@@ -210,3 +210,34 @@ p.location-error.inline-errors {
   color: #64748b;
   line-height: 1.35;
 }
+
+// ----------------------
+// Company admin form
+// ----------------------
+.company-checkbox-group {
+  .choices-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 10px 0 0;
+  }
+
+  .choice {
+    margin: 0;
+    padding: 0;
+  }
+
+  label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-weight: 500;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  input[type='checkbox'] {
+    margin-top: 2px;
+    flex: 0 0 auto;
+  }
+}

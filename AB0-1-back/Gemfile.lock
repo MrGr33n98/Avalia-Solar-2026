@@ -194,6 +194,7 @@ GEM
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
     ffi (1.17.2-x64-mingw-ucrt)
+    ffi (1.17.2-x86_64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
     formtastic (5.0.0)
       actionpack (>= 6.0.0)
@@ -292,6 +293,8 @@ GEM
       net-protocol
     nio4r (2.7.5)
     nokogiri (1.15.3-x64-mingw-ucrt)
+      racc (~> 1.4)
+    nokogiri (1.15.3-x86_64-darwin)
       racc (~> 1.4)
     nokogiri (1.15.3-x86_64-linux)
       racc (~> 1.4)
@@ -518,6 +521,7 @@ GEM
       activesupport (>= 5.2)
       sprockets (>= 3.0.0)
     sqlite3 (1.6.3-x64-mingw-ucrt)
+    sqlite3 (1.6.3-x86_64-darwin)
     sqlite3 (1.6.3-x86_64-linux)
     stimulus-rails (1.2.1)
       railties (>= 6.0.0)
@@ -586,6 +590,7 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
+  x86_64-darwin-19
   x86_64-linux-gnu
 
 DEPENDENCIES
@@ -724,6 +729,7 @@ CHECKSUMS
   faraday (2.14.0) sha256=8699cfe5d97e55268f2596f9a9d5a43736808a943714e3d9a53e6110593941cd
   faraday-net_http (3.4.2) sha256=f147758260d3526939bf57ecf911682f94926a3666502e24c69992765875906c
   ffi (1.17.2-x64-mingw-ucrt) sha256=15d2da54ee578657a333a6059ed16eaba1cbd794ceecd15944825b65c8381ac0
+  ffi (1.17.2-x86_64-darwin) sha256=981f2d4e32ea03712beb26e55e972797c2c5a7b0257955d8667ba58f2da6440e
   ffi (1.17.2-x86_64-linux-gnu) sha256=05d2026fc9dbb7cfd21a5934559f16293815b7ce0314846fee2ac8efbdb823ea
   formtastic (5.0.0) sha256=71cc99c8227208f64da8d2b0926d97cef1e5f77e0105047cd57fddeccd3a6416
   formtastic_i18n (0.7.0) sha256=ecef51c9e9030c00f19e69d2483b77f4515c9587d74268b76cf4b6e7988c8e78
@@ -772,6 +778,7 @@ CHECKSUMS
   net-smtp (0.3.4) sha256=3dd445186f3d6dd8c2559850eb5dafdc6c1c0a85195489a874338908e9c59143
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
   nokogiri (1.15.3-x64-mingw-ucrt) sha256=599a46b6e4f5a34dd21da06bdbd69611728304af5ef42bb183e4b4ca073fd7a3
+  nokogiri (1.15.3-x86_64-darwin) sha256=1f0bc0343f9dd1db8dd42e4c9110dd24fc11a7f923b9fa0f866e7f90739e4e7a
   nokogiri (1.15.3-x86_64-linux) sha256=ca244ed58568d7265088f83c568d2947102fb00bac14b5bc0e63f678dcd6323d
   noticed (2.2.0) sha256=3227b5fbce29ead4978ff316b745ce860fc598e3351d97fd50b73cd022e204c1
   oauth2 (2.0.18) sha256=bacf11e470dfb963f17348666d0a75c7b29ca65bc48fd47be9057cf91a403287
@@ -853,6 +860,7 @@ CHECKSUMS
   sprockets (4.2.0) sha256=5c273487255c47523f30c0b673310fce70a09ca060a6bbcd3e5d0d489e19024c
   sprockets-rails (3.4.2) sha256=36d6327757ccf7460a00d1d52b2d5ef0019a4670503046a129fa1fb1300931ad
   sqlite3 (1.6.3-x64-mingw-ucrt) sha256=5df1dcf85b2027fa5bc054250ca2201cf28721151470cb0c45fbb8e21b92399e
+  sqlite3 (1.6.3-x86_64-darwin) sha256=b74b8694e3e090c2e08ccb85b23fb889690d068ca0cace49f9e1d118058bdc46
   sqlite3 (1.6.3-x86_64-linux) sha256=aebdc5821f4ddeeb9cc36983f0a9c3815e1024e3bd4ddb0dcbc212bb20569de8
   stimulus-rails (1.2.1) sha256=831bbcc0c12ea9c751e0a96b85d9908a0e4b42031964724d5b507166e06f0e8a
   terminal-table (4.0.0) sha256=f504793203f8251b2ea7c7068333053f0beeea26093ec9962e62ea79f94301d2
