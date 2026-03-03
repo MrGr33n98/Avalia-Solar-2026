@@ -342,7 +342,7 @@ export default function EnterpriseHeader({
                 className="gap-2 px-2 hover:bg-muted/60"
               >
                 <Avatar className="h-7 w-7 ring-2 ring-border/50">
-                  <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                  <AvatarImage src={user?.avatar_url} alt="User" />
                   <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-500 text-white text-xs font-semibold">
                     {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
                   </AvatarFallback>

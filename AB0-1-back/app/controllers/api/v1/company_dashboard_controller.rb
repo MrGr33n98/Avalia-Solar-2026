@@ -7,7 +7,9 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
-        return render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+          return render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 }
+        end
 
         sql = <<~SQL
           SELECT 
@@ -19,18 +21,23 @@ module Api
           WHERE company_id = $1 AND day >= CURRENT_DATE - 30
         SQL
         
-        stats = ActiveRecord::Base.connection.exec_query(sql, 'Overview', [[nil, @company.id]]).first || {}
-        views = stats['views_30d'].to_i
-        leads = stats['leads_30d'].to_i
-        conversion = views > 0 ? ((leads.to_f / views) * 100).round(2) : 0
+        begin
+          stats = ActiveRecord::Base.connection.exec_query(sql, 'Overview', [[nil, @company.id]]).first || {}
+          views = stats['views_30d'].to_i
+          leads = stats['leads_30d'].to_i
+          conversion = views > 0 ? ((leads.to_f / views) * 100).round(2) : 0
 
-        render json: {
-          views_30d: views,
-          cta_clicks_30d: stats['cta_clicks_30d'].to_i,
-          whatsapp_clicks_30d: stats['whatsapp_clicks_30d'].to_i,
-          leads_30d: leads,
-          conversion_rate: conversion
-        }
+          render json: {
+            views_30d: views,
+            cta_clicks_30d: stats['cta_clicks_30d'].to_i,
+            whatsapp_clicks_30d: stats['whatsapp_clicks_30d'].to_i,
+            leads_30d: leads,
+            conversion_rate: conversion
+          }
+        rescue StandardError => e
+          log_analytics_error('overview', e)
+          render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 }
+        end
       end
 
       # GET /api/v1/company_dashboard/analytics/timeseries
@@ -52,64 +59,77 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
-        return render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+          return render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} }
+        end
 
-        sql_trust = "SELECT score, components FROM company_trust_score WHERE company_id = $1"
-        trust = ActiveRecord::Base.connection.exec_query(sql_trust, 'Trust', [[nil, @company.id]]).first || {}
+        begin
+          sql_trust = 'SELECT score, components FROM company_trust_score WHERE company_id = $1'
+          trust = ActiveRecord::Base.connection.exec_query(sql_trust, 'Trust', [[nil, @company.id]]).first || {}
 
-        sql_reviews = "SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM reviews WHERE company_id = $1 AND status = 'approved'"
-        reviews = ActiveRecord::Base.connection.exec_query(sql_reviews, 'Reviews', [[nil, @company.id]]).first || {}
+          sql_reviews = "SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM reviews WHERE company_id = $1 AND status = 'approved'"
+          reviews = ActiveRecord::Base.connection.exec_query(sql_reviews, 'Reviews', [[nil, @company.id]]).first || {}
 
-        render json: {
-          total_reviews: reviews['total'].to_i,
-          avg_rating: reviews['avg_rating'].to_f.round(2),
-          trust_score: trust['score'].to_f.round(2),
-          trust_components: trust['components'] ? JSON.parse(trust['components']) : {}
-        }
+          render json: {
+            total_reviews: reviews['total'].to_i,
+            avg_rating: reviews['avg_rating'].to_f.round(2),
+            trust_score: trust['score'].to_f.round(2),
+            trust_components: trust['components'] ? JSON.parse(trust['components']) : {}
+          }
+        rescue StandardError => e
+          log_analytics_error('reputation', e)
+          render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} }
+        end
       end
 
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
-        return render json: { rank_position: nil, score: 0, magic_quadrant_points: [] } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
-
-        sql_rank = "SELECT score, breakdown FROM company_ranking_score WHERE company_id = $1"
-        rank = ActiveRecord::Base.connection.exec_query(sql_rank, 'Rank', [[nil, @company.id]]).first || {}
-
-        # Magic Quadrant base data (Top 20 in any of the company's categories)
-        # Assuming we just need competitors based on the first category for MVP
-        category_id = @company.categories.first&.id
-        quadrant_data = []
-        
-        if category_id
-          sql_quadrant = <<~SQL
-            SELECT c.id, c.name, ts.score AS trust_score, COALESCE(rs.total_leads, 0) AS leads_30d
-            FROM companies c
-            JOIN categories_companies cc ON cc.company_id = c.id
-            LEFT JOIN company_trust_score ts ON ts.company_id = c.id
-            LEFT JOIN company_feature_rolling_30d rs ON rs.company_id = c.id
-            WHERE cc.category_id = $1
-            ORDER BY ts.score DESC NULLS LAST
-            LIMIT 20
-          SQL
-          
-          competitors = ActiveRecord::Base.connection.exec_query(sql_quadrant, 'Quadrant', [[nil, category_id]])
-          
-          quadrant_data = competitors.map do |c|
-            {
-              id: c['id'],
-              name: c['id'] == @company.id ? c['name'] : "Competidor #{c['id']}", # Anonymize others
-              completenessOfVision: c['trust_score'].to_f,
-              abilityToExecute: c['leads_30d'].to_i,
-              isCurrentCompany: c['id'] == @company.id
-            }
-          end
+        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+          return render json: { rank_position: nil, ranking_score: 0, magic_quadrant_points: [] }
         end
 
-        render json: {
-          rank_position: nil, # Hard to calculate absolute position efficiently without dense ranking materialized view
-          ranking_score: rank['score'].to_f,
-          magic_quadrant_points: quadrant_data
-        }
+        begin
+          sql_rank = 'SELECT score, breakdown FROM company_ranking_score WHERE company_id = $1'
+          rank = ActiveRecord::Base.connection.exec_query(sql_rank, 'Rank', [[nil, @company.id]]).first || {}
+
+          # Magic Quadrant base data (Top 20 in any of the company's categories)
+          category_id = @company.categories.first&.id
+          quadrant_data = []
+
+          if category_id
+            sql_quadrant = <<~SQL
+              SELECT c.id, c.name, ts.score AS trust_score, COALESCE(rs.total_leads, 0) AS leads_30d
+              FROM companies c
+              JOIN categories_companies cc ON cc.company_id = c.id
+              LEFT JOIN company_trust_score ts ON ts.company_id = c.id
+              LEFT JOIN company_feature_rolling_30d rs ON rs.company_id = c.id
+              WHERE cc.category_id = $1
+              ORDER BY ts.score DESC NULLS LAST
+              LIMIT 20
+            SQL
+
+            competitors = ActiveRecord::Base.connection.exec_query(sql_quadrant, 'Quadrant', [[nil, category_id]])
+
+            quadrant_data = competitors.map do |c|
+              {
+                id: c['id'],
+                name: c['id'] == @company.id ? c['name'] : "Competidor #{c['id']}", # Anonymize others
+                completenessOfVision: c['trust_score'].to_f,
+                abilityToExecute: c['leads_30d'].to_i,
+                isCurrentCompany: c['id'] == @company.id
+              }
+            end
+          end
+
+          render json: {
+            rank_position: nil,
+            ranking_score: rank['score'].to_f,
+            magic_quadrant_points: quadrant_data
+          }
+        rescue StandardError => e
+          log_analytics_error('ranking', e)
+          render json: { rank_position: nil, ranking_score: 0, magic_quadrant_points: [] }
+        end
       end
 
       # GET /api/v1/company_dashboard/assets
@@ -737,6 +757,14 @@ module Api
 
       def calculate_conversion_rate
         # Now handled by CompanyDashboard::StatsService
+      end
+
+      def log_analytics_error(action, error)
+        Rails.logger.error(
+          "[CompanyDashboard#analytics_#{action}] #{error.class}: #{error.message} " \
+          "company_id=#{@company&.id} user_id=#{current_user&.id}"
+        )
+        Rails.logger.error("[CompanyDashboard#analytics_#{action}] backtrace=#{error.backtrace&.first(5)&.join(' | ')}")
       end
     end
   end

@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react'
-import * as cable from '@/app/lib/cable'
+import * as cable from '@/lib/cable'
 import { useCompanyDashboard } from '@/app/dashboard/hooks/useCompanyDashboard'
 import { fetchApi } from '@/lib/api'
 
-jest.mock('@/app/lib/cable')
+jest.mock('@/lib/cable')
 jest.mock('@/lib/api', () => ({
   fetchApi: jest.fn(),
 }))

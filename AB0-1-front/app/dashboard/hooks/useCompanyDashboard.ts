@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react'
 import { fetchApi } from '@/lib/api'
-import { subscribeCompanyDashboard } from '@/app/lib/cable'
+import { subscribeCompanyDashboard } from '@/lib/cable'
 
 type KPI = {
   events_count: number

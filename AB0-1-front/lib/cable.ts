@@ -1,75 +1,107 @@
-import { getApiOrigin } from './api-config';
+import { createConsumer, Cable } from '@rails/actioncable'
+import { getApiOrigin } from './api-config'
 
-type CableMessage = any;
-const PROD_API_ORIGIN = 'https://api.avaliasolar.com.br';
+type DashboardMessage = {
+  type: string
+  source?: string
+  company_id: number
+  tracked_at: string
+  meta?: Record<string, any>
+  counters?: {
+    events_count?: number
+    quote_clicks?: number
+    whatsapp_clicks?: number
+    reviews_count?: number
+    average_rating?: number
+    rating_count?: number
+  }
+}
+
+let consumer: Cable | null = null
+const PROD_API_ORIGIN = 'https://api.avaliasolar.com.br'
 
 function isLocalHostUrl(url: string): boolean {
-  return /(^|:\/\/)(localhost|127\.0\.0\.1)(:\d+)?/i.test(url);
+  return /(^|:\/\/)(localhost|127\.0\.0\.1)(:\d+)?/i.test(url)
 }
 
 function shouldForcePublicApiOrigin(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (process.env.NODE_ENV !== 'production') return false;
-  return !['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (typeof window === 'undefined') return false
+  if (process.env.NODE_ENV !== 'production') return false
+  return !['localhost', '127.0.0.1'].includes(window.location.hostname)
 }
 
 function sanitizeOrigin(origin: string): string {
-  const trimmed = (origin || '').trim();
-  if (!trimmed) return '';
+  const trimmed = (origin || '').trim()
+  if (!trimmed) return ''
   if (shouldForcePublicApiOrigin() && isLocalHostUrl(trimmed)) {
-    return PROD_API_ORIGIN;
+    return PROD_API_ORIGIN
   }
-  return trimmed;
+  return trimmed
 }
 
-function toWsUrl(origin: string): string {
-  if (!origin) return '';
-  if (origin.startsWith('https://')) return origin.replace('https://', 'wss://');
-  if (origin.startsWith('http://')) return origin.replace('http://', 'ws://');
-  return origin.replace(/^http/, 'ws');
+function ensureCablePath(url: string): string {
+  const normalized = url.replace(/\/+$/, '')
+  if (normalized.endsWith('/cable')) return normalized
+  return `${normalized}/cable`
+}
+
+function toWsOrigin(origin: string): string {
+  if (!origin) return ''
+  if (origin.startsWith('wss://') || origin.startsWith('ws://')) return origin
+  if (origin.startsWith('https://')) return origin.replace('https://', 'wss://')
+  if (origin.startsWith('http://')) return origin.replace('http://', 'ws://')
+  return `wss://${origin.replace(/^\/+/, '')}`
+}
+
+function resolveCableUrl(): string {
+  const envUrl = sanitizeOrigin(process.env.NEXT_PUBLIC_CABLE_URL || '')
+  if (envUrl) return ensureCablePath(envUrl)
+
+  const apiOrigin = sanitizeOrigin(getApiOrigin())
+  if (apiOrigin) return ensureCablePath(toWsOrigin(apiOrigin))
+
+  if (process.env.NODE_ENV === 'production') {
+    return ensureCablePath(toWsOrigin(PROD_API_ORIGIN))
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return ensureCablePath(toWsOrigin(window.location.origin))
+  }
+
+  return 'ws://localhost:3001/cable'
+}
+
+export function getConsumer() {
+  if (consumer) return consumer
+  const url = resolveCableUrl()
+  if (process.env.NODE_ENV !== 'production') {
+    console.debug('[ActionCable] Using URL', url)
+  }
+  consumer = createConsumer(url)
+  return consumer
 }
 
 export function subscribeCompanyDashboard(
   companyId: string | number,
-  onMessage: (msg: CableMessage) => void
+  onMessage: (msg: DashboardMessage) => void,
+  onStatus?: (status: 'connected' | 'disconnected') => void
 ) {
-  const origin = sanitizeOrigin(getApiOrigin()) || (process.env.NODE_ENV === 'production' ? PROD_API_ORIGIN : '');
-  const wsOrigin = toWsUrl(origin);
-  if (!wsOrigin) {
-    console.warn('ActionCable: Missing WS Origin', { wsOrigin });
-    return () => {};
+  const c = getConsumer()
+  const subscription = c.subscriptions.create(
+    { channel: 'CompanyDashboardChannel', company_id: Number(companyId) },
+    {
+      connected() {
+        onStatus?.('connected')
+      },
+      disconnected() {
+        onStatus?.('disconnected')
+      },
+      received(data: any) {
+        onMessage(data as DashboardMessage)
+      },
+    }
+  )
+  return {
+    unsubscribe: () => c.subscriptions.remove(subscription),
   }
-
-  const url = `${wsOrigin}/cable`;
-  console.log('ActionCable: Connecting to', url);
-  const socket = new WebSocket(url);
-
-  socket.onopen = () => {
-    const identifier = JSON.stringify({ channel: 'CompanyDashboardChannel', company_id: Number(companyId) });
-    socket.send(JSON.stringify({ command: 'subscribe', identifier }));
-  };
-
-  socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      // Ignore pings and internal confirmations
-      if (data.type === 'ping' || data.type === 'welcome' || data.type === 'confirm_subscription') return;
-      if (data.message) onMessage(data.message);
-    } catch {
-      // ignore
-    }
-  };
-
-  socket.onerror = (error) => {
-    console.error('ActionCable: WebSocket Error', error);
-    // ignore; UI can fall back to polling
-  };
-
-  return () => {
-    try {
-      socket.close();
-    } catch {
-      // ignore
-    }
-  };
 }
