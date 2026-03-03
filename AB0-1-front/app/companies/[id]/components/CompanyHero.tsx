@@ -255,11 +255,11 @@ export default function CompanyHero({
                 </Button>
 
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="outline"
+                  size="default"
                   className={cn(
-                    'h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-500 shadow-none hover:bg-transparent hover:text-slate-900',
-                    inComp && 'text-blue-700'
+                    'h-11 rounded-xl border-2 border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:min-w-[140px]',
+                    inComp && 'border-blue-600 bg-blue-50 text-blue-700 hover:border-blue-700'
                   )}
                   onClick={() => {
                     if (inComp) {
@@ -269,10 +269,9 @@ export default function CompanyHero({
                     }
                   }}
                 >
-                  <Scale className={cn('mr-1.5 h-3.5 w-3.5', inComp && 'fill-current')} />
+                  <Scale className={cn('mr-2 h-4 w-4', inComp && 'fill-current')} />
                   {inComp ? 'Comparando' : 'Comparar'}
-                </Button>
-              </div>
+                </Button>              </div>
 
               <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
                 {ctaEnabled && ctaUrl && (
