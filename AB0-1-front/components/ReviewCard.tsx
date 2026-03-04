@@ -96,6 +96,38 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
         </p>
       </div>
 
+      {/* Granular Scores */}
+      {review.review_criterion_scores && review.review_criterion_scores.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+          {review.review_criterion_scores.map((score) => (
+            <div key={score.id} className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{score.title}</span>
+              <div className="flex items-center gap-1.5">
+                {score.not_applicable ? (
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded uppercase">N/A</span>
+                ) : (
+                  <>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${
+                            i < Math.floor(score.score)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-black text-slate-700">{Number(score.score).toFixed(1)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <button className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors">

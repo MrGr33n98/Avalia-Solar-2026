@@ -4,4 +4,5 @@ class ReviewSerializer < ActiveModel::Serializer
 
   belongs_to :user
   belongs_to :company
+  has_many :review_criterion_scores
 end

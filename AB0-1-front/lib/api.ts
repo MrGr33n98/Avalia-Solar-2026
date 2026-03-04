@@ -308,6 +308,13 @@ export interface Review {
   featured?: boolean;
   display_order?: number;
   helpful_count?: number;
+  review_criterion_scores?: Array<{
+    id: number;
+    score: number;
+    not_applicable: boolean;
+    rating_criterion_id: number;
+    title: string;
+  }>;
 }
 
 export interface SocialProofReview {
