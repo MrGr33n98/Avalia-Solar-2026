@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, ThumbsUp } from 'lucide-react';
 import { Review, fetchApi } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useRef, useState } from 'react';

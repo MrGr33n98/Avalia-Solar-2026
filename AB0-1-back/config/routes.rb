@@ -99,6 +99,21 @@ Rails.application.routes.draw do
       resources :banner_events, only: [:create]
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
 
+      resources :categories do
+        member do
+          get :companies
+          get :products
+          get :banners
+          get :evaluation_context
+        end
+
+        collection do
+          get :tree
+          get :featured
+          get 'by_slug/:slug', to: 'categories#show_by_slug'
+        end
+      end
+
       get 'dashboard/stats', to: 'dashboard#stats'
       get 'dashboard/export', to: 'dashboard_exports#export'
 
@@ -140,21 +155,6 @@ Rails.application.routes.draw do
       end
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
-
-      resources :categories do
-        member do
-          get :companies
-          get :products
-          get :banners
-          get :evaluation_context
-        end
-
-        collection do
-          get :tree
-          get :featured
-          get 'by_slug/:slug', to: 'categories#show_by_slug'
-        end
-      end
 
       resources :banners, only: [:index]
       resources :banner_globals, only: [:index]
