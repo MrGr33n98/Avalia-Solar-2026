@@ -14,10 +14,16 @@ export function useCategoriesTree() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchApiSafe<CategoryTreeNode[]>('/categories/tree');
       
-      // Ordenar categorias raiz por companies_count desc
-      const sortedData = (data || []).sort((a, b) => (b.companies_count || 0) - (a.companies_count || 0));
+      // Chamada protegida para evitar crashes globais
+      const data = await fetchApiSafe<CategoryTreeNode[]>('/categories/tree').catch(err => {
+        console.warn('[useCategoriesTree] Fallback triggered due to API error:', err);
+        return [];
+      });
+      
+      // Garantir que data seja sempre um array antes de ordenar
+      const safeData = Array.isArray(data) ? data : [];
+      const sortedData = safeData.sort((a, b) => (b.companies_count || 0) - (a.companies_count || 0));
       
       setCategories(sortedData);
     } catch (err) {

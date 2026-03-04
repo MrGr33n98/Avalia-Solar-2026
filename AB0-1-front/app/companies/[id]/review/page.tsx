@@ -61,6 +61,13 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   
   const router = useRouter();
   const { user } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = (() => {
+    const query = searchParams?.toString();
+    const fullPath = query ? `${pathname}?${query}` : pathname;
+    return encodeURIComponent(fullPath || '/');
+  })();
 
   const addField = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     setter(prev => [...prev, '']);

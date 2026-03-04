@@ -227,7 +227,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     );
   };
 
-  const averageRating = stats?.average_rating?.toFixed(1) ||
+  const averageRating = Number(stats?.average_rating || 0).toFixed(1) ||
     (reviews.length > 0
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
       : '0.0');
