@@ -149,213 +149,164 @@ export default function ComparePage() {
                       
                       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-tighter">
                         <Star className="h-3 w-3 fill-current" />
-                        {company.average_rating?.toFixed(1) || '0.0'} ({company.rating_count || 0})
+                        {company.rating_avg?.toFixed(1) || '0.0'} ({company.rating_count || 0})
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                      </motion.div>
+                      ))}
+                      </AnimatePresence>
 
-                {/* Empty Slots */}
-                {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                  <Link 
-                    key={`empty-${i}`}
-                    href="/companies"
-                    className="p-8 flex flex-col items-center justify-center border-r border-slate-100 last:border-r-0 bg-slate-50/20 group transition-all hover:bg-white"
-                  >
-                    <div className="h-16 w-16 rounded-3xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-blue-200 group-hover:text-blue-400 transition-all mb-4">
+                      {/* Empty Slots */}
+                      {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                      <Link 
+                      key={`empty-${i}`}
+                      href="/companies"
+                      className="p-8 flex flex-col items-center justify-center border-r border-slate-100 last:border-r-0 bg-slate-50/20 group transition-all hover:bg-white"
+                      >
+                      <div className="h-16 w-16 rounded-3xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-blue-200 group-hover:text-blue-400 transition-all mb-4">
                       <Scale className="h-6 w-6" />
-                    </div>
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Adicionar Empresa</span>
-                  </Link>
-                ))}
-              </div>
+                      </div>
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Adicionar Empresa</span>
+                      </Link>
+                      ))}
+                      </div>
 
-              {/* Group: Visão Geral */}
-              <CategoryHeader 
-                id="geral" 
-                label="Visão Geral" 
-                icon={<Info className="h-4 w-4" />} 
-                isExpanded={expandedGroups.includes('geral')} 
-                onToggle={() => toggleGroup('geral')} 
-              />
-              {expandedGroups.includes('geral') && (
-                <div className="divide-y divide-slate-50">
-                  <ComparisonRow 
-                    label="Localização" 
-                    icon={<MapPin className="h-4 w-4 text-blue-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
+                      {/* Group: Visão Geral */}
+                      <CategoryHeader 
+                      id="geral" 
+                      label="Visão Geral" 
+                      icon={<Info className="h-4 w-4" />} 
+                      isExpanded={expandedGroups.includes('geral')} 
+                      onToggle={() => toggleGroup('geral')} 
+                      />
+                      {expandedGroups.includes('geral') && (
+                      <div className="divide-y divide-slate-50">
+                      <ComparisonRow 
+                      label="Localização" 
+                      icon={<MapPin className="h-4 w-4 text-blue-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
                       <span className="text-sm font-bold text-slate-600">{c.city}, {c.state}</span>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Selo de Confiança" 
-                    icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
+                      )} 
+                      />
+                      <ComparisonRow 
+                      label="Selo Verificado" 
+                      icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
                       c.verified ? (
                         <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-xl text-xs font-black">
                           <Check className="h-3.5 w-3.5" /> Verificada
                         </div>
                       ) : <span className="text-slate-300 font-medium">—</span>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Experiência" 
-                    icon={<Clock className="h-4 w-4 text-orange-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => {
+                      )} 
+                      />
+                      <ComparisonRow 
+                      label="Anos de Mercado" 
+                      icon={<Clock className="h-4 w-4 text-orange-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => {
                       const years = c.founded_year ? new Date().getFullYear() - c.founded_year : null;
                       return years !== null ? (
-                        <span className="text-sm font-bold text-slate-700">{years > 0 ? `${years} anos no mercado` : 'Inaugurada este ano'}</span>
+                        <span className="text-sm font-bold text-slate-700">{years > 0 ? `${years} anos` : 'Inaugurada este ano'}</span>
                       ) : <span className="text-slate-300 font-medium">—</span>;
-                    }} 
-                  />
-                  <ComparisonRow 
-                    label="Reputação Premium" 
-                    icon={<Trophy className="h-4 w-4 text-amber-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
+                      }} 
+                      />
+                      <ComparisonRow 
+                      label="Destaque" 
+                      icon={<Zap className="h-4 w-4 text-amber-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
                       c.featured ? (
                         <div className="inline-flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-1.5 rounded-xl text-xs font-black">
                           <Zap className="h-3.5 w-3.5 fill-current" /> Premium
                         </div>
                       ) : <span className="text-slate-300 font-medium">—</span>
-                    )} 
-                  />
-                </div>
-              )}
+                      )} 
+                      />
+                      </div>
+                      )}
 
-              {/* Group: Comercial & Serviços */}
-              <CategoryHeader 
-                id="comercial" 
-                label="Comercial & Serviços" 
-                icon={<CircleDollarSign className="h-4 w-4" />} 
-                isExpanded={expandedGroups.includes('comercial')} 
-                onToggle={() => toggleGroup('comercial')} 
-              />
-              {expandedGroups.includes('comercial') && (
-                <div className="divide-y divide-slate-50">
-                  <ComparisonRow 
-                    label="Financiamento" 
-                    icon={<CircleDollarSign className="h-4 w-4 text-emerald-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      c.financing_enabled ? (
-                        <div className="flex flex-col gap-1">
-                          <div className="inline-flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                            <Check className="h-4 w-4" /> Disponível
-                          </div>
-                          {c.financing_options && <span className="text-[10px] text-slate-400 font-medium max-w-[150px] line-clamp-1">{c.financing_options}</span>}
-                        </div>
-                      ) : <span className="text-slate-300 font-medium">Não informado</span>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Projetos" 
-                    icon={<Briefcase className="h-4 w-4 text-slate-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
+                      {/* Group: Diferenciais & Prêmios */}
+                      <CategoryHeader 
+                      id="diferenciais" 
+                      label="Diferenciais & Prêmios" 
+                      icon={<Award className="h-4 w-4" />} 
+                      isExpanded={expandedGroups.includes('diferenciais')} 
+                      onToggle={() => toggleGroup('diferenciais')} 
+                      />
+                      {expandedGroups.includes('diferenciais') && (
+                      <div className="divide-y divide-slate-50">
+                      <ComparisonRow 
+                      label="Badges & Conquistas" 
+                      icon={<Trophy className="h-4 w-4 text-amber-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
                       <div className="flex flex-wrap gap-1 justify-center md:justify-start">
-                        {c.project_types && c.project_types.length > 0 ? (
-                          c.project_types.slice(0, 3).map((t, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
-                              {t}
+                        {c.badges && c.badges.length > 0 ? (
+                          c.badges.slice(0, 3).map((badge, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100" title={badge.description || badge.name}>
+                              {badge.name}
                             </span>
                           ))
                         ) : <span className="text-slate-300 font-medium">—</span>}
                       </div>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Resposta" 
-                    icon={<Zap className="h-4 w-4 text-blue-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      <span className="text-sm font-bold text-slate-700">{c.response_time_sla || <span className="text-slate-300 font-medium">Sob consulta</span>}</span>
-                    )} 
-                  />
-                </div>
-              )}
-
-              {/* Group: Capacidade Técnica */}
-              <CategoryHeader 
-                id="tecnico" 
-                label="Capacidade Técnica" 
-                icon={<Briefcase className="h-4 w-4" />} 
-                isExpanded={expandedGroups.includes('tecnico')} 
-                onToggle={() => toggleGroup('tecnico')} 
-              />
-              {expandedGroups.includes('tecnico') && (
-                <div className="divide-y divide-slate-50">
-                  <ComparisonRow 
-                    label="Marcas Parceiras" 
-                    icon={<Award className="h-4 w-4 text-slate-400" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      <span className="text-sm font-medium text-slate-600 italic line-clamp-2 max-w-[200px]">{c.partner_brands || <span className="text-slate-300 not-italic">—</span>}</span>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Cobertura" 
-                    icon={<Globe className="h-4 w-4 text-blue-400" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      <span className="text-sm font-bold text-slate-700">
-                        {c.coverage_states ? (
-                          `${c.coverage_states.split(',').length} estados`
-                        ) : 'Atendimento Local'}
-                      </span>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Time" 
-                    icon={<Briefcase className="h-4 w-4 text-slate-400" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      <span className="text-sm font-bold text-slate-700">{c.employees_count ? `${c.employees_count} colaboradores` : <span className="text-slate-300 font-medium">—</span>}</span>
-                    )} 
-                  />
-                </div>
-              )}
-
-              {/* Group: Diferenciais */}
-              <CategoryHeader 
-                id="diferenciais" 
-                label="Diferenciais & Prêmios" 
-                icon={<Award className="h-4 w-4" />} 
-                isExpanded={expandedGroups.includes('diferenciais')} 
-                onToggle={() => toggleGroup('diferenciais')} 
-              />
-              {expandedGroups.includes('diferenciais') && (
-                <div className="divide-y divide-slate-50">
-                  <ComparisonRow 
-                    label="Certificações" 
-                    icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
-                      <div className="text-center md:text-left">
-                        <p className="text-sm font-medium text-slate-600 line-clamp-3">
-                          {c.certifications ? (Array.isArray(c.certifications) ? c.certifications.join(', ') : c.certifications) : <span className="text-slate-300">—</span>}
-                        </p>
-                      </div>
-                    )} 
-                  />
-                  <ComparisonRow 
-                    label="Premiações" 
-                    icon={<Trophy className="h-4 w-4 text-amber-500" />} 
-                    companies={comparisonList} 
-                    value={(c) => (
+                      )} 
+                      />
+                      <ComparisonRow 
+                      label="Prêmios" 
+                      icon={<Award className="h-4 w-4 text-blue-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
                       <p className="text-sm font-medium text-slate-600 line-clamp-2 italic">
                         {c.awards || <span className="text-slate-300 not-italic">—</span>}
                       </p>
-                    )} 
-                  />
-                </div>
-              )}
+                      )} 
+                      />
+                      </div>
+                      )}
 
-              {/* Footer Row: Actions */}
-              <div className="grid grid-cols-4 bg-slate-50/50 sticky bottom-0 z-20 border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+                      {/* Group: Financiamento */}
+                      <CategoryHeader 
+                      id="comercial" 
+                      label="Financiamento" 
+                      icon={<CircleDollarSign className="h-4 w-4" />} 
+                      isExpanded={expandedGroups.includes('comercial')} 
+                      onToggle={() => toggleGroup('comercial')} 
+                      />
+                      {expandedGroups.includes('comercial') && (
+                      <div className="divide-y divide-slate-50">
+                      <ComparisonRow 
+                      label="Status Financiamento" 
+                      icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                      c.financing_enabled ? (
+                        <div className="inline-flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                          <Check className="h-4 w-4" /> Disponível
+                        </div>
+                      ) : <span className="text-slate-300 font-medium">Não informado</span>
+                      )} 
+                      />
+                      <ComparisonRow 
+                      label="Parceiros" 
+                      icon={<CircleDollarSign className="h-4 w-4 text-blue-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                      <div className="flex flex-wrap gap-1 justify-center md:justify-start">
+                        {c.financing_partners && c.financing_partners.length > 0 ? (
+                          c.financing_partners.slice(0, 3).map((partner, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                              {partner.name}
+                            </span>
+                          ))
+                        ) : <span className="text-slate-300 font-medium">—</span>}
+                      </div>
+                      )} 
+                      />
+                      </div>
+                      )}
+
+                      {/* Footer Row: Actions */}              <div className="grid grid-cols-4 bg-slate-50/50 sticky bottom-0 z-20 border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                 <div className="p-8 flex items-center justify-center border-r border-slate-100">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ação imediata</span>
                 </div>
