@@ -58,6 +58,11 @@ module Analytics
 
       persist_platform_event!
       
+      # Sync Review Telemetry Cache (Solar Reviews 2.0)
+      if @event_type.start_with?('review_')
+        Reviews::TelemetryAggregator.call(@event_type, @metadata)
+      end
+
       Result.new(ok: true)
     rescue StandardError => e
       Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")        

@@ -4,10 +4,15 @@ module ReviewCallbacks
   extend ActiveSupport::Concern
 
   included do
+    before_save :update_score_from_criteria
     after_commit :recalculate_company_rating, on: %i[create update destroy]
   end
 
   private
+
+  def update_score_from_criteria
+    self.rating = Reviews::ScoreCalculator.new(self).calculate
+  end
 
   def recalculate_company_rating
     company_ids = []

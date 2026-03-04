@@ -448,6 +448,29 @@ ActiveAdmin.register Company do
       end
     end
 
+    panel 'Social Proof & Reviews 2.0' do
+      # Calculate aggregates from reviews metadata cache
+      # Map to hash explicitly to avoid nil issues
+      stats = resource.reviews.approved.pluck(:metadata).map { |m| m || {} }
+      total_reads = stats.sum { |m| m['read_count'].to_i }
+      total_clicks = stats.sum { |m| m['cta_clicks'].to_i }
+      
+      attributes_table_for resource do
+        row 'Total de Leituras de Mini Cases' do
+          status_tag total_reads, class: 'info'
+        end
+        row 'Total de Cliques de Interesse (Review CTA)' do
+          status_tag total_clicks, class: 'ok'
+        end
+        row 'Taxa de Conversão de Social Proof' do
+          total_reads > 0 ? "#{(total_clicks.to_f / total_reads * 100).round(2)}%" : '0%'
+        end
+        row 'Score Médio de Prova Social' do
+          resource.reviews.approved.average(:rating).to_f.round(2)
+        end
+      end
+    end
+
     if Company.column_names.include?('effect')
       panel 'Visual Effect Preview' do
         div class: 'company-card admin-preview', 'data-controller': 'effect',

@@ -72,6 +72,12 @@ ActiveAdmin.register Review do
     end
     column :featured
     column :display_order
+    column 'Leituras' do |review|
+      review.metadata&.[]('read_count') || 0
+    end
+    column 'Cliques CTA' do |review|
+      review.metadata&.[]('cta_clicks') || 0
+    end
     column :created_at
     column :updated_at
     actions defaults: true do |review|

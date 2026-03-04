@@ -10,8 +10,22 @@ class Review < ApplicationRecord
   MAX_FEATURED_PER_COMPANY = 5
 
   enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3 }
+  enum project_type: { residential: 0, commercial: 1, industrial: 2, rural: 3 }
+  enum installation_status: { completed: 0, in_progress: 1, waiting: 2 }
+
+  store_accessor :content_metadata, :pros, :cons, :buyer_tip, :trust_badge_state
+  store_accessor :metadata, :cta_clicks, :read_count, :last_aggregated_at
+
+  def pros
+    Array(super)
+  end
+
+  def cons
+    Array(super)
+  end
 
   scope :approved_only, -> { where(status: statuses[:approved]) }
+
   scope :featured_only, -> { where(featured: true) }
   scope :for_company, ->(company_id) { where(company_id: company_id) if company_id.present? }
   scope :for_social_proof, -> { approved_only.featured_only.order(display_order: :asc, created_at: :desc) }

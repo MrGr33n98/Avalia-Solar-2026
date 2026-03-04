@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp, User, Building2 } from 'lucide-react';
-import { Review } from '@/lib/api';
+import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Review, fetchApi } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useRef, useState } from 'react';
 
 interface ReviewCardProps {
   review: Review;
@@ -12,7 +13,96 @@ interface ReviewCardProps {
   onReply?: (review: Review) => void;
 }
 
+const TRACKED_REVIEWS_KEY = 'avalia_tracked_reviews_v1';
+
 export default function ReviewCard({ review, className = "", variant = 'user', onReply }: ReviewCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [hasTrackedRead, setHasTrackedRead] = useState(false);
+  const [hasTrackedClick, setHasTrackedClick] = useState(false);
+  const dwellTimerRef = useRef<any>(null);
+
+  // Safe access for pros/cons
+  const prosList = Array.isArray(review.pros) ? review.pros : [];
+  const consList = Array.isArray(review.cons) ? review.cons : [];
+
+  // Check session storage on mount
+  useEffect(() => {
+    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]');
+    if (tracked.includes(review.id)) {
+      setHasTrackedRead(true);
+    }
+  }, [review.id]);
+
+  // Telemetry: Track 'review_read' with Dwell Time (70% visible for 2s)
+  useEffect(() => {
+    if (hasTrackedRead || !review.id || !review.company_id) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
+          // Start dwell timer
+          dwellTimerRef.current = setTimeout(() => {
+            trackEvent('review_read');
+            markAsTracked(review.id);
+          }, 2000); // 2 seconds dwell time
+        } else {
+          // Cancel if user scrolls away before 2s
+          if (dwellTimerRef.current) {
+            clearTimeout(dwellTimerRef.current);
+            dwellTimerRef.current = null;
+          }
+        }
+      },
+      { threshold: [0, 0.7] }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (dwellTimerRef.current) clearTimeout(dwellTimerRef.current);
+    };
+  }, [review.id, hasTrackedRead]);
+
+  const markAsTracked = (id: number) => {
+    setHasTrackedRead(true);
+    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]');
+    if (!tracked.includes(id)) {
+      sessionStorage.setItem(TRACKED_REVIEWS_KEY, JSON.stringify([...tracked, id]));
+    }
+  };
+
+  const trackEvent = async (eventType: 'review_read' | 'review_cta_click') => {
+    try {
+      await fetchApi('/analytics/track', {
+        method: 'POST',
+        body: JSON.stringify({
+          event_type: eventType,
+          company_id: review.company_id,
+          metadata: {
+            review_id: review.id,
+            source: 'review_card',
+            project_type: review.project_type
+          }
+        })
+      });
+    } catch (err) {
+      console.warn(`[Telemetry] Failed to track ${eventType}:`, err);
+    }
+  };
+
+  const handleCTAClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasTrackedClick) return; // Spam protection
+    
+    setHasTrackedClick(true);
+    trackEvent('review_cta_click');
+    console.log('[CTA] User interested in review project:', review.id);
+  };
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -29,6 +119,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
 
   return (
     <motion.div
+      ref={cardRef}
       className={`bg-white rounded-xl shadow-md border border-gray-200 p-6 ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -69,7 +160,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
           </div>
 
           {/* Rating Stars */}
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center space-x-2 mb-1">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -86,14 +177,99 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
               {review.rating}/5
             </span>
           </div>
+
+          {/* Technical Context Badges */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            {review.project_type && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {review.project_type === 'residential' ? 'Residencial' : 
+                 review.project_type === 'commercial' ? 'Comercial' :
+                 review.project_type === 'industrial' ? 'Industrial' : 'Rural'}
+              </span>
+            )}
+            {review.estimated_power && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                {review.estimated_power} kWp
+              </span>
+            )}
+            {review.installation_status && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {review.installation_status === 'completed' ? 'Instalado' :
+                 review.installation_status === 'in_progress' ? 'Em andamento' : 'Aguardando'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Review Content */}
       <div className="mb-4">
-        <p className="text-gray-700 leading-relaxed">
-          {review.comment}
-        </p>
+        {review.display_headline && (
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            {review.display_headline}
+          </h3>
+        )}
+        
+        {/* Pros & Cons Section */}
+        {(prosList.length > 0 || consList.length > 0) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {prosList.length > 0 && (
+              <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                <h5 className="text-xs font-bold text-green-700 uppercase mb-2">Pontos Positivos</h5>
+                <ul className="text-sm text-green-800 space-y-1">
+                  {prosList.map((pro, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="mr-2 text-green-500">•</span>
+                      {pro}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {consList.length > 0 && (
+              <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                <h5 className="text-xs font-bold text-red-700 uppercase mb-2">Oportunidades de Melhoria</h5>
+                <ul className="text-sm text-red-800 space-y-1">
+                  {consList.map((con, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="mr-2 text-red-500">•</span>
+                      {con}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {review.comment}
+          </p>
+        )}
+
+        {review.buyer_tip && (
+          <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+            <h5 className="text-xs font-bold text-blue-700 uppercase mb-1">Dica para o comprador</h5>
+            <p className="text-sm text-blue-900 italic">"{review.buyer_tip}"</p>
+          </div>
+        )}
+
+        {/* Action CTA */}
+        {review.project_type && (
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleCTAClick}
+              disabled={hasTrackedClick}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-full transition-all shadow-sm ${
+                hasTrackedClick 
+                  ? 'bg-gray-100 text-gray-400 cursor-default' 
+                  : 'bg-slate-900 text-white hover:bg-blue-600'
+              }`}
+            >
+              {hasTrackedClick ? 'Interesse registrado' : 'Tenho interesse em projeto similar'}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Granular Scores */}

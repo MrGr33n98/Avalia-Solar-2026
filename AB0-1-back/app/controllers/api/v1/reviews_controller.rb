@@ -147,7 +147,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def review_params
     params.require(:review).permit(
-      :rating, :comment, :company_id,
+      :rating, :comment, :company_id, :headline, :project_type,
+      :installation_status, :estimated_power, :is_legacy,
+      { content_metadata: [:buyer_tip, :trust_badge_state, { pros: [], cons: [] }] },
       review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy]
     )
   end

@@ -308,6 +308,27 @@ export interface Review {
   featured?: boolean;
   display_order?: number;
   helpful_count?: number;
+  headline?: string;
+  display_headline?: string;
+  project_type?: 'residential' | 'commercial' | 'industrial' | 'rural';
+  installation_status?: 'completed' | 'in_progress' | 'waiting';
+  estimated_power?: number;
+  is_legacy?: boolean;
+  pros?: string[];
+  cons?: string[];
+  buyer_tip?: string;
+  editorial_complete?: boolean;
+  content_metadata?: {
+    pros: string[];
+    cons: string[];
+    buyer_tip?: string;
+    trust_badge_state?: string;
+  };
+  metadata?: {
+    cta_clicks?: number;
+    read_count?: number;
+    last_aggregated_at?: string;
+  };
   review_criterion_scores?: Array<{
     id: number;
     score: number;
