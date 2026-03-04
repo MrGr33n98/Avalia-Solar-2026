@@ -194,6 +194,8 @@ ActiveAdmin.register Category, namespace: :admin do
           f.template.safe_join([label, body])
         end
       )
+
+      nil
     end
 
     f.inputs 'Lead Wizard Settings' do
