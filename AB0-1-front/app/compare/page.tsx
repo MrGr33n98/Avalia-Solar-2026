@@ -34,6 +34,11 @@ export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['geral', 'tecnico', 'comercial', 'diferenciais']);
 
+  const formatRating = (value: unknown) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+  };
+
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => 
       prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
@@ -149,7 +154,7 @@ export default function ComparePage() {
                       
                       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-tighter">
                         <Star className="h-3 w-3 fill-current" />
-                        {company.rating_avg?.toFixed(1) || '0.0'} ({company.rating_count || 0})
+                        {formatRating(company.rating_avg)} ({company.rating_count || 0})
                       </div>
                       </motion.div>
                       ))}
