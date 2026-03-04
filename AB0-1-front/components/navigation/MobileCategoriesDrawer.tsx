@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { Zap, RefreshCw } from 'lucide-react';
 
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
@@ -44,9 +45,22 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : error ? (
-            <div className="text-center py-10 text-slate-500">
-              Erro ao carregar categorias.
+          ) : error && categories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="bg-amber-50 text-amber-600 p-3 rounded-full mb-4">
+                <Zap className="h-6 w-6" />
+              </div>
+              <h3 className="text-slate-900 font-semibold mb-1">Categorias Indisponíveis</h3>
+              <p className="text-slate-500 text-xs mb-6">
+                Não foi possível carregar o menu. Tente novamente mais tarde ou acesse a página completa.
+              </p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-2 text-primary text-sm font-bold border border-primary/20 px-4 py-2 rounded-lg hover:bg-primary/5 transition-colors"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Tentar Recarregar
+              </button>
             </div>
           ) : (
             <Accordion type="single" collapsible className="w-full">

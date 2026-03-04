@@ -16,19 +16,42 @@ export function useCategoriesTree() {
       setError(null);
       
       // Chamada protegida para evitar crashes globais
+      // Passamos um catch interno para logar o tipo de erro e retornar array vazio se falhar
       const data = await fetchApiSafe<CategoryTreeNode[]>('/categories/tree').catch(err => {
-        console.warn('[useCategoriesTree] Fallback triggered due to API error:', err);
+        const isUpstream = err?.status === 502 || err?.status === 504;
+        const isNotFound = err?.status === 404;
+        
+        console.warn(`[useCategoriesTree] ${isUpstream ? 'Upstream/API Error' : isNotFound ? 'Route Not Found' : 'Fetch Error'}:`, {
+          status: err?.status,
+          message: err?.message,
+          endpoint: '/categories/tree'
+        });
+        
+        // Se for erro temporário de API (502/504/500), mantemos o erro no state para feedback
+        // mas o hook continua a execução para retornar o que tiver (mesmo que seja [])
+        if (err?.status >= 500) {
+          setError(err);
+        }
+        
         return [];
       });
       
       // Garantir que data seja sempre um array antes de ordenar
+      // Se data for null ou undefined (pode vir de comportamentos inesperados do fetchApiSafe), fallback para []
       const safeData = Array.isArray(data) ? data : [];
-      const sortedData = safeData.sort((a, b) => (b.companies_count || 0) - (a.companies_count || 0));
+      
+      // Ordenação segura (com proteção para campos nulos)
+      const sortedData = [...safeData].sort((a, b) => {
+        const aCount = a?.companies_count || 0;
+        const bCount = b?.companies_count || 0;
+        return bCount - aCount;
+      });
       
       setCategories(sortedData);
     } catch (err) {
-      console.error('[useCategoriesTree] Error fetching categories tree:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch categories tree'));
+      console.error('[useCategoriesTree] Critical error in hook logic:', err);
+      // Erros críticos de lógica (ex: erro no sort ou parse)
+      setError(err instanceof Error ? err : new Error('Failed to process categories tree'));
     } finally {
       setLoading(false);
     }

@@ -324,7 +324,10 @@ module Api
       # Finders / Params
       # -------------------------
 
-      def category_tree_json(category)
+      def category_tree_json(category, visited = Set.new)
+        return nil if visited.include?(category.id)
+        visited.add(category.id)
+
         {
           id: category.id,
           name: category.name,
@@ -333,7 +336,8 @@ module Api
           companies_count: category.companies_count || 0,
           children: (category.children.select { |c| c.status == 'active' } || [])
                     .sort_by(&:name)
-                    .map { |child| category_tree_json(child) }
+                    .map { |child| category_tree_json(child, visited.dup) }
+                    .compact
         }
       end
 

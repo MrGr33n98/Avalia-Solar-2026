@@ -22,7 +22,48 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
     return filterCategories(categories, searchQuery);
   }, [categories, searchQuery, filterCategories]);
 
-  if (error) return null;
+  // Fallback state if the menu is open but categories failed to load
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+          {[...Array(14)].map((_, i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-5 w-32 rounded-md" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full rounded-sm" />
+                <Skeleton className="h-3 w-3/4 rounded-sm" />
+                <Skeleton className="h-3 w-1/2 rounded-sm" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (error && categories.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="bg-amber-50 text-amber-600 p-3 rounded-full mb-4">
+            <Zap className="h-6 w-6" />
+          </div>
+          <h3 className="text-slate-900 font-semibold mb-1">Menu Temporariamente Indisponível</h3>
+          <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 px-4">
+            Estamos com dificuldades para carregar as categorias. Você ainda pode pesquisar ou ver a listagem completa.
+          </p>
+          <Link 
+            href="/categories" 
+            onClick={onClose}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Acessar Todas as Categorias
+          </Link>
+        </div>
+      );
+    }
+
+    return <CategoriesGrid categories={filteredTree} />;
+  };
 
   return (
     <AnimatePresence>
@@ -74,46 +115,33 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
 
               {/* Scrollable Grid Area */}
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/30">
-                {loading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
-                    {[...Array(14)].map((_, i) => (
-                      <div key={i} className="space-y-3">
-                        <Skeleton className="h-5 w-32 rounded-md" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-3 w-full rounded-sm" />
-                          <Skeleton className="h-3 w-3/4 rounded-sm" />
-                          <Skeleton className="h-3 w-1/2 rounded-sm" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <CategoriesGrid categories={filteredTree} />
-                )}
+                {renderContent()}
               </div>
 
-              {/* Footer / Destaque Rápido */}
-              <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Populares agora:</span>
-                  <div className="flex gap-2">
-                    {categories.slice(0, 3).map(cat => (
-                      <Link 
-                        key={cat.id}
-                        href={`/categories/${cat.slug}`}
-                        onClick={onClose}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-600 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
-                      >
-                        <Zap className="h-3 w-3 text-amber-500" />
-                        {cat.name}
-                      </Link>
-                    ))}
+              {/* Footer / Destaque Rápido (apenas se houver categorias) */}
+              {categories.length > 0 && (
+                <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Populares agora:</span>
+                    <div className="flex gap-2">
+                      {categories.slice(0, 3).map(cat => (
+                        <Link 
+                          key={cat.id}
+                          href={`/categories/${cat.slug}`}
+                          onClick={onClose}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-600 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
+                        >
+                          <Zap className="h-3 w-3 text-amber-500" />
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Mais de {categories.length} categorias de energia solar
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  Mais de {categories.length} categorias de energia solar
-                </p>
-              </div>
+              )}
             </div>
           </motion.div>
         </>
