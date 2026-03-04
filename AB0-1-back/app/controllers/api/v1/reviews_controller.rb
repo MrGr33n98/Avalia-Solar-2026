@@ -6,7 +6,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def index
     # Eager load associations to prevent N+1 queries
-    @reviews = Review.includes(:user, :company)
+    @reviews = Review.includes(:user, :company, review_criterion_scores: :rating_criterion)
                      .order(created_at: :desc)
 
     # Filtra por company_id se fornecido
@@ -31,11 +31,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     # Add a limit to avoid sending too much data
     @reviews = @reviews.limit(params[:limit].present? ? params[:limit].to_i : 10)
 
-    # Render a custom JSON response that includes associated data
-    render json: @reviews, include: {
-      user: { only: %i[id name], methods: [:avatar_url] },
-      company: { only: %i[id name logo_url slug] }
-    }
+    render json: @reviews.map { |review| serialize_review(review) }
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Registros não encontrados' }, status: :not_found
   rescue StandardError => e
@@ -44,13 +40,11 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def show
-    render json: @review, include: {
-      user: { only: %i[id name] }
-    }
+    render json: serialize_review(@review)
   end
 
   def mine
-    @reviews = current_user.reviews.includes(:company).order(created_at: :desc)
+    @reviews = current_user.reviews.includes(:company, review_criterion_scores: :rating_criterion).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
     }
@@ -75,7 +69,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       owners = @review.company.company_members.owner.includes(:user).map(&:user)
       ReviewNotifier.with(review: @review, type: :new_review).deliver(owners) if owners.any?
 
-      render json: @review, status: :created
+      render json: serialize_review(@review.reload), status: :created
     else
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
     end
@@ -85,7 +79,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     if @review.user_id == current_user.id
       # User updating their own review
       if @review.update(review_params)
-        render json: @review
+        render json: serialize_review(@review.reload)
       else
         render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
       end
@@ -95,7 +89,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
         # Notify review author
         ReviewNotifier.with(review: @review, type: :reply).deliver(@review.user)
 
-        render json: @review
+        render json: serialize_review(@review.reload)
       else
         render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
       end
@@ -114,16 +108,49 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   def serialize_review(review)
     {
       id: review.id,
+      user_id: review.user_id,
+      company_id: review.company_id,
       company: {
         id: review.company.id,
         name: review.company.name,
-        logo_url: review.company.logo_url
+        logo_url: review.company.logo_url,
+        slug: review.company.slug
+      },
+      user: {
+        id: review.user.id,
+        name: review.user.name,
+        avatar_url: review.user.avatar_url
       },
       rating: review.rating,
+      comment: review.comment,
       body: review.comment,
+      reply: review.reply,
+      replied_at: review.replied_at,
       status: review.status,
-      created_at: review.created_at
+      featured: review.featured,
+      display_order: review.display_order,
+      verified: review.verified,
+      created_at: review.created_at,
+      updated_at: review.updated_at,
+      review_criterion_scores: serialize_review_criterion_scores(review)
     }
+  end
+
+  def serialize_review_criterion_scores(review)
+    return [] unless ReviewCriterionScore.table_exists?
+
+    review.review_criterion_scores.includes(:rating_criterion).map do |score|
+      {
+        id: score.id,
+        score: score.score&.to_f,
+        not_applicable: score.not_applicable,
+        rating_criterion_id: score.rating_criterion_id,
+        title: score.rating_criterion&.title
+      }
+    end
+  rescue ActiveRecord::StatementInvalid => e
+    Rails.logger.warn("[ReviewsController] failed to serialize review_criterion_scores for review=#{review.id}: #{e.message}")
+    []
   end
 
   def set_review

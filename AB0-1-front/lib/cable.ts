@@ -71,7 +71,19 @@ function resolveCableUrl(): string {
   return 'ws://localhost:3001/cable'
 }
 
+function isRealtimeEnabled(): boolean {
+  const realtimeFlag = process.env.NEXT_PUBLIC_ENABLE_REALTIME_DASHBOARD
+  if (realtimeFlag === 'true') return true
+  if (realtimeFlag === 'false') return false
+
+  if (typeof window === 'undefined') return false
+
+  // Keep local development zero-config, but require explicit opt-in in production.
+  return ['localhost', '127.0.0.1'].includes(window.location.hostname)
+}
+
 export function getConsumer() {
+  if (!isRealtimeEnabled()) return null
   if (consumer) return consumer
   const url = resolveCableUrl()
   if (process.env.NODE_ENV !== 'production') {
@@ -87,6 +99,13 @@ export function subscribeCompanyDashboard(
   onStatus?: (status: 'connected' | 'disconnected') => void
 ) {
   const c = getConsumer()
+  if (!c) {
+    onStatus?.('disconnected')
+    return {
+      unsubscribe: () => {},
+    }
+  }
+
   const subscription = c.subscriptions.create(
     { channel: 'CompanyDashboardChannel', company_id: Number(companyId) },
     {
