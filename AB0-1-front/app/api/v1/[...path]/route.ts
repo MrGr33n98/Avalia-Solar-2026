@@ -57,6 +57,10 @@ function resolveProxyApiBases() {
     const normalized = normalizeApiBase(candidate);
     if (!normalized) return;
     if (seen.has(normalized)) return;
+    
+    // Skip relative paths to avoid recursive proxy loops
+    if (!normalized.startsWith('http')) return;
+    
     seen.add(normalized);
     resolved.push(normalized);
   });

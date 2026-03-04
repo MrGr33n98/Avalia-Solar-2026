@@ -1,4 +1,6 @@
 # app/controllers/api/v1/categories_controller.rb
+require 'set'
+
 module Api
   module V1
     class CategoriesController < Api::V1::BaseController
