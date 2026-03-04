@@ -76,11 +76,11 @@ export default function CompanyCardV2({
 
         {/* Rating */}
         {(company.rating || company.rating_avg || company.average_rating) ? (
-          <div className="flex items-center gap-2" aria-label={`Avaliação: ${(company.rating || company.rating_avg || company.average_rating).toFixed(1)} de 5 estrelas`}>
+          <div className="flex items-center gap-2" aria-label={`Avaliação: ${Number(company.rating || company.rating_avg || company.average_rating || 0).toFixed(1)} de 5 estrelas`}>
             <div className="flex items-center gap-1.5">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400" strokeWidth={0} aria-hidden="true" />
               <span className="text-sm font-bold text-slate-900">
-                {Number(company.rating || company.rating_avg || company.average_rating).toFixed(1)}/5.0
+                {Number(company.rating || company.rating_avg || company.average_rating || 0).toFixed(1)}/5.0
               </span>
             </div>
             {company.rating_count && (
