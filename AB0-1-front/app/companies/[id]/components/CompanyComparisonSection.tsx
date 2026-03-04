@@ -10,14 +10,11 @@ import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, 
-  MapPin, 
   Check, 
   X, 
   Scale, 
   Search, 
-  Trophy,
   ArrowRight,
-  ShieldCheck,
   Zap,
   Clock,
   Plus
@@ -225,7 +222,6 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
             <div className="divide-y divide-slate-50">
               <ComparisonRow 
                 label="Reputação" 
-                icon={<Star className="h-4 w-4 text-amber-500" />} 
                 companies={displayedCompanies} 
                 value={(c) => (
                   <div className="flex flex-col items-center md:items-start">
@@ -237,7 +233,6 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
 
               <ComparisonRow 
                 label="Localização" 
-                icon={<MapPin className="h-4 w-4 text-blue-500" />} 
                 companies={displayedCompanies} 
                 value={(c) => (
                   <span className="text-sm font-bold text-slate-600">{c.city}, {c.state}</span>
@@ -246,7 +241,6 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
 
               <ComparisonRow 
                 label="Verificação" 
-                icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
                 companies={displayedCompanies} 
                 value={(c) => (
                   c.verified ? (
@@ -259,7 +253,6 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
 
               <ComparisonRow 
                 label="Selo Premium" 
-                icon={<Zap className="h-4 w-4 text-orange-500" />} 
                 companies={displayedCompanies} 
                 value={(c) => (
                   c.featured ? (
@@ -272,7 +265,6 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
 
               <ComparisonRow 
                 label="Experiência" 
-                icon={<Clock className="h-4 w-4 text-slate-500" />} 
                 companies={displayedCompanies} 
                 value={(c) => {
                   const year = (c as any).founded_year;
@@ -322,22 +314,17 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
 
 function ComparisonRow({ 
   label, 
-  icon, 
   companies, 
   value 
 }: { 
   label: string; 
-  icon: React.ReactNode; 
   companies: Company[]; 
   value: (c: Company) => React.ReactNode 
 }) {
   return (
     <div className="grid grid-cols-4 group hover:bg-slate-50/50 transition-colors">
-      <div className="p-8 flex items-center gap-4 bg-slate-50/10 border-r border-slate-100">
-        <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-colors">
-          {icon}
-        </div>
-        <span className="text-sm font-black text-slate-800 uppercase tracking-tighter">{label}</span>
+      <div className="p-8 flex items-center bg-slate-50/10 border-r border-slate-100">
+        <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{label}</span>
       </div>
 
       {companies.map((company, idx) => (
@@ -355,4 +342,3 @@ function ComparisonRow({
     </div>
   );
 }
-
