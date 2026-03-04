@@ -240,7 +240,7 @@ export default function CompanyHero({
             </section>
 
             <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px] lg:items-end">
-              <div className="flex flex-wrap gap-1 lg:justify-end">
+              <div className="flex w-full flex-wrap gap-1 lg:justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -253,12 +253,14 @@ export default function CompanyHero({
                   <Share2 className="mr-1.5 h-3.5 w-3.5" />
                   Compartilhar
                 </Button>
+              </div>
 
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
                 <Button
                   variant="outline"
                   size="default"
                   className={cn(
-                    'h-11 rounded-xl border-2 border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:min-w-[140px]',
+                    'h-11 rounded-xl border-2 border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:min-w-[140px]',
                     inComp && 'border-blue-600 bg-blue-50 text-blue-700 hover:border-blue-700'
                   )}
                   onClick={() => {
@@ -271,9 +273,8 @@ export default function CompanyHero({
                 >
                   <Scale className={cn('mr-2 h-4 w-4', inComp && 'fill-current')} />
                   {inComp ? 'Comparando' : 'Comparar'}
-                </Button>              </div>
+                </Button>
 
-              <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
                 {ctaEnabled && ctaUrl && (
                   <div className="w-full sm:w-auto">
                     <WhatsappButton
