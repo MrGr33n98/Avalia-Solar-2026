@@ -26,8 +26,33 @@ export default function CompanyOverview({ company, reviews = [], reviewsLoading 
     })
     .slice(0, 2);
 
+  const totalReads = reviews.reduce((acc, r) => acc + (Number(r.metadata?.read_count) || 0), 0);
+  const totalClicks = reviews.reduce((acc, r) => acc + (Number(r.metadata?.cta_clicks) || 0), 0);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Impacto das Avaliações (Proof of Value) */}
+      {ratingCount > 0 && (totalReads > 0 || totalClicks > 0) && (
+        <section className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg border border-blue-500/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <MessageSquare className="h-24 w-24" />
+          </div>
+          <div className="relative z-10">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-blue-100 mb-4">Impacto das suas Avaliações</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                <p className="text-3xl font-black mb-1">{totalReads}</p>
+                <p className="text-xs font-semibold text-blue-100">Pessoas leram seus mini cases</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                <p className="text-3xl font-black mb-1">{totalClicks}</p>
+                <p className="text-xs font-semibold text-blue-100">Cliques em seus CTAs de contato</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Sobre a Empresa */}
       <section>
         <h2 className="text-xl md:text-2xl font-black text-slate-950 mb-4 flex items-center gap-2">

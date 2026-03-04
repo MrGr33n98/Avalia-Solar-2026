@@ -45,6 +45,13 @@ const formatSubmitErrorMessage = (error: unknown) => {
 function ReviewForm({ company, companyPath }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [headline, setHeadline] = useState('');
+  const [projectType, setProjectType] = useState<'residential' | 'commercial' | 'industrial' | 'rural'>('residential');
+  const [installationStatus, setInstallationStatus] = useState<'completed' | 'in_progress' | 'waiting'>('completed');
+  const [estimatedPower, setEstimatedPower] = useState('');
+  const [pros, setPros] = useState<string[]>(['']);
+  const [cons, setCons] = useState<string[]>(['']);
+  const [buyerTip, setBuyerTip] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -54,13 +61,18 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   
   const router = useRouter();
   const { user } = useAuth();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const returnTo = (() => {
-    const query = searchParams?.toString();
-    const fullPath = query ? `${pathname}?${query}` : pathname;
-    return encodeURIComponent(fullPath || '/');
-  })();
+
+  const addField = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setter(prev => [...prev, '']);
+  };
+
+  const updateField = (index: number, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setter(prev => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
 
   useEffect(() => {
     // Resolve categoryId with priority: category_info.id (from serializer) -> category_id -> direct id
@@ -121,12 +133,25 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         rating,
         comment: comment.trim(),
         company_id: company.id,
+        headline: headline.trim(),
+        project_type: projectType,
+        installation_status: installationStatus,
+        estimated_power: parseFloat(estimatedPower) || undefined,
+        content_metadata: {
+          pros: pros.filter(p => p.trim() !== ''),
+          cons: cons.filter(c => c.trim() !== ''),
+          buyer_tip: buyerTip.trim()
+        },
         ...(review_criterion_scores_attributes.length > 0 && { review_criterion_scores_attributes })
       } as any);
       
       setShowConfirmModal(true);
       setRating(0);
       setComment('');
+      setHeadline('');
+      setPros(['']);
+      setCons(['']);
+      setBuyerTip('');
       setCriterionScores({});
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -251,11 +276,98 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               </div>
             )}
 
+            {/* Contexto Técnico */}
+            <div className="grid gap-6 p-4 bg-muted/20 rounded-lg border border-border/50 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="projectType">Tipo de Projeto</Label>
+                <select 
+                  id="projectType"
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                  value={projectType}
+                  onChange={(e) => setProjectType(e.target.value as any)}
+                >
+                  <option value="residential">Residencial</option>
+                  <option value="commercial">Comercial</option>
+                  <option value="industrial">Industrial</option>
+                  <option value="rural">Rural</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="installationStatus">Status</Label>
+                <select 
+                  id="installationStatus"
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                  value={installationStatus}
+                  onChange={(e) => setInstallationStatus(e.target.value as any)}
+                >
+                  <option value="completed">Concluído</option>
+                  <option value="in_progress">Em andamento</option>
+                  <option value="waiting">Aguardando</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estimatedPower">Potência (kWp)</Label>
+                <input 
+                  id="estimatedPower"
+                  type="number"
+                  step="0.1"
+                  placeholder="Ex: 5.5"
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                  value={estimatedPower}
+                  onChange={(e) => setEstimatedPower(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Headline Editorial */}
+            <div className="space-y-2">
+              <Label htmlFor="headline" className="text-base font-semibold">
+                Título da sua Avaliação
+              </Label>
+              <input
+                id="headline"
+                placeholder="Ex: Instalação impecável e economia imediata"
+                className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+              />
+            </div>
+
+            {/* Prós e Contras */}
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-green-700 uppercase">O que foi bom?</Label>
+                {pros.map((pro, i) => (
+                  <input
+                    key={i}
+                    placeholder="Ponto positivo"
+                    className="w-full p-2 text-sm rounded-md border border-green-200 bg-green-50/30"
+                    value={pro}
+                    onChange={(e) => updateField(i, e.target.value, setPros)}
+                  />
+                ))}
+                <button type="button" onClick={() => addField(setPros)} className="text-xs text-green-600 font-medium hover:underline">+ Adicionar ponto</button>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-red-700 uppercase">O que pode melhorar?</Label>
+                {cons.map((con, i) => (
+                  <input
+                    key={i}
+                    placeholder="Oportunidade de melhoria"
+                    className="w-full p-2 text-sm rounded-md border border-red-200 bg-red-50/30"
+                    value={con}
+                    onChange={(e) => updateField(i, e.target.value, setCons)}
+                  />
+                ))}
+                <button type="button" onClick={() => addField(setCons)} className="text-xs text-red-600 font-medium hover:underline">+ Adicionar ponto</button>
+              </div>
+            </div>
+
             <div className="space-y-2 pt-4 border-t border-border/50">
-              <Label htmlFor="comment" className="text-base font-semibold">Seu Comentário</Label>
+              <Label htmlFor="comment" className="text-base font-semibold">Relato detalhado da experiência</Label>
               <Textarea
                 id="comment"
-                placeholder="Conte-nos os detalhes da sua experiência (ex: prazo, atendimento, qualidade)..."
+                placeholder="Conte-nos os detalhes da sua experiência (ex: atendimento, qualidade, pós-venda)..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 className="min-h-[120px]"
@@ -263,6 +375,17 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               <p className="text-xs text-gray-500 text-right">
                 Mínimo de 10 caracteres
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="buyerTip" className="text-base font-semibold">Dica para quem vai comprar</Label>
+              <Textarea
+                id="buyerTip"
+                placeholder="Ex: Peça o inversor com monitoramento via Wi-Fi, vale a pena!"
+                className="resize-none h-20 text-sm italic border-blue-200 bg-blue-50/20"
+                value={buyerTip}
+                onChange={(e) => setBuyerTip(e.target.value)}
+              />
             </div>
 
             {submitError && (
