@@ -26,14 +26,19 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
-          {[...Array(14)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-5 w-32 rounded-md" />
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-full rounded-sm" />
-                <Skeleton className="h-3 w-3/4 rounded-sm" />
-                <Skeleton className="h-3 w-1/2 rounded-sm" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-10">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="flex flex-col gap-3 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-200" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-slate-200 rounded w-3/4" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                </div>
+              </div>
+              <div className="space-y-2 ml-13">
+                <div className="h-3 bg-slate-50 rounded w-full" />
+                <div className="h-3 bg-slate-50 rounded w-2/3" />
               </div>
             </div>
           ))}
@@ -43,18 +48,18 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
 
     if (error && categories.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="bg-amber-50 text-amber-600 p-3 rounded-full mb-4">
-            <Zap className="h-6 w-6" />
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="bg-amber-50 text-amber-500 p-4 rounded-2xl mb-5 ring-4 ring-amber-50/50">
+            <Zap className="h-8 w-8" />
           </div>
-          <h3 className="text-slate-900 font-semibold mb-1">Menu Temporariamente Indisponível</h3>
-          <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 px-4">
-            Estamos com dificuldades para carregar as categorias. Você ainda pode pesquisar ou ver a listagem completa.
+          <h3 className="text-slate-900 text-lg font-bold mb-2">Menu em Manutenção</h3>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
+            Estamos otimizando a árvore de categorias para você. Enquanto isso, explore nossa listagem completa.
           </p>
           <Link 
             href="/categories" 
             onClick={onClose}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
           >
             Acessar Todas as Categorias
           </Link>
@@ -62,7 +67,84 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
       );
     }
 
-    return <CategoriesGrid categories={filteredTree} />;
+    return (
+      <motion.div 
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.05
+            }
+          }
+        }}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-10 gap-y-12"
+      >
+        {filteredTree.map((category) => (
+          <motion.div 
+            key={category.id}
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              show: { opacity: 1, y: 0 }
+            }}
+            className="group flex flex-col gap-4"
+          >
+            {/* Categoria Pai */}
+            <Link 
+              href={`/categories/${category.slug}`}
+              onClick={onClose}
+              className="flex items-start gap-3.5 group/parent"
+            >
+              <div className="w-11 h-11 rounded-xl bg-blue-50/50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover/parent:bg-blue-600 group-hover/parent:text-white transition-all duration-300 shadow-sm group-hover/parent:shadow-blue-200">
+                {category.icon_url ? (
+                  <div className="w-6 h-6 relative">
+                    <img src={category.icon_url} alt={category.name} className="object-contain" />
+                  </div>
+                ) : (
+                  <SlidersHorizontal className="h-5 w-5" />
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[15px] font-bold text-slate-900 group-hover/parent:text-blue-600 transition-colors truncate leading-tight">
+                  {category.name}
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-tight mt-0.5">
+                  {category.companies_count} Empresas
+                </span>
+              </div>
+            </Link>
+
+            {/* Subcategorias (Filhos) */}
+            {category.children && category.children.length > 0 && (
+              <div className="flex flex-col gap-2.5 pl-1 pr-2 border-l-2 border-slate-50 ml-5">
+                {category.children.slice(0, 4).map((child) => (
+                  <Link
+                    key={child.id}
+                    href={`/categories/${child.slug}`}
+                    onClick={onClose}
+                    className="text-[13px] text-slate-500 hover:text-blue-600 hover:translate-x-1 transition-all font-medium flex items-center gap-2 group/child"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover/child:bg-blue-400 group-hover/child:scale-125 transition-all" />
+                    <span className="truncate">{child.name}</span>
+                  </Link>
+                ))}
+                {category.children.length > 4 && (
+                  <Link
+                    href={`/categories/${category.slug}`}
+                    onClick={onClose}
+                    className="text-[11px] font-bold text-blue-500/80 hover:text-blue-600 mt-1 pl-3.5"
+                  >
+                    + {category.children.length - 4} especialidades
+                  </Link>
+                )}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </motion.div>
+    );
   };
 
   return (

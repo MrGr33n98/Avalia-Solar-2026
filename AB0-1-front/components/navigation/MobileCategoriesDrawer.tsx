@@ -38,62 +38,74 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
           <SheetTitle className="text-xl font-bold text-slate-900">Categorias</SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
+        <ScrollArea className="flex-1 px-4 py-2">
           {loading ? (
-            <div className="space-y-4">
+            <div className="space-y-4 px-2">
               {[...Array(8)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
+                <div key={i} className="flex items-center gap-4 py-3 border-b border-slate-50 animate-pulse">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                    <div className="h-3 bg-slate-50 rounded w-1/4" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : error && categories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <div className="bg-amber-50 text-amber-600 p-3 rounded-full mb-4">
-                <Zap className="h-6 w-6" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="bg-amber-50 text-amber-500 p-5 rounded-3xl mb-6 ring-8 ring-amber-50/50">
+                <Zap className="h-10 w-10" />
               </div>
-              <h3 className="text-slate-900 font-semibold mb-1">Categorias Indisponíveis</h3>
-              <p className="text-slate-500 text-xs mb-6">
-                Não foi possível carregar o menu. Tente novamente mais tarde ou acesse a página completa.
+              <h3 className="text-slate-900 text-lg font-bold mb-2">Ops! Menu em Manutenção</h3>
+              <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                Estamos ajustando as categorias. Tente recarregar ou explore todas as opções no link abaixo.
               </p>
               <button 
                 onClick={() => window.location.reload()}
-                className="flex items-center gap-2 text-primary text-sm font-bold border border-primary/20 px-4 py-2 rounded-lg hover:bg-primary/5 transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-3.5 px-6 bg-white border-2 border-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
               >
-                <RefreshCw className="h-4 w-4" />
-                Tentar Recarregar
+                <RefreshCw className="h-4 w-4 text-blue-500" />
+                Recarregar Menu
               </button>
             </div>
           ) : (
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full px-2">
               {categories.map((category) => (
-                <AccordionItem key={category.id} value={`item-${category.id}`} className="border-slate-100">
-                  <AccordionTrigger className="text-base font-semibold text-slate-800 hover:text-primary transition-colors py-4">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-3">
-                        {category.icon_url && (
-                          <div className="w-6 h-6 relative shrink-0">
-                            <Image
-                              src={category.icon_url}
-                              alt={category.name}
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
-                        )}
-                        <span>{category.name}</span>
+                <AccordionItem key={category.id} value={`item-${category.id}`} className="border-slate-50 last:border-0">
+                  <AccordionTrigger className="text-[15px] font-bold text-slate-900 hover:no-underline py-5 group">
+                    <div className="flex items-center justify-between w-full pr-2">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                          {category.icon_url ? (
+                            <div className="w-6 h-6 relative">
+                              <Image
+                                src={category.icon_url}
+                                alt={category.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <Zap className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span>{category.name}</span>
+                          {category.companies_count > 0 && (
+                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                              {category.companies_count} Empresas
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {category.companies_count > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
-                          {category.companies_count}
-                        </span>
-                      )}
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col gap-1 pl-4 pb-4">
+                  <AccordionContent className="pb-4">
+                    <div className="flex flex-col gap-1.5 pl-14 pr-2">
                       <Link
                         href={`/categories/${category.slug}`}
                         onClick={onClose}
-                        className="text-sm font-medium text-primary py-2 flex items-center justify-between"
+                        className="text-sm font-bold text-blue-600 py-3 px-4 bg-blue-50/50 rounded-xl flex items-center justify-between active:scale-95 transition-transform"
                       >
                         <span>Ver tudo em {category.name}</span>
                       </Link>
@@ -102,11 +114,11 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                           key={child.id}
                           href={`/categories/${child.slug}`}
                           onClick={onClose}
-                          className="text-sm text-slate-600 hover:text-primary py-2 transition-colors flex items-center justify-between"
+                          className="text-sm font-medium text-slate-600 py-3 px-4 hover:bg-slate-50 rounded-xl transition-colors flex items-center justify-between active:bg-slate-100"
                         >
                           <span>{child.name}</span>
                           {child.companies_count > 0 && (
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400">
                               {child.companies_count}
                             </span>
                           )}
