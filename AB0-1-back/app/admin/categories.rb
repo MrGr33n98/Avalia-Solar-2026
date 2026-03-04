@@ -66,12 +66,14 @@ ActiveAdmin.register Category, namespace: :admin do
 
     f.inputs 'Associations' do
       f.input :companies,
-              as: :check_boxes,
+              as: :select,
+              multiple: true,
               collection: Company.order(:name).map { |company|
                 location = [company.city, company.state].compact.reject(&:blank?).join(' - ')
                 ["#{company.name}#{location.present? ? " (#{location})" : ''}", company.id]
               },
-              input_html: { class: 'category-company-selector__checkboxes' }
+              input_html: { class: 'select2-input', style: 'width: 100%' },
+              hint: 'Busque e selecione uma ou mais empresas relacionadas a esta categoria.'
     end
 
     f.inputs 'Lead Wizard Settings' do
