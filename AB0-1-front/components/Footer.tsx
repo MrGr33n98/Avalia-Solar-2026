@@ -26,8 +26,8 @@ export default function Footer() {
   const socialLinks = [
     { href: 'https://facebook.com', icon: Facebook, label: 'Facebook' },
     { href: 'https://twitter.com', icon: Twitter, label: 'Twitter' },
-    { href: 'https://instagram.com', icon: Instagram, label: 'Instagram' },
-    { href: 'https://linkedin.com', icon: Linkedin, label: 'LinkedIn' },
+    { href: 'https://www.instagram.com/avalia_solar?igsh=MXdoMjhhYXR1OHk3eg==', icon: Instagram, label: 'Instagram' },
+    { href: 'https://www.linkedin.com/company/avalia-solar/', icon: Linkedin, label: 'LinkedIn' },
   ];
 
   return (
