@@ -73,7 +73,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
               <div>
                 <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Score Ranking</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-black text-amber-900">{data?.ranking_score ? data.ranking_score.toFixed(1) : 'N/A'}</h3>
+                  <h3 className="text-3xl font-black text-amber-900">{data?.ranking_score ? Number(data.ranking_score).toFixed(1) : 'N/A'}</h3>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
@@ -106,7 +106,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
                 <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Reputação (Trust)</p>
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-3xl font-black text-emerald-900">
-                    {quadrantData.find((q: any) => q.isCurrentCompany)?.completenessOfVision?.toFixed(1) || '0'}
+                    {Number(quadrantData.find((q: any) => q.isCurrentCompany)?.completenessOfVision || 0).toFixed(1)}
                   </h3>
                 </div>
               </div>

@@ -285,14 +285,20 @@ module Api
       # GET /categories/tree
       # =========================
       def tree
-        # Simplificando para resolver o 404 e estabilizar o frontend
-        # Removendo cache temporariamente para diagnosticar
         begin
-          roots = ::Category.where(status: 'active', parent_id: nil)
-                            .order(:name)
-                            .includes(:icon_attachment, children: :icon_attachment)
+          last_update = ::Category.where(status: 'active').maximum(:updated_at).to_i
+          cache_key = "api/v1/categories/tree/#{last_update}"
 
-          render json: roots.map { |root| category_tree_json(root) }
+          # Usando cache mas com fallback imediato
+          data = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+            roots = ::Category.where(status: 'active', parent_id: nil)
+                              .order(:name)
+                              .includes(:icon_attachment, children: :icon_attachment)
+
+            roots.map { |root| category_tree_json(root) }
+          end
+
+          render json: data || []
         rescue StandardError => e
           Rails.logger.error("[CategoriesController#tree] Error: #{e.message}")
           render json: []
