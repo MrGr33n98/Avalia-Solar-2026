@@ -11,11 +11,14 @@ interface CategoryColumnProps {
 }
 
 export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopular }) => {
+  const children = category.children || [];
+  const slug = category.slug || '';
+
   return (
     <div className="flex flex-col min-w-0">
       {/* Título da Categoria Raiz */}
       <Link
-        href={`/categories/${category.slug}`}
+        href={`/categories/${slug}`}
         className={cn(
           "group flex items-center justify-between gap-2 text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors leading-tight mb-2",
           isPopular && "text-blue-700"
@@ -31,10 +34,10 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
 
       {/* Subcategorias */}
       <ul className="flex flex-col gap-0.5">
-        {category.children.slice(0, 12).map((child) => (
+        {children.slice(0, 12).map((child) => (
           <li key={child.id}>
             <Link
-              href={`/categories/${child.slug}`}
+              href={`/categories/${child.slug || ''}`}
               className="flex items-center justify-between group py-1 text-xs text-slate-500 hover:text-blue-600 transition-colors leading-tight"
             >
               <span className="truncate pr-2">{child.name}</span>
@@ -46,13 +49,13 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
             </Link>
           </li>
         ))}
-        {category.children.length > 12 && (
+        {children.length > 12 && (
           <li>
             <Link
-              href={`/categories/${category.slug}`}
+              href={`/categories/${slug}`}
               className="text-[10px] font-medium text-blue-500 hover:text-blue-700 pt-1 block"
             >
-              Ver mais ({category.children.length - 12})
+              Ver mais ({children.length - 12})
             </Link>
           </li>
         )}

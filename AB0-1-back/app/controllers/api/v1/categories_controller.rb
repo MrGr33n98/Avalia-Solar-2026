@@ -328,10 +328,10 @@ module Api
         {
           id: category.id,
           name: category.name,
-          slug: category.seo_url,
+          slug: category.seo_url, # Mantendo seo_url mas garantindo que o frontend leia corretamente
           icon_url: category.icon_url,
           companies_count: category.companies_count || 0,
-          children: category.children.select { |c| c.status == 'active' }
+          children: (category.children.select { |c| c.status == 'active' } || [])
                     .sort_by(&:name)
                     .map { |child| category_tree_json(child) }
         }
