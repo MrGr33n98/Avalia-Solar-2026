@@ -23,6 +23,7 @@ class CompanySerializer < ActiveModel::Serializer
              :financing_profile,
              :financing_partners,
              :financing_offers,
+             :categories,
              :category_info,
              :sector_ratings_enabled,
              :sector_rating_avg,
@@ -77,6 +78,19 @@ class CompanySerializer < ActiveModel::Serializer
       name: category.name,
       seo_url: category.seo_url
     }
+  end
+
+  def categories
+    object.categories.order(:name).map do |category|
+      {
+        id: category.id,
+        name: category.name,
+        seo_url: category.seo_url
+      }
+    end
+  rescue StandardError => e
+    Rails.logger.warn("[CompanySerializer] categories unavailable for company=#{object.id}: #{e.class}: #{e.message}")
+    []
   end
 
   def badges

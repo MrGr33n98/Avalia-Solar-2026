@@ -73,6 +73,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     return encodeURIComponent(fullPath || '/');
   })();
 
+  const availableCategories = Array.isArray(company?.categories) && company.categories.length > 0
+    ? company.categories
+    : company?.category_info
+      ? [company.category_info]
+      : [];
+
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
 
@@ -190,11 +196,17 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               </div>
               
               <ReviewCategoryStep 
-                categories={company?.categories || []} 
+                categories={availableCategories} 
                 onSelect={handleCategorySelect} 
                 selectedId={categoryId} 
                 errorCategoryId={errorCategoryId}
               />
+
+              {availableCategories.length === 0 && (
+                <div className="p-4 bg-amber-50 text-amber-700 text-sm font-medium rounded-xl border border-amber-100">
+                  Esta empresa não possui categorias de serviço configuradas no momento. Tente novamente mais tarde.
+                </div>
+              )}
 
               {submitError && step === 1 && (
                 <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
