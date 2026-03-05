@@ -444,7 +444,7 @@ export const companiesApiSafe = {
       return null;
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);
-      throw error;
+      return null;
     }
   },
 
@@ -456,7 +456,7 @@ export const companiesApiSafe = {
       return null;
     } catch (error) {
       console.error(`Error fetching company with slug ${slug}:`, error);
-      throw error;
+      return null;
     }
   },
 
