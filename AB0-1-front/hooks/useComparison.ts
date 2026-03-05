@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Company } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ const comparisonEvents = new EventTarget();
 export function useComparison() {
   const [comparisonList, setComparisonList] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const skipEmitRef = useRef(false); // evita loop de eventos entre instâncias
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -45,22 +46,48 @@ export function useComparison() {
     }
   }, []);
 
-  // Save to localStorage when list changes
+  // Save to localStorage when list changes (evitando re-emissão em updates sincronizados)
   useEffect(() => {
-    if (!isLoading) {
-      try {
-        console.log('[DEBUG] Saving to localStorage:', comparisonList.map(c => c.name));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
-        // Emit event for other components
-        comparisonEvents.dispatchEvent(new CustomEvent('comparison-updated', { 
-          detail: { companies: comparisonList } 
-        }));
-        console.log('[DEBUG] Successfully saved and emitted event');
-      } catch (e) {
-        console.error('[DEBUG] Failed to save comparison list', e);
-      }
+    if (isLoading) return;
+
+    // Atualização veio de outro hook via evento, apenas consome e sai
+    if (skipEmitRef.current) {
+      skipEmitRef.current = false;
+      return;
+    }
+
+    try {
+      console.log('[DEBUG] Saving to localStorage:', comparisonList.map(c => c.name));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
+      comparisonEvents.dispatchEvent(new CustomEvent('comparison-updated', { 
+        detail: { companies: comparisonList } 
+      }));
+      console.log('[DEBUG] Successfully saved and emitted event');
+    } catch (e) {
+      console.error('[DEBUG] Failed to save comparison list', e);
     }
   }, [comparisonList, isLoading]);
+
+  // Sincroniza instâncias do hook na mesma aba via EventTarget
+  useEffect(() => {
+    const handleSync = (event: Event) => {
+      const detail = (event as CustomEvent)?.detail?.companies as Company[] | undefined;
+      if (!detail) return;
+
+      // Evita sobrescrever quando lista já está igual
+      const sameLength = detail.length === comparisonList.length;
+      const sameIds = sameLength && detail.every((c, idx) => comparisonList[idx]?.id === c.id);
+      if (sameLength && sameIds) return;
+
+      skipEmitRef.current = true;
+      setComparisonList(detail);
+    };
+
+    comparisonEvents.addEventListener('comparison-updated', handleSync as EventListener);
+    return () => {
+      comparisonEvents.removeEventListener('comparison-updated', handleSync as EventListener);
+    };
+  }, [comparisonList]);
 
   const addToComparison = useCallback((company: Company) => {
     setComparisonList((prev) => {
