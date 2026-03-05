@@ -28,6 +28,10 @@ Normalizar o payload do wizard para aceitar os formatos já usados pelos modais,
 - [x] `../../AB0-1-back/spec/requests/api/v1/leads_wizard_spec.rb`
 - [x] `components/QuickLeadModal.tsx`
 - [x] `components/QuoteWizardModal.tsx`
+- [x] `../../AB0-1-front/src/modules/leadWizard/api/wizard.api.ts`
+- [x] `../../AB0-1-front/src/modules/leadWizard/components/WizardRenderer.tsx`
+- [x] `../../AB0-1-front/src/modules/leadWizard/hooks/useLeadWizard.ts`
+- [x] `../../AB0-1-front/src/modules/leadWizard/types/wizard.types.ts`
 - [x] `docs/stories/STORY-2026-02-28-lead-wizard-validation-recovery.md`
 
 ## Validation
@@ -38,3 +42,5 @@ Normalizar o payload do wizard para aceitar os formatos já usados pelos modais,
 - [x] `npm run typecheck` (bloqueado: script inexistente no `package.json`)
 - [x] `node --max-old-space-size=4096 .\\node_modules\\typescript\\bin\\tsc --noEmit` (falhou por erros TypeScript preexistentes fora deste ajuste)
 - [x] `npm test -- --runInBand` (falhou por problemas preexistentes do repo: `TransformStream is not defined`, suites E2E/Cypress misturadas no Jest, OOM e outros testes legados)
+- [x] `npm run lint` em `../../AB0-1-front` (bloqueado no ambiente atual: `next: command not found`, dependências do frontend indisponíveis)
+- [x] `npx tsc --noEmit` em `../../AB0-1-front` (falhou por resolução ausente de dependências/base types do repo local, com milhares de erros globais preexistentes como `Cannot find module 'react'` e `Cannot find module 'next/image'`)

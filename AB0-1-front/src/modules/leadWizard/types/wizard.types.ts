@@ -71,6 +71,9 @@ export interface WizardSessionData {
   currentStepIndex: number;
   answers: Record<string, any>;
   lastUpdated: string;
+  categoryId: number;
+  preferredCompanyId?: number;
+  leadResult?: { lead_id: number; otp_sent_at: string; email_hint?: string };
 }
 
 export interface LeadCoreFields {
@@ -105,5 +108,6 @@ export type WizardStateStatus =
   | 'STEP_ACTIVE' 
   | 'VALIDATING' 
   | 'SUBMITTING' 
+  | 'OTP_VERIFICATION'
   | 'SUCCESS' 
   | 'ERROR';
