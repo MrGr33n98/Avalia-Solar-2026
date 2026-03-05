@@ -147,6 +147,24 @@ class Company < ApplicationRecord
   scope :by_state, ->(state) { where(state: state) if state.present? }
   scope :by_city, ->(city) { where(city: city) if city.present? }
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
+
+  # Full Text Search Scope
+  scope :search_by_text, ->(query) {
+    return all if query.blank?
+
+    # to_tsvector logic matching the migration index
+    tsvector = <<-SQL
+      to_tsvector('portuguese',
+        coalesce(name, '') || ' ' ||
+        coalesce(description, '') || ' ' ||
+        coalesce(city, '') || ' ' ||
+        coalesce(state, '')
+      )
+    SQL
+
+    # plainto_tsquery for safe input handling
+    where("#{tsvector} @@ plainto_tsquery('portuguese', ?)", query)
+  }
   
   # Sprint 1 Ranking Engine
   scope :ordered_by_priority, -> {

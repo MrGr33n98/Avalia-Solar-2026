@@ -20,7 +20,15 @@ module Api
 
         retries = 0
         begin
-        @companies = ::Company.includes(:categories, :badges)
+        @companies = ::Company.includes(
+          :categories,
+          :badges,
+          :review_aggregates,
+          :company_faqs,
+          :company_financing_profile,
+          :company_financing_partners,
+          :company_financing_offers
+        )
 
           # Ordenação (Classificação)
           if params[:sort].present?
@@ -80,10 +88,7 @@ module Api
           if params[:q].present?
             term = params[:q].to_s.strip
             if term.present?
-              @companies = @companies.where(
-                'LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.slug) LIKE LOWER(:q) OR LOWER(companies.cnpj) LIKE LOWER(:q)',
-                q: "%#{term}%"
-              )
+              @companies = @companies.search_by_text(term)
             end
           end
 
