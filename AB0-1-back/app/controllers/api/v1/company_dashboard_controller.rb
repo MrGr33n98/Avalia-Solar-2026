@@ -677,7 +677,7 @@ module Api
 
         return render json: { error: 'Access pending approval' }, status: :forbidden unless current_user&.active?
 
-        return unless !has_membership && fallback_company&.active?
+        return unless !has_membership && company_active?(fallback_company)
 
         current_user.company_members.find_or_create_by!(
           company: fallback_company
@@ -724,6 +724,13 @@ module Api
           end
 
         source.to_h.symbolize_keys
+      end
+
+      def company_active?(company)
+        return false unless company
+        return company.active_status? if company.respond_to?(:active_status?)
+
+        company.status.to_s == 'active'
       end
 
       def rating_distribution_for(scope)

@@ -237,7 +237,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return ::Lead.all if current_user&.admin?
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
-      unless company&.active?
+      unless company_active?(company)
         render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden, code: 'COMPANY_INACTIVE')
         return nil
       end
@@ -257,7 +257,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return if current_user&.admin?
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
-      unless company&.active?
+      unless company_active?(company)
         render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden, code: 'COMPANY_INACTIVE')
         return
       end
@@ -302,6 +302,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
         logo_url: company.logo_url
       }
     end
+  end
+
+  def company_active?(company)
+    return false unless company
+    return company.active_status? if company.respond_to?(:active_status?)
+
+    company.status.to_s == 'active'
   end
 
   def extract_utm_payload
