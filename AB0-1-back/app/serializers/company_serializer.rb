@@ -45,8 +45,6 @@ class CompanySerializer < ActiveModel::Serializer
     empty_review_aggregates
   end
 
-  private
-
   def review_aggregates_available?
     ReviewAggregate.table_exists?
   rescue StandardError
