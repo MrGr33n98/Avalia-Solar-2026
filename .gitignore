@@ -140,3 +140,8 @@ node_modules
 *.backup.*
 AGENTS.md.backup*
 FINAL-LEADS-FLORIANOPOLIS-HELIO.csv
+
+# Local analysis/prompts and temp assets
+ANALISE_TECNICA_DASHBOARDS_FINAL.md
+DEV_PROMPT_DASHBOARD_FIXES.md
+tmp/
