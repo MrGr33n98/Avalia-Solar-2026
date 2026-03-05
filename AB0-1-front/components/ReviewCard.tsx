@@ -249,7 +249,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
         {review.buyer_tip && (
           <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
             <h5 className="text-xs font-bold text-blue-700 uppercase mb-1">Dica para o comprador</h5>
-            <p className="text-sm text-blue-900 italic">"{review.buyer_tip}"</p>
+            <p className="text-sm text-blue-900 italic">&ldquo;{review.buyer_tip}&rdquo;</p>
           </div>
         )}
 

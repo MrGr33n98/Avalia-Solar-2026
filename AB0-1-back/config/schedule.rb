@@ -28,3 +28,15 @@ end
 every 1.day, at: '6:00 am' do
   rake 'analytics:check_size'
 end
+
+# Analytics quality report - Daily at 8:00 AM BRT
+# Comprehensive data quality analysis
+every 1.day, at: '8:00 am' do
+  rake 'analytics:quality_report'
+end
+
+# Analytics quality check - Every 4 hours
+# Quick health check with alerting
+every 4.hours do
+  rake 'analytics:quality_check'
+end

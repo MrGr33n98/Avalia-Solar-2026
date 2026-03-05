@@ -131,4 +131,154 @@ namespace :analytics do
     puts "[Analytics] Size check failed: #{e.message}"
     raise e
   end
+
+  desc "Generate data quality report for last 7 days"
+  task quality_report: :environment do
+    require_relative '../../app/services/analytics/anomaly_detector'
+    
+    puts "=" * 80
+    puts "📊 ANALYTICS DATA QUALITY REPORT"
+    puts "Generated: #{Time.current.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+    puts "Period: Last 7 days"
+    puts "=" * 80
+    puts ""
+    
+    # Run all quality checks
+    detector = Analytics::AnomalyDetector.new(lookback_days: 7)
+    results = detector.comprehensive_detection
+    
+    # Display summary
+    puts "🎯 SUMMARY"
+    puts "-" * 80
+    puts "Total anomalies detected: #{results[:summary][:total_anomalies]}"
+    puts "  - Critical: #{results[:summary][:critical_count]}"
+    puts "  - Warning: #{results[:summary][:warning_count]}"
+    puts "  - Info: #{results[:summary][:info_count]}"
+    puts ""
+    
+    # Display spikes and drops
+    if results[:spikes_and_drops].any?
+      puts "⚠️  ANOMALIES (Spikes/Drops)"
+      puts "-" * 80
+      results[:spikes_and_drops].each do |anomaly|
+        icon = case anomaly[:severity]
+               when 'critical' then '🔴'
+               when 'warning' then '🟡'
+               else '🔵'
+               end
+        
+        puts "#{icon} #{anomaly[:type].upcase}: #{anomaly[:event_type]}"
+        puts "   Current: #{anomaly[:current_value]} | Baseline: #{anomaly[:baseline_mean]} ± #{anomaly[:baseline_stddev]}"
+        puts "   Change: #{anomaly[:percentage_change]}% (#{anomaly[:severity]})"
+        puts ""
+      end
+    else
+      puts "✅ No anomalies detected (Spikes/Drops)"
+      puts ""
+    end
+    
+    # Display missing session IDs
+    if results[:missing_session_ids].any?
+      puts "⚠️  MISSING SESSION IDs"
+      puts "-" * 80
+      results[:missing_session_ids].each do |issue|
+        icon = issue[:severity] == 'critical' ? '🔴' : '🟡'
+        puts "#{icon} #{issue[:event_type]}: #{issue[:percentage]}% missing (#{issue[:missing_count]}/#{issue[:total_count]})"
+      end
+      puts ""
+    else
+      puts "✅ No missing session IDs detected"
+      puts ""
+    end
+    
+    # Display missing company IDs
+    if results[:missing_company_ids].any?
+      puts "⚠️  MISSING COMPANY IDs"
+      puts "-" * 80
+      results[:missing_company_ids].each do |issue|
+        icon = issue[:severity] == 'critical' ? '🔴' : '🟡'
+        puts "#{icon} #{issue[:event_type]}: #{issue[:percentage]}% missing (#{issue[:missing_count]}/#{issue[:total_count]})"
+      end
+      puts ""
+    else
+      puts "✅ No missing company IDs detected"
+      puts ""
+    end
+    
+    # Display duplicates
+    if results[:duplicates].any?
+      puts "⚠️  DUPLICATES DETECTED"
+      puts "-" * 80
+      results[:duplicates].each do |issue|
+        icon = issue[:severity] == 'critical' ? '🔴' : '🟡'
+        puts "#{icon} Duplicate rate: #{issue[:duplicate_rate]}% (#{issue[:duplicate_count]} duplicates)"
+      end
+      puts ""
+    else
+      puts "✅ No duplicates detected"
+      puts ""
+    end
+    
+    puts "=" * 80
+    
+    # Health status
+    overall_health = if results[:summary][:critical_count] > 0
+                       "🔴 CRITICAL - Immediate action required"
+                     elsif results[:summary][:warning_count] > 0
+                       "🟡 WARNING - Monitor closely"
+                     else
+                       "✅ HEALTHY - All metrics within acceptable ranges"
+                     end
+    
+    puts "Overall Health: #{overall_health}"
+    puts "=" * 80
+    
+    # TODO: Send to Slack when notification system is integrated
+    # TODO: Store in database for historical tracking
+    
+  rescue StandardError => e
+    puts "[Analytics Quality Report] Failed: #{e.message}"
+    Rails.logger.error("[Analytics Quality Report] Error: #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    raise e
+  end
+
+  desc "Run all quality checks and alert if issues found"
+  task quality_check: :environment do
+    require_relative '../../app/services/analytics/anomaly_detector'
+    
+    detector = Analytics::AnomalyDetector.new(lookback_days: 7)
+    results = detector.comprehensive_detection
+    
+    # Alert only if critical issues found
+    if results[:summary][:critical_count] > 0
+      puts "🔴 CRITICAL ISSUES DETECTED - #{results[:summary][:critical_count]} anomalies"
+      
+      # List critical issues
+      all_issues = (results[:spikes_and_drops] + 
+                    results[:missing_session_ids] + 
+                    results[:missing_company_ids] + 
+                    results[:duplicates])
+      
+      critical_issues = all_issues.select { |i| i[:severity] == 'critical' }
+      
+      critical_issues.each do |issue|
+        puts "  - #{issue[:type]}: #{issue[:event_type] || 'N/A'}"
+      end
+      
+      # TODO: Send Slack alert
+      puts ""
+      puts "⚠️  Run 'rake analytics:quality_report' for full details"
+      
+      exit 1 # Exit with error code for CI/CD integration
+    elsif results[:summary][:warning_count] > 0
+      puts "🟡 WARNING - #{results[:summary][:warning_count]} issues require attention"
+      puts "Run 'rake analytics:quality_report' for details"
+    else
+      puts "✅ All quality checks passed"
+    end
+  rescue StandardError => e
+    puts "[Analytics Quality Check] Failed: #{e.message}"
+    exit 1
+  end
 end
