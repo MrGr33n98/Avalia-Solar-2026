@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, Loader2, X } from 'lucide-react';
 import { LeadWizardEngine } from '@/src/modules/leadWizard/components/LeadWizardEngine';
+import { companiesApiSafe } from '@/lib/api-client';
+import { resolveWizardCategoryId } from '@/lib/lead-engine';
 
 type LeadWizardEventDetail = {
   categoryId?: number;
@@ -12,16 +14,27 @@ type LeadWizardEventDetail = {
   source?: string;
 };
 
+type CategoryOption = {
+  id: number;
+  name?: string;
+  seo_url?: string;
+};
+
 export default function DynamicLeadWizardModal() {
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [isResolvingCategory, setIsResolvingCategory] = useState(false);
+  const [categoryResolutionError, setCategoryResolutionError] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = ((event as CustomEvent<LeadWizardEventDetail>).detail || {}) as LeadWizardEventDetail;
       setCategoryId(detail.categoryId);
       setPreferredCompanyId(detail.preferredCompanyId);
+      setCategoryOptions([]);
+      setCategoryResolutionError(null);
       setOpen(true);
     };
 
@@ -35,8 +48,58 @@ export default function DynamicLeadWizardModal() {
     if (!nextOpen) {
       setCategoryId(undefined);
       setPreferredCompanyId(undefined);
+      setCategoryOptions([]);
+      setCategoryResolutionError(null);
+      setIsResolvingCategory(false);
     }
   };
+
+  useEffect(() => {
+    if (!open || categoryId || !preferredCompanyId) return;
+
+    let cancelled = false;
+
+    const resolveCategory = async () => {
+      setIsResolvingCategory(true);
+      setCategoryResolutionError(null);
+
+      try {
+        const company = await companiesApiSafe.getById(preferredCompanyId);
+        if (cancelled) return;
+
+        const categories = Array.isArray(company?.categories)
+          ? company.categories.filter((category): category is CategoryOption => Number.isFinite(category?.id))
+          : [];
+        const inferredCategoryId = resolveWizardCategoryId(company);
+
+        setCategoryOptions(categories);
+
+        if (inferredCategoryId && (categories.length <= 1 || categories.some((category) => category.id === inferredCategoryId && /financiamento|financing/i.test(`${category.name || ''} ${category.seo_url || ''}`)))) {
+          setCategoryId(inferredCategoryId);
+        } else if (categories.length === 1) {
+          setCategoryId(categories[0].id);
+        } else if (categories.length === 0) {
+          setCategoryResolutionError('Nao foi possivel identificar uma categoria para esta empresa.');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCategoryResolutionError('Nao foi possivel carregar as categorias desta empresa.');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsResolvingCategory(false);
+        }
+      }
+    };
+
+    resolveCategory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, categoryId, preferredCompanyId]);
+
+  const showCategoryPicker = !categoryId && categoryOptions.length > 1;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -69,6 +132,38 @@ export default function DynamicLeadWizardModal() {
               categoryId={categoryId}
               preferredCompanyId={preferredCompanyId}
             />
+          ) : isResolvingCategory ? (
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border bg-white p-8 text-center shadow-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <h2 className="mt-4 text-lg font-bold text-slate-900">
+                Preparando formulario
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Estamos identificando a categoria ideal para esta solicitacao.
+              </p>
+            </div>
+          ) : showCategoryPicker ? (
+            <div className="mx-auto max-w-2xl rounded-2xl border bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900">
+                Escolha a categoria do seu interesse
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Esta empresa atua em mais de uma vertical. Selecione a categoria para abrir o formulario correto.
+              </p>
+              <div className="mt-6 grid gap-3">
+                {categoryOptions.map((category) => (
+                  <Button
+                    key={category.id}
+                    type="button"
+                    variant="outline"
+                    className="justify-start rounded-xl px-4 py-6 text-left"
+                    onClick={() => setCategoryId(category.id)}
+                  >
+                    {category.name || category.seo_url || `Categoria ${category.id}`}
+                  </Button>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-6 text-center shadow-sm">
               <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
@@ -76,7 +171,7 @@ export default function DynamicLeadWizardModal() {
                 Nao foi possivel abrir o formulario
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                A categoria do wizard nao foi identificada para esta empresa. Tente novamente a partir da pagina da categoria.
+                {categoryResolutionError || 'A categoria do wizard nao foi identificada para esta empresa. Tente novamente a partir da pagina da categoria.'}
               </p>
             </div>
           )}

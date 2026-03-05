@@ -434,6 +434,15 @@ module Api
         verified_badge_url = company_verified_badge_url(company)
 
         if params[:fields].to_s == 'card'
+          primary_category = company.categories.first
+          categories_payload = company.categories.order(:name).map do |category|
+            {
+              id: category.id,
+              name: category.name,
+              seo_url: category.seo_url
+            }
+          end
+
           return {
             id: company.id,
             slug: company.slug,
@@ -458,7 +467,14 @@ module Api
             badges: badge_payload,
             financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
             active_admin: company.respond_to?(:active_admin) ? company.active_admin : false,
-            whatsapp: company.respond_to?(:whatsapp) ? company.whatsapp : nil
+            whatsapp: company.respond_to?(:whatsapp) ? company.whatsapp : nil,
+            category_id: primary_category&.id,
+            category_info: primary_category.present? ? {
+              id: primary_category.id,
+              name: primary_category.name,
+              seo_url: primary_category.seo_url
+            } : nil,
+            categories: categories_payload
           }
         end
 
