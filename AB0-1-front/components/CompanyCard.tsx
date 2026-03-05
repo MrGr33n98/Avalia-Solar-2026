@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Share2, Check, Scale, BadgeCheck, Info, Trophy } from 'lucide-react';
+import { Star, MapPin, Building2, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useComparison } from '@/hooks/useComparison';
 import { cn } from '@/lib/utils';
 
 interface ExtendedCompany extends Company {
@@ -86,9 +86,6 @@ export default function CompanyCard({
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const isFav = isFavorite(id);
-
-  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
-  const inComp = isInComparison(id);
 
   const [ctaVisible, setCtaVisible] = useState(false);
   const ctaRef = useCallback((node: HTMLDivElement | null) => {
@@ -340,30 +337,14 @@ export default function CompanyCard({
           compact ? "top-2" : "top-2",
           "sm:opacity-0 sm:group-hover:opacity-100"
         )}>
-          <Button
-            size="icon"
-            variant="secondary"
-            className={cn(
-              "h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all border border-gray-100",
-              inComp ? "text-primary" : "text-gray-600"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (inComp) {
-                removeFromComparison(id);
-              } else {
-                addToComparison(company);
-              }
-              track('company_comparison_toggle', {
-                company_id: id,
-                company_name: name,
-                status: !inComp ? 'added' : 'removed'
-              });
-            }}
-            title={inComp ? "Remover da comparação" : "Adicionar à comparação"}
-          >
-            <Scale className={cn("h-4 w-4 md:h-4 md:w-4", inComp && "fill-current")} />
-          </Button>
+          <div onClick={(e) => e.stopPropagation()}>
+            <ComparisonToggleButton 
+              company={company}
+              variant="floating"
+              size="default"
+              animated={true}
+            />
+          </div>
           <Button
             size="icon"
             variant="secondary"

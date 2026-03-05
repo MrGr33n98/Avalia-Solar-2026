@@ -19,15 +19,26 @@ export function useComparison() {
     setIsLoading(true);
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
+      console.log('[DEBUG] Loading from localStorage:', saved);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Validate the data structure
-        if (Array.isArray(parsed) && parsed.every(item => item && typeof item.id === 'number')) {
-          setComparisonList(parsed);
+        console.log('[DEBUG] Parsed data:', parsed);
+        // Validate the data structure - more flexible validation
+        if (Array.isArray(parsed)) {
+          const validCompanies = parsed.filter(item => 
+            item && 
+            (typeof item.id === 'number' || typeof item.id === 'string') && 
+            typeof item.name === 'string'
+          );
+          console.log('[DEBUG] Valid companies found:', validCompanies.length, validCompanies.map(c => c.name));
+          setComparisonList(validCompanies);
+        } else {
+          console.log('[DEBUG] Data is not an array, clearing storage');
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
     } catch (e) {
-      console.error('Failed to parse comparison list', e);
+      console.error('[DEBUG] Failed to parse comparison list', e);
       localStorage.removeItem(STORAGE_KEY); // Clear corrupted data
     } finally {
       setIsLoading(false);
@@ -38,13 +49,15 @@ export function useComparison() {
   useEffect(() => {
     if (!isLoading) {
       try {
+        console.log('[DEBUG] Saving to localStorage:', comparisonList.map(c => c.name));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
         // Emit event for other components
         comparisonEvents.dispatchEvent(new CustomEvent('comparison-updated', { 
           detail: { companies: comparisonList } 
         }));
+        console.log('[DEBUG] Successfully saved and emitted event');
       } catch (e) {
-        console.error('Failed to save comparison list', e);
+        console.error('[DEBUG] Failed to save comparison list', e);
       }
     }
   }, [comparisonList, isLoading]);

@@ -54,10 +54,14 @@ export default function ComparisonToggleButton({
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('[DEBUG] ComparisonToggleButton: handleToggle called for company:', company.name);
+    console.log('[DEBUG] Current state - isSelected:', isSelected, 'canAddMore:', canAddMore, 'count:', count);
+    
     setIsLoading(true);
     
     try {
       if (isSelected) {
+        console.log('[DEBUG] Removing company from comparison');
         removeFromComparison(company.id);
         track('comparison_remove', { 
           company_id: company.id,
@@ -66,9 +70,11 @@ export default function ComparisonToggleButton({
         });
       } else {
         if (!canAddMore) {
-          // Show toast already handled in hook
+          console.log('[DEBUG] Cannot add more companies, limit reached');
+          setIsLoading(false);
           return;
         }
+        console.log('[DEBUG] Adding company to comparison');
         addToComparison(company);
         track('comparison_add', { 
           company_id: company.id,
@@ -78,7 +84,10 @@ export default function ComparisonToggleButton({
         });
       }
     } finally {
-      setTimeout(() => setIsLoading(false), 300); // Small delay for better UX
+      setTimeout(() => {
+        setIsLoading(false);
+        console.log('[DEBUG] Toggle loading finished');
+      }, 300); // Small delay for better UX
     }
   };
 

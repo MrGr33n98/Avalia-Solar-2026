@@ -6,6 +6,7 @@ import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, MapPin, Star } fro
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Company } from '@/lib/api';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -51,8 +52,6 @@ export default function CompanyHero({
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
-  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
-  const inComp = isInComparison(company.id);
   const canRequestQuote = (company as any).active_admin === true;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
@@ -257,24 +256,13 @@ export default function CompanyHero({
               </div>
 
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-                <Button
-                  variant="outline"
+                <ComparisonToggleButton 
+                  company={company}
+                  variant="default"
                   size="default"
-                  className={cn(
-                    'h-11 rounded-xl border-2 border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:min-w-[140px]',
-                    inComp && 'border-blue-600 bg-blue-50 text-blue-700 hover:border-blue-700'
-                  )}
-                  onClick={() => {
-                    if (inComp) {
-                      removeFromComparison(company.id);
-                    } else {
-                      addToComparison(company);
-                    }
-                  }}
-                >
-                  <Scale className={cn('mr-2 h-4 w-4', inComp && 'fill-current')} />
-                  {inComp ? 'Comparando' : 'Comparar'}
-                </Button>
+                  animated={true}
+                  className="sm:min-w-[140px]"
+                />
 
                 {ctaEnabled && ctaUrl && (
                   <div className="w-full sm:w-auto">
