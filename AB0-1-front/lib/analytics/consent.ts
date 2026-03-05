@@ -68,6 +68,143 @@ export function setConsent(consent: Partial<ConsentState>): void {
 }
 
 /**
+ * Set consent state WITH audit trail logging to backend
+ * LGPD Compliance: Logs consent decisions for audit purposes
+ */
+export async function setConsentWithAudit(
+  consent: Partial<ConsentState>,
+  options?: {
+    consentMethod?: 'banner' | 'settings' | 'api' | 'default';
+    metadata?: Record<string, any>;
+  }
+): Promise<void> {
+  // First, update local consent state
+  setConsent(consent);
+  
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // Determine consent type
+    let consentType: string;
+    if (consent.analytics && consent.marketing) {
+      consentType = 'all';
+    } else if (consent.analytics) {
+      consentType = 'analytics';
+    } else if (consent.marketing) {
+      consentType = 'marketing';
+    } else {
+      consentType = 'none';
+    }
+    
+    // Get current URL and referrer
+    const pageUrl = window.location.href;
+    const referrer = document.referrer || '';
+    
+    // Get session ID from cookies
+    const sessionId = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('_session_id='))
+      ?.split('=')[1] || generateSessionId();
+    
+    // Prepare payload
+    const payload = {
+      consent_type: consentType,
+      consent_given: !!(consent.analytics || consent.marketing),
+      policy_version: 'v1.0',
+      consent_method: options?.consentMethod || 'banner',
+      page_url: pageUrl,
+      referrer: referrer,
+      metadata: options?.metadata || {}
+    };
+    
+    // Log to backend API
+    const response = await fetch('/api/v1/consent/log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      credentials: 'include' // Include cookies for session
+    });
+    
+    if (!response.ok) {
+      console.warn('[Consent] Failed to log consent to backend:', response.statusText);
+    }
+  } catch (error) {
+    // Don't block user experience if logging fails
+    console.error('[Consent] Error logging consent:', error);
+  }
+}
+
+// Helper to generate session ID if not present
+function generateSessionId(): string {
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+}
+
+/**
+ * Check consent status from backend
+ */
+export async function getConsentStatus(): Promise<ConsentState | null> {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const response = await fetch('/api/v1/consent/status', {
+      method: 'GET',
+      credentials: 'include'
+    });
+    
+    if (response.status === 404) {
+      return null; // No consent recorded
+    }
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get consent status: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Convert backend format to frontend format
+    return {
+      analytics: data.consent_type === 'all' || data.consent_type === 'analytics',
+      marketing: data.consent_type === 'all' || data.consent_type === 'marketing',
+      lastUpdated: new Date(data.consented_at).getTime()
+    };
+  } catch (error) {
+    console.error('[Consent] Error fetching consent status:', error);
+    return null;
+  }
+}
+
+/**
+ * Revoke all consent
+ */
+export async function revokeConsent(reason?: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  
+  // First, update local state
+  optOut();
+  
+  try {
+    const response = await fetch('/api/v1/consent/revoke', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        revoke_reason: reason || 'user_request'
+      }),
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      console.warn('[Consent] Failed to revoke consent on backend:', response.statusText);
+    }
+  } catch (error) {
+    console.error('[Consent] Error revoking consent:', error);
+  }
+}
+
+/**
  * Check if analytics tracking is allowed
  */
 export function hasAnalyticsConsent(): boolean {

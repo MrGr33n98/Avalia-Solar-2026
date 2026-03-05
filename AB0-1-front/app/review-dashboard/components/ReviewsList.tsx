@@ -82,26 +82,35 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
             </div>
           ) : (
             filteredData.map((review) => (
-              <div key={review.id} className="p-5 md:p-6 hover:bg-slate-50/50 transition-all group">
-                <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                  <div className="flex gap-4">
-                    <Avatar className="h-14 w-14 rounded-2xl border border-slate-100 shadow-sm shrink-0">
-                      <AvatarImage src={review.company?.logo_url || ''} className="object-cover" />
-                      <AvatarFallback className="bg-slate-50 text-slate-300 font-black">
-                        {typeof review.company === 'string' 
-                          ? review.company.substring(0, 2).toUpperCase()
-                          : review.company?.name?.substring(0, 2).toUpperCase() || 'EM'
-                        }
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-black text-slate-950 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                          {typeof review.company === 'string' 
+                  <div key={review.id} className="p-5 md:p-6 hover:bg-slate-50/50 transition-all group">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                      <div className="flex gap-4">
+                        {(() => {
+                          const companyObj = typeof review.company === 'string' ? null : review.company;
+                          const companyName = typeof review.company === 'string'
                             ? review.company
-                            : review.company?.name || 'Empresa'
-                          }
-                        </h4>  
+                            : companyObj?.name || 'Empresa';
+                          const initialsSource = typeof review.company === 'string'
+                            ? review.company
+                            : companyObj?.name || 'EM';
+                          const initials = initialsSource.substring(0, 2).toUpperCase();
+                          const logoUrl = companyObj?.logo_url || '';
+                          return (
+                        <Avatar className="h-14 w-14 rounded-2xl border border-slate-100 shadow-sm shrink-0">
+                          <AvatarImage src={logoUrl} className="object-cover" />
+                          <AvatarFallback className="bg-slate-50 text-slate-300 font-black">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                          )
+                        })()}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-black text-slate-950 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                              {typeof review.company === 'string'
+                                ? review.company
+                                : review.company?.name || 'Empresa'}
+                            </h4>  
                         <Badge variant="secondary" className={cn("text-[10px] font-black uppercase px-2 py-0 h-4 rounded-md tracking-tighter", statusMap[review.status || '']?.bg, statusMap[review.status || '']?.color)}>
                           {statusMap[review.status || '']?.label || review.status}
                         </Badge>

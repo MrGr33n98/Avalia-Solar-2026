@@ -89,10 +89,8 @@ describe('LoginPage', () => {
 
     mockPush.mockClear();
     mockLogin.mockClear();
-    Object.defineProperty(window, 'location', {
-      value: { href: 'http://localhost/' },
-      writable: true,
-    });
+    // Ensure location is set without redefining the property (jsdom makes it non-configurable)
+    window.location.href = 'http://localhost/';
   });
 
   it('renders the login form with email and password inputs', () => {

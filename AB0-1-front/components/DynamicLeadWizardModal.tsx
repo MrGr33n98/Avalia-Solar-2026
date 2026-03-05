@@ -66,15 +66,25 @@ export default function DynamicLeadWizardModal() {
       try {
         const company = await companiesApiSafe.getById(preferredCompanyId);
         if (cancelled) return;
+        if (!company) {
+          setCategoryResolutionError('Nao foi possivel identificar a empresa.');
+          return;
+        }
 
-        const categories = Array.isArray(company?.categories)
-          ? company.categories.filter((category): category is CategoryOption => Number.isFinite(category?.id))
+        const categories = Array.isArray((company as any)?.categories)
+          ? (company as any).categories
+              .map((category: any) => ({
+                id: Number(category?.id),
+                name: category?.name,
+                seo_url: category?.seo_url || category?.seoUrl || category?.slug,
+              }))
+              .filter((c: CategoryOption) => Number.isFinite(c.id))
           : [];
-        const inferredCategoryId = resolveWizardCategoryId(company);
+        const inferredCategoryId = resolveWizardCategoryId(company as any);
 
         setCategoryOptions(categories);
 
-        if (inferredCategoryId && (categories.length <= 1 || categories.some((category) => category.id === inferredCategoryId && /financiamento|financing/i.test(`${category.name || ''} ${category.seo_url || ''}`)))) {
+        if (inferredCategoryId && (categories.length <= 1 || categories.some((category: CategoryOption) => category.id === inferredCategoryId && /financiamento|financing/i.test(`${category.name || ''} ${category.seo_url || ''}`)))) {
           setCategoryId(inferredCategoryId);
         } else if (categories.length === 1) {
           setCategoryId(categories[0].id);

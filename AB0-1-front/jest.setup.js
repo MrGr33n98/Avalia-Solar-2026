@@ -58,3 +58,13 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Polyfill TransformStream for libraries that expect Web Streams API in JSDOM
+try {
+  const { TransformStream } = require('node:stream/web');
+  if (typeof global.TransformStream === 'undefined') {
+    global.TransformStream = TransformStream;
+  }
+} catch (err) {
+  // ignore if not available
+}

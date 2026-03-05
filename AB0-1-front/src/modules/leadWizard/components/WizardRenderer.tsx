@@ -92,7 +92,12 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
         )}
 
         {thankYou?.redirect_url && (
-          <Button className="mt-6" onClick={() => window.location.href = thankYou.redirect_url}>
+          <Button
+            className="mt-6"
+            onClick={() => {
+              const redirectUrl = thankYou?.redirect_url;
+              if (redirectUrl) window.location.href = redirectUrl;
+            }}>
             Continuar
           </Button>
         )}

@@ -54,7 +54,7 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
           </div>
         </div>
         <p className="text-sm text-slate-600 leading-relaxed italic">
-          "{review.comment}"
+          &ldquo;{review.comment}&rdquo;
         </p>
       </div>
     </div>

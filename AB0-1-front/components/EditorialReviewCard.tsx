@@ -76,7 +76,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
         {/* Headline & Comment */}
         <div className="space-y-3">
           <h3 className="text-xl font-black tracking-tight text-slate-900 leading-tight">
-            "{review.headline}"
+            &ldquo;{review.headline}&rdquo;
           </h3>
           <p className="text-slate-600 text-sm leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-default">
             {review.comment}
@@ -121,7 +121,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
             <Quote className="absolute -right-2 -bottom-2 h-12 w-12 text-blue-100 group-hover:rotate-12 transition-transform" />
             <h5 className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2 relative z-10">Dica do Comprador</h5>
             <p className="text-sm text-blue-900 italic font-medium relative z-10 leading-snug">
-              "{review.buyer_tip}"
+              &ldquo;{review.buyer_tip}&rdquo;
             </p>
           </div>
         )}

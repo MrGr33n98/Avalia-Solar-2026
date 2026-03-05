@@ -95,9 +95,9 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
       queryClient.invalidateQueries({ queryKey: ['company-analytics-overview', companyId] });
     });
     return () => {
-      if (!subscription) return;
-      if (typeof subscription === 'function') subscription();
-      else if (typeof subscription.unsubscribe === 'function') subscription.unsubscribe();
+      if (subscription && typeof (subscription as any).unsubscribe === 'function') {
+        subscription.unsubscribe();
+      }
     };
   }, [companyId, queryClient]);
 
