@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WizardSchema, WizardStateStatus, WizardPayload, LeadCoreFields, FieldSchema } from '../types/wizard.types';
+import { WizardSchema, WizardStateStatus } from '../types/wizard.types';
 import { wizardApi } from '../api/wizard.api';
 import { track } from '@/lib/analytics';
+import { buildWizardPayload } from '../utils/payload';
 
 const SESSION_KEY = 'leadWizardSession';
-const CORE_KEYS = ['full_name', 'email', 'phone', 'zipcode', 'city', 'state', 'consent'];
 
 export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) => {
   const [status, setStatus] = useState<WizardStateStatus>('IDLE');
@@ -21,6 +21,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       try {
         const fetchedSchema = await wizardApi.resolveSchema(categoryId, preferredCompanyId);
         setSchema(fetchedSchema);
+        setServerError(fetchedSchema.availability?.company_available === false ? fetchedSchema.availability.message || 'Esta empresa não atende a categoria selecionada.' : null);
         
         // Restore session if available and matches category
         const savedSession = localStorage.getItem(SESSION_KEY);
@@ -35,7 +36,11 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
         }
         
         setStatus('STEP_ACTIVE');
-        track('wizard_started', { category_id: categoryId, template_key: fetchedSchema.template_key });
+        track('wizard_started', {
+          category_id: categoryId,
+          template_key: fetchedSchema.template_key,
+          availability_reason: fetchedSchema.availability?.reason,
+        });
       } catch (error) {
         setStatus('SCHEMA_ERROR');
       }
@@ -101,6 +106,11 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
   }, [schema, currentStepIndex, answers]);
 
   const nextStep = useCallback(() => {
+    if (schema?.availability?.company_available === false) {
+      setStatus('STEP_ACTIVE');
+      return;
+    }
+
     setStatus('VALIDATING');
     if (validateCurrentStep()) {
       track('wizard_step_completed', { step_index: currentStepIndex });
@@ -122,24 +132,12 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     }
   }, [currentStepIndex]);
 
-  const buildPayload = useCallback((): WizardPayload => {
-    const coreFields: any = { consent: false, category_id: categoryId, preferred_company_id: preferredCompanyId || null };
-    const dynamicFields: any = {};
-
-    Object.entries(answers).forEach(([key, value]) => {
-      if (CORE_KEYS.includes(key)) {
-        coreFields[key] = value;
-      } else {
-        dynamicFields[key] = value;
-      }
-    });
-
-    return {
-      lead: coreFields as LeadCoreFields,
-      wizard_answers: dynamicFields,
-      // utm and attribution could be grabbed from a global context/cookie here
-    };
-  }, [answers, categoryId, preferredCompanyId]);
+  const buildPayload = useCallback(() => buildWizardPayload({
+    answers,
+    categoryId,
+    preferredCompanyId,
+    schema,
+  }), [answers, categoryId, preferredCompanyId, schema]);
 
   const submitWizard = async () => {
     setStatus('SUBMITTING');

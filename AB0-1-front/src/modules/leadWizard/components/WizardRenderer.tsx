@@ -58,6 +58,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
 
   const currentStep = schema.schema.steps[currentStepIndex];
   const isPremiumCustom = schema.source === 'company_custom';
+  const companyUnavailable = schema.availability?.company_available === false;
 
   return (
     <div className="max-w-2xl mx-auto w-full bg-white rounded-xl shadow-sm border p-6 md:p-8">
@@ -112,7 +113,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
         
         <Button 
           onClick={nextStep} 
-          disabled={status === 'SUBMITTING'}
+          disabled={status === 'SUBMITTING' || companyUnavailable}
           className="min-w-[140px]"
         >
           {status === 'SUBMITTING' ? (
@@ -120,6 +121,8 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
               <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
               Enviando...
             </span>
+          ) : companyUnavailable ? (
+            'Indisponível'
           ) : isLastStep ? (
             'Enviar Solicitação'
           ) : (

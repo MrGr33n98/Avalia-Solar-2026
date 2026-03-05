@@ -17,6 +17,7 @@ export interface FieldOption {
 
 export interface FieldSchema {
   key: string;
+  target?: 'lead' | 'wizard_answers';
   type: FieldType;
   label: string;
   placeholder?: string;
@@ -44,6 +45,12 @@ export interface WizardSchema {
   category_id: number;
   template_key: string;
   template_version: number;
+  availability?: {
+    preferred_company_id?: number | string | null;
+    company_available: boolean;
+    reason: string;
+    message?: string;
+  };
   schema: {
     steps: StepSchema[];
     ui_config?: {
@@ -76,6 +83,12 @@ export interface LeadCoreFields {
   consent: boolean;
   category_id?: number;
   preferred_company_id?: number | null;
+  product_vertical?: string;
+  project_profile?: string;
+  quote_type?: string;
+  system_size_band?: string;
+  decision_timeline?: string;
+  address_full?: string;
 }
 
 export interface WizardPayload {

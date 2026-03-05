@@ -8,6 +8,7 @@ RSpec.describe 'Leads wizard API', type: :request do
   end
 
   let(:category) { Category.create!(name: 'Solar', description: 'Categoria de energia solar') }
+  let(:other_category) { Category.create!(name: 'Mobilidade', description: 'Categoria de mobilidade') }
 
   def create_company(attrs = {})
     base_attrs = {
@@ -25,8 +26,10 @@ RSpec.describe 'Leads wizard API', type: :request do
     }
     base_attrs[:plan_status] = 'active' if Company.column_names.include?('plan_status')
 
+    assigned_categories = attrs.delete(:categories) || [category]
+
     company = Company.new(base_attrs.merge(attrs))
-    company.categories << category
+    company.categories = assigned_categories
     company.save!
     company
   end
@@ -34,6 +37,7 @@ RSpec.describe 'Leads wizard API', type: :request do
   let!(:company_a) { create_company(name: 'Company A', featured: true, rating_avg: 4.7) }
   let!(:company_b) { create_company(name: 'Company B', featured: false, rating_avg: 4.3) }
   let!(:company_c) { create_company(name: 'Company C', featured: false, rating_avg: 4.1) }
+  let!(:company_other_vertical) { create_company(name: 'Company EV', categories: [other_category]) }
 
   it 'creates wizard lead and verifies otp' do
     allow(Lead).to receive(:generate_otp_code).and_return('123456')
@@ -117,5 +121,28 @@ RSpec.describe 'Leads wizard API', type: :request do
     expect(lead.system_size_band).to eq('Ate 7 kWp')
     expect(lead.decision_timeline).to eq('Agora')
     expect(lead.address_full).to eq('Rua D, 75 - Rio de Janeiro/RJ')
+  end
+
+  it 'rejects wizard lead creation when the preferred company does not serve the selected category' do
+    post '/api/v1/leads/wizard_create', params: {
+      lead: {
+        project_profile: 'Residencial',
+        system_size_band: 'Ate 7 kWp',
+        decision_timeline: 'Agora',
+        full_name: 'Lead Invalido',
+        email: 'invalido@example.com',
+        phone: '21999999999',
+        zipcode: '21941000',
+        consent: true,
+        category_id: category.id
+      },
+      preferred_company_id: company_other_vertical.id
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+
+    payload = JSON.parse(response.body)
+    expect(payload['error']).to eq('validation_failed')
+    expect(payload.dig('fields', 'preferred_company_id')).to be_present
   end
 end
