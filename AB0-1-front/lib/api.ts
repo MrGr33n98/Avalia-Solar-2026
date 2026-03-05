@@ -125,7 +125,7 @@ export interface Company {
   payment_methods?: string[];
   category_name?: string;
   category_id?: number;
-  categories?: string;         // Some APIs return this as a string
+  categories?: Category[];     // Array of Category objects for multi-vertical support
   featured?: boolean;
   founded_year?: number;
   employees_count?: number;
@@ -213,6 +213,24 @@ export interface Company {
   financing_profile?: CompanyFinancingProfile | null;
   financing_partners?: CompanyFinancingPartner[];
   financing_offers?: CompanyFinancingOffer[];
+  review_aggregates?: {
+    global: {
+      category_id: null;
+      category_name: null;
+      average_rating: number;
+      total_reviews: number;
+      scores_distribution: Record<string, number>;
+      criteria_breakdown: Record<string, number>;
+    } | null;
+    by_category: Array<{
+      category_id: number;
+      category_name: string;
+      average_rating: number;
+      total_reviews: number;
+      scores_distribution: Record<string, number>;
+      criteria_breakdown: Record<string, number>;
+    }>;
+  };
 }
 
 export interface FinancingOption {
@@ -317,6 +335,8 @@ export interface Review {
   pros?: string[];
   cons?: string[];
   buyer_tip?: string;
+  category_id?: number;
+  category_name?: string;
   editorial_complete?: boolean;
   content_metadata?: {
     pros: string[];
@@ -328,7 +348,13 @@ export interface Review {
     cta_clicks?: number;
     read_count?: number;
     last_aggregated_at?: string;
+    reviewer_email?: string;
   };
+  granular_scores?: Array<{
+    title: string;
+    score: number;
+    weight: number;
+  }>;
   review_criterion_scores?: Array<{
     id: number;
     score: number;

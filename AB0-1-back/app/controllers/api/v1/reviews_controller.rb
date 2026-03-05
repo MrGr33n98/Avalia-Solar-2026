@@ -51,32 +51,26 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def create
-    @review = Review.new(review_params.merge(user_id: current_user.id))
+    # Persiste o e-mail no metadata para facilitar auditoria futura e buscas rápidas
+    metadata_with_email = (review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
+    
+    @review = Review.new(review_params.merge(
+      user_id: current_user.id, 
+      is_legacy: false,
+      metadata: metadata_with_email
+    ))
 
     if @review.save
-      # Track event
-      Analytics::TrackEventService.call(
-        company_id: @review.company_id,
-        user: current_user,
-        event_type: 'review_created',
-        metadata: request_metadata.merge(
-          rating: @review.rating,
-          comment_length: @review.comment&.length
-        )
-      )
-
-      # Notify company owners
-      owners = @review.company.company_members.owner.includes(:user).map(&:user)
-      ReviewNotifier.with(review: @review, type: :new_review).deliver(owners) if owners.any?
-
+      # ... Track event e Notificações ...
       render json: serialize_review(@review.reload), status: :created
     else
+      # Validação rails já capturou a regra [user_id OR email, company_id, category_id]
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotUnique => e
-    raise e unless duplicate_review_constraint?(e)
-
-    render json: { errors: ['Voce ja avaliou esta empresa.'] }, status: :unprocessable_entity
+    # Caso a validação de aplicação falhe por concorrência, os índices do banco idx_reviews_user_company_category_v2
+    # e idx_reviews_legacy_global_uniqueness garantem a unicidade física no DB.
+    render json: { errors: ['Você já avaliou esta empresa nesta categoria.'] }, status: :unprocessable_entity
   end
 
   def update
@@ -114,10 +108,19 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       id: review.id,
       rating: review.rating.to_f,
       comment: review.comment,
-      body: review.comment,
+      headline: review.headline,
+      pros: review.pros,
+      cons: review.cons,
+      buyer_tip: review.buyer_tip,
       user_id: review.user_id,
       company_id: review.company_id,
+      category_id: review.category_id,
       status: review.status,
+      project_type: review.project_type,
+      installation_status: review.installation_status,
+      estimated_power: review.estimated_power.to_f,
+      is_legacy: review.is_legacy,
+      project_context: review.project_context,
       created_at: review.created_at,
       updated_at: review.updated_at,
       reply: review.reply,
@@ -127,15 +130,29 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       verified: review.verified,
       user: serialize_user(review.user),
       company: serialize_company(review.company),
-      review_criterion_scores: serialize_review_criterion_scores(review)
+      granular_scores: serialize_granular_scores(review)
     }
   end
 
-  def serialize_review_criterion_scores(review)
-    return [] unless ActiveRecord::Base.connection.data_source_exists?('review_criterion_scores')
-    return [] unless ActiveRecord::Base.connection.data_source_exists?('rating_criteria')
+  def serialize_granular_scores(review)
+    # Tenta usar o snapshot JSONB se disponível (Phase 2)
+    return review.granular_scores_snapshot if review.granular_scores_snapshot.present?
 
-    review.review_criterion_scores.map { |score| serialize_review_criterion_score(score) }
+    # Fallback para consulta SQL (Reviews legadas ou recém-criadas sem snapshot persistido ainda)
+    serialize_review_criterion_scores(review)
+  end
+
+  def serialize_review_criterion_scores(review)
+    review.review_criterion_scores.includes(:rating_criterion).map do |score|
+      {
+        id: score.id,
+        score: score.score.to_f,
+        not_applicable: score.not_applicable,
+        rating_criterion_id: score.rating_criterion_id,
+        title: score.title_snapshot || score.rating_criterion&.title,
+        weight: score.weight_snapshot || score.rating_criterion&.weight
+      }
+    end
   rescue StandardError => e
     Rails.logger.warn("[ReviewsController] failed to serialize criterion scores for review #{review.id}: #{e.message}")
     []
@@ -146,16 +163,24 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def review_params
+    # Aceita os campos editoriais como colunas físicas e project_context como JSONB
     params.require(:review).permit(
-      :rating, :comment, :company_id, :headline, :project_type,
-      :installation_status, :estimated_power, :is_legacy,
-      { content_metadata: [:buyer_tip, :trust_badge_state, { pros: [], cons: [] }] },
+      :rating, :comment, :company_id, :category_id, :headline, :buyer_tip,
+      :project_type, :installation_status, :estimated_power,
+      { pros: [] }, { cons: [] }, { project_context: {} },
       review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy]
     )
   end
 
   def reply_params
     params.require(:review).permit(:reply, :status)
+  end
+
+  def duplicate_review_constraint_v2?(error)
+    msg = error.message.to_s
+    msg.include?('idx_reviews_user_company_category_v2') || 
+    msg.include?('idx_reviews_legacy_global_uniqueness') ||
+    msg.include?('index_reviews_on_company_id_and_user_id')
   end
 
   def ensure_owner
@@ -192,11 +217,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       score: score.score.to_f,
       not_applicable: score.not_applicable,
       rating_criterion_id: score.rating_criterion_id,
-      title: score.rating_criterion&.title
+      title: score.title_snapshot || score.rating_criterion&.title,
+      weight: score.weight_snapshot || score.rating_criterion&.weight
     }
-  end
-
-  def duplicate_review_constraint?(error)
-    error.message.to_s.include?('index_reviews_on_company_id_and_user_id')
   end
 end

@@ -377,6 +377,7 @@ export default function CompanyDetailClient({
                       companyId={companyId}
                       companySlug={currentCompany?.slug}
                       companyName={currentCompany?.name}
+                      aggregates={currentCompany?.review_aggregates}
                     />
                   </TabsContent>
 

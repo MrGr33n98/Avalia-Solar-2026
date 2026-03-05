@@ -36,6 +36,7 @@ class Company < ApplicationRecord
   # =========================
   has_and_belongs_to_many :categories, join_table: :categories_companies
   has_many :reviews, dependent: :destroy
+  has_many :review_aggregates, dependent: :destroy
   has_many :pending_changes, dependent: :destroy
   has_many :products, dependent: :destroy
   has_many :leads, dependent: :destroy

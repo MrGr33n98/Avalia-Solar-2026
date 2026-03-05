@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Star, ArrowLeft } from 'lucide-react';
+import { Star, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { reviewsApi, fetchApi } from '@/lib/api';
+import { reviewsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
+import { cn } from '@/lib/utils';
 
 import {
   Dialog,
@@ -23,113 +23,73 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import { ReviewCategoryStep } from './components/ReviewCategoryStep';
+import { ReviewGranularScoreStep } from './components/ReviewGranularScoreStep';
+import { ReviewEditorialStep } from './components/ReviewEditorialStep';
+
 interface ReviewFormProps {
   company: any;
   companyPath: string;
 }
 
-interface Criterion {
-  id: number;
-  slug: string;
-  title: string;
-  help_text: string | null;
-  required: boolean;
-}
-
 const formatSubmitErrorMessage = (error: unknown) => {
-  const fallback = 'Ocorreu um erro ao enviar sua avaliacao. Por favor, tente novamente.';
+  const fallback = 'Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.';
   const message = getApiErrorMessage(error, fallback).replace(/^\[\d{3}\]\s*/, '').trim();
   return message || fallback;
 };
 
 function ReviewForm({ company, companyPath }: ReviewFormProps) {
+  const [step, setStep] = useState(1);
+  const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [errorCategoryId, setErrorCategoryId] = useState<number | undefined>();
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [projectType, setProjectType] = useState<'residential' | 'commercial' | 'industrial' | 'rural'>('residential');
-  const [installationStatus, setInstallationStatus] = useState<'completed' | 'in_progress' | 'waiting'>('completed');
-  const [estimatedPower, setEstimatedPower] = useState('');
-  const [pros, setPros] = useState<string[]>(['']);
-  const [cons, setCons] = useState<string[]>(['']);
-  const [buyerTip, setBuyerTip] = useState('');
+  const [criterionScores, setCriterionScores] = useState<Record<number, number>>({});
+  const [editorialData, setEditorialData] = useState({
+    headline: '',
+    pros: [] as string[],
+    cons: [] as string[],
+    buyerTip: '',
+    comment: ''
+  });
+  
+  const [projectMetadata, setProjectMetadata] = useState({
+    projectType: 'residential' as const,
+    installationStatus: 'completed' as const,
+    estimatedPower: ''
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  
-  const [criteria, setCriteria] = useState<Criterion[]>([]);
-  const [criterionScores, setCriterionScores] = useState<Record<number, number>>({});
   
   const router = useRouter();
   const { user } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
   const returnTo = (() => {
     const query = searchParams?.toString();
     const fullPath = query ? `${pathname}?${query}` : pathname;
     return encodeURIComponent(fullPath || '/');
   })();
 
-  const addField = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => [...prev, '']);
-  };
+  const nextStep = () => setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
 
-  const updateField = (index: number, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    // Resolve categoryId with priority: category_info.id (from serializer) -> category_id -> direct id
-    const categoryId = company?.category_info?.id || company?.category_id;
-    
-    if (categoryId) {
-      fetchApi(`/categories/${categoryId}/evaluation_context`)
-        .then((data: any) => {
-          // Render whenever criteria exists, even if has_granular_criteria boolean is missing
-          if (data?.criteria && Array.isArray(data.criteria) && data.criteria.length > 0) {
-            setCriteria(data.criteria);
-          }
-        })
-        .catch(err => {
-          console.error('[ReviewForm] Failed to fetch evaluation context:', err);
-        });
-    }
-  }, [company]);
-
-  const handleCriterionScoreChange = (criterionId: number, score: number) => {
-    setCriterionScores(prev => ({ ...prev, [criterionId]: score }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!user) {
-      setSubmitError('Você precisa estar logado para deixar uma avaliação.');
-      return;
-    }
-    
-    if (rating === 0) {
-      setSubmitError('Por favor, selecione uma classificação geral.');
+      setSubmitError('Você precisa estar logado para avaliar.');
       return;
     }
 
-    const missingRequired = criteria.some(c => c.required && !criterionScores[c.id]);
-    if (missingRequired) {
-      setSubmitError('Por favor, avalie todos os critérios obrigatórios.');
+    if (editorialData.comment.trim().length < 10) {
+      setSubmitError('O relato detalhado deve ter pelo menos 10 caracteres.');
       return;
     }
-    
-    if (comment.trim().length < 10) {
-      setSubmitError('Por favor, escreva um comentário com pelo menos 10 caracteres.');
-      return;
-    }
-    
+
     setIsSubmitting(true);
     setSubmitError(null);
-    
+
     try {
       const review_criterion_scores_attributes = Object.entries(criterionScores).map(([id, score]) => ({
         rating_criterion_id: Number(id),
@@ -137,34 +97,43 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
       }));
 
       await reviewsApi.create({
-        rating,
-        comment: comment.trim(),
         company_id: company.id,
-        headline: headline.trim(),
-        project_type: projectType,
-        installation_status: installationStatus,
-        estimated_power: parseFloat(estimatedPower) || undefined,
-        content_metadata: {
-          pros: pros.filter(p => p.trim() !== ''),
-          cons: cons.filter(c => c.trim() !== ''),
-          buyer_tip: buyerTip.trim()
-        },
-        ...(review_criterion_scores_attributes.length > 0 && { review_criterion_scores_attributes })
+        category_id: categoryId,
+        rating: rating || 5,
+        headline: editorialData.headline.trim(),
+        comment: editorialData.comment.trim(),
+        pros: editorialData.pros,
+        cons: editorialData.cons,
+        buyer_tip: editorialData.buyerTip.trim(),
+        project_type: projectMetadata.projectType,
+        installation_status: projectMetadata.installationStatus,
+        estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
+        review_criterion_scores_attributes
       } as any);
-      
+
       setShowConfirmModal(true);
-      setRating(0);
-      setComment('');
-      setHeadline('');
-      setPros(['']);
-      setCons(['']);
-      setBuyerTip('');
-      setCriterionScores({});
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting review:', error);
-      setSubmitError(formatSubmitErrorMessage(error));
+      const message = formatSubmitErrorMessage(error);
+      setSubmitError(message);
+      
+      // Se for erro de unicidade (contém "já avaliou" ou código específico de duplicidade), destaca a categoria e volta ao passo 1
+      const isUniquenessError = message.includes('já avaliou') || message.includes('Você já avaliou');
+      
+      if (isUniquenessError) {
+        setErrorCategoryId(categoryId);
+        setStep(1);
+      }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCategorySelect = (id: number) => {
+    setCategoryId(id);
+    if (errorCategoryId !== id) {
+      setErrorCategoryId(undefined);
+      setSubmitError(null);
     }
   };
 
@@ -175,262 +144,186 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
 
   if (!user) {
     return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Star className="h-8 w-8 text-blue-600" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">Faça login para avaliar</h3>
-        <p className="text-gray-600 mb-4">
-          Você precisa estar logado para deixar uma avaliação.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <Button onClick={() => router.push(`/login?return_to=${returnTo}`)}>
-            Fazer Login
-          </Button>
-          <Button variant="outline" onClick={() => router.push(`/signup?return_to=${returnTo}`)}>
-            Criar Conta
-          </Button>
-        </div>
-        <div className="mt-3 text-sm text-gray-600">
-          Você é uma empresa?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Cadastre sua empresa
-          </Link>
-        </div>
-      </div>
+      <Card className="border-none shadow-none bg-transparent">
+        <CardContent className="p-8 text-center bg-white rounded-2xl border shadow-sm">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Star className="h-8 w-8 text-blue-600" />
+          </div>
+          <h3 className="text-xl font-bold mb-2 tracking-tight">Faça login para avaliar</h3>
+          <p className="text-muted-foreground mb-6 text-sm">
+            Para garantir a integridade da nossa plataforma, apenas usuários autenticados podem enviar avaliações.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="lg" onClick={() => router.push(`/login?return_to=${returnTo}`)} className="rounded-full px-8">
+              Fazer Login
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => router.push(`/signup?return_to=${returnTo}`)} className="rounded-full px-8">
+              Criar Conta Grátis
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="outline" 
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-1.5">
+          {[1, 2, 3].map(i => (
+            <div 
+              key={i} 
+              className={`h-1.5 w-8 rounded-full transition-all duration-500 ${step >= i ? 'bg-blue-600' : 'bg-slate-200'}`} 
+            />
+          ))}
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Passo {step} de 3</span>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Deixe sua Avaliação</CardTitle>
-          <CardDescription>
-            Compartilhe sua experiência com esta empresa para ajudar outros usuários.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avaliação Geral */}
-            <div className="p-4 bg-muted/20 rounded-lg border border-border/50">
-              <Label className="text-base font-semibold">Nota Geral</Label>
-              <div className="flex gap-1 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`h-10 w-10 ${
-                        star <= rating
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-300 hover:text-yellow-200'
-                      }`}
-                    />
-                  </button>
-                ))}
+
+      <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
+        <CardContent className="p-6 sm:p-10">
+          {step === 1 && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">Sobre qual serviço você deseja falar?</h2>
+                <p className="text-slate-500 text-sm">Cada serviço pode ter critérios de avaliação diferentes.</p>
+              </div>
+              
+              <ReviewCategoryStep 
+                categories={company?.categories || []} 
+                onSelect={handleCategorySelect} 
+                selectedId={categoryId} 
+                errorCategoryId={errorCategoryId}
+              />
+
+              {submitError && step === 1 && (
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+                  {submitError}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={nextStep} 
+                  disabled={!categoryId || !!errorCategoryId}
+                  className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
+                >
+                  Próximo: Notas
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+          )}
 
-            {/* Critérios Granulares */}
-            {criteria.length > 0 && (
-              <div className="space-y-4 pt-4 border-t border-border/50">
-                <Label className="text-base font-semibold">Avalie os detalhes do serviço</Label>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {criteria.map(criterion => (
-                    <div key={criterion.id} className="p-3 bg-muted/10 rounded-md border border-border/30">
-                      <Label className="text-sm flex items-center justify-between">
-                        <span>{criterion.title} {criterion.required && <span className="text-red-500">*</span>}</span>
-                      </Label>
-                      {criterion.help_text && (
-                        <p className="text-xs text-muted-foreground mt-0.5 mb-2">{criterion.help_text}</p>
-                      )}
-                      <div className="flex gap-1 mt-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => handleCriterionScoreChange(criterion.id, star)}
-                            className="focus:outline-none transition-transform hover:scale-110"
-                          >
-                            <Star
-                              className={`h-6 w-6 ${
-                                star <= (criterionScores[criterion.id] || 0)
-                                  ? 'text-yellow-400 fill-yellow-400'
-                                  : 'text-gray-300 hover:text-yellow-200'
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+          {step === 2 && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">Como foi o desempenho técnico?</h2>
+                <p className="text-slate-500 text-sm">Sua nota ajuda a empresa a melhorar e outros clientes a escolherem melhor.</p>
+              </div>
+
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
+                <Label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-3">Satisfação Geral</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="focus:outline-none transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`h-10 w-10 ${
+                          star <= rating
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-slate-200 hover:text-yellow-200'
+                        }`}
+                      />
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Contexto Técnico */}
-            <div className="grid gap-6 p-4 bg-muted/20 rounded-lg border border-border/50 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="projectType">Tipo de Projeto</Label>
-                <select 
-                  id="projectType"
-                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                  value={projectType}
-                  onChange={(e) => setProjectType(e.target.value as any)}
-                >
-                  <option value="residential">Residencial</option>
-                  <option value="commercial">Comercial</option>
-                  <option value="industrial">Industrial</option>
-                  <option value="rural">Rural</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="installationStatus">Status</Label>
-                <select 
-                  id="installationStatus"
-                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                  value={installationStatus}
-                  onChange={(e) => setInstallationStatus(e.target.value as any)}
-                >
-                  <option value="completed">Concluído</option>
-                  <option value="in_progress">Em andamento</option>
-                  <option value="waiting">Aguardando</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="estimatedPower">Potência (kWp)</Label>
-                <input 
-                  id="estimatedPower"
-                  type="number"
-                  step="0.1"
-                  placeholder="Ex: 5.5"
-                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                  value={estimatedPower}
-                  onChange={(e) => setEstimatedPower(e.target.value)}
+              {categoryId && (
+                <ReviewGranularScoreStep 
+                  categoryId={categoryId} 
+                  onChange={setCriterionScores} 
+                  values={criterionScores} 
                 />
+              )}
+
+              <div className="flex justify-between pt-8 border-t">
+                <Button variant="ghost" onClick={prevStep} className="rounded-full px-6 text-slate-500">
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={nextStep}
+                  disabled={rating === 0}
+                  className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
+                >
+                  Próximo: Texto
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+          )}
 
-            {/* Headline Editorial */}
-            <div className="space-y-2">
-              <Label htmlFor="headline" className="text-base font-semibold">
-                Título da sua Avaliação
-              </Label>
-              <input
-                id="headline"
-                placeholder="Ex: Instalação impecável e economia imediata"
-                className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
+          {step === 3 && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">Agora, conte-nos em palavras</h2>
+                <p className="text-slate-500 text-sm">O título e os prós/contras ajudam em uma leitura rápida da sua experiência.</p>
+              </div>
+
+              <ReviewEditorialStep 
+                data={editorialData} 
+                onChange={setEditorialData} 
               />
-            </div>
 
-            {/* Prós e Contras */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-3">
-                <Label className="text-sm font-bold text-green-700 uppercase">O que foi bom?</Label>
-                {pros.map((pro, i) => (
-                  <input
-                    key={i}
-                    placeholder="Ponto positivo"
-                    className="w-full p-2 text-sm rounded-md border border-green-200 bg-green-50/30"
-                    value={pro}
-                    onChange={(e) => updateField(i, e.target.value, setPros)}
-                  />
-                ))}
-                <button type="button" onClick={() => addField(setPros)} className="text-xs text-green-600 font-medium hover:underline">+ Adicionar ponto</button>
-              </div>
-              <div className="space-y-3">
-                <Label className="text-sm font-bold text-red-700 uppercase">O que pode melhorar?</Label>
-                {cons.map((con, i) => (
-                  <input
-                    key={i}
-                    placeholder="Oportunidade de melhoria"
-                    className="w-full p-2 text-sm rounded-md border border-red-200 bg-red-50/30"
-                    value={con}
-                    onChange={(e) => updateField(i, e.target.value, setCons)}
-                  />
-                ))}
-                <button type="button" onClick={() => addField(setCons)} className="text-xs text-red-600 font-medium hover:underline">+ Adicionar ponto</button>
+              {submitError && (
+                <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+                  {submitError}
+                </div>
+              )}
+
+              <div className="flex justify-between pt-8 border-t">
+                <Button variant="ghost" onClick={prevStep} className="rounded-full px-6 text-slate-500">
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || editorialData.comment.length < 10}
+                  className="rounded-full px-10 h-12 font-black shadow-lg bg-slate-950 hover:bg-blue-700 hover:shadow-blue-200 transition-all gap-2"
+                >
+                  {isSubmitting ? 'Enviando...' : 'Finalizar Avaliação'}
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-
-            <div className="space-y-2 pt-4 border-t border-border/50">
-              <Label htmlFor="comment" className="text-base font-semibold">Relato detalhado da experiência</Label>
-              <Textarea
-                id="comment"
-                placeholder="Conte-nos os detalhes da sua experiência (ex: atendimento, qualidade, pós-venda)..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="min-h-[120px]"
-              />
-              <p className="text-xs text-gray-500 text-right">
-                Mínimo de 10 caracteres
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="buyerTip" className="text-base font-semibold">Dica para quem vai comprar</Label>
-              <Textarea
-                id="buyerTip"
-                placeholder="Ex: Peça o inversor com monitoramento via Wi-Fi, vale a pena!"
-                className="resize-none h-20 text-sm italic border-blue-200 bg-blue-50/20"
-                value={buyerTip}
-                onChange={(e) => setBuyerTip(e.target.value)}
-              />
-            </div>
-
-            {submitError && (
-              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md">
-                {submitError}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Enviando...' : 'Enviar Avaliação'}
-            </Button>
-          </form>
+          )}
         </CardContent>
       </Card>
 
       <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-2 bg-green-100 rounded-full">
-                <Star className="h-5 w-5 text-green-600 fill-green-600" />
-              </div>
-              Avaliação Enviada!
-            </DialogTitle>
-            <DialogDescription className="pt-2">
-              Sua avaliação foi recebida com sucesso e está aguardando aprovação da nossa equipe.
-              Você será notificado assim que ela for publicada.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={handleCloseModal} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
-              Entendi, voltar para a empresa
-            </Button>
-          </DialogFooter>
+        <DialogContent className="rounded-3xl p-0 overflow-hidden border-none max-w-md">
+          <div className="bg-green-600 p-8 flex justify-center">
+            <div className="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+              <CheckCircle2 className="h-10 w-10 text-white" />
+            </div>
+          </div>
+          <div className="p-8 text-center space-y-4">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-slate-900">Avaliação Enviada!</DialogTitle>
+              <DialogDescription className="text-slate-500 text-base">
+                Sua contribuição é fundamental. Nossa equipe irá validar os dados editoriais para publicação em breve.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="pt-4">
+              <Button onClick={handleCloseModal} className="w-full rounded-full h-12 font-bold bg-slate-950">
+                Entendi, voltar para a empresa
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -443,37 +336,12 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
   const { company, loading, error } = useCompanySafe(slug);
   const companyPath = buildCompanyPath(company?.slug, company?.name, company?.id);
 
-  if (!slug) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Empresa não encontrada</h3>
-              <p className="text-gray-600 mb-4">
-                Não foi possível identificar a empresa solicitada.
-              </p>
-              <Button onClick={() => router.back()}>
-                Voltar
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-10 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
+      <div className="container mx-auto py-20 px-4">
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="h-10 bg-slate-200 animate-pulse rounded-full w-1/3" />
+          <div className="h-[500px] bg-slate-100 animate-pulse rounded-3xl w-full" />
         </div>
       </div>
     );
@@ -481,42 +349,41 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
 
   if (error || !company) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Empresa não encontrada</h3>
-              <p className="text-gray-600 mb-4">
-                Não foi possível encontrar a empresa para a qual você deseja deixar uma avaliação.
-              </p>
-              <Button onClick={() => router.back()}>
-                Voltar
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto py-20 px-4">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="bg-red-50 p-6 rounded-3xl inline-block">
+            <Star className="h-12 w-12 text-red-500 mx-auto" />
+          </div>
+          <h3 className="text-2xl font-black text-slate-900">Empresa não encontrada</h3>
+          <p className="text-slate-500">
+            Não conseguimos localizar a empresa para esta avaliação. Verifique o link ou tente pesquisar novamente.
+          </p>
+          <Button variant="outline" className="rounded-full px-8" onClick={() => router.push('/companies')}>
+            Ver todas as empresas
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Avaliar {company.name}</h1>
-          <p className="text-gray-600 mt-2">
-            Sua opinião é importante para ajudar outros usuários a tomar decisões informadas.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#f8f9fa] py-12 px-4">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <header className="space-y-2">
+          <Link 
+            href={companyPath} 
+            className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-1 group"
+          >
+            <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
+            Voltar para {company.name}
+          </Link>
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900">Sua opinião vale muito.</h1>
+        </header>
 
-        <Suspense fallback={<div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">Carregando formulário...</div>}>
+        <Suspense fallback={<div className="h-64 bg-white shadow-xl rounded-3xl animate-pulse" />}>
           <ReviewForm company={company} companyPath={companyPath} />
         </Suspense>
       </div>
     </div>
   );
 }
-

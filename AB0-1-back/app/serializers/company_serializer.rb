@@ -28,7 +28,33 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_rating_avg,
              :sector_rating_count,
              :awards,
-             :badges
+             :badges,
+             :review_aggregates
+
+  def review_aggregates
+    # Retorna o global (category_id: nil) e os por categoria
+    aggregates = ReviewAggregate.where(company_id: object.id).includes(:category)
+    
+    {
+      global: serialize_aggregate(aggregates.find { |a| a.category_id.nil? }),
+      by_category: aggregates.reject { |a| a.category_id.nil? }.map { |a| serialize_aggregate(a) }
+    }
+  end
+
+  private
+
+  def serialize_aggregate(agg)
+    return nil unless agg
+
+    {
+      category_id: agg.category_id,
+      category_name: agg.category&.name,
+      average_rating: agg.average_rating.to_f,
+      total_reviews: agg.total_reviews,
+      scores_distribution: agg.scores_distribution,
+      criteria_breakdown: agg.criteria_breakdown
+    }
+  end
 
   def category_info
     category = object.categories.first
