@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 
 import LandingHero from '@/components/landing/LandingHero';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
 const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
   loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
@@ -61,7 +62,7 @@ const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), 
   loading: () => null,
 });
 
-export const revalidate = 300;
+export const revalidate = 3600;
 const FALLBACK_CATEGORY_MIN_ID = 9000;
 
 function SectionShell({
@@ -213,6 +214,11 @@ export default async function Home() {
 
   return (
     <main className="flex-grow">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' }
+        ]}
+      />
       <Suspense fallback={null}>
         <HomePageTracking />
       </Suspense>

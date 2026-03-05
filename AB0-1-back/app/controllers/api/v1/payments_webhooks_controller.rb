@@ -1,6 +1,10 @@
 module Api
   module V1
     class PaymentsWebhooksController < ActionController::API
+      ALLOWED_PROVIDERS = %w[stripe mercadopago pagarme mock].freeze
+      
+      before_action :validate_provider
+      
       # Webhooks should not require user auth
       def create
         provider = params[:provider].to_s
@@ -25,6 +29,24 @@ module Api
         else
           render json: { ok: true, ignored: true }
         end
+      end
+
+      private
+
+      def validate_provider
+        return if ALLOWED_PROVIDERS.include?(params[:provider])
+        
+        # Structured logging for security monitoring
+        Rails.logger.warn({
+          event: 'webhook_provider_rejected',
+          provider: params[:provider],
+          ip: request.remote_ip,
+          user_agent: request.user_agent,
+          timestamp: Time.current.iso8601,
+          reason: 'invalid_provider'
+        }.to_json)
+        
+        render json: { error: 'Invalid provider' }, status: :unprocessable_entity
       end
     end
   end

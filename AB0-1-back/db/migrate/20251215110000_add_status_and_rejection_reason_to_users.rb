@@ -9,7 +9,7 @@ class AddStatusAndRejectionReasonToUsers < ActiveRecord::Migration[7.0]
         # Atualiza status baseado em approved_by_admin apenas se a coluna existir
         if column_exists?(:users, :approved_by_admin)
           execute <<~SQL
-            UPDATE users SET status = 1 WHERE approved_by_admin = 1;
+            UPDATE users SET status = 1 WHERE approved_by_admin IS TRUE;
           SQL
         end
       end

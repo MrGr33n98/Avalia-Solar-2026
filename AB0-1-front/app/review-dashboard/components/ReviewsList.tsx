@@ -88,13 +88,19 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
                     <Avatar className="h-14 w-14 rounded-2xl border border-slate-100 shadow-sm shrink-0">
                       <AvatarImage src={review.company?.logo_url || ''} className="object-cover" />
                       <AvatarFallback className="bg-slate-50 text-slate-300 font-black">
-                        {review.company?.name?.substring(0, 2).toUpperCase() || 'EM'}
+                        {typeof review.company === 'string' 
+                          ? review.company.substring(0, 2).toUpperCase()
+                          : review.company?.name?.substring(0, 2).toUpperCase() || 'EM'
+                        }
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-black text-slate-950 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                          {review.company?.name || 'Empresa'}
+                          {typeof review.company === 'string' 
+                            ? review.company
+                            : review.company?.name || 'Empresa'
+                          }
                         </h4>  
                         <Badge variant="secondary" className={cn("text-[10px] font-black uppercase px-2 py-0 h-4 rounded-md tracking-tighter", statusMap[review.status || '']?.bg, statusMap[review.status || '']?.color)}>
                           {statusMap[review.status || '']?.label || review.status}

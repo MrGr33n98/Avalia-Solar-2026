@@ -3,10 +3,30 @@ import { Metadata } from 'next';
 import { redirect, notFound } from 'next/navigation';
 import CategoryPageServer from './CategoryPageServer';
 import { categoriesApi } from '@/lib/api';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
 interface CategorySlugPageProps {
   params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };
+}
+
+async function BreadcrumbsWrapper({ slug }: { slug: string }) {
+  try {
+    const category = await categoriesApi.getBySlug(slug);
+    if (!category) return null;
+
+    return (
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Categorias', item: '/categories' },
+          { name: category.name, item: `/categories/${category.slug}` }
+        ]}
+      />
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: CategorySlugPageProps): Promise<Metadata> {
@@ -128,11 +148,16 @@ export default function CategorySlugPage({ params, searchParams }: CategorySlugP
   if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
 
   return (
-    <Suspense fallback={<CategoryLoadingFallback />}>
-      {/* Mantive wrapper simples; z-index 800 costuma ser desnecessário aqui */}
-      <div className="relative">
-        <CategoryPageServer params={params} searchParams={searchParams} />
-      </div>
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <BreadcrumbsWrapper slug={params.slug} />
+      </Suspense>
+      <Suspense fallback={<CategoryLoadingFallback />}>
+        {/* Mantive wrapper simples; z-index 800 costuma ser desnecessário aqui */}
+        <div className="relative">
+          <CategoryPageServer params={params} searchParams={searchParams} />
+        </div>
+      </Suspense>
+    </>
   );
 }

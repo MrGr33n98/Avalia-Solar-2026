@@ -12,6 +12,7 @@ import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
+import ComparisonDebugger from '@/components/ComparisonDebugger';
 
 const inter = Inter({
   subsets: ['latin', 'latin-ext'],
@@ -118,6 +119,13 @@ export default function RootLayout({
             </ClientBody>
           </UtmProvider>
         </ThemeProvider>
+        
+        {/* Debug component for development */}
+        {process.env.NODE_ENV === 'development' && (
+          <Suspense fallback={null}>
+            <ComparisonDebugger />
+          </Suspense>
+        )}
         
         {/* Web Vitals Tracking - Non-blocking, after consent */}
         <Suspense fallback={null}>

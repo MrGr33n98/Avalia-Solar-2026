@@ -1,6 +1,9 @@
 # Stage 1: Install dependencies
-FROM node:20-bookworm-slim AS deps
+FROM node:20-alpine AS deps
 WORKDIR /app
+
+# Install libc6-compat for better compatibility with node modules
+RUN apk add --no-cache libc6-compat
 
 # Install dependencies based on the preferred package manager
 COPY AB0-1-front/package.json AB0-1-front/package-lock.json ./
@@ -8,8 +11,12 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --legacy-peer-deps --no-audit
 
 # Stage 2: Rebuild the source code only when needed
-FROM node:20-bookworm-slim AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Install libc6-compat for better compatibility
+RUN apk add --no-cache libc6-compat
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY AB0-1-front/ .
 
@@ -65,8 +72,12 @@ RUN --mount=type=secret,id=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY \
     npm run build
 
 # Stage 3: Production image, copy all the files and run next
-FROM node:20-bookworm-slim AS runner
+# Using alpine for better availability and smaller size
+FROM node:20-alpine AS runner
 WORKDIR /app
+
+# Install libc6-compat for compatibility and dumb-init for proper signal handling
+RUN apk add --no-cache libc6-compat dumb-init
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
@@ -74,8 +85,8 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME="0.0.0.0"
 
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 COPY --from=builder /app/public ./public
 
@@ -94,4 +105,9 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node --version || exit 1
+
+# Use dumb-init for proper signal handling
+CMD ["dumb-init", "node", "server.js"]
