@@ -93,6 +93,13 @@ Rails.application.routes.draw do
       post 'events/track', to: 'analytics#events_track'
       get 'analytics/conversions', to: 'analytics#conversions'
 
+      # Consent endpoints
+      namespace :consent do
+        post 'log'
+        post 'revoke'
+        get 'status'
+      end
+
       get 'lead_wizards/resolve', to: 'lead_wizards#resolve'
 
       resources :banner_offers, only: [:index]
