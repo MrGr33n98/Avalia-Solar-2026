@@ -21,6 +21,10 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
   } = wizardState;
 
   const [otpValue, setOtpValue] = React.useState('');
+  const formatRating = React.useCallback((rating: unknown) => {
+    const parsed = Number(rating ?? 0);
+    return Number.isFinite(parsed) ? parsed.toFixed(1) : '0.0';
+  }, []);
 
   if (status === 'LOADING_SCHEMA' || status === 'IDLE') {
     return (
@@ -78,7 +82,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
                   <div className="text-right shrink-0">
                     <div className="flex items-center gap-1 text-slate-900 font-black text-sm">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      {c.rating_avg?.toFixed(1) || '0.0'}
+                      {formatRating(c.rating_avg)}
                     </div>
                   </div>
                 </div>

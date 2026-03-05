@@ -62,6 +62,10 @@ export default function QuoteWizardModal() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [companies, setCompanies] = useState<WizardCompany[]>([]);
   const [verificationHint, setVerificationHint] = useState('');
+  const formatRating = (rating: unknown) => {
+    const parsed = Number(rating ?? 0);
+    return Number.isFinite(parsed) ? parsed.toFixed(1) : '0.0';
+  };
 
   const progressValue = useMemo(() => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)), [step]);
 
@@ -351,7 +355,7 @@ export default function QuoteWizardModal() {
                     <div className="text-right">
                        <div className="flex items-center gap-1 text-slate-900 font-black">
                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                         {c.rating_avg?.toFixed(1) || '0.0'}
+                         {formatRating(c.rating_avg)}
                        </div>
                        <p className="text-[10px] text-slate-400 font-black">{c.reviews_count || 0} AVALIAÇÕES</p>
                     </div>
