@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ interface StickyCTAProps {
 export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
   const canRequestQuote = (company as any).active_admin === true;
+  const wizardCategoryId = resolveWizardCategoryId(company);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,7 +43,12 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
       element_type: 'button',
       action_type: 'click'
     });
-    openLeadModal({ preferredCompanyId: company.id, source: 'sticky-cta', type: 'quick' });
+    openLeadModal({
+      preferredCompanyId: company.id,
+      categoryId: wizardCategoryId,
+      source: 'sticky-cta',
+      type: 'wizard'
+    });
   };
 
   if (!canRequestQuote) return null;

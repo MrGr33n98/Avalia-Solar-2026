@@ -4,7 +4,7 @@ import { Trophy, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 
 interface Props {
   company: Company;
@@ -13,6 +13,8 @@ interface Props {
 
 export default function Top1StickyCTA({ company, rank }: Props) {
   if (rank !== 1) return null;
+
+  const wizardCategoryId = resolveWizardCategoryId(company);
 
   return (
     <AnimatePresence>
@@ -38,7 +40,14 @@ export default function Top1StickyCTA({ company, rank }: Props) {
           </div>
 
           <Button 
-            onClick={() => openLeadModal({ source: 'top1-sticky-cta', preferredCompanyId: company.id })}
+            onClick={() =>
+              openLeadModal({
+                source: 'top1-sticky-cta',
+                preferredCompanyId: company.id,
+                categoryId: wizardCategoryId,
+                type: 'wizard'
+              })
+            }
             className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-xs px-4 h-10 rounded-xl shadow-lg transition-all active:scale-95"
           >
             <MessageSquare className="w-4 h-4 mr-2" />

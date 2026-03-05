@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics/lazy';
@@ -192,6 +192,7 @@ export default function CompanyCard({
   const whatsappEnabled = enabledRaw === undefined || enabledRaw === null ? true : Boolean(enabledRaw);
   // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
   const canRequestQuote = company.active_admin === true;
+  const wizardCategoryId = resolveWizardCategoryId(company);
 
   const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
 
@@ -548,7 +549,14 @@ export default function CompanyCard({
                     companySlug={company.slug}
                     ctaType="quote_request"
                     ctaDestination="quote_wizard"
-                    onClick={() => openLeadModal({ preferredCompanyId: id, source: 'company-card', type: 'quick' })}
+                    onClick={() =>
+                      openLeadModal({
+                        preferredCompanyId: id,
+                        categoryId: wizardCategoryId,
+                        source: 'company-card',
+                        type: 'wizard'
+                      })
+                    }
                     className={cn(
                       'w-full shadow-sm font-bold rounded-xl transition-all',
                       compact ? 'h-9 text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'

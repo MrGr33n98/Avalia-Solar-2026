@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Company, Product, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { productsApiSafe, reviewsApiSafe } from "@/lib/api-client";
-import { openLeadModal } from "@/lib/lead-engine";
+import { openLeadModal, resolveWizardCategoryId } from "@/lib/lead-engine";
 
 // GTM Tracking
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -211,6 +211,7 @@ export default function CompanyDetailClient({
   const ctaUrl = canRequestQuote
     ? (extendedCompany.cta_whatsapp_url || extendedCompany.whatsapp_url || (currentCompany as any)?.whatsapp || null)
     : null;
+  const wizardCategoryId = resolveWizardCategoryId(currentCompany);
 
   const tabs = useMemo(() => {
     const baseTabs = [
@@ -435,7 +436,14 @@ export default function CompanyDetailClient({
                       variant="outline"
                       size="sm"
                       className="w-full text-xs font-bold"
-                      onClick={() => openLeadModal({ source: 'company-sidebar-help', type: 'quick' })}
+                      onClick={() =>
+                        openLeadModal({
+                          source: 'company-sidebar-help',
+                          preferredCompanyId: currentCompany.id,
+                          categoryId: wizardCategoryId,
+                          type: 'wizard'
+                        })
+                      }
                     >
                       Falar com especialista
                     </Button>

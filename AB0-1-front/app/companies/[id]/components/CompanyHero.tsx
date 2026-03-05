@@ -9,7 +9,7 @@ import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
@@ -54,6 +54,7 @@ export default function CompanyHero({
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   const inComp = isInComparison(company.id);
   const canRequestQuote = (company as any).active_admin === true;
+  const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const hasLogo = Boolean(logoUrl) && !logoError;
@@ -292,7 +293,14 @@ export default function CompanyHero({
                   <Button
                     size="default"
                     className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"
-                    onClick={() => openLeadModal({ preferredCompanyId: company.id, source: 'company-hero', type: 'quick' })}
+                    onClick={() =>
+                      openLeadModal({
+                        preferredCompanyId: company.id,
+                        categoryId: wizardCategoryId,
+                        source: 'company-hero',
+                        type: 'wizard'
+                      })
+                    }
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Solicitar orçamento

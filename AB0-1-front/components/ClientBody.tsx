@@ -11,6 +11,7 @@ import { Context7Provider } from '@/app/context7/provider';
 // Lazy load heavy client-side modals and floating components
 const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
 const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
+const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWizardModal'), { ssr: false });
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
 const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
@@ -123,6 +124,7 @@ export default function ClientBody({
               {children}
               <QuoteWizardModal />
               <QuickLeadModal />
+              <DynamicLeadWizardModal />
               <ComparisonFloatingBar />
               <Toaster />
               <CookieConsent />

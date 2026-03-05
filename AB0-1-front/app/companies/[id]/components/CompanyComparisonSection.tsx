@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash/debounce';
 
-import { openLeadModal } from '@/lib/lead-engine';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 
 interface CompanyComparisonSectionProps {
   currentCompany: Company;
@@ -35,6 +35,7 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const wizardCategoryId = resolveWizardCategoryId(currentCompany);
 
   // Add current company to comparison on mount if not already there
   useEffect(() => {
@@ -79,7 +80,12 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
   };
 
   const handleQuoteClick = (companyId: number) => {
-    openLeadModal({ preferredCompanyId: companyId, source: 'comparison-section', type: 'quick' });
+    openLeadModal({
+      preferredCompanyId: companyId,
+      categoryId: wizardCategoryId,
+      source: 'comparison-section',
+      type: 'wizard'
+    });
   };
 
   // Organize companies: Current company first, then others
