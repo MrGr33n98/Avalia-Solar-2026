@@ -3,7 +3,6 @@
 .gitignore
 .github
 .vscode
-.trae
 
 # Dependências
 **/node_modules
@@ -35,3 +34,20 @@ docs/
 *.md
 LICENSE
 README.md
+
+# Testes
+**/__tests__
+**/test-*
+**/*.test.*
+**/*.spec.*
+
+# Desenvolvimento local
+.env.local
+.env.*.local
+**/.env.local
+
+# Temporários
+tmp/
+backup_*/
+test-artifacts/
+test-results/
