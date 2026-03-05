@@ -220,8 +220,6 @@ module Api
         end
       end
 
-      private
-
       def serialize_criterion(rc)
         {
           id: rc.id,
@@ -306,6 +304,8 @@ module Api
           render json: []
         end
       end
+
+      public :show_by_slug, :tree
 
       private
 

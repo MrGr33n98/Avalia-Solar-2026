@@ -498,6 +498,19 @@ class Company < ApplicationRecord
     respond_to?(:active_admin) ? !!active_admin : false
   end
 
+  # Backward-compatible CTA aliases used by API payloads and serializers.
+  def cta_whatsapp_enabled
+    return false unless quote_feature_enabled?
+
+    whatsapp_enabled?
+  end
+
+  def cta_whatsapp_url
+    return nil unless cta_whatsapp_enabled
+
+    respond_to?(:whatsapp_url) ? whatsapp_url : nil
+  end
+
   def financing_feature_allowed?
     flag = feature_enabled_from_plan?(:financing_simulation)
     flag.nil? ? has_paid_plan? : flag

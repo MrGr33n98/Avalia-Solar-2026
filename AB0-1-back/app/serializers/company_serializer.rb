@@ -32,16 +32,30 @@ class CompanySerializer < ActiveModel::Serializer
              :review_aggregates
 
   def review_aggregates
-    # Retorna o global (category_id: nil) e os por categoria
+    return empty_review_aggregates unless review_aggregates_available?
+
     aggregates = ReviewAggregate.where(company_id: object.id).includes(:category)
-    
+
     {
       global: serialize_aggregate(aggregates.find { |a| a.category_id.nil? }),
       by_category: aggregates.reject { |a| a.category_id.nil? }.map { |a| serialize_aggregate(a) }
     }
+  rescue StandardError => e
+    Rails.logger.warn("[CompanySerializer] review_aggregates unavailable for company=#{object.id}: #{e.class}: #{e.message}")
+    empty_review_aggregates
   end
 
   private
+
+  def review_aggregates_available?
+    ReviewAggregate.table_exists?
+  rescue StandardError
+    false
+  end
+
+  def empty_review_aggregates
+    { global: nil, by_category: [] }
+  end
 
   def serialize_aggregate(agg)
     return nil unless agg
