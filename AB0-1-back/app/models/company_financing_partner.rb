@@ -1,5 +1,5 @@
 class CompanyFinancingPartner < ApplicationRecord
-  belongs_to :company
+  belongs_to :company, counter_cache: :financing_partners_count
   has_one_attached :logo
 
   scope :ordered, -> { order(position: :asc, priority: :asc, created_at: :asc) }

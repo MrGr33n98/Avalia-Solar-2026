@@ -1,7 +1,7 @@
 class CompanyMember < ApplicationRecord
   has_paper_trail
 
-  belongs_to :company
+  belongs_to :company, counter_cache: true
   belongs_to :user
   enum role: { owner: 0, manager: 1, editor: 2 }, _default: :editor
   enum status: { pending: 'pending', active: 'active', rejected: 'rejected', revoked: 'revoked' }, _default: :active

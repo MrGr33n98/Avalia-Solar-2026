@@ -170,7 +170,10 @@ module Api
 
       # GET /api/v1/companies/featured
       def featured
-        @companies = ::Company.active.where(featured: true).limit(10)
+        cache_key = "companies_featured_v1"
+        @companies = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+          ::Company.active.where(featured: true).limit(10).to_a
+        end
         render json: @companies.map { |c| company_json_attributes(c) }
       end
 

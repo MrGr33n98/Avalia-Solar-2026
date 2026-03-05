@@ -25,12 +25,6 @@ ActiveAdmin.register Company do
     link_to 'Suspend', suspend_admin_company_path(resource), method: :put, class: 'member_link'
   end
 
-  controller do
-    def find_resource
-      scoped_collection.find_by_slug_or_id!(params[:id])
-    end
-  end
-
   action_item :add_product, only: :show do
     link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
   end
@@ -85,27 +79,6 @@ ActiveAdmin.register Company do
     end
   end
 
-
-  index do
-    selectable_column
-    id_column
-    column :name
-    column :cnpj
-    column :state
-    column :city
-    column :status do |company|
-      status_tag company.status
-    end
-    column :priority_score
-    column :sponsored
-    column :moderation_status do |company|
-      status_tag company.moderation_status, class: "status_#{company.moderation_status}"
-    end
-    column :featured
-    column :social_proof_enabled if Company.column_names.include?('social_proof_enabled')
-    column :created_at
-    actions
-  end
 
   sidebar 'Social Proof status', only: %i[show edit] do
     plan_name = resource.plan&.name || 'No plan'
@@ -700,8 +673,19 @@ ActiveAdmin.register Company do
     selectable_column
     id_column
     column :name
+    column :cnpj
     column :state
     column :city
+    column :status do |company|
+      status_tag company.status
+    end
+    column :priority_score
+    column :rating_avg
+    column :reviews_count
+    column :leads_count
+    column :moderation_status do |company|
+      status_tag company.moderation_status, class: "status_#{company.moderation_status}"
+    end
     column :featured
     column :verified
     if Company.column_names.include?('effect')
@@ -710,7 +694,6 @@ ActiveAdmin.register Company do
                    class: company.effect ? 'ok' : 'warning')
       end
     end
-    column :status
     column :plan_status if Company.column_names.include?('plan_status')
     column :plan if Company.reflect_on_association(:plan)
     column :created_at
@@ -804,6 +787,10 @@ ActiveAdmin.register Company do
   end
 
   controller do
+    def scoped_collection
+      super.includes(:categories, :plan)
+    end
+
     def find_resource
       scoped_collection.find_by(id: params[:id]) ||
         scoped_collection.find_by(slug: params[:id]) ||
