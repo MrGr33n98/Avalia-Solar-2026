@@ -7,20 +7,8 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapper: {
-    '^@/components/(.*)$': '<rootDir>/components/$1',
-    '^@/components/ui/(.*)$': '<rootDir>/components/ui/$1',
-    '^@/components/Skeleton$': '<rootDir>/components/ui/Skeleton',
-    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
-    '^@/lib/(.*)$': '<rootDir>/lib/$1',
-    '^@/app/(.*)$': '<rootDir>/app/$1',
-    '^@/public/(.*)$': '<rootDir>/public/$1',
-    '^@/context/(.*)$': '<rootDir>/context/$1',
-    '^@/contexts/(.*)$': '<rootDir>/contexts/$1',
-    '^@/utils/(.*)$': '<rootDir>/utils/$1',
-    '^@/types$': '<rootDir>/types',
-  },
-  
+  // Rodar todos os testes padrão do Jest (sem filtro unit-only)
+  // Se quiser rodar subset, defina testMatch no CLI, não aqui.
   // TASK-013: Coverage configuration
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
@@ -55,6 +43,34 @@ const customJestConfig = {
   ],
   
   coverageDirectory: 'coverage',
+
+  // Ignore E2E/Playwright specs and heavy app router tests in Jest (those run in Playwright)
+  testPathIgnorePatterns: [
+    '<rootDir>/tests/',
+    '<rootDir>/e2e/',
+    '<rootDir>/playwright-report/',
+    '<rootDir>/app/__tests__/', // app-router server components not runnable in JSDOM
+    '<rootDir>/__tests__/pages/', // page-level integration tests rely on Next runtime
+    '<rootDir>/__tests__/app/', // app directory integration tests
+    '<rootDir>/app/.*/__tests__/', // nested app route tests
+    '<rootDir>/cypress/', // Cypress specs run in Cypress, not Jest
+  ],
+
+  // Allow mocking ESM packages that break in Jest (better-auth)
+  moduleNameMapper: {
+    '^@/components/(.*)$': '<rootDir>/components/$1',
+    '^@/components/ui/(.*)$': '<rootDir>/components/ui/$1',
+    '^@/components/Skeleton$': '<rootDir>/components/ui/Skeleton',
+    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@/lib/(.*)$': '<rootDir>/lib/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
+    '^@/public/(.*)$': '<rootDir>/public/$1',
+    '^@/context/(.*)$': '<rootDir>/context/$1',
+    '^@/contexts/(.*)$': '<rootDir>/contexts/$1',
+    '^@/utils/(.*)$': '<rootDir>/utils/$1',
+    '^@/types$': '<rootDir>/types',
+    '^better-auth/client$': '<rootDir>/__mocks__/better-auth-client.js',
+  },
 };
 
 module.exports = createJestConfig(customJestConfig);

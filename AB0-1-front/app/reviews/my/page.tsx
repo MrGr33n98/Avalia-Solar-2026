@@ -167,7 +167,9 @@ export default function MyReviewsPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {r.company?.name || `Empresa #${r.company_id}`}
+                              {typeof r.company === 'string'
+                                ? r.company
+                                : r.company?.name || `Empresa #${r.company_id}`}
                             </h3>
                           </div>
                           

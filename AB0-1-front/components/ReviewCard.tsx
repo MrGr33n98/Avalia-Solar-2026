@@ -114,8 +114,13 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   };
 
   const isCompany = variant === 'company';
-  const displayName = isCompany ? review.company?.name : (review.user?.name || `Usuário ${review.user_id}`);
-  const displayImage = isCompany ? review.company?.logo_url : review.user?.avatar_url;
+  const companyObj = typeof review.company === 'string' ? null : review.company;
+  const displayName = isCompany
+    ? companyObj?.name || (typeof review.company === 'string' ? review.company : `Empresa ${review.company_id}`)
+    : (review.user?.name || `Usuário ${review.user_id}`);
+  const displayImage = isCompany
+    ? companyObj?.logo_url
+    : review.user?.avatar_url;
 
   return (
     <motion.div
@@ -145,7 +150,9 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
             <div className="flex items-center space-x-2">
               <h4 className="font-semibold text-gray-900">
                 {isCompany && review.company ? (
-                  <span>Avaliou <strong>{review.company.name}</strong></span>
+                  <span>
+                    Avaliou <strong>{typeof review.company === 'string' ? review.company : review.company.name}</strong>
+                  </span>
                 ) : (
                   displayName
                 )}
