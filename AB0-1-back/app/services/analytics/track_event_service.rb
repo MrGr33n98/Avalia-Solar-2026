@@ -40,8 +40,6 @@ module Analytics
     def call
       return Result.new(ok: false, error: 'event_type missing') if @event_type.blank?
 
-      company = Company.find_by(id: @company_id) if @company_id.present?
-
       if @company_id.blank? && GLOBAL_EVENTS.include?(normalized_event_type)
         return Result.new(ok: true, event: nil, error: 'global_event_without_company_skipped')
       end
@@ -57,13 +55,14 @@ module Analytics
       end
 
       persist_platform_event!
+      event = persist_analytics_event!
       
       # Sync Review Telemetry Cache (Solar Reviews 2.0)
       if @event_type.start_with?('review_')
         Reviews::TelemetryAggregator.call(@event_type, @metadata)
       end
 
-      Result.new(ok: true)
+      Result.new(ok: true, event: event)
     rescue StandardError => e
       Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")        
       Result.new(ok: false, error: 'analytics_processing_error')
@@ -128,6 +127,21 @@ module Analytics
         )
       SQL
       conn.execute(sql)
+    end
+
+    def persist_analytics_event!
+      return unless ActiveRecord::Base.connection.table_exists?('analytics_events')
+
+      AnalyticsEvent.create!(
+        company_id: @company_id,
+        user_id: @user&.id,
+        event_type: @event_type,
+        metadata: @metadata,
+        tracked_at: @occurred_at,
+        event_id: @event_id
+      )
+    rescue ActiveRecord::RecordNotUnique
+      nil
     end
 
     def normalized_event_type

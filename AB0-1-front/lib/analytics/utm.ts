@@ -64,6 +64,16 @@ function getReferrerHost(referrer?: string): string | undefined {
   }
 }
 
+function isSameSiteHost(refHost?: string): boolean {
+  if (!refHost || !isBrowser) return false;
+
+  const currentHost = window.location.hostname;
+  if (!currentHost) return false;
+  if (refHost === currentHost) return true;
+
+  return refHost.endsWith(`.${currentHost}`) || currentHost.endsWith(`.${refHost}`);
+}
+
 function getLandingPath(pathname?: string): string {
   if (pathname) return pathname;
   if (!isBrowser) return '/';
@@ -157,10 +167,16 @@ export function updateAttribution(pathname?: string, searchParams?: URLSearchPar
     : buildTouch(utmValues, pathname, referrer);
 
   const refHost = getReferrerHost(referrer);
-  const shouldUpdateLast = hasNewUtm || (!existing && true) || (refHost && refHost !== existing?.last_touch?.referrer_host);
+  const hasExternalReferrer = !!refHost && !isSameSiteHost(refHost);
+  const shouldUpdateLast =
+    hasNewUtm ||
+    !existing ||
+    (hasExternalReferrer && refHost !== existing?.last_touch?.referrer_host);
+  const fallbackValues = existing?.last_touch?.values || existing?.first_touch?.values || {};
+  const lastTouchValues = hasNewUtm ? utmValues : fallbackValues;
   const last_touch = shouldUpdateLast
-    ? buildTouch(utmValues, pathname, referrer)
-    : (existing?.last_touch || buildTouch(utmValues, pathname, referrer));
+    ? buildTouch(lastTouchValues, pathname, referrer)
+    : (existing?.last_touch || buildTouch(lastTouchValues, pathname, referrer));
 
   const attribution: Attribution = {
     first_touch,

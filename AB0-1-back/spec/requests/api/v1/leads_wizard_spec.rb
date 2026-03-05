@@ -41,6 +41,30 @@ RSpec.describe 'Leads wizard API', type: :request do
 
   it 'creates wizard lead and verifies otp' do
     allow(Lead).to receive(:generate_otp_code).and_return('123456')
+    attribution_payload = {
+      first_touch: {
+        values: {
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'wizard_launch'
+        },
+        landing_path: '/companies/company-b',
+        referrer_host: 'google.com',
+        ts: Time.current.iso8601
+      },
+      last_touch: {
+        values: {
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'wizard_launch',
+          utm_content: 'banner_a'
+        },
+        landing_path: '/companies/company-b',
+        referrer_host: 'google.com',
+        ts: Time.current.iso8601
+      },
+      ttl_days: 30
+    }
 
     post '/api/v1/leads/wizard_create', params: {
       lead: {
@@ -57,7 +81,20 @@ RSpec.describe 'Leads wizard API', type: :request do
         phone: '21999999999',
         consent: true
       },
-      preferred_company_id: company_b.id
+      preferred_company_id: company_b.id,
+      utm: {
+        utm_source: 'google',
+        utm_medium: 'cpc',
+        utm_campaign: 'wizard_launch',
+        utm_content: 'banner_a',
+        utm_term: 'energia-solar',
+        gclid: 'gclid-123',
+        fbclid: 'fbclid-456',
+        msclkid: 'msclkid-789',
+        landing_path: '/companies/company-b',
+        referrer_host: 'google.com'
+      },
+      attribution: attribution_payload
     }
 
     expect(response).to have_http_status(:created)
@@ -74,6 +111,17 @@ RSpec.describe 'Leads wizard API', type: :request do
     expect(created_lead.system_size_band).to eq('Ate 7 kWp')
     expect(created_lead.decision_timeline).to eq('Agora')
     expect(created_lead.address_full).to eq('Rua C, 50 - Rio de Janeiro/RJ')
+    expect(created_lead.utm_source).to eq('google')
+    expect(created_lead.utm_medium).to eq('cpc')
+    expect(created_lead.utm_campaign).to eq('wizard_launch')
+    expect(created_lead.utm_content).to eq('banner_a')
+    expect(created_lead.utm_term).to eq('energia-solar')
+    expect(created_lead.gclid).to eq('gclid-123')
+    expect(created_lead.fbclid).to eq('fbclid-456')
+    expect(created_lead.msclkid).to eq('msclkid-789')
+    expect(created_lead.landing_path).to eq('/companies/company-b')
+    expect(created_lead.referrer_host).to eq('google.com')
+    expect(created_lead.attribution_json).to include('first_touch', 'last_touch', 'ttl_days')
     Lead.find(lead_id).update_column(:otp_sent_at, 2.minutes.ago)
 
     post "/api/v1/leads/#{lead_id}/send_otp"

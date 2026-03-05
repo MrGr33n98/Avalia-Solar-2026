@@ -65,14 +65,19 @@ RSpec.describe Analytics::TrackEventService do
   describe '.call basic functionality' do
     context 'when tracking events with valid company_id' do
       it 'accepts the event and processes normally' do
-        result = described_class.call(
-          company_id: company.id,
-          event_type: 'profile_view',
-          metadata: { path: '/companies/foo' }
-        )
+        result = nil
+        expect do
+          result = described_class.call(
+            company_id: company.id,
+            event_type: 'profile_view',
+            metadata: { path: '/companies/foo' }
+          )
+        end.to change(AnalyticsEvent, :count).by(1)
 
         expect(result.ok).to be(true)
         expect(result.error).to be_nil
+        expect(result.event).to be_present
+        expect(result.event.event_type).to eq('profile_view')
       end
     end
 
@@ -111,6 +116,8 @@ RSpec.describe Analytics::TrackEventService do
         # Skip if analytics_event_dedup table doesn't exist
         skip 'analytics_event_dedup table not available' unless ActiveRecord::Base.connection.table_exists?('analytics_event_dedup')
 
+        initial_event_count = AnalyticsEvent.count
+
         # First call should succeed
         first_result = described_class.call(
           company_id: company.id,
@@ -132,6 +139,8 @@ RSpec.describe Analytics::TrackEventService do
           event_id: event_id
         )
 
+        final_event_count = AnalyticsEvent.count
+
         # Verify still only one dedup record exists
         dedup_count_after_second = ActiveRecord::Base.connection.execute(
           "SELECT COUNT(*) FROM analytics_event_dedup WHERE event_id = '#{event_id}'"
@@ -145,6 +154,7 @@ RSpec.describe Analytics::TrackEventService do
           expect(second_result.ok).to be(true)
           expect(second_result.error).to eq('duplicate_event')
           expect(dedup_count_after_second).to eq(1)  # Still only 1 record
+          expect(final_event_count - initial_event_count).to eq(1)
         end
       end
     end

@@ -361,6 +361,8 @@ function sendToBackend(
 
   const metadata = compact({
     ...properties,
+    session_id: context.session_id,
+    source: context.source,
     utm_source: utm.utm_source,
     utm_medium: utm.utm_medium,
     utm_campaign: utm.utm_campaign,

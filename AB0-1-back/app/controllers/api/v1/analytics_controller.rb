@@ -3,6 +3,12 @@
 class Api::V1::AnalyticsController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[track conversions events_track]
   ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital].freeze
+  CORE_CONVERSION_EVENT_MAP = {
+    'profile_view' => :profile_views,
+    'cta_click' => :cta_clicks,
+    'whatsapp_click' => :whatsapp_clicks,
+    'lead_created' => :leads
+  }.freeze
 
   # POST /api/v1/events/track
   def events_track
@@ -96,17 +102,31 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     company_id = params[:company_id]
     days = [(params[:days] || 30).to_i, 365].min
     from_time = days.days.ago
+    from_day = from_time.to_date
+    to_day = Date.current
 
     scope = AnalyticsEvent.where('tracked_at >= ?', from_time)
     scope = scope.where(company_id: company_id) if company_id.present?
 
-    grouped = scope.group(:event_type).count
-    daily = scope.group('DATE(tracked_at)').count
+    if company_id.present?
+      metrics, daily, data_source = canonical_company_conversions(
+        company_id: company_id,
+        scope: scope,
+        days: days,
+        from_day: from_day,
+        to_day: to_day
+      )
+    else
+      metrics = scope.group(:event_type).count
+      daily = scope.group('DATE(tracked_at)').count
+      data_source = 'analytics_events'
+    end
 
     render json: {
-      metrics: grouped,
+      metrics: metrics,
       daily: daily,
-      since: from_time
+      since: from_time,
+      data_source: data_source
     }
   rescue StandardError => e
     Rails.logger.error("[Analytics] conversions error: #{e.class}: #{e.message}")
@@ -145,5 +165,33 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     when Hash
       value
     end
+  end
+
+  def canonical_company_conversions(company_id:, scope:, days:, from_day:, to_day:)
+    source = CompanyDashboard::MetricsSource.new(company_id: company_id)
+    unless source.available?
+      return [scope.group(:event_type).count, scope.group('DATE(tracked_at)').count, 'analytics_events_fallback']
+    end
+
+    core_totals = source.totals(from_day:, to_day:) || {}
+
+    non_core_scope = scope.where.not(event_type: CORE_CONVERSION_EVENT_MAP.keys)
+    metrics = non_core_scope.group(:event_type).count
+    CORE_CONVERSION_EVENT_MAP.each do |event_type, key|
+      metrics[event_type] = core_totals[key].to_i
+    end
+
+    core_daily = source.timeseries(days:).to_h do |row|
+      [
+        row[:date].to_date,
+        row[:profile_views].to_i + row[:cta_clicks].to_i + row[:whatsapp_clicks].to_i + row[:leads].to_i
+      ]
+    end
+    non_core_daily = non_core_scope.group('DATE(tracked_at)').count.transform_keys { |key| key.to_date }
+    merged_daily = Hash.new(0)
+    core_daily.each { |day, total| merged_daily[day] += total.to_i }
+    non_core_daily.each { |day, total| merged_daily[day] += total.to_i }
+
+    [metrics, merged_daily.sort.to_h, 'company_daily_stats+analytics_events']
   end
 end

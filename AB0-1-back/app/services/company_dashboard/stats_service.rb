@@ -7,25 +7,53 @@ module CompanyDashboard
     def call
       return default_stats unless @company
 
+      profile_views = metric_with_fallback(
+        metric_key: 'profile_views',
+        fallback_method: :profile_views_count
+      )
+      cta_clicks = metric_with_fallback(
+        metric_key: 'cta_clicks',
+        fallback_method: :cta_clicks_count
+      )
+      whatsapp_clicks = metric_with_fallback(
+        metric_key: 'whatsapp_clicks',
+        fallback_method: :whatsapp_clicks_count
+      )
+      leads_received = @company.leads.count
+      conversion_rate = calculate_conversion_rate(views: profile_views, leads: leads_received)
+
       {
-        profile_views: safe_count(:profile_views_count) + analytics_count('view'),
-        cta_clicks: safe_count(:cta_clicks_count) + analytics_count('click'),
-        whatsapp_clicks: safe_count(:whatsapp_clicks_count) + analytics_count('whatsapp_click'),
-        leads_received: @company.leads.count,
+        profile_views: profile_views,
+        cta_clicks: cta_clicks,
+        whatsapp_clicks: whatsapp_clicks,
+        leads_received: leads_received,
         reviews_count: reviews_count,
         average_rating: safe_count(:rating_avg),
         pending_approvals: pending_approvals_count,
         active_campaigns: active_campaigns_count,
-        conversion_rate: calculate_conversion_rate
-      }
+        conversion_rate: conversion_rate
+      }.merge(CompanyDashboard::FreshnessProvider.call)
     end
 
     private
 
-    def analytics_count(event_type)
-      return 0 unless @company&.id
+    def metric_with_fallback(metric_key:, fallback_method:)
+      aggregated = daily_stats_totals[metric_key]
+      return aggregated.to_i if aggregated.present?
 
-      AnalyticsEvent.where(company_id: @company.id, event_type: event_type).count
+      safe_count(fallback_method)
+    end
+
+    def daily_stats_totals
+      return @daily_stats_totals if defined?(@daily_stats_totals)
+      source = MetricsSource.new(company_id: @company&.id)
+      totals = source.totals
+
+      @daily_stats_totals = {
+        'profile_views' => totals&.dig(:profile_views),
+        'cta_clicks' => totals&.dig(:cta_clicks),
+        'whatsapp_clicks' => totals&.dig(:whatsapp_clicks)
+      }
     end
 
     def safe_count(method)
@@ -45,16 +73,15 @@ module CompanyDashboard
     end
 
     def active_campaigns_count
-      if @company&.campaigns.respond_to?(:active)
-        @company.campaigns.active.count
-      else
-        @company&.campaigns&.count || 0
-      end
+      return 0 unless @company.respond_to?(:campaigns)
+
+      campaigns = @company.campaigns
+      return 0 unless campaigns
+
+      campaigns.respond_to?(:active) ? campaigns.active.count : campaigns.count
     end
 
-    def calculate_conversion_rate
-      views = safe_count(:profile_views_count) + analytics_count('view')
-      leads = @company.leads.count
+    def calculate_conversion_rate(views:, leads:)
       return 0 if views.zero?
 
       ((leads.to_f / views) * 100).round(2)
@@ -71,7 +98,7 @@ module CompanyDashboard
         pending_approvals: 0,
         active_campaigns: 0,
         conversion_rate: 0
-      }
+      }.merge(CompanyDashboard::FreshnessProvider.call)
     end
   end
 end

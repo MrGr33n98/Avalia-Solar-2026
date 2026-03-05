@@ -2,6 +2,19 @@
 
 module LeadWizard
   class Creator
+    UTM_FIELD_KEYS = %w[
+      utm_source
+      utm_medium
+      utm_campaign
+      utm_content
+      utm_term
+      gclid
+      fbclid
+      msclkid
+      landing_path
+      referrer_host
+    ].freeze
+
     CORE_WIZARD_KEYS = %w[
       full_name fullName name
       email
@@ -143,16 +156,36 @@ module LeadWizard
     end
 
     def apply_metadata(lead, core_params)
-      # UTM logic simplified for brevity - assumes helper existence or duplication
-      utm = normalize_hash(@params['utm']).presence || normalize_hash(core_params['utm'])
-      attribution = normalize_hash(@params['attribution']).presence || normalize_hash(core_params['attribution'])
-      
-      # Assign if columns exist
-      lead.utm_source = utm['utm_source'] if lead.respond_to?(:utm_source=)
-      lead.utm_medium = utm['utm_medium'] if lead.respond_to?(:utm_medium=)
-      lead.utm_campaign = utm['utm_campaign'] if lead.respond_to?(:utm_campaign=)
-      lead.attribution_json = attribution if lead.respond_to?(:attribution_json=) && attribution.present?
-      # ... and so on
+      top_level_utm = normalize_hash(@params.slice(*UTM_FIELD_KEYS))
+      core_level_utm = normalize_hash(core_params.slice(*UTM_FIELD_KEYS))
+      nested_utm = normalize_hash(@params['utm']).presence || normalize_hash(core_params['utm']).presence
+      utm = nested_utm || top_level_utm.presence || core_level_utm.presence || {}
+
+      attribution =
+        normalize_hash(@params['attribution']).presence ||
+        normalize_hash(core_params['attribution']).presence ||
+        normalize_hash(@params['attribution_json']).presence ||
+        normalize_hash(core_params['attribution_json']).presence
+
+      assign_if_present(lead, :utm_source, utm['utm_source'])
+      assign_if_present(lead, :utm_medium, utm['utm_medium'])
+      assign_if_present(lead, :utm_campaign, utm['utm_campaign'])
+      assign_if_present(lead, :utm_content, utm['utm_content'])
+      assign_if_present(lead, :utm_term, utm['utm_term'])
+      assign_if_present(lead, :gclid, utm['gclid'])
+      assign_if_present(lead, :fbclid, utm['fbclid'])
+      assign_if_present(lead, :msclkid, utm['msclkid'])
+      assign_if_present(lead, :landing_path, utm['landing_path'])
+      assign_if_present(lead, :referrer_host, utm['referrer_host'])
+      assign_if_present(lead, :attribution_json, attribution) if attribution.present?
+    end
+
+    def assign_if_present(record, field, value)
+      writer = "#{field}="
+      return unless value.present?
+      return unless record.respond_to?(writer)
+
+      record.public_send(writer, value)
     end
 
     def resolve_schema_info(category_id:, preferred_company_id:)

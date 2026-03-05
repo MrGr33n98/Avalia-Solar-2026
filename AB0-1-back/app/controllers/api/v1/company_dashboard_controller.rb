@@ -7,54 +7,49 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
-        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
-          return render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 }
-        end
-
-        sql = <<~SQL
-          SELECT 
-            COALESCE(SUM(profile_views), 0) as views_30d,
-            COALESCE(SUM(cta_clicks), 0) as cta_clicks_30d,
-            COALESCE(SUM(whatsapp_clicks), 0) as whatsapp_clicks_30d,
-            COALESCE(SUM(leads), 0) as leads_30d
-          FROM company_daily_stats
-          WHERE company_id = $1 AND day >= CURRENT_DATE - 30
-        SQL
-        
         begin
-          stats = ActiveRecord::Base.connection.exec_query(sql, 'Overview', [[nil, @company.id]]).first || {}
-          views = stats['views_30d'].to_i
-          leads = stats['leads_30d'].to_i
-          conversion = views > 0 ? ((leads.to_f / views) * 100).round(2) : 0
+          source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
+          stats = source.totals(from_day: 30.days.ago.to_date, to_day: Date.current)
+          return render json: default_overview_payload unless stats
+
+          views = stats[:profile_views].to_i
+          leads = stats[:leads].to_i
+          conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
 
           render json: {
             views_30d: views,
-            cta_clicks_30d: stats['cta_clicks_30d'].to_i,
-            whatsapp_clicks_30d: stats['whatsapp_clicks_30d'].to_i,
+            cta_clicks_30d: stats[:cta_clicks].to_i,
+            whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
             leads_30d: leads,
-            conversion_rate: conversion
-          }
+            conversion_rate: conversion,
+            data_source: 'company_daily_stats'
+          }.merge(CompanyDashboard::FreshnessProvider.call)
         rescue StandardError => e
           log_analytics_error('overview', e)
-          render json: { views_30d: 0, cta_clicks_30d: 0, whatsapp_clicks_30d: 0, leads_30d: 0, conversion_rate: 0 }
+          render json: default_overview_payload.merge(CompanyDashboard::FreshnessProvider.call)
         end
       end
 
       # GET /api/v1/company_dashboard/analytics/timeseries
       def analytics_timeseries
         days = [(params[:days] || 90).to_i, 365].min
-        return render json: { data: [] } unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+        source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
+        series = source.timeseries(days:)
 
-        sql = <<~SQL
-          SELECT day as date, profile_views as views, cta_clicks as clicks, whatsapp_clicks as whatsapp, leads
-          FROM company_daily_stats
-          WHERE company_id = $1 AND day >= CURRENT_DATE - $2::int
-          ORDER BY day ASC
-        SQL
-        
-        series = ActiveRecord::Base.connection.exec_query(sql, 'Timeseries', [[nil, @company.id], [nil, days]])
-        
-        render json: { data: series.to_a }
+        data = series.map do |row|
+          {
+            date: row[:date],
+            views: row[:profile_views],
+            clicks: row[:cta_clicks],
+            whatsapp: row[:whatsapp_clicks],
+            leads: row[:leads]
+          }
+        end
+
+        render json: { 
+          data:, 
+          data_source: 'company_daily_stats' 
+        }.merge(CompanyDashboard::FreshnessProvider.call)
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation
@@ -765,6 +760,17 @@ module Api
           "company_id=#{@company&.id} user_id=#{current_user&.id}"
         )
         Rails.logger.error("[CompanyDashboard#analytics_#{action}] backtrace=#{error.backtrace&.first(5)&.join(' | ')}")
+      end
+
+      def default_overview_payload
+        {
+          views_30d: 0,
+          cta_clicks_30d: 0,
+          whatsapp_clicks_30d: 0,
+          leads_30d: 0,
+          conversion_rate: 0,
+          data_source: 'company_daily_stats_unavailable'
+        }.merge(CompanyDashboard::FreshnessProvider.call)
       end
     end
   end
