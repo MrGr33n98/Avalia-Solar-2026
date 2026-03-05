@@ -39,8 +39,20 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def mine
+    start_time = Time.current
     return render json: { error: 'Authentication required' }, status: :unauthorized if current_user.nil?
     @leads = ::Lead.where(email: current_user.email).order(created_at: :desc)
+    
+    duration_ms = ((Time.current - start_time) * 1000).round(2)
+    Rails.logger.info({
+      event: 'api_performance',
+      endpoint: 'leads#mine',
+      duration_ms: duration_ms,
+      user_id: current_user.id,
+      count: @leads.count,
+      timestamp: Time.current.iso8601
+    }.to_json)
+    
     render json: {
       data: @leads.map { |l| serialize_lead(l) },
       meta: { page: 1, total_pages: 1, total_count: @leads.count }

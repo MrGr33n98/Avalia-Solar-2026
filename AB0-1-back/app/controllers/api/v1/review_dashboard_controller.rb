@@ -8,6 +8,7 @@ module Api
 
       # GET /api/v1/review_dashboard/summary
       def summary
+        start_time = Time.current
         start_date = 30.days.ago.beginning_of_day
         end_date = Time.current
 
@@ -51,6 +52,16 @@ module Api
         completion_percent -= 20 if current_user.avatar.blank?
         completion_percent -= 20 if current_user.city.blank?
         completion_percent -= 10 if current_user.state.blank?
+
+        # Performance monitoring
+        duration_ms = ((Time.current - start_time) * 1000).round(2)
+        Rails.logger.info({
+          event: 'api_performance',
+          endpoint: 'review_dashboard#summary',
+          duration_ms: duration_ms,
+          user_id: current_user.id,
+          timestamp: Time.current.iso8601
+        }.to_json)
 
         render json: {
           kpis: {
