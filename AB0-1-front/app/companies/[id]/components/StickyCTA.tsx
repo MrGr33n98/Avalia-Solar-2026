@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
-import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
+import { resolveWizardCategoryId } from '@/lib/lead-engine';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
 import { cn } from '@/lib/utils';
@@ -43,11 +44,9 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
       element_type: 'button',
       action_type: 'click'
     });
-    openLeadModal({
+    openQuoteWizard({
       preferredCompanyId: company.id,
-      categoryId: wizardCategoryId,
       source: 'sticky-cta',
-      type: 'wizard'
     });
   };
 

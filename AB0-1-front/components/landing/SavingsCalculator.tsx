@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 
 export default function SavingsCalculator() {
@@ -26,7 +26,7 @@ export default function SavingsCalculator() {
 
   const handleConsultation = () => {
     track('home_calculator_consultation_click', { bill_value: bill });
-    openLeadModal({ source: 'home-calculator', type: 'quick' });
+    openQuoteWizard({ source: 'home-calculator' });
   };
 
   return (

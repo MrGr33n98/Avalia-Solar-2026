@@ -28,7 +28,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Company, Product, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { productsApiSafe, reviewsApiSafe } from "@/lib/api-client";
-import { openLeadModal, resolveWizardCategoryId } from "@/lib/lead-engine";
+import { resolveWizardCategoryId } from "@/lib/lead-engine";
+import { openQuoteWizard } from "@/lib/quote-wizard";
 
 // GTM Tracking
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -437,11 +438,9 @@ export default function CompanyDetailClient({
                       size="sm"
                       className="w-full text-xs font-bold"
                       onClick={() =>
-                        openLeadModal({
+                        openQuoteWizard({
                           source: 'company-sidebar-help',
                           preferredCompanyId: currentCompany.id,
-                          categoryId: wizardCategoryId,
-                          type: 'wizard'
                         })
                       }
                     >

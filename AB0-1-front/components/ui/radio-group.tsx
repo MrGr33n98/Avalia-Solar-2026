@@ -1,44 +1,82 @@
 'use client';
 
 import * as React from 'react';
-import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
-import { Circle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-const RadioGroup = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
->(({ className, ...props }, ref) => {
-  return (
-    <RadioGroupPrimitive.Root
-      className={cn('grid gap-2', className)}
-      {...props}
-      ref={ref}
-    />
-  );
-});
-RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;
+type RadioGroupContextValue = {
+  name: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  disabled?: boolean;
+};
 
-const RadioGroupItem = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
->(({ className, ...props }, ref) => {
-  return (
-    <RadioGroupPrimitive.Item
-      ref={ref}
-      className={cn(
-        'aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-        className
-      )}
-      {...props}
-    >
-      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-current text-current" />
-      </RadioGroupPrimitive.Indicator>
-    </RadioGroupPrimitive.Item>
-  );
-});
-RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName;
+const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(null);
+
+type RadioGroupProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> & {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  name?: string;
+  disabled?: boolean;
+};
+
+const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupProps>(
+  ({ className, value, onValueChange, name, disabled, ...props }, ref) => {
+    const generatedName = React.useId();
+
+    return (
+      <RadioGroupContext.Provider
+        value={{
+          name: name || generatedName,
+          value,
+          onValueChange,
+          disabled,
+        }}
+      >
+        <div
+          ref={ref}
+          role="radiogroup"
+          className={cn('grid gap-2', className)}
+          {...props}
+        />
+      </RadioGroupContext.Provider>
+    );
+  }
+);
+RadioGroup.displayName = 'RadioGroup';
+
+type RadioGroupItemProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> & {
+  value: string;
+};
+
+const RadioGroupItem = React.forwardRef<HTMLInputElement, RadioGroupItemProps>(
+  ({ className, value, disabled, ...props }, ref) => {
+    const context = React.useContext(RadioGroupContext);
+
+    if (!context) {
+      throw new Error('RadioGroupItem must be used within RadioGroup');
+    }
+
+    const isDisabled = context.disabled || disabled;
+
+    return (
+      <input
+        ref={ref}
+        type="radio"
+        name={context.name}
+        value={value}
+        checked={context.value === value}
+        disabled={isDisabled}
+        onChange={() => context.onValueChange?.(value)}
+        className={cn(
+          'h-4 w-4 border border-primary text-primary accent-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+RadioGroupItem.displayName = 'RadioGroupItem';
 
 export { RadioGroup, RadioGroupItem };

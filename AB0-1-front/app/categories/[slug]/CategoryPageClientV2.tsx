@@ -28,7 +28,7 @@ import {
 import { Search, Filter, X } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { Company } from '@/lib/api';
-import { openLeadModal } from '@/lib/lead-engine';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface CategoryPageClientProps {
   initialCategory: any;
@@ -217,7 +217,7 @@ export default function CategoryPageClient({
                 placement: 'hero',
                 category: slug,
               });
-              openLeadModal({ source: 'category-hero', type: 'quick' });
+              openQuoteWizard({ source: 'category-hero' });
             }}
             onMethodologyClick={() => console.log('Methodology modal')}
           />

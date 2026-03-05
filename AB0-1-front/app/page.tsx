@@ -15,6 +15,7 @@ const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalc
   loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
 });
 
+import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -211,7 +212,7 @@ export default async function Home() {
               Junte-se a milhares de brasileiros que já reduziram seus custos em até 95%. Peça seu orçamento gratuito hoje.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <CTAPrimaryButton label="Fazer Orçamento Grátis" className="h-14 px-10 text-lg" />
+              <HomeConversionCTA />
               <CTAPrimaryButton 
                 label="Ler nosso blog" 
                 variant="outline"
