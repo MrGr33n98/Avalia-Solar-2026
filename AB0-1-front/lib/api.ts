@@ -291,7 +291,7 @@ export interface Lead {
   name?: string;
   email?: string;
   phone?: string;
-  company?: string;
+  company?: string | { id?: number | string; name: string; logo_url?: string | null };
   company_obj?: {
     id: number | string;
     name: string;
@@ -318,7 +318,7 @@ export interface Review {
   updated_at?: string;
   user?: { id: number; name: string; avatar_url?: string | null };
   product?: { id: number; name: string };
-  company?: { id: number; name: string; logo_url?: string | null; slug?: string };
+  company?: string | { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
   replied_at?: string;
   status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft';
