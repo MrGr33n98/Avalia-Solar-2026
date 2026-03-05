@@ -50,6 +50,25 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
     onTabChange?.(value);
   };
 
+  const getCompanyName = (quote: Lead): string => {
+    if (typeof quote.company === 'string' && quote.company.trim().length > 0) {
+      return quote.company;
+    }
+
+    if (quote.company && typeof quote.company === 'object' && 'name' in quote.company) {
+      const objectName = quote.company.name;
+      if (typeof objectName === 'string' && objectName.trim().length > 0) {
+        return objectName;
+      }
+    }
+
+    if (quote.company_obj?.name) {
+      return quote.company_obj.name;
+    }
+
+    return 'Empresa não identificada';
+  };
+
   return (
     <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
       <CardHeader className="pb-4 bg-slate-50/50">
@@ -93,7 +112,11 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
               </Button>
             </div>
           ) : (
-            filteredData.map((quote) => (
+            filteredData.map((quote) => {
+              const companyName = getCompanyName(quote);
+              const companyInitials = companyName.slice(0, 2).toUpperCase() || 'ES';
+
+              return (
               <div key={quote.id} className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-all group">
                 {/* Z-PATTERN: Left (Company) */}
                 <div className="flex items-center gap-4">
@@ -101,7 +124,7 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
                     <Avatar className="h-12 w-12 rounded-2xl border border-slate-100 shadow-sm">
                       <AvatarImage src={quote.company_logo_url || ''} className="object-cover" />
                       <AvatarFallback className="bg-slate-100 text-slate-400 font-black">
-                        {quote.company?.substring(0, 2).toUpperCase() || 'ES'}
+                        {companyInitials}
                       </AvatarFallback>
                     </Avatar>
                     <div className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-50" title="Verificada">
@@ -110,7 +133,7 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
                   </div>
                   <div>
                     <h4 className="font-black text-slate-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                      {quote.company || 'Empresa não identificada'}
+                      {companyName}
                     </h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       {quote.product_vertical || 'Energia Solar'} • {new Date(quote.created_at).toLocaleDateString('pt-BR')}
@@ -158,7 +181,8 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
                   </DropdownMenu>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </CardContent>
