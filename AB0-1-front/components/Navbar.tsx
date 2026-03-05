@@ -82,17 +82,17 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-[1000] bg-white border-b border-gray-200 shadow-sm">
+    <nav className="sticky top-0 z-[1000] clay-header bg-clay-bg border-b border-clay-shadow-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4 h-16 relative">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 shrink-0" aria-label="Home Avalia Solar">
+        <Link href="/" className="flex items-center space-x-2 shrink-0 clay-surface clay-convex p-2 rounded-clay-md" aria-label="Home Avalia Solar">
           <Image 
             src="/images/logo.png" 
             alt="Avalia Solar Logo" 
             width={84} 
             height={56} 
             sizes="84px"
-            className="h-14 w-[84px] object-contain" 
+            className="h-10 w-[70px] object-contain" 
             priority={logoPriority}
           />
         </Link>
@@ -116,13 +116,13 @@ export default function Navbar() {
             >
               <Button
                 variant="ghost"
-                className={`flex items-center gap-1 font-medium transition-colors ${
-                  isMegaMenuOpen ? 'text-primary bg-slate-50' : 'text-gray-700 hover:text-primary'
+                className={`clay-chip smooth-transition flex items-center gap-1 font-medium ${
+                  isMegaMenuOpen ? 'text-primary bg-clay-surface-raised active' : 'text-gray-700 hover:text-primary'
                 }`}
                 onClick={toggleMegaMenu}
               >
                 Categorias
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 smooth-transition ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
 
               {megaMenuMounted && (
@@ -133,24 +133,24 @@ export default function Navbar() {
               )}
             </div>
 
-            <Link href="/companies" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+            <Link href="/companies" className="text-sm font-medium text-gray-700 hover:text-primary smooth-transition clay-chip px-3 py-1.5">
               Empresas
             </Link>
-            <Link href="/products" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+            <Link href="/products" className="text-sm font-medium text-gray-700 hover:text-primary smooth-transition clay-chip px-3 py-1.5">
               Produtos
             </Link>
-            <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+            <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-primary smooth-transition clay-chip px-3 py-1.5">
               Blog
             </Link>
 
             {/* Auth Buttons */}
-            <div className="flex items-center gap-3 pl-2 border-l border-gray-200">
+            <div className="flex items-center gap-3 pl-2 border-l border-clay-shadow-light">
               {!isAuthenticated ? (
                 <>
-                  <Button asChild variant="ghost" size="sm">
+                  <Button asChild variant="ghost" size="sm" className="clay-chip">
                     <Link href="/login">Login</Link>
                   </Button>
-                  <Button asChild size="sm">
+                  <Button asChild size="sm" className="clay-btn-primary">
                     <Link href="/register">Cadastre sua empresa</Link>
                   </Button>
                 </>
@@ -161,7 +161,7 @@ export default function Navbar() {
                       <CompanySwitcher className="w-48" />
                     </div>
                   )}
-                  <Button asChild variant="ghost" size="sm">
+                  <Button asChild variant="ghost" size="sm" className="clay-chip">
                     <Link 
                       href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
                       onClick={handleMinhaContaClick}
@@ -170,11 +170,11 @@ export default function Navbar() {
                     </Link>
                   </Button>
                   {user?.role === 'company' && (
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="outline" size="sm" className="clay-chip">
                       <Link href="/dashboard/company">Dashboard</Link>
                     </Button>
                   )}
-                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <Button variant="ghost" size="sm" onClick={handleLogout} className="clay-chip">
                     Sair
                   </Button>
                 </>

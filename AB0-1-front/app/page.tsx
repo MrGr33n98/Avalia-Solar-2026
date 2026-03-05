@@ -75,7 +75,7 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section className={[zebra ? 'bg-gray-50' : '', 'py-8 md:py-12'].join(' ')}>
+    <section className={[zebra ? 'bg-clay-bg' : '', 'py-8 md:py-12'].join(' ')}>
       <div className={['container mx-auto', 'px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
     </section>
   );
@@ -97,7 +97,7 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <Card className="flex items-center gap-3 p-4 border-gray-200">
+    <Card className="flex items-center gap-3 p-4 clay-panel border-clay-shadow-light">
       <Info className="h-5 w-5 text-gray-500" />
       <p className="text-sm text-gray-600">{message}</p>
     </Card>
@@ -269,7 +269,7 @@ export default async function Home() {
                 variant="outline"
                 href="/blog"
                 ctaType="blog_view"
-                className="h-14 px-10 text-lg border-white text-white hover:bg-white hover:text-slate-900 transition-all" 
+                className="h-14 px-10 text-lg clay-chip border-white text-white hover:bg-white hover:text-slate-900 smooth-transition" 
               />
             </div>
           </div>
@@ -410,9 +410,9 @@ async function CategoriesSectionWrapper({
       ) : null}
 
       <div className="mt-8 md:mt-10 text-center">
-        <Button asChild variant="outline" className="rounded-full">
+        <Button asChild variant="outline" className="clay-chip rounded-full">
           <Link href="/categories" className="group">
-            Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+            Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
           </Link>
         </Button>
       </div>
@@ -432,9 +432,9 @@ async function CompaniesSectionWrapper({
         title="Empresas em Destaque"
         subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
         right={
-          <Button asChild variant="ghost" className="text-brand-blue font-bold">
+          <Button asChild variant="ghost" className="text-brand-blue font-bold clay-chip">
             <Link href="/companies" className="group">
-              Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+              Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
             </Link>
           </Button>
         }
@@ -446,7 +446,7 @@ async function CompaniesSectionWrapper({
           <BannerByLocationLazy 
             location="companies_top" 
             initialBanners={companiesBanners.slice(0, 1)} 
-            className="rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+            className="clay-panel rounded-clay-xl border border-clay-shadow-light overflow-hidden"
           />
         )}
 
@@ -467,7 +467,7 @@ async function CompaniesSectionWrapper({
           href="/companies"
           ctaType="external"
           ctaDestination="/companies"
-          className="md:w-auto w-full" 
+          className="md:w-auto w-full clay-btn-primary" 
         />
       </div>
     </SectionShell>

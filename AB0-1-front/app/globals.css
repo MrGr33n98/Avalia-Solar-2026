@@ -29,42 +29,68 @@
     --spacing-section-mobile: 2rem;
     --spacing-section-desktop: 3rem;
     --banner-height-max: 20rem;
-    --background: 0 0% 98%; /* Clean White Background - Enterprise */
+    --background: 0 0% 100%; /* Pure White Background for Clay */
     --foreground: 0 0% 10%; /* Deep Dark Gray - Professional */
 
-    --card: 0 0% 100%; /* Pure White Card */
+    --card: 0 0% 94%; /* Off-white for clay cards #F0F3F9 */
     --card-foreground: 0 0% 10%; /* Deep Dark Gray */
 
-    --popover: 0 0% 100%; /* Pure White Popover */
+    --popover: 0 0% 94%; /* Off-white for clay popovers */
     --popover-foreground: 0 0% 10%; /* Deep Dark Gray */
 
-    --primary: 211 100% 29%; /* Avalia Solar Brand Blue */
+    --primary: 211 100% 41%; /* Avalia Solar Brand Blue #0056D2 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 196 100% 47%; /* Avalia Solar Brand Cyan */
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 262 83% 58%; /* Avalia Solar Brand Purple #6C5CE7 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 96%;
+    --muted: 0 0% 94%; /* Off-white #F0F3F9 */
     --muted-foreground: 0 0% 45%;
 
-    --accent: 85 55% 51%; /* Avalia Solar Brand Green */
+    --accent: 131 73% 52%; /* Avalia Solar Brand Green #34C759 */
     --accent-foreground: 0 0% 10%;
 
     --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 211 100% 29%;
+    --border: 0 0% 86%; /* Softer border */
+    --input: 0 0% 94%; /* Off-white input background */
+    --ring: 211 100% 41%;
 
     /* Chart colors */
-    --chart-1: 211 100% 29%;
+    --chart-1: 211 100% 41%;
     --chart-2: 196 100% 47%;
-    --chart-3: 85 55% 51%;
+    --chart-3: 131 73% 52%;
     --chart-4: 56 97% 56%;  /* Official Yellow #FCEE21 */
     --chart-5: 0 0% 43%;   /* Gray */
 
-    --radius: 0.375rem;
+    --radius: 1.5rem; /* Higher radius for clay */
+
+    /* Clay Design Tokens */
+    --clay-bg: 240 15% 96%; /* #F0F3F9 */
+    --clay-surface: 0 0% 100%; /* Pure white for main surface */
+    --clay-surface-raised: 240 15% 98%; /* Slightly raised surface */
+    --clay-surface-sunken: 240 15% 94%; /* Sunken surface */
+
+    /* Clay Shadow Tokens */
+    --clay-shadow-light: 240 15% 85%;
+    --clay-shadow-dark: 0 0% 100%;
+    --clay-shadow-primary-light: 211 100% 35%;
+    --clay-shadow-primary-dark: 211 100% 47%;
+    --clay-shadow-green-light: 131 73% 45%;
+    --clay-shadow-green-dark: 131 73% 59%;
+    --clay-shadow-purple-light: 262 83% 50%;
+    --clay-shadow-purple-dark: 262 83% 66%;
+
+    /* Clay Radiuses */
+    --clay-radius-sm: 0.875rem;
+    --clay-radius-md: 1.25rem;
+    --clay-radius-lg: 1.75rem;
+    --clay-radius-xl: 2.25rem;
+
+    /* Animation durations - respecting reduced motion */
+    --clay-duration: 250ms;
+    --clay-easing: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -80,13 +106,13 @@
     --primary: 211 100% 45%; /* Slightly lighter for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 196 100% 47%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 262 83% 65%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 85 55% 51%;
+    --accent: 131 73% 58%;
     --accent-foreground: 0 0% 10%;
 
     --destructive: 0 63% 50%;
@@ -99,9 +125,15 @@
     /* Chart colors */
     --chart-1: 211 100% 45%;
     --chart-2: 196 100% 47%;
-    --chart-3: 85 55% 51%;
+    --chart-3: 131 73% 58%;
     --chart-4: 56 97% 56%;
     --chart-5: 0 0% 60%;
+
+    /* Clay tokens for dark mode - disable clay effects in dark mode */
+    --clay-bg: 0 0% 7%;
+    --clay-surface: 0 0% 7%;
+    --clay-surface-raised: 0 0% 9%;
+    --clay-surface-sunken: 0 0% 5%;
   }
 }
 
@@ -152,7 +184,7 @@
   
   /* Smooth transitions */
   .smooth-transition {
-    @apply transition-all duration-300 ease-in-out;
+    transition: all var(--clay-duration) var(--clay-easing);
   }
 
   /* Hide scrollbars (horizontal chips, tabs, etc) */
@@ -163,6 +195,213 @@
 
   .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* === CLAYMORPHISM DESIGN SYSTEM === */
+  
+  /* Base Clay Surface */
+  .clay-surface {
+    background: hsl(var(--clay-bg));
+    border-radius: var(--clay-radius-lg);
+    transition: all var(--clay-duration) var(--clay-easing);
+  }
+
+  /* Clay Convex (raised) */
+  .clay-convex {
+    box-shadow: 
+      10px 10px 30px hsl(var(--clay-shadow-light)),
+      -10px -10px 30px hsl(var(--clay-shadow-dark));
+  }
+
+  /* Clay Concave (sunken) */
+  .clay-concave {
+    box-shadow: 
+      inset 8px 8px 16px hsl(var(--clay-shadow-light)),
+      inset -8px -8px 16px hsl(var(--clay-shadow-dark));
+  }
+
+  /* Clay Card - Default state */
+  .clay-card {
+    @apply clay-surface clay-convex;
+    background: hsl(var(--clay-surface));
+    border: 1px solid hsl(var(--clay-shadow-light));
+    border-radius: var(--clay-radius-xl);
+  }
+
+  .clay-card:hover {
+    box-shadow: 
+      6px 6px 20px hsl(var(--clay-shadow-light)),
+      -6px -6px 20px hsl(var(--clay-shadow-dark));
+  }
+
+  .clay-card:active,
+  .clay-card[data-state="active"] {
+    box-shadow: 
+      inset 6px 6px 12px hsl(var(--clay-shadow-light)),
+      inset -6px -6px 12px hsl(var(--clay-shadow-dark));
+  }
+
+  /* Clay Button Primary */
+  .clay-btn-primary {
+    @apply clay-surface;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: none;
+    border-radius: var(--clay-radius-md);
+    box-shadow: 
+      8px 8px 24px hsl(var(--clay-shadow-primary-light)),
+      -8px -8px 24px hsl(var(--clay-shadow-primary-dark));
+    font-weight: 700;
+  }
+
+  .clay-btn-primary:hover {
+    box-shadow: 
+      4px 4px 12px hsl(var(--clay-shadow-primary-light)),
+      -4px -4px 12px hsl(var(--clay-shadow-primary-dark));
+  }
+
+  .clay-btn-primary:active {
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--clay-shadow-primary-light)),
+      inset -4px -4px 8px hsl(var(--clay-shadow-primary-dark));
+  }
+
+  /* Clay Button Secondary */
+  .clay-btn-secondary {
+    @apply clay-surface;
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border: none;
+    border-radius: var(--clay-radius-md);
+    box-shadow: 
+      8px 8px 24px hsl(var(--clay-shadow-purple-light)),
+      -8px -8px 24px hsl(var(--clay-shadow-purple-dark));
+    font-weight: 700;
+  }
+
+  .clay-btn-secondary:hover {
+    box-shadow: 
+      4px 4px 12px hsl(var(--clay-shadow-purple-light)),
+      -4px -4px 12px hsl(var(--clay-shadow-purple-dark));
+  }
+
+  .clay-btn-secondary:active {
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--clay-shadow-purple-light)),
+      inset -4px -4px 8px hsl(var(--clay-shadow-purple-dark));
+  }
+
+  /* Clay Button Accent (Green) */
+  .clay-btn-accent {
+    @apply clay-surface;
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border: none;
+    border-radius: var(--clay-radius-md);
+    box-shadow: 
+      8px 8px 24px hsl(var(--clay-shadow-green-light)),
+      -8px -8px 24px hsl(var(--clay-shadow-green-dark));
+    font-weight: 700;
+  }
+
+  .clay-btn-accent:hover {
+    box-shadow: 
+      4px 4px 12px hsl(var(--clay-shadow-green-light)),
+      -4px -4px 12px hsl(var(--clay-shadow-green-dark));
+  }
+
+  .clay-btn-accent:active {
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--clay-shadow-green-light)),
+      inset -4px -4px 8px hsl(var(--clay-shadow-green-dark));
+  }
+
+  /* Clay Input (concave by default) */
+  .clay-input {
+    @apply clay-surface clay-concave;
+    background: hsl(var(--clay-surface-sunken));
+    border: 1px solid hsl(var(--clay-shadow-light));
+    border-radius: var(--clay-radius-sm);
+  }
+
+  .clay-input:focus {
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--clay-shadow-light)),
+      inset -4px -4px 8px hsl(var(--clay-shadow-dark)),
+      0 0 0 2px hsl(var(--ring));
+  }
+
+  /* Clay Chip - Default convex */
+  .clay-chip {
+    @apply clay-surface;
+    background: hsl(var(--clay-surface));
+    border: 1px solid hsl(var(--clay-shadow-light));
+    border-radius: var(--clay-radius-md);
+    box-shadow: 
+      4px 4px 12px hsl(var(--clay-shadow-light)),
+      -4px -4px 12px hsl(var(--clay-shadow-dark));
+    font-weight: 600;
+  }
+
+  .clay-chip:hover {
+    box-shadow: 
+      2px 2px 8px hsl(var(--clay-shadow-light)),
+      -2px -2px 8px hsl(var(--clay-shadow-dark));
+  }
+
+  .clay-chip.active,
+  .clay-chip[data-state="selected"] {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 
+      inset 2px 2px 6px hsl(var(--clay-shadow-primary-light)),
+      inset -2px -2px 6px hsl(var(--clay-shadow-primary-dark));
+  }
+
+  /* Clay Panel (for filters, etc.) */
+  .clay-panel {
+    @apply clay-surface clay-convex;
+    background: hsl(var(--clay-surface));
+    border: 1px solid hsl(var(--clay-shadow-light));
+    border-radius: var(--clay-radius-lg);
+    padding: 1.5rem;
+  }
+
+  /* Clay Header Bar */
+  .clay-header {
+    @apply clay-surface;
+    background: hsl(var(--clay-bg));
+    border-bottom: 1px solid hsl(var(--clay-shadow-light));
+    box-shadow: 
+      0 4px 12px hsl(var(--clay-shadow-light)),
+      0 -2px 8px hsl(var(--clay-shadow-dark));
+  }
+
+  /* Motion Reduction Respect */
+  @media (prefers-reduced-motion: reduce) {
+    .clay-surface,
+    .clay-card,
+    .clay-btn-primary,
+    .clay-btn-secondary,
+    .clay-btn-accent,
+    .clay-input,
+    .clay-chip {
+      transition: none !important;
+    }
+  }
+
+  /* Dark mode clay disable */
+  .dark .clay-surface,
+  .dark .clay-card,
+  .dark .clay-btn-primary,
+  .dark .clay-btn-secondary,
+  .dark .clay-btn-accent,
+  .dark .clay-input,
+  .dark .clay-chip,
+  .dark .clay-panel,
+  .dark .clay-header {
+    box-shadow: none;
+    border: 1px solid hsl(var(--border));
   }
 }
 /* TASK-027: Toast animations */

@@ -56,21 +56,23 @@ export default function SavingsCalculator() {
                   <label className="text-xs font-bold text-slate-300">Sua conta de luz mensal</label>
                   <span className="text-xl font-bold text-white">R$ {bill}</span>
                 </div>
-                <Slider
-                  value={[bill]}
-                  min={100}
-                  max={5000}
-                  step={50}
-                  onValueChange={(val) => setBill(val[0])}
-                  className="mb-1"
-                />
+                <div className="clay-input bg-slate-700/50 border border-slate-600 p-2 rounded-clay-md">
+                  <Slider
+                    value={[bill]}
+                    min={100}
+                    max={5000}
+                    step={50}
+                    onValueChange={(val) => setBill(val[0])}
+                    className="mb-1 [&_[role=slider]]:clay-convex [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                  />
+                </div>
                 <div className="flex justify-between text-[10px] text-slate-500">
                   <span>R$ 100</span>
                   <span>R$ 5.000+</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700 flex gap-2 items-start">
+              <div className="p-3 clay-chip bg-slate-800/50 border border-slate-700 flex gap-2 items-start">
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-[11px] text-slate-400 leading-tight">
                   Cálculo baseado na tarifa média nacional e durabilidade média de 25 anos dos equipamentos.
@@ -84,7 +86,7 @@ export default function SavingsCalculator() {
               key={bill}
               className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
-              <Card className="bg-white/10 border-white/10 backdrop-blur-md overflow-hidden">
+              <Card className="clay-panel bg-white/10 border-white/10 backdrop-blur-md overflow-hidden">
                 <CardContent className="p-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -107,21 +109,21 @@ export default function SavingsCalculator() {
                   <div className="mt-6">
                     <Button 
                       onClick={handleConsultation}
-                      className="w-full h-11 lg:h-10 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 group"
+                      className="w-full h-11 lg:h-10 text-sm font-bold clay-btn-primary shadow-lg shadow-primary/20 group"
                     >
                       Solicitar Estudo Personalizado
-                      <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="ml-1.5 h-4 w-4 smooth-transition group-hover:translate-x-1" />
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                <div className="p-3 clay-chip bg-emerald-500/10 border border-emerald-500/20 text-center">
                   <p className="text-emerald-400 text-[10px] font-bold uppercase mb-0.5">Redução</p>
                   <p className="text-lg font-black text-emerald-400">Até 95%</p>
                 </div>
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                <div className="p-3 clay-chip bg-blue-500/10 border border-blue-500/20 text-center">
                   <p className="text-blue-400 text-[10px] font-bold uppercase mb-0.5">Payback Médio</p>
                   <p className="text-lg font-black text-blue-400">3-4 Anos</p>
                 </div>

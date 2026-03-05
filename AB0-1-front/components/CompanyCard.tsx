@@ -237,11 +237,11 @@ export default function CompanyCard({
 
   if (isLoading) {
     return (
-      <Card className={cn('overflow-hidden rounded-2xl border border-gray-200', className)}>
+      <Card className={cn('overflow-hidden rounded-clay-lg border border-clay-shadow-light clay-surface', className)}>
         <Skeleton className={cn('w-full', compact ? 'h-[80px]' : 'h-[100px]')} />
         <CardContent className="pt-4">
           <div className="relative -mt-8 mb-3">
-            <Skeleton className={cn('rounded-full border-4 border-white shadow-sm', compact ? 'w-12 h-12' : 'w-14 h-14')} />
+            <Skeleton className={cn('rounded-full border-4 border-clay-surface shadow-sm', compact ? 'w-12 h-12' : 'w-14 h-14')} />
           </div>
           <Skeleton className="h-6 w-3/4 mb-2" />
           <div className="flex gap-2 mb-3">
@@ -281,9 +281,9 @@ export default function CompanyCard({
   return (
     <Card
       className={cn(
-        'relative flex flex-col bg-white border border-gray-200 transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-primary/20 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+        'relative flex flex-col bg-clay-surface border border-clay-shadow-light smooth-transition clay-card hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden h-full', // Changed from h-[240px] to h-full to allow dynamic growth or container control
-        compact ? 'rounded-2xl min-h-[280px]' : 'rounded-3xl',
+        compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
         className
       )}
       onClick={handleCardClick}
@@ -333,7 +333,7 @@ export default function CompanyCard({
 
       <div className="relative">
         <div className={cn(
-          "absolute right-2 flex flex-col gap-2 z-10 transition-all duration-200",
+          "absolute right-2 flex flex-col gap-2 z-10 smooth-transition",
           compact ? "top-2" : "top-2",
           "sm:opacity-0 sm:group-hover:opacity-100"
         )}>
@@ -348,7 +348,7 @@ export default function CompanyCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-9 w-9 md:h-8 md:w-8 rounded-full shadow-md bg-white/95 hover:bg-white backdrop-blur-sm transition-all text-gray-600 border border-gray-100"
+            className="h-9 w-9 md:h-8 md:w-8 clay-chip bg-clay-surface/95 hover:bg-clay-surface backdrop-blur-sm smooth-transition text-gray-600 border border-clay-shadow-light"
             onClick={handleShare}
             title="Compartilhar"
           >
@@ -407,8 +407,13 @@ export default function CompanyCard({
               </div>
             )}
             <div
-              className={cn('relative rounded-full overflow-hidden bg-white')}
-              style={{ width: avatarSize, height: avatarSize, boxShadow: `0 0 0 2px ${avatarRingColor}` }}
+              className={cn('relative rounded-full overflow-hidden bg-clay-surface clay-convex')}
+              style={{ 
+                width: avatarSize, 
+                height: avatarSize, 
+                boxShadow: `inset 2px 2px 6px hsl(var(--clay-shadow-light)), inset -2px -2px 6px hsl(var(--clay-shadow-dark))`,
+                border: `2px solid ${avatarRingColor}`
+              }}
             >
               {logoUrl && !logoError ? (
                 <Image
@@ -517,8 +522,8 @@ export default function CompanyCard({
                     companySlug={company.slug}
                     label={text.whatsapp}
                     className={cn(
-                      'w-full shadow-sm font-bold rounded-xl transition-all',
-                      compact ? 'h-9 text-[12px] bg-[#004791] hover:bg-[#00356b] text-white border-none' : 'h-11 lg:h-10'
+                      'w-full clay-btn-primary smooth-transition font-bold',
+                      compact ? 'h-9 text-[12px]' : 'h-11 lg:h-10'
                     )}
                   />
                 )
@@ -539,8 +544,8 @@ export default function CompanyCard({
                       })
                     }
                     className={cn(
-                      'w-full shadow-sm font-bold rounded-xl transition-all',
-                      compact ? 'h-9 text-[12px] bg-[#004791] hover:bg-[#00356b]' : 'h-11 lg:h-10'
+                      'w-full clay-btn-primary smooth-transition font-bold',
+                      compact ? 'h-9 text-[12px]' : 'h-11 lg:h-10'
                     )}
                   />
                 )
@@ -551,7 +556,7 @@ export default function CompanyCard({
           <Button
             variant="outline"
             className={cn(
-              'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium transition-all',
+              'clay-chip border-clay-shadow-light text-gray-700 hover:bg-clay-surface-raised hover:text-gray-900 font-medium smooth-transition',
               compact
                 ? (canRequestQuote ? 'h-9 w-9 p-0 flex-shrink-0' : 'h-9 w-full')
                 : 'w-full h-11 lg:h-10'
@@ -559,7 +564,7 @@ export default function CompanyCard({
             asChild
           >
           <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-            <Star className={cn('text-gray-400 group-hover:text-amber-500 transition-colors', compact && canRequestQuote ? 'w-4 h-4' : 'w-4 h-4 mr-1')} />
+            <Star className={cn('text-gray-400 group-hover:text-amber-500 smooth-transition', compact && canRequestQuote ? 'w-4 h-4' : 'w-4 h-4 mr-1')} />
             {(!compact || !canRequestQuote) && text.review}
           </Link>
           </Button>

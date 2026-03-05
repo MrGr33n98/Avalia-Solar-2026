@@ -18,6 +18,10 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        'clay-sm': 'var(--clay-radius-sm)',
+        'clay-md': 'var(--clay-radius-md)', 
+        'clay-lg': 'var(--clay-radius-lg)',
+        'clay-xl': 'var(--clay-radius-xl)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
@@ -25,9 +29,9 @@ const config: Config = {
       colors: {
         brand: {
           blue: {
-            DEFAULT: '#004996',
-            light: '#005bb8',
-            dark: '#003770',
+            DEFAULT: '#0056D2',
+            light: '#3374DB',
+            dark: '#003FA3',
           },
           cyan: {
             DEFAULT: '#00AFEF',
@@ -35,9 +39,14 @@ const config: Config = {
             dark: '#008bc0',
           },
           green: {
-            DEFAULT: '#8DC63F',
-            light: '#a3d165',
-            dark: '#6d9a30',
+            DEFAULT: '#34C759',
+            light: '#5DD177',
+            dark: '#28A745',
+          },
+          purple: {
+            DEFAULT: '#6C5CE7',
+            light: '#8B7AEB',
+            dark: '#5B4BD7',
           },
           yellow: '#FCEE21',
           gray: '#6D6E71',
@@ -82,6 +91,12 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        clay: {
+          bg: 'hsl(var(--clay-bg))',
+          surface: 'hsl(var(--clay-surface))',
+          'surface-raised': 'hsl(var(--clay-surface-raised))',
+          'surface-sunken': 'hsl(var(--clay-surface-sunken))',
+        },
       },
       keyframes: {
         'accordion-down': {
@@ -100,10 +115,19 @@ const config: Config = {
             height: '0',
           },
         },
+        'clay-press': {
+          '0%': { 
+            transform: 'scale(1)',
+          },
+          '100%': { 
+            transform: 'scale(0.98)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'clay-press': 'clay-press var(--clay-duration) var(--clay-easing)',
       },
     },
   },

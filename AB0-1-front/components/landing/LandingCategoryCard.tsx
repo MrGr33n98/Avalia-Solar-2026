@@ -31,15 +31,15 @@ export default function LandingCategoryCard({ category, className }: LandingCate
   const ratingLabel = avgRating > 0 ? avgRating.toFixed(1) : null;
 
   return (
-    <Card className={cn('overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow h-auto max-h-[320px]', className)}>
-      <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
-        <div className="relative aspect-[3/1] bg-gray-100 overflow-hidden">
+    <Card className={cn('overflow-hidden clay-card border-clay-shadow-light hover:shadow-md smooth-transition h-auto max-h-[320px]', className)}>
+      <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-clay-lg">
+        <div className="relative aspect-[3/1] bg-clay-bg overflow-hidden">
           <Image
             src={resolveCategoryImage(category)}
             alt={category?.name || 'Categoria'}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover object-center transition-transform duration-500 hover:scale-105"
+            className="object-cover object-center smooth-transition hover:scale-105"
           />
         </div>
 
@@ -77,7 +77,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
               asChild
               size="sm"
               variant="outline"
-              className="h-11 lg:h-7 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 px-3 lg:px-2 text-xs lg:text-[10px]"
+              className="h-11 lg:h-7 clay-chip border-clay-shadow-light text-blue-700 hover:bg-clay-surface-raised px-3 lg:px-2 text-xs lg:text-[10px]"
             >
               <span>
                 Explorar <ArrowRight className="ml-1 h-3.5 w-3.5 lg:h-3 lg:w-3" />

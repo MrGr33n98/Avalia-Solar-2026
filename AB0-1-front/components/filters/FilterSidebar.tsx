@@ -103,7 +103,7 @@ export const FilterSidebar: React.FC = () => {
             variant="ghost" 
             size="sm" 
             onClick={clearFilters}
-            className="text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 px-2 transition-colors gap-1.5 uppercase tracking-wider"
+            className="text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 px-2 clay-chip gap-1.5 uppercase tracking-wider"
           >
             <RotateCcw size={14} />
             Limpar
@@ -162,8 +162,8 @@ export const FilterSidebar: React.FC = () => {
       </div>
 
       {/* Footer (SaaS styling) */}
-      <div className="mt-auto pt-4 border-t border-slate-100 px-3">
-        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+      <div className="mt-auto pt-4 border-t border-clay-shadow-light px-3">
+        <div className="clay-panel bg-clay-bg rounded-clay-lg p-4 border border-clay-shadow-light">
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
             Status da Busca
           </p>
@@ -181,7 +181,7 @@ export const FilterSidebar: React.FC = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-[300px] sticky top-[88px] h-[calc(100vh-120px)] bg-white border border-slate-200 rounded-xl p-3 overflow-hidden flex-col shadow-sm">
+      <aside className="hidden lg:flex w-[300px] sticky top-[88px] h-[calc(100vh-120px)] clay-panel bg-clay-surface border border-clay-shadow-light rounded-clay-lg p-3 overflow-hidden flex-col">
         <FilterContent />
       </aside>
 
@@ -189,11 +189,11 @@ export const FilterSidebar: React.FC = () => {
       <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
-            <Button className="rounded-full shadow-2xl bg-slate-900 hover:bg-slate-800 text-white px-8 h-14 gap-3 border-none text-base font-bold">
+            <Button className="clay-btn-primary rounded-full shadow-2xl px-8 h-14 gap-3 border-none text-base font-bold">
               <SlidersHorizontal size={20} />
               <span>Filtrar</span>
               {isFilterActive(filters) && (
-                <span className="bg-blue-500 text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-slate-900 ml-1">
+                <span className="bg-blue-500 text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-primary ml-1">
                   !
                 </span>
               )}

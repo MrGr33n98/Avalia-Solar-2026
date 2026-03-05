@@ -103,7 +103,7 @@ export default function LandingCategoryChips({
   return (
     <section className={cn('px-4 md:px-6', className)}>
       <div className="container mx-auto">
-        <div className="relative rounded-2xl bg-white/70 border border-gray-200 shadow-sm">
+        <div className="relative clay-panel rounded-clay-lg border border-clay-shadow-light">
           <div
             ref={scrollerRef}
             className="flex items-center gap-3 overflow-x-auto px-3 py-3 no-scrollbar min-h-[56px]"
@@ -113,7 +113,7 @@ export default function LandingCategoryChips({
             {includeAllChip ? (
               <Link
                 href="/categories"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all whitespace-nowrap"
+                className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap"
                 role="listitem"
               >
                 <LayoutGrid className="h-5 w-5 text-blue-600" />
@@ -129,7 +129,7 @@ export default function LandingCategoryChips({
                 <Link
                   key={category.id}
                   href={href}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all whitespace-nowrap"
+                  className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap"
                   role="listitem"
                   aria-label={category.name}
                 >
@@ -150,13 +150,13 @@ export default function LandingCategoryChips({
             })}
           </div>
 
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 bg-gradient-to-l from-white via-white/70 to-transparent rounded-r-2xl">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2 bg-gradient-to-l from-clay-surface via-clay-surface/70 to-transparent rounded-r-clay-lg">
             <Button
               type="button"
               size="icon"
               variant="ghost"
               onClick={() => scrollBy(320)}
-              className="h-9 w-9 rounded-full border border-gray-200 bg-white/90 shadow-sm hover:bg-white"
+              className="h-9 w-9 clay-chip border border-clay-shadow-light bg-clay-surface/90 hover:bg-clay-surface"
               aria-label="Ver mais categorias"
             >
               <ChevronRight className="h-5 w-5 text-slate-700" />
