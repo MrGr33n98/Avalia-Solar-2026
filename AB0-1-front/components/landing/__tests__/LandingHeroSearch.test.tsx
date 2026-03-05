@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { LandingHeroSearch } from '@/components/landing/LandingHeroSearch';
 import type { Category } from '@/lib/api';
+import { track } from '@/lib/analytics/lazy';
 
 const pushMock = jest.fn();
 
@@ -40,6 +41,7 @@ const buildCategory = (overrides: Partial<Category>): Category =>
 describe('LandingHeroSearch', () => {
   beforeEach(() => {
     pushMock.mockReset();
+    (track as jest.Mock).mockReset();
     window.localStorage.clear();
   });
 
@@ -87,5 +89,35 @@ describe('LandingHeroSearch', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buscar Empresas' }));
 
     expect(pushMock).toHaveBeenCalledWith('/categories/carregadores-veiculares');
+  });
+
+  it('tracks variant metadata in experiment mode', () => {
+    const categories = [
+      buildCategory({
+        id: 999,
+        name: 'Baterias',
+        seo_url: 'baterias',
+      }),
+    ];
+
+    render(
+      <LandingHeroSearch
+        categories={categories}
+        heroVariant="variant"
+        experimentId="home_hero_v1"
+      />
+    );
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '999' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar Empresas' }));
+
+    expect(track).toHaveBeenCalledWith(
+      'search_submitted',
+      expect.objectContaining({
+        hero_variant: 'variant',
+        experiment_id: 'home_hero_v1',
+      }),
+      expect.any(Object)
+    );
   });
 });

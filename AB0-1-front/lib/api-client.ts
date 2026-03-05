@@ -405,6 +405,40 @@ export const companiesApiSafe = {
     }
   },
 
+  getTotalCount: async (
+    params?: {
+      status?: string;
+      featured?: boolean;
+      category_id?: number;
+      category_ids?: number[];
+      sort?: string;
+      q?: string;
+      state?: string[] | string;
+      city?: string[] | string;
+      min_rating?: number;
+      verified?: boolean;
+      fields?: 'card';
+    }
+  ): Promise<number | null> => {
+    try {
+      const response = await companiesApiSafe.getAllPaginated({
+        ...(params || {}),
+        page: 1,
+        per_page: 1,
+      });
+
+      const total = Number(response?.meta?.pagination?.total);
+      if (Number.isFinite(total) && total >= 0) {
+        return total;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[companiesApiSafe.getTotalCount] Error:', error);
+      return null;
+    }
+  },
+
   // ðŸ”¥ Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number | string): Promise<Company | null> => {
     const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);

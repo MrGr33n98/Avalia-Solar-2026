@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  HOME_HERO_EXPERIMENT_COOKIE,
+  HOME_HERO_EXPERIMENT_TTL_DAYS,
+  isHomeHeroExperimentEnabled,
+  resolveHomeHeroVariant,
+  shouldAssignHomeHeroExperimentCookie,
+} from '@/lib/experiments/homeHeroExperiment';
 
 const LEGACY_COMPANIES_PATH = '/companies';
 const COMPANIES_CATEGORIES_PATH = '/companies/categorias';
@@ -92,6 +99,12 @@ function buildCompaniesCategoriesPath(categoryIds: number[], slugById: Record<nu
 // This middleware runs on the edge
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const experimentEnabled = isHomeHeroExperimentEnabled();
+  const experimentCookieValue = request.cookies.get(HOME_HERO_EXPERIMENT_COOKIE)?.value;
+  const resolvedExperimentVariant = resolveHomeHeroVariant({
+    enabled: experimentEnabled,
+    cookieValue: experimentCookieValue,
+  });
   // Get the token from httpOnly cookie
   const token = request.cookies.get('jwt_token')?.value;
   const isRscRequest = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc');
@@ -129,6 +142,29 @@ export async function middleware(request: NextRequest) {
     return response;
   };
 
+  const maybeAttachHomeHeroExperimentCookie = (response: NextResponse) => {
+    if (
+      !shouldAssignHomeHeroExperimentCookie({
+        pathname,
+        enabled: experimentEnabled,
+        cookieValue: experimentCookieValue,
+      })
+    ) {
+      return response;
+    }
+
+    response.cookies.set({
+      name: HOME_HERO_EXPERIMENT_COOKIE,
+      value: resolvedExperimentVariant,
+      maxAge: HOME_HERO_EXPERIMENT_TTL_DAYS * 24 * 60 * 60,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    return response;
+  };
+
   if (pathname === LEGACY_COMPANIES_PATH) {
     const categoryIds = normalizeCategoryIds(request.nextUrl.searchParams.get('category_ids'));
 
@@ -142,7 +178,7 @@ export async function middleware(request: NextRequest) {
         redirectUrl.searchParams.append(key, value);
       });
 
-      return applyNoStoreHeaders(NextResponse.redirect(redirectUrl, 301));
+      return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.redirect(redirectUrl, 301)));
     }
   }
   
@@ -154,7 +190,7 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url);
       const redirectTo = pathname + request.nextUrl.search;
       loginUrl.searchParams.set('redirect', redirectTo);
-      return applyNoStoreHeaders(NextResponse.redirect(loginUrl));
+      return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.redirect(loginUrl)));
     }
     if (process.env.NODE_ENV === 'development') {
       console.log(`[Middleware] Authorized access to: ${pathname}`);
@@ -162,7 +198,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // Continue with the request
-  return applyNoStoreHeaders(NextResponse.next());
+  return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.next()));
 }
 
 // Configure which paths the middleware should run on

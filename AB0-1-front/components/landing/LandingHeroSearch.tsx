@@ -10,9 +10,12 @@ import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { track } from '@/lib/analytics/lazy';
 import type { Category } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
+import type { HomeHeroVariant } from '@/lib/experiments/homeHeroExperiment';
 
 type LandingHeroSearchProps = {
   categories: Category[];
+  heroVariant?: HomeHeroVariant;
+  experimentId?: string;
 };
 
 const CATEGORY_CACHE_KEY = 'avalia.home.categories.cache.v1';
@@ -37,7 +40,11 @@ const normalizeCategoryList = (items: Category[] | null | undefined): Category[]
     .filter((item): item is Category => Boolean(item));
 };
 
-export function LandingHeroSearch({ categories }: LandingHeroSearchProps) {
+export function LandingHeroSearch({
+  categories,
+  heroVariant = 'control',
+  experimentId = 'home_hero_v1',
+}: LandingHeroSearchProps) {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [location, setLocation] = useState<{ state: string; city?: string } | null>(null);
@@ -89,6 +96,8 @@ export function LandingHeroSearch({ categories }: LandingHeroSearchProps) {
       category_id: value,
       category_name: category?.name,
       source: 'landing_hero_dropdown',
+      hero_variant: heroVariant,
+      experiment_id: experimentId,
     });
   };
 
@@ -100,6 +109,8 @@ export function LandingHeroSearch({ categories }: LandingHeroSearchProps) {
         state: location?.state,
         city: location?.city,
         source: 'landing_hero',
+        hero_variant: heroVariant,
+        experiment_id: experimentId,
       },
       { critical: true }
     );
@@ -157,6 +168,11 @@ export function LandingHeroSearch({ categories }: LandingHeroSearchProps) {
         <CTAPrimaryButton
           label="Buscar Empresas"
           ctaType="search_submitted"
+          trackProps={{
+            source: 'landing_hero',
+            hero_variant: heroVariant,
+            experiment_id: experimentId,
+          }}
           onClick={handleSearch}
           className="w-full md:w-auto h-12 md:h-14 px-8 rounded-xl md:rounded-full bg-brand-blue hover:bg-brand-blue-light text-white font-bold text-lg shadow-lg shadow-brand-blue/20 transition-all hover:scale-105 active:scale-95"
         />
