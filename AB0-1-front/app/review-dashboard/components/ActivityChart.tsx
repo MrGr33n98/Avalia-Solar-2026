@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LineChart as LineChartIcon } from 'lucide-react';
 import {
-  LineChart,
+  LineChart as RechartsLineChart,
   Line,
   XAxis,
   YAxis,
@@ -42,7 +43,10 @@ export function ActivityChart({ data = [], loading }: ActivityChartProps) {
     );
   }
 
-  const isEmpty = data.length === 0 || data.every(d => d.profile_views === 0 && d.whatsapp_clicks === 0 && d.cta_clicks === 0);
+  const safeData = Array.isArray(data) ? data : [];
+  const isEmpty =
+    safeData.length === 0 ||
+    safeData.every(d => d.profile_views === 0 && d.whatsapp_clicks === 0 && d.cta_clicks === 0);
 
   return (
     <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
@@ -54,7 +58,7 @@ export function ActivityChart({ data = [], loading }: ActivityChartProps) {
         {isEmpty ? (
           <div className="h-[260px] flex flex-col items-center justify-center text-center px-6 space-y-4">
             <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-               <LineChart className="h-8 w-8" />
+              <LineChartIcon className="h-8 w-8" />
             </div>
             <div className="space-y-1">
               <p className="text-slate-950 font-black uppercase text-sm">Gráficos em breve</p>
@@ -66,7 +70,7 @@ export function ActivityChart({ data = [], loading }: ActivityChartProps) {
         ) : (
           <div className="h-[280px] w-full mt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <RechartsLineChart data={safeData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="date"
@@ -118,7 +122,7 @@ export function ActivityChart({ data = [], loading }: ActivityChartProps) {
                   dot={false}
                   activeDot={{ r: 6, strokeWidth: 0 }}
                 />
-              </LineChart>
+              </RechartsLineChart>
             </ResponsiveContainer>
           </div>
         )}
