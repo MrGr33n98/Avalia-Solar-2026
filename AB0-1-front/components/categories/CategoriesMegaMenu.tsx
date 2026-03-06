@@ -86,7 +86,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
         {filteredTree.map((category) => {
           const iconSrc = getPreferredCategoryIcon(category.slug, category.icon_url);
           return (
-          <motion.div 
+            <motion.div
             key={category.id}
             variants={{
               hidden: { opacity: 0, y: 10 },
@@ -143,6 +143,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
               </div>
             )}
           </motion.div>
+          );
         })}
       </motion.div>
     );
