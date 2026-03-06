@@ -21,7 +21,7 @@ interface SeoPageData {
 }
 
 async function getSeoPage(slug: string): Promise<SeoPageData | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
   try {
     const res = await fetch(`${apiUrl}/api/v1/seo_pages/${slug}`, {
       next: { revalidate: 3600, tags: ['seo-pages'] }, // ISR: 1 hour
