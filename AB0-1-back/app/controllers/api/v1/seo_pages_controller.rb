@@ -1,8 +1,7 @@
 module Api
   module V1
-    class SeoPagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [:show]
-
+    class SeoPagesController < Api::V1::BaseController
+      # Permite acesso público às páginas de SEO
       def show
         @seo_page = SeoLandingPage.find_by_slug!(params[:slug])
         
@@ -18,8 +17,6 @@ module Api
             description: @seo_page.category.description
           }
         }
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'SEO Page not found' }, status: :not_found
       end
     end
   end
