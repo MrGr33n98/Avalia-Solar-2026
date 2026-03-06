@@ -476,6 +476,30 @@ module Api
         end
       end
 
+      # Serializer used by index/featured endpoints
+      def company_json_attributes(company)
+        if params[:fields].to_s == 'card'
+          primary_category = company.categories.first
+          {
+            id: company.id,
+            slug: company.slug,
+            name: company.name,
+            city: company.city,
+            state: company.state,
+            rating_avg: company.rating_avg,
+            rating_count: company.rating_count,
+            featured: company.featured,
+            verified: company.verified,
+            logo_url: company.logo_url,
+            banner_url: company.banner_url,
+            primary_category: primary_category&.name,
+            category_ids: company.categories.limit(5).pluck(:id)
+          }
+        else
+          company_detail_payload(company)
+        end
+      end
+
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company
@@ -622,225 +646,6 @@ module Api
           Rails.logger.error "[Audit] Critical error creating company: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
           render json: { error: 'Internal Server Error' }, status: :internal_server_error
         end
-      end
-
-      # PATCH/PUT /api/v1/companies/:id
-      def update
-        Rails.logger.info "[Audit] Updating company ID #{@company.id}. User: #{current_user&.id}"
-
-        if params[:company][:logo].present?
-          Rails.logger.info "[Audit] Photo Flow: New logo upload detected for Company ID #{@company.id}"
-        end
-
-        if @company.update(company_params)
-          if @company.logo.attached? && params[:company][:logo].present?
-            Rails.logger.info "[Audit] Photo Flow: Company logo updated successfully for ID #{@company.id}"
-          end
-
-          company_json = {
-            id: @company.id,
-            slug: @company.slug,
-            name: @company.name,
-            description: @company.description,
-            website: @company.website,
-            phone: @company.phone,
-            address: @company.address,
-            state: @company.state,
-            city: @company.city,
-            status: @company.status,
-            featured: @company.featured,
-            verified: @company.verified
-          }
-          render json: { company: company_json }, status: :ok
-        else
-          Rails.logger.warn "[Audit] Company update failed for ID #{@company.id}: #{@company.errors.full_messages.join(', ')}"
-          render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
-
-      # DELETE /api/v1/companies/:id
-      def destroy
-        @company.destroy
-        head :no_content
-      end
-
-      # GET /api/v1/companies/states
-      def states
-        states = Locations::BrLocations.states.map { |state| state['acronym'] }
-        render json: { states: states }
-      end
-
-      # GET /api/v1/companies/cities
-      def cities
-        state = params[:state].to_s.strip.upcase
-        cities = state.present? ? Locations::BrLocations.cities_for(state) : []
-        render json: { cities: cities }
-      end
-
-      # GET /api/v1/companies/locations
-      def locations
-        locations = ::Company.distinct.pluck(:state, :city).compact
-                             .map { |state, city| { state: state, city: city } }
-                             .sort_by { |loc| [loc[:state], loc[:city]] }
-        render json: { locations: locations }
-      end
-
-      # GET /api/v1/companies/analytics/historical
-      def analytics_historical
-        days = params[:days]&.to_i || 30
-        cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
-
-        data = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
-          generate_historical_data(@company, days)
-        end
-
-        render json: { data: data }, status: :ok
-      rescue StandardError => e
-        Rails.logger.error("analytics_historical error: #{e.message}")
-        render json: { data: [] }, status: :ok
-      end
-
-      # GET /api/v1/companies/analytics/reviews
-      def analytics_reviews
-        render json: reviews_data
-      end
-
-      # GET /api/v1/companies/analytics/competitors
-      def analytics_competitors
-        render json: competitors_data
-      end
-
-      # GET /api/v1/companies/analytics/traffic
-      def analytics_traffic
-        days = params[:days]&.to_i || 30
-        cache_key = "company_#{@company.id}_traffic_#{days}_#{Date.today}"
-
-        sources = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
-          generate_traffic_sources(@company, days)
-        end
-
-        render json: { sources: sources }, status: :ok
-      rescue StandardError => e
-        Rails.logger.error("analytics_traffic error: #{e.message}")
-        render json: { sources: [] }, status: :ok
-      end
-
-      # POST /api/v1/companies/request_admin_access
-      def request_admin_access
-        return if authenticate_api_user == false
-        return unless @company
-
-        change = PendingChange.create!(
-          company: @company,
-          user_id: current_user&.id,
-          change_type: 'access_request',
-          data: { requested_at: Time.current },
-          status: 'pending'
-        )
-
-        render json: { message: 'Solicitação enviada para aprovação', pending_change: change }, status: :created
-      end
-
-      private
-
-      def fetch_companies_data
-        badge_payload = company_badges_payload(company)
-        verified_badge_url = company_verified_badge_url(company)
-
-        if params[:fields].to_s == 'card'
-          primary_category = company.categories.first
-          categories_payload = company.categories.order(:name).map do |category|
-            {
-              id: category.id,
-              name: category.name,
-              seo_url: category.seo_url
-            }
-          end
-
-          return {
-            id: company.id,
-            slug: company.slug,
-            name: company.name,
-            description: company.description,
-            website: company.website,
-            phone: company.phone,
-            state: company.state,
-            city: company.city,
-            created_at: company.created_at,
-            updated_at: company.updated_at,
-            banner_url: company.banner_url,
-            logo_url: company.logo_url,
-            rating_avg: company.rating_avg,
-            rating_count: company.rating_count,
-            status: company.status,
-            featured: company.featured,
-            verified: company.verified,
-            awards: company.awards,
-            verified_badge_url: verified_badge_url,
-            verified_badge_image_url: verified_badge_url,
-            badges: badge_payload,
-            financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
-            active_admin: company.respond_to?(:active_admin) ? company.active_admin : false,
-            whatsapp: company.respond_to?(:whatsapp) ? company.whatsapp : nil,
-            category_id: primary_category&.id,
-            category_info: primary_category.present? ? {
-              id: primary_category.id,
-              name: primary_category.name,
-              seo_url: primary_category.seo_url
-            } : nil,
-            categories: categories_payload
-          }
-        end
-
-        {
-          id: company.id,
-          slug: company.slug,
-          name: company.name,
-          description: company.description,
-          website: company.website,
-          phone: company.phone,
-          address: company.address,
-          state: company.state,
-          city: company.city,
-          created_at: company.created_at,
-          updated_at: company.updated_at,
-          banner_url: company.banner_url,
-          logo_url: company.logo_url,
-          rating_avg: company.rating_avg,
-          rating_count: company.rating_count,
-          status: company.status,
-          featured: company.featured,
-          verified: company.verified,
-          awards: company.awards,
-          verified_badge_url: verified_badge_url,
-          verified_badge_image_url: verified_badge_url,
-          badges: badge_payload,
-          founded_year: company.founded_year,
-          employees_count: company.employees_count,
-          certifications: company.certifications,
-          email_public: company.email_public,
-          instagram: company.instagram,
-          facebook: company.facebook,
-          linkedin: company.linkedin,
-          working_hours: company.working_hours,
-          payment_methods: company.payment_methods,
-          buttons: Rails.cache.fetch("company_buttons/#{company.id}/#{company.updated_at.to_i}",
-                                     expires_in: 5.minutes) do
-            company.company_buttons.active.ordered.select(:label, :url, :button_type, :active,
-                                                          :position).as_json(only: %i[label url button_type])
-          end,
-          ctas: [],
-          cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
-          cta_whatsapp_url: company.respond_to?(:cta_whatsapp_url) ? company.cta_whatsapp_url : nil,
-          whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
-          plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
-          plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
-          has_paid_plan: company.has_paid_plan?,
-          social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
-          can_use_social_proof: company.can_use_social_proof?,
-          financing_enabled: company.respond_to?(:financing_enabled) ? company.financing_enabled : false,
-          financing_tab_visible: company.respond_to?(:financing_tab_visible?) ? company.financing_tab_visible? : false
-        }
       end
 
       def company_detail_payload(company)
