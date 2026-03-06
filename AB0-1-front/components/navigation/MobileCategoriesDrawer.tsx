@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { getPreferredCategoryIcon } from '@/components/categories/categoryIcons';
 import { Zap, RefreshCw } from 'lucide-react';
 
 interface MobileCategoriesDrawerProps {
@@ -70,20 +71,17 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
             </div>
           ) : (
             <Accordion type="single" collapsible className="w-full px-2">
-              {categories.map((category) => (
+              {categories.map((category) => {
+                const iconSrc = getPreferredCategoryIcon(category.slug, category.icon_url);
+                return (
                 <AccordionItem key={category.id} value={`item-${category.id}`} className="border-slate-50 last:border-0">
                   <AccordionTrigger className="text-[15px] font-bold text-slate-900 hover:no-underline py-5 group">
                     <div className="flex items-center justify-between w-full pr-2">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                          {category.icon_url ? (
-                            <div className="w-6 h-6 relative">
-                              <Image
-                                src={category.icon_url}
-                                alt={category.name}
-                                fill
-                                className="object-contain"
-                              />
+                        <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 overflow-hidden">
+                          {iconSrc ? (
+                            <div className="w-full h-full relative">
+                              <Image src={iconSrc} alt={category.name} fill className="object-contain" />
                             </div>
                           ) : (
                             <Zap className="h-5 w-5" />
@@ -127,7 +125,8 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-              ))}
+                );
+              })}
             </Accordion>
           )}
         </ScrollArea>
