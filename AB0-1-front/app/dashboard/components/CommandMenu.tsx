@@ -2,24 +2,7 @@
 
 import * as React from 'react';
 import {
-  Calculator,
-  Calendar,
-  CreditCard,
-  Settings,
-  Smile,
-  User,
   Search,
-  BarChart3,
-  Sparkles,
-  TrendingUp,
-  Award,
-  Building2,
-  FileText,
-  Package,
-  Star,
-  Image as ImageIcon,
-  Target,
-  Megaphone,
 } from 'lucide-react';
 
 import {
@@ -32,6 +15,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@/components/ui/command';
+import { DASHBOARD_NAVIGATION, filterNavigationByContext } from '@/config/navigation';
 
 interface CommandMenuProps {
   onSelectTab: (tabId: string) => void;
@@ -57,22 +41,32 @@ export function CommandMenu({ onSelectTab }: CommandMenuProps) {
     command();
   }, []);
 
-  const menuItems = [
-    { id: 'overview', label: 'Visão Geral', icon: BarChart3, group: 'Métricas' },
-    { id: 'style-analysis', label: 'Design System', icon: Sparkles, group: 'Ferramentas' },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp, group: 'Métricas' },
-    { id: 'benchmark', label: 'Benchmark', icon: Award, group: 'Métricas' },
-    { id: 'info', label: 'Minha Empresa', icon: Building2, group: 'Gestão' },
-    { id: 'categories', label: 'Categorias', icon: FileText, group: 'Gestão' },
-    { id: 'banners', label: 'Banners', icon: Sparkles, group: 'Gestão' },
-    { id: 'products', label: 'Produtos', icon: Package, group: 'Gestão' },
-    { id: 'reviews', label: 'Reviews', icon: Star, group: 'Gestão' },
-    { id: 'approvals', label: 'Aprovações', icon: FileText, group: 'Gestão' },
-    { id: 'media', label: 'Mídia', icon: ImageIcon, group: 'Gestão' },
-    { id: 'leads', label: 'Oportunidades', icon: Target, group: 'Gestão' },
-    { id: 'campaigns', label: 'Campanhas', icon: Megaphone, group: 'Gestão' },
-    { id: 'settings', label: 'Configurações', icon: Settings, group: 'Sistema' },
-  ];
+  const menuItems = React.useMemo(() => {
+    const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
+    const flatItems: Array<{ id: string; label: string; icon: any; group: string }> = [];
+
+    navItems.forEach(item => {
+      if (item.children) {
+        item.children.forEach(child => {
+          flatItems.push({
+            id: child.id,
+            label: child.label,
+            icon: child.icon,
+            group: item.label,
+          });
+        });
+      } else {
+        flatItems.push({
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          group: item.group || 'Geral',
+        });
+      }
+    });
+
+    return flatItems;
+  }, []);
 
   const groups = Array.from(new Set(menuItems.map((item) => item.group)));
 

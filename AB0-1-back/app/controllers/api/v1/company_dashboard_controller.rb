@@ -54,23 +54,9 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
-        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
-          return render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} }
-        end
-
         begin
-          sql_trust = 'SELECT score, components FROM company_trust_score WHERE company_id = $1'
-          trust = ActiveRecord::Base.connection.exec_query(sql_trust, 'Trust', [[nil, @company.id]]).first || {}
-
-          sql_reviews = "SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM reviews WHERE company_id = $1 AND status = 'approved'"
-          reviews = ActiveRecord::Base.connection.exec_query(sql_reviews, 'Reviews', [[nil, @company.id]]).first || {}
-
-          render json: {
-            total_reviews: reviews['total'].to_i,
-            avg_rating: reviews['avg_rating'].to_f.round(2),
-            trust_score: trust['score'].to_f.round(2),
-            trust_components: trust['components'] ? JSON.parse(trust['components']) : {}
-          }
+          service = CompanyDashboard::ReputationService.new(company: @company)
+          render json: service.reputation_data
         rescue StandardError => e
           log_analytics_error('reputation', e)
           render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} }
@@ -79,47 +65,14 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
-        unless ActiveRecord::Base.connection.adapter_name =~ /postgre/i
-          return render json: { rank_position: nil, ranking_score: 0, magic_quadrant_points: [] }
-        end
-
         begin
-          sql_rank = 'SELECT score, breakdown FROM company_ranking_score WHERE company_id = $1'
-          rank = ActiveRecord::Base.connection.exec_query(sql_rank, 'Rank', [[nil, @company.id]]).first || {}
-
-          # Magic Quadrant base data (Top 20 in any of the company's categories)
-          category_id = @company.categories.first&.id
-          quadrant_data = []
-
-          if category_id
-            sql_quadrant = <<~SQL
-              SELECT c.id, c.name, ts.score AS trust_score, COALESCE(rs.total_leads, 0) AS leads_30d
-              FROM companies c
-              JOIN categories_companies cc ON cc.company_id = c.id
-              LEFT JOIN company_trust_score ts ON ts.company_id = c.id
-              LEFT JOIN company_feature_rolling_30d rs ON rs.company_id = c.id
-              WHERE cc.category_id = $1
-              ORDER BY ts.score DESC NULLS LAST
-              LIMIT 20
-            SQL
-
-            competitors = ActiveRecord::Base.connection.exec_query(sql_quadrant, 'Quadrant', [[nil, category_id]])
-
-            quadrant_data = competitors.map do |c|
-              {
-                id: c['id'],
-                name: c['id'] == @company.id ? c['name'] : "Competidor #{c['id']}", # Anonymize others
-                completenessOfVision: c['trust_score'].to_f,
-                abilityToExecute: c['leads_30d'].to_i,
-                isCurrentCompany: c['id'] == @company.id
-              }
-            end
-          end
+          service = CompanyDashboard::RankingService.new(company: @company)
+          data = service.ranking_data
 
           render json: {
-            rank_position: nil,
-            ranking_score: rank['score'].to_f,
-            magic_quadrant_points: quadrant_data
+            rank_position: data[:current_position],
+            ranking_score: data[:percentile],
+            magic_quadrant_points: format_magic_quadrant(data[:category_rankings])
           }
         rescue StandardError => e
           log_analytics_error('ranking', e)
@@ -767,6 +720,20 @@ module Api
           "company_id=#{@company&.id} user_id=#{current_user&.id}"
         )
         Rails.logger.error("[CompanyDashboard#analytics_#{action}] backtrace=#{error.backtrace&.first(5)&.join(' | ')}")
+      end
+
+      def format_magic_quadrant(category_rankings)
+        # Simplified format for magic quadrant - using first category
+        return [] if category_rankings.empty?
+
+        ranking = category_rankings.first
+        [{
+          id: @company.id,
+          name: @company.name,
+          completenessOfVision: ranking[:percentile],
+          abilityToExecute: ranking[:position],
+          isCurrentCompany: true
+        }]
       end
 
       def default_overview_payload

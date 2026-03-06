@@ -1068,6 +1068,29 @@ export const reviewDashboardApi = {
   getSummary: () => fetchApi('/review_dashboard/summary'),
 };
 
+export interface CompanyAnalyticsOverview {
+  views_30d: number;
+  cta_clicks_30d: number;
+  whatsapp_clicks_30d: number;
+  leads_30d: number;
+  conversion_rate: number;
+  data_source: string;
+  freshness?: {
+    last_updated_at: string;
+  };
+}
+
+export const companyDashboardApi = {
+  getAnalyticsOverview: (companyId?: string | number) => 
+    fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  getAnalyticsTimeseries: (companyId?: string | number, days: number = 90) =>
+    fetchApi('/company_dashboard/analytics/timeseries', {
+      params: { company_id: companyId, days },
+    }),
+};
+
 export const companiesApi = {
   getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; mine?: boolean; q?: string; } = {}): Promise<Company[]> => {
     try {

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useEffect, useMemo, useState } from 'react';
+import { DASHBOARD_NAVIGATION, filterNavigationByContext, type NavigationItem } from '@/config/navigation';
 
 interface SidebarProps {
   activeTab: string;
@@ -56,58 +57,28 @@ function SidebarContent({
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }) {
-  const groups: SidebarGroupItem[] = useMemo(
-    () => [
-      {
-        id: 'analytics-group',
-        label: 'Analytics',
-        icon: BarChart3,
-        children: [{ id: 'analytics', label: 'Analytics' }],
-      },
-      {
-        id: 'reviews-group',
-        label: 'Avaliações',
-        icon: Star,
-        children: [{ id: 'reviews', label: 'Avaliações' }],
-      },
-      {
-        id: 'interaction-group',
-        label: 'Dados de interação',
-        icon: Database,
-        children: [{ id: 'leads', label: 'Oportunidades' }],
-      },
-      {
-        id: 'product-edit-group',
-        label: 'Edição de produto',
-        icon: Edit3,
-        children: [
-          { id: 'product-general', label: 'Informações gerais' },
-          { id: 'product-categories', label: 'Categorias' },
-          { id: 'product-pricing', label: 'Planos e preços' },
-          { id: 'product-support', label: 'Suporte e treinamento' },
-          { id: 'product-banner', label: 'Banner' },
-          { id: 'product-sponsored-description', label: 'Descrição patrocinada' },
-          { id: 'product-downloads', label: 'Conteúdo Baixável' },
-          { id: 'product-features', label: 'Funcionalidades' },
-          { id: 'product-videos', label: 'Vídeos' },
-          { id: 'product-images', label: 'Imagens' },
-        ],
-      },
-    ],
-    []
-  );
+  const groups: SidebarGroupItem[] = useMemo(() => {
+    const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
+    return navItems
+      .filter(item => item.children && item.children.length > 0)
+      .map(item => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+        children: item.children!.map(child => ({ id: child.id, label: child.label })),
+      }));
+  }, []);
 
-  const leafItems: SidebarLeafItem[] = useMemo(
-    () => [
-      { id: 'overview', label: 'Home', icon: Home },
-      { id: 'ranking-performance', label: 'Ranking Performance', icon: Trophy },
-      { id: 'sector-questions', label: 'Perguntas', icon: Edit3 },
-      { id: 'integrations', label: 'Integrações', icon: Link2 },
-      { id: 'trust-widget', label: 'Selo de Confiança', icon: ShieldCheck },
-      { id: 'avalia-badges', label: 'Selos Avalia Solar', icon: BadgeCheck },
-    ],
-    []
-  );
+  const leafItems: SidebarLeafItem[] = useMemo(() => {
+    const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
+    return navItems
+      .filter(item => !item.children)
+      .map(item => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+      }));
+  }, []);
 
   const groupByActiveTab = useMemo(() => {
     if (activeTab === 'analytics') return 'analytics-group';

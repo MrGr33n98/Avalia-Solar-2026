@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import EnterpriseDashboard from '../components/EnterpriseDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
+import { TourProvider } from '@/providers/TourProvider';
 
 const parseCompanyId = (value: string | null): number | null => {
   if (!value) return null;
@@ -124,9 +125,11 @@ function CompanyDashboardPageInner() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel...</div>}>
-      <EnterpriseDashboard companyId={companyId} />
-    </Suspense>
+    <TourProvider>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel...</div>}>
+        <EnterpriseDashboard companyId={companyId} />
+      </Suspense>
+    </TourProvider>
   );
 }
 

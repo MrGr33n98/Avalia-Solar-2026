@@ -19,27 +19,13 @@ module Api
         quotes_replied = Lead.where(email: current_user.email).where(wizard_status: 'proposal_sent').count
         reviews_published = Review.where(user_id: current_user.id, status: :approved).count
 
-        # Charts Data (Last 30 days activity)
-        # Assuming activity means views/clicks on companies they interacted with or general activity
-        # For simplicity, we'll return daily counts of their leads and reviews created
-        daily_leads = Lead.where(email: current_user.email)
-                          .where(created_at: start_date..end_date)
-                          .group('DATE(created_at)')
-                          .count
-
-        Review.where(user_id: current_user.id)
-              .where(created_at: start_date..end_date)
-              .group('DATE(created_at)')
-              .count
-
-        # Format chart data
-        chart_data = (start_date.to_date..end_date.to_date).map do |date|
-          {
-            date: date.to_s,
-            profile_views: 0, # Placeholder or fetch from AnalyticsEvent if relevant
-            whatsapp_clicks: 0, # Placeholder
-            cta_clicks: daily_leads[date] || 0
-          }
+        # Charts Data - Real activity data from AnalyticsEvent
+        activity_service = ReviewDashboard::ActivityService.new(user: current_user)
+        chart_data = Rails.cache.fetch(
+          "review_dashboard:activity:#{current_user.id}",
+          expires_in: 1.hour
+        ) do
+          activity_service.activity_chart_data(start_date: start_date, end_date: end_date)
         end
 
         # Profile Completion

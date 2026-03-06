@@ -35,6 +35,7 @@ class Lead < ApplicationRecord
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
   after_create_commit :instrument_lead_captured
+  after_create_commit :create_notification_for_company
 
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
             :decision_timeline, :address_full,
@@ -198,5 +199,22 @@ class Lead < ApplicationRecord
 
   def instrument_lead_captured
     ActiveSupport::Notifications.instrument('lead.captured', lead_id: id)
+  end
+
+  def create_notification_for_company
+    return unless company.present?
+
+    company.users.where(role: 'company_user').find_each do |company_user|
+      Notification.create!(
+        user: company_user,
+        notification_type: 'new_lead',
+        title: 'Nova oportunidade recebida',
+        body: "#{product_vertical} - #{project_profile}",
+        notifiable: self,
+        delivery_channels: ['in_app']
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.error("[Lead] Failed to create notification: #{e.message}")
   end
 end

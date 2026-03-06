@@ -183,7 +183,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
       )}
 
       {/* TOP SECTION: Main KPIs - Moved to absolute top for value-first hierarchy */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="metrics">
         {statsQuery.isLoading ? (
           <>
             {Array.from({ length: 4 }).map((_, idx) => (
@@ -205,7 +205,9 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         {statsQuery.isLoading ? (
           <Skeleton className="h-[340px] w-full rounded-xl" />
         ) : (
-          <NPSDetailedCard averageRating={Number(stats?.averageRating || 0)} reviewsCount={Number(stats?.reviewsCount || 0)} />
+          <div data-tour="reputation">
+            <NPSDetailedCard averageRating={Number(stats?.averageRating || 0)} reviewsCount={Number(stats?.reviewsCount || 0)} />
+          </div>
         )}
         {statsQuery.isLoading ? (
           <Skeleton className="h-[340px] w-full rounded-xl" />

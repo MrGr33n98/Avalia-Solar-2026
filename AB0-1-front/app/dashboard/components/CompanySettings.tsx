@@ -20,6 +20,31 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
         <p className="text-muted-foreground">Configure CTAs e preferências da empresa</p>
       </div>
 
+      {/* Tour Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tour Guiado</CardTitle>
+          <CardDescription>Reveja o tutorial do dashboard a qualquer momento</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Faça um tour pelas principais funcionalidades do dashboard
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const { startDashboardTour } = require('@/lib/tour');
+                  startDashboardTour();
+                }
+              }}>
+                Iniciar Tour
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>CTAs Personalizados</CardTitle>

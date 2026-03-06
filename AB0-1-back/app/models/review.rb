@@ -36,6 +36,7 @@ class Review < ApplicationRecord
   after_commit :invalidate_social_proof_cache
   after_commit :enqueue_aggregation, on: %i[create update], if: :should_recalculate_aggregates?
   after_update_commit :notify_user_of_reply, if: :saved_change_to_reply?
+  after_commit :create_notification_for_company, on: :create
 
   # Validations
   validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
@@ -212,10 +213,37 @@ class Review < ApplicationRecord
   end
 
   def notify_user_of_reply
-    return if reply.blank?
+    return unless user.present?
+    return unless company.present?
+
+    Notification.create!(
+      user: user,
+      notification_type: 'reply_received',
+      title: 'Empresa respondeu sua avaliação',
+      body: "#{company.name} respondeu sua avaliação",
+      notifiable: self,
+      delivery_channels: ['in_app', 'email']
+    )
 
     ReviewMailer.new_reply(self).deliver_later
   rescue StandardError => e
-    Rails.logger.error("[ReviewMailer] Failed to enqueue reply email: #{e.message}")
+    Rails.logger.error("[Review] Failed to notify reply: #{e.message}")
+  end
+
+  def create_notification_for_company
+    return unless company.present?
+
+    company.users.where(role: 'company_user').find_each do |company_user|
+      Notification.create!(
+        user: company_user,
+        notification_type: 'new_review',
+        title: 'Nova avaliação recebida',
+        body: "#{rating} estrelas - #{headline.presence || comment.truncate(50)}",
+        notifiable: self,
+        delivery_channels: ['in_app']
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.error("[Review] Failed to create notification: #{e.message}")
   end
 end

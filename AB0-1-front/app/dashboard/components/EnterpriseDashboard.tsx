@@ -197,7 +197,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           <div className="max-w-[1600px] mx-auto p-4 lg:p-8">
             {/* Content based on active tab using Shadcn Tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
-              <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="overview" className="mt-0 focus-visible:outline-none" data-tour="overview">
                 <OverviewTab
                   companyId={companyId}
                   company={company}
@@ -207,7 +207,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               {/* Sprint 5: Ranking Performance Tab */}
-              <TabsContent value="ranking-performance" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="ranking-performance" className="mt-0 focus-visible:outline-none" data-tour="ranking">
                 <RankingPerformanceTab company={company} stats={stats} />
               </TabsContent>
 
@@ -243,7 +243,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="analytics" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="analytics" className="mt-0 focus-visible:outline-none" data-tour="analytics">
                 {(company?.has_paid_plan || company?.plan_status === 'active') && (
                   <div className="space-y-6">
                     <div>
@@ -469,7 +469,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none" data-tour="reviews">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -503,7 +503,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="leads" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="leads" className="mt-0 focus-visible:outline-none" data-tour="leads">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -545,7 +545,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
+              <TabsContent value="settings" className="mt-0 focus-visible:outline-none" data-tour="settings">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">

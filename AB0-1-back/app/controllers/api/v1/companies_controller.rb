@@ -18,6 +18,27 @@ module Api
       def index
         Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
+        # Generate cache key based on filters
+        cache_key = generate_cache_key(params)
+        
+        # Use Rails.cache with versioned keys
+        result = Rails.cache.fetch(cache_key, expires_in: cache_ttl_for_params(params)) do
+          fetch_companies_data
+        end
+
+        if params[:page].present?
+          render json: result, status: :ok
+        else
+          render json: result, status: :ok
+        end
+      rescue StandardError => e
+        Rails.logger.error("Error in companies#index: #{e.message}")
+        render json: { error: 'Internal server error' }, status: :internal_server_error
+      end
+
+      private
+
+      def fetch_companies_data
         retries = 0
         begin
         @companies = ::Company.includes(
@@ -140,17 +161,17 @@ module Api
               company_json_attributes(company)
             end
 
-            render json: {
+            {
               data: companies_json,
               meta: { pagination: pagination_metadata(paginated) }
-            }, status: :ok
+            }
           else
             expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
             companies_json = @companies.map do |company|
               company_json_attributes(company)
             end
 
-            render json: companies_json, status: :ok
+            companies_json
           end
         rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotEstablished => e
           if (retries += 1) <= 3
@@ -159,13 +180,39 @@ module Api
             retry
           end
           raise e
-        rescue StandardError => e
-          Rails.logger.error("Error in CompaniesController#index: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
-          render json: {
-            error: 'Internal Server Error',
-            message: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.'
-          }, status: :internal_server_error
         end
+      end
+
+      def generate_cache_key(params)
+        filters = {
+          status: params[:status],
+          featured: params[:featured],
+          verified: params[:verified],
+          state: params[:state],
+          city: params[:city],
+          category_id: params[:category_id],
+          category_ids: params[:category_ids],
+          min_rating: params[:min_rating],
+          q: params[:q],
+          sort: params[:sort],
+          limit: params[:limit],
+          page: params[:page],
+          mine: params[:mine]
+        }.compact
+
+        filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
+        "companies:index:v2:#{filter_hash}"
+      end
+
+      def cache_ttl_for_params(params)
+        # Shorter TTL for user-specific queries
+        return 5.minutes if params[:mine] || params[:q].present?
+        
+        # Longer TTL for static lists
+        return 1.hour if params[:featured] || params[:verified]
+        
+        # Default TTL
+        15.minutes
       end
 
       # GET /api/v1/companies/featured

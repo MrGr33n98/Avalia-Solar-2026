@@ -76,6 +76,8 @@ class Company < ApplicationRecord
 
   before_save :capture_category_ids_for_metrics, prepend: true
   after_save :update_associated_categories_metrics
+  after_save :invalidate_companies_cache
+  after_destroy :invalidate_companies_cache
   # after_commit :update_associated_categories_metrics, on: [:create, :update, :destroy]
 
   # =========================
@@ -836,5 +838,13 @@ class Company < ApplicationRecord
     errors.add(attribute, "dimensÃƒÂµes muito pequenas (#{width}x#{height}px). MÃƒÂ­nimo recomendado: #{recommendation}")
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar dimensoes atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
+  end
+
+  def invalidate_companies_cache
+    Rails.cache.delete_matched('companies:index:v2:*')
+    Rails.cache.delete('companies_featured_v1')
+    Rails.logger.info("[Company] Cache invalidated for company_id=#{id}")
+  rescue StandardError => e
+    Rails.logger.error("[Company] Failed to invalidate cache: #{e.message}")
   end
 end

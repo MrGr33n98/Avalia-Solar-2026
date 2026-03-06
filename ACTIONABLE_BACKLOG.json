@@ -1,19 +1,407 @@
 {
   "backlog_metadata": {
-    "generated_at": "2026-02-01T06:20:59.334Z",
-    "version": "2.0",
+    "generated_at": "2026-03-06T01:29:16.943Z",
+    "version": "2.1",
     "platform": "Avalia Solar",
-    "audit_type": "Strategic Growth Audit 360°",
-    "total_items": 50,
+    "audit_type": "Dashboard Audit + Strategic Growth 360°",
+    "total_items": 60,
     "priority_distribution": {
-      "P0_critical": 12,
-      "P1_high": 18,
-      "P2_medium": 15,
+      "P0_critical": 15,
+      "P1_high": 23,
+      "P2_medium": 17,
       "P3_low": 5
-    }
+    },
+    "latest_audit": "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md",
+    "dashboard_gaps_identified": 10
   },
-  
   "backlog": [
+    {
+      "id": "AS-DASH-P0-G1",
+      "title": "Fix Review Dashboard Company Type Error (G1)",
+      "description": "Corrigir bug crítico company.substring em QuotesPanel que quebra Review Dashboard completamente. Backend retorna Company object mas frontend espera string, causando TypeError.",
+      "priority": "P0-Critical",
+      "impact": "Crítico",
+      "effort": "S",
+      "effort_hours": 6,
+      "story_points": 2,
+      "owner": "Dev Team",
+      "rice_score": {
+        "reach": 10,
+        "impact": 10,
+        "confidence": 10,
+        "effort": 6,
+        "total": 166
+      },
+      "success_metrics": [
+        "Dashboard Crash Rate: 12% → <0.5%",
+        "Zero JavaScript errors (company.substring) em 24h",
+        "Support tickets dashboard = 0"
+      ],
+      "acceptance_criteria": [
+        "QuotesPanel renderiza sem erros JavaScript",
+        "Company initials exibem corretamente",
+        "Type guard extractCompanyInfo implementado",
+        "Unit tests cobrem ambos formatos (object e string)",
+        "TypeScript types corrigidos (Lead interface)"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:192-218",
+        "AB0-1-front/app/review-dashboard/components/QuotesPanel.tsx:104"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de churn por bug crítico)",
+      "estimated_timeline": "Sprint Hotfix (48h)",
+      "story_file": "docs/stories/006.fix_review_dashboard_company_type_error.md"
+    },
+    {
+      "id": "AS-DASH-P0-G2",
+      "title": "Integrate Real Performance Metrics (G2)",
+      "description": "Substituir dados mockados em PerformanceMetrics por dados reais da API /api/v1/company_dashboard/analytics/overview. Atualmente métricas hardcoded (views: 3847) geram decisões incorretas.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "M",
+      "effort_hours": 10,
+      "story_points": 5,
+      "owner": "Backend + Frontend Team",
+      "rice_score": {
+        "reach": 9,
+        "impact": 9,
+        "confidence": 9,
+        "effort": 10,
+        "total": 73
+      },
+      "success_metrics": [
+        "Data Accuracy: 0% (mock) → 100% (real)",
+        "API response time <500ms (p95)",
+        "User trust score >4.5/5",
+        "Support tickets (wrong data) → 0"
+      ],
+      "acceptance_criteria": [
+        "PerformanceMetrics usa useCompanyAnalytics hook",
+        "Loading state com skeleton implementado",
+        "Error state com tratamento graceful",
+        "Auto-refresh a cada 30 segundos",
+        "Cache de 1 minuto implementado"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:346-358",
+        "AB0-1-front/app/dashboard/components/PerformanceMetrics.tsx:55-80"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de churn por dados incorretos)",
+      "estimated_timeline": "Sprint Hotfix (48h)",
+      "story_file": "docs/stories/007.integrate_real_performance_metrics.md"
+    },
+    {
+      "id": "AS-DASH-P0-G3",
+      "title": "Secure Webhook Authentication (G3)",
+      "description": "Implementar autenticação HMAC SHA-256 em webhooks de pagamento para prevenir fraudes. Atualmente endpoint aceita qualquer payload sem validação de assinatura.",
+      "priority": "P0-Critical",
+      "impact": "Alto",
+      "effort": "M",
+      "effort_hours": 10,
+      "story_points": 8,
+      "owner": "Backend Team",
+      "rice_score": {
+        "reach": 7,
+        "impact": 10,
+        "confidence": 9,
+        "effort": 10,
+        "total": 63
+      },
+      "success_metrics": [
+        "Webhook fraud attempts: 0 successful",
+        "Failed auth attempts: 100% logged",
+        "Security incident reports: 0",
+        "Compliance score: 100%"
+      ],
+      "acceptance_criteria": [
+        "HMAC SHA-256 signature validation implementada",
+        "Timestamp validation (5min window) para prevenir replay attacks",
+        "WebhookSecurityService criado",
+        "Suporte para múltiplos providers (Stripe, Mock)",
+        "Security logs para failed attempts"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:528-662",
+        "AB0-1-back/app/controllers/api/v1/payments_webhooks_controller.rb:5"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de fraude financeira)",
+      "estimated_timeline": "Sprint Hotfix (48h)",
+      "story_file": "docs/stories/008.secure_webhook_authentication.md"
+    },
+    {
+      "id": "AS-DASH-P1-G4",
+      "title": "Implement Real Activity Chart Data (G4)",
+      "description": "Integrar dados reais de profile_views e whatsapp_clicks no Activity Chart do Review Dashboard. Atualmente ambos sempre 0 (placeholders), apenas cta_clicks funcional.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_hours": 12,
+      "story_points": 5,
+      "owner": "Backend + Data Team",
+      "rice_score": {
+        "reach": 8,
+        "impact": 7,
+        "confidence": 8,
+        "effort": 12,
+        "total": 37
+      },
+      "success_metrics": [
+        "Activity Chart Accuracy: 33% → 100%",
+        "Dashboard engagement: +20% time spent",
+        "Analytics events/day: 5k → 20k",
+        "Query performance (p95) <200ms"
+      ],
+      "acceptance_criteria": [
+        "ReviewDashboard::ActivityService criado",
+        "Frontend tracking de profile_view e whatsapp_click",
+        "API endpoint /api/v1/analytics/track autorizado",
+        "Database index para performance",
+        "Cache de 1 hora implementado"
+      ],
+      "dependencies": [
+        "AS-DATA-P1-006"
+      ],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:430-441",
+        "AB0-1-back/app/controllers/api/v1/review_dashboard_controller.rb"
+      ],
+      "estimated_revenue_impact": "R$ 10k/mês (melhor engajamento = retenção)",
+      "estimated_timeline": "Sprint Data Integrity (2 semanas)",
+      "story_file": "docs/stories/009.implement_real_activity_chart_data.md"
+    },
+    {
+      "id": "AS-DASH-P1-G5",
+      "title": "Refactor SQL Raw to Service Objects (G5)",
+      "description": "Extrair queries SQL raw acopladas no company_dashboard_controller para Service Objects. Melhorar manutenibilidade e testabilidade sem alterar funcionalidade.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "L",
+      "effort_hours": 16,
+      "story_points": 13,
+      "owner": "Backend Team",
+      "rice_score": {
+        "reach": 5,
+        "impact": 6,
+        "confidence": 8,
+        "effort": 16,
+        "total": 15
+      },
+      "success_metrics": [
+        "Zero queries SQL raw em controllers",
+        "Test coverage >80% em services",
+        "API response time mantido (<850ms)",
+        "Code maintainability index >70"
+      ],
+      "acceptance_criteria": [
+        "CompanyDashboard::ReputationService criado",
+        "CompanyDashboard::RankingService criado",
+        "CompanyDashboard::AnalyticsService criado",
+        "Queries SQL abstraídas em AR/Arel",
+        "Unit tests para cada service"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:360-370",
+        "AB0-1-back/app/controllers/api/v1/company_dashboard_controller.rb:62"
+      ],
+      "estimated_revenue_impact": "R$ 0 (tech debt reduction)",
+      "estimated_timeline": "Sprint Data Integrity (2 semanas)"
+    },
+    {
+      "id": "AS-DASH-P1-G6",
+      "title": "Unify Dashboard Navigation Config (G6)",
+      "description": "Criar config compartilhada entre EnterpriseSidebar (19 items) e CommandMenu (14 items). Atualmente divergências causam UX fragmentada e manutenção difícil.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_hours": 8,
+      "story_points": 5,
+      "owner": "Frontend Team",
+      "rice_score": {
+        "reach": 7,
+        "impact": 5,
+        "confidence": 8,
+        "effort": 8,
+        "total": 35
+      },
+      "success_metrics": [
+        "Single source of truth (config/navigation.ts)",
+        "Zero navigation divergências",
+        "Documentação completa de contextos",
+        "Manutenção time: -50%"
+      ],
+      "acceptance_criteria": [
+        "Arquivo config/navigation.ts criado",
+        "29 tabs com context flags (operational, quick, admin)",
+        "EnterpriseSidebar consome config",
+        "CommandMenu consome config",
+        "Unit tests para navigation filtering"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:371-380",
+        "AB0-1-front/app/dashboard/components/EnterpriseSidebar.tsx"
+      ],
+      "estimated_revenue_impact": "R$ 0 (melhor UX = retenção)",
+      "estimated_timeline": "Sprint Data Integrity (2 semanas)"
+    },
+    {
+      "id": "AS-DASH-P1-G7",
+      "title": "Implement Companies Listing Cache (G7)",
+      "description": "Adicionar Redis cache em /api/v1/companies com TTL de 5min para queries populares. Reduzir load do DB em 70% e melhorar response time de 1.2s para <300ms.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "M",
+      "effort_hours": 6,
+      "story_points": 5,
+      "owner": "Backend Team",
+      "rice_score": {
+        "reach": 8,
+        "impact": 6,
+        "confidence": 9,
+        "effort": 6,
+        "total": 72
+      },
+      "success_metrics": [
+        "Cache hit rate: >70%",
+        "Database queries: -70%",
+        "API response time: 1.2s → <300ms (p95)",
+        "Redis memory usage <2GB"
+      ],
+      "acceptance_criteria": [
+        "Rails.cache.fetch em CompaniesController#index",
+        "Cache keys versionados (include filters hash)",
+        "Cache invalidation em callbacks",
+        "Monitoring de hit rate (Yabeda)",
+        "TTL otimizado por tipo de query"
+      ],
+      "dependencies": [
+        "AS-CTO-P1-009"
+      ],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:488-494",
+        "AB0-1-back/app/controllers/api/v1/companies_controller.rb"
+      ],
+      "estimated_revenue_impact": "R$ 5k/mês (redução custo infra)",
+      "estimated_timeline": "Sprint Data Integrity (2 semanas)"
+    },
+    {
+      "id": "AS-DASH-P1-G8",
+      "title": "Implement Rate Limiting (G8)",
+      "description": "Adicionar Rack::Attack com rate limiting em endpoints críticos: /api/v1/analytics/track (100/min), authenticated APIs (300/5min). Prevenir DoS e spam.",
+      "priority": "P1-High",
+      "impact": "Médio",
+      "effort": "S",
+      "effort_hours": 4,
+      "story_points": 3,
+      "owner": "DevOps Team",
+      "rice_score": {
+        "reach": 9,
+        "impact": 7,
+        "confidence": 9,
+        "effort": 4,
+        "total": 141
+      },
+      "success_metrics": [
+        "DoS attempts blocked: 100%",
+        "API abuse incidents: 0",
+        "False positives: <1%",
+        "429 responses properly handled"
+      ],
+      "acceptance_criteria": [
+        "Rack::Attack configurado",
+        "Rate limits por endpoint (track: 100/min, api: 300/5min)",
+        "Throttle por IP + Authorization header",
+        "Redis store para contadores",
+        "Monitoring de rate limit events"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:554-560",
+        "AB0-1-back/app/controllers/api/v1/analytics_controller.rb"
+      ],
+      "estimated_revenue_impact": "R$ 0 (prevenção de DoS)",
+      "estimated_timeline": "Sprint Data Integrity (2 semanas)"
+    },
+    {
+      "id": "AS-DASH-P2-G9",
+      "title": "Implement Real Notification System (G9)",
+      "description": "Substituir notification badge mockado (hardcoded '3') por sistema real de notificações: new_review, new_lead, status_update, reply_received.",
+      "priority": "P2-Medium",
+      "impact": "Baixo",
+      "effort": "M",
+      "effort_hours": 12,
+      "story_points": 8,
+      "owner": "Backend + Frontend Team",
+      "rice_score": {
+        "reach": 7,
+        "impact": 5,
+        "confidence": 7,
+        "effort": 12,
+        "total": 20
+      },
+      "success_metrics": [
+        "100% notificações reais (zero mock)",
+        "User engagement: +15%",
+        "Notification delivery rate: >95%",
+        "Open rate: >40%"
+      ],
+      "acceptance_criteria": [
+        "Tabela notifications criada",
+        "Notification model com polymorphic notifiable",
+        "4 tipos implementados (new_review, new_lead, status_update, reply_received)",
+        "API endpoint /api/v1/notifications",
+        "Badge mostra count real de unread"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:453-458",
+        "AB0-1-front/app/review-dashboard/page.tsx:172-174"
+      ],
+      "estimated_revenue_impact": "R$ 5k/mês (melhor engajamento)",
+      "estimated_timeline": "Sprint UX Polish (30 dias)"
+    },
+    {
+      "id": "AS-DASH-P2-G10",
+      "title": "Create Company Dashboard Onboarding Tour (G10)",
+      "description": "Implementar tour guiado com 8 steps para novos usuários do Company Dashboard: overview, metrics, reviews, leads, settings. Reduzir curva de aprendizado.",
+      "priority": "P2-Medium",
+      "impact": "Baixo",
+      "effort": "L",
+      "effort_hours": 20,
+      "story_points": 13,
+      "owner": "Frontend + UX Team",
+      "rice_score": {
+        "reach": 6,
+        "impact": 4,
+        "confidence": 7,
+        "effort": 20,
+        "total": 8
+      },
+      "success_metrics": [
+        "80% novos usuários completam tour",
+        "Time to first action: -40%",
+        "Support tickets (how-to): -60%",
+        "User satisfaction (NPS): +15 points"
+      ],
+      "acceptance_criteria": [
+        "Tour component com 8 steps",
+        "localStorage tracking de tour completion",
+        "Skip button funcional",
+        "Reset tour option em settings",
+        "Mobile-responsive (modal em mobile)"
+      ],
+      "dependencies": [],
+      "evidence_references": [
+        "DIAGNOSTICO_AUDITORIA_DASHBOARDS_2026-03-06.md:391-397",
+        "AB0-1-front/app/dashboard/company/page.tsx"
+      ],
+      "estimated_revenue_impact": "R$ 10k/ano (redução churn early-stage)",
+      "estimated_timeline": "Sprint UX Polish (30 dias)"
+    },
     {
       "id": "AS-CEO-P0-001",
       "title": "Implementar Sistema de Catalogação de Produtos com SKU Único",
@@ -49,7 +437,6 @@
       "estimated_revenue_impact": "R$ 200k-500k/ano (via API de dados)",
       "estimated_timeline": "Sprint 1-3 (6 semanas)"
     },
-    
     {
       "id": "AS-CMO-P0-002",
       "title": "Gerar Páginas SEO de Produtos Individuais (SSG/ISR)",
@@ -78,7 +465,9 @@
         "Sitemap.xml incluindo produtos",
         "Meta tags dinâmicas (title, description, OG)"
       ],
-      "dependencies": ["AS-CEO-P0-001"],
+      "dependencies": [
+        "AS-CEO-P0-001"
+      ],
       "evidence_references": [
         "AB0-1-front/app/products/page.tsx - lista genérica sem [slug]",
         "AB0-1-front/app/sitemap.ts:56-76 - sem produtos no sitemap"
@@ -86,7 +475,6 @@
       "estimated_revenue_impact": "R$ 150k/ano (900 leads × R$ 150 CPA vs paid)",
       "estimated_timeline": "Sprint 3-4 (4 semanas)"
     },
-    
     {
       "id": "AS-CMO-P0-003",
       "title": "Criar Landing Pages Geolocalizadas (Cidade/Estado)",
@@ -123,7 +511,6 @@
       "estimated_revenue_impact": "R$ 225k/ano (1.500 leads × R$ 150 CPA)",
       "estimated_timeline": "Sprint 5-6 (5 semanas)"
     },
-    
     {
       "id": "AS-CEO-P0-004",
       "title": "Implementar Lead Scoring ML + Automação de Follow-up",
@@ -152,7 +539,9 @@
         "Integração com Postmark/Twilio",
         "Dashboard de lead quality para empresas"
       ],
-      "dependencies": ["AS-DATA-P1-006"],
+      "dependencies": [
+        "AS-DATA-P1-006"
+      ],
       "evidence_references": [
         "AB0-1-back/app/models/lead.rb:71-78 - wizard existe mas sem scoring",
         "AB0-1-back/app/services/lead_distribution_service.rb - distribuição básica"
@@ -160,7 +549,6 @@
       "estimated_revenue_impact": "R$ 75k-150k/mês (dobro de conversão)",
       "estimated_timeline": "Sprint 5-6 (6 semanas)"
     },
-    
     {
       "id": "AS-CTO-P1-005",
       "title": "Construir Webhook Engine com Retry/DLQ e Segurança HMAC",
@@ -198,7 +586,6 @@
       "estimated_revenue_impact": "R$ 25k-45k/mês (planos premium)",
       "estimated_timeline": "Sprint 7-10 (8 semanas)"
     },
-    
     {
       "id": "AS-DATA-P1-006",
       "title": "Instrumentar Analytics Completo (30+ Eventos de Funil)",
@@ -235,7 +622,6 @@
       "estimated_revenue_impact": "R$ 50k/mês (via otimização de conversão)",
       "estimated_timeline": "Sprint 1-2 (3 semanas)"
     },
-    
     {
       "id": "AS-CEO-P1-007",
       "title": "Lançar API de Dados Proprietários (MVP com 3 Endpoints)",
@@ -264,7 +650,9 @@
         "Swagger/OpenAPI documentation",
         "Webhook webhooks product.updated"
       ],
-      "dependencies": ["AS-CEO-P0-001"],
+      "dependencies": [
+        "AS-CEO-P0-001"
+      ],
       "evidence_references": [
         "AB0-1-back/config/routes.rb:45-271 - apenas API v1 pública",
         "Sem versionamento v2 ou API comercial"
@@ -272,7 +660,6 @@
       "estimated_revenue_impact": "R$ 95k/mês = R$ 1.14M/ano",
       "estimated_timeline": "Sprint 11-15 (10 semanas)"
     },
-    
     {
       "id": "AS-CEO-P1-008",
       "title": "Criar Marketplace de Financiamento (Intermediação)",
@@ -300,7 +687,9 @@
         "Comissão automática calculada e registrada",
         "Dashboard de financiamento para empresas"
       ],
-      "dependencies": ["AS-CEO-P0-004"],
+      "dependencies": [
+        "AS-CEO-P0-004"
+      ],
       "evidence_references": [
         "AB0-1-back/app/models/company_financing_profile.rb - estrutura existe",
         "Falta intermediação e tracking de comissões"
@@ -308,7 +697,6 @@
       "estimated_revenue_impact": "R$ 225k/mês = R$ 2.7M/ano",
       "estimated_timeline": "Sprint 16-24 (12 semanas)"
     },
-    
     {
       "id": "AS-CTO-P1-009",
       "title": "Adicionar Índices de Database (Performance 5x)",
@@ -345,7 +733,6 @@
       "estimated_revenue_impact": "R$ 10k/mês (retenção via melhor UX)",
       "estimated_timeline": "Sprint 1 (1 semana)"
     },
-    
     {
       "id": "AS-CTO-P1-010",
       "title": "Implementar Query Caching (Redis) em Endpoints Críticos",
@@ -374,7 +761,9 @@
         "Redis memory usage < 2GB",
         "Monitoring de hit rate (Yabeda)"
       ],
-      "dependencies": ["AS-CTO-P1-009"],
+      "dependencies": [
+        "AS-CTO-P1-009"
+      ],
       "evidence_references": [
         "TECHNICAL_REPORT.md:515-535 - cache não usado em queries críticas",
         "AB0-1-back/config/environments/production.rb - cache_store configurado"
@@ -382,7 +771,6 @@
       "estimated_revenue_impact": "R$ 5k/mês (redução custo infra)",
       "estimated_timeline": "Sprint 2 (2 semanas)"
     },
-    
     {
       "id": "AS-CTO-P1-011",
       "title": "Otimizar Frontend Images (WebP + Lazy Load)",
@@ -419,7 +807,6 @@
       "estimated_revenue_impact": "R$ 15k/mês (melhor conversão via UX)",
       "estimated_timeline": "Sprint 2 (2 semanas)"
     },
-    
     {
       "id": "AS-DEVOPS-P1-012",
       "title": "Setup Read Replica PostgreSQL (Scaling)",
@@ -456,7 +843,6 @@
       "estimated_revenue_impact": "R$ 20k/mês (prevenir downtime)",
       "estimated_timeline": "Sprint 8-10 (3 semanas)"
     },
-    
     {
       "id": "AS-CMO-P2-013",
       "title": "Criar 50 Guias Long-Form (3000+ palavras)",
@@ -485,7 +871,10 @@
         "Imagens otimizadas (WebP)",
         "Schema.org Article implementado"
       ],
-      "dependencies": ["AS-CMO-P0-002", "AS-CMO-P0-003"],
+      "dependencies": [
+        "AS-CMO-P0-002",
+        "AS-CMO-P0-003"
+      ],
       "evidence_references": [
         "SEO_GROWTH_REPORT.md:285-324 - keywords informacionais identificadas",
         "AB0-1-front/app/blog - estrutura existe"
@@ -493,7 +882,6 @@
       "estimated_revenue_impact": "R$ 180k/ano (1.200 leads × R$ 150 CPA)",
       "estimated_timeline": "Sprint 7-12 (6 semanas, paralelo)"
     },
-    
     {
       "id": "AS-CMO-P2-014",
       "title": "Executar Link Building (50+ Backlinks/Mês)",
@@ -522,7 +910,9 @@
         "20 menções em portais de notícia (DA 60+)",
         "Ahrefs tracking configurado"
       ],
-      "dependencies": ["AS-CEO-P0-001"],
+      "dependencies": [
+        "AS-CEO-P0-001"
+      ],
       "evidence_references": [
         "SEO_GROWTH_REPORT.md:403-471 - estratégias de link building",
         "Baseline estimado: DA 20, <100 backlinks"
@@ -530,7 +920,6 @@
       "estimated_revenue_impact": "R$ 100k/ano (melhor ranking = mais tráfego)",
       "estimated_timeline": "Sprint 1-24 (contínuo, 12 meses)"
     },
-    
     {
       "id": "AS-CTO-P2-015",
       "title": "Implementar LGPD Consent Granular",
@@ -567,7 +956,6 @@
       "estimated_revenue_impact": "R$ 0 (prevenção de multas LGPD)",
       "estimated_timeline": "Sprint 5-7 (3 semanas)"
     },
-    
     {
       "id": "AS-CTO-P2-016",
       "title": "Criar GDPR/LGPD Right to Erasure Endpoint",
@@ -595,7 +983,9 @@
         "Logs de erasure/export para auditoria",
         "UI em /dashboard/privacy para self-service"
       ],
-      "dependencies": ["AS-CTO-P2-015"],
+      "dependencies": [
+        "AS-CTO-P2-015"
+      ],
       "evidence_references": [
         "TECHNICAL_REPORT.md:327-348 - endpoints faltantes",
         "LGPD Art. 18 exige direito ao apagamento"
@@ -603,7 +993,6 @@
       "estimated_revenue_impact": "R$ 0 (prevenção de multas)",
       "estimated_timeline": "Sprint 8-11 (4 semanas)"
     },
-    
     {
       "id": "AS-DATA-P2-017",
       "title": "Setup BigQuery Data Warehouse (ETL via Fivetran)",
@@ -632,7 +1021,9 @@
         "dbt transformations (5+ models)",
         "Metabase conectado ao BigQuery"
       ],
-      "dependencies": ["AS-DATA-P1-006"],
+      "dependencies": [
+        "AS-DATA-P1-006"
+      ],
       "evidence_references": [
         "ANALYTICS_REPORT.md:479-518 - data warehouse faltante",
         "Dados fragmentados = queries lentas"
@@ -640,7 +1031,6 @@
       "estimated_revenue_impact": "R$ 50k/ano (decisões data-driven)",
       "estimated_timeline": "Sprint 13-18 (6 semanas)"
     },
-    
     {
       "id": "AS-DATA-P2-018",
       "title": "Treinar Lead Scoring ML Model (RandomForest)",
@@ -669,7 +1059,10 @@
         "API endpoint /api/v1/leads/:id/score deployado",
         "Monitoring de model drift (weekly retraining)"
       ],
-      "dependencies": ["AS-DATA-P1-006", "AS-DATA-P2-017"],
+      "dependencies": [
+        "AS-DATA-P1-006",
+        "AS-DATA-P2-017"
+      ],
       "evidence_references": [
         "ANALYTICS_REPORT.md:596-625 - lead scoring use case",
         "AB0-1-back/app/models/lead.rb - sem coluna lead_score"
@@ -677,7 +1070,6 @@
       "estimated_revenue_impact": "R$ 100k/mês (via melhor conversão)",
       "estimated_timeline": "Sprint 19-26 (8 semanas)"
     },
-    
     {
       "id": "AS-PRODUCT-P2-019",
       "title": "Construir Comparador de Produtos (Side-by-Side)",
@@ -706,7 +1098,10 @@
         "API: /api/v1/products/compare endpoint",
         "Schema.org ComparisonPage"
       ],
-      "dependencies": ["AS-CEO-P0-001", "AS-CMO-P0-002"],
+      "dependencies": [
+        "AS-CEO-P0-001",
+        "AS-CMO-P0-002"
+      ],
       "evidence_references": [
         "PRODUCTS_STRATEGY_REPORT.md:385-463 - comparison tool design",
         "Feature não implementada"
@@ -714,7 +1109,6 @@
       "estimated_revenue_impact": "R$ 30k/mês (melhor conversão)",
       "estimated_timeline": "Sprint 7-10 (4 semanas)"
     },
-    
     {
       "id": "AS-PRODUCT-P2-020",
       "title": "Implementar Sistema de Reviews de Produtos",
@@ -743,7 +1137,9 @@
         "Schema.org Review em cada produto",
         "API: /products/:id/reviews endpoints (CRUD)"
       ],
-      "dependencies": ["AS-CMO-P0-002"],
+      "dependencies": [
+        "AS-CMO-P0-002"
+      ],
       "evidence_references": [
         "PRODUCTS_STRATEGY_REPORT.md:616-641 - reviews feature spec",
         "AB0-1-back/app/models/review.rb - apenas company reviews"
@@ -751,7 +1147,6 @@
       "estimated_revenue_impact": "R$ 20k/mês (melhor SEO + confiança)",
       "estimated_timeline": "Sprint 11-15 (5 semanas)"
     },
-    
     {
       "id": "AS-UX-P3-021",
       "title": "Redesign Lead Wizard (7 Steps → 3 Steps)",
@@ -780,7 +1175,9 @@
         "Mobile-first design",
         "Analytics tracking de cada step"
       ],
-      "dependencies": ["AS-DATA-P1-006"],
+      "dependencies": [
+        "AS-DATA-P1-006"
+      ],
       "evidence_references": [
         "EXECUTIVE_SUMMARY.md - conversão subotimizada mencionada",
         "AB0-1-back/app/models/lead.rb - wizard_status tracking existe"
@@ -789,40 +1186,63 @@
       "estimated_timeline": "Sprint 16-19 (4 semanas)"
     }
   ],
-  
   "sprints_overview": {
     "sprint_1_2": {
       "weeks": "1-2",
       "theme": "Quick Wins & Data Foundation",
-      "items": ["AS-CTO-P1-009", "AS-CTO-P1-010", "AS-CTO-P1-011", "AS-DATA-P1-006"]
+      "items": [
+        "AS-CTO-P1-009",
+        "AS-CTO-P1-010",
+        "AS-CTO-P1-011",
+        "AS-DATA-P1-006"
+      ]
     },
     "sprint_3_4": {
       "weeks": "3-4",
       "theme": "SEO Long-Tail Products",
-      "items": ["AS-CEO-P0-001", "AS-CMO-P0-002"]
+      "items": [
+        "AS-CEO-P0-001",
+        "AS-CMO-P0-002"
+      ]
     },
     "sprint_5_6": {
       "weeks": "5-6",
       "theme": "SEO Geolocalization & Lead Scoring",
-      "items": ["AS-CMO-P0-003", "AS-CEO-P0-004", "AS-CTO-P2-015"]
+      "items": [
+        "AS-CMO-P0-003",
+        "AS-CEO-P0-004",
+        "AS-CTO-P2-015"
+      ]
     },
     "sprint_7_10": {
       "weeks": "7-10",
       "theme": "Webhooks Platform & Comparison Tool",
-      "items": ["AS-CTO-P1-005", "AS-PRODUCT-P2-019", "AS-DEVOPS-P1-012"]
+      "items": [
+        "AS-CTO-P1-005",
+        "AS-PRODUCT-P2-019",
+        "AS-DEVOPS-P1-012"
+      ]
     },
     "sprint_11_15": {
       "weeks": "11-15",
       "theme": "API & Product Reviews",
-      "items": ["AS-CEO-P1-007", "AS-PRODUCT-P2-020", "AS-CTO-P2-016"]
+      "items": [
+        "AS-CEO-P1-007",
+        "AS-PRODUCT-P2-020",
+        "AS-CTO-P2-016"
+      ]
     },
     "sprint_16_24": {
       "weeks": "16-24",
       "theme": "Financing Marketplace & ML",
-      "items": ["AS-CEO-P1-008", "AS-DATA-P2-017", "AS-DATA-P2-018", "AS-UX-P3-021"]
+      "items": [
+        "AS-CEO-P1-008",
+        "AS-DATA-P2-017",
+        "AS-DATA-P2-018",
+        "AS-UX-P3-021"
+      ]
     }
   },
-  
   "estimated_total_impact": {
     "arr_12_months": "R$ 6.000.000",
     "monthly_leads_increase": "5x (1.000 → 5.000)",
@@ -835,7 +1255,6 @@
       "Featured products: R$ 720k/ano"
     ]
   },
-  
   "risk_mitigation": {
     "high_priority": [
       "LGPD compliance (AS-CTO-P2-015, AS-CTO-P2-016) - evitar multas",
@@ -848,7 +1267,6 @@
       "AS-DATA-P2-017 bloqueia AS-DATA-P2-018"
     ]
   },
-  
   "team_allocation_recommended": {
     "backend_developers": 2,
     "frontend_developers": 1,
@@ -860,7 +1278,6 @@
     "seo_specialist": 1,
     "total_headcount": 9
   },
-  
   "budget_estimate": {
     "personnel_12_months": "R$ 540.000",
     "infrastructure": "R$ 60.000",

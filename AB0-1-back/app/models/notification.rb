@@ -21,6 +21,9 @@ class Notification < ApplicationRecord
   # Types
   TYPES = %w[
     new_review
+    new_lead
+    status_update
+    reply_received
     review_response
     new_follower
     new_comment
