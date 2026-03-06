@@ -460,42 +460,6 @@ module Api
         15.minutes
       end
 
-      # GET /api/v1/companies/featured
-      def featured
-        cache_key = "companies_featured_v1"
-        @companies = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-          ::Company.active.where(featured: true).limit(10).to_a
-        end
-        render json: @companies.map { |c| company_json_attributes(c) }
-      end
-
-      # GET /api/v1/companies/mine
-      def mine
-        # Use a relation directly to avoid loading everything into memory at once
-        companies_scope = current_user.active_member_companies.includes(:categories)
-
-        if params[:q].present?
-          term = params[:q].to_s.strip
-          companies_scope = companies_scope.where(
-            'LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.city) LIKE LOWER(:q)', q: "%#{term}%"
-          )
-        end
-
-        # Cache for 5 minutes as requested, handle cache failures gracefully
-        cache_key = "user_#{current_user.id}_companies_mine_#{Digest::SHA1.hexdigest(params[:q].to_s)}"
-
-        begin
-          companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-            fetch_mine_companies_data(companies_scope)
-          end
-        rescue StandardError => e
-          Rails.logger.error("[CompaniesController#mine] Cache error: #{e.message}")
-          companies_data = fetch_mine_companies_data(companies_scope)
-        end
-
-        render json: companies_data
-      end
-
       def fetch_mine_companies_data(scope)
         scope.map do |company|
           {
@@ -779,11 +743,20 @@ module Api
 
       private
 
-      def fetch_mine_companies_data
-        @company = find_company_by_id_or_slug(params[:id])
-        return if @company
-
-        render json: { error: 'Company not found' }, status: :not_found and return
+      def fetch_mine_companies_data(scope)
+        scope.map do |company|
+          {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            city: company.city,
+            state: company.state,
+            logo_url: company.logo_url,
+            category: company.categories.first&.name,
+            status: company.status,
+            verified: company.verified
+          }
+        end
       end
 
       def company_json_attributes(company)
@@ -981,14 +954,8 @@ module Api
       end
 
       def set_company
-        company = find_company_by_id_or_slug(params[:id])
-        return { error: 'Company not found' } unless company
-
-        days = params[:days]&.to_i || 30
-        data = generate_historical_data(company, days)
-        { data: data }
-      rescue ActiveRecord::RecordNotFound
-        { error: 'Company not found' }
+        @company = find_company_by_id_or_slug(params[:id])
+        render json: { error: 'Company not found' }, status: :not_found unless @company
       end
 
       def reviews_data
