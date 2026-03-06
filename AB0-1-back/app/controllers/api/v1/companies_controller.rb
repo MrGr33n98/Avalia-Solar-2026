@@ -42,7 +42,10 @@ module Api
         @companies = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
           ::Company.active.where(featured: true).limit(10).to_a
         end
-        render json: @companies.map { |c| company_json_attributes(c) }
+        companies_json = @companies.map do |company|
+          company_json_attributes(company)
+        end
+        render json: companies_json
       end
 
       # GET /api/v1/companies/mine
@@ -497,154 +500,6 @@ module Api
           }
         else
           company_detail_payload(company)
-        end
-      end
-
-      # GET /api/v1/companies/:id
-      def show
-        return render json: { error: 'Company not found' }, status: :not_found unless @company
-
-        render json: { company: company_detail_payload(@company) }, status: :ok
-      end
-
-      # GET /api/v1/companies/by_slug/:slug
-      def show_by_slug
-        company = find_company_by_id_or_slug(params[:slug])
-        return render json: { error: 'Company not found' }, status: :not_found unless company
-
-        render json: { company: company_detail_payload(company) }, status: :ok
-      end
-
-      # GET /api/v1/companies/:id/categories
-      def categories
-        cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
-        render json: { categories: cats.as_json }, status: :ok
-      end
-
-      # GET /api/v1/companies/:id/social_proof
-      def social_proof
-        limit = params[:limit].to_i
-        limit = 3 if limit <= 0
-        limit = [limit, 10].min
-
-        cache_key = Review.social_proof_cache_key(@company.id, limit: limit)
-        payload = Rails.cache.fetch(cache_key, expires_in: 20.minutes) do
-          base_scope = @company.reviews.includes(:user).for_social_proof
-          selected = base_scope.limit(limit)
-
-          {
-            company_id: @company.id,
-            company_slug: @company.slug,
-            total_featured_reviews: base_scope.count,
-            generated_at: Time.current.iso8601,
-            reviews: selected.map { |review| social_proof_review_payload(review) }
-          }
-        end
-
-        render json: payload, status: :ok
-      end
-
-      # POST /api/v1/companies
-      def create
-        Rails.logger.info "[Audit] Initing company creation. Params: #{company_params.except(:logo).inspect}"
-        @company = ::Company.new(company_params)
-
-        # Injeta localização da borda (Cloudflare) se não fornecida e verificada
-        if @edge_location.present?
-          @company.city = @edge_location[:city] if @company.city.blank?
-          @company.state = @edge_location[:state] if @company.state.blank?
-
-          # Log para auditoria se a localização foi injetada pela borda
-          if @edge_verified
-            Rails.logger.info "[Audit] Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
-          end
-        end
-
-        @company.status = 'pending' if @company.status.blank?
-
-        if params[:company][:logo].present?
-          Rails.logger.info "[Audit] Company logo detected in request for new company: #{@company.name}"
-        end
-
-        begin
-          ::Company.transaction do
-            if @company.save
-              # Track event
-              Analytics::TrackEventService.call(
-                company_id: @company.id,
-                user: current_user,
-                event_type: 'company_created',
-                metadata: request_metadata.merge(
-                  status: @company.status,
-                  city: @company.city,
-                  state: @company.state
-                )
-              )
-
-              Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
-
-              if @company.logo.attached?
-                Rails.logger.info "[Audit] Photo Flow: Company logo attached successfully for ID #{@company.id}"
-              end
-
-              # FIX #2: Criar CompanyMember owner automaticamente no companies#create com transação
-              if current_user
-                @company.company_members.create!(
-                  user: current_user,
-                  role: :owner
-                )
-                Rails.logger.info "[Audit] User ID #{current_user.id} assigned as owner of Company ID #{@company.id}"
-              end
-
-              PendingChange.create!(
-                company: @company,
-                user_id: current_user&.id,
-                change_type: 'company_create',
-                data: { requested_at: Time.current },
-                status: 'pending'
-              )
-
-              begin
-                AdminUser.find_each do |admin|
-                  NotificationMailer.admin_alert(
-                    admin.email,
-                    'Nova empresa cadastrada',
-                    "Empresa #{@company.name} criada com status pendente em #{Time.current}"
-                  ).deliver_later
-                end
-
-                # Send confirmation email to company
-                ::CompanyMailer.registration_received(@company).deliver_later
-              rescue StandardError => e
-                Rails.logger.warn "[Audit] Notification failure: #{e.message}"
-              end
-
-              company_json = {
-                id: @company.id,
-                slug: @company.slug,
-                name: @company.name,
-                description: @company.description,
-                website: @company.website,
-                phone: @company.phone,
-                address: @company.address,
-                state: @company.state,
-                city: @company.city,
-                status: @company.status,
-                featured: @company.featured,
-                verified: @company.verified
-              }
-              render json: { company: company_json }, status: :created
-            else
-              Rails.logger.warn "[Audit] Company creation failed: #{@company.errors.full_messages.join(', ')}"
-              render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
-            end
-          end
-        rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error "[Audit] RecordInvalid during company creation: #{e.message}"
-          render json: { errors: [e.message] }, status: :unprocessable_entity
-        rescue StandardError => e
-          Rails.logger.error "[Audit] Critical error creating company: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
-          render json: { error: 'Internal Server Error' }, status: :internal_server_error
         end
       end
 
