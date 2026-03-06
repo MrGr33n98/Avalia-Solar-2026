@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { getPreferredCategoryIcon } from './categoryIcons';
+
 
 interface CategoriesMegaMenuProps {
   isOpen: boolean;
@@ -84,7 +84,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-10 gap-y-12"
       >
         {filteredTree.map((category) => {
-          const iconSrc = getPreferredCategoryIcon(category.slug, category.icon_url);
+
           return (
             <motion.div
             key={category.id}
@@ -98,15 +98,8 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
             <Link
               href={`/categories/${category.slug}`}
               onClick={onClose}
-              className="flex items-start gap-3.5 group/parent"
+              className="flex items-start group/parent"
             >
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-blue-50/50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover/parent:bg-blue-600 group-hover/parent:text-white transition-all duration-300 shadow-sm group-hover/parent:shadow-blue-200 overflow-hidden">
-                {iconSrc ? (
-                  <img src={iconSrc} alt={category.name} className="w-full h-full object-contain" />
-                ) : (
-                  <SlidersHorizontal className="h-5 w-5" />
-                )}
-              </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[15px] font-bold text-slate-900 group-hover/parent:text-blue-600 transition-colors truncate leading-tight">
                   {category.name}
@@ -215,7 +208,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                           onClick={onClose}
                           className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-600 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
                         >
-                          <Zap className="h-3 w-3 text-amber-500" />
+
                           {cat.name}
                         </Link>
                       ))}
