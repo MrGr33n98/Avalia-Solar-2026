@@ -77,10 +77,78 @@ monthly_digest_email_job:
   description: 'Send monthly digest emails to companies'
   enabled: true
 
-# Analytics daily aggregation
+# Analytics daily aggregation (LEGACY - Disabling in favor of new workers)
 analytics_daily_aggregation_job:
-  cron: '59 23 * * *'  # Every day at 23:59
+  cron: '59 23 * * *'
   class: AnalyticsDailyAggregationJob
   queue: low
-  description: 'Aggregate analytics_events into company_daily_stats'
+  description: 'Aggregate analytics_events into company_daily_stats (DEPRECATED)'
+  enabled: false
+
+# ==========================================
+# ANALYTICS PIPELINE (TASK-REL-005)
+# ==========================================
+
+# 1. Base Aggregation (Events -> Daily Stats)
+analytics_aggregation_worker:
+  cron: '55 23 * * *'  # Run just before midnight
+  class: Analytics::AggregationWorker
+  queue: analytics
+  description: 'Canonical event aggregation'
+  enabled: true
+
+# 2. Daily Feature Store (Metrics calculation)
+analytics_feature_store_daily_worker:
+  cron: '05 0 * * *'  # Run shortly after midnight
+  class: Analytics::FeatureStoreDailyWorker
+  queue: analytics
+  description: 'Daily feature store update'
+  enabled: true
+
+# 3. Rolling 30d Features (Trends)
+analytics_feature_store_rolling_30d_worker:
+  cron: '15 0 * * *'
+  class: Analytics::FeatureStoreRolling30dWorker
+  queue: analytics
+  description: 'Rolling 30d window trends calculation'
+  enabled: true
+
+# 4. Reputation & Trust Scores
+analytics_trust_score_worker:
+  cron: '25 0 * * *'
+  class: Analytics::TrustScoreWorker
+  queue: analytics
+  description: 'Recalculate trust scores based on data integrity'
+  enabled: true
+
+# 5. Business Ranking
+analytics_ranking_score_worker:
+  cron: '35 0 * * *'
+  class: Analytics::RankingScoreWorker
+  queue: analytics
+  description: 'Recalculate ranking score for company listings'
+  enabled: true
+
+# 6. Anomaly Detection
+analytics_anomaly_daily_worker:
+  cron: '45 0 * * *'
+  class: Analytics::AnomalyDailyWorker
+  queue: analytics
+  description: 'Detect abnormal behavior in daily traffic'
+  enabled: true
+
+# 7. Retention Analysis
+analytics_retention_worker:
+  cron: '00 1 * * *'
+  class: Analytics::RetentionWorker
+  queue: maintenance
+  description: 'Calculate daily retention metrics'
+  enabled: true
+
+# 8. Data Reconciliation (Verification)
+analytics_daily_reconciliation_job:
+  cron: '30 1 * * *'
+  class: Analytics::DailyReconciliationJob
+  queue: default
+  description: 'Audit data integrity between logs and aggregates'
   enabled: true

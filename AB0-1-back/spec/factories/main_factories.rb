@@ -92,4 +92,12 @@ FactoryBot.define do
     association :rating_criterion
     score { 5.0 }
   end
+
+  factory :company_daily_stat do
+    association :company
+    day { Date.yesterday }
+    profile_views { 0 }
+    cta_clicks { 0 }
+    leads { 0 }
+  end
 end

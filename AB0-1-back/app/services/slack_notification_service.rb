@@ -126,4 +126,24 @@ class SlackNotificationService
     ]
     notify(message, attachments)
   end
+
+  def self.notify_reconciliation_alert(reconciliation)
+    message = "🚨 *ALERTA CRÍTICO: Reconciliação de Analytics*"
+    attachments = [
+      {
+        color: '#e74c3c',
+        title: "Discrepância detectada no dia #{reconciliation.day}",
+        fields: [
+          { title: 'Empresa', value: reconciliation.company&.name || "ID: #{reconciliation.company_id}", short: true },
+          { title: 'Métrica', value: reconciliation.metric_name.upcase, short: true },
+          { title: 'Canônico (Stats)', value: reconciliation.canonical_value.to_s, short: true },
+          { title: 'Observado (Logs)', value: reconciliation.observed_value.to_s, short: true },
+          { title: 'Desvio Absoluto', value: reconciliation.delta_abs.to_s, short: true },
+          { title: 'Desvio Percentual', value: "#{reconciliation.delta_percent}%", short: true }
+        ],
+        footer: "Reconciliation ID: #{reconciliation.id}"
+      }
+    ]
+    notify(message, attachments, synchronous: true)
+  end
 end

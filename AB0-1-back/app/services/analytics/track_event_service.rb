@@ -46,8 +46,15 @@ module Analytics
 
       return Result.new(ok: false, error: 'company_id missing for event') if @company_id.blank?
 
-      unless validate_contract!
-        return Result.new(ok: false, error: 'invalid_contract')
+      # Validação de contrato (P0)
+      validation_result = validate_contract!
+      unless validation_result[:ok]
+        log_ingest_error(validation_result[:missing_keys])
+        
+        # Hard mode: Se G4_ANALYTICS_STRICT_MODE=true, bloqueia o evento
+        if ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'
+          return Result.new(ok: false, error: "contract_violation: missing_keys=#{validation_result[:missing_keys].join(',')}")
+        end
       end
       
       unless ensure_unique_event!
@@ -71,12 +78,43 @@ module Analytics
     private
 
     def validate_contract!
-      return true unless ActiveRecord::Base.connection.table_exists?('event_definitions')
-      
       registry = Analytics::EventRegistry.fetch(@event_type)
-      return true if registry.nil?
+      return { ok: true } if registry.nil? # Se não definido, aceita qualquer coisa (Graceful)
       
-      true
+      raw_keys = registry['required_keys']
+      required_keys = case raw_keys
+                      when String then JSON.parse(raw_keys || '[]')
+                      when Array then raw_keys
+                      else []
+                      end
+      
+      required_keys = Array(required_keys).map(&:to_s)
+      missing_keys = required_keys - @metadata.keys.map(&:to_s)
+      
+      { ok: missing_keys.empty?, missing_keys: missing_keys }
+    rescue JSON::ParserError => e
+      Rails.logger.error("[G4-Analytics][Contract] JSON Parse Error for #{@event_type}: #{e.message}")
+      { ok: false, missing_keys: ['INVALID_CONTRACT_JSON'] } # Bloqueia se o JSON estiver quebrado
+    rescue StandardError => e
+      Rails.logger.warn("[G4-Analytics][Contract] Unexpected failure for #{@event_type}: #{e.message}")
+      { ok: true } # Fail-open para outros erros inesperados
+    end
+
+    def log_ingest_error(missing_keys)
+      return unless ActiveRecord::Base.connection.table_exists?('event_ingest_errors')
+      
+      conn = ActiveRecord::Base.connection
+      error_reason = "Missing required keys: #{missing_keys.join(', ')}"
+      
+      sql = <<~SQL
+        INSERT INTO event_ingest_errors (
+          event_id, event_type, payload, error_reason, occurred_at, created_at
+        ) VALUES (
+          #{conn.quote(@event_id)}, #{conn.quote(@event_type)}, #{conn.quote(@metadata.to_json)},
+          #{conn.quote(error_reason)}, #{conn.quote(@occurred_at)}, #{conn.quote(Time.current)}
+        )
+      SQL
+      conn.execute(sql)
     end
 
     def ensure_unique_event!

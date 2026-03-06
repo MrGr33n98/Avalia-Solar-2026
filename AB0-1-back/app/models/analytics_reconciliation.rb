@@ -4,9 +4,9 @@ class AnalyticsReconciliation < ApplicationRecord
 
   belongs_to :company, optional: true
 
-  # Thresholds P0
-  THRESHOLD_WARN = 2.0
-  THRESHOLD_CRITICAL = 5.0
+  # Thresholds P0 (Configurable via ENV)
+  THRESHOLD_WARN = ENV.fetch('ANALYTICS_RECON_WARN', 2.0).to_f
+  THRESHOLD_CRITICAL = ENV.fetch('ANALYTICS_RECON_CRITICAL', 5.0).to_f
 
   def self.calculate_status(delta_percent)
     abs_delta = delta_percent.abs

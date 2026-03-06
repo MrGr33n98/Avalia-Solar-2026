@@ -80,6 +80,9 @@ module Analytics
         "Canonical: #{recon.canonical_value}, Observed: #{recon.observed_value}, " \
         "Delta: #{recon.delta_percent}%"
       )
+
+      # Alerta operacional crítico
+      SlackNotificationService.notify_reconciliation_alert(recon)
     end
 
     def observed_platform_event_count(company_id:, event_type:, range:)
