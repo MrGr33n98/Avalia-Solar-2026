@@ -743,23 +743,7 @@ module Api
 
       private
 
-      def fetch_mine_companies_data(scope)
-        scope.map do |company|
-          {
-            id: company.id,
-            name: company.name,
-            slug: company.slug,
-            city: company.city,
-            state: company.state,
-            logo_url: company.logo_url,
-            category: company.categories.first&.name,
-            status: company.status,
-            verified: company.verified
-          }
-        end
-      end
-
-      def company_json_attributes(company)
+      def fetch_companies_data
         badge_payload = company_badges_payload(company)
         verified_badge_url = company_verified_badge_url(company)
 
