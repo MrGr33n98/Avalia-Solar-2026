@@ -52,6 +52,14 @@ function getCustomIconSrc(category: Category) {
     return '/carport-avalia-solar.png';
   }
 
+  if (key.includes('energia solar') || key.includes('energia-solar')) {
+    return '/energia-solar-avalia-solar.png';
+  }
+
+  if (key.includes('rural')) {
+    return '/rural-avaliasolar.png';
+  }
+
   if ((key.includes('resid') && key.includes('condom')) || key.includes('condominio')) {
     return '/residencial-e-condominio-avalia-solar.png';
   }
