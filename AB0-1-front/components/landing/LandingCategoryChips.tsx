@@ -52,6 +52,18 @@ function getCustomIconSrc(category: Category) {
     return '/carport-avalia-solar.png';
   }
 
+  if ((key.includes('resid') && key.includes('condom')) || key.includes('condominio')) {
+    return '/residencial-e-condominio-avalia-solar.png';
+  }
+
+  if (key.includes('instal') && (key.includes('ev') || key.includes('veic') || key.includes('carreg'))) {
+    return '/instaladores-ev-avalia-solar.png';
+  }
+
+  if (key.includes('instal')) {
+    return '/instaladores-solar-avalia-solar.png';
+  }
+
   if (key.includes('invers') || key.includes('converter')) {
     return '/icon-inversor-avalia-solar.jpeg';
   }
