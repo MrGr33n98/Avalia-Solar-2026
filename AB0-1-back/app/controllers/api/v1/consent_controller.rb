@@ -3,8 +3,6 @@
 module Api
   module V1
     class ConsentController < Api::V1::BaseController
-      skip_before_action :authenticate_api_user, only: [:log, :status]
-      
       # POST /api/v1/consent/log
       def log
         consent_log = ConsentLog.create!(
