@@ -59,4 +59,5 @@ SELECT
   END as description
 FROM stats_with_rolling
 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-  AND avg_7d > 0;
+  AND avg_7d > 0
+ORDER BY date DESC, ABS(COALESCE(pct_change, 0)) DESC;
