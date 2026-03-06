@@ -36,6 +36,251 @@ module Api
         render json: { error: 'Internal server error' }, status: :internal_server_error
       end
 
+      # GET /api/v1/companies/featured
+      def featured
+        cache_key = "companies_featured_v1"
+        @companies = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+          ::Company.active.where(featured: true).limit(10).to_a
+        end
+        render json: @companies.map { |c| company_json_attributes(c) }
+      end
+
+      # GET /api/v1/companies/mine
+      def mine
+        # Use a relation directly to avoid loading everything into memory at once
+        companies_scope = current_user.active_member_companies.includes(:categories)
+
+        if params[:q].present?
+          term = params[:q].to_s.strip
+          companies_scope = companies_scope.where(
+            'LOWER(companies.name) LIKE LOWER(:q) OR LOWER(companies.city) LIKE LOWER(:q)', q: "%#{term}%"
+          )
+        end
+
+        # Cache for 5 minutes as requested, handle cache failures gracefully
+        cache_key = "user_#{current_user.id}_companies_mine_#{Digest::SHA1.hexdigest(params[:q].to_s)}"
+
+        begin
+          companies_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+            fetch_mine_companies_data(companies_scope)
+          end
+        rescue StandardError => e
+          Rails.logger.error("[CompaniesController#mine] Cache error: #{e.message}")
+          companies_data = fetch_mine_companies_data(companies_scope)
+        end
+
+        render json: companies_data
+      end
+
+      # GET /api/v1/companies/:id
+      def show
+        return render json: { error: 'Company not found' }, status: :not_found unless @company
+
+        render json: { company: company_detail_payload(@company) }, status: :ok
+      end
+
+      # GET /api/v1/companies/by_slug/:slug
+      def show_by_slug
+        company = find_company_by_id_or_slug(params[:slug])
+        return render json: { error: 'Company not found' }, status: :not_found unless company
+
+        render json: { company: company_detail_payload(company) }, status: :ok
+      end
+
+      # GET /api/v1/companies/:id/categories
+      def categories
+        cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
+        render json: { categories: cats.as_json }, status: :ok
+      end
+
+      # GET /api/v1/companies/:id/social_proof
+      def social_proof
+        limit = params[:limit].to_i
+        limit = 3 if limit <= 0
+        limit = [limit, 10].min
+
+        cache_key = Review.social_proof_cache_key(@company.id, limit: limit)
+        payload = Rails.cache.fetch(cache_key, expires_in: 20.minutes) do
+          base_scope = @company.reviews.includes(:user).for_social_proof
+          selected = base_scope.limit(limit)
+
+          {
+            company_id: @company.id,
+            company_slug: @company.slug,
+            total_featured_reviews: base_scope.count,
+            generated_at: Time.current.iso8601,
+            reviews: selected.map { |review| social_proof_review_payload(review) }
+          }
+        end
+
+        render json: payload, status: :ok
+      end
+
+      # POST /api/v1/companies
+      def create
+        Rails.logger.info "[Audit] Initing company creation. Params: #{company_params.except(:logo).inspect}"
+        @company = ::Company.new(company_params)
+
+        # Injeta localização da borda (Cloudflare) se não fornecida e verificada
+        if @edge_location.present?
+          @company.city = @edge_location[:city] if @company.city.blank?
+          @company.state = @edge_location[:state] if @company.state.blank?
+
+          # Log para auditoria se a localização foi injetada pela borda
+          if @edge_verified
+            Rails.logger.info "[Audit] Edge Verified Location applied to Company ID #{@company.id}: #{@company.city}/#{@company.state}"
+          end
+        end
+
+        @company.status = 'pending' if @company.status.blank?
+
+        if params[:company][:logo].present?
+          Rails.logger.info "[Audit] Company logo detected in request for new company: #{@company.name}"
+        end
+
+        begin
+          ::Company.transaction do
+            if @company.save
+              # Track event
+              Analytics::TrackEventService.call(
+                company_id: @company.id,
+                user: current_user,
+                event_type: 'company_created',
+                metadata: request_metadata.merge(
+                  status: @company.status,
+                  city: @company.city,
+                  state: @company.state
+                )
+              )
+
+              Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
+
+              if @company.logo.attached?
+                Rails.logger.info "[Audit] Photo Flow: Company logo attached successfully for ID #{@company.id}"
+              end
+
+              # FIX #2: Criar CompanyMember owner automaticamente no companies#create com transação
+              if current_user
+                @company.company_members.create!(
+                  user: current_user,
+                  role: :owner
+                )
+                Rails.logger.info "[Audit] User ID #{current_user.id} assigned as owner of Company ID #{@company.id}"
+              end
+
+              PendingChange.create!(
+                company: @company,
+                user_id: current_user&.id,
+                change_type: 'company_create',
+                data: { requested_at: Time.current },
+                status: 'pending'
+              )
+
+              begin
+                AdminUser.find_each do |admin|
+                  NotificationMailer.admin_alert(
+                    admin.email,
+                    'Nova empresa cadastrada',
+                    "Empresa #{@company.name} criada com status pendente em #{Time.current}"
+                  ).deliver_later
+                end
+
+                # Send confirmation email to company
+                ::CompanyMailer.registration_received(@company).deliver_later
+              rescue StandardError => e
+                Rails.logger.warn "[Audit] Notification failure: #{e.message}"
+              end
+
+              company_json = {
+                id: @company.id,
+                slug: @company.slug,
+                name: @company.name,
+                description: @company.description,
+                website: @company.website,
+                phone: @company.phone,
+                address: @company.address,
+                state: @company.state,
+                city: @company.city,
+                status: @company.status,
+                featured: @company.featured,
+                verified: @company.verified
+              }
+              render json: { company: company_json }, status: :created
+            else
+              Rails.logger.warn "[Audit] Company creation failed: #{@company.errors.full_messages.join(', ')}"
+              render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
+            end
+          end
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "[Audit] RecordInvalid during company creation: #{e.message}"
+          render json: { errors: [e.message] }, status: :unprocessable_entity
+        rescue StandardError => e
+          Rails.logger.error "[Audit] Critical error creating company: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+          render json: { error: 'Internal Server Error' }, status: :internal_server_error
+        end
+      end
+
+      # PATCH/PUT /api/v1/companies/:id
+      def update
+        Rails.logger.info "[Audit] Updating company ID #{@company.id}. User: #{current_user&.id}"
+
+        if params[:company][:logo].present?
+          Rails.logger.info "[Audit] Photo Flow: New logo upload detected for Company ID #{@company.id}"
+        end
+
+        if @company.update(company_params)
+          if @company.logo.attached? && params[:company][:logo].present?
+            Rails.logger.info "[Audit] Photo Flow: Company logo updated successfully for ID #{@company.id}"
+          end
+
+          company_json = {
+            id: @company.id,
+            slug: @company.slug,
+            name: @company.name,
+            description: @company.description,
+            website: @company.website,
+            phone: @company.phone,
+            address: @company.address,
+            state: @company.state,
+            city: @company.city,
+            status: @company.status,
+            featured: @company.featured,
+            verified: @company.verified
+          }
+          render json: { company: company_json }, status: :ok
+        else
+          Rails.logger.warn "[Audit] Company update failed for ID #{@company.id}: #{@company.errors.full_messages.join(', ')}"
+          render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # DELETE /api/v1/companies/:id
+      def destroy
+        @company.destroy
+        head :no_content
+      end
+
+      # GET /api/v1/companies/states
+      def states
+        states = Locations::BrLocations.states.map { |state| state['acronym'] }
+        render json: { states: states }
+      end
+
+      # GET /api/v1/companies/cities
+      def cities
+        state = params[:state].to_s.strip.upcase
+        cities = state.present? ? Locations::BrLocations.cities_for(state) : []
+        render json: { cities: cities }
+      end
+
+      # GET /api/v1/companies/locations
+      def locations
+        locations = ::Company.distinct.pluck(:state, :city).compact
+                             .map { |state, city| { state: state, city: city } }
+                             .sort_by { |loc| [loc[:state], loc[:city]] }
+        render json: { locations: locations }
+      end
+
       private
 
       def fetch_companies_data
@@ -282,6 +527,7 @@ module Api
         render json: { company: company_detail_payload(company) }, status: :ok
       end
 
+      # GET /api/v1/companies/:id/categories
       def categories
         cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
         render json: { categories: cats.as_json }, status: :ok
@@ -475,9 +721,65 @@ module Api
         render json: { locations: locations }
       end
 
+      # GET /api/v1/companies/analytics/historical
+      def analytics_historical
+        days = params[:days]&.to_i || 30
+        cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
+
+        data = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
+          generate_historical_data(@company, days)
+        end
+
+        render json: { data: data }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("analytics_historical error: #{e.message}")
+        render json: { data: [] }, status: :ok
+      end
+
+      # GET /api/v1/companies/analytics/reviews
+      def analytics_reviews
+        render json: reviews_data
+      end
+
+      # GET /api/v1/companies/analytics/competitors
+      def analytics_competitors
+        render json: competitors_data
+      end
+
+      # GET /api/v1/companies/analytics/traffic
+      def analytics_traffic
+        days = params[:days]&.to_i || 30
+        cache_key = "company_#{@company.id}_traffic_#{days}_#{Date.today}"
+
+        sources = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
+          generate_traffic_sources(@company, days)
+        end
+
+        render json: { sources: sources }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("analytics_traffic error: #{e.message}")
+        render json: { sources: [] }, status: :ok
+      end
+
+      # POST /api/v1/companies/request_admin_access
+      def request_admin_access
+        return if authenticate_api_user == false
+        return unless @company
+
+        change = PendingChange.create!(
+          company: @company,
+          user_id: current_user&.id,
+          change_type: 'access_request',
+          data: { requested_at: Time.current },
+          status: 'pending'
+        )
+
+        render json: { message: 'Solicitação enviada para aprovação', pending_change: change }, status: :created
+      end
+
       private
 
-      def set_company
+      def fetch_mine_companies_data
         @company = find_company_by_id_or_slug(params[:id])
         return if @company
 
@@ -625,8 +927,9 @@ module Api
                         }
                       }
                     )
-                  end
-                def company_verified_badge_url(company)
+      end
+
+      def company_verified_badge_url(company)
         return nil unless company.respond_to?(:verified_badge_url)
 
         company.verified_badge_url
@@ -677,62 +980,7 @@ module Api
         params.require(:company).permit(*permitted)
       end
 
-      public
-
-      def analytics_historical
-        days = params[:days]&.to_i || 30
-        cache_key = "company_#{@company.id}_historical_#{days}_#{Date.today}"
-
-        data = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
-          generate_historical_data(@company, days)
-        end
-
-        render json: { data: data }, status: :ok
-      rescue StandardError => e
-        Rails.logger.error("analytics_historical error: #{e.message}")
-        render json: { data: [] }, status: :ok
-      end
-
-      def analytics_reviews
-        render json: reviews_data
-      end
-
-      def analytics_competitors
-        render json: competitors_data
-      end
-
-      def analytics_traffic
-        days = params[:days]&.to_i || 30
-        cache_key = "company_#{@company.id}_traffic_#{days}_#{Date.today}"
-
-        sources = Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
-          generate_traffic_sources(@company, days)
-        end
-
-        render json: { sources: sources }, status: :ok
-      rescue StandardError => e
-        Rails.logger.error("analytics_traffic error: #{e.message}")
-        render json: { sources: [] }, status: :ok
-      end
-
-      def request_admin_access
-        return if authenticate_api_user == false
-        return unless @company
-
-        change = PendingChange.create!(
-          company: @company,
-          user_id: current_user&.id,
-          change_type: 'access_request',
-          data: { requested_at: Time.current },
-          status: 'pending'
-        )
-
-        render json: { message: 'Solicitação enviada para aprovação', pending_change: change }, status: :created
-      end
-
-      private
-
-      def historical_data
+      def set_company
         company = find_company_by_id_or_slug(params[:id])
         return { error: 'Company not found' } unless company
 
