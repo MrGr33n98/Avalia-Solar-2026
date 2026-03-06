@@ -298,6 +298,8 @@ Rails.application.routes.draw do
           post :vote
         end
       end
+
+      resources :seo_pages, param: :slug, only: [:show]
     end
   end
 

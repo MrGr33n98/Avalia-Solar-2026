@@ -80,7 +80,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^14.2.34",
+    "@next/bundle-analyzer": "^14.2.35",
     "@playwright/test": "^1.53.2",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@testing-library/jest-dom": "^6.8.0",
