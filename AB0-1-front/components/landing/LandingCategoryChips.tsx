@@ -2,6 +2,7 @@
 
 import { useMemo, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   BatteryCharging,
   ChevronRight,
@@ -36,6 +37,22 @@ function getIconForCategory(category: Category) {
   if (key.includes('instal') || key.includes('install')) return Wrench;
   if (key.includes('off') || key.includes('grid')) return PlugZap;
   return LayoutGrid;
+}
+
+function getCustomIconSrc(category: Category) {
+  const name = (category?.name || '').toLowerCase();
+  const slug = (category?.seo_url || '').toLowerCase();
+  const key = `${name} ${slug}`;
+
+  if ((key.includes('carreg') && key.includes('resid')) || key.includes('wallbox')) {
+    return '/carregadores-residenciais-e-wallbox.jpeg';
+  }
+
+  if (key.includes('invers') || key.includes('converter')) {
+    return '/icon-inversor-avalia-solar.jpeg';
+  }
+
+  return null;
 }
 
 export default function LandingCategoryChips({
@@ -83,6 +100,7 @@ export default function LandingCategoryChips({
             {items.map((category) => {
               const href = buildCategoryPath(category?.seo_url, category?.id);
               const Icon = getIconForCategory(category);
+              const customIconSrc = getCustomIconSrc(category);
               return (
                 <Link
                   key={category.id}
@@ -91,7 +109,17 @@ export default function LandingCategoryChips({
                   role="listitem"
                   aria-label={category.name}
                 >
-                  <Icon className="h-5 w-5 text-blue-600" />
+                  {customIconSrc ? (
+                    <Image
+                      src={customIconSrc}
+                      alt={`Icon - ${category.name}`}
+                      width={20}
+                      height={20}
+                      className="h-5 w-5 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <Icon className="h-5 w-5 text-blue-600" />
+                  )}
                   <span className="text-sm font-medium text-slate-900">{category.name}</span>
                 </Link>
               );
