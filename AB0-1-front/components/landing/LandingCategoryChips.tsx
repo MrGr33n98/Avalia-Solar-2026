@@ -48,6 +48,10 @@ function getCustomIconSrc(category: Category) {
     return '/carregadores-residenciais-e-wallbox.jpeg';
   }
 
+  if (key.includes('carport')) {
+    return '/carport-avalia-solar.png';
+  }
+
   if (key.includes('invers') || key.includes('converter')) {
     return '/icon-inversor-avalia-solar.jpeg';
   }
