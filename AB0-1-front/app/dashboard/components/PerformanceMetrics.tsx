@@ -29,7 +29,7 @@ import CTABreakdownChart from './CTABreakdownChart';
 import TopCampaignsCard from './TopCampaignsCard';
 import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
 import ExportButton from './ExportButton';
-import { useQuery } from '@tantml:react-query';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import '../styles/print.css';
 
