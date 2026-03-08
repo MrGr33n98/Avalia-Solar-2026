@@ -281,4 +281,127 @@ namespace :analytics do
     puts "[Analytics Quality Check] Failed: #{e.message}"
     exit 1
   end
+
+  desc 'Import engagement metrics from GA4'
+  task import_ga4_metrics: :environment do
+    puts '🔄 Importing GA4 engagement metrics...'
+    
+    companies_with_ga4 = Company.where.not(ga4_property_id: nil)
+    
+    if companies_with_ga4.empty?
+      puts '⚠️  No companies with GA4 property configured'
+      exit
+    end
+
+    success_count = 0
+    error_count = 0
+
+    companies_with_ga4.find_each do |company|
+      print "Processing #{company.name} (#{company.ga4_property_id})... "
+      
+      metrics = GA4Service.fetch_engagement_metrics(
+        property_id: company.ga4_property_id,
+        start_date: 30.days.ago.to_date,
+        end_date: Date.current
+      )
+
+      if metrics
+        company.update!(
+          ga4_last_sync: Time.current,
+          engagement_metrics: metrics
+        )
+        
+        puts '✅ Success'
+        success_count += 1
+      else
+        puts '❌ Failed'
+        error_count += 1
+      end
+    rescue StandardError => e
+      puts "❌ Error: #{e.message}"
+      error_count += 1
+    end
+
+    puts "\n📊 Summary:"
+    puts "   Success: #{success_count}"
+    puts "   Errors: #{error_count}"
+  end
+
+  desc 'Backfill company_daily_stats from analytics_events'
+  task backfill_daily_stats: :environment do
+    puts '🔄 Backfilling company_daily_stats...'
+    
+    start_date = 90.days.ago.to_date
+    end_date = Date.current
+
+    (start_date..end_date).each do |date|
+      print "Processing #{date}... "
+      
+      aggregated = AnalyticsEvent
+        .where('DATE(tracked_at) = ?', date)
+        .group(:company_id, :event_type)
+        .count
+
+      aggregated.each do |(company_id, event_type), count|
+        stat = CompanyDailyStat.find_or_initialize_by(
+          company_id: company_id,
+          date: date
+        )
+
+        case event_type
+        when 'profile_view', 'Company Profile Viewed'
+          stat.profile_views = (stat.profile_views || 0) + count
+        when 'cta_click', 'CTA Clicked'
+          stat.cta_clicks = (stat.cta_clicks || 0) + count
+        when 'whatsapp_click', 'WhatsApp CTA Clicked'
+          stat.whatsapp_clicks = (stat.whatsapp_clicks || 0) + count
+        when 'Email CTA Clicked'
+          stat.email_clicks = (stat.email_clicks || 0) + count
+        when 'Phone CTA Clicked'
+          stat.phone_clicks = (stat.phone_clicks || 0) + count
+        when 'Website CTA Clicked'
+          stat.website_clicks = (stat.website_clicks || 0) + count
+        when 'lead_created', 'Lead Form Submitted', 'Quote Request CTA Clicked'
+          stat.leads = (stat.leads || 0) + count
+        end
+
+        stat.save!
+      end
+
+      puts "✅ #{aggregated.size} events"
+    end
+
+    puts "\n✅ Backfill complete!"
+  end
+
+  desc 'Generate test analytics data'
+  task generate_test_data: :environment do
+    puts '🧪 Generating test analytics data...'
+    
+    company = Company.first
+    unless company
+      puts '❌ No companies found'
+      exit
+    end
+
+    (30.days.ago.to_date..Date.current).each do |date|
+      stat = CompanyDailyStat.find_or_create_by!(
+        company_id: company.id,
+        date: date
+      )
+
+      base_views = rand(100..500)
+      stat.update!(
+        profile_views: base_views,
+        cta_clicks: (base_views * rand(0.15..0.25)).to_i,
+        whatsapp_clicks: (base_views * rand(0.08..0.15)).to_i,
+        email_clicks: (base_views * rand(0.03..0.06)).to_i,
+        phone_clicks: (base_views * rand(0.02..0.04)).to_i,
+        website_clicks: (base_views * rand(0.01..0.03)).to_i,
+        leads: (base_views * rand(0.02..0.05)).to_i
+      )
+    end
+
+    puts "✅ Generated 30 days of test data for #{company.name}"
+  end
 end

@@ -5,9 +5,17 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
   ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital].freeze
   CORE_CONVERSION_EVENT_MAP = {
     'profile_view' => :profile_views,
+    'Company Profile Viewed' => :profile_views,
     'cta_click' => :cta_clicks,
+    'CTA Clicked' => :cta_clicks,
     'whatsapp_click' => :whatsapp_clicks,
-    'lead_created' => :leads
+    'WhatsApp CTA Clicked' => :whatsapp_clicks,
+    'Email CTA Clicked' => :email_clicks,
+    'Phone CTA Clicked' => :phone_clicks,
+    'Website CTA Clicked' => :website_clicks,
+    'lead_created' => :leads,
+    'Lead Form Submitted' => :leads,
+    'Quote Request CTA Clicked' => :leads
   }.freeze
 
   # POST /api/v1/events/track
@@ -139,11 +147,21 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     case raw.to_s
     when 'view'
       'profile_view'
+    when 'Company Profile Viewed'
+      'profile_view'
     when 'click'
       'cta_click'
-    when 'whatsapp_click'
+    when 'CTA Clicked'
+      'cta_click'
+    when 'whatsapp_click', 'WhatsApp CTA Clicked'
       'whatsapp_click'
-    when 'lead'
+    when 'Email CTA Clicked'
+      'Email CTA Clicked'
+    when 'Phone CTA Clicked'
+      'Phone CTA Clicked'
+    when 'Website CTA Clicked'
+      'Website CTA Clicked'
+    when 'lead', 'Lead Form Submitted', 'Quote Request CTA Clicked'
       'lead_created'
     when 'review'
       'review_created'

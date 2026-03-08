@@ -6,6 +6,7 @@ import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
 import { track } from '@/lib/analytics/lazy';
+import { trackCTAClick } from '@/lib/analytics/track-cta';
 
 
 interface CompanySidebarProps {
@@ -51,6 +52,15 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
                 <a 
                   href={`tel:${company.phone.replace(/\D/g, '')}`} 
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4"
+                  onClick={async (e) => {
+                    await trackCTAClick({
+                      ctaType: 'phone',
+                      ctaLocation: 'sidebar',
+                      companyId: String(company.id),
+                      companyName: company.name,
+                      phoneNumber: company.phone,
+                    });
+                  }}
                 >
                   {company.phone}
                 </a>
@@ -70,6 +80,15 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1.5 hover:underline decoration-primary/30 underline-offset-4 truncate w-full"
+                  onClick={async (e) => {
+                    await trackCTAClick({
+                      ctaType: 'website',
+                      ctaLocation: 'sidebar',
+                      companyId: String(company.id),
+                      companyName: company.name,
+                      destinationUrl: company.website,
+                    });
+                  }}
                 >
                   <span className="truncate">{formatUrl(company.website)}</span>
                   <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-50" />
@@ -107,6 +126,15 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
                 <a 
                   href={`mailto:${company.email || company.email_public}`}
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate block"
+                  onClick={async (e) => {
+                    await trackCTAClick({
+                      ctaType: 'email',
+                      ctaLocation: 'sidebar',
+                      companyId: String(company.id),
+                      companyName: company.name,
+                      email: company.email || company.email_public,
+                    });
+                  }}
                 >
                   {company.email || company.email_public}
                 </a>

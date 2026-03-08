@@ -20,6 +20,11 @@ module Api
             views_30d: views,
             cta_clicks_30d: stats[:cta_clicks].to_i,
             whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
+            email_clicks_30d: stats[:email_clicks].to_i,
+            phone_clicks_30d: stats[:phone_clicks].to_i,
+            website_clicks_30d: stats[:website_clicks].to_i,
+            unique_views_30d: stats[:unique_views].to_i,
+            returning_views_30d: stats[:returning_views].to_i,
             leads_30d: leads,
             conversion_rate: conversion,
             data_source: 'company_daily_stats'

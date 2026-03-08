@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
+import { trackCTAClick, trackCompanyProfileView } from '@/lib/analytics/track-cta';
 import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
@@ -80,7 +81,14 @@ export default function CompanyHero({
 
   useEffect(() => {
     setBadgeImageError(false);
-  }, [company.id, heroBadgeUrl]);
+    
+    // Track company profile view on mount
+    trackCompanyProfileView(
+      String(company.id),
+      company.name,
+      company.category_id ? String(company.category_id) : undefined
+    );
+  }, [company.id, company.name, company.category_id, heroBadgeUrl]);
 
   const handleShare = async () => {
     track('company_share_click', {
@@ -281,14 +289,20 @@ export default function CompanyHero({
                   <Button
                     size="default"
                     className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"
-                    onClick={() =>
+                    onClick={async () => {
+                      await trackCTAClick({
+                        ctaType: 'quote',
+                        ctaLocation: 'hero',
+                        companyId: String(company.id),
+                        companyName: company.name,
+                      });
                       openLeadModal({
                         preferredCompanyId: company.id,
                         categoryId: wizardCategoryId,
                         source: 'company-hero',
                         type: 'wizard'
-                      })
-                    }
+                      });
+                    }}
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Solicitar orçamento

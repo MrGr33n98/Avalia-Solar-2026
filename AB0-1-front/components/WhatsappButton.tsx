@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/lazy';
+import { trackCTAClick, addUTMToUrl } from '@/lib/analytics/track-cta';
 import { appendUtm } from '@/lib/analytics/utm';
 
 type Styles = {
@@ -95,7 +96,7 @@ export default function WhatsappButton({
     </svg>
   );
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : undefined);
     let link = (href || '').trim();
     if (link && !/^https?:\/\//i.test(link)) {
@@ -106,6 +107,20 @@ export default function WhatsappButton({
       }
       link = digits ? `https://wa.me/${digits}` : '';
     }
+    
+    // NEW: Track with unified CTA tracking
+    if (companyId) {
+      await trackCTAClick({
+        ctaType: 'whatsapp',
+        ctaLocation: path?.includes('/companies/') ? 'hero' : 'other',
+        companyId: String(companyId),
+        companyName: '', // Will be filled by context if available
+        destinationUrl: link,
+        phoneNumber: href,
+      });
+    }
+    
+    // OLD: Keep legacy tracking for compatibility
     track('whatsapp_click', {
       button_label: label || 'WhatsApp',
       destination_url: link,
@@ -117,12 +132,12 @@ export default function WhatsappButton({
       page_path: path
     });
 
-    // Opcional: anexar UTMs quando o link for http/https
+    // Add UTMs to destination URL
     if (link) {
       try {
-        link = appendUtm(link);
+        link = addUTMToUrl(link, 'whatsapp');
       } catch (err) {
-        console.warn('[WhatsappButton] appendUtm failed', err);
+        console.warn('[WhatsappButton] addUTMToUrl failed', err);
       }
     }
 

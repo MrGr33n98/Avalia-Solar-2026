@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,11 +17,21 @@ import {
   Mail,
   Globe,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Printer
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import StatsCard from './StatsCard';
 import { useCompanyAnalytics } from '../hooks/useCompanyAnalytics';
+import TimeSeriesChart from './TimeSeriesChart';
+import CTABreakdownChart from './CTABreakdownChart';
+import TopCampaignsCard from './TopCampaignsCard';
+import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
+import ExportButton from './ExportButton';
+import { useQuery } from '@tantml:react-query';
+import { fetchApi } from '@/lib/api';
+import '../styles/print.css';
 
 interface PerformanceMetricsProps {
   companyId: string;
@@ -53,7 +63,38 @@ interface Metrics {
 }
 
 export default function PerformanceMetrics({ companyId, themeMode = 'light' }: PerformanceMetricsProps) {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [timeRange, setTimeRange] = useState<DateRangePreset>('30d');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>();
+  
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(`analytics-date-range-${companyId}`);
+    if (saved) {
+      try {
+        const { preset, customRange } = JSON.parse(saved);
+        setTimeRange(preset);
+        if (customRange) {
+          setCustomDateRange({
+            from: new Date(customRange.from),
+            to: new Date(customRange.to),
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load saved date range:', e);
+      }
+    }
+  }, [companyId]);
+
+  // Save to localStorage when changed
+  const handleDateRangeChange = (preset: DateRangePreset, customRange?: { from: Date; to: Date }) => {
+    setTimeRange(preset);
+    setCustomDateRange(customRange);
+    
+    localStorage.setItem(
+      `analytics-date-range-${companyId}`,
+      JSON.stringify({ preset, customRange })
+    );
+  };
   
   const { data: analyticsData, loading, error, refresh } = useCompanyAnalytics({
     companyId,
@@ -61,16 +102,29 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
     refreshInterval: 30000,
   });
 
+  // Fetch timeseries data for charts
+  const { data: timeseriesData, isLoading: timeseriesLoading } = useQuery({
+    queryKey: ['analytics-timeseries', companyId, timeRange],
+    queryFn: async () => {
+      const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+      const response = await fetchApi<{ data: any[] }>('/company_dashboard/analytics/timeseries', {
+        params: { company_id: companyId, days }
+      });
+      return response.data || [];
+    },
+    enabled: Boolean(companyId),
+  });
+
   const metrics: Metrics = {
     profileViews: {
       total: analyticsData?.views_30d || 0,
-      trend: 0,
-      unique: Math.floor((analyticsData?.views_30d || 0) * 0.76),
-      returning: Math.floor((analyticsData?.views_30d || 0) * 0.24),
+      trend: analyticsData?.views_trend || 0,
+      unique: analyticsData?.unique_views_30d || 0,
+      returning: analyticsData?.returning_views_30d || 0,
     },
     ctaClicks: {
       total: analyticsData?.cta_clicks_30d || 0,
-      trend: 0,
+      trend: analyticsData?.cta_clicks_trend || 0,
       byType: [
         { 
           type: 'whatsapp', 
@@ -79,32 +133,23 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         },
         { 
           type: 'email', 
-          count: Math.floor(((analyticsData?.cta_clicks_30d || 0) - (analyticsData?.whatsapp_clicks_30d || 0)) * 0.5), 
+          count: analyticsData?.email_clicks_30d || 0, 
           label: 'Email' 
         },
         { 
           type: 'phone', 
-          count: Math.floor(((analyticsData?.cta_clicks_30d || 0) - (analyticsData?.whatsapp_clicks_30d || 0)) * 0.3), 
+          count: analyticsData?.phone_clicks_30d || 0, 
           label: 'Telefone' 
         },
         { 
           type: 'website', 
-          count: Math.floor(((analyticsData?.cta_clicks_30d || 0) - (analyticsData?.whatsapp_clicks_30d || 0)) * 0.2), 
+          count: analyticsData?.website_clicks_30d || 0, 
           label: 'Website' 
         },
       ],
     },
-    engagement: {
-      avgTimeOnPage: 245,
-      bounceRate: 34,
-      pagesPerSession: 2.8,
-    },
-    sources: [
-      { source: 'Busca Orgânica', visits: Math.floor((analyticsData?.views_30d || 0) * 0.396), percentage: 39.6 },
-      { source: 'Direto', visits: Math.floor((analyticsData?.views_30d || 0) * 0.30), percentage: 30.0 },
-      { source: 'Redes Sociais', visits: Math.floor((analyticsData?.views_30d || 0) * 0.20), percentage: 20.0 },
-      { source: 'Referral', visits: Math.floor((analyticsData?.views_30d || 0) * 0.104), percentage: 10.4 },
-    ],
+    engagement: analyticsData?.engagement || null,
+    sources: analyticsData?.traffic_sources || [],
   };
 
   const isDark = themeMode === 'dark';
@@ -158,6 +203,44 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
 
   return (
     <div className="space-y-6">
+      {/* Print Header - Hidden on screen */}
+      <div className="print-header hidden">
+        <h1>Relatório de Analytics</h1>
+        <p>Gerado em {new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' })}</p>
+      </div>
+
+      {/* Header with filters */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+        <div>
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+            Métricas de Performance
+          </h2>
+          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+            Acompanhe o desempenho do seu perfil
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <DateRangePicker
+            value={timeRange}
+            customRange={customDateRange}
+            onChange={handleDateRangeChange}
+          />
+          <ExportButton
+            timeseriesData={timeseriesData}
+            aggregatedData={analyticsData}
+            companyName="Empresa"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="print-button"
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir
+          </Button>
+        </div>
+      </div>
       {/* Time Range Selector */}
       <div className="flex justify-between items-center">
         <div>
@@ -243,44 +326,72 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         {/* Avg Time on Page */}
         <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
           <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
-                <Calendar className={`h-6 w-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+            {metrics.engagement ? (
+              <>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-xl ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
+                    <Calendar className={`h-6 w-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                  </div>
+                </div>
+                <div>
+                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                    Tempo Médio
+                  </p>
+                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                    {formatTime(metrics.engagement.avgTimeOnPage)}
+                  </p>
+                  <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    {metrics.engagement.pagesPerSession.toFixed(1)} páginas/sessão
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
+                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  Dados de Engajamento
+                </p>
+                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}>
+                  Configure GA4 para visualizar
+                </p>
               </div>
-            </div>
-            <div>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
-                Tempo Médio
-              </p>
-              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                {formatTime(metrics.engagement.avgTimeOnPage)}
-              </p>
-              <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                {metrics.engagement.pagesPerSession.toFixed(1)} páginas/sessão
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Bounce Rate */}
         <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
           <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'}`}>
-                <ArrowUpRight className={`h-6 w-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+            {metrics.engagement ? (
+              <>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-xl ${isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'}`}>
+                    <ArrowUpRight className={`h-6 w-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                  </div>
+                </div>
+                <div>
+                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                    Taxa de Rejeição
+                  </p>
+                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                    {metrics.engagement.bounceRate}%
+                  </p>
+                  <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    {metrics.engagement.bounceRate < 40 ? 'Excelente' : metrics.engagement.bounceRate < 60 ? 'Bom' : 'Pode melhorar'}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
+                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  Taxa de Rejeição
+                </p>
+                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}>
+                  Configure GA4 para visualizar
+                </p>
               </div>
-            </div>
-            <div>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
-                Taxa de Rejeição
-              </p>
-              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                {metrics.engagement.bounceRate}%
-              </p>
-              <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
-                {metrics.engagement.bounceRate < 40 ? 'Excelente' : metrics.engagement.bounceRate < 60 ? 'Bom' : 'Pode melhorar'}
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -357,6 +468,11 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
             <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
               Fontes de Tráfego
             </CardTitle>
+            {(!metrics.sources || metrics.sources.length === 0) && (
+              <CardDescription className={isDark ? 'text-slate-400' : ''}>
+                Dados indisponíveis - implemente UTM tracking
+              </CardDescription>
+            )}
             <CardDescription className={isDark ? 'text-slate-400' : ''}>
               De onde vêm seus visitantes
             </CardDescription>
@@ -448,6 +564,37 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
           </CardContent>
         </Card>
       </div>
+
+      {/* Time Series Chart - NEW */}
+      <TimeSeriesChart
+        data={timeseriesData || []}
+        loading={timeseriesLoading}
+        themeMode={themeMode}
+        title="Evolução de Métricas"
+        description="Acompanhe visualizações, CTAs e leads ao longo do tempo"
+        showLines={['views', 'cta_clicks', 'leads']}
+      />
+
+      {/* CTA Breakdown Chart - NEW */}
+      <CTABreakdownChart
+        data={{
+          whatsapp_clicks: analyticsData?.whatsapp_clicks_30d || 0,
+          email_clicks: analyticsData?.email_clicks_30d || 0,
+          phone_clicks: analyticsData?.phone_clicks_30d || 0,
+          website_clicks: analyticsData?.website_clicks_30d || 0,
+        }}
+        loading={loading}
+        themeMode={themeMode}
+        title="Performance por Tipo de CTA"
+        description="Quais CTAs geram mais engajamento?"
+      />
+
+      {/* Top Campaigns Card - NEW */}
+      <TopCampaignsCard
+        companyId={companyId}
+        themeMode={themeMode}
+        limit={5}
+      />
     </div>
   );
 }
