@@ -110,16 +110,27 @@ export default function CompanyCard({
   }, [id, name, company.slug, category, ctaVisible]);
 
   // Track impression
-  useEffect(() => {
-    if (id) {
-      track('company_card_impression', {
-        company_id: id,
-        company_name: name,
-        company_slug: company.slug,
-        category: category
-      });
-    }
-  }, [id, name, company.slug, category]);
+  // Impression tracking via IntersectionObserver
+  const cardRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    
+    // Only track if impression tracking is enabled (default true)
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        track('company_card_impression', {
+          company_id: id,
+          company_name: name,
+          verified: company.verified,
+          view_mode: compact ? 'list' : 'grid',
+          company_slug: company.slug,
+          category: category
+        });
+        observer.disconnect();
+      }
+    }, { threshold: 0.1 });
+    
+    observer.observe(node);
+  }, [id, name, company.verified, compact, company.slug, category]);
 
   const rating = average_rating?.toFixed(1) ?? '0.0';
   const totalReviews = rating_count || 0;
@@ -280,6 +291,17 @@ export default function CompanyCard({
   };
 
   return (
+    <div 
+      ref={cardRef}
+      className={cn(
+        "group relative flex flex-col h-full bg-white transition-all duration-300",
+        "border border-slate-200 hover:border-brand-blue/30 rounded-2xl overflow-hidden",
+        "hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]",
+        compact ? "flex-row h-[200px]" : "flex-col",
+        className
+      )}
+      data-testid={`company-card-${id}`}
+    >
     <Card
       className={cn(
         'relative flex flex-col bg-clay-surface border border-clay-shadow-light smooth-transition clay-card hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
@@ -580,5 +602,6 @@ export default function CompanyCard({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

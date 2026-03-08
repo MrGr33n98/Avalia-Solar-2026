@@ -35,7 +35,14 @@ class Company < ApplicationRecord
   # =========================
   # Associations
   # =========================
-  has_and_belongs_to_many :categories, join_table: :categories_companies
+  has_and_belongs_to_many :categories, join_table: :categories_companies,
+                                      after_add: :update_category_metrics,
+                                      after_remove: :update_category_metrics
+
+  def update_category_metrics(category)
+    category.update_metrics! if category.respond_to?(:update_metrics!)
+  end
+
   has_many :reviews, dependent: :destroy
   has_many :review_aggregates, dependent: :destroy
   has_many :pending_changes, dependent: :destroy
@@ -210,12 +217,7 @@ class Company < ApplicationRecord
   end
 
   def recalculate_rating_cache!
-    new_rating = reviews.approved.average(:rating).to_f.round(2)
-    new_count = reviews.approved.count
-
-    update_columns(rating_avg: new_rating, rating_count: new_count)
-
-    # Update associated categories metrics
+    Reviews::AggregationService.new(self, nil).recalculate!
     categories.each(&:update_metrics!)
   end
 

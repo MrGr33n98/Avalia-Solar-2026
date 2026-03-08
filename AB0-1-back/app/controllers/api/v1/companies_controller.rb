@@ -503,7 +503,9 @@ module Api
       # Serializer used by index/featured endpoints
       def company_json_attributes(company)
         if params[:fields].to_s == 'card'
-          primary_category = company.categories.first
+          # Use preloaded association to avoid N+1
+          categories_array = company.categories.to_a
+          primary_category = categories_array.first
           {
             id: company.id,
             slug: company.slug,
@@ -517,7 +519,7 @@ module Api
             logo_url: company.logo_url,
             banner_url: company.banner_url,
             primary_category: primary_category&.name,
-            category_ids: company.categories.limit(5).pluck(:id)
+            category_ids: categories_array.take(5).map(&:id)
           }
         else
           company_detail_payload(company)
@@ -624,9 +626,11 @@ module Api
       end
 
       def reviews_data
-        company = find_company_by_id_or_slug(params[:id])
+        # Use @company if already set by before_action
+        company = @company || find_company_by_id_or_slug(params[:id])
         return { error: 'Company not found' } unless company
 
+        # Use preloaded reviews if available, or just the association
         reviews = company.reviews.includes(:user)
         distribution = reviews.group(:rating).count
         {

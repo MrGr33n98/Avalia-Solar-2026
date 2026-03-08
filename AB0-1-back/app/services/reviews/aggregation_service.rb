@@ -39,6 +39,12 @@ module Reviews
       # Se recalculei uma categoria, dispara a atualização do Bucket Global (category_id: nil)
       if @category.present?
         self.class.new(@company, nil).recalculate!
+      else
+        # Sync to Company denormalized cache for high-performance listing access
+        @company.update_columns(
+          rating_avg: aggregate.average_rating,
+          rating_count: aggregate.total_reviews
+        )
       end
     end
 
