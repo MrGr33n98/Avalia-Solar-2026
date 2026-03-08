@@ -1,340 +1,160 @@
 /**
- * Data Layer Utilities
+ * Data Layer Utilities - Google Tag Manager (GTM) & GA4
  * 
- * Funções auxiliares para interagir com o Google Tag Manager Data Layer
- * Fornece type-safe data layer pushes
+ * Funções auxiliares padronizadas para o ecossistema Google.
+ * Segue as recomendações de nomenclatura do GA4 e triggers do GTM.
  */
 
-// Tipos do Data Layer
-export interface PageData {
-  type: 'homepage' | 'category' | 'company' | 'product' | 'dashboard' | 'auth' | 'other';
-  path: string;
-  title: string;
-  referrer?: string;
-  language?: string;
-  sections?: string[];
+export interface GTMEvent {
+  event: string;
+  [key: string]: any;
 }
 
-export interface UserData {
-  id?: string | null;
-  type?: 'company' | 'user' | 'admin' | 'guest' | null;
-  registrationDate?: string | null;
-  subscriptionPlan?: 'free' | 'basic' | 'premium' | null;
-  subscriptionStatus?: 'active' | 'expired' | 'trial' | null;
+/**
+ * Push padrão para o Data Layer com suporte a triggers do GTM
+ */
+export function pushToDataLayer(data: GTMEvent): void {
+  if (typeof window === 'undefined') return;
+  
+  window.dataLayer = window.dataLayer || [];
+  
+  // Adiciona timestamp automático se não existir
+  const payload = {
+    ...data,
+    gtm_timestamp: new Date().toISOString(),
+  };
+
+  window.dataLayer.push(payload);
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[GTM-Push]:', payload);
+  }
 }
 
-export interface SessionData {
-  id: string;
-  timestamp: number;
-  isNewSession: boolean;
-}
+// === Conversões Primárias (Receita) ===
 
-export interface CategoryData {
-  id: number | string;
-  name: string;
-  slug: string;
-  companiesCount?: number;
-  productsCount?: number;
-}
-
-export interface CompanyData {
-  id: number | string;
-  name: string;
-  slug: string;
+/**
+ * Quando um lead é gerado com sucesso
+ */
+export function trackLeadSuccess(data: {
+  lead_id?: string;
+  value?: number;
+  currency?: string;
   category?: string;
   city?: string;
-  state?: string;
-  rating?: number;
-  reviewsCount?: number;
-  productsCount?: number;
-  verified?: boolean;
+}) {
+  pushToDataLayer({
+    event: 'generate_lead',
+    ...data
+  });
 }
 
-export interface ProductData {
-  item_id: string;
-  item_name: string;
-  item_brand?: string;
-  item_category?: string;
-  item_category2?: string;
-  price: number;
-  quantity?: number;
-  item_list_name?: string;
-  item_list_id?: string;
-  index?: number;
+/**
+ * Clique em contato direto (WhatsApp ou Telefone)
+ */
+export function trackContactClick(method: 'whatsapp' | 'phone', company: {
+  id: string | number;
+  name: string;
+}) {
+  pushToDataLayer({
+    event: 'contact_click',
+    contact_type: method,
+    item_id: String(company.id),
+    item_name: company.name,
+    content_type: 'company_contact'
+  });
 }
 
-export interface EcommerceData {
-  currency?: string;
-  value?: number;
-  items?: ProductData[];
+// === Micro-Tracking & Intenção ===
+
+/**
+ * Quando o usuário inicia o Wizard mas ainda não converteu
+ */
+export function trackWizardStart(wizardId: string, source: string) {
+  pushToDataLayer({
+    event: 'begin_checkout',
+    wizard_id: wizardId,
+    source_location: source
+  });
 }
 
-// Declaração do window.dataLayer
-declare global {
-  interface Window {
-    dataLayer: any[];
+/**
+ * Rastreia buscas, incluindo as que não retornam resultados
+ */
+export function trackSearchPerformance(term: string, resultsCount: number) {
+  pushToDataLayer({
+    event: 'search_performance',
+    search_term: term,
+    results_count: resultsCount,
+    has_results: resultsCount > 0
+  });
+  
+  if (resultsCount === 0) {
+    pushToDataLayer({
+      event: 'search_no_results',
+      search_term: term
+    });
   }
 }
 
 /**
- * Inicializa o Data Layer
- * Deve ser chamado apenas uma vez no carregamento inicial
+ * Micro-interação com FAQs
  */
-export function initializeDataLayer(): void {
-  if (typeof window === 'undefined') return;
-  
-  window.dataLayer = window.dataLayer || [];
-}
-
-/**
- * Push genérico para o Data Layer
- */
-export function pushToDataLayer(data: Record<string, any>): void {
-  if (typeof window === 'undefined') return;
-  
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(data);
-  
-  // Debug em desenvolvimento
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[GTM] Data Layer Push:', data);
-  }
-}
-
-/**
- * Track Page View
- * Deve ser chamado em cada navegação de página
- */
-export function trackPageView(
-  page: PageData,
-  user?: UserData,
-  additionalData?: Record<string, any>
-): void {
+export function trackFaqEngagement(action: 'expand' | 'vote_up' | 'vote_down', question: string) {
   pushToDataLayer({
-    event: 'page_view',
-    page,
-    user: user || {
-      id: null,
-      type: 'guest',
-      registrationDate: null,
-      subscriptionPlan: null,
-      subscriptionStatus: null,
-    },
-    session: {
-      id: getSessionId(),
-      timestamp: Date.now(),
-      isNewSession: isNewSession(),
-    },
-    ...additionalData,
+    event: 'faq_interaction',
+    action_type: action,
+    faq_question: question
   });
 }
 
 /**
- * Track Event Genérico
+ * Engajamento com dados de valor (ROI / Irradiação)
  */
-export function trackEvent(
-  eventName: string,
-  eventData?: Record<string, any>
-): void {
+export function trackValueDataInteraction(type: 'roi_expand' | 'radiation_view', region: string) {
   pushToDataLayer({
-    event: eventName,
-    timestamp: Date.now(),
-    ...eventData,
+    event: 'select_content',
+    content_type: 'regional_data',
+    item_id: type,
+    location_id: region
   });
 }
 
 /**
- * Track Form Start
+ * Rastreia intenção no Mega Menu (Hover prolongado)
  */
-export function trackFormStart(formName: string, formLocation: string): void {
+export function trackMenuIntent(categoryName: string) {
   pushToDataLayer({
-    event: 'form_start',
-    formName,
-    formLocation,
-    timestamp: Date.now(),
+    event: 'menu_intent',
+    category_name: categoryName
   });
 }
 
+// === Ecommerce / Listagem ===
+
 /**
- * Track Form Submit
+ * Impressão de cards de empresas em listagens
  */
-export function trackFormSubmit(
-  formName: string,
-  formFields?: Record<string, boolean>
-): void {
+export function trackCompanyListImpression(companies: any[], listName: string) {
   pushToDataLayer({
-    event: 'form_submit',
-    formName,
-    formFields,
-    timestamp: Date.now(),
+    event: 'view_item_list',
+    item_list_name: listName,
+    items: companies.map((c, index) => ({
+      item_id: String(c.id),
+      item_name: c.name,
+      index: index + 1,
+      item_category: c.category
+    }))
   });
 }
 
-/**
- * Track Form Error
- */
-export function trackFormError(
-  formName: string,
-  errorType: string,
-  errorMessage?: string
-): void {
-  pushToDataLayer({
-    event: 'form_error',
-    formName,
-    errorType,
-    errorMessage,
-    timestamp: Date.now(),
-  });
-}
-
-// === Lead Events ===
-
-/**
- * Track Lead Generated
- */
-export function trackLeadGenerated(
-  leadType: string,
-  leadValue?: string,
-  additionalData?: Record<string, any>
-): void {
-  pushToDataLayer({
-    event: 'lead_generated',
-    leadType,
-    leadValue,
-    timestamp: Date.now(),
-    ...additionalData,
-  });
-}
-
-/**
- * Track Category Click
- */
-export function trackCategoryClick(
-  categoryId: string | number,
-  categoryName: string,
-  listingPosition?: number
-): void {
-  pushToDataLayer({
-    event: 'category_click',
-    categoryId,
-    categoryName,
-    listingPosition,
-    timestamp: Date.now(),
-  });
-}
-
-/**
- * Track CTA Click
- */
-export function trackCTAClick(
-  label: string,
-  type: string,
-  destination?: string,
-  additionalData?: Record<string, any>
-): void {
-  pushToDataLayer({
-    event: 'cta_click',
-    ctaLabel: label,
-    ctaType: type,
-    ctaDestination: destination,
-    timestamp: Date.now(),
-    ...additionalData,
-  });
-}
-
-/**
- * Track Company Click
- */
-export function trackCompanyClick(
-  companyId: string | number,
-  companyName: string,
-  listingPosition: number,
-  additionalData?: Record<string, any>
-): void {
-  pushToDataLayer({
-    event: 'company_click',
-    companyId,
-    companyName,
-    listingPosition,
-    timestamp: Date.now(),
-    ...additionalData,
-  });
-}
-
-/**
- * Track Contact Company
- */
-export function trackContactCompany(
-  companyId: string | number,
-  companyName: string,
-  contactMethod: 'form' | 'phone' | 'whatsapp' | 'email'
-): void {
-  pushToDataLayer({
-    event: 'contact_company',
-    companyId,
-    companyName,
-    contactMethod,
-    timestamp: Date.now(),
-  });
-}
-
-/**
- * Track Banner Click
- */
-export function trackBannerClick(
-  bannerId: string | number,
-  bannerDestination: string,
-  bannerPosition: string
-): void {
-  pushToDataLayer({
-    event: 'banner_click',
-    bannerId,
-    bannerDestination,
-    bannerPosition,
-    timestamp: Date.now(),
-  });
-}
-
-// === Utility Functions ===
-
-/**
- * Get or Create Session ID
- */
-function getSessionId(): string {
+// Helpers de Sessão (Preservados do original)
+export function getGtmSessionId(): string {
   if (typeof window === 'undefined') return '';
-  
-  let sessionId = sessionStorage.getItem('gtm_session_id');
-  
-  if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('gtm_session_id', sessionId);
+  let id = sessionStorage.getItem('gtm_session_id');
+  if (!id) {
+    id = `gtm_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    sessionStorage.setItem('gtm_session_id', id);
   }
-  
-  return sessionId;
-}
-
-/**
- * Check if is New Session
- */
-function isNewSession(): boolean {
-  if (typeof window === 'undefined') return true;
-  
-  const lastPageView = sessionStorage.getItem('gtm_last_page_view');
-  const now = Date.now();
-  
-  if (!lastPageView) {
-    sessionStorage.setItem('gtm_last_page_view', now.toString());
-    return true;
-  }
-  
-  const timeDiff = now - parseInt(lastPageView, 10);
-  const thirtyMinutes = 30 * 60 * 1000;
-  
-  if (timeDiff > thirtyMinutes) {
-    sessionStorage.setItem('gtm_last_page_view', now.toString());
-    return true;
-  }
-  
-  sessionStorage.setItem('gtm_last_page_view', now.toString());
-  return false;
+  return id;
 }

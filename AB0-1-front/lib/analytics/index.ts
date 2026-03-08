@@ -268,6 +268,22 @@ export function track(
   const sendToMixpanel = options.sendTo?.mixpanel !== false;
   const sendToGA4 = options.sendTo?.ga4 !== false;
   
+  // Push to GTM dataLayer
+  try {
+    const { name: ga4Name, params: ga4Params } = mapToGA4Event(eventName, sanitized);
+    if (typeof window !== 'undefined') {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: ga4Name,
+        ...ga4Params,
+        original_event: eventName,
+        gtm_timestamp: new Date().toISOString()
+      });
+    }
+  } catch (e) {
+    console.error('[Analytics] GTM dataLayer push failed:', e);
+  }
+  
   // Send to Mixpanel
   if (sendToMixpanel && mixpanelInstance) {
     try {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { faqApi, type FaqItem } from '@/lib/api-faq';
+import { trackFaqEngagement } from '@/lib/dataLayer';
 import { Search, HelpCircle, ThumbsUp, ThumbsDown, Layers } from 'lucide-react';
 
 interface FaqSectionProps {
@@ -38,6 +39,12 @@ export default function FaqSection({ companyId }: FaqSectionProps) {
   }, [query, category]);
 
   const handleVote = async (id: number, helpful: boolean) => {
+    // Track FAQ engagement
+    const faq = faqs.find(f => f.id === id);
+    if (faq) {
+      trackFaqEngagement(helpful ? 'vote_up' : 'vote_down', faq.question);
+    }
+
     try {
       const updated = await faqApi.vote(id, helpful);
       setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...updated } : f)));

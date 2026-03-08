@@ -13,7 +13,17 @@ export type AnalyticsEventName =
   | 'lead_click_direct'
   | 'sort_change'
   | 'filter_toolbar_remove'
-  | 'company_card_impression';
+  | 'company_card_impression'
+  | 'phone_click'
+  | 'whatsapp_click'
+  | 'wizard_started'
+  | 'wizard_step_completed'
+  | 'search_no_results'
+  | 'roi_expand'
+  | 'regional_companies_view'
+  | 'faq_vote'
+  | 'category_menu_hover'
+  | 'scroll_depth_reached';
 
 export interface AnalyticsEventPayload {
   [key: string]: any;
@@ -145,6 +155,41 @@ export const analytics = {
 
   leadClickDirect: (payload: LeadClickDirectEvent) =>
     trackEvent('lead_click_direct', payload),
+
+  phoneClick: (payload: { company_id: number; company_name?: string; category?: string }) =>
+    trackEvent('phone_click', payload),
+
+  whatsappClick: (payload: { company_id: number; company_name?: string; category?: string }) =>
+    trackEvent('whatsapp_click', payload),
+
+  wizardStarted: (payload: { wizard_id: string; category_id?: number; region_slug?: string }) =>
+    trackEvent('wizard_started', payload),
+
+  wizardStepCompleted: (payload: { 
+    wizard_id: string; 
+    step_name: string; 
+    step_number: number;
+    category_id?: number;
+    region_slug?: string 
+  }) => trackEvent('wizard_step_completed', payload),
+
+  searchNoResults: (payload: { search_term: string; search_category?: string }) =>
+    trackEvent('search_no_results', payload),
+
+  roiExpand: (payload: { location: string; estimated_payback?: number }) =>
+    trackEvent('roi_expand', payload),
+
+  regionalCompaniesView: (payload: { location: string; category?: string }) =>
+    trackEvent('regional_companies_view', payload),
+
+  faqVote: (payload: { question: string; vote: 'up' | 'down'; location?: string }) =>
+    trackEvent('faq_vote', payload),
+
+  categoryMenuHover: (payload: { category_name: string }) =>
+    trackEvent('category_menu_hover', payload),
+
+  scrollDepthReached: (payload: { depth: number; page_type: string }) =>
+    trackEvent('scroll_depth_reached', payload),
 
   sortChange: (payload: SortChangeEvent) =>
     trackEvent('sort_change', payload),

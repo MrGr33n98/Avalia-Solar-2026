@@ -12,6 +12,7 @@ import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
+import { track } from '@/lib/analytics/lazy';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -52,12 +53,22 @@ function SearchContent() {
       const searchResults = await searchApi.all(term);
 
       // Garantir arrays sempre válidos
-      setResults({
+      const finalResults = {
         companies: searchResults.companies ?? [],
         products: searchResults.products ?? [],
         categories: searchResults.categories ?? [],
         articles: searchResults.articles ?? []
-      });
+      };
+
+      setResults(finalResults);
+
+      const totalResultsCount = Object.values(finalResults).reduce((acc, arr) => acc + arr.length, 0);
+      if (totalResultsCount === 0) {
+        track('search_no_results', {
+          search_term: term,
+          search_category: 'all'
+        });
+      }
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err?.message || 'Erro ao realizar a busca');

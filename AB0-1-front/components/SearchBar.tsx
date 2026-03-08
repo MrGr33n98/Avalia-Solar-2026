@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api';
+import { trackSearchPerformance } from '@/lib/dataLayer';
 import type { SearchAllResponse } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,11 @@ export default function SearchBar({
             categories: data.categories ?? [],
             articles: data.articles ?? [],
           });
+          
+          // Track search performance including zero results
+          const totalCount = (data.companies?.length || 0) + (data.products?.length || 0) + (data.categories?.length || 0) + (data.articles?.length || 0);
+          trackSearchPerformance(searchTerm, totalCount);
+
           const hasAny = (['companies','products','categories','articles'] as const)
             .some((k) => (data[k] ?? []).length > 0);
           setActiveIndex(hasAny ? 0 : -1);

@@ -114,33 +114,29 @@ export function mapToGA4Event(
   // Map common events to GA4 recommended events
   const eventMap: Record<string, string> = {
     'page_view': 'page_view',
+    'search_performance': 'search',
     'search_submitted': 'search',
+    'search_no_results': 'search',
     'location_selected': 'select_content',
     'category_selected': 'select_content',
     'company_card_impression': 'view_item_list',
     'company_card_click': 'select_item',
     'cta_click': 'select_content',
+    'contact_click': 'contact',
     'whatsapp_click': 'contact',
-    'lead_started': 'begin_checkout',
+    'generate_lead': 'generate_lead',
     'lead_submitted': 'generate_lead',
-    'lead_verified': 'purchase', // Using purchase as a proxy for high-intent verification
-    'Page Viewed': 'page_view',
-    'Company Viewed': 'view_item',
-    'Search Performed': 'search',
-    'Lead Submitted': 'generate_lead',
-    'Sign Up Completed': 'sign_up',
-    'Login Completed': 'login',
-    'Review Submitted': 'generate_lead',
-    'Product Viewed': 'view_item',
-    'CTA Clicked': 'select_content',
+    'lead_verified': 'purchase',
+    'begin_checkout': 'begin_checkout',
     'wizard_started': 'begin_checkout',
     'wizard_step_completed': 'checkout_progress',
     'wizard_step_viewed': 'view_item_list',
     'wizard_submitted': 'purchase',
-    'wizard_abandoned': 'view_item',
     'company_cta_impression': 'view_promotion',
     'company_share_click': 'share',
-    'company_comparison_toggle': 'select_content'
+    'company_comparison_toggle': 'select_content',
+    'regional_data_exposed': 'select_content',
+    'scroll_depth_reached': 'optimize_experience'
   };
   
   const ga4EventName = eventMap[eventName] || eventName.toLowerCase().replace(/ /g, '_');

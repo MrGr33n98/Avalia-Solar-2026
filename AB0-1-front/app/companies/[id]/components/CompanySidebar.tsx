@@ -1,10 +1,12 @@
-﻿import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'lucide-react';
+import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
+import { track } from '@/lib/analytics/lazy';
+
 
 interface CompanySidebarProps {
   company: Company;

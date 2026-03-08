@@ -23,6 +23,7 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics/lazy';
+import { trackContactClick } from '@/lib/dataLayer';
 import { useFavorites } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
 

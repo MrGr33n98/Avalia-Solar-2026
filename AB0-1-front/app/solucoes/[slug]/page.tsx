@@ -1,6 +1,11 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import React from 'react';
+import { RegionalDataTracker } from '@/components/seo-lp/RegionalDataTracker';
+import { SeoPageAnalytics } from '@/components/seo-lp/SeoPageAnalytics';
+import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import { track } from '@/lib/analytics/lazy';
+import Link from 'next/link';
 
 interface SeoPageData {
   slug: string;
@@ -96,6 +101,12 @@ export default async function Page({ params }: { params: { slug: string } }) {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      <SeoPageAnalytics 
+        slug={data.slug} 
+        cityName={data.city_name} 
+        categoryName={data.category.name} 
+      />
+      
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -117,7 +128,12 @@ export default async function Page({ params }: { params: { slug: string } }) {
       </header>
 
       {/* Bloco de Dados Sociais/Regionais */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-12">
+      <section className="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-12 overflow-hidden">
+        <RegionalDataTracker 
+          location={data.city_name} 
+          category={data.category.name} 
+          estimatedPayback={data.metadata_cache.estimated_roi} 
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-center text-center">
             <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Irradiação Solar</span>
@@ -152,6 +168,21 @@ export default async function Page({ params }: { params: { slug: string } }) {
           A cidade de {data.city_name} apresenta excelentes condições para a geração de energia fotovoltaica. 
           Com uma irradiação de {data.metadata_cache.solar_radiation} kWh/m², o sistema se paga em média em {data.metadata_cache.estimated_roi} anos.
         </p>
+
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
+          <CTAPrimaryButton 
+            label="Solicitar Orçamento Grátis"
+            companyId="0"
+            companySlug="multi-vendor"
+            className="w-full sm:w-auto px-12 h-14 text-lg"
+          />
+          <Link 
+            href={`/categories/${data.category.seo_url}?city=${data.city_name}`}
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            Ver instaladores em {data.city_name}
+          </Link>
+        </div>
       </section>
     </main>
   );
