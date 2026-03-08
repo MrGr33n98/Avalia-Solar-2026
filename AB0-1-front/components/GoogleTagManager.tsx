@@ -15,7 +15,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
     <>
       <Script
         id="google-consent-mode"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
@@ -34,7 +34,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
 
       <Script
         id="gtm-script"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

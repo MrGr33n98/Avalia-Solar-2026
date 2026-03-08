@@ -313,11 +313,13 @@ module Api
         @companies = ::Company.includes(
           :categories,
           :badges,
-          :review_aggregates,
           :company_faqs,
+          :company_buttons,
+          :plan,
           :company_financing_profile,
-          :company_financing_partners,
-          :company_financing_offers
+          review_aggregates: [:category],
+          company_financing_partners: { logo_attachment: :blob },
+          company_financing_offers: []
         )
 
           # Ordenação (Classificação)

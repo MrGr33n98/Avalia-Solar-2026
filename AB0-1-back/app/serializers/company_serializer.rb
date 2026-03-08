@@ -35,7 +35,12 @@ class CompanySerializer < ActiveModel::Serializer
   def review_aggregates
     return empty_review_aggregates unless review_aggregates_available?
 
-    aggregates = ReviewAggregate.where(company_id: object.id).includes(:category)
+    # Use preloaded association to avoid N+1
+    aggregates = if object.association(:review_aggregates).loaded?
+                   object.review_aggregates
+                 else
+                   ReviewAggregate.where(company_id: object.id).includes(:category)
+                 end
 
     {
       global: serialize_aggregate(aggregates.find { |a| a.category_id.nil? }),
@@ -70,7 +75,13 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def category_info
-    category = object.categories.first
+    # Use preloaded association if available
+    categories_array = if object.association(:categories).loaded?
+                          object.categories.to_a
+                        else
+                          object.categories.limit(1).to_a
+                        end
+    category = categories_array.first
     return nil unless category
 
     {
@@ -81,7 +92,14 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def categories
-    object.categories.order(:name).map do |category|
+    # Use preloaded association to avoid N+1 and sorting query
+    cats = if object.association(:categories).loaded?
+             object.categories.to_a.sort_by(&:name)
+           else
+             object.categories.order(:name)
+           end
+
+    cats.map do |category|
       {
         id: category.id,
         name: category.name,
@@ -172,7 +190,14 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def faqs
-    object.company_faqs.published_only.ordered.map do |faq|
+    # Use loaded association to avoid N+1
+    faq_list = if object.association(:company_faqs).loaded?
+                object.company_faqs.select(&:published?).sort_by { |f| f.position || 999 }
+              else
+                object.company_faqs.published_only.ordered
+              end
+
+    faq_list.map do |faq|
       faq.as_json(only: %i[id question answer status position])
     end
   end
@@ -232,7 +257,14 @@ class CompanySerializer < ActiveModel::Serializer
   def financing_partners
     return [] unless financing_tab_visible
 
-    object.company_financing_partners.active.ordered.map do |partner|
+    # Use loaded association to avoid N+1
+    partners = if object.association(:company_financing_partners).loaded?
+                 object.company_financing_partners.select(&:active?).sort_by { |p| p.position || 0 }
+               else
+                 object.company_financing_partners.active.ordered
+               end
+
+    partners.map do |partner|
       partner.as_json(only: %i[id name partner_type website priority position active badge]).merge(
         logo_url: generate_attachment_url(partner.logo)
       )
@@ -242,13 +274,18 @@ class CompanySerializer < ActiveModel::Serializer
   def financing_offers
     return [] unless financing_tab_visible
 
-    object.company_financing_offers.active.ordered.map do |offer|
+    # Use loaded association to avoid N+1
+    offers = if object.association(:company_financing_offers).loaded?
+                object.company_financing_offers.select(&:active?).sort_by { |o| o.position || 0 }
+              else
+                object.company_financing_offers.active.ordered
+              end
+
+    offers.map do |offer|
       offer.as_json(
-        only: %i[
-          id name offer_type term_months interest_rate_monthly
-          min_down_payment_percent grace_months amortization_type
-          notes active position
-        ]
+        only: %i[id name offer_type term_months interest_rate_monthly
+                min_down_payment_percent grace_months amortization_type
+                notes active position]
       )
     end
   end
