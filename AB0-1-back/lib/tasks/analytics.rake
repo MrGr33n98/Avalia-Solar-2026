@@ -299,7 +299,7 @@ namespace :analytics do
     companies_with_ga4.find_each do |company|
       print "Processing #{company.name} (#{company.ga4_property_id})... "
       
-      metrics = GA4Service.fetch_engagement_metrics(
+      metrics = Ga4Service.fetch_engagement_metrics(
         property_id: company.ga4_property_id,
         start_date: 30.days.ago.to_date,
         end_date: Date.current

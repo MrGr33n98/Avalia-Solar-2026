@@ -147,7 +147,7 @@ class AnalyticsTrackingJob
 
   # Forward event to GA4 via Measurement Protocol
   def forward_to_ga4(event_name, properties, metadata)
-    GA4Service.track(event_name, properties.merge(metadata))
+    Ga4Service.track(event_name, properties.merge(metadata))
   rescue StandardError => e
     Rails.logger.warn(
       "[AnalyticsTrackingJob] Failed to forward to GA4: #{e.message}"

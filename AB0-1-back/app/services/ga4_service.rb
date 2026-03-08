@@ -4,7 +4,7 @@
 # Google Analytics 4 Measurement Protocol Integration
 # Imports engagement metrics (avgTimeOnPage, bounceRate, etc)
 
-class GA4Service
+class Ga4Service
   MEASUREMENT_API_ENDPOINT = 'https://www.google-analytics.com/mp/collect'
   
   class << self
@@ -31,7 +31,7 @@ class GA4Service
 
         parse_engagement_response(response)
       rescue StandardError => e
-        Rails.logger.error("[GA4Service] Failed to fetch engagement metrics: #{e.message}")
+        Rails.logger.error("[Ga4Service] Failed to fetch engagement metrics: #{e.message}")
         nil
       end
     end
@@ -93,7 +93,7 @@ class GA4Service
         engagement_rate: (metrics[3].value.to_f * 100).round(2) # percentage
       }
     rescue StandardError => e
-      Rails.logger.error("[GA4Service] Failed to parse response: #{e.message}")
+      Rails.logger.error("[Ga4Service] Failed to parse response: #{e.message}")
       nil
     end
 
@@ -129,10 +129,10 @@ class GA4Service
       response = http.request(request)
 
       unless response.code == '204'
-        Rails.logger.warn("[GA4Service] GA4 returned non-204: #{response.code}")
+        Rails.logger.warn("[Ga4Service] GA4 returned non-204: #{response.code}")
       end
     rescue StandardError => e
-      Rails.logger.error("[GA4Service] Failed to send to GA4: #{e.message}")
+      Rails.logger.error("[Ga4Service] Failed to send to GA4: #{e.message}")
     end
 
     def generate_client_id(properties)
