@@ -63,5 +63,6 @@ Interprete os atalhos abaixo carregando o arquivo correspondente em `.aios-core/
 - `@squad-creator`, `/squad-creator`, `/squad-creator.md` -> `.aios-core/development/agents/squad-creator.md`
 - `@aios-master`, `/aios-master`, `/aios-master.md` -> `.aios-core/development/agents/aios-master.md`
 - `@aios-vanguard`, `/aios-vanguard`, `/aios-vanguard.md` -> `.aios-core/development/agents/aios-vanguard.md`
-- `@avalia-solar-leads`, `/avalia-solar-leads`, `/avalia-solar-leads.md` -> `.aios-core/development/agents/avalia-solar-leads.md`
+- `@master-solar`, `/master-solar`, `/master-solar.md` -> `.gemini/rules/AIOS/agents/aios-master-custom-avalia-solar.md`
+- `@master-custom-avalia-solar`, `/master-custom-avalia-solar` -> `.gemini/rules/AIOS/agents/aios-master-custom-avalia-solar.md`
 <!-- AIOS-MANAGED-END: shortcuts -->
