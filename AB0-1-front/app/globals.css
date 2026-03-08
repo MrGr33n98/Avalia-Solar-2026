@@ -18,9 +18,9 @@
 
 @layer base {
   html {
-    /* Keep browser-native text scaling to avoid cross-browser CSS parser warnings. */
-    -webkit-text-size-adjust: auto;
-    text-size-adjust: auto;
+    /* Use 100% to prevent scaling issues on mobile while avoiding cross-browser parser warnings. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 }
 

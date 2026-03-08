@@ -158,3 +158,37 @@ export function getGtmSessionId(): string {
   }
   return id;
 }
+
+// === Unified Page Tracking (Missing Exports) ===
+
+export interface PageData {
+  type: 'homepage' | 'category' | 'company_detail' | 'comparison' | 'wizard_step' | 'lead_conversion' | 'general';
+  path: string;
+  title: string;
+  referrer?: string;
+  language: 'pt-BR';
+  sections?: string[];
+}
+
+export interface UserData {
+  id?: string | number;
+  type?: 'user' | 'company_admin' | 'admin';
+  tier?: 'free' | 'premium' | 'enterprise';
+}
+
+/**
+ * Função central para rastreamento de visualização de página.
+ * Integra com o Data Layer e GTM.
+ */
+export function trackPageView(
+  pageData: PageData, 
+  user?: UserData, 
+  additionalData?: Record<string, any>
+) {
+  pushToDataLayer({
+    event: 'page_view_custom',
+    ...pageData,
+    user_properties: user,
+    ...additionalData
+  });
+}

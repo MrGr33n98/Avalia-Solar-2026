@@ -15,7 +15,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 
 const inter = Inter({
-  subsets: ['latin', 'latin-ext'],
+  subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
   preload: true,

@@ -263,6 +263,27 @@ module Api
         head :no_content
       end
 
+      # GET /api/v1/companies/:id/analytics/historical
+      def analytics_historical
+        days = (params[:days] || 30).to_i
+        render json: { data: generate_historical_data(@company, days) }
+      end
+
+      # GET /api/v1/companies/:id/analytics/reviews
+      def analytics_reviews
+        render json: reviews_data
+      end
+
+      # GET /api/v1/companies/:id/analytics/competitors
+      def analytics_competitors
+        render json: competitors_data
+      end
+
+      # GET /api/v1/companies/:id/analytics/traffic
+      def analytics_traffic
+        render json: traffic_data
+      end
+
       # GET /api/v1/companies/states
       def states
         states = Locations::BrLocations.states.map { |state| state['acronym'] }
