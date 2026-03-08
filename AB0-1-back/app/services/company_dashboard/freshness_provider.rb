@@ -5,11 +5,11 @@ module CompanyDashboard
     PIPELINE = 'main_aggregation'
 
     def self.call
-      res = ActiveRecord::Base.connection.select_one(
-        "SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = $1",
-        'Freshness',
-        [[nil, PIPELINE]]
-      )
+      sql = ActiveRecord::Base.sanitize_sql_array([
+        "SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = ?",
+        PIPELINE
+      ])
+      res = ActiveRecord::Base.connection.select_one(sql)
 
       last_aggregated_at = res ? Time.zone.parse(res['last_processed_at'].to_s) : nil
       freshness_seconds = last_aggregated_at ? (Time.current - last_aggregated_at).to_i : nil
