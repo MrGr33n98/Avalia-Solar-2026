@@ -353,7 +353,8 @@ export const companiesApiSafe = {
       return [];
     } catch (error) {
       console.error('Error fetching companies:', error);
-      throw error;
+      // Return empty array on error to prevent breaking the UI during build or runtime
+      return [];
     }
   },
 
@@ -401,7 +402,8 @@ export const companiesApiSafe = {
       return { data: [] };
     } catch (error) {
       console.error('[companiesApiSafe.getAllPaginated] Error:', error);
-      throw error;
+      // Return empty data on error to prevent breaking the UI during build or runtime
+      return { data: [] };
     }
   },
 

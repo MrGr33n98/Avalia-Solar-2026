@@ -425,7 +425,16 @@ async function CompaniesSectionWrapper({
 }: {
   dataPromise: ReturnType<typeof getCompaniesDataCached>;
 }) {
-  const { companies, companiesBanners } = await dataPromise;
+  let companies: Company[] = [];
+  let companiesBanners: Banner[] = [];
+  try {
+    const data = await dataPromise;
+    companies = Array.isArray(data?.companies) ? data.companies : [];
+    companiesBanners = Array.isArray(data?.companiesBanners) ? data.companiesBanners : [];
+  } catch (error) {
+    console.error('[Home] CompaniesSectionWrapper fallback triggered:', error);
+  }
+
   return (
     <SectionShell>
       <SectionHeader
