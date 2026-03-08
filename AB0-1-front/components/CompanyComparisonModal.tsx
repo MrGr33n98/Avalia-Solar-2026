@@ -83,17 +83,17 @@ export default function CompanyComparisonModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] p-0 gap-0 bg-gradient-to-br from-slate-50 to-white border-0 shadow-2xl">
-        <DialogHeader className="p-6 pb-0 space-y-0">
-          <div className="flex items-center justify-between">
+        <DialogHeader className="p-4 md:p-6 pb-0 space-y-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
+              <div className="p-2 rounded-xl bg-blue-100 text-blue-600 shrink-0">
                 <Scale className="h-5 w-5" />
               </div>
-              <div>
-                <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">
+              <div className="min-w-0">
+                <DialogTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">
                   Comparação Detalhada
                 </DialogTitle>
-                <DialogDescription className="text-slate-500 font-medium">
+                <DialogDescription className="text-slate-500 font-medium text-xs md:text-sm">
                   {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'} em análise
                 </DialogDescription>
               </div>
@@ -102,7 +102,7 @@ export default function CompanyComparisonModal({
               variant="outline" 
               size="sm" 
               onClick={onClearAll}
-              className="text-slate-500 hover:text-red-600 hover:border-red-200 font-bold transition-all"
+              className="text-slate-500 hover:text-red-600 hover:border-red-200 font-bold transition-all w-full md:w-auto h-9 md:h-10"
             >
               <X className="h-4 w-4 mr-2" />
               Limpar Tudo
@@ -112,21 +112,21 @@ export default function CompanyComparisonModal({
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="px-6">
-              <TabsList className="grid w-full grid-cols-5 h-12 bg-slate-100/50 rounded-2xl p-1">
-                <TabsTrigger value="overview" className="text-xs font-bold rounded-xl">
+            <div className="px-4 md:px-6">
+              <TabsList className="flex md:grid w-full md:grid-cols-5 h-12 bg-slate-100/50 rounded-2xl p-1 overflow-x-auto scrollbar-hide justify-start md:justify-center">
+                <TabsTrigger value="overview" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
                   Visão Geral
                 </TabsTrigger>
-                <TabsTrigger value="credentials" className="text-xs font-bold rounded-xl">
+                <TabsTrigger value="credentials" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
                   Credibilidade
                 </TabsTrigger>
-                <TabsTrigger value="commercial" className="text-xs font-bold rounded-xl">
+                <TabsTrigger value="commercial" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
                   Comercial
                 </TabsTrigger>
-                <TabsTrigger value="technical" className="text-xs font-bold rounded-xl">
+                <TabsTrigger value="technical" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
                   Técnico
                 </TabsTrigger>
-                <TabsTrigger value="contact" className="text-xs font-bold rounded-xl">
+                <TabsTrigger value="contact" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
                   Contato
                 </TabsTrigger>
               </TabsList>
@@ -134,7 +134,7 @@ export default function CompanyComparisonModal({
 
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="p-6 pt-4">
+                <div className="p-4 md:p-6 pt-4 pb-20">
                   {/* Companies Header */}
                   <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden mb-6">
                     <div className="overflow-x-auto scrollbar-hide">
