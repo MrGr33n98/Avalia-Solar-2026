@@ -11,9 +11,9 @@ class AddDetailedCtaTrackingToCompanyDailyStats < ActiveRecord::Migration[7.0]
     add_column :company_daily_stats, :unique_views, :integer, default: 0, null: false
     add_column :company_daily_stats, :returning_views, :integer, default: 0, null: false
     
-    # Ensure efficient queries
-    add_index :company_daily_stats, [:company_id, :date], unique: true, if_not_exists: true
-    add_index :company_daily_stats, :date, if_not_exists: true
+    # Ensure efficient queries (column is 'day', not 'date')
+    add_index :company_daily_stats, [:company_id, :day], unique: true, if_not_exists: true
+    add_index :company_daily_stats, :day, if_not_exists: true
     
     # Backfill email/phone/website clicks based on existing proportions (optional)
     # This is conservative - better to start from 0 than to have fake data
