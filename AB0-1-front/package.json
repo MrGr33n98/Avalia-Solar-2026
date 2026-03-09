@@ -68,6 +68,8 @@
     "next": "^14.2.34",
     "next-themes": "^0.3.0",
     "postcss": "8.4.30",
+    "posthog-js": "^1.359.1",
+    "posthog-node": "^5.28.0",
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
