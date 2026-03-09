@@ -76,7 +76,6 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from '@/components/theme-provider';
-import { PostHogProvider } from '@/providers/PostHogProvider';
 
 export default function RootLayout({
   children,
@@ -107,7 +106,6 @@ export default function RootLayout({
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
         
-        <PostHogProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -122,7 +120,6 @@ export default function RootLayout({
               </ClientBody>
             </UtmProvider>
           </ThemeProvider>
-        </PostHogProvider>
         
         {/* Debug component for development */}
         {process.env.NODE_ENV === 'development' && (

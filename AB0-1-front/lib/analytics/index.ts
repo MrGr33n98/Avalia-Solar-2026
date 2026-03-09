@@ -30,7 +30,7 @@ export { DashboardEvents } from './ga4';
 let initialized = false;
 let currentUserId: string | null = null;
 let currentContext: Partial<AnalyticsContext> = {};
-let mixpanelInstance: any = null;
+let posthogInstance: any = null;
 let initPromise: Promise<void> | null = null;
 const EVENT_QUEUE_LIMIT = 100;
 const BACKEND_MIN_INTERVAL_MS = 400;
@@ -52,10 +52,10 @@ export function initializeAnalytics(): void {
   if (initialized) return;
   if (typeof window === 'undefined') return;
   
-  const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   
-  if (!mixpanelToken && !ga4Id) {
+  if (!posthogKey && !ga4Id) {
     console.warn('[Analytics] No tokens configured');
     return;
   }
@@ -89,28 +89,32 @@ async function initializeSDKs(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-  const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
   const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const hasConsent = hasAnalyticsConsent();
   
-  // Mixpanel - APENAS com consentimento
-  if (mixpanelToken && hasConsent && !mixpanelInstance) {
+  // PostHog - APENAS com consentimento
+  if (posthogKey && hasConsent && !posthogInstance) {
     try {
       // Dynamic import to reduce initial bundle size
-      const mixpanel = (await import('mixpanel-browser')).default;
-      mixpanel.init(mixpanelToken, {
-        debug: process.env.NODE_ENV === 'development',
-        track_pageview: false, // Manual tracking
-        persistence: 'localStorage',
-        ignore_dnt: false,
-        opt_out_tracking_by_default: false,
-        loaded: () => {
-          console.log('[Analytics] Mixpanel initialized');
+      const posthog = (await import('posthog-js')).default;
+      posthog.init(posthogKey, {
+        api_host: posthogHost,
+        person_profiles: 'identified_only',
+        capture_pageview: false, // Manual tracking
+        capture_pageleave: true,
+        autocapture: false,
+        session_recording: {
+          maskAllInputs: true,
+        },
+        loaded: (ph) => {
+          console.log('[Analytics] PostHog initialized. Distinct ID:', ph.get_distinct_id());
         }
       });
-      mixpanelInstance = mixpanel;
+      posthogInstance = posthog;
     } catch (e) {
-      console.error('[Analytics] Mixpanel init failed:', e);
+      console.error('[Analytics] PostHog init failed:', e);
     }
   }
   
@@ -265,7 +269,11 @@ export function track(
   const sanitized = sanitizeProperties(eventProps);
 
   // Determine destinations
-  const sendToMixpanel = options.sendTo?.mixpanel !== false;
+  const sendToPosthog = options.sendTo?.posthog !== false;
+  // If mixpanel is specified, fallback to posthog behavior
+  const legacySendToMixpanel = options.sendTo?.mixpanel !== false;
+  const shouldSendToPosthog = sendToPosthog && legacySendToMixpanel;
+  
   const sendToGA4 = options.sendTo?.ga4 !== false;
   
   // Push to GTM dataLayer
@@ -284,18 +292,16 @@ export function track(
     console.error('[Analytics] GTM dataLayer push failed:', e);
   }
   
-  // Send to Mixpanel
-  if (sendToMixpanel && mixpanelInstance) {
+  // Send to PostHog
+  if (shouldSendToPosthog && posthogInstance) {
     try {
-      // Convert to Title Case for Mixpanel
-      const mixpanelEventName = toTitleCase(eventName);
-      mixpanelInstance.track(mixpanelEventName, sanitized);
+      posthogInstance.capture(eventName, sanitized);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Mixpanel] Event:', mixpanelEventName, sanitized);
+        console.log('[PostHog] Event:', eventName, sanitized);
       }
     } catch (e) {
-      console.error('[Analytics] Mixpanel track failed:', e);
+      console.error('[Analytics] PostHog track failed:', e);
     }
   }
   
@@ -479,15 +485,18 @@ export function page(
     timestamp: pageProps.timestamp
   });
   
-  // Mixpanel
-  if (mixpanelInstance) {
+  // PostHog
+  if (posthogInstance) {
     try {
-      mixpanelInstance.track_pageview(sanitized);
+      posthogInstance.capture('$pageview', {
+        $current_url: window.location.href,
+        ...sanitized
+      });
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Mixpanel] Page View:', sanitized);
+        console.log('[PostHog] Page View:', sanitized);
       }
     } catch (e) {
-      console.error('[Analytics] Mixpanel page view failed:', e);
+      console.error('[Analytics] PostHog page view failed:', e);
     }
   }
   
@@ -514,16 +523,16 @@ export function identify(
   // Sanitize traits (no PII)
   const sanitizedTraits = sanitizeProperties(traits);
   
-  // Mixpanel
-  if (mixpanelInstance) {
+  // PostHog
+  if (posthogInstance) {
     try {
-      mixpanelInstance.identify(userId);
+      posthogInstance.identify(userId, sanitizedTraits);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Mixpanel] Identify:', userId, sanitizedTraits);
+        console.log('[PostHog] Identify:', userId, sanitizedTraits);
       }
     } catch (e) {
-      console.error('[Analytics] Mixpanel identify failed:', e);
+      console.error('[Analytics] PostHog identify failed:', e);
     }
   }
   
@@ -549,12 +558,12 @@ export function setUserProperties(traits: UserTraits): void {
   
   const sanitized = sanitizeProperties(traits);
   
-  // Mixpanel
-  if (mixpanelInstance) {
+  // PostHog
+  if (posthogInstance) {
     try {
-      mixpanelInstance.people.set(sanitized);
+      posthogInstance.capture('$set', { $set: sanitized });
     } catch (e) {
-      console.error('[Analytics] Mixpanel set user properties failed:', e);
+      console.error('[Analytics] PostHog set user properties failed:', e);
     }
   }
   
@@ -573,15 +582,15 @@ export function alias(newId: string): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  if (mixpanelInstance) {
+  if (posthogInstance) {
     try {
-      mixpanelInstance.alias(newId);
+      posthogInstance.alias(newId);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Mixpanel] Alias:', newId);
+        console.log('[PostHog] Alias:', newId);
       }
     } catch (e) {
-      console.error('[Analytics] Mixpanel alias failed:', e);
+      console.error('[Analytics] PostHog alias failed:', e);
     }
   }
 }
@@ -595,11 +604,11 @@ export function reset(): void {
   currentUserId = null;
   currentContext = {};
   
-  if (mixpanelInstance) {
+  if (posthogInstance) {
     try {
-      mixpanelInstance.reset();
+      posthogInstance.reset();
     } catch (e) {
-      console.error('[Analytics] Mixpanel reset failed:', e);
+      console.error('[Analytics] PostHog reset failed:', e);
     }
   }
   

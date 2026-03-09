@@ -13,6 +13,7 @@ export interface EventOptions {
   critical?: boolean;
   sendTo?: {
     mixpanel?: boolean;
+    posthog?: boolean;
     ga4?: boolean;
   };
   eventId?: string;

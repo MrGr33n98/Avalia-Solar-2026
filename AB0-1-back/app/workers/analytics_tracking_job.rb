@@ -48,7 +48,7 @@ class AnalyticsTrackingJob
     store_utm_attribution(company_id, properties, metadata) if has_utm_params?(properties)
 
     # Forward to external analytics platforms
-    forward_to_mixpanel(event_name, properties, metadata) if ENV['MIXPANEL_TOKEN'].present?
+    forward_to_posthog(event_name, properties, metadata) if ENV['POSTHOG_API_KEY'].present?
     forward_to_ga4(event_name, properties, metadata) if ENV['GA4_MEASUREMENT_ID'].present?
 
     Rails.logger.info(
@@ -135,12 +135,18 @@ class AnalyticsTrackingJob
     # Don't raise - UTM tracking failures shouldn't fail the job
   end
 
-  # Forward event to Mixpanel
-  def forward_to_mixpanel(event_name, properties, metadata)
-    MixpanelService.track(event_name, properties.merge(metadata))
+  # Forward event to PostHog
+  def forward_to_posthog(event_name, properties, metadata)
+    distinct_id = properties['user_id'] || properties['session_id'] || metadata[:session_id] || 'anonymous'
+
+    PostHog.capture({
+      distinct_id: distinct_id,
+      event: event_name,
+      properties: properties.merge(metadata)
+    })
   rescue StandardError => e
     Rails.logger.warn(
-      "[AnalyticsTrackingJob] Failed to forward to Mixpanel: #{e.message}"
+      "[AnalyticsTrackingJob] Failed to forward to PostHog: #{e.message}"
     )
     # Don't raise - external service failures shouldn't fail the job
   end
