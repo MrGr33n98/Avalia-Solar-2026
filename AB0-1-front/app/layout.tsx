@@ -10,7 +10,7 @@ import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 import JsonLd from '@/components/JsonLd';
-import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
+import GoogleTagManager, { GoogleTagManagerNoScript, GoogleAnalytics, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
@@ -102,6 +102,9 @@ export default function RootLayout({
       <body suppressHydrationWarning className="font-sans">
         {/* Google Tag Manager - Initialized early in body to avoid blocking head, but still before main content */}
         <GoogleTagManager gtmId={GTM_ID} />
+        
+        {/* GA4 Direct Integration (works independently of GTM) */}
+        <GoogleAnalytics />
         
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
