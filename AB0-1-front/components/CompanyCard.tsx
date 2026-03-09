@@ -371,11 +371,12 @@ export default function CompanyCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-9 w-9 md:h-8 md:w-8 clay-chip bg-clay-surface/95 hover:bg-clay-surface backdrop-blur-sm smooth-transition text-gray-600 border border-clay-shadow-light"
+            className="h-11 w-11 md:h-10 md:w-10 clay-chip bg-clay-surface/95 hover:bg-clay-surface backdrop-blur-sm smooth-transition text-gray-600 border border-clay-shadow-light shadow-sm"
             onClick={handleShare}
             title="Compartilhar"
+            aria-label={`Compartilhar perfil de ${name}`}
           >
-            {shared ? <Check className="h-4 w-4 text-emerald-500" /> : <Share2 className="h-4 w-4 md:h-4 md:w-4" />}
+            {shared ? <Check className="h-5 w-5 text-emerald-500" /> : <Share2 className="h-5 w-5 md:h-5 md:w-5" />}
           </Button>
         </div>
 
@@ -384,7 +385,7 @@ export default function CompanyCard({
             {bannerUrl && !bannerError ? (
               <Image
                 src={bannerUrl}
-                alt={`Banner ${name}`}
+                alt=""
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 onError={() => setBannerError(true)}
@@ -396,7 +397,7 @@ export default function CompanyCard({
             ) : (
               <Image
                 src="/images/banner-avalia-solar.png"
-                alt={`Banner padrão ${name}`}
+                alt=""
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover object-center"
@@ -441,7 +442,7 @@ export default function CompanyCard({
               {logoUrl && !logoError ? (
                 <Image
                   src={logoUrl}
-                  alt={`Logo ${name}`}
+                  alt=""
                   fill
                   sizes="80px"
                   onError={() => setLogoError(true)}
@@ -579,10 +580,10 @@ export default function CompanyCard({
           <Button
             variant="outline"
             className={cn(
-              'clay-chip border-clay-shadow-light text-gray-700 hover:bg-clay-surface-raised hover:text-gray-900 font-medium smooth-transition',
+              'clay-chip border-clay-shadow-light text-gray-700 hover:bg-clay-surface-raised hover:text-gray-900 font-bold smooth-transition',
               compact
-                ? (canRequestQuote ? 'h-9 w-9 p-0 flex-shrink-0' : 'h-9 w-full')
-                : 'w-full h-11 lg:h-10'
+                ? (canRequestQuote ? 'h-11 w-11 p-0 flex-shrink-0' : 'h-11 w-full')
+                : 'w-full h-12 lg:h-11'
             )}
             asChild
           >

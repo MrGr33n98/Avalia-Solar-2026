@@ -138,13 +138,18 @@ export function LandingHeroSearch({
     <Card className="p-2 md:p-3 shadow-2xl border-slate-100 rounded-2xl md:rounded-full bg-white max-w-3xl mx-auto">
       <div className="flex flex-col md:flex-row items-center gap-2">
         <div className="flex-1 w-full relative group">
+          <label htmlFor="category-select" className="sr-only">
+            Escolher categoria de serviço
+          </label>
           <select
+            id="category-select"
             className="w-full h-12 md:h-14 pl-12 pr-10 bg-slate-50 border-none rounded-xl md:rounded-l-full focus:ring-2 focus:ring-brand-blue appearance-none text-slate-700 font-medium cursor-pointer transition-colors hover:bg-slate-100"
             value={selectedCategory}
             onChange={handleCategoryChange}
+            aria-label="Selecionar categoria de serviço"
           >
             <option value="">
-              {usingStaticFallback ? 'Categorias em contingencia' : 'O que voce procura?'}
+              {usingStaticFallback ? 'Categorias em contingência' : 'O que você procura?'}
             </option>
             {effectiveCategories.map((category) => (
               <option key={category.id} value={category.id}>

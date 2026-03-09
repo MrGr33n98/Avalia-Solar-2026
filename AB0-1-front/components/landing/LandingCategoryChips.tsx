@@ -129,9 +129,9 @@ export default function LandingCategoryChips({
                 <Link
                   key={category.id}
                   href={href}
-                  className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap"
+                  className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap min-h-[44px]"
                   role="listitem"
-                  aria-label={category.name}
+                  aria-label={`Ver empresas na categoria ${category.name}`}
                 >
                   {customIconSrc ? (
                     <Image
@@ -156,7 +156,7 @@ export default function LandingCategoryChips({
               size="icon"
               variant="ghost"
               onClick={() => scrollBy(320)}
-              className="h-9 w-9 clay-chip border border-clay-shadow-light bg-clay-surface/90 hover:bg-clay-surface"
+              className="h-11 w-11 md:h-12 md:w-12 clay-chip border border-clay-shadow-light bg-clay-surface/90 hover:bg-clay-surface shadow-md"
               aria-label="Ver mais categorias"
             >
               <ChevronRight className="h-5 w-5 text-slate-700" />

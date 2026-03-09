@@ -36,7 +36,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
         <div className="relative aspect-[3/1] bg-clay-bg overflow-hidden">
           <Image
             src={resolveCategoryImage(category)}
-            alt={category?.name || 'Categoria'}
+            alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover object-center smooth-transition hover:scale-105"
@@ -77,7 +77,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
               asChild
               size="sm"
               variant="outline"
-              className="h-11 lg:h-7 clay-chip border-clay-shadow-light text-blue-700 hover:bg-clay-surface-raised px-3 lg:px-2 text-xs lg:text-[10px]"
+              className="h-11 lg:h-10 clay-chip border-clay-shadow-light text-blue-700 hover:bg-clay-surface-raised px-4 lg:px-3 text-sm lg:text-xs font-bold"
             >
               <span>
                 Explorar <ArrowRight className="ml-1 h-3.5 w-3.5 lg:h-3 lg:w-3" />

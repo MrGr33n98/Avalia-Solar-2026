@@ -10,6 +10,7 @@ import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsEr
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
 const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
+  ssr: false,
   loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
 });
 const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalculator'), {
@@ -55,6 +56,7 @@ const BannerByLocationLazy = dynamic(() => import('@/components/BannerByLocation
   loading: () => <div className="h-20 animate-pulse bg-gray-100 rounded-xl" />,
 });
 const TrustRow = dynamic(() => import('@/components/ui/TrustRow').then((m) => m.TrustRow), {
+  ssr: false,
   loading: () => <div className="h-20 animate-pulse bg-gray-50 rounded-xl" />,
 });
 const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), {

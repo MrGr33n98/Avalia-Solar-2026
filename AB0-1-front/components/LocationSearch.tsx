@@ -80,6 +80,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label="Selecionar localização"
           className={cn("w-[200px] justify-between", className)}
         >
           <div className="flex items-center truncate">
