@@ -291,21 +291,11 @@ export default function CompanyCard({
   };
 
   return (
-    <div 
+    <Card
       ref={cardRef}
       className={cn(
-        "group relative flex flex-col h-full bg-white transition-all duration-300",
-        "border border-slate-200 hover:border-brand-blue/30 rounded-2xl overflow-hidden",
-        "hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]",
-        compact ? "flex-row h-[200px]" : "flex-col",
-        className
-      )}
-      data-testid={`company-card-${id}`}
-    >
-    <Card
-      className={cn(
         'relative flex flex-col bg-clay-surface border border-clay-shadow-light smooth-transition clay-card hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
-        'overflow-hidden h-full', // Changed from h-[240px] to h-full to allow dynamic growth or container control
+        'overflow-hidden h-full flex-1',
         compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
         className
       )}
@@ -318,6 +308,7 @@ export default function CompanyCard({
       aria-label={`Visitar perfil ${name}`}
       data-selected={selected}
       data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
+      data-testid={`company-card-${id}`}
     >
       {jsonLdStr && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
@@ -603,6 +594,5 @@ export default function CompanyCard({
         </div>
       </CardContent>
     </Card>
-    </div>
   );
 }
