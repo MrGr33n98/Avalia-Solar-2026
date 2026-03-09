@@ -22,7 +22,7 @@ export default function TopCompaniesGrid({ companies, title = "Top Empresas da R
         </h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-fr items-stretch">
         {companies.slice(0, 3).map((company, index) => (
           <TopCompanyCard 
             key={company.id} 

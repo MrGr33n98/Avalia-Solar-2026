@@ -4,10 +4,11 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
+import dynamic from 'next/dynamic';
 import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';

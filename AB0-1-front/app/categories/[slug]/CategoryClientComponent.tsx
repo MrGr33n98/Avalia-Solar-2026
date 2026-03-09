@@ -737,6 +737,7 @@ export default function CategoryClientComponent({
               <Input
                 type="search"
                 placeholder={`Buscar em ${category.name}...`}
+                aria-label={`Buscar em ${category.name}`}
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="h-10 rounded-lg bg-gray-100 pl-9 pr-3 text-sm placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-primary/30 transition-all duration-300"
@@ -956,7 +957,7 @@ export default function CategoryClientComponent({
                       key="companies"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr items-stretch"
                     >
                       {filteredCompanies.map((company, index) => (
                         <motion.div
@@ -965,7 +966,7 @@ export default function CategoryClientComponent({
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.04 }}
                           whileHover={{ y: -5 }}
-                          className="transition-all duration-300 hover:shadow-xl rounded-xl"
+                          className="transition-all duration-300 hover:shadow-xl rounded-xl h-full flex flex-col"
                         >
                           <CompanyCard company={company} rank={index + 1} />
                         </motion.div>

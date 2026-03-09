@@ -171,6 +171,7 @@ export default function CompanyComparisonModal({
 
                                 <button
                                   onClick={() => onRemoveCompany(company.id)}
+                                  aria-label={`Remover ${company.name} da comparação`}
                                   className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                                 >
                                   <X className="h-4 w-4" />

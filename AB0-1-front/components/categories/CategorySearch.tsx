@@ -18,6 +18,7 @@ export const CategorySearch: React.FC<CategorySearchProps> = ({ value, onChange 
         <Input
           type="text"
           placeholder="Buscar categoria..."
+          aria-label="Buscar categoria"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="pl-9 pr-9 h-9 bg-slate-50 border-slate-200 focus-visible:ring-blue-500 rounded-lg text-sm transition-all"

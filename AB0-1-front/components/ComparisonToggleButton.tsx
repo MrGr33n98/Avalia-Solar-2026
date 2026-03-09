@@ -247,6 +247,11 @@ export default function ComparisonToggleButton({
       className={cn(currentVariant.button, className)}
       variant="ghost"
       size={variant === 'minimal' || variant === 'floating' ? 'icon' : size}
+      aria-label={
+        isSelected 
+          ? `Remover ${company.name} da comparação`
+          : `Adicionar ${company.name} à comparação`
+      }
       title={
         isSelected 
           ? `Remover ${company.name} da comparação`

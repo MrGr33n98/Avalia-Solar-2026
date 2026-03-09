@@ -11,7 +11,7 @@ interface FilterState {
   verified?: boolean;
   minRating?: number;
   state?: string;
-  projectType?: string; // US: Adição de filtro de tipo de projeto
+  projectType?: string;
 }
 
 interface CategoryFilterSidebarProps {
@@ -102,10 +102,13 @@ export default function CategoryFilterSidebar({
               Localização
             </p>
             <div className="relative">
+              <label htmlFor="state-filter" className="sr-only">Filtrar por Estados</label>
               <select
+                id="state-filter"
                 value={filters.state || ''}
                 onChange={(e) => onFilterChange('state', e.target.value || undefined)}
-                className="w-full px-4 py-3 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white appearance-none transition-all outline-none"
+                aria-label="Selecionar estado"
+                className="w-full px-4 py-3.5 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white appearance-none transition-all outline-none"
               >
                 <option value="">Brasil (Todos)</option>
                 <option value="SP">São Paulo</option>
@@ -122,7 +125,7 @@ export default function CategoryFilterSidebar({
             </div>
           </div>
 
-          {/* Grupo: Tipo de Projeto (V1 Restore) */}
+          {/* Grupo: Tipo de Projeto */}
           <div className="space-y-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Zap className="w-3 h-3" />
@@ -134,7 +137,7 @@ export default function CategoryFilterSidebar({
                   key={type}
                   onClick={() => onFilterChange('projectType', filters.projectType === type ? undefined : type)}
                   className={cn(
-                    "w-full text-left px-4 py-3 rounded-2xl text-xs font-bold transition-all border",
+                    "w-full text-left px-4 py-3.5 rounded-2xl text-xs font-bold transition-all border",
                     filters.projectType === type 
                       ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100" 
                       : "bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:bg-slate-50"
@@ -149,10 +152,10 @@ export default function CategoryFilterSidebar({
       </div>
 
       {/* Sugestão / Ajuda */}
-      <div className="bg-blue-600 rounded-[2rem] p-8 text-white space-y-4">
+      <div className="bg-blue-600 rounded-[2rem] p-8 text-white space-y-4 shadow-xl shadow-blue-500/10">
         <p className="text-sm font-black leading-tight">Precisa de ajuda para escolher?</p>
-        <p className="text-xs text-blue-100 leading-relaxed">Nossos especialistas podem te ajudar a encontrar a melhor empresa gratuitamente.</p>
-        <Button className="w-full bg-white text-blue-600 hover:bg-blue-50 font-black rounded-xl">
+        <p className="text-xs text-blue-50 leading-relaxed font-medium">Nossos especialistas podem te ajudar a encontrar a melhor empresa gratuitamente.</p>
+        <Button className="w-full bg-white text-blue-600 hover:bg-blue-50 font-black rounded-xl h-12 shadow-lg shadow-blue-900/20 transition-all active:scale-95">
           Falar com Consultor
         </Button>
       </div>

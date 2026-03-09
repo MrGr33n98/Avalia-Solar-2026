@@ -92,7 +92,10 @@ export default function LocationSearch({ className, onLocationSelect }: Location
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0">
         <Command>
-          <CommandInput placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} />
+          <CommandInput 
+            placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} 
+            aria-label={view === 'states' ? "Buscar estado" : "Buscar cidade"}
+          />
           <CommandList className="max-h-[300px] overflow-y-auto">
             {loadingStates && view === 'states' && (
               <div className="p-4 text-sm text-center text-muted-foreground animate-pulse">
