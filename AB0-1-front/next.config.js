@@ -222,7 +222,19 @@ const nextConfig = {
   trailingSlash: false,
 
   async rewrites() {
+    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
     return {
+      beforeFiles: [
+        // Proxy reverso para PostHog — evita bloqueio por ad-blockers (Brave, uBlock, etc.)
+        {
+          source: '/ingest/static/:path*',
+          destination: `${posthogHost}/static/:path*`,
+        },
+        {
+          source: '/ingest/:path*',
+          destination: `${posthogHost}/:path*`,
+        },
+      ],
       fallback: [
         {
           source: '/api/v1/:path*',
