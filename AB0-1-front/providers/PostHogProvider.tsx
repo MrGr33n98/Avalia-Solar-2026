@@ -4,6 +4,7 @@ import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
 import { useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from "next/navigation"
+import * as Sentry from "@sentry/nextjs"
 
 // Handle view capture
 function PostHogPageView() {
@@ -36,6 +37,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         person_profiles: 'identified_only',
         capture_pageview: false // Handle manually via PostHogPageView component
       })
+
+      // Link PostHog session to Sentry
+      const sessionId = posthog.get_session_id()
+      if (sessionId) {
+        Sentry.setTag("posthog_session_id", sessionId)
+      }
     }
   }, [])
 
