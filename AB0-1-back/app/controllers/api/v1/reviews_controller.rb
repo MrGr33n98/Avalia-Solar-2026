@@ -62,6 +62,17 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
     if @review.save
       # ... Track event e Notificações ...
+      PostHog.capture(
+        distinct_id: current_user.posthog_distinct_id,
+        event: 'review_submitted',
+        properties: {
+          review_id: @review.id,
+          company_id: @review.company_id,
+          category_id: @review.category_id,
+          rating: @review.rating.to_f,
+          project_type: @review.project_type
+        }.compact
+      )
       render json: serialize_review(@review.reload), status: :created
     else
       # Validação rails já capturou a regra [user_id OR email, company_id, category_id]

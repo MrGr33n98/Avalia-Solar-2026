@@ -39,6 +39,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         redirect_to new_user_session_path
       else
         # User is approved and active
+        PostHog.identify(distinct_id: @user.posthog_distinct_id, properties: @user.posthog_properties)
+        PostHog.capture(
+          distinct_id: @user.posthog_distinct_id,
+          event: 'social_login_completed',
+          properties: { provider: provider_name.downcase, role: @user.role }
+        )
         sign_in_and_redirect @user, event: :authentication
         set_flash_message(:notice, :success, kind: provider_name) if is_navigational_format?
       end

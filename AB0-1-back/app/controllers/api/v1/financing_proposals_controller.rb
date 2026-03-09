@@ -65,6 +65,20 @@ module Api
         end
 
         Rails.logger.info("[Financing] Proposal SUCCESS company=#{@company.id} lead=#{lead.id} option=#{option_id}")
+
+        PostHog.capture(
+          distinct_id: current_user&.posthog_distinct_id || "anon_financing_#{lead.id}",
+          event: 'financing_proposal_submitted',
+          properties: {
+            lead_id: lead.id,
+            company_id: @company.id,
+            option_id: option_id,
+            financed_amount: amount,
+            months: months,
+            use_type: use_type
+          }.compact
+        )
+
         render json: { proposal_id: lead.id, status: lead.wizard_status }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("[Financing] Proposal validation failed: #{e.message}")

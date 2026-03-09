@@ -156,6 +156,20 @@ module Api
                 )
               )
 
+              if current_user
+                PostHog.capture(
+                  distinct_id: current_user.posthog_distinct_id,
+                  event: 'company_registered',
+                  properties: {
+                    company_id: @company.id,
+                    company_name: @company.name,
+                    city: @company.city,
+                    state: @company.state,
+                    status: @company.status
+                  }
+                )
+              end
+
               Rails.logger.info "[Audit] Company created successfully: ID #{@company.id}, Name: #{@company.name}"
 
               if @company.logo.attached?

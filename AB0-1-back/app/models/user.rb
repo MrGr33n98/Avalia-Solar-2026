@@ -113,6 +113,23 @@ class User < ApplicationRecord
     active_company_members.exists?(company_id: company_id)
   end
 
+  # PostHog: unique identifier for this user across analytics events and error reports
+  def posthog_distinct_id
+    id.to_s
+  end
+
+  # PostHog: person properties set on identify calls
+  def posthog_properties
+    {
+      email: email,
+      name: name,
+      role: role,
+      city: city,
+      state: state,
+      date_joined: created_at&.iso8601
+    }
+  end
+
   # Envia notificações do Devise de forma assíncrona (TASK-014)
   def send_devise_notification(notification, *)
     devise_mailer.send(notification, self, *).deliver_later

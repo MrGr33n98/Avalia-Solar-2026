@@ -20,8 +20,19 @@ module Api
           consented_at: Time.current
         )
         
-        render json: { 
-          status: 'success', 
+        distinct_id = current_user&.posthog_distinct_id || "anon_#{session_id}"
+        PostHog.capture(
+          distinct_id: distinct_id,
+          event: 'consent_given',
+          properties: {
+            consent_type: params[:consent_type],
+            consent_method: params[:consent_method] || 'banner',
+            policy_version: params[:policy_version] || 'v1.0'
+          }.compact
+        )
+
+        render json: {
+          status: 'success',
           id: consent_log.id,
           consented_at: consent_log.consented_at
         }, status: :created
@@ -62,8 +73,16 @@ module Api
           )
         end
         
-        render json: { 
-          status: 'revoked', 
+        PostHog.capture(
+          distinct_id: current_user&.posthog_distinct_id || "anon_#{session_id}",
+          event: 'consent_revoked',
+          properties: {
+            revoke_reason: params[:revoke_reason]
+          }.compact
+        )
+
+        render json: {
+          status: 'revoked',
           id: consent_log.id,
           revoked_at: consent_log.consented_at
         }

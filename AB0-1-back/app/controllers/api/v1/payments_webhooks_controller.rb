@@ -22,7 +22,19 @@ module Api
         when 'paid', 'succeeded', 'success'
           ends_at = sub.starts_at ? (sub.starts_at + sub.banner_offer.duration_days.days) : (Time.current + sub.banner_offer.duration_days.days)
           sub.activate!(starts_at: Time.current, ends_at: ends_at)
-          
+
+          company_id = sub.respond_to?(:company_id) ? sub.company_id : nil
+          PostHog.capture(
+            distinct_id: company_id ? "company_#{company_id}" : "anon_sub_#{sub.id}",
+            event: 'banner_subscription_activated',
+            properties: {
+              subscription_id: sub.id,
+              company_id: company_id,
+              provider: provider,
+              duration_days: sub.banner_offer&.duration_days
+            }.compact
+          )
+
           log_webhook_success(sub, status)
           render json: { ok: true }
         when 'failed'

@@ -66,6 +66,20 @@ module Api
             )
           )
 
+          PostHog.identify(
+            distinct_id: user.posthog_distinct_id,
+            properties: user.posthog_properties
+          )
+          PostHog.capture(
+            distinct_id: user.posthog_distinct_id,
+            event: 'user_logged_in',
+            properties: {
+              login_method: 'email',
+              role: user.role,
+              companies_count: user.active_member_companies.count
+            }
+          )
+
           payload = payload_for(user)
           if user.company_user?
             active_companies = user.active_member_companies.select(:id, :name, :slug)
@@ -149,6 +163,20 @@ module Api
               city: attrs[:city],
               state: attrs[:state]
             )
+          )
+
+          PostHog.identify(
+            distinct_id: user.posthog_distinct_id,
+            properties: user.posthog_properties
+          )
+          PostHog.capture(
+            distinct_id: user.posthog_distinct_id,
+            event: 'user_registered',
+            properties: {
+              role: user.role,
+              city: attrs[:city],
+              state: attrs[:state]
+            }
           )
 
           return render json: payload_for(user), status: :created
@@ -414,6 +442,16 @@ module Api
             company_id: user.company_id,
             event_type: 'email_confirmed',
             metadata: { ip: request.remote_ip }
+          )
+
+          PostHog.identify(
+            distinct_id: user.posthog_distinct_id,
+            properties: user.posthog_properties
+          )
+          PostHog.capture(
+            distinct_id: user.posthog_distinct_id,
+            event: 'email_confirmed',
+            properties: { role: user.role }
           )
 
           # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)

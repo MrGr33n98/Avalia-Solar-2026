@@ -12,24 +12,24 @@
 PostHog::Rails.configure do |config|
   # Automatically capture exceptions (default: false)
   # Set to true to enable automatic exception tracking
-  # config.auto_capture_exceptions = true
+  config.auto_capture_exceptions = true
 
   # Report exceptions that Rails rescues (e.g., with rescue_from) (default: false)
   # Set to true to capture rescued exceptions
-  # config.report_rescued_exceptions = true
+  config.report_rescued_exceptions = true
 
   # Automatically instrument ActiveJob background jobs (default: false)
   # Set to true to enable automatic ActiveJob exception tracking
-  # config.auto_instrument_active_job = true
+  config.auto_instrument_active_job = true
 
   # Capture user context with exceptions (default: true)
-  # config.capture_user_context = true
+  config.capture_user_context = true
 
   # Controller method name to get current user (default: :current_user)
-  # Change this if your app uses a different method name (e.g., :authenticated_user)
-  # When configured, exceptions will include user context (distinct_id, email, name),
-  # making it easier to identify affected users and debug user-specific issues.
-  # config.current_user_method = :current_user
+  config.current_user_method = :current_user
+
+  # Use posthog_distinct_id on the User model for automatic user association
+  config.user_id_method = :posthog_distinct_id
 
   # Additional exception classes to exclude from reporting
   # These are added to the default excluded exceptions
@@ -55,14 +55,14 @@ PostHog.init do |config|
   # Your PostHog project API key (required)
   # Get this from: PostHog Project Settings > API Keys
   # https://app.posthog.com/settings/project-details#variables
-  config.api_key = 'phc_oo5u9eWrjVdqdLRg1UbuiHnh5AZCp8SUxdgi68fGARd'
+  config.api_key = ENV.fetch('POSTHOG_API_KEY', nil)
 
   # ============================================================================
   # OPTIONAL CONFIGURATION
   # ============================================================================
 
   # For PostHog Cloud, use: https://us.i.posthog.com or https://eu.i.posthog.com
-  config.host = 'https://us.i.posthog.com'
+  config.host = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
 
   # Personal API key (optional, but required for local feature flag evaluation)
   # Get this from: PostHog Settings > Personal API Keys
