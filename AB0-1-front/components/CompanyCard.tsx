@@ -238,9 +238,6 @@ export default function CompanyCard({
 
   useEffect(() => { emit('view'); }, [emit]);
 
-
-
-
   const formatPhone = (phone?: string) => {
     if (!phone) return '';
     const digits = phone.replace(/\D/g, '');
@@ -271,8 +268,8 @@ export default function CompanyCard({
     );
   }
 
-  // Banner ratio: keep cards more compact in carousels/lists.
-  const bannerRatio = compact ? 4 : 3;
+  // Banner ratio: consistent across all cards for grid alignment
+  const bannerRatio = compact ? 21 / 9 : 16 / 9;
   const avatarSize = compact ? 44 : 64;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -574,7 +571,7 @@ export default function CompanyCard({
               'clay-chip border-clay-shadow-light text-gray-700 hover:bg-clay-surface-raised hover:text-gray-900 font-bold smooth-transition',
               compact
                 ? (canRequestQuote ? 'h-11 w-11 p-0 flex-shrink-0' : 'h-11 w-full')
-                : 'w-full h-12 lg:h-11'
+                : 'w-full h-11'
             )}
             asChild
           >

@@ -261,6 +261,7 @@ function ActiveFilters({
           <button
             onClick={() => handleFilterChange('state', '')}
             className="ml-1 hover:text-[#0d9488] rounded-full p-0.5 hover:bg-[#14b8a6]/20"
+            aria-label="Remover filtro de estado"
           >
             <XIcon className="h-3 w-3" />
           </button>
@@ -276,6 +277,7 @@ function ActiveFilters({
           <button
             onClick={() => handleFilterChange('city', '')}
             className="ml-1 hover:text-[#0d9488] rounded-full p-0.5 hover:bg-[#14b8a6]/20"
+            aria-label="Remover filtro de cidade"
           >
             <XIcon className="h-3 w-3" />
           </button>
@@ -291,6 +293,7 @@ function ActiveFilters({
           <button
             onClick={() => handleFilterChange('rating', 0)}
             className="ml-1 hover:text-amber-900 rounded-full p-0.5 hover:bg-amber-200"
+            aria-label="Remover filtro de avaliação"
           >
             <XIcon className="h-3 w-3" />
           </button>
@@ -306,6 +309,7 @@ function ActiveFilters({
           <button
             onClick={() => handleFilterChange('verified', false)}
             className="ml-1 hover:text-[#0d9488] rounded-full p-0.5 hover:bg-[#14b8a6]/20"
+            aria-label="Remover filtro de empresas verificadas"
           >
             <XIcon className="h-3 w-3" />
           </button>

@@ -136,9 +136,9 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
             label="Orçamento"
             companyId={id.toString()}
             companySlug={company.slug}
-            className="flex-1 h-10 rounded-xl bg-[#004791] hover:bg-[#00356b] font-bold text-xs"
+            className="flex-1 h-11 rounded-xl bg-[#004791] hover:bg-[#00356b] font-bold text-xs"
           />
-          <Button variant="outline" className="h-10 rounded-xl border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-50" asChild>
+          <Button variant="outline" className="h-11 rounded-xl border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-50" asChild>
             <Link href={companyPath}>Ver Perfil</Link>
           </Button>
         </div>

@@ -45,6 +45,9 @@ export async function generateMetadata({ params }: CategorySlugPageProps): Promi
     return {
       title,
       description,
+      alternates: {
+        canonical: `/categories/${params.slug}`,
+      },
       openGraph: {
         title,
         description,
