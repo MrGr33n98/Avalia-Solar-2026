@@ -11,15 +11,12 @@
 
 PostHog::Rails.configure do |config|
   # Automatically capture exceptions (default: false)
-  # Set to true to enable automatic exception tracking
   config.auto_capture_exceptions = true
 
   # Report exceptions that Rails rescues (e.g., with rescue_from) (default: false)
-  # Set to true to capture rescued exceptions
   config.report_rescued_exceptions = true
 
   # Automatically instrument ActiveJob background jobs (default: false)
-  # Set to true to enable automatic ActiveJob exception tracking
   config.auto_instrument_active_job = true
 
   # Capture user context with exceptions (default: true)
@@ -30,100 +27,27 @@ PostHog::Rails.configure do |config|
 
   # Use posthog_distinct_id on the User model for automatic user association
   config.user_id_method = :posthog_distinct_id
-
-  # Additional exception classes to exclude from reporting
-  # These are added to the default excluded exceptions
-  # config.excluded_exceptions = [
-  #   # 'MyCustom404Error',
-  #   # 'MyCustomValidationError'
-  # ]
 end
-
-# You can also configure Rails options directly:
-# PostHog::Rails.config.auto_capture_exceptions = true
 
 # ============================================================================
 # CORE POSTHOG CONFIGURATION
 # ============================================================================
-# Initialize the PostHog client with core SDK options.
+# Only initialize PostHog if the API key is available.
+# This prevents failures during Docker build (assets:precompile) where
+# environment variables are not yet available in the build context.
 
-PostHog.init do |config|
-  # ============================================================================
-  # REQUIRED CONFIGURATION
-  # ============================================================================
+posthog_api_key = ENV.fetch('POSTHOG_API_KEY', nil)
 
-  # Your PostHog project API key (required)
-  # Get this from: PostHog Project Settings > API Keys
-  # https://app.posthog.com/settings/project-details#variables
-  config.api_key = ENV.fetch('POSTHOG_API_KEY', nil)
-
-  # ============================================================================
-  # OPTIONAL CONFIGURATION
-  # ============================================================================
-
-  # For PostHog Cloud, use: https://us.i.posthog.com or https://eu.i.posthog.com
-  config.host = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
-
-  # Personal API key (optional, but required for local feature flag evaluation)
-  # Get this from: PostHog Settings > Personal API Keys
-  # https://app.posthog.com/settings/user-api-keys
-  config.personal_api_key = ENV.fetch('POSTHOG_PERSONAL_API_KEY', nil)
-
-  # Maximum number of events to queue before dropping (default: 10000)
-  config.max_queue_size = 10_000
-
-  # Feature flags polling interval in seconds (default: 30)
-  config.feature_flags_polling_interval = 30
-
-  # Feature flag request timeout in seconds (default: 3)
-  config.feature_flag_request_timeout_seconds = 3
-
-  # Error callback - called when PostHog encounters an error
-  # config.on_error = proc { |status, message|
-  #   Rails.logger.error("[PostHog] Error #{status}: #{message}")
-  # }
-
-  # Before send callback - modify or filter events before sending
-  # Return nil to prevent the event from being sent
-  # config.before_send = proc { |event|
-  #   # Filter out test users
-  #   return nil if event[:properties]&.dig('$user_email')&.end_with?('@test.com')
-  #
-  #   # Add custom properties to all events
-  #   event[:properties] ||= {}
-  #   event[:properties]['environment'] = Rails.env
-  #
-  #   event
-  # }
-
-  # ============================================================================
-  # ENVIRONMENT-SPECIFIC CONFIGURATION
-  # ============================================================================
-
-  # Disable in test environment
-  config.test_mode = true if Rails.env.test?
-
-  # Optional: Disable in development
-  # config.test_mode = true if Rails.env.test? || Rails.env.development?
+if posthog_api_key.present?
+  PostHog.init do |config|
+    config.api_key    = posthog_api_key
+    config.host       = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
+    config.personal_api_key = ENV.fetch('POSTHOG_PERSONAL_API_KEY', nil)
+    config.max_queue_size = 10_000
+    config.feature_flags_polling_interval = 30
+    config.feature_flag_request_timeout_seconds = 3
+    config.test_mode  = true if Rails.env.test?
+  end
+else
+  Rails.logger.warn '[PostHog] POSTHOG_API_KEY not set — PostHog analytics disabled.' if defined?(Rails)
 end
-
-# ============================================================================
-# DEFAULT EXCLUDED EXCEPTIONS
-# ============================================================================
-# The following exceptions are excluded by default:
-#
-# - AbstractController::ActionNotFound
-# - ActionController::BadRequest
-# - ActionController::InvalidAuthenticityToken
-# - ActionController::InvalidCrossOriginRequest
-# - ActionController::MethodNotAllowed
-# - ActionController::NotImplemented
-# - ActionController::ParameterMissing
-# - ActionController::RoutingError
-# - ActionController::UnknownFormat
-# - ActionController::UnknownHttpMethod
-# - ActionDispatch::Http::Parameters::ParseError
-# - ActiveRecord::RecordNotFound
-# - ActiveRecord::RecordNotUnique
-#
-# These can be re-enabled by removing them from the exclusion list if needed.
