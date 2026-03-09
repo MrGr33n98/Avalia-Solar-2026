@@ -339,6 +339,11 @@ GEM
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
+    posthog-rails (3.5.4)
+      posthog-ruby (~> 3.5)
+      railties (>= 5.2.0)
+    posthog-ruby (3.5.5)
+      concurrent-ruby (~> 1)
     prism (1.9.0)
     prometheus-client (4.2.5)
       base64
@@ -629,6 +634,8 @@ DEPENDENCIES
   paper_trail (~> 16.0)
   pg
   pg_search (~> 2.3)
+  posthog-rails
+  posthog-ruby
   puma (~> 5.0)
   pundit
   rack-attack
@@ -794,6 +801,8 @@ CHECKSUMS
   pg (1.5.3) sha256=6b9ee5e2d5aee975588232c41f8203e766157cf71dba54ee85b343a45ced9bfd
   pg (1.5.3-x64-mingw-ucrt) sha256=1f2a6b2afaf0ccb8afe8b6a00131bce8151fbd6e8826b2d944288f6f2b615389
   pg_search (2.3.7) sha256=27868941844961e593526b835da20e48995e9b846515e91856084c5bd9ab4f35
+  posthog-rails (3.5.4) sha256=9b0b3a5b3ac097abcaa4642c3f30fa5a2bfa4be9add51ab6cf279b79b1d18eb8
+  posthog-ruby (3.5.5) sha256=15a7eae6e6186850d0f7bd92145706ae5e2e4dbe8fd3d6b0a6b531f11f43c97c
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   prometheus-client (4.2.5) sha256=807bebc3e92ccd9f4d814d90be15e85338f3708d227badf80924ef3f6e7d5225
   public_suffix (5.0.1) sha256=65603917ff4ecb32f499f42c14951aeed2380054fa7fc51758fc0a8d455fe043
