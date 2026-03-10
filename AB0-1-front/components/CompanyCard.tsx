@@ -269,8 +269,8 @@ export default function CompanyCard({
   }
 
   // Banner ratio: consistent across all cards for grid alignment
-  const bannerRatio = 21 / 9; // Panoramic ratio for compact height
-  const avatarSize = compact ? 40 : 56;
+  const bannerRatio = 10 / 3; // Reduced vertical height by ~30% (was 21/9)
+  const avatarSize = compact ? 40 : 52;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -369,7 +369,7 @@ export default function CompanyCard({
         </div>
 
         <AspectRatio ratio={bannerRatio} className={cn('w-full')}>
-        <div className={cn('relative w-full h-full')}>
+        <div className={cn('relative w-full h-full bg-slate-50/80 dark:bg-slate-900/50')}>
             {bannerUrl && !bannerError ? (
               <Image
                 src={bannerUrl}
@@ -377,7 +377,7 @@ export default function CompanyCard({
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 onError={() => setBannerError(true)}
-                className="object-cover object-center"
+                className="object-contain object-center px-1"
                 data-testid="company-banner"
               />
             ) : compact ? (
@@ -388,7 +388,7 @@ export default function CompanyCard({
                 alt=""
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover object-center"
+                className="object-contain object-center px-1"
                 data-testid="company-banner"
               />
             )}
@@ -396,7 +396,7 @@ export default function CompanyCard({
         </AspectRatio>
 
         <div
-          className={cn('absolute left-4 z-20', compact ? '-bottom-4' : '-bottom-5')}
+          className={cn('absolute left-3 z-20', compact ? '-bottom-4' : '-bottom-5')}
           style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
         >
           <div className="relative">
@@ -452,7 +452,7 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-2.5' : 'px-3.5 pb-3 pt-6')}>
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-2.5' : 'px-3.5 pb-2.5 pt-5')}>
         <div className={cn("flex flex-col mb-2", compact ? "gap-1" : "gap-2")}>
           <div className="flex flex-col gap-1">
             <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
