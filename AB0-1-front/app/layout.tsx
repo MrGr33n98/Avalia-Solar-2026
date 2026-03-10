@@ -95,19 +95,19 @@ export default function RootLayout({
             <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
           </>
         )}
-        {/* Mixpanel preconnects removed - analytics lazy loaded after consent */}
+        {/* Analytics preconnects */}
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
+        
+        {/* Google Tag Manager - Movido para o head para evitar a mensagem 'A tag não está no lugar certo' */}
+        <GoogleTagManager gtmId={GTM_ID} />
       </head>
       <body suppressHydrationWarning className="font-sans">
-        {/* Google Tag Manager - Initialized early in body to avoid blocking head, but still before main content */}
-        <GoogleTagManager gtmId={GTM_ID} />
+        {/* Google Tag Manager (noscript) */}
+        <GoogleTagManagerNoScript gtmId={GTM_ID} />
         
         {/* GA4 Direct Integration (works independently of GTM) */}
         <GoogleAnalytics />
-        
-        {/* Google Tag Manager (noscript) */}
-        <GoogleTagManagerNoScript gtmId={GTM_ID} />
         
           <ThemeProvider
             attribute="class"
