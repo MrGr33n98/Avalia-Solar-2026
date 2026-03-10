@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
 import EnterpriseHeader from './EnterpriseHeader';
+import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Hooks
@@ -195,6 +195,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1600px] mx-auto p-4 lg:p-8">
+            <MobileDashboardQuickAccess
+              activeTab={activeTab}
+              company={company}
+              stats={stats}
+              onTabChange={handleTabChange}
+              onOpenNavigation={() => setSidebarOpen(true)}
+            />
+
             {/* Content based on active tab using Shadcn Tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
               <TabsContent value="overview" className="mt-0 focus-visible:outline-none" data-tour="overview">

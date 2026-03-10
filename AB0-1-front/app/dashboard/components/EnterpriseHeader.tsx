@@ -11,8 +11,7 @@ import {
   LogOut,
   Settings,
   Menu,
-  X,
-  Search,
+  MoreHorizontal,
   HelpCircle,
   Download,
   FileSpreadsheet,
@@ -137,7 +136,7 @@ export default function EnterpriseHeader({
               </AvatarFallback>
             </Avatar>
             
-            <div className="hidden sm:block min-w-0">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-semibold text-foreground truncate">
                   {company?.name || 'Minha Empresa'}
@@ -146,7 +145,7 @@ export default function EnterpriseHeader({
                   <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                 {company?.city}, {company?.state}
               </p>
             </div>
@@ -160,6 +159,51 @@ export default function EnterpriseHeader({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative md:hidden hover:bg-muted/60"
+                aria-label="Mais ações do dashboard"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Ações rápidas</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={handleExportCSV}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                <span>Exportar como CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                track('Report Exported', {
+                  export_type: 'pdf',
+                  company_id: company?.id,
+                  user_id: user?.id
+                });
+                window.print();
+              }}>
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Imprimir página</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://horizon-ui.com/boilerplate-shadcn#pricing', '_blank')}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Planos e preços</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = 'mailto:suporte@ab01.com'}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Suporte técnico</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('/#faqs', '_blank')}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Perguntas frequentes</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Export Reports */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -208,7 +252,7 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hover:bg-muted/60"
+                className="relative hidden md:inline-flex hover:bg-muted/60"
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>
@@ -332,7 +376,7 @@ export default function EnterpriseHeader({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="hidden md:block h-6" />
 
           {/* User Menu */}
           <DropdownMenu>

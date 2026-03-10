@@ -43,6 +43,7 @@ describe('EnterpriseHeader', () => {
     expect(screen.getByText('WEG')).toBeInTheDocument();
     expect(screen.getByText('Jaragua do Sul, SC')).toBeInTheDocument();
     expect(screen.getByTestId('command-menu')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mais ações do dashboard')).toBeInTheDocument();
   });
 
   it('shows unread notifications badge when there are unread items', () => {

@@ -1,6 +1,6 @@
 # EPIC-MOBILE-001: Mobile-First Readiness & Architecture
 
-**Status:** 👀 Sprint 2 In Review
+**Status:** 🟡 Sprint 2 Conditional Pass — Pending Final Validations
 **Owner:** Product Owner / Tech Lead
 **Created:** 2026-03-10
 **Priority:** 🔴 P0 - Critical
@@ -118,7 +118,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 | [M-003](#story-m-003) | Implement Safe-Area Support | 3 | 🔴 Critical | In Review | 1 |
 | [M-004](#story-m-004) | Service Worker Foundation | 13 | 🔴 Critical | In Review | 2 |
 | [M-005](#story-m-005) | Offline Cache Strategy | 8 | 🔴 Critical | In Review | 2 |
-| [M-006](#story-m-006) | Mobile Dashboard IA Redesign | 13 | 🟠 High | Draft | 3 |
+| [M-006](#story-m-006) | Mobile Dashboard IA Redesign | 13 | 🟠 High | In Review | 3 |
 | [M-007](#story-m-007) | Touch-Optimized Filters & Search | 8 | 🟠 High | Draft | 3 |
 | [M-008](#story-m-008) | Mobile Form Optimization | 5 | 🟠 High | Draft | 3 |
 | [M-009](#story-m-009) | Image Optimization Pipeline | 5 | 🟡 Medium | Draft | 4 |
@@ -164,6 +164,16 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 
 ---
 
+### Sprint 2 Gate Review (2026-03-10)
+
+- **Gate Status:** 🟡 Conditional Pass
+- **Formal review:** `docs/SPRINT-2_CONDITIONAL_PASS.md`
+- **Still pending:** QA manual em device real para `M-004` e `M-005`
+- **Still pending:** `Lighthouse Offline >= 6/10` para `M-004`
+- **Operational note:** Sprint 3 pode seguir em planejamento e story refinement, mas `M-004` e `M-005` permanecem `In Review` até o fechamento dessas validações
+
+---
+
 ### Sprint 3: Mobile IA Optimization (Weeks 5-6)
 **Goal:** Otimizar Information Architecture para mobile
 
@@ -177,6 +187,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 - Filtros mobile-first
 - Formulários multi-step otimizados
 - Task Completion Rate: 45% → 65%
+- Stories materializadas em `docs/stories/` para refinamento e execução
 
 ---
 

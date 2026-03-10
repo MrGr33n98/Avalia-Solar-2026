@@ -8,15 +8,10 @@ import {
   ShieldCheck,
   BadgeCheck,
   Link2,
-  Building2,
   FileText,
-  Package,
   ImageIcon,
   Target,
-  Megaphone,
-  Settings,
   Sparkles,
-  Award,
   TrendingUp,
 } from 'lucide-react';
 
@@ -31,6 +26,11 @@ export interface NavigationItem {
   children?: NavigationItem[];
   badge?: boolean;
   description?: string;
+}
+
+export interface FlatNavigationItem extends Omit<NavigationItem, 'children'> {
+  parentId?: string;
+  parentLabel?: string;
 }
 
 export const DASHBOARD_NAVIGATION: NavigationItem[] = [
@@ -157,16 +157,23 @@ export function filterNavigationByContext(
   items: NavigationItem[],
   context: NavigationContext
 ): NavigationItem[] {
-  return items
-    .filter((item) => item.context.includes(context) || item.context.includes('all'))
-    .map((item) => ({
-      ...item,
-      children: item.children
-        ? item.children.filter(
-            (child) => child.context.includes(context) || child.context.includes('all')
-          )
-        : undefined,
-    }));
+  return items.flatMap((item) => {
+    const filteredChildren = item.children?.filter(
+      (child) => child.context.includes(context) || child.context.includes('all')
+    );
+    const itemMatches = item.context.includes(context) || item.context.includes('all');
+
+    if (!itemMatches && !filteredChildren?.length) {
+      return [];
+    }
+
+    return [
+      {
+        ...item,
+        children: filteredChildren,
+      },
+    ];
+  });
 }
 
 export function getNavigationItemById(id: string): NavigationItem | undefined {
@@ -182,4 +189,23 @@ export function getNavigationItemById(id: string): NavigationItem | undefined {
 
 export function getNavigationGroups(): string[] {
   return Array.from(new Set(DASHBOARD_NAVIGATION.map((item) => item.group).filter(Boolean)));
+}
+
+export function flattenNavigationItems(items: NavigationItem[]): FlatNavigationItem[] {
+  return items.flatMap((item) => {
+    if (!item.children?.length) {
+      return [{ ...item }];
+    }
+
+    return item.children.map((child) => ({
+      ...child,
+      group: child.group || item.group,
+      parentId: item.id,
+      parentLabel: item.label,
+    }));
+  });
+}
+
+export function getFlatNavigationByContext(context: NavigationContext): FlatNavigationItem[] {
+  return flattenNavigationItems(filterNavigationByContext(DASHBOARD_NAVIGATION, context));
 }

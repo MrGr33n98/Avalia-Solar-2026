@@ -1,6 +1,8 @@
 import { 
   DASHBOARD_NAVIGATION, 
+  flattenNavigationItems,
   filterNavigationByContext, 
+  getFlatNavigationByContext,
   getNavigationItemById,
   type NavigationContext 
 } from '../config/navigation';
@@ -61,7 +63,11 @@ describe('Navigation Configuration', () => {
       
       quickAccess.forEach(item => {
         expect(
-          item.context.includes('quick_access') || item.context.includes('all')
+          item.context.includes('quick_access') ||
+            item.context.includes('all') ||
+            item.children?.every(
+              (child) => child.context.includes('quick_access') || child.context.includes('all')
+            )
         ).toBe(true);
       });
     });
@@ -106,6 +112,29 @@ describe('Navigation Configuration', () => {
     it('returns undefined for non-existent items', () => {
       const item = getNavigationItemById('non-existent-id');
       expect(item).toBeUndefined();
+    });
+  });
+
+  describe('flat navigation helpers', () => {
+    it('flattens child items while preserving parent labels', () => {
+      const operational = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
+      const flatItems = flattenNavigationItems(operational);
+      const reviewsItem = flatItems.find((item) => item.id === 'reviews');
+
+      expect(reviewsItem).toBeDefined();
+      expect(reviewsItem?.parentLabel).toBe('Avaliações');
+    });
+
+    it('returns flattened quick access items in mobile priority order', () => {
+      const quickAccess = getFlatNavigationByContext('quick_access');
+
+      expect(quickAccess.map((item) => item.id)).toEqual([
+        'overview',
+        'reviews',
+        'leads',
+        'ranking-performance',
+        'trust-widget',
+      ]);
     });
   });
 });

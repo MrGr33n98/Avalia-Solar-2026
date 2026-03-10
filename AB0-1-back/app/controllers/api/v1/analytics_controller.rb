@@ -2,7 +2,8 @@
 
 class Api::V1::AnalyticsController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[track conversions events_track]
-  ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital].freeze
+  before_action :check_rate_limit, only: %i[track events_track]
+  ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital micro_interaction].freeze
   CORE_CONVERSION_EVENT_MAP = {
     'profile_view' => :profile_views,
     'Company Profile Viewed' => :profile_views,
@@ -30,7 +31,15 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     
     return render json: { error: 'event_type is required' }, status: :bad_request if event_type.blank?
 
-    # Handle session_id persistence
+    # Validate micro-interaction events
+    if event_type == 'micro_interaction'
+      validator = MicroInteractionValidator.new(params)
+      unless validator.valid?
+        return render json: { errors: validator.errors }, status: :unprocessable_entity
+      end
+    end
+
+    # Handle session_id and anonymous_id persistence
     session_id = cookies.signed[:as_sid] || SecureRandom.uuid
     cookies.signed[:as_sid] = {
       value: session_id,
@@ -39,7 +48,9 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       same_site: :lax
     }
 
+    anonymous_id = cookies[:anonymous_id] || generate_anonymous_id
     metadata['session_id'] ||= session_id
+    metadata['anonymous_id'] ||= anonymous_id
 
     result = Analytics::TrackEventService.call(
       company_id: company_id,
@@ -49,7 +60,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     )
 
     if result.ok
-      render json: { status: 'success' }
+      render json: { status: 'success', event_id: result.event&.id }
     else
       render json: { status: 'error', message: result.error }, status: :unprocessable_entity
     end
@@ -211,5 +222,30 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     non_core_daily.each { |day, total| merged_daily[day] += total.to_i }
 
     [metrics, merged_daily.sort.to_h, 'company_daily_stats+analytics_events']
+  end
+
+  def check_rate_limit
+    # Redis-based rate limiting: 100 events per minute per IP
+    key = "analytics:#{request.ip}"
+    count = Rails.cache.read(key) || 0
+    
+    if count >= 100
+      render json: { error: 'Rate limit exceeded' }, status: :too_many_requests
+      return
+    end
+    
+    Rails.cache.write(key, count + 1, expires_in: 1.minute)
+  end
+
+  def generate_anonymous_id
+    id = SecureRandom.uuid
+    cookies[:anonymous_id] = {
+      value: id,
+      expires: 2.years.from_now,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :lax
+    }
+    id
   end
 end

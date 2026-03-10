@@ -13,9 +13,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
 } from '@/components/ui/command';
-import { DASHBOARD_NAVIGATION, filterNavigationByContext } from '@/config/navigation';
+import { getFlatNavigationByContext } from '@/config/navigation';
 
 interface CommandMenuProps {
   onSelectTab: (tabId: string) => void;
@@ -42,30 +41,12 @@ export function CommandMenu({ onSelectTab }: CommandMenuProps) {
   }, []);
 
   const menuItems = React.useMemo(() => {
-    const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
-    const flatItems: Array<{ id: string; label: string; icon: any; group: string }> = [];
-
-    navItems.forEach(item => {
-      if (item.children) {
-        item.children.forEach(child => {
-          flatItems.push({
-            id: child.id,
-            label: child.label,
-            icon: child.icon,
-            group: item.label,
-          });
-        });
-      } else {
-        flatItems.push({
-          id: item.id,
-          label: item.label,
-          icon: item.icon,
-          group: item.group || 'Geral',
-        });
-      }
-    });
-
-    return flatItems;
+    return getFlatNavigationByContext('operational').map((item) => ({
+      id: item.id,
+      label: item.label,
+      icon: item.icon,
+      group: item.parentLabel || item.group || 'Geral',
+    }));
   }, []);
 
   const groups = Array.from(new Set(menuItems.map((item) => item.group)));

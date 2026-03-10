@@ -1,0 +1,165 @@
+# STORY M-007: Touch-Optimized Filters & Search
+
+**ID:** M-007 | **Epic:** [EPIC-MOBILE-001](../EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md)
+**Sprint:** 3 | **Points:** 8 | **Priority:** 🟠 High
+**Created:** 2026-03-10
+**Status:** 📋 Draft
+
+**Predecessor:** M-002 (Touch-Safe Navigation)
+
+---
+
+## User Story
+
+**Como** usuário mobile navegando por categorias e empresas,  
+**Quero** filtrar e buscar com controles touch-first,  
+**Para que** eu refine resultados sem atrito, taps perdidos ou excesso de scroll.
+
+---
+
+## Context
+
+**Problema Atual:**
+
+- existem superfícies de filtro distintas e densas em `AB0-1-front/components/CategoriesIndexWithSidebar.tsx`
+- o fluxo de filtros mobile também depende de uma sheet separada em `AB0-1-front/components/filters/FilterSidebar.tsx`
+- a experiência atual ainda mistura padrões desktop e mobile, com aplicação inconsistente de ações, estados ativos e densidade de controles
+
+**Sintoma de UX:**
+
+- filtros exigem esforço cognitivo alto em mobile
+- ações de aplicar/limpar nem sempre ficam persistentes no campo visual ideal
+- busca e filtros não operam como uma experiência única e touch-first
+
+**Business Impact:**
+
+- prejudica discovery e refino em mobile
+- reduz velocidade para encontrar empresas/categorias relevantes
+- aumenta abandono em rotas de listagem
+
+**MFRI Impact:**
+
+- +8 → +10
+
+---
+
+## Acceptance Criteria
+
+### AC1: Bottom Sheet Mobile-First
+- [ ] Filtros mobile abrem em bottom sheet
+- [ ] Bottom sheet suporta scroll interno sem conflito com o restante da página
+- [ ] Interação de abrir/fechar é consistente nas telas cobertas
+
+### AC2: Touch Safety
+- [ ] Touch targets ≥48px
+- [ ] Checkboxes, toggles, selects e sliders têm área de toque suficiente
+- [ ] Não há controles críticos pequenos demais para uso one-handed
+
+### AC3: Persistent Actions
+- [ ] `Apply` e `Clear` ficam sempre visíveis no fluxo mobile
+- [ ] Active filter pills mostram estado atual com remoção rápida
+- [ ] Usuário entende claramente o que já está aplicado
+
+### AC4: Search Experience
+- [ ] Busca mobile oferece autocomplete adequado
+- [ ] Teclado touch não cobre a ação principal de busca
+- [ ] Busca e filtros se complementam sem ambiguidade
+
+---
+
+## Scope
+
+### In Scope
+✅ Redesenhar filtros mobile como bottom sheet  
+✅ Melhorar touch targets e densidade  
+✅ Persistir ações de aplicar/limpar  
+✅ Exibir active filters com clareza  
+✅ Refinar busca touch-first
+
+### Out of Scope
+❌ Nova engine de busca backend  
+❌ Personalização por segmento de usuário  
+❌ Mudanças em SEO de rotas  
+❌ Reescrita completa das listagens
+
+---
+
+## Tasks
+
+### Task 7.1: Audit
+- [ ] Mapear todos os fluxos de filtro mobile existentes
+- [ ] Identificar divergências entre categorias e empresas
+- [ ] Levantar controles abaixo do mínimo touch-safe
+
+### Task 7.2: Interaction Redesign
+- [ ] Unificar padrão de bottom sheet mobile
+- [ ] Definir posição persistente de `Apply` e `Clear`
+- [ ] Introduzir active filter pills com remoção rápida
+
+### Task 7.3: Search Optimization
+- [ ] Refinar campo de busca para teclado touch
+- [ ] Definir autocomplete e estados vazios
+- [ ] Garantir boa convivência entre busca e filtros ativos
+
+### Task 7.4: Validation
+- [ ] Testar em iOS Safari e Android Chrome
+- [ ] Validar usabilidade one-handed
+- [ ] Executar regressão das listagens desktop
+
+---
+
+## Dev Notes
+
+### Candidate Files
+- `AB0-1-front/components/CategoriesIndexWithSidebar.tsx`
+- `AB0-1-front/components/filters/FilterSidebar.tsx`
+- `AB0-1-front/components/categories/CategoryFilterSidebar.tsx`
+- `AB0-1-front/components/filters/ActiveFiltersSummary.tsx`
+
+### Mobile Constraints
+- bottom sheet deve respeitar safe-area inferior
+- ações principais devem ficar dentro da thumb zone
+- evitar duplicação de lógica entre as superfícies de filtro
+
+---
+
+## Definition of Done
+
+- [ ] filtros mobile unificados em padrão bottom sheet
+- [ ] touch targets corrigidos
+- [ ] apply/clear persistentes
+- [ ] active filters visíveis
+- [ ] story documentada com checklist e file list
+
+---
+
+## File List
+- [ ] `AB0-1-front/components/CategoriesIndexWithSidebar.tsx`
+- [ ] `AB0-1-front/components/filters/FilterSidebar.tsx`
+- [ ] `AB0-1-front/components/categories/CategoryFilterSidebar.tsx`
+- [ ] `AB0-1-front/components/filters/ActiveFiltersSummary.tsx`
+- [x] `docs/stories/M-007_touch_optimized_filters_search.md`
+
+---
+
+## Validation
+- [ ] QA manual em iOS Safari
+- [ ] QA manual em Android Chrome
+- [ ] verificação de touch targets ≥48px
+- [ ] regressão desktop nas listagens
+
+**Validation Notes (2026-03-10):**
+- story materializada a partir de `docs/MOBILE_PRODUCT_BACKLOG.md`
+- requisitos derivados do epic e do backlog, sem implementação iniciada
+
+---
+
+## Change Log
+
+| Date | Version | Description | Author |
+|------|---------|-------------|--------|
+| 2026-03-10 | 1.0 | Draft story created from epic and backlog | Codex |
+
+---
+
+**Generated by:** Codex

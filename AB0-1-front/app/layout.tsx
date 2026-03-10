@@ -15,6 +15,7 @@ import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
+import ClipboardTracker from '@/components/ClipboardTracker';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -142,6 +143,11 @@ export default function RootLayout({
         {/* Web Vitals Tracking - Non-blocking, after consent */}
         <Suspense fallback={null}>
           <WebVitalsReporter />
+        </Suspense>
+        
+        {/* Clipboard Tracking - Micro-interactions */}
+        <Suspense fallback={null}>
+          <ClipboardTracker />
         </Suspense>
       </body>
     </html>

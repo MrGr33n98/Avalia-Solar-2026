@@ -19,43 +19,52 @@
 
 ### For Product Owners
 2. **[Epic Overview](./EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md)**
-   - Full initiative scope
-   - 12 stories across 5 sprints
-   - Success criteria
-   - Risk analysis
-   
+    - Full initiative scope
+    - 12 stories across 5 sprints
+    - Success criteria
+    - Risk analysis
+
 3. **[Product Backlog](./MOBILE_PRODUCT_BACKLOG.md)**
-   - Prioritized stories (P0/P1/P2)
-   - Story points & estimates
-   - Dependencies graph
-   - Resource allocation
+    - Prioritized stories (P0/P1/P2)
+    - Story points & estimates
+    - Dependencies graph
+    - Resource allocation
 
 4. **[Metrics Dashboard](./MOBILE_METRICS_DASHBOARD.md)**
-   - OKRs tracking
-   - North Star Metric: Mobile Readiness Index
-   - Weekly review template
-   - Alert thresholds
+    - OKRs tracking
+    - North Star Metric: Mobile Readiness Index
+    - Weekly review template
+    - Alert thresholds
+
+5. **[Sprint 2 Conditional Pass](./SPRINT-2_CONDITIONAL_PASS.md)**
+   - gate decision da Sprint 2
+   - pendências finais de QA
+   - distinção entre feature sign-off e merge readiness
 
 ### For Engineering Teams
-5. **[Sprint 1 Stories](./stories/)**
-    - [M-001: Mobile Platform Definition & MADR](./stories/M-001_mobile_platform_definition.md)
-    - [M-002: Remove Hover-Dependent Navigation](./stories/M-002_remove_hover_navigation.md)
-    - [M-003: Implement Safe-Area Support](./stories/M-003_safe_area_support.md)
-6. **[Sprint 2 Stories](./stories/)**
-    - [M-004: Service Worker Foundation](./stories/M-004_service_worker_foundation.md)
-    - [M-005: Offline Cache Strategy](./stories/M-005_offline_cache_strategy.md)
-7. **[Architecture Decision Record](./architecture/MADR-001-mobile-platform.md)**
-   - decisão oficial de plataforma mobile
-   - browser/device matrix
-   - roadmap 3-6-12 meses
+6. **[Sprint 1 Stories](./stories/)**
+     - [M-001: Mobile Platform Definition & MADR](./stories/M-001_mobile_platform_definition.md)
+     - [M-002: Remove Hover-Dependent Navigation](./stories/M-002_remove_hover_navigation.md)
+     - [M-003: Implement Safe-Area Support](./stories/M-003_safe_area_support.md)
+7. **[Sprint 2 Stories](./stories/)**
+     - [M-004: Service Worker Foundation](./stories/M-004_service_worker_foundation.md)
+     - [M-005: Offline Cache Strategy](./stories/M-005_offline_cache_strategy.md)
+8. **[Sprint 3 Stories](./stories/)**
+     - [M-006: Mobile Dashboard IA Redesign](./stories/M-006_mobile_dashboard_ia_redesign.md)
+     - [M-007: Touch-Optimized Filters & Search](./stories/M-007_touch_optimized_filters_search.md)
+     - [M-008: Mobile Form Optimization](./stories/M-008_mobile_form_optimization.md)
+9. **[Architecture Decision Record](./architecture/MADR-001-mobile-platform.md)**
+    - decisão oficial de plataforma mobile
+    - browser/device matrix
+    - roadmap 3-6-12 meses
 
-8. **[Service Worker Strategy](./architecture/service-worker-strategy.md)**
-   - estratégias de cache
-   - mutation queue
-   - sync e fallback offline
+10. **[Service Worker Strategy](./architecture/service-worker-strategy.md)**
+    - estratégias de cache
+    - mutation queue
+    - sync e fallback offline
 
-9. **[Safe-Area Guide](./guides/safe-area-guide.md)**
-   - padrão de implementação para elementos fixed/sticky
+11. **[Safe-Area Guide](./guides/safe-area-guide.md)**
+    - padrão de implementação para elementos fixed/sticky
 
 ---
 
@@ -181,9 +190,10 @@ Week 9-10  [░░░░░░░░░░░░░░░░░░░░░░�
 → Next step: Local environment setup, review acceptance criteria
 
 #### **QA Engineer**
+→ Read: [Sprint 2 Conditional Pass](./SPRINT-2_CONDITIONAL_PASS.md)
 → Read: [M-011 Testing Infrastructure](./MOBILE_PRODUCT_BACKLOG.md#m-011-mobile-testing-infrastructure)
 → Focus on: Device testing matrix, test coverage goals
-→ Next step: Setup BrowserStack, prepare test plans
+→ Next step: Fechar Sprint 2 real-device QA e seguir para M-007
 
 #### **Designer / UX**
 → Read: [M-006 Dashboard IA Redesign](./MOBILE_PRODUCT_BACKLOG.md#m-006-mobile-dashboard-ia-redesign)
@@ -215,7 +225,10 @@ docs/
     ├── M-003_safe_area_support.md
     ├── M-004_service_worker_foundation.md
     ├── M-005_offline_cache_strategy.md
-    └── (M-006 through M-012 to be created in Sprint Planning)
+    ├── M-006_mobile_dashboard_ia_redesign.md
+    ├── M-007_touch_optimized_filters_search.md
+    ├── M-008_mobile_form_optimization.md
+    └── (M-009 through M-012 to be created in Sprint Planning)
 ```
 
 ---
