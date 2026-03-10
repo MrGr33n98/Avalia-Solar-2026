@@ -269,8 +269,8 @@ export default function CompanyCard({
   }
 
   // Banner ratio: consistent across all cards for grid alignment
-  const bannerRatio = compact ? 21 / 9 : 16 / 9;
-  const avatarSize = compact ? 44 : 64;
+  const bannerRatio = 21 / 9; // Panoramic ratio for compact height
+  const avatarSize = compact ? 40 : 56;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -396,7 +396,7 @@ export default function CompanyCard({
         </AspectRatio>
 
         <div
-          className={cn('absolute left-4 z-20', compact ? '-bottom-5' : '-bottom-6')}
+          className={cn('absolute left-4 z-20', compact ? '-bottom-4' : '-bottom-5')}
           style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
         >
           <div className="relative">
@@ -452,11 +452,11 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-6 px-3 pb-3' : 'px-3.5 pb-3.5 pt-7')}>
-        <div className={cn("flex flex-col mb-2", compact ? "gap-1.5" : "gap-3")}>
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-2.5' : 'px-3.5 pb-3 pt-6')}>
+        <div className={cn("flex flex-col mb-2", compact ? "gap-1" : "gap-2")}>
           <div className="flex flex-col gap-1">
             <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('font-black tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-xl md:text-2xl')}>
+              <h3 className={cn('font-black tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-lg md:text-xl')}>
                 {name}
               </h3>
             </Link>
@@ -473,12 +473,12 @@ export default function CompanyCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {average_rating > 0 ? (
-                <div className="flex items-center gap-1.5">
+                <>
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                  <span className="text-sm font-bold text-slate-900">
+                  <span className="text-xs font-bold text-slate-900">
                     {Number(average_rating).toFixed(1)}/5.0
                   </span>
                   {!compact && rating_count > 0 && (
@@ -486,28 +486,29 @@ export default function CompanyCard({
                       ({rating_count.toLocaleString(lang)})
                     </span>
                   )}
-                </div>
+                </>
               ) : (
                 <span className="text-[11px] text-gray-400 font-bold">Sem avaliações</span>
               )}
             </div>
-            {category_name && !compact && (
-              <span className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded-full truncate">
-                {category_name}
-              </span>
+            {!compact && (city || state) && (
+              <div className="flex items-center gap-1 text-[10px] text-gray-500 truncate">
+                <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
+              </div>
             )}
           </div>
         </div>
 
-        {(!compact || (city || state)) && (
-          <div className="mt-auto flex items-center gap-1 text-[10px] text-gray-500 truncate pb-2">
+        {compact && (city || state) && (
+          <div className="flex items-center gap-1 text-[10px] text-gray-500 truncate pb-1.5">
             <MapPin className="w-3 h-3 text-gray-400" />
             <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
           </div>
         )}
 
         {!compact && (
-          <p className="mt-1 text-xs text-slate-600 leading-relaxed line-clamp-2 min-h-[2.5rem]">
+          <p className="mt-1 text-xs text-slate-600 leading-normal line-clamp-2 min-h-[2.5rem]">
             {description || (
               <span className="text-gray-400 italic font-light">
                 Visite o perfil para saber mais sobre nossos serviços.
@@ -521,7 +522,7 @@ export default function CompanyCard({
           ref={ctaRef}
           className={cn(
             "mt-auto pt-2 print:hidden",
-            compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-3"
+            compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-2"
           )}
         >
           {canRequestQuote && (

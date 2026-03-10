@@ -60,6 +60,10 @@ services:
       AWS_REGION: ${SPACES_REGION:-nyc3}
       AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      # Analytics
+      GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID}
+      GA4_API_SECRET: ${GA4_API_SECRET}
+      G4_ANALYTICS_ENABLED: ${G4_ANALYTICS_ENABLED:-true}
     ports:
       - "3001:3001"
     networks:
@@ -109,13 +113,20 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    env_file: .env
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
-      NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
-      API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.avaliasolar.com.br}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://avaliasolar.com.br}
+      API_URL_INTERNAL: ${API_URL_INTERNAL:-http://ab0-backend:3001/api/v1}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
+      # Analytics
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID}
+      NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID}
+      NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-true}
+      NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY}
+      NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST}
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
