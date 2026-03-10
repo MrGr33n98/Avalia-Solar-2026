@@ -93,6 +93,20 @@ Rails.application.routes.draw do
       post 'events/track', to: 'analytics#events_track'
       get 'analytics/conversions', to: 'analytics#conversions'
 
+      # Intent Scores API
+      resources :intent_scores, only: [:index, :show] do
+        collection do
+          get :summary
+          post :recalculate
+        end
+      end
+
+      # Identity Stitching API
+      namespace :identity do
+        post 'stitch', to: 'identity_stitch#create'
+        post 'track_session', to: 'identity_stitch#track_session'
+      end
+
       # Consent endpoints
       namespace :consent do
         post 'log'
