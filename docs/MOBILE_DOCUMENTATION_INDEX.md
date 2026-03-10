@@ -38,9 +38,16 @@
 
 ### For Engineering Teams
 5. **[Sprint 1 Stories](./stories/)**
-   - [M-001: Mobile Platform Definition & MADR](./stories/M-001_mobile_platform_definition.md)
-   - [M-002: Remove Hover-Dependent Navigation](./stories/M-002_remove_hover_navigation.md)
-   - [M-003: Implement Safe-Area Support](./stories/M-003_safe_area_support.md)
+    - [M-001: Mobile Platform Definition & MADR](./stories/M-001_mobile_platform_definition.md)
+    - [M-002: Remove Hover-Dependent Navigation](./stories/M-002_remove_hover_navigation.md)
+    - [M-003: Implement Safe-Area Support](./stories/M-003_safe_area_support.md)
+6. **[Architecture Decision Record](./architecture/MADR-001-mobile-platform.md)**
+   - decisão oficial de plataforma mobile
+   - browser/device matrix
+   - roadmap 3-6-12 meses
+
+7. **[Safe-Area Guide](./guides/safe-area-guide.md)**
+   - padrão de implementação para elementos fixed/sticky
 
 ---
 
@@ -104,10 +111,10 @@ EPIC-MOBILE-001 (94 points, 5 sprints)
 ### Stories Status
 | Status | Count | Points | % |
 |--------|-------|--------|---|
-| 📋 Draft (Not Started) | 12 | 94 | 100% |
+| 📋 Draft (Not Started) | 9 | 78 | 83% |
 | ✅ Ready | 0 | 0 | 0% |
 | 🔄 In Progress | 0 | 0 | 0% |
-| 👀 In Review | 0 | 0 | 0% |
+| 👀 In Review | 3 | 16 | 17% |
 | ✔️ Done | 0 | 0 | 0% |
 
 ### Priority Distribution
@@ -186,6 +193,13 @@ docs/
 ├── MOBILE_PRODUCT_BACKLOG.md             (Detailed backlog)
 ├── MOBILE_METRICS_DASHBOARD.md           (OKRs & tracking)
 ├── MOBILE_DOCUMENTATION_INDEX.md         (This file)
+├── announcements/
+│   └── mobile-platform-decision.md
+├── architecture/
+│   ├── MADR-001-mobile-platform.md
+│   └── mobile-architecture-diagram.svg
+├── guides/
+│   └── safe-area-guide.md
 │
 └── stories/
     ├── M-001_mobile_platform_definition.md
@@ -334,6 +348,7 @@ Every **2 weeks (Fridays)**, demonstrate:
 | 2026-03-10 | Initial documentation set created | AIOS Orion Agent |
 | 2026-03-10 | Sprint 1 stories detailed | AIOS Orion Agent |
 | 2026-03-10 | Metrics dashboard configured | AIOS Orion Agent |
+| 2026-03-10 | Sprint 1 implementation artifacts linked (MADR, safe-area guide, announcement) | Codex |
 
 ---
 

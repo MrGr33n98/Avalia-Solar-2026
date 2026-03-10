@@ -113,9 +113,9 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 
 | ID | Title | Points | Priority | Status | Sprint |
 |----|-------|--------|----------|--------|--------|
-| [M-001](#story-m-001) | Mobile Platform Definition & MADR | 5 | 🔴 Critical | Draft | 1 |
-| [M-002](#story-m-002) | Remove Hover-Dependent Navigation | 8 | 🔴 Critical | Draft | 1 |
-| [M-003](#story-m-003) | Implement Safe-Area Support | 3 | 🔴 Critical | Draft | 1 |
+| [M-001](#story-m-001) | Mobile Platform Definition & MADR | 5 | 🔴 Critical | In Review | 1 |
+| [M-002](#story-m-002) | Remove Hover-Dependent Navigation | 8 | 🔴 Critical | In Review | 1 |
+| [M-003](#story-m-003) | Implement Safe-Area Support | 3 | 🔴 Critical | In Review | 1 |
 | [M-004](#story-m-004) | Service Worker Foundation | 13 | 🔴 Critical | Draft | 2 |
 | [M-005](#story-m-005) | Offline Cache Strategy | 8 | 🔴 Critical | Draft | 2 |
 | [M-006](#story-m-006) | Mobile Dashboard IA Redesign | 13 | 🟠 High | Draft | 3 |

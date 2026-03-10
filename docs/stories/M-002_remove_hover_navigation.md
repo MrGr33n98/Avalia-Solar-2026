@@ -3,7 +3,7 @@
 **ID:** M-002 | **Epic:** [EPIC-MOBILE-001](../EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md)
 **Sprint:** 1 | **Points:** 8 | **Priority:** 🔴 Critical
 **Created:** 2026-03-10
-**Status:** 📋 Draft
+**Status:** 👀 In Review
 
 **Predecessor:** M-001 (Mobile Platform Definition)
 
@@ -97,7 +97,7 @@ onMouseLeave={() => setIsHovered(false)}
 ## Tasks
 
 ### Task 2.1: Audit & Analysis (2h)
-- [ ] **T2.1.1:** Identificar todos componentes hover-dependent
+- [x] **T2.1.1:** Identificar todos componentes hover-dependent
   ```bash
   grep -r "onMouseEnter\|onMouseLeave" AB0-1-front/components/
   ```
@@ -107,7 +107,7 @@ onMouseLeave={() => setIsHovered(false)}
   - iPhone 14 Pro / Safari
   - Samsung Galaxy S23 / Chrome
   - Documentar issues específicos
-- [ ] **T2.1.3:** Analisar alternative patterns
+- [x] **T2.1.3:** Analisar alternative patterns
   - Accordion (escolhido)
   - Bottom sheet
   - Full-page submenu
@@ -118,13 +118,13 @@ onMouseLeave={() => setIsHovered(false)}
 ---
 
 ### Task 2.2: Refactor CategoryDropdownItem (6h)
-- [ ] **T2.2.1:** Remover hover handlers
+- [x] **T2.2.1:** Remover hover handlers
   ```diff
   - onMouseEnter={() => setIsHovered(true)}
   - onMouseLeave={() => setIsHovered(false)}
   + onClick={handleToggle}
   ```
-- [ ] **T2.2.2:** Implementar toggle logic
+- [x] **T2.2.2:** Implementar toggle logic
   ```tsx
   const [isExpanded, setIsExpanded] = useState(false)
   
@@ -145,7 +145,7 @@ onMouseLeave={() => setIsHovered(false)}
     return () => document.removeEventListener('click', handleClickOutside)
   }, [isExpanded])
   ```
-- [ ] **T2.2.3:** Adicionar ARIA attributes
+- [x] **T2.2.3:** Adicionar ARIA attributes
   ```tsx
   <button
     aria-expanded={isExpanded}
@@ -153,7 +153,7 @@ onMouseLeave={() => setIsHovered(false)}
     aria-haspopup="true"
   >
   ```
-- [ ] **T2.2.4:** Implementar visual indicator
+- [x] **T2.2.4:** Implementar visual indicator
   ```tsx
   <ChevronIcon 
     className={cn(
@@ -162,7 +162,7 @@ onMouseLeave={() => setIsHovered(false)}
     )}
   />
   ```
-- [ ] **T2.2.5:** Adicionar keyboard support
+- [x] **T2.2.5:** Adicionar keyboard support
   ```tsx
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -177,7 +177,7 @@ onMouseLeave={() => setIsHovered(false)}
 ---
 
 ### Task 2.3: Touch Optimization (3h)
-- [ ] **T2.3.1:** Aumentar touch targets
+- [x] **T2.3.1:** Aumentar touch targets
   ```css
   .category-dropdown-button {
     min-height: 48px;
@@ -185,7 +185,7 @@ onMouseLeave={() => setIsHovered(false)}
     /* Ensure 44x44px minimum on iOS */
   }
   ```
-- [ ] **T2.3.2:** Adicionar touch feedback
+- [x] **T2.3.2:** Adicionar touch feedback
   ```tsx
   <button
     className="active:bg-gray-100 transition-colors duration-150"
@@ -193,7 +193,7 @@ onMouseLeave={() => setIsHovered(false)}
     onTouchEnd={() => setIsTouched(false)}
   >
   ```
-- [ ] **T2.3.3:** Eliminar 300ms click delay
+- [x] **T2.3.3:** Eliminar 300ms click delay
   ```tsx
   // Ensure viewport meta tag in layout.tsx:
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
@@ -203,7 +203,7 @@ onMouseLeave={() => setIsHovered(false)}
     touch-action: manipulation;
   }
   ```
-- [ ] **T2.3.4:** Implementar smooth transitions
+- [x] **T2.3.4:** Implementar smooth transitions
   ```css
   .submenu {
     transition: max-height 300ms ease-in-out, opacity 200ms;
@@ -224,7 +224,7 @@ onMouseLeave={() => setIsHovered(false)}
 ---
 
 ### Task 2.4: Desktop Compatibility (2h)
-- [ ] **T2.4.1:** Manter hover preview (optional)
+- [x] **T2.4.1:** Manter hover preview (optional)
   ```tsx
   // Desktop: hover shows preview after 300ms
   // Mobile: only click/tap triggers
@@ -253,14 +253,14 @@ onMouseLeave={() => setIsHovered(false)}
   }, [isDesktop])
   ```
 - [ ] **T2.4.2:** Testar em desktop Chrome/Firefox/Safari
-- [ ] **T2.4.3:** Validar que click funciona normalmente
+- [x] **T2.4.3:** Validar que click funciona normalmente
 
 **Deliverable:** Desktop experience validada
 
 ---
 
 ### Task 2.5: Testing (4h)
-- [ ] **T2.5.1:** Criar testes E2E Cypress mobile
+- [x] **T2.5.1:** Criar testes E2E Cypress mobile
   ```typescript
   describe('CategoryDropdownItem - Mobile', () => {
     beforeEach(() => {
@@ -320,7 +320,7 @@ onMouseLeave={() => setIsHovered(false)}
 ---
 
 ### Task 2.6: Documentation (1h)
-- [ ] **T2.6.1:** Atualizar component README
+- [x] **T2.6.1:** Atualizar component README
   ```markdown
   # CategoryDropdownItem
   
@@ -456,11 +456,28 @@ AB0-1-front/
 
 ---
 
+## File List
+- [x] `AB0-1-front/components/CategoryDropdownItem.tsx`
+- [x] `AB0-1-front/components/CategoryDropdownItem.README.md`
+- [x] `AB0-1-front/__tests__/navigation/CategoryNavigation.test.tsx`
+- [x] `AB0-1-front/cypress/e2e/category-navigation-mobile.cy.ts`
+- [x] `docs/stories/M-002_remove_hover_navigation.md`
+
+---
+
+## Validation
+- [ ] BrowserStack / devices reais
+- [ ] visual regression
+- [ ] axe audit
+
+---
+
 ## Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2026-03-10 | 1.0 | Story created | AIOS Orion |
+| 2026-03-10 | 1.1 | Touch-safe dropdown implemented with unit and Cypress coverage scaffold | Codex |
 
 ---
 

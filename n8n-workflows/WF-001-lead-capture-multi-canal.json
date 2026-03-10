@@ -1,0 +1,202 @@
+{
+  "name": "WF-001: Captura de Leads Multi-Canal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Lead Capture",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "lead-capture-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalizar dados do lead\nconst items = $input.all();\nconst normalized = [];\n\nfor (const item of items) {\n  const lead = item.json.body || item.json;\n  \n  // Extrair dados\n  const normalizedLead = {\n    name: lead.name || lead.full_name || 'Nome não informado',\n    email: lead.email || '',\n    phone: lead.phone || lead.phone_number || '',\n    source: lead.source || lead.utm_source || 'website',\n    product: lead.product || lead.interest || '',\n    company: lead.company || lead.company_name || '',\n    message: lead.message || lead.comments || '',\n    captured_at: new Date().toISOString(),\n    lead_id: `LEAD-${Date.now()}`,\n    status: 'new'\n  };\n  \n  // Enriquecer com informações adicionais\n  normalizedLead.crm_link = `https://crm.example.com/leads/${normalizedLead.lead_id}`;\n  normalizedLead.priority = determinePriority(normalizedLead);\n  \n  normalized.push({\n    json: normalizedLead\n  });\n}\n\nfunction determinePriority(lead) {\n  // Lógica simples de prioridade\n  if (lead.company && lead.email.includes('@gmail.com') === false) {\n    return 'high';\n  }\n  if (lead.phone && lead.message) {\n    return 'medium';\n  }\n  return 'low';\n}\n\nreturn normalized;"
+      },
+      "id": "code-normalize",
+      "name": "Code - Normalize Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "#vendas-leads",
+        "text": "🎯 Novo Lead Capturado!",
+        "blocksUi": {
+          "blocksValues": [
+            {
+              "type": "section",
+              "textUi": {
+                "text": "*Nome:* {{$json.name}}\\n*Email:* {{$json.email}}\\n*Telefone:* {{$json.phone}}\\n*Origem:* {{$json.source}}\\n*Interesse:* {{$json.product}}\\n*Empresa:* {{$json.company}}\\n*Prioridade:* {{$json.priority}}",
+                "type": "mrkdwn"
+              }
+            },
+            {
+              "type": "actions",
+              "elementsUi": {
+                "elementValues": [
+                  {
+                    "type": "button",
+                    "text": "Qualificar Lead",
+                    "url": "={{$json.crm_link}}",
+                    "style": "primary"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "slack-notification",
+      "name": "Slack - Notify New Lead",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [650, 200],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "your-spreadsheet-id",
+          "mode": "list",
+          "cachedResultName": "Leads Database"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{$json.lead_id}}",
+            "name": "={{$json.name}}",
+            "email": "={{$json.email}}",
+            "phone": "={{$json.phone}}",
+            "source": "={{$json.source}}",
+            "product": "={{$json.product}}",
+            "company": "={{$json.company}}",
+            "message": "={{$json.message}}",
+            "captured_at": "={{$json.captured_at}}",
+            "status": "={{$json.status}}",
+            "priority": "={{$json.priority}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "google-sheets-save",
+      "name": "Google Sheets - Save Lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [650, 400],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"lead_id\": $json.lead_id, \"message\": \"Lead capturado com sucesso!\"} }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Lead Capture": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Slack - Notify New Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets - Save Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Notify New Lead": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Save Lead": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-03-10T03:55:00.000Z",
+      "updatedAt": "2026-03-10T03:55:00.000Z",
+      "id": "1",
+      "name": "vendas"
+    },
+    {
+      "createdAt": "2026-03-10T03:55:00.000Z",
+      "updatedAt": "2026-03-10T03:55:00.000Z",
+      "id": "2",
+      "name": "leads"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-10T03:55:00.000Z",
+  "versionId": "1"
+}

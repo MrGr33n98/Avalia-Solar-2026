@@ -1,6 +1,6 @@
 import './globals.css';
 import '@/lib/env'; // Validate environment variables
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
@@ -73,6 +73,12 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 import { ThemeProvider } from '@/components/theme-provider';

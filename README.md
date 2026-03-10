@@ -217,3 +217,17 @@ API checks:
 - Os botoes de Orcamento/WhatsApp so devem aparecer quando `companies.active_admin = true`.
 - O backend valida a regra: a API de leads bloqueia criacao de lead para empresas com `active_admin = false`.
 - Para habilitar, use o ActiveAdmin em Empresas e marque **Ativar orcamentos (recurso pago)**.
+
+## Mobile Development Guidelines
+
+- Fonte da verdade mobile: `docs/architecture/MADR-001-mobile-platform.md`
+- Estratégia oficial atual: `PWA-first` sobre `Next.js 14 + React 18`
+- Estado mobile:
+  - server state: `React Query`
+  - client/mobile UI state: `Zustand` (roadmap)
+  - offline layer planejada: `Workbox + IndexedDB`
+- Regras obrigatórias para UI mobile:
+  - sem dependência exclusiva de hover
+  - touch targets mínimos de `44px`/`48px`
+  - elementos `fixed`/`sticky` devem respeitar safe-area
+- Guia rápido de safe-area: `docs/guides/safe-area-guide.md`

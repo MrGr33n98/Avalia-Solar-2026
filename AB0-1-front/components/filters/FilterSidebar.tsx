@@ -181,15 +181,18 @@ export const FilterSidebar: React.FC = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-[300px] sticky top-[88px] h-[calc(100vh-120px)] clay-panel bg-clay-surface border border-clay-shadow-light rounded-clay-lg p-3 overflow-hidden flex-col">
+      <aside className="hidden lg:flex w-[300px] sticky top-[calc(88px+var(--safe-area-inset-top))] h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] pb-[var(--safe-area-inset-bottom)] clay-panel bg-clay-surface border border-clay-shadow-light rounded-clay-lg p-3 overflow-hidden flex-col">
         <FilterContent />
       </aside>
 
       {/* Mobile Trigger & Sheet */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <div className="lg:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
-            <Button className="clay-btn-primary rounded-full shadow-2xl px-8 h-14 gap-3 border-none text-base font-bold">
+            <Button
+              data-testid="mobile-filters-trigger"
+              className="clay-btn-primary rounded-full shadow-2xl px-8 h-14 gap-3 border-none text-base font-bold"
+            >
               <SlidersHorizontal size={20} />
               <span>Filtrar</span>
               {isFilterActive(filters) && (
@@ -199,17 +202,20 @@ export const FilterSidebar: React.FC = () => {
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] p-6 border-none shadow-2xl">
+          <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] border-none p-6 pb-[max(1.5rem,var(--safe-area-inset-bottom))] shadow-2xl">
             <SheetHeader className="mb-6 flex flex-row items-center justify-between space-y-0">
               <SheetTitle className="text-2xl font-black tracking-tight">Filtros Avançados</SheetTitle>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)} className="rounded-full bg-slate-100">
                 <X size={20} />
               </Button>
             </SheetHeader>
-            <div className="h-full pb-32 overflow-y-auto">
+            <div className="h-full overflow-y-auto pb-36">
               <FilterContent />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pt-12">
+            <div
+              data-testid="mobile-filters-sheet-footer"
+              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent px-6 pt-12 pb-[max(1.5rem,var(--safe-area-inset-bottom))]"
+            >
               <Button 
                 className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-xl"
                 onClick={() => setIsMobileOpen(false)}

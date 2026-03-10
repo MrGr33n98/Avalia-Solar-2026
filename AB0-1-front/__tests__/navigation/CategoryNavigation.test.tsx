@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import CategoryCard from '@/components/CategoryCard';
 import CategoryCardMinimal from '@/components/CategoryCardMinimal';
 import CategoryDropdownItem from '@/components/CategoryDropdownItem';
@@ -13,8 +14,18 @@ jest.mock('next/image', () => ({
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -51,14 +62,81 @@ describe('Category navigation flows', () => {
     expect(link).toHaveAttribute('href', `/categories/${slug}`);
   });
 
-  it('Navbar dropdown item uses /categories/<slug> for main and subcategory', () => {
+  it('Navbar dropdown item opens submenu on tap and keeps main category link available', async () => {
     const catWithSub = {
       ...baseCategory,
       subcategories: [{ ...baseCategory, id: 43, name: 'Subcat', seo_url: 'subcat' }],
     } as Category;
+
+    const user = userEvent.setup();
+
     render(<CategoryDropdownItem category={catWithSub} onSelect={() => {}} />);
-    const mainLink = screen.getByRole('link', { name: /Carros Elétricos e Recarga/i });
+    const toggle = screen.getByRole('button', { name: /Carros Elétricos e Recarga/i });
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    const mainLink = screen.getByRole('link', { name: /Ver Carros Elétricos e Recarga/i });
     expect(mainLink).toHaveAttribute('href', `/categories/${slug}`);
+
+    const subLink = screen.getByRole('link', { name: /Subcat/i });
+    expect(subLink).toHaveAttribute('href', '/categories/subcat');
+  });
+
+  it('closes submenu on second tap and supports keyboard activation', async () => {
+    const catWithSub = {
+      ...baseCategory,
+      subcategories: [{ ...baseCategory, id: 43, name: 'Subcat', seo_url: 'subcat' }],
+    } as Category;
+
+    const user = userEvent.setup();
+
+    render(<CategoryDropdownItem category={catWithSub} onSelect={() => {}} />);
+    const toggle = screen.getByRole('button', { name: /Carros Elétricos e Recarga/i });
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.keyDown(toggle, { key: 'Enter' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('closes the previous dropdown when another item opens', async () => {
+    const firstCategory = {
+      ...baseCategory,
+      subcategories: [{ ...baseCategory, id: 43, name: 'Subcat', seo_url: 'subcat' }],
+    } as Category;
+    const secondCategory = {
+      ...baseCategory,
+      id: 99,
+      name: 'Mobilidade',
+      seo_url: 'mobilidade',
+      subcategories: [{ ...baseCategory, id: 100, name: 'Carregadores', seo_url: 'carregadores' }],
+    } as Category;
+
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <CategoryDropdownItem category={firstCategory} onSelect={() => {}} />
+        <CategoryDropdownItem category={secondCategory} onSelect={() => {}} />
+      </>
+    );
+
+    const firstToggle = screen.getByRole('button', { name: /Carros Elétricos e Recarga/i });
+    const secondToggle = screen.getByRole('button', { name: /Mobilidade/i });
+
+    await user.click(firstToggle);
+    expect(firstToggle).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(secondToggle);
+
+    expect(firstToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(secondToggle).toHaveAttribute('aria-expanded', 'true');
   });
 });
 

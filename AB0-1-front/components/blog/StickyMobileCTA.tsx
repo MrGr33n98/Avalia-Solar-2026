@@ -13,14 +13,15 @@ export function StickyMobileCTA() {
       // Show after scrolling 300px
       setIsVisible(window.scrollY > 300);
     };
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 lg:hidden animate-in slide-in-from-bottom duration-300">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] lg:hidden animate-in slide-in-from-bottom duration-300">
       <div className="flex gap-3 max-w-md mx-auto">
         <Button 
           className="flex-1 shadow-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground" 

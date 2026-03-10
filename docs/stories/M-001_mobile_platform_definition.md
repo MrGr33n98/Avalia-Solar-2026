@@ -3,7 +3,7 @@
 **ID:** M-001 | **Epic:** [EPIC-MOBILE-001](../EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md)
 **Sprint:** 1 | **Points:** 5 | **Priority:** 🔴 Critical
 **Created:** 2026-03-10
-**Status:** 📋 Draft
+**Status:** 👀 In Review
 
 ---
 
@@ -50,10 +50,10 @@
 - [x] Browser support matrix definida
 
 ### AC3: Stakeholder Alignment
-- [x] ADR revisado por: Tech Lead, PO, Frontend Lead
-- [x] Aprovação formal documentada no ADR
-- [x] Comunicação enviada para toda eng org
-- [x] Roadmap apresentado em sprint planning
+- [ ] ADR revisado por: Tech Lead, PO, Frontend Lead
+- [ ] Aprovação formal documentada no ADR
+- [ ] Comunicação enviada para toda eng org
+- [ ] Roadmap apresentado em sprint planning
 
 ### AC4: Development Guidelines
 - [x] Seção "Mobile Development Guidelines" adicionada ao README
@@ -83,15 +83,15 @@
 ## Tasks
 
 ### Task 1.1: Research & Analysis (3h)
-- [ ] **T1.1.1:** Analisar código atual mobile (`AB0-1-front/`)
+- [x] **T1.1.1:** Analisar código atual mobile (`AB0-1-front/`)
   - Identificar patterns PWA existentes
   - Mapear dependências críticas
   - Avaliar readiness para PWA
-- [ ] **T1.1.2:** Benchmarking competitivo
+- [x] **T1.1.2:** Benchmarking competitivo
   - Analisar 3-5 marketplaces similares
   - Documentar estratégia mobile dos líderes
   - Identificar best practices
-- [ ] **T1.1.3:** Análise de custos
+- [x] **T1.1.3:** Análise de custos
   - Estimar esforço PWA vs Native
   - TCO (Total Cost of Ownership) 12 meses
   - Resource requirements
@@ -101,16 +101,16 @@
 ---
 
 ### Task 1.2: Create MADR (4h)
-- [ ] **T1.2.1:** Escrever seção "Context"
+- [x] **T1.2.1:** Escrever seção "Context"
   - Situação atual do mobile no projeto
   - Problemas identificados (MFRI -8)
   - Business drivers
-- [ ] **T1.2.2:** Escrever seção "Decision"
+- [x] **T1.2.2:** Escrever seção "Decision"
   - Opções avaliadas (PWA / Native / Hybrid)
   - Critérios de decisão
   - Decisão final: **PWA-first com roadmap nativo Q3 2026**
   - Justificativa técnica e de negócio
-- [ ] **T1.2.3:** Escrever seção "Consequences"
+- [x] **T1.2.3:** Escrever seção "Consequences"
   - Impactos positivos
   - Riscos e mitigações
   - Próximos passos
@@ -120,7 +120,7 @@
 ---
 
 ### Task 1.3: Tech Stack Definition (3h)
-- [ ] **T1.3.1:** Definir tech stack mobile oficial
+- [x] **T1.3.1:** Definir tech stack mobile oficial
   ```yaml
   Framework: Next.js 14+ (App Router)
   UI Library: React 18+
@@ -137,11 +137,11 @@
     - Bundle Analyzer: @next/bundle-analyzer
     - Monitoring: Lighthouse CI
   ```
-- [ ] **T1.3.2:** Documentar browser support matrix
+- [x] **T1.3.2:** Documentar browser support matrix
   - iOS Safari 15+ (últimas 2 versões)
   - Android Chrome 100+ (últimas 2 versões)
   - Graceful degradation para legados
-- [ ] **T1.3.3:** Criar device testing matrix
+- [x] **T1.3.3:** Criar device testing matrix
   - P0 devices (iPhone 14 Pro, Galaxy S23)
   - P1 devices (iPhone SE, Pixel 7)
   - Tablet strategy (iPad Pro)
@@ -151,14 +151,14 @@
 ---
 
 ### Task 1.4: Architecture Diagram (2h)
-- [ ] **T1.4.1:** Criar diagrama de arquitetura mobile
+- [x] **T1.4.1:** Criar diagrama de arquitetura mobile
   - Client Layer (React Components)
   - State Layer (React Query + Zustand)
   - Offline Layer (Service Worker + IndexedDB)
   - Network Layer (API Client + Retry Logic)
   - Sync Layer (Background Sync)
-- [ ] **T1.4.2:** Gerar imagem do diagrama (Mermaid ou Excalidraw)
-- [ ] **T1.4.3:** Incluir no MADR
+- [x] **T1.4.2:** Gerar imagem do diagrama (Mermaid ou Excalidraw)
+- [x] **T1.4.3:** Incluir no MADR
 
 **Deliverable:** `docs/architecture/mobile-architecture-diagram.svg`
 
@@ -173,25 +173,25 @@
 - [ ] **T1.5.2:** Apresentar MADR (30 min)
 - [ ] **T1.5.3:** Coletar feedback e iterar (2h)
 - [ ] **T1.5.4:** Obter aprovação formal
-- [ ] **T1.5.5:** Documentar approvals no MADR
+- [x] **T1.5.5:** Documentar approvals no MADR
 
 **Deliverable:** MADR aprovado com signatures
 
 ---
 
 ### Task 1.6: Documentation & Communication (2h)
-- [ ] **T1.6.1:** Atualizar README.md
+- [x] **T1.6.1:** Atualizar README.md
   - Adicionar seção "Mobile Development"
   - Link para MADR
   - Quick start mobile
-- [ ] **T1.6.2:** Atualizar PR template
+- [x] **T1.6.2:** Atualizar PR template
   - Adicionar mobile checklist:
     - [ ] Testado em iOS Safari
     - [ ] Testado em Android Chrome
     - [ ] Performance budget respeitado
     - [ ] Touch targets >44px
     - [ ] Safe-area respeitada
-- [ ] **T1.6.3:** Criar announcement para eng org
+- [x] **T1.6.3:** Criar announcement para eng org
   - Resumo executivo da decisão
   - Link para MADR completo
   - Próximos passos (Sprints 2-5)
@@ -310,11 +310,31 @@ Accepted | 2026-03-10
 
 ---
 
+## File List
+- [x] `README.md`
+- [x] `.github/PULL_REQUEST_TEMPLATE.md`
+- [x] `docs/architecture/MADR-001-mobile-platform.md`
+- [x] `docs/architecture/mobile-architecture-diagram.svg`
+- [x] `docs/announcements/mobile-platform-decision.md`
+- [x] `docs/MOBILE_DOCUMENTATION_INDEX.md`
+- [x] `docs/EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md`
+- [x] `docs/stories/M-001_mobile_platform_definition.md`
+
+---
+
+## Validation
+- [ ] stakeholder review meeting
+- [ ] formal approval captured in ADR
+- [ ] engineering broadcast sent in Slack/Teams
+
+---
+
 ## Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2026-03-10 | 1.0 | Story created | AIOS Orion |
+| 2026-03-10 | 1.1 | MADR, architecture diagram, README and PR template updated | Codex |
 
 ---
 

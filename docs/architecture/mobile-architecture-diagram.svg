@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Avalia Solar mobile architecture</title>
+  <desc id="desc">PWA-first architecture for Avalia Solar mobile initiative.</desc>
+  <style>
+    .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+    .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+    .section { font: 700 18px Arial, sans-serif; fill: #0f172a; }
+    .body { font: 400 14px Arial, sans-serif; fill: #1e293b; }
+    .box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 18; ry: 18; }
+    .accent { fill: #eff6ff; stroke: #2563eb; }
+    .line { stroke: #94a3b8; stroke-width: 2.5; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <text x="60" y="60" class="title">Avalia Solar — Mobile Architecture</text>
+  <text x="60" y="90" class="subtitle">PWA-first sobre Next.js 14 App Router com offline foundation incremental</text>
+
+  <rect x="60" y="140" width="280" height="130" class="box accent" />
+  <text x="85" y="180" class="section">Client Layer</text>
+  <text x="85" y="212" class="body">- Next.js App Router</text>
+  <text x="85" y="236" class="body">- React 18 components</text>
+  <text x="85" y="260" class="body">- Touch-safe navigation + safe-area</text>
+
+  <rect x="460" y="140" width="280" height="130" class="box" />
+  <text x="485" y="180" class="section">State Layer</text>
+  <text x="485" y="212" class="body">- React Query v5</text>
+  <text x="485" y="236" class="body">- Zustand (planned mobile state)</text>
+  <text x="485" y="260" class="body">- URL-driven filters</text>
+
+  <rect x="860" y="140" width="280" height="130" class="box" />
+  <text x="885" y="180" class="section">Network Layer</text>
+  <text x="885" y="212" class="body">- API client to Rails backend</text>
+  <text x="885" y="236" class="body">- Retry / fallback strategy</text>
+  <text x="885" y="260" class="body">- Analytics + observability</text>
+
+  <rect x="260" y="360" width="280" height="140" class="box" />
+  <text x="285" y="400" class="section">Offline Layer</text>
+  <text x="285" y="432" class="body">- Workbox service worker</text>
+  <text x="285" y="456" class="body">- Cache strategies by route/resource</text>
+  <text x="285" y="480" class="body">- IndexedDB / Dexie planned</text>
+
+  <rect x="660" y="360" width="280" height="140" class="box" />
+  <text x="685" y="400" class="section">Quality Layer</text>
+  <text x="685" y="432" class="body">- Jest + Testing Library</text>
+  <text x="685" y="456" class="body">- Playwright smoke + visual</text>
+  <text x="685" y="480" class="body">- Cypress mobile suite incremental</text>
+
+  <rect x="360" y="590" width="500" height="110" class="box accent" />
+  <text x="385" y="632" class="section">Delivery Model</text>
+  <text x="385" y="662" class="body">Single deploy path for desktop + mobile web, with native evaluation gated for Q3 2026.</text>
+
+  <line x1="340" y1="205" x2="460" y2="205" class="line" />
+  <line x1="740" y1="205" x2="860" y2="205" class="line" />
+  <line x1="600" y1="270" x2="600" y2="360" class="line" />
+  <line x1="400" y1="500" x2="500" y2="590" class="line" />
+  <line x1="800" y1="500" x2="720" y2="590" class="line" />
+</svg>

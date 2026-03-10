@@ -32,7 +32,8 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -59,7 +60,7 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-200 shadow-lg p-4 md:py-3"
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/80 px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] shadow-lg backdrop-blur-lg md:py-3"
         >
           <div className="container mx-auto flex items-center justify-between gap-4">
             <div className="hidden md:flex items-center gap-3">

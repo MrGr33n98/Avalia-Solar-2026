@@ -3,7 +3,7 @@
 **ID:** M-003 | **Epic:** [EPIC-MOBILE-001](../EPIC-MOBILE-001_MOBILE_FIRST_READINESS.md)
 **Sprint:** 1 | **Points:** 3 | **Priority:** 🔴 Critical
 **Created:** 2026-03-10
-**Status:** 📋 Draft
+**Status:** 👀 In Review
 
 **Predecessor:** M-001 (Mobile Platform Definition)
 
@@ -111,7 +111,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ## Tasks
 
 ### Task 3.1: Global Safe-Area Setup (1h)
-- [ ] **T3.1.1:** Atualizar viewport meta tag
+- [x] **T3.1.1:** Atualizar viewport meta tag
   ```tsx
   // AB0-1-front/app/layout.tsx
   <meta
@@ -119,7 +119,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
     content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
   />
   ```
-- [ ] **T3.1.2:** Criar global safe-area CSS
+- [x] **T3.1.2:** Criar global safe-area CSS
   ```css
   /* AB0-1-front/app/globals.css */
   :root {
@@ -141,7 +141,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
     padding-left: var(--safe-area-inset-left);
   }
   ```
-- [ ] **T3.1.3:** Documentar no README
+- [x] **T3.1.3:** Documentar no README
   ```markdown
   ## Safe-Area Support
   
@@ -158,7 +158,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ---
 
 ### Task 3.2: Fix StickyMobileCTA (30min)
-- [ ] **T3.2.1:** Atualizar component
+- [x] **T3.2.1:** Atualizar component
   ```diff
   // AB0-1-front/components/blog/StickyMobileCTA.tsx:23
   <div
@@ -179,7 +179,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ---
 
 ### Task 3.3: Fix FilterSidebar (45min)
-- [ ] **T3.3.1:** Atualizar component
+- [x] **T3.3.1:** Atualizar component
   ```diff
   // AB0-1-front/components/filters/FilterSidebar.tsx:189
   <aside
@@ -190,7 +190,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
     )}
   >
   ```
-- [ ] **T3.3.2:** Verificar se overflow funciona corretamente
+- [x] **T3.3.2:** Verificar se overflow funciona corretamente
 - [ ] **T3.3.3:** Testar scroll behavior
 
 **Deliverable:** Sidebar com safe-area
@@ -198,7 +198,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ---
 
 ### Task 3.4: Fix CategoriesIndexWithSidebar Toolbar (45min)
-- [ ] **T3.4.1:** Atualizar toolbar
+- [x] **T3.4.1:** Atualizar toolbar
   ```diff
   // AB0-1-front/components/CategoriesIndexWithSidebar.tsx:138
   <div
@@ -218,11 +218,11 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ---
 
 ### Task 3.5: Comprehensive Audit (2h)
-- [ ] **T3.5.1:** Buscar todos elementos fixed/sticky
+- [x] **T3.5.1:** Buscar todos elementos fixed/sticky
   ```bash
   grep -r "fixed\|sticky" AB0-1-front/components/ | grep className
   ```
-- [ ] **T3.5.2:** Criar checklist de componentes
+- [x] **T3.5.2:** Criar checklist de componentes
   ```markdown
   - [x] StickyMobileCTA
   - [x] FilterSidebar
@@ -232,8 +232,8 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
   - [ ] Modals (verificar z-index conflicts)
   - [ ] Toasts/Notifications
   ```
-- [ ] **T3.5.3:** Corrigir componentes adicionais
-- [ ] **T3.5.4:** Documentar cada correção
+- [x] **T3.5.3:** Corrigir componentes adicionais
+- [x] **T3.5.4:** Documentar cada correção
 
 **Deliverable:** Audit report + fixes
 
@@ -262,7 +262,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
       ├── android-gesture-sidebar.png
       └── ...
   ```
-- [ ] **T3.6.5:** Criar Playwright visual test
+- [x] **T3.6.5:** Criar Playwright visual test
   ```typescript
   test('safe-area on iPhone 14 Pro', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -285,7 +285,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
 ---
 
 ### Task 3.7: Documentation (1h)
-- [ ] **T3.7.1:** Criar Safe-Area Guide
+- [x] **T3.7.1:** Criar Safe-Area Guide
   ```markdown
   # Safe-Area Implementation Guide
   
@@ -303,7 +303,7 @@ Elementos fixed/sticky no rodapé e topo não usam `env(safe-area-inset-*)`, cau
   [...]
   ```
 - [ ] **T3.7.2:** Adicionar ao component library docs
-- [ ] **T3.7.3:** Atualizar PR template checklist
+- [x] **T3.7.3:** Atualizar PR template checklist
   ```markdown
   - [ ] Fixed/sticky elements use safe-area insets
   ```
@@ -392,11 +392,35 @@ AB0-1-front/
 
 ---
 
+## File List
+- [x] `AB0-1-front/app/layout.tsx`
+- [x] `AB0-1-front/app/globals.css`
+- [x] `AB0-1-front/components/blog/StickyMobileCTA.tsx`
+- [x] `AB0-1-front/components/filters/FilterSidebar.tsx`
+- [x] `AB0-1-front/components/CategoriesIndexWithSidebar.tsx`
+- [x] `AB0-1-front/components/Navbar.tsx`
+- [x] `AB0-1-front/components/FloatingWhatsApp.tsx`
+- [x] `AB0-1-front/app/companies/[id]/components/StickyCTA.tsx`
+- [x] `AB0-1-front/components/company/Top1StickyCTA.tsx`
+- [x] `AB0-1-front/tests/mobile-safe-area.spec.ts`
+- [x] `docs/guides/safe-area-guide.md`
+- [x] `docs/stories/M-003_safe_area_support.md`
+
+---
+
+## Validation
+- [ ] manual iOS / Android real devices
+- [ ] screenshot comparison
+- [ ] header overlap verification on notched devices
+
+---
+
 ## Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2026-03-10 | 1.0 | Story created | AIOS Orion |
+| 2026-03-10 | 1.1 | Safe-area support implemented across critical mobile fixed/sticky elements | Codex |
 
 ---
 
