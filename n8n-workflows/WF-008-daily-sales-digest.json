@@ -1,0 +1,76 @@
+{
+  "name": "WF-008: Daily Sales Digest no Slack",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 9 * * *"}]}},
+      "id": "schedule-morning",
+      "name": "Schedule - Daily 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate Daily Sales Metrics\nconst today = new Date();\nconst yesterday = new Date(today);\nyesterday.setDate(yesterday.getDate() - 1);\n\n// Simular dados (substituir por chamadas API reais ao CRM)\nconst metrics = {\n  date: yesterday.toLocaleDateString('pt-BR'),\n  new_leads: Math.floor(Math.random() * 20) + 5,\n  deals_won: Math.floor(Math.random() * 5) + 1,\n  deals_lost: Math.floor(Math.random() * 3),\n  revenue: (Math.random() * 50000 + 10000).toFixed(2),\n  pipeline_value: (Math.random() * 500000 + 100000).toFixed(2),\n  conversion_rate: (Math.random() * 20 + 5).toFixed(1),\n  win_rate: (Math.random() * 40 + 30).toFixed(1),\n  meetings_scheduled: Math.floor(Math.random() * 10) + 2,\n  proposals_sent: Math.floor(Math.random() * 8) + 1\n};\n\nreturn [{json: metrics}];"
+      },
+      "id": "code-metrics",
+      "name": "Code - Calculate Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "#vendas-daily",
+        "text": "📊 Resumo de Vendas - {{$json.date}}",
+        "blocksUi": {
+          "blocksValues": [
+            {
+              "type": "header",
+              "textUi": {"text": "📊 Resumo Diário de Vendas", "type": "plain_text"}
+            },
+            {
+              "type": "section",
+              "fieldsUi": {
+                "fieldValues": [
+                  {"text": "*🎯 Novos Leads:*\\n{{$json.new_leads}}", "type": "mrkdwn"},
+                  {"text": "*✅ Deals Ganhos:*\\n{{$json.deals_won}}", "type": "mrkdwn"},
+                  {"text": "*❌ Deals Perdidos:*\\n{{$json.deals_lost}}", "type": "mrkdwn"},
+                  {"text": "*💰 Receita:*\\nR$ {{$json.revenue}}", "type": "mrkdwn"},
+                  {"text": "*📈 Pipeline Total:*\\nR$ {{$json.pipeline_value}}", "type": "mrkdwn"},
+                  {"text": "*🎲 Taxa Conversão:*\\n{{$json.conversion_rate}}%", "type": "mrkdwn"},
+                  {"text": "*🏆 Win Rate:*\\n{{$json.win_rate}}%", "type": "mrkdwn"},
+                  {"text": "*📅 Reuniões:*\\n{{$json.meetings_scheduled}}", "type": "mrkdwn"}
+                ]
+              }
+            },
+            {
+              "type": "divider"
+            },
+            {
+              "type": "context",
+              "elementsUi": {
+                "elementValues": [
+                  {"text": "Atualizado automaticamente via n8n", "type": "mrkdwn"}
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "slack-digest",
+      "name": "Slack - Send Daily Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 9AM": {"main": [[{"node": "Code - Calculate Metrics", "type": "main", "index": 0}]]},
+    "Code - Calculate Metrics": {"main": [[{"node": "Slack - Send Daily Digest", "type": "main", "index": 0}]]}
+  },
+  "tags": [{"id": "1", "name": "vendas"}, {"id": "6", "name": "reporting"}, {"id": "7", "name": "slack"}]
+}

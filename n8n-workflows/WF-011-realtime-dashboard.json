@@ -1,0 +1,107 @@
+{
+  "name": "WF-011: Real-Time Sales Dashboard",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "hours", "hoursInterval": 2}]}},
+      "id": "schedule",
+      "name": "Schedule - Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate Real-Time Metrics\nconst now = new Date();\nconst todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());\nconst monthStart = new Date(now.getFullYear(), now.getMonth(), 1);\n\n// Simular dados (substituir por APIs reais)\nconst metrics = {\n  // Hoje\n  today_date: now.toLocaleDateString('pt-BR'),\n  today_leads: Math.floor(Math.random() * 10) + 1,\n  today_revenue: (Math.random() * 20000).toFixed(2),\n  today_deals: Math.floor(Math.random() * 3) + 1,\n  today_meetings: Math.floor(Math.random() * 5) + 1,\n  \n  // Mês\n  month_revenue: (Math.random() * 300000 + 50000).toFixed(2),\n  month_goal: 500000,\n  month_progress: ((Math.random() * 60 + 20).toFixed(1)),\n  pipeline_value: (Math.random() * 800000 + 200000).toFixed(2),\n  \n  // Top Sellers\n  top_seller_1: {name: 'João Silva', revenue: (Math.random() * 100000 + 50000).toFixed(2)},\n  top_seller_2: {name: 'Maria Santos', revenue: (Math.random() * 80000 + 40000).toFixed(2)},\n  top_seller_3: {name: 'Pedro Costa', revenue: (Math.random() * 60000 + 30000).toFixed(2)},\n  \n  last_update: now.toLocaleString('pt-BR')\n};\n\nreturn [{json: metrics}];"
+      },
+      "id": "code-metrics",
+      "name": "Code - Calculate Dashboard Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "update",
+        "messageId": "={{$env.DASHBOARD_MESSAGE_ID}}",
+        "channel": "#vendas-dashboard",
+        "text": "📊 Dashboard de Vendas - Live",
+        "blocksUi": {
+          "blocksValues": [
+            {
+              "type": "header",
+              "textUi": {"text": "📊 Dashboard de Vendas - Live", "type": "plain_text"}
+            },
+            {
+              "type": "section",
+              "textUi": {"text": "*Hoje* ({{$json.today_date}})", "type": "mrkdwn"}
+            },
+            {
+              "type": "section",
+              "fieldsUi": {
+                "fieldValues": [
+                  {"text": "*🎯 Leads:*\\n{{$json.today_leads}}", "type": "mrkdwn"},
+                  {"text": "*💰 Receita:*\\nR$ {{$json.today_revenue}}", "type": "mrkdwn"},
+                  {"text": "*✅ Deals:*\\n{{$json.today_deals}}", "type": "mrkdwn"},
+                  {"text": "*📞 Reuniões:*\\n{{$json.today_meetings}}", "type": "mrkdwn"}
+                ]
+              }
+            },
+            {
+              "type": "divider"
+            },
+            {
+              "type": "section",
+              "textUi": {"text": "*Mês Atual*", "type": "mrkdwn"}
+            },
+            {
+              "type": "section",
+              "fieldsUi": {
+                "fieldValues": [
+                  {"text": "*💵 Receita Total:*\\nR$ {{$json.month_revenue}}", "type": "mrkdwn"},
+                  {"text": "*🎯 Meta:*\\nR$ {{$json.month_goal}}", "type": "mrkdwn"},
+                  {"text": "*📈 Progresso:*\\n{{$json.month_progress}}%", "type": "mrkdwn"},
+                  {"text": "*📊 Pipeline:*\\nR$ {{$json.pipeline_value}}", "type": "mrkdwn"}
+                ]
+              }
+            },
+            {
+              "type": "divider"
+            },
+            {
+              "type": "section",
+              "textUi": {"text": "*🏆 Top Vendedores (Mês)*", "type": "mrkdwn"}
+            },
+            {
+              "type": "section",
+              "textUi": {
+                "text": "1️⃣ {{$json.top_seller_1.name}} - R$ {{$json.top_seller_1.revenue}}\\n2️⃣ {{$json.top_seller_2.name}} - R$ {{$json.top_seller_2.revenue}}\\n3️⃣ {{$json.top_seller_3.name}} - R$ {{$json.top_seller_3.revenue}}",
+                "type": "mrkdwn"
+              }
+            },
+            {
+              "type": "context",
+              "elementsUi": {
+                "elementValues": [
+                  {"text": "Última atualização: {{$json.last_update}}", "type": "mrkdwn"}
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "slack-update",
+      "name": "Slack - Update Dashboard",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [650, 300],
+      "notes": "Primeira vez: usar 'post' para criar mensagem. Depois usar 'update' com o message_id"
+    }
+  ],
+  "connections": {
+    "Schedule - Every 2 Hours": {"main": [[{"node": "Code - Calculate Dashboard Metrics", "type": "main", "index": 0}]]},
+    "Code - Calculate Dashboard Metrics": {"main": [[{"node": "Slack - Update Dashboard", "type": "main", "index": 0}]]}
+  },
+  "tags": [{"id": "1", "name": "vendas"}, {"id": "6", "name": "reporting"}, {"id": "7", "name": "slack"}]
+}

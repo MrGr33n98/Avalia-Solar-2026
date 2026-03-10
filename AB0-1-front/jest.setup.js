@@ -59,6 +59,12 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  configurable: true,
+  value: jest.fn(),
+});
+
 // Polyfill TransformStream for libraries that expect Web Streams API in JSDOM
 try {
   const { TransformStream } = require('node:stream/web');

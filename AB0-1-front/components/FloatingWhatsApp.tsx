@@ -25,7 +25,7 @@ export default function FloatingWhatsApp({ phone = '+55 65 9346-5055', className
       rel="noopener noreferrer"
       aria-label="Abrir WhatsApp"
       className={[
-        'fixed bottom-5 right-5 z-50',
+        'fixed bottom-[max(1.25rem,var(--safe-area-inset-bottom))] right-[max(1.25rem,var(--safe-area-inset-right))] z-50',
         'h-14 w-14 rounded-full',
         'bg-[#25D366] hover:bg-[#1ebe5d]',
         'shadow-xl shadow-black/15',

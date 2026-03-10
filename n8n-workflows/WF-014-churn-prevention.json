@@ -1,0 +1,94 @@
+{
+  "name": "WF-014: Churn Prevention - Early Warning",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 8 * * *"}]}},
+      "id": "schedule",
+      "name": "Schedule - Daily 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Churn Risk Scoring\nimport statistics\n\nitems = _input.all()\nat_risk_clients = []\n\nfor item in items:\n    client = item[\"json\"]\n    risk_score = 0\n    risk_factors = []\n    \n    # Análise de uso\n    if client.get(\"usage_percent\", 100) < 30:\n        risk_score += 25\n        risk_factors.append(\"Uso baixo do produto\")\n    \n    if client.get(\"days_since_login\", 0) >= 7:\n        risk_score += 20\n        risk_factors.append(\"Inativo há 7+ dias\")\n    \n    # Suporte\n    if client.get(\"open_tickets\", 0) > 2:\n        risk_score += 15\n        risk_factors.append(\"Múltiplos tickets abertos\")\n    \n    # Engajamento\n    if client.get(\"meetings_cancelled\", 0) > 1:\n        risk_score += 15\n        risk_factors.append(\"Cancelou reuniões\")\n    \n    if client.get(\"email_response_rate\", 100) < 50:\n        risk_score += 10\n        risk_factors.append(\"Não responde emails\")\n    \n    # NPS\n    if client.get(\"nps_score\", 10) < 7:\n        risk_score += 15\n        risk_factors.append(f\"NPS baixo ({client.get('nps_score')})\")\n    \n    # Classificação\n    if risk_score >= 60:\n        risk_level = \"🚨 CRÍTICO\"\n        action = \"Intervenção imediata do gerente\"\n    elif risk_score >= 40:\n        risk_level = \"⚠️ ALTO\"\n        action = \"Agendar reunião urgente\"\n    elif risk_score >= 20:\n        risk_level = \"⚡ MÉDIO\"\n        action = \"Check-in proativo\"\n    else:\n        continue\n    \n    at_risk_clients.append({\n        \"json\": {\n            **client,\n            \"risk_score\": risk_score,\n            \"risk_level\": risk_level,\n            \"risk_factors\": risk_factors,\n            \"recommended_action\": action\n        }\n    })\n\nreturn at_risk_clients"
+      },
+      "id": "code-risk",
+      "name": "Code - Churn Risk Algorithm",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{$json.csm_slack_id}}",
+        "text": "🚨 ALERTA DE CHURN",
+        "blocksUi": {
+          "blocksValues": [
+            {
+              "type": "header",
+              "textUi": {"text": "{{$json.risk_level}} - Cliente em Risco", "type": "plain_text"}
+            },
+            {
+              "type": "section",
+              "fieldsUi": {
+                "fieldValues": [
+                  {"text": "*👤 Cliente:*\\n{{$json.company_name}}", "type": "mrkdwn"},
+                  {"text": "*📊 Risk Score:*\\n{{$json.risk_score}}/100", "type": "mrkdwn"},
+                  {"text": "*💼 ARR:*\\nR$ {{$json.arr}}", "type": "mrkdwn"},
+                  {"text": "*📅 Cliente desde:*\\n{{$json.customer_since}}", "type": "mrkdwn"}
+                ]
+              }
+            },
+            {
+              "type": "section",
+              "textUi": {
+                "text": "*⚠️ Fatores de Risco:*\\n- {{$json.risk_factors.join('\\n- ')}}",
+                "type": "mrkdwn"
+              }
+            },
+            {
+              "type": "section",
+              "textUi": {
+                "text": "*🎯 Ação Recomendada:*\\n{{$json.recommended_action}}",
+                "type": "mrkdwn"
+              }
+            },
+            {
+              "type": "actions",
+              "elementsUi": {
+                "elementValues": [
+                  {
+                    "type": "button",
+                    "text": "Ver no CRM",
+                    "url": "={{$json.crm_url}}",
+                    "style": "primary"
+                  },
+                  {
+                    "type": "button",
+                    "text": "📞 Ligar Agora",
+                    "url": "tel:={{$json.phone}}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "slack-alert-csm",
+      "name": "Slack - Alert CSM",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 8AM": {"main": [[{"node": "Code - Churn Risk Algorithm", "type": "main", "index": 0}]]},
+    "Code - Churn Risk Algorithm": {"main": [[{"node": "Slack - Alert CSM", "type": "main", "index": 0}]]}
+  },
+  "tags": [{"id": "1", "name": "vendas"}, {"id": "9", "name": "churn"}, {"id": "10", "name": "cs"}]
+}

@@ -121,7 +121,7 @@ export default function CategoriesIndexWithSidebar() {
           
           {/* 2. Sidebar de Filtros - Hierarquia Reforçada */}
           <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-24">
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-[calc(6rem+var(--safe-area-inset-top))]">
               <SidebarFilters 
                 filters={filters} 
                 onFilterChange={handleFilterChange} 
@@ -135,7 +135,10 @@ export default function CategoriesIndexWithSidebar() {
           <main className="flex-1 space-y-8 md:space-y-12">
             
             {/* Toolbar: Busca + Mobile Toggle */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm sticky top-20 z-20 flex flex-col sm:flex-row gap-4 items-center justify-between backdrop-blur-md bg-white/90">
+            <div
+              data-testid="categories-toolbar"
+              className="bg-white px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))] rounded-2xl border border-slate-200 shadow-sm sticky top-[calc(5rem+var(--safe-area-inset-top))] z-20 flex flex-col sm:flex-row gap-4 items-center justify-between backdrop-blur-md bg-white/90"
+            >
                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" className="lg:hidden w-full sm:w-auto h-11 font-bold">

@@ -20,7 +20,7 @@ export default function Top1StickyCTA({ company, rank }: Props) {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-20 left-4 right-4 z-50 md:hidden"
+        className="fixed bottom-[calc(5rem+var(--safe-area-inset-bottom))] left-[max(1rem,var(--safe-area-inset-left))] right-[max(1rem,var(--safe-area-inset-right))] z-50 md:hidden"
       >
         <div className="bg-slate-900 border-2 border-amber-400/50 shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-2xl p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

@@ -1,0 +1,51 @@
+{
+  "name": "WF-004: Follow-Up Automático Inteligente",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 9 * * *"}]}},
+      "id": "schedule-daily-9am",
+      "name": "Schedule - Daily 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Follow-up Logic\nconst items = $input.all();\nconst today = new Date();\nconst followups = [];\n\nfor (const item of items) {\n  const lead = item.json;\n  const lastContact = new Date(lead.last_contact_date || today);\n  const daysSinceContact = Math.floor((today - lastContact) / (1000 * 60 * 60 * 24));\n  \n  let action = null;\n  let message = \"\";\n  let channel = \"email\";\n  \n  // Regras de follow-up\n  if (daysSinceContact === 3 && lead.stage === \"proposta_enviada\") {\n    action = \"reminder\";\n    message = `Olá ${lead.name}, lembrando sobre a proposta enviada. Tem alguma dúvida?`;\n  } else if (daysSinceContact === 7 && lead.stage === \"primeiro_contato\") {\n    action = \"checkin\";\n    message = `Olá ${lead.name}, como está indo a avaliação da solução?`;\n  } else if (daysSinceContact === 14 && lead.stage === \"negociacao\") {\n    action = \"urgency\";\n    message = `${lead.name}, temos uma promoção especial que acaba esta semana!`;\n    channel = \"whatsapp\";\n  } else if (daysSinceContact >= 30) {\n    action = \"reengagement\";\n    message = `Olá ${lead.name}, ainda tem interesse? Temos novidades!`;\n  }\n  \n  if (action) {\n    followups.push({\n      json: {\n        ...lead,\n        followup_action: action,\n        followup_message: message,\n        followup_channel: channel,\n        followup_scheduled: true,\n        days_since_contact: daysSinceContact\n      }\n    });\n  }\n}\n\nreturn followups;"
+      },
+      "id": "code-followup",
+      "name": "Code - Follow-up Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "#vendas-followups",
+        "text": "📞 Follow-ups Agendados para Hoje",
+        "blocksUi": {
+          "blocksValues": [{
+            "type": "section",
+            "textUi": {
+              "text": "*{{$json.followup_action}}*\\n👤 {{$json.name}} ({{$json.company}})\\n⏱️ Último contato: {{$json.days_since_contact}} dias atrás\\n📧 Mensagem: {{$json.followup_message}}",
+              "type": "mrkdwn"
+            }
+          }]
+        }
+      },
+      "id": "slack-notify",
+      "name": "Slack - Notify Follow-up",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 9AM": {"main": [[{"node": "Code - Follow-up Logic", "type": "main", "index": 0}]]},
+    "Code - Follow-up Logic": {"main": [[{"node": "Slack - Notify Follow-up", "type": "main", "index": 0}]]}
+  },
+  "tags": [{"id": "1", "name": "vendas"}, {"id": "5", "name": "followup"}]
+}

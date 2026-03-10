@@ -82,7 +82,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-[1000] clay-header bg-clay-bg border-b border-clay-shadow-light">
+    <nav className="sticky top-0 z-[1000] border-b border-clay-shadow-light bg-clay-bg pt-[var(--safe-area-inset-top)] clay-header">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4 h-16 relative">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 shrink-0 clay-surface clay-convex p-2 rounded-clay-md" aria-label="Home Avalia Solar">

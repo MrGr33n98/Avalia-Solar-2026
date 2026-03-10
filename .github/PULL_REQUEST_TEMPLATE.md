@@ -25,6 +25,15 @@ Closes #
 - [ ] Logs and error handling are clear
 - [ ] No known regression in existing flows
 
+## Mobile Checklist
+
+- [ ] N/A
+- [ ] Tested on mobile viewport
+- [ ] No hover-only interaction added
+- [ ] Touch targets remain >= 44px
+- [ ] Fixed/sticky elements respect safe-area
+- [ ] Mobile regression checked against existing web flows
+
 ## Monetization / Plan Gating Impact
 
 - [ ] N/A
