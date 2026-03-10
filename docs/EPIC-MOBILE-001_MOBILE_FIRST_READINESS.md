@@ -1,6 +1,6 @@
 # EPIC-MOBILE-001: Mobile-First Readiness & Architecture
 
-**Status:** 📋 Planning
+**Status:** 👀 Sprint 2 In Review
 **Owner:** Product Owner / Tech Lead
 **Created:** 2026-03-10
 **Priority:** 🔴 P0 - Critical
@@ -116,8 +116,8 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 | [M-001](#story-m-001) | Mobile Platform Definition & MADR | 5 | 🔴 Critical | In Review | 1 |
 | [M-002](#story-m-002) | Remove Hover-Dependent Navigation | 8 | 🔴 Critical | In Review | 1 |
 | [M-003](#story-m-003) | Implement Safe-Area Support | 3 | 🔴 Critical | In Review | 1 |
-| [M-004](#story-m-004) | Service Worker Foundation | 13 | 🔴 Critical | Draft | 2 |
-| [M-005](#story-m-005) | Offline Cache Strategy | 8 | 🔴 Critical | Draft | 2 |
+| [M-004](#story-m-004) | Service Worker Foundation | 13 | 🔴 Critical | In Review | 2 |
+| [M-005](#story-m-005) | Offline Cache Strategy | 8 | 🔴 Critical | In Review | 2 |
 | [M-006](#story-m-006) | Mobile Dashboard IA Redesign | 13 | 🟠 High | Draft | 3 |
 | [M-007](#story-m-007) | Touch-Optimized Filters & Search | 8 | 🟠 High | Draft | 3 |
 | [M-008](#story-m-008) | Mobile Form Optimization | 5 | 🟠 High | Draft | 3 |
@@ -156,9 +156,10 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 - M-005: Offline Cache Strategy
 
 **Deliverables:**
-- Service Worker registrado e funcional
-- Cache strategy documentada e implementada
+- Service Worker registrado, resiliente e validado por E2E
+- Cache strategy documentada em `docs/architecture/service-worker-strategy.md`
 - Offline UI para 5 rotas principais
+- Mutation queue com retry + background sync fallback
 - MFRI Score: 0 → +5
 
 ---
@@ -228,7 +229,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 ### Mobile Architecture
 - **Framework:** Next.js 14+ com App Router
 - **State Management:** React Query v5 + Zustand para offline state
-- **Service Worker:** Workbox 7+ com estratégias customizadas
+- **Service Worker:** Service Worker customizado com estratégias por recurso e fallback offline
 - **Storage:** IndexedDB via Dexie.js para cache persistente
 - **Sync:** Background Sync API para mutações offline
 
@@ -291,7 +292,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 | Type | Location | Status |
 |------|----------|--------|
 | MADR | `docs/architecture/MADR-001-mobile-platform.md` | Pending (M-001) |
-| Service Worker Architecture | `docs/architecture/service-worker-strategy.md` | Pending (M-004) |
+| Service Worker Architecture | `docs/architecture/service-worker-strategy.md` | In Review (M-004/M-005) |
 | Mobile Testing Guide | `docs/qa/mobile-testing-guide.md` | Pending (M-011) |
 | PWA Installation Guide | `docs/guides/pwa-installation.md` | Pending (M-012) |
 | Performance Playbook | `docs/performance/mobile-optimization.md` | Pending (M-009) |
@@ -319,7 +320,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 ## Progress Tracking
 
 ```
-[░░░░░░░░░░] 0% Complete
+[████░░░░░░] 39% Implementado / Em Review
 ```
 
 **Sprint Velocity (Estimated):** 18-20 points/sprint
@@ -333,6 +334,7 @@ O AvaliaSolar possui boa responsividade pontual, mas **não tem arquitetura mobi
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2026-03-10 | 1.0 | Epic created from mobile diagnostic | AIOS Orion Agent |
+| 2026-03-10 | 1.1 | Sprint 2 offline foundation validated; epic status moved to review | Codex |
 
 ---
 

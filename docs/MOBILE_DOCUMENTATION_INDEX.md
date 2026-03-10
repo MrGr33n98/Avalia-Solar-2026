@@ -41,12 +41,20 @@
     - [M-001: Mobile Platform Definition & MADR](./stories/M-001_mobile_platform_definition.md)
     - [M-002: Remove Hover-Dependent Navigation](./stories/M-002_remove_hover_navigation.md)
     - [M-003: Implement Safe-Area Support](./stories/M-003_safe_area_support.md)
-6. **[Architecture Decision Record](./architecture/MADR-001-mobile-platform.md)**
+6. **[Sprint 2 Stories](./stories/)**
+    - [M-004: Service Worker Foundation](./stories/M-004_service_worker_foundation.md)
+    - [M-005: Offline Cache Strategy](./stories/M-005_offline_cache_strategy.md)
+7. **[Architecture Decision Record](./architecture/MADR-001-mobile-platform.md)**
    - decisão oficial de plataforma mobile
    - browser/device matrix
    - roadmap 3-6-12 meses
 
-7. **[Safe-Area Guide](./guides/safe-area-guide.md)**
+8. **[Service Worker Strategy](./architecture/service-worker-strategy.md)**
+   - estratégias de cache
+   - mutation queue
+   - sync e fallback offline
+
+9. **[Safe-Area Guide](./guides/safe-area-guide.md)**
    - padrão de implementação para elementos fixed/sticky
 
 ---
@@ -111,10 +119,10 @@ EPIC-MOBILE-001 (94 points, 5 sprints)
 ### Stories Status
 | Status | Count | Points | % |
 |--------|-------|--------|---|
-| 📋 Draft (Not Started) | 9 | 78 | 83% |
+| 📋 Draft (Not Started) | 7 | 57 | 61% |
 | ✅ Ready | 0 | 0 | 0% |
 | 🔄 In Progress | 0 | 0 | 0% |
-| 👀 In Review | 3 | 16 | 17% |
+| 👀 In Review | 5 | 37 | 39% |
 | ✔️ Done | 0 | 0 | 0% |
 
 ### Priority Distribution
@@ -205,7 +213,9 @@ docs/
     ├── M-001_mobile_platform_definition.md
     ├── M-002_remove_hover_navigation.md
     ├── M-003_safe_area_support.md
-    └── (M-004 through M-012 to be created in Sprint Planning)
+    ├── M-004_service_worker_foundation.md
+    ├── M-005_offline_cache_strategy.md
+    └── (M-006 through M-012 to be created in Sprint Planning)
 ```
 
 ---
@@ -338,6 +348,9 @@ Every **2 weeks (Fridays)**, demonstrate:
 | M-001 Story | 1.0 | 2026-03-10 | ✅ Final |
 | M-002 Story | 1.0 | 2026-03-10 | ✅ Final |
 | M-003 Story | 1.0 | 2026-03-10 | ✅ Final |
+| M-004 Story | 1.1 | 2026-03-10 | 👀 In Review |
+| M-005 Story | 1.1 | 2026-03-10 | 👀 In Review |
+| Service Worker Strategy | 1.1 | 2026-03-10 | 👀 In Review |
 
 ---
 
@@ -349,6 +362,8 @@ Every **2 weeks (Fridays)**, demonstrate:
 | 2026-03-10 | Sprint 1 stories detailed | AIOS Orion Agent |
 | 2026-03-10 | Metrics dashboard configured | AIOS Orion Agent |
 | 2026-03-10 | Sprint 1 implementation artifacts linked (MADR, safe-area guide, announcement) | Codex |
+| 2026-03-10 | Sprint 2 implementation artifacts linked (SW strategy, M-004, M-005) | Codex |
+| 2026-03-10 | Sprint 2 validation status updated after resilient SW precache + green E2E | Codex |
 
 ---
 
