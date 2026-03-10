@@ -2,6 +2,10 @@
 // Analytics API Integration
 // =======================
 import { fetchApi } from './api';
+import {
+  isQueuedOfflineMutationResult,
+  sendJsonApiMutationWithOfflineQueue,
+} from './offline/apiMutation';
 
 export interface CompanyAnalytics {
   profile_views: number;
@@ -443,9 +447,14 @@ export const analyticsApi = {
     metadata?: Record<string, any>;
   }): Promise<void> => {
     try {
-      await fetchApi('/analytics/track', {
+      await sendJsonApiMutationWithOfflineQueue('/analytics/track', {
         method: 'POST',
-        body: JSON.stringify(eventData),
+        body: eventData,
+        conflictKey: `analytics:event:${eventData.event_type}:${eventData.company_id}`,
+        metadata: {
+          queue: 'analytics-track-event',
+          eventType: eventData.event_type,
+        },
       });
     } catch (error) {
       // Silence logs for 500 errors to avoid console noise
@@ -477,10 +486,20 @@ export const analyticsApi = {
     tracked_at?: string;
   }): Promise<void> => {
     try {
-      await fetchApi('/banner_events', {
+      const response = await sendJsonApiMutationWithOfflineQueue('/banner_events', {
         method: 'POST',
-        body: JSON.stringify({ banner_event: payload }),
+        body: { banner_event: payload },
+        conflictKey: `banner:${payload.banner_id}:${payload.event_type}`,
+        metadata: {
+          queue: 'banner-events',
+          eventType: payload.event_type,
+          bannerId: payload.banner_id,
+        },
       });
+
+      if (isQueuedOfflineMutationResult(response)) {
+        return;
+      }
     } catch (error) {
       console.error('[analyticsApi.trackBannerEvent] Error:', error);
     }

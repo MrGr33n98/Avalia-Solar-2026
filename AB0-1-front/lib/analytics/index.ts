@@ -15,6 +15,10 @@ import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId, isNewSession } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
+import {
+  isQueuedOfflineMutationResult,
+  sendJsonApiMutationWithOfflineQueue,
+} from '@/lib/offline/apiMutation';
 import { 
   initializeGTag, 
   gtagEvent, 
@@ -412,17 +416,23 @@ function sendToBackend(
 
   try {
     backendLastSentAt = now;
-    void fetch(backendEndpoint, {
+    void sendJsonApiMutationWithOfflineQueue(backendEndpoint, {
       method: 'POST',
+      body,
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      credentials: 'include',
-      body: serializedBody,
       keepalive: true,
+      conflictKey: `analytics:${eventId}`,
+      metadata: {
+        eventName,
+        queue: 'analytics-backend',
+      },
     })
       .then((response) => {
+        if (isQueuedOfflineMutationResult(response)) {
+          return;
+        }
         if (response.status !== 429) return;
         const retryAfterRaw = response.headers.get('retry-after');
         const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;

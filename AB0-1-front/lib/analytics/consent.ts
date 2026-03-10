@@ -4,6 +4,9 @@
  */
 
 import { ConsentState } from './types';
+import {
+  sendJsonApiMutationWithOfflineQueue,
+} from '@/lib/offline/apiMutation';
 
 const CONSENT_STORAGE_KEY = 'avaliasolar_consent';
 
@@ -118,16 +121,17 @@ export async function setConsentWithAudit(
     };
     
     // Log to backend API
-    const response = await fetch('/api/v1/consent/log', {
+    const response = await sendJsonApiMutationWithOfflineQueue('/consent/log', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+      body: payload,
+      conflictKey: `consent:log:${sessionId}:${consentType}`,
+      metadata: {
+        queue: 'consent-log',
+        consentType,
       },
-      body: JSON.stringify(payload),
-      credentials: 'include' // Include cookies for session
     });
     
-    if (!response.ok) {
+    if (response instanceof Response && !response.ok) {
       console.warn('[Consent] Failed to log consent to backend:', response.statusText);
     }
   } catch (error) {
@@ -185,18 +189,18 @@ export async function revokeConsent(reason?: string): Promise<void> {
   optOut();
   
   try {
-    const response = await fetch('/api/v1/consent/revoke', {
+    const response = await sendJsonApiMutationWithOfflineQueue('/consent/revoke', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      body: {
         revoke_reason: reason || 'user_request'
-      }),
-      credentials: 'include'
+      },
+      conflictKey: `consent:revoke:${reason || 'user_request'}`,
+      metadata: {
+        queue: 'consent-revoke',
+      },
     });
     
-    if (!response.ok) {
+    if (response instanceof Response && !response.ok) {
       console.warn('[Consent] Failed to revoke consent on backend:', response.statusText);
     }
   } catch (error) {

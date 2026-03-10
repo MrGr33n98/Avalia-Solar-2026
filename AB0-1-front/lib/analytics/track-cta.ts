@@ -8,6 +8,10 @@
  */
 
 import { track } from '@/lib/analytics/lazy';
+import {
+  isQueuedOfflineMutationResult,
+  sendJsonApiMutationWithOfflineQueue,
+} from '@/lib/offline/apiMutation';
 
 interface CTAClickProperties {
   ctaType: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote';
@@ -157,16 +161,22 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
  */
 async function sendToBackendAPI(eventName: string, properties: Record<string, any>): Promise<void> {
   try {
-    const response = await fetch('/api/v1/analytics/track', {
+    const response = await sendJsonApiMutationWithOfflineQueue('/analytics/track', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      body: {
         event: eventName,
         properties,
-      }),
+      },
+      conflictKey: `cta:${eventName}:${properties.company_id || 'global'}`,
+      metadata: {
+        queue: 'cta-analytics',
+        eventName,
+      },
     });
+
+    if (isQueuedOfflineMutationResult(response)) {
+      return;
+    }
 
     if (!response.ok) {
       throw new Error(`Backend API returned ${response.status}`);

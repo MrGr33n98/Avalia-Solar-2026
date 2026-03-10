@@ -14,6 +14,7 @@ import GoogleTagManager, { GoogleTagManagerNoScript, GoogleAnalytics, GTM_ID } f
 import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
+import PwaOfflineController from '@/components/PwaOfflineController';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -123,6 +124,7 @@ export default function RootLayout({
           >
             <UtmProvider>
               <ClientBody>
+                <PwaOfflineController />
                 <Navbar />
                 {children}
                 <Footer />

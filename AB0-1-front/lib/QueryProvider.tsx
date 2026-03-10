@@ -59,7 +59,7 @@ export function QueryProvider({ children }: QueryProviderProps) {
             refetchOnWindowFocus: false,
             refetchOnReconnect: true,
             // Network mode: online | always | offlineFirst
-            networkMode: 'online',
+            networkMode: 'offlineFirst',
           },
           mutations: {
             // Configurações padrão para mutations

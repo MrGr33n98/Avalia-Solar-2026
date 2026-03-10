@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const PLAYWRIGHT_PORT = process.env.PLAYWRIGHT_PORT || '3010';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -8,14 +10,15 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: `http://localhost:${PLAYWRIGHT_PORT}`,
     trace: 'on-first-retry',
+    serviceWorkers: 'allow',
   },
 
   projects: [
     {
       name: 'chromium-mobile',
-      use: { ...devices['iPhone 12'] },
+      use: { ...devices['Pixel 5'] },
     },
     {
       name: 'chromium-desktop',
@@ -32,8 +35,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    command: `cross-env PORT=${PLAYWRIGHT_PORT} NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE=true npm run dev`,
+    url: `http://localhost:${PLAYWRIGHT_PORT}`,
+    reuseExistingServer: false,
   },
 });
