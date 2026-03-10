@@ -107,6 +107,9 @@ Rails.application.routes.draw do
         post 'track_session', to: 'identity_stitch#track_session'
       end
 
+      # Gated Downloads API
+      resources :gated_downloads, only: [:create]
+
       # Consent endpoints
       namespace :consent do
         post 'log'
