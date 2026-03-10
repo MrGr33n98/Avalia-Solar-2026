@@ -878,3 +878,13 @@ class Company < ApplicationRecord
     end
   end
 end
+    intent_enterprise?
+  end
+
+  def max_intent_history_days
+    case intent_tier
+    when 'enterprise' then 90
+    when 'pro' then 30
+    else 7
+    end
+  end
