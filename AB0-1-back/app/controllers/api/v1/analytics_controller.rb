@@ -90,10 +90,15 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       normalize_hash_param(params.dig(:analytic, :metadata)) ||
       {}
 
-    return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request if raw_type.blank?
+    unless raw_type.present?
+      Rails.logger.warn("[Analytics] Rejecting event: event_type missing. Payload: #{params.to_unsafe_h.slice('event', 'event_type', 'analytic')}")
+      return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request 
+    end
 
     event_type = map_event_type(raw_type)
+    
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
+      Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'. Payload: #{params.to_unsafe_h.slice('company_id', 'company')}")
       return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request
     end
 

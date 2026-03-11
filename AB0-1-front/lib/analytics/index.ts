@@ -122,8 +122,8 @@ async function initializeSDKs(): Promise<void> {
     }
   }
   
-  // GA4
-  if (ga4Id) {
+  // GA4 - APENAS com consentimento
+  if (ga4Id && hasConsent) {
     try {
       initializeGTag(ga4Id);
       console.log('[Analytics] GA4 initialized');

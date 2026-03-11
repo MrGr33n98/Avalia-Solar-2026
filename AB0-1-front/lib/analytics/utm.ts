@@ -2,6 +2,7 @@
 
 import { Attribution, AttributionTouch, UTMParameters } from './types';
 import { getCookie, setCookie, deleteCookie } from './cookies';
+import { hasAnalyticsConsent } from './consent';
 
 const STORAGE_KEY = 'avaliasolar_attribution_v2';
 const COOKIE_KEY = 'avaliasolar_attribution_v2';
@@ -108,6 +109,12 @@ function readFromStorages(): StoredPayload | null {
 
 function persist(payload: StoredPayload): void {
   if (!isBrowser) return;
+  
+  // 🚨 CRITICAL LGPD FIX: Do not persist analytics/marketing attribution cookies without consent
+  if (!hasAnalyticsConsent()) {
+    return;
+  }
+
   const serialized = JSON.stringify(payload);
 
   try {
