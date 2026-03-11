@@ -64,8 +64,10 @@ export function initializeAnalytics(): void {
     return;
   }
   
-  // Inicializa attribution UTM (first/last touch) com a URL atual
-  updateAttribution();
+  // Só persistimos attribution após consentimento explícito.
+  if (hasAnalyticsConsent()) {
+    updateAttribution();
+  }
   
   // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
   // Usamos requestIdleCallback para não bloquear a thread principal
@@ -78,6 +80,7 @@ export function initializeAnalytics(): void {
   // Listen for consent change to re-initialize or update SDKs
   onConsentChange((consent) => {
     if (consent.analytics) {
+      updateAttribution();
       // Se ganhou consentimento, garantimos que o Mixpanel seja iniciado
       initializeSDKs();
       // Track the current page immediately after consent

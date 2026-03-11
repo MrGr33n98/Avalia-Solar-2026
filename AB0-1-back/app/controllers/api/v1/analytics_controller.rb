@@ -81,13 +81,22 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     end
 
     raw_type = params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence
-    company_id = params[:company_id].presence || params.dig(:company,
-                                                            :id).presence || params.dig(:analytic, :company_id).presence
+    legacy_properties =
+      normalize_hash_param(params[:properties]) ||
+      normalize_hash_param(params.dig(:analytic, :properties)) ||
+      {}
+    company_id =
+      params[:company_id].presence ||
+      params.dig(:company, :id).presence ||
+      params.dig(:analytic, :company_id).presence ||
+      legacy_properties['company_id'].presence ||
+      legacy_properties[:company_id].presence
     event_id = params[:event_id].presence || params.dig(:analytic, :event_id).presence
     metadata =
       normalize_hash_param(params[:metadata]) ||
       normalize_hash_param(params[:data]) ||
       normalize_hash_param(params.dig(:analytic, :metadata)) ||
+      legacy_properties.presence ||
       {}
 
     unless raw_type.present?
@@ -98,7 +107,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     event_type = map_event_type(raw_type)
     
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
-      Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'. Payload: #{params.to_unsafe_h.slice('company_id', 'company')}")
+      Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'. Payload: #{params.to_unsafe_h.slice('company_id', 'company', 'properties')}")
       return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request
     end
 

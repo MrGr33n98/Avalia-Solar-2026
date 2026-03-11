@@ -1,17 +1,11 @@
 /**
  * CTA Tracking Helper - Real Analytics Implementation
  * 
- * Tracks CTA clicks with UTM attribution and sends to:
- * - Mixpanel (product analytics)
- * - Backend API (company_daily_stats)
- * - GA4 (via unified analytics)
+ * Tracks CTA clicks through the unified analytics layer.
+ * The shared layer handles consent, backend forwarding and GA4/GTM dispatch.
  */
 
 import { track } from '@/lib/analytics/lazy';
-import {
-  isQueuedOfflineMutationResult,
-  sendJsonApiMutationWithOfflineQueue,
-} from '@/lib/offline/apiMutation';
 
 interface CTAClickProperties {
   ctaType: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote';
@@ -135,13 +129,6 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
       });
     }
 
-    // 3. Send to backend API for company_daily_stats aggregation
-    await sendToBackendAPI(specificEventName || 'CTA Clicked', {
-      cta_type: props.ctaType,
-      company_id: props.companyId,
-      ...getUTMParams(),
-    });
-
     // Debug log in development
     if (process.env.NODE_ENV === 'development') {
       console.log('[Analytics] CTA Tracked', {
@@ -152,42 +139,6 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
   } catch (error) {
     console.error('[Analytics] Failed to track CTA click:', error);
     // Don't throw - tracking failures should not break user experience
-  }
-}
-
-/**
- * Send tracking event to backend API
- * Backend will increment company_daily_stats counters
- */
-async function sendToBackendAPI(eventName: string, properties: Record<string, any>): Promise<void> {
-  try {
-    const response = await sendJsonApiMutationWithOfflineQueue('/analytics/track', {
-      method: 'POST',
-      body: {
-        event: eventName,
-        properties,
-      },
-      conflictKey: `cta:${eventName}:${properties.company_id || 'global'}`,
-      metadata: {
-        queue: 'cta-analytics',
-        eventName,
-      },
-    });
-
-    if (isQueuedOfflineMutationResult(response)) {
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Backend API returned ${response.status}`);
-    }
-  } catch (error) {
-    console.error('[Analytics] Failed to send to backend API:', error);
-    // Log to Sentry in production
-    if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
-      // @ts-ignore
-      window.Sentry?.captureException(error);
-    }
   }
 }
 
@@ -210,11 +161,6 @@ export async function trackCompanyProfileView(
       ...metadata,
     });
 
-    // Send to backend
-    await sendToBackendAPI('Company Profile Viewed', {
-      company_id: companyId,
-      ...getUTMParams(),
-    });
   } catch (error) {
     console.error('[Analytics] Failed to track profile view:', error);
   }
@@ -239,12 +185,6 @@ export async function trackLeadFormSubmit(
       ...metadata,
     });
 
-    // Send to backend
-    await sendToBackendAPI('Lead Form Submitted', {
-      company_id: companyId,
-      form_type: formType,
-      ...getUTMParams(),
-    });
   } catch (error) {
     console.error('[Analytics] Failed to track lead form:', error);
   }

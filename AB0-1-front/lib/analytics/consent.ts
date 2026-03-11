@@ -4,11 +4,13 @@
  */
 
 import { ConsentState } from './types';
+import { deleteCookie } from './cookies';
 import {
   sendJsonApiMutationWithOfflineQueue,
 } from '@/lib/offline/apiMutation';
 
 const CONSENT_STORAGE_KEY = 'avaliasolar_consent';
+const ATTRIBUTION_STORAGE_KEY = 'avaliasolar_attribution_v2';
 
 /**
  * Get current consent state
@@ -236,6 +238,16 @@ export function optIn(): void {
  */
 export function optOut(): void {
   setConsent({ analytics: false, marketing: false });
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(ATTRIBUTION_STORAGE_KEY);
+      sessionStorage.removeItem(ATTRIBUTION_STORAGE_KEY);
+      deleteCookie(ATTRIBUTION_STORAGE_KEY);
+    } catch (e) {
+      console.warn('[Consent] Failed to clear attribution storage', e);
+    }
+  }
   
   // Clear Mixpanel persistence
   if (typeof window !== 'undefined') {

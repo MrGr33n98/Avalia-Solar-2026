@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, ThumbsUp } from 'lucide-react';
 import { Review, fetchApi } from '@/lib/api';
+import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useRef, useState } from 'react';
 
@@ -76,6 +77,8 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   };
 
   const trackEvent = async (eventType: 'review_read' | 'review_cta_click') => {
+    if (!hasAnalyticsConsent()) return;
+
     try {
       await fetchApi('/analytics/track', {
         method: 'POST',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { hasAnalyticsConsent, optIn } from '@/lib/analytics/consent';
+import { optIn, optOut } from '@/lib/analytics/consent';
 import { Cookie, X } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,12 +25,7 @@ export default function CookieConsent() {
   };
 
   const handleDecline = () => {
-    // We still save the preference as false to not show the banner again
-    localStorage.setItem('avaliasolar_consent', JSON.stringify({
-      analytics: false,
-      marketing: false,
-      lastUpdated: Date.now()
-    }));
+    optOut();
     setShowBanner(false);
   };
 

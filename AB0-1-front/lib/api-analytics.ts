@@ -2,6 +2,7 @@
 // Analytics API Integration
 // =======================
 import { fetchApi } from './api';
+import { hasAnalyticsConsent } from './analytics/consent';
 import {
   isQueuedOfflineMutationResult,
   sendJsonApiMutationWithOfflineQueue,
@@ -446,6 +447,10 @@ export const analyticsApi = {
     event_type: 'view' | 'click' | 'lead' | 'whatsapp_click' | 'badge_cta_click' | 'badge_cta_view' | 'badges_tab_open' | string;
     metadata?: Record<string, any>;
   }): Promise<void> => {
+    if (typeof window !== 'undefined' && !hasAnalyticsConsent()) {
+      return;
+    }
+
     try {
       await sendJsonApiMutationWithOfflineQueue('/analytics/track', {
         method: 'POST',
