@@ -29,6 +29,7 @@
 ### Implementation Progress
 - [x] Tier system (Free/Pro/Enterprise)
 - [x] Company model intent methods
+- [x] Migration foreign keys aligned with bigint-based companies/users schema
 - [x] CompanyWebhooks table + model
 - [x] WebhookDeliveryJob (HMAC signing)
 - [x] EnrichAnonymousSessionJob (firmographic placeholder)
@@ -57,8 +58,19 @@
 - `app/dashboard/intent/page.tsx`
 
 **Modified:**
+- `db/migrate/20260310160000_create_intent_scores.rb` (align company/lead foreign key column types)
+- `db/migrate/20260310160100_create_anonymous_sessions.rb` (align user/company foreign key column types)
+- `db/migrate/20260310160242_create_company_webhooks.rb` (align company foreign key column type)
+- `db/migrate/20260310160300_create_gated_downloads.rb` (align company/user foreign key column types and fix users foreign key declaration)
 - `app/models/company.rb` (intent tier methods)
 - `config/routes.rb` (gated_downloads route)
 
+### File List
+- `AB0-1-back/db/migrate/20260310160000_create_intent_scores.rb`
+- `AB0-1-back/db/migrate/20260310160100_create_anonymous_sessions.rb`
+- `AB0-1-back/db/migrate/20260310160242_create_company_webhooks.rb`
+- `AB0-1-back/db/migrate/20260310160300_create_gated_downloads.rb`
+
 ### Change Log
+- **2026-03-11 13:52 -03**: Hotfix de deploy para alinhar foreign keys `company_id`/`user_id`/`lead_id` ao schema legado em `bigint`
 - **2026-03-10 13:05**: Phase 3 implementation complete

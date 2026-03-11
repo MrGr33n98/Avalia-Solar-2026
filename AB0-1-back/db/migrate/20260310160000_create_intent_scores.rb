@@ -3,8 +3,8 @@ class CreateIntentScores < ActiveRecord::Migration[7.0]
     enable_extension 'pgcrypto' unless extension_enabled?('pgcrypto')
     
     create_table :intent_scores, id: :uuid do |t|
-      t.uuid     :company_id,            null: false
-      t.uuid     :lead_id,               index: true
+      t.bigint   :company_id,            null: false
+      t.bigint   :lead_id,               index: true
       t.string   :anonymous_id,          index: true
       t.string   :session_id
 

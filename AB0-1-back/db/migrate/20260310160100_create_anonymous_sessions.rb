@@ -2,8 +2,8 @@ class CreateAnonymousSessions < ActiveRecord::Migration[7.0]
   def change
     create_table :anonymous_sessions, id: :uuid do |t|
       t.string   :anonymous_id,     null: false
-      t.uuid     :user_id
-      t.uuid     :company_id
+      t.bigint   :user_id
+      t.bigint   :company_id
       t.string   :ip_hash
       t.string   :user_agent_hash
       t.string   :device_fingerprint

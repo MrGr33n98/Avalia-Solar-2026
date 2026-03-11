@@ -1,7 +1,7 @@
 class CreateCompanyWebhooks < ActiveRecord::Migration[7.0]
   def change
     create_table :company_webhooks, id: :uuid do |t|
-      t.uuid :company_id, null: false, index: true
+      t.bigint :company_id, null: false, index: true
       t.string :url, null: false
       t.string :secret_key
       t.boolean :active, default: true
