@@ -14,9 +14,8 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
 
   return (
     <>
-      <Script
+      <script
         id="google-consent-mode"
-        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
@@ -29,13 +28,26 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
               'wait_for_update': 500
             });
             gtag('js', new Date());
+
+            // Rehydrate consent state immediately to avoid 0% consent rate issues globally
+            try {
+              var stored = localStorage.getItem('avaliasolar_consent');
+              if (stored) {
+                var consent = JSON.parse(stored);
+                gtag('consent', 'update', {
+                  'ad_storage': consent.marketing ? 'granted' : 'denied',
+                  'analytics_storage': consent.analytics ? 'granted' : 'denied',
+                  'ad_user_data': consent.marketing ? 'granted' : 'denied',
+                  'ad_personalization': consent.marketing ? 'granted' : 'denied'
+                });
+              }
+            } catch(e) {}
           `,
         }}
       />
 
-      <Script
+      <script
         id="gtm-script"
-        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
