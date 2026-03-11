@@ -37,6 +37,7 @@
 - [x] GatedContentDownload.tsx component
 - [x] Intent Dashboard page (/dashboard/intent)
 - [x] GatedDownloadsController API
+- [x] API controllers aligned with shared CSRF skip behavior
 - [x] Routes configured
 - [ ] RSpec tests
 - [ ] Integration testing
@@ -62,6 +63,8 @@
 - `db/migrate/20260310160100_create_anonymous_sessions.rb` (align user/company foreign key column types)
 - `db/migrate/20260310160242_create_company_webhooks.rb` (align company foreign key column type)
 - `db/migrate/20260310160300_create_gated_downloads.rb` (align company/user foreign key column types and fix users foreign key declaration)
+- `app/controllers/api/v1/gated_downloads_controller.rb` (remove redundant CSRF skip causing Rails boot failure)
+- `app/controllers/api/v1/identity_stitch_controller.rb` (remove redundant CSRF skip to match API base controller behavior)
 - `app/models/company.rb` (intent tier methods)
 - `config/routes.rb` (gated_downloads route)
 
@@ -70,7 +73,10 @@
 - `AB0-1-back/db/migrate/20260310160100_create_anonymous_sessions.rb`
 - `AB0-1-back/db/migrate/20260310160242_create_company_webhooks.rb`
 - `AB0-1-back/db/migrate/20260310160300_create_gated_downloads.rb`
+- `AB0-1-back/app/controllers/api/v1/gated_downloads_controller.rb`
+- `AB0-1-back/app/controllers/api/v1/identity_stitch_controller.rb`
 
 ### Change Log
+- **2026-03-11 14:00 -03**: Hotfix de boot do Rails removendo `skip_before_action :verify_authenticity_token` redundante em controllers API herdados de `BaseController`
 - **2026-03-11 13:52 -03**: Hotfix de deploy para alinhar foreign keys `company_id`/`user_id`/`lead_id` ao schema legado em `bigint`
 - **2026-03-10 13:05**: Phase 3 implementation complete

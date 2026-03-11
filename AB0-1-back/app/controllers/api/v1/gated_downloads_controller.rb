@@ -1,7 +1,6 @@
 module Api
   module V1
     class GatedDownloadsController < BaseController
-      skip_before_action :verify_authenticity_token
       before_action :authenticate_api_user, only: []
 
       # POST /api/v1/gated_downloads
