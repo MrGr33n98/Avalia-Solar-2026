@@ -14,6 +14,8 @@ import {
 } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
 import { identify, track } from '@/lib/analytics/lazy';
+import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
+import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
 
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = !!user;
   const authRequestId = useRef(0);
+  const stitchedIdentitySignature = useRef<string | null>(null);
 
   const nextAuthRequest = () => {
     authRequestId.current += 1;
@@ -50,20 +53,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user?.id) {
+      const sessionId = getSessionId();
+      const companyId = user.company_id ? String(user.company_id) : undefined;
+      const trackedAt = new Date().toISOString();
+      const stitchSignature = [String(user.id), companyId ?? '', sessionId].join(':');
+
+      if (stitchedIdentitySignature.current !== stitchSignature) {
+        stitchedIdentitySignature.current = stitchSignature;
+        void handleUserIdentified({
+          id: String(user.id),
+          email: user.email?.trim(),
+          name: user.name?.trim(),
+          role: user.role,
+          company_id: companyId,
+          session_id: sessionId,
+          tracked_at: trackedAt,
+        }).catch((stitchError) => {
+          logError(stitchError instanceof Error ? stitchError : new Error(String(stitchError)), {
+            action: 'identity_stitch_failed',
+            metadata: { user_id: user.id, company_id: companyId, session_id: sessionId },
+          });
+        });
+      }
+
       identify(String(user.id), {
-        email: user.email,
-        name: user.name,
+        email: user.email?.trim(),
+        name: user.name?.trim(),
         role: user.role,
-        company_id: user.company_id ? String(user.company_id) : undefined,
+        company_id: companyId,
       });
 
       Sentry.setUser({
         id: String(user.id),
-        email: user.email,
-        username: user.name,
+        email: user.email?.trim(),
+        username: user.name?.trim(),
         role: user.role,
       });
     } else {
+      stitchedIdentitySignature.current = null;
       Sentry.setUser(null);
     }
   }, [user]);

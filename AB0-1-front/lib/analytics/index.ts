@@ -1,6 +1,6 @@
 /**
  * Analytics Core - Avalia Solar
- * Unified analytics layer integrating Mixpanel + GA4
+ * Canonical frontend analytics layer: PostHog + backend
  * 
  * Features:
  * - LGPD compliant (consent-based)
@@ -13,22 +13,12 @@
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
-import { getSessionId, isNewSession } from './session';
+import { getSessionId } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
 import {
   isQueuedOfflineMutationResult,
   sendJsonApiMutationWithOfflineQueue,
 } from '@/lib/offline/apiMutation';
-import { 
-  initializeGTag, 
-  gtagEvent, 
-  gtagPageView, 
-  gtagSetUserId,
-  gtagSetUserProperties,
-  mapToGA4Event 
-} from './gtag';
-
-export { DashboardEvents } from './ga4';
 
 // Initialization state
 let initialized = false;
@@ -57,11 +47,9 @@ export function initializeAnalytics(): void {
   if (typeof window === 'undefined') return;
   
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   
-  if (!posthogKey && !ga4Id) {
-    console.warn('[Analytics] No tokens configured');
-    return;
+  if (!posthogKey && process.env.NODE_ENV === 'development') {
+    console.warn('[Analytics] PostHog token not configured; backend-only tracking active');
   }
   
   // Só persistimos attribution após consentimento explícito.
@@ -69,7 +57,7 @@ export function initializeAnalytics(): void {
     updateAttribution();
   }
   
-  // Inicializamos SDKs básicos (GA4 via Consent Mode já lida com LGPD)
+  // Inicializamos SDKs básicos sem bloquear a thread principal
   // Usamos requestIdleCallback para não bloquear a thread principal
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(() => void initializeSDKs());
@@ -81,7 +69,7 @@ export function initializeAnalytics(): void {
   onConsentChange((consent) => {
     if (consent.analytics) {
       updateAttribution();
-      // Se ganhou consentimento, garantimos que o Mixpanel seja iniciado
+      // Se ganhou consentimento, garantimos que o PostHog seja iniciado
       initializeSDKs();
       // Track the current page immediately after consent
       setTimeout(() => page(), 500);
@@ -96,48 +84,37 @@ async function initializeSDKs(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
-  const ga4Id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-  const hasConsent = hasAnalyticsConsent();
-  
-  // PostHog - APENAS com consentimento
-  if (posthogKey && hasConsent && !posthogInstance) {
-    try {
-      // Dynamic import to reduce initial bundle size
-      const posthog = (await import('posthog-js')).default;
-      posthog.init(posthogKey, {
-        api_host: posthogHost,
-        person_profiles: 'identified_only',
-        capture_pageview: false, // Manual tracking
-        capture_pageleave: true,
-        autocapture: false,
-        session_recording: {
-          maskAllInputs: true,
-        },
-        loaded: (ph) => {
-          console.log('[Analytics] PostHog initialized. Distinct ID:', ph.get_distinct_id());
-        }
-      });
-      posthogInstance = posthog;
-    } catch (e) {
-      console.error('[Analytics] PostHog init failed:', e);
+    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+    const hasConsent = hasAnalyticsConsent();
+    
+    // PostHog - APENAS com consentimento
+    if (posthogKey && hasConsent && !posthogInstance) {
+      try {
+        // Dynamic import to reduce initial bundle size
+        const posthog = (await import('posthog-js')).default;
+        posthog.init(posthogKey, {
+          api_host: posthogHost,
+          person_profiles: 'identified_only',
+          capture_pageview: false,
+          capture_pageleave: true,
+          autocapture: false,
+          session_recording: {
+            maskAllInputs: true,
+          },
+          loaded: (ph) => {
+            console.log('[Analytics] PostHog initialized. Distinct ID:', ph.get_distinct_id());
+          }
+        });
+        posthogInstance = posthog;
+      } catch (e) {
+        console.error('[Analytics] PostHog init failed:', e);
+      }
     }
-  }
-  
-  // GA4 - APENAS com consentimento
-  if (ga4Id && hasConsent) {
-    try {
-      initializeGTag(ga4Id);
-      console.log('[Analytics] GA4 initialized');
-    } catch (e) {
-      console.error('[Analytics] GA4 init failed:', e);
-    }
-  }
-  
-  initialized = true;
-  flushEventQueue();
-  initPromise = null;
+
+    initialized = true;
+    flushEventQueue();
+    initPromise = null;
   })();
 
   return initPromise;
@@ -275,32 +252,8 @@ export function track(
   // Remove PII
   const sanitized = sanitizeProperties(eventProps);
 
-  // Determine destinations
-  const sendToPosthog = options.sendTo?.posthog !== false;
-  // If mixpanel is specified, fallback to posthog behavior
-  const legacySendToMixpanel = options.sendTo?.mixpanel !== false;
-  const shouldSendToPosthog = sendToPosthog && legacySendToMixpanel;
-  
-  const sendToGA4 = options.sendTo?.ga4 !== false;
-  
-  // Push to GTM dataLayer
-  try {
-    const { name: ga4Name, params: ga4Params } = mapToGA4Event(eventName, sanitized);
-    if (typeof window !== 'undefined') {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: ga4Name,
-        ...ga4Params,
-        original_event: eventName,
-        gtm_timestamp: new Date().toISOString()
-      });
-    }
-  } catch (e) {
-    console.error('[Analytics] GTM dataLayer push failed:', e);
-  }
-  
-  // Send to PostHog
-  if (shouldSendToPosthog && posthogInstance) {
+  // Frontend sinks: PostHog + backend only.
+  if (options.sendTo?.posthog !== false && posthogInstance) {
     try {
       posthogInstance.capture(eventName, sanitized);
       
@@ -309,20 +262,6 @@ export function track(
       }
     } catch (e) {
       console.error('[Analytics] PostHog track failed:', e);
-    }
-  }
-  
-  // Send to GA4
-  if (sendToGA4) {
-    try {
-      const { name, params } = mapToGA4Event(eventName, sanitized);
-      gtagEvent(name, params);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[GA4] Event:', name, params);
-      }
-    } catch (e) {
-      console.error('[Analytics] GA4 track failed:', e);
     }
   }
 }
@@ -459,16 +398,6 @@ function sendToBackend(
 }
 
 /**
- * Convert snake_case or spinal-case to Title Case for Mixpanel
- */
-function toTitleCase(str: string): string {
-  return str
-    .split(/[_-]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
-/**
  * Track page view
  */
 export function page(
@@ -501,8 +430,8 @@ export function page(
   // PostHog
   if (posthogInstance) {
     try {
-      posthogInstance.capture('$pageview', {
-        $current_url: window.location.href,
+      posthogInstance.capture('page_view', {
+        page_url: window.location.href,
         ...sanitized
       });
       if (process.env.NODE_ENV === 'development') {
@@ -511,13 +440,6 @@ export function page(
     } catch (e) {
       console.error('[Analytics] PostHog page view failed:', e);
     }
-  }
-  
-  // GA4
-  try {
-    gtagPageView(context.pathname, pageName, sanitized);
-  } catch (e) {
-    console.error('[Analytics] GA4 page view failed:', e);
   }
 }
 
@@ -549,13 +471,6 @@ export function identify(
     }
   }
   
-  // GA4
-  try {
-    gtagSetUserId(userId);
-  } catch (e) {
-    console.error('[Analytics] GA4 set user ID failed:', e);
-  }
-  
   // Set user properties
   if (Object.keys(sanitizedTraits).length > 0) {
     setUserProperties(sanitizedTraits);
@@ -578,13 +493,6 @@ export function setUserProperties(traits: UserTraits): void {
     } catch (e) {
       console.error('[Analytics] PostHog set user properties failed:', e);
     }
-  }
-  
-  // GA4
-  try {
-    gtagSetUserProperties(sanitized);
-  } catch (e) {
-    console.error('[Analytics] GA4 set user properties failed:', e);
   }
 }
 
@@ -623,12 +531,6 @@ export function reset(): void {
     } catch (e) {
       console.error('[Analytics] PostHog reset failed:', e);
     }
-  }
-  
-  try {
-    gtagSetUserId(null);
-  } catch (e) {
-    console.error('[Analytics] GA4 reset failed:', e);
   }
 }
 

@@ -5,10 +5,16 @@ import { alias, identify } from './index';
 const ANONYMOUS_ID_STORAGE_KEYS = ['ajs_anonymous_id', 'as_anonymous_id'] as const;
 
 export interface IdentityStitchPayload {
-  user_id: string;
+  user_id: string | number;
   anonymous_id?: string;
   email?: string;
   name?: string;
+  role?: string;
+  company_id?: string | number;
+  company_name?: string;
+  lead_id?: string | number;
+  session_id?: string | number;
+  tracked_at?: string;
 }
 
 /**
@@ -17,16 +23,26 @@ export interface IdentityStitchPayload {
  */
 export const stitchIdentity = async (payload: IdentityStitchPayload) => {
   try {
+    const userId = String(payload.user_id);
     const anonymousId = payload.anonymous_id || getAnonymousId();
+    const identifyTraits = Object.fromEntries(
+      Object.entries({
+        email: payload.email,
+        name: payload.name,
+        role: payload.role,
+        company_id: payload.company_id != null ? String(payload.company_id) : undefined,
+        company_name: payload.company_name,
+        lead_id: payload.lead_id != null ? String(payload.lead_id) : undefined,
+        session_id: payload.session_id != null ? String(payload.session_id) : undefined,
+        tracked_at: payload.tracked_at
+      }).filter(([, value]) => value !== undefined && value !== '')
+    );
 
     // 1. Analytics core identify + alias
-    identify(payload.user_id, {
-      email: payload.email,
-      name: payload.name
-    });
+    identify(userId, identifyTraits);
 
     if (anonymousId) {
-      alias(payload.user_id);
+      alias(userId);
     }
 
     // 2. Backend stitching
@@ -36,8 +52,9 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        user_id: payload.user_id,
-        anonymous_id: anonymousId
+        user_id: userId,
+        anonymous_id: anonymousId,
+        ...identifyTraits
       }),
       keepalive: true
     });
@@ -129,7 +146,17 @@ export const getAnonymousId = (): string => {
  *   }
  * }, [user]);
  */
-export const handleUserIdentified = async (user: { id: string; email?: string; name?: string }) => {
+export const handleUserIdentified = async (user: {
+  id: string | number;
+  email?: string;
+  name?: string;
+  role?: string;
+  company_id?: string | number;
+  company_name?: string;
+  lead_id?: string | number;
+  session_id?: string | number;
+  tracked_at?: string;
+}) => {
   const anonymousId = getAnonymousId();
   
   if (!anonymousId) {
@@ -141,7 +168,13 @@ export const handleUserIdentified = async (user: { id: string; email?: string; n
     user_id: user.id,
     anonymous_id: anonymousId,
     email: user.email,
-    name: user.name
+    name: user.name,
+    role: user.role,
+    company_id: user.company_id,
+    company_name: user.company_name,
+    lead_id: user.lead_id,
+    session_id: user.session_id,
+    tracked_at: user.tracked_at
   });
 };
 

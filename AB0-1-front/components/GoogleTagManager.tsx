@@ -1,13 +1,10 @@
 'use client';
 
-import Script from 'next/script';
-
 interface GTMProps {
   gtmId: string;
 }
 
 const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export function GoogleTagManager({ gtmId }: GTMProps) {
   if (!analyticsEnabled || !gtmId) return null;
@@ -55,40 +52,6 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
             j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
             })(window,document,'script','dataLayer','${gtmId}');
-          `,
-        }}
-      />
-    </>
-  );
-}
-
-// GA4 Direct Integration (independent of GTM)
-export function GoogleAnalytics() {
-  if (!analyticsEnabled || !GA_MEASUREMENT_ID) return null;
-
-  return (
-    <>
-      <Script
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-      />
-      <Script
-        id="ga4-init"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', {
-              page_path: window.location.pathname,
-              send_page_view: false,
-              cookie_domain: 'auto',
-              custom_map: {
-                dimension1: 'company_id',
-                dimension2: 'user_id'
-              }
-            });
           `,
         }}
       />

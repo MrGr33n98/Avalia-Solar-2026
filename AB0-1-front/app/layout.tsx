@@ -6,11 +6,10 @@ import { Suspense } from 'react';
 
 import dynamic from 'next/dynamic';
 import ClientBody from '@/components/ClientBody';
-import Script from 'next/script';
 import Navbar from '@/components/Navbar';
 const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 import JsonLd from '@/components/JsonLd';
-import GoogleTagManager, { GoogleTagManagerNoScript, GoogleAnalytics, GTM_ID } from '@/components/GoogleTagManager';
+import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
@@ -106,45 +105,42 @@ export default function RootLayout({
         {/* Analytics preconnects */}
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
-        
+
         {/* Google Tag Manager - Movido para o head para evitar a mensagem 'A tag não está no lugar certo' */}
         <GoogleTagManager gtmId={GTM_ID} />
       </head>
       <body suppressHydrationWarning className="font-sans">
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
-        
-        {/* GA4 Direct Integration (works independently of GTM) */}
-        <GoogleAnalytics />
-        
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <UtmProvider>
-              <ClientBody>
-                <PwaOfflineController />
-                <Navbar />
-                {children}
-                <Footer />
-              </ClientBody>
-            </UtmProvider>
-          </ThemeProvider>
-        
+
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <UtmProvider>
+            <ClientBody>
+              <PwaOfflineController />
+              <Navbar />
+              {children}
+              <Footer />
+            </ClientBody>
+          </UtmProvider>
+        </ThemeProvider>
+
         {/* Debug component for development */}
         {process.env.NODE_ENV === 'development' && (
           <Suspense fallback={null}>
             <ComparisonDebugger />
           </Suspense>
         )}
-        
+
         {/* Web Vitals Tracking - Non-blocking, after consent */}
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
-        
+
         {/* Clipboard Tracking - Micro-interactions */}
         <Suspense fallback={null}>
           <ClipboardTracker />
