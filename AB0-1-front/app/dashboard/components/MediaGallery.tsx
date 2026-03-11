@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ImageIcon, Upload, Video, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { companiesApi, fetchApi } from '@/lib/api';
+import { useImageGalleryWatch } from '@/lib/analytics/hooks/useIntentTracking';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGalleryContext7 } from '@/app/context7/provider';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,12 +51,14 @@ interface MediaGalleryProps {
 export default function MediaGallery({ companyId, showControls = true, showHeader = true, planFeatures }: MediaGalleryProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { trackGalleryDwell } = useImageGalleryWatch(companyId);
   const { gallery, dispatchGallery } = useGalleryContext7();
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
   const [companyData, setCompanyData] = useState<any>(null);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const photoViewRef = useRef<{ startedAt: number; photoIndex: number } | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<{ type: 'photo' | 'video'; url: string; video_id?: string } | null>(null);
 
@@ -109,6 +112,29 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
 
   const canUpload = Boolean(isSuperAdmin || (isCompanyMember && (planFlag ?? companyFlag ?? false)));
   const controlsVisible = showControls && canUpload;
+
+  const flushPhotoView = useCallback(() => {
+    if (!photoViewRef.current) return;
+
+    trackGalleryDwell(Date.now() - photoViewRef.current.startedAt, photoViewRef.current.photoIndex);
+    photoViewRef.current = null;
+  }, [trackGalleryDwell]);
+
+  const openPhotoLightbox = useCallback(
+    (url: string, photoIndex: number) => {
+      flushPhotoView();
+      photoViewRef.current = { startedAt: Date.now(), photoIndex };
+      setLightboxItem({ type: 'photo', url });
+      setLightboxOpen(true);
+    },
+    [flushPhotoView]
+  );
+
+  useEffect(() => {
+    return () => {
+      flushPhotoView();
+    };
+  }, [flushPhotoView]);
 
   const handleUpload = () => {
     if (!controlsVisible) return;
@@ -235,14 +261,11 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
             </div>
           ) : gallery.photos.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {gallery.photos.map((photo) => (
+              {gallery.photos.map((photo, index) => (
                 <button
                   key={photo.id}
                   className="rounded-lg overflow-hidden group"
-                  onClick={() => {
-                    setLightboxItem({ type: 'photo', url: photo.url });
-                    setLightboxOpen(true);
-                  }}
+                  onClick={() => openPhotoLightbox(photo.url, index)}
                 >
                   <Card className="overflow-hidden">
                     <CardContent className="p-0">
@@ -285,6 +308,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                   key={v.id}
                   className="rounded-lg overflow-hidden group"
                   onClick={() => {
+                    flushPhotoView();
                     setLightboxItem({ type: 'video', url: v.url, video_id: v.video_id });
                     setLightboxOpen(true);
                   }}
@@ -331,7 +355,15 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         </DialogContent>
       </Dialog>
 
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+      <Dialog
+        open={lightboxOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            flushPhotoView();
+          }
+          setLightboxOpen(open);
+        }}
+      >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Visualização</DialogTitle>

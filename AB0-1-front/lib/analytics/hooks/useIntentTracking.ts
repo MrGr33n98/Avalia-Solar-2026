@@ -274,6 +274,67 @@ export const useFormHesitation = (
   return { trackFieldChange, resetFieldTracking };
 };
 
+export const useCalculatorInput = (companyId: string | number) => {
+  const trackSimulation = useCallback(
+    (loanValue: number, installments: number) => {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'calculator_usage',
+        signal_category: 'financial_intent',
+        element_type: 'calculator',
+        metadata: {
+          loan_value: Math.round(loanValue),
+          installments: Math.round(installments),
+        },
+      });
+    },
+    [companyId]
+  );
+
+  return { trackSimulation };
+};
+
+export const useImageGalleryWatch = (companyId: string | number) => {
+  const trackGalleryDwell = useCallback(
+    (timeMs: number, photoIndex: number) => {
+      if (timeMs <= 5000) return;
+
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'comparison_view',
+        signal_category: 'research_intent',
+        element_type: 'image_gallery',
+        duration_ms: Math.round(timeMs),
+        metadata: {
+          photo_index: Math.round(photoIndex),
+        },
+      });
+    },
+    [companyId]
+  );
+
+  return { trackGalleryDwell };
+};
+
+export const useFaqExpand = (companyId: string | number) => {
+  const trackQuestion = useCallback(
+    (questionId: string | number) => {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'tooltip_interaction',
+        signal_category: 'research_intent',
+        element_type: 'faq',
+        metadata: {
+          faq_id: questionId,
+        },
+      });
+    },
+    [companyId]
+  );
+
+  return { trackQuestion };
+};
+
 export const detectTextType = (text: string): string => {
   const trimmedText = text.trim();
 

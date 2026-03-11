@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Banknote,
   Sparkles,
@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Company, CompanyFinancingOffer, CompanyFinancingPartner } from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
+import { useCalculatorInput } from '@/lib/analytics/hooks/useIntentTracking';
 import { simulateFinancing, AmortizationType } from '@/lib/financing';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,8 @@ const clamp = (value: number, min?: number | null, max?: number | null) => {
 
 export default function CompanyFinancing({ company, companyId }: Props) {
   const [companyData, setCompanyData] = useState<Company | null>(company || null);
+  const trackingCompanyId = companyData?.id ?? companyId ?? company?.id ?? '';
+  const { trackSimulation } = useCalculatorInput(trackingCompanyId);
 
   useEffect(() => {
     if (company) {
@@ -104,7 +107,18 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     if (offer.min_down_payment_percent) setDownPayment(offer.min_down_payment_percent);
     if (offer.amortization_type) setAmortization(offer.amortization_type as AmortizationType);
     if (offer.grace_months) setGraceMonths(offer.grace_months);
+    if (trackingCompanyId) {
+      trackSimulation(amount, offer.term_months ?? termMonths);
+    }
   };
+
+  const trackCurrentSimulation = useCallback(
+    (nextAmount: number = amount, nextTermMonths: number = termMonths) => {
+      if (!trackingCompanyId) return;
+      trackSimulation(nextAmount, nextTermMonths);
+    },
+    [amount, termMonths, trackSimulation, trackingCompanyId]
+  );
 
   const ctaUrl =
     profile?.cta_url ||
@@ -163,6 +177,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(clamp(Number(e.target.value || 0), profile?.min_amount_cents ? profile.min_amount_cents / 100 : undefined, profile?.max_amount_cents ? profile.max_amount_cents / 100 : undefined))}
+                onBlur={() => trackCurrentSimulation()}
                 min={profile?.min_amount_cents ? profile.min_amount_cents / 100 : 1000}
                 max={profile?.max_amount_cents ? profile.max_amount_cents / 100 : undefined}
                 className="h-11"
@@ -180,6 +195,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 max={profile?.max_down_payment_percent ?? 80}
                 step={1}
                 onValueChange={(v) => setDownPayment(v[0])}
+                onValueCommit={() => trackCurrentSimulation()}
               />
             </div>
 
@@ -194,6 +210,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 max={profile?.max_term_months ?? 120}
                 step={1}
                 onValueChange={(v) => setTermMonths(v[0])}
+                onValueCommit={(value) => trackCurrentSimulation(amount, value[0])}
               />
             </div>
 
@@ -208,6 +225,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 step={0.01}
                 disabled={!profile?.show_fee_inputs}
                 onChange={(e) => setInterest(Number(e.target.value || 0))}
+                onBlur={() => trackCurrentSimulation()}
               />
             </div>
 
@@ -223,11 +241,18 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                   max={profile?.max_grace_months ?? 12}
                   step={1}
                   onValueChange={(v) => setGraceMonths(v[0])}
+                  onValueCommit={() => trackCurrentSimulation()}
                 />
               </div>
             )}
 
-            <Tabs value={amortization} onValueChange={(v) => setAmortization(v as AmortizationType)}>
+            <Tabs
+              value={amortization}
+              onValueChange={(v) => {
+                setAmortization(v as AmortizationType);
+                trackCurrentSimulation();
+              }}
+            >
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger value="price">Price</TabsTrigger>
                 <TabsTrigger value="sac">SAC</TabsTrigger>

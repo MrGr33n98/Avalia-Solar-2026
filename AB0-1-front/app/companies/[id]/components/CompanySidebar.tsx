@@ -8,7 +8,7 @@ import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
-import { useCopyIntent, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { useCopyIntent, useFaqExpand, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 
 interface CompanySidebarProps {
@@ -17,6 +17,7 @@ interface CompanySidebarProps {
 
 export default function CompanySidebar({ company }: CompanySidebarProps) {
   const intentCompanyId = String(company.id);
+  const visibleFaqs = company.faqs?.slice(0, 5) ?? [];
   const phoneHoverIntent = useHoverIntent(intentCompanyId, 'phone', 800, {
     signalCategory: 'contact_intent',
     elementSelector: 'company-sidebar-phone',
@@ -45,6 +46,7 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
       source: 'company_profile_sidebar',
     },
   });
+  const { trackQuestion } = useFaqExpand(intentCompanyId);
 
   const formatUrl = (url?: string) => {
     if (!url) return '';
@@ -203,7 +205,7 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
         </Card>
       )}
 
-      {company.faqs && company.faqs.length > 0 && (
+      {visibleFaqs.length > 0 && (
         <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">
           <CardHeader className="bg-muted/30 pb-4 border-b">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -212,8 +214,19 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <Accordion type="single" collapsible className="w-full">
-              {company.faqs.slice(0, 5).map((faq, index) => (
+            <Accordion
+              type="single"
+              collapsible
+              className="w-full"
+              onValueChange={(value) => {
+                if (!value) return;
+                const faq = visibleFaqs.find((item, index) => `faq-${item.id ?? index}` === value);
+                if (faq) {
+                  trackQuestion(faq.id ?? value);
+                }
+              }}
+            >
+              {visibleFaqs.map((faq, index) => (
                 <AccordionItem
                   key={faq.id || index}
                   value={`faq-${faq.id ?? index}`}
