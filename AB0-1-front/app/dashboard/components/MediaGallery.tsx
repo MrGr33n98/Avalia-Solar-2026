@@ -5,7 +5,7 @@ import { ImageIcon, Upload, Video, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { companiesApi, fetchApi } from '@/lib/api';
@@ -345,6 +345,9 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar Vídeo do YouTube</DialogTitle>
+            <DialogDescription>
+              Informe a URL do video para enviar o conteudo para aprovacao.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Cole a URL do YouTube aqui" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
@@ -367,6 +370,9 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Visualização</DialogTitle>
+            <DialogDescription className="sr-only">
+              Visualize a foto ou o video selecionado em tamanho ampliado.
+            </DialogDescription>
           </DialogHeader>
           {lightboxItem?.type === 'photo' && (
             <img src={lightboxItem.url} alt="" className="w-full h-auto object-contain rounded-lg" />
