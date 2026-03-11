@@ -1,0 +1,55 @@
+row_type,id,name,status_now,confidence,gtm_type,trigger,event_name_or_key,filters,consent,destination,parameter_mapping,notes
+variable,VAR-001,Page URL,on,high,built_in,,Page URL,,n/a,GTM,built-in,use for all pageview tags
+variable,VAR-002,Page Path,on,high,built_in,,Page Path,,n/a,GTM,built-in,use for company profile page filters
+variable,VAR-003,Referrer,on,high,built_in,,Referrer,,n/a,GTM,built-in,optional attribution context
+variable,VAR-004,original_event,on,high,data_layer_variable,,original_event,,n/a,GTM,dlv:original_event,required for filtered custom event triggers
+variable,VAR-005,event_id,on,high,data_layer_variable,,event_id,,n/a,GTM,dlv:event_id,debugging and dedupe analysis
+variable,VAR-006,session_id,on,high,data_layer_variable,,session_id,,n/a,GTM,dlv:session_id,analytics session context
+variable,VAR-007,company_id,on,high,data_layer_variable,,company_id,,n/a,GTM,dlv:company_id,company-scoped conversions
+variable,VAR-008,company_name,on,high,data_layer_variable,,company_name,,n/a,GTM,dlv:company_name,optional pixel payload
+variable,VAR-009,category_id,on,high,data_layer_variable,,category_id,,n/a,GTM,dlv:category_id,category-scoped payloads
+variable,VAR-010,search_term,on,high,data_layer_variable,,search_term,,n/a,GTM,dlv:search_term,search telemetry tags
+variable,VAR-011,results_count,on,high,data_layer_variable,,results_count,,n/a,GTM,dlv:results_count,search result quality
+variable,VAR-012,cta_type,on,medium,data_layer_variable,,cta_type,,n/a,GTM,dlv:cta_type,cta detail where available
+variable,VAR-013,cta_location,on,medium,data_layer_variable,,cta_location,,n/a,GTM,dlv:cta_location,cta detail where available
+variable,VAR-014,item_id,on,high,data_layer_variable,,item_id,,n/a,GTM,dlv:item_id,mapped GA-style item id
+variable,VAR-015,item_name,on,high,data_layer_variable,,item_name,,n/a,GTM,dlv:item_name,mapped GA-style item name
+variable,VAR-016,item_category,on,high,data_layer_variable,,item_category,,n/a,GTM,dlv:item_category,mapped GA-style item category
+variable,VAR-017,metric_name,optional,high,data_layer_variable,,metric_name,,n/a,GTM,dlv:metric_name,web vitals or perf tags
+variable,VAR-018,metric_value,optional,high,data_layer_variable,,metric_value,,n/a,GTM,dlv:metric_value,web vitals or perf tags
+variable,VAR-019,gtm_timestamp,on,high,data_layer_variable,,gtm_timestamp,,n/a,GTM,dlv:gtm_timestamp,debugging only
+trigger,TRG-001,pv_all_pages,on,high,page_view,All Pages,,,n/a,GTM,,base trigger for pageview media tags
+trigger,TRG-002,pv_company_profile_pages,on,medium,page_view,Some Page Views,Page Path contains /companies/,n/a,GTM,,safe for page-scoped remarketing
+trigger,TRG-003,ce_search,on,high,custom_event,,event=search,original_event matches search_performance|search_submitted|search_no_results,n/a,GTM,,clean enough for media audiences
+trigger,TRG-004,ce_company_card_click,on,high,custom_event,,event=select_item,original_event=company_card_click,n/a,GTM,,canonical search/list click signal
+trigger,TRG-005,ce_whatsapp_contact,on,high,custom_event,,event=contact,original_event=whatsapp_click,n/a,GTM,,preferred WhatsApp conversion trigger
+trigger,TRG-006,ce_quote_request_legacy,optional,medium,custom_event,,event=quote_request_cta_clicked,,n/a,GTM,,legacy helper use only for micro-conversion
+trigger,TRG-007,ce_wizard_started,on,high,custom_event,,event=begin_checkout,original_event=wizard_started,n/a,GTM,,clean funnel start
+trigger,TRG-008,ce_wizard_progress,optional,high,custom_event,,event=checkout_progress,original_event=wizard_step_completed,n/a,GTM,,step progression only
+trigger,TRG-009,ce_wizard_success,on,high,custom_event,,event=wizard_success,,n/a,GTM,,current best GTM lead success trigger
+trigger,TRG-010,ce_web_vital,optional,high,custom_event,,event=web_vital,,n/a,GTM,,observability only
+trigger,TRG-011,ce_profile_view_legacy,optional,medium,custom_event,,event=company_profile_viewed,,n/a,GTM,,usable for pixels never for GA4 while app GA is direct
+trigger,TRG-012,ce_cta_generic_legacy,off,low,custom_event,,event=cta_clicked,,n/a,GTM,,generic alias too noisy
+trigger,TRG-013,ce_whatsapp_legacy_alias,off,low,custom_event,,event=whatsapp_cta_clicked,,n/a,GTM,,ignore prefer TRG-005
+trigger,TRG-014,ce_lead_created_canonical,future,low,custom_event,,event=lead_created,,n/a,GTM,,not a reliable frontend GTM signal today
+trigger,TRG-015,ce_review_created_canonical,future,low,custom_event,,event=review_created,,n/a,GTM,,backend-centric not GTM-ready today
+tag,TAG-001,conversion_linker_all_pages,on,high,conversion_linker,TRG-001,,,ad_storage,Google Ads,,always-on base tag when paid media is active
+tag,TAG-002,google_ads_remarketing_all_pages,optional,high,google_ads_remarketing,TRG-001,,,ad_storage|ad_user_data,Google Ads,Page URL Page Path,safe pageview audience tag
+tag,TAG-003,google_ads_remarketing_company_profiles,optional,medium,google_ads_remarketing,TRG-002,,,ad_storage|ad_user_data,Google Ads,Page Path,company profile audience
+tag,TAG-004,google_ads_conversion_whatsapp_click,optional,high,google_ads_conversion,TRG-005,,,ad_storage|ad_user_data,Google Ads,company_id company_name,strongest contact-intent click
+tag,TAG-005,google_ads_conversion_quote_click_legacy,optional,medium,google_ads_conversion,TRG-006,,,ad_storage|ad_user_data,Google Ads,company_id company_name cta_location,use only if quote-click is a tracked micro-conversion
+tag,TAG-006,google_ads_conversion_verified_lead,on,high,google_ads_conversion,TRG-009,,,ad_storage|ad_user_data,Google Ads,company_id session_id,current best GTM lead conversion
+tag,TAG-007,meta_pixel_pageview,optional,high,meta_pixel,TRG-001,,,ad_storage|ad_user_data|ad_personalization,Meta,Page URL Page Path,base pageview pixel
+tag,TAG-008,meta_pixel_viewcontent_company_profile,optional,medium,meta_pixel,TRG-011,,,ad_storage|ad_user_data|ad_personalization,Meta,company_id company_name,use legacy company profile event until canonical cleanup lands
+tag,TAG-009,meta_pixel_contact_whatsapp,optional,high,meta_pixel,TRG-005,,,ad_storage|ad_user_data|ad_personalization,Meta,company_id company_name,preferred contact event
+tag,TAG-010,meta_pixel_initiatecheckout_wizard_start,optional,high,meta_pixel,TRG-007,,,ad_storage|ad_user_data|ad_personalization,Meta,company_id session_id,maps lead wizard start
+tag,TAG-011,meta_pixel_lead_wizard_success,on,high,meta_pixel,TRG-009,,,ad_storage|ad_user_data|ad_personalization,Meta,company_id session_id,current best Meta lead conversion
+tag,TAG-012,ga4_config_do_not_enable_in_gtm,off,high,ga4_configuration,TRG-001,,,analytics_storage,GA4,,duplicate risk because GA4 already runs directly in app
+tag,TAG-013,ga4_event_page_view_do_not_enable_in_gtm,off,high,ga4_event,TRG-001,,,analytics_storage,GA4,page_path page_title,duplicate risk with direct gtagPageView
+tag,TAG-014,ga4_event_search_do_not_enable_in_gtm,off,high,ga4_event,TRG-003,,,analytics_storage,GA4,search_term results_count,duplicate risk with direct app event
+tag,TAG-015,ga4_event_company_card_click_do_not_enable_in_gtm,off,high,ga4_event,TRG-004,,,analytics_storage,GA4,item_id item_name item_category,duplicate risk with direct app event
+tag,TAG-016,ga4_event_whatsapp_contact_do_not_enable_in_gtm,off,high,ga4_event,TRG-005,,,analytics_storage,GA4,company_id item_id item_name,duplicate risk with direct app event
+tag,TAG-017,ga4_event_quote_click_do_not_enable_in_gtm,off,medium,ga4_event,TRG-006,,,analytics_storage,GA4,company_id cta_location,duplicate plus legacy alias risk
+tag,TAG-018,ga4_event_wizard_start_do_not_enable_in_gtm,off,high,ga4_event,TRG-007,,,analytics_storage,GA4,company_id session_id,duplicate risk with direct app event
+tag,TAG-019,ga4_event_wizard_success_do_not_enable_in_gtm,off,high,ga4_event,TRG-009,,,analytics_storage,GA4,company_id session_id,duplicate risk with direct app event
+tag,TAG-020,preview_event_logger,preview_only,high,custom_html,TRG-003|TRG-004|TRG-005|TRG-006|TRG-007|TRG-009|TRG-011,,,none,GTM,event object only,debug helper only never publish to production

@@ -5,11 +5,12 @@ RSpec.describe CompanyDashboard::StatsService do
 
   subject { described_class.new(company).call }
 
-  context 'when company has no data' do
-    it 'returns zeroed stats' do
+  context 'when company has no aggregated telemetry yet' do
+    it 'falls back to denormalized counters' do
       expect(subject[:profile_views]).to eq(100)
       expect(subject[:leads_received]).to eq(0)
       expect(subject[:conversion_rate]).to eq(0)
+      expect(subject[:data_source]).to eq('company_denormalized_fallback')
     end
   end
 
@@ -45,6 +46,7 @@ RSpec.describe CompanyDashboard::StatsService do
       expect(subject[:whatsapp_clicks]).to eq(12)
       expect(subject[:leads_received]).to eq(7)
       expect(subject[:conversion_rate]).to eq(2.0)
+      expect(subject[:data_source]).to eq('company_daily_stats')
     end
   end
 
@@ -54,6 +56,7 @@ RSpec.describe CompanyDashboard::StatsService do
     it 'returns safe default values' do
       expect(subject[:profile_views]).to eq(0)
       expect(subject[:conversion_rate]).to eq(0)
+      expect(subject[:data_source]).to eq('company_unavailable')
     end
   end
 end

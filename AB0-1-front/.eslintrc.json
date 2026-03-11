@@ -1,3 +1,16 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@/lib/dataLayer",
+            "message": "Use '@/lib/analytics/consolidated' instead."
+          }
+        ]
+      }
+    ]
+  }
 }

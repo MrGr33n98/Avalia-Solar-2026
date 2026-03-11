@@ -23,9 +23,9 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics/lazy';
-import { trackContactClick } from '@/lib/dataLayer';
 import { useFavorites } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
+import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
@@ -76,6 +76,7 @@ export default function CompanyCard({
   const router = useRouter();
   const company = rawCompany as ExtendedCompany;
   const { id, name, city, state, description, website, category_name } = company;
+  const intentCompanyId = String(id);
   const rating_count = Number((company as any).rating_count ?? (company as any).total_reviews ?? (company as any).reviews_count ?? 0);
   const average_rating = parseFloat((company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0);
 
@@ -199,6 +200,20 @@ export default function CompanyCard({
   const hasWhatsapp = Boolean(whatsappLinkRaw);
   const enabledRaw = (company as any).cta_whatsapp_enabled ?? (company as any).whatsapp_enabled;
   const whatsappEnabled = enabledRaw === undefined || enabledRaw === null ? true : Boolean(enabledRaw);
+  const whatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-card-whatsapp-cta',
+    metadata: {
+      source: 'company_card',
+    },
+  });
+  const quoteHoverIntent = useHoverIntent(intentCompanyId, 'quote_button', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-card-quote-cta',
+    metadata: {
+      source: 'company_card',
+    },
+  });
   // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
   const canRequestQuote = company.active_admin === true;
   const wizardCategoryId = resolveWizardCategoryId(company);
@@ -526,7 +541,11 @@ export default function CompanyCard({
           )}
         >
           {canRequestQuote && (
-            <div className={cn(compact ? "flex-1" : "w-full")} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={cn(compact ? "flex-1" : "w-full")}
+              onClick={(e) => e.stopPropagation()}
+              {...(hasWhatsapp && whatsappEnabled ? whatsappHoverIntent : quoteHoverIntent)}
+            >
               {hasWhatsapp && whatsappEnabled ? (
                 WhatsAppCTAButton && (
                   <WhatsAppCTAButton

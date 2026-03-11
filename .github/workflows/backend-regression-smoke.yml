@@ -88,7 +88,8 @@ jobs:
             spec/models/company_sector_question_spec.rb \
             spec/policies/company_policy_spec.rb \
             spec/services/analytics/track_event_service_spec.rb \
+            spec/services/analytics/track_event_contract_spec.rb \
+            spec/requests/api/v1/analytics_tracking_spec.rb \
             spec/requests/api/v1/company_sector_questions_spec.rb \
             spec/requests/api/v1/sector_ratings_spec.rb \
             spec/requests/api/v1/company_dashboard_stats_notifications_spec.rb
-

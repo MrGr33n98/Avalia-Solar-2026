@@ -3,6 +3,7 @@ class CompanyWebhook < ApplicationRecord
 
   validates :url, presence: true, format: URI::DEFAULT_PARSER.make_regexp(%w[http https])
   validates :secret_key, length: { minimum: 32 }, allow_blank: true
+  validate :validate_events
 
   scope :active, -> { where(active: true) }
   scope :for_event, ->(event_name) { where("events @> ?::jsonb", [event_name].to_json) }
@@ -28,5 +29,14 @@ class CompanyWebhook < ApplicationRecord
 
   def subscribed_to?(event_name)
     events.include?(event_name)
+  end
+
+  private
+
+  def validate_events
+    invalid_events = Array(events) - SUPPORTED_EVENTS
+    return if invalid_events.empty?
+
+    errors.add(:events, "contains unsupported events: #{invalid_events.join(', ')}")
   end
 end

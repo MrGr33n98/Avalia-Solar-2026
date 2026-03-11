@@ -39,6 +39,13 @@ module Api
       def analytics_timeseries
         days = [(params[:days] || 90).to_i, 365].min
         source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
+        unless source.available?
+          return render json: {
+            data: [],
+            data_source: 'company_daily_stats_unavailable'
+          }.merge(CompanyDashboard::FreshnessProvider.call)
+        end
+
         series = source.timeseries(days:)
 
         data = series.map do |row|

@@ -1,9 +1,58 @@
 # Add this line near the top with other requires
 require 'csv'
+require 'find'
 
 require_relative "boot"
 
 require "rails/all"
+
+# json-schema uses Dir[] globs that fail to expand on Windows in some environments,
+# which prevents rswag from loading JSON::Schema::Draft4 during test boot.
+if Gem.win_platform?
+  begin
+    require 'json-schema'
+
+    if defined?(JSON::Schema) && !defined?(JSON::Schema::Draft4)
+      json_schema_root = Gem.loaded_specs['json-schema']&.full_gem_path
+
+      if json_schema_root.present?
+        %w[attributes validators].each do |segment|
+          Find.find(File.join(json_schema_root, 'lib', 'json-schema', segment)) do |path|
+            require path if path.end_with?('.rb')
+          end
+        end
+      end
+    end
+  rescue LoadError
+    # Bundler will raise a clearer error later if json-schema is unavailable.
+  end
+
+  begin
+    regexp_parser_root = Gem::Specification.find_by_name('regexp_parser').full_gem_path
+
+    require File.join(regexp_parser_root, 'lib', 'regexp_parser', 'error.rb')
+
+    Regexp.const_set(:Syntax, Module.new) unless Regexp.const_defined?(:Syntax, false)
+    unless Regexp::Syntax.const_defined?(:SyntaxError, false)
+      Regexp::Syntax.const_set(:SyntaxError, Class.new(Regexp::Parser::Error))
+    end
+
+    %w[token base any version_lookup].each do |dependency|
+      require File.join(regexp_parser_root, 'lib', 'regexp_parser', 'syntax', "#{dependency}.rb")
+    end
+
+    Dir.children(File.join(regexp_parser_root, 'lib', 'regexp_parser', 'syntax', 'versions')).sort.each do |entry|
+      next unless entry.end_with?('.rb')
+
+      require File.join(regexp_parser_root, 'lib', 'regexp_parser', 'syntax', 'versions', entry)
+    end
+
+    Regexp::Syntax::CURRENT = Regexp::Syntax.for("ruby/#{RUBY_VERSION}") unless Regexp::Syntax.const_defined?(:CURRENT)
+  rescue Gem::MissingSpecError, LoadError
+    # Bundler will raise a clearer error later if regexp_parser is unavailable.
+  end
+
+end
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.

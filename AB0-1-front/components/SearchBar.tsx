@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api';
-import { trackSearchPerformance } from '@/lib/dataLayer';
+import { trackSearchPerformance } from '@/lib/analytics/consolidated';
 import type { SearchAllResponse } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

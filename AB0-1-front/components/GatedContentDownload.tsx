@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
+import { getAnonymousId, handleUserIdentified } from '@/lib/analytics/identity-stitch';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 
 interface GatedContentFormProps {
   companyId: string;
@@ -32,9 +33,8 @@ export function GatedContentDownload({
     setError(null);
 
     try {
-      const anonymousId = localStorage.getItem('as_anonymous_id') || '';
+      const anonymousId = getAnonymousId();
 
-      // 1. Submit to backend
       const response = await fetch('/api/v1/gated_downloads', {
         method: 'POST',
         headers: {
@@ -58,7 +58,6 @@ export function GatedContentDownload({
 
       const data = await response.json();
 
-      // 2. Identity stitching (if user_id returned)
       if (data.user_id) {
         await handleUserIdentified({
           id: data.user_id,
@@ -67,27 +66,28 @@ export function GatedContentDownload({
         });
       }
 
-      // 3. Track high-intent event
-      if (typeof window !== 'undefined' && (window as any).posthog) {
-        (window as any).posthog.capture('gated_content_downloaded', {
-          company_id: companyId,
+      sendIntentSignal({
+        company_id: companyId,
+        user_id: data.user_id,
+        anonymous_id: data.anonymous_id || anonymousId,
+        signal_type: 'document_download',
+        signal_category: 'research_intent',
+        element_type: 'gated_content_download',
+        metadata: {
           document_type: documentType,
-          document_title: documentTitle,
-          contact_email: formData.email
-        });
-      }
+          document_title: documentTitle
+        }
+      });
 
-      // 4. Trigger download
-      window.open(documentUrl, '_blank');
+      window.open(documentUrl, '_blank', 'noopener,noreferrer');
 
-      // 5. Success callback
       if (onSuccess) {
         onSuccess();
       }
-
-    } catch (err: any) {
-      setError(err.message || 'Erro ao processar solicitação');
-      console.error('[GatedContent] Error:', err);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao processar solicitação';
+      setError(message);
+      console.error('[GatedContent] Error:', error);
     } finally {
       setIsSubmitting(false);
     }

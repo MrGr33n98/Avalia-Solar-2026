@@ -31,7 +31,8 @@ module CompanyDashboard
         average_rating: safe_count(:rating_avg),
         pending_approvals: pending_approvals_count,
         active_campaigns: active_campaigns_count,
-        conversion_rate: conversion_rate
+        conversion_rate: conversion_rate,
+        data_source: stats_data_source
       }.merge(CompanyDashboard::FreshnessProvider.call)
     end
 
@@ -39,21 +40,35 @@ module CompanyDashboard
 
     def metric_with_fallback(metric_key:, fallback_method:)
       aggregated = daily_stats_totals[metric_key]
-      return aggregated.to_i if aggregated.present?
+      return aggregated.to_i if canonical_metrics_available? && aggregated.present?
 
       safe_count(fallback_method)
     end
 
     def daily_stats_totals
       return @daily_stats_totals if defined?(@daily_stats_totals)
-      source = MetricsSource.new(company_id: @company&.id)
-      totals = source.totals
+      totals = canonical_metrics_available? ? metrics_source.totals : nil
 
       @daily_stats_totals = {
         'profile_views' => totals&.dig(:profile_views),
         'cta_clicks' => totals&.dig(:cta_clicks),
         'whatsapp_clicks' => totals&.dig(:whatsapp_clicks)
       }
+    end
+
+    def canonical_metrics_available?
+      return @canonical_metrics_available if defined?(@canonical_metrics_available)
+
+      @canonical_metrics_available =
+        metrics_source.available? && CompanyDailyStat.where(company_id: @company.id).exists?
+    end
+
+    def metrics_source
+      @metrics_source ||= MetricsSource.new(company_id: @company&.id)
+    end
+
+    def stats_data_source
+      canonical_metrics_available? ? 'company_daily_stats' : 'company_denormalized_fallback'
     end
 
     def safe_count(method)
@@ -97,7 +112,8 @@ module CompanyDashboard
         average_rating: 0,
         pending_approvals: 0,
         active_campaigns: 0,
-        conversion_rate: 0
+        conversion_rate: 0,
+        data_source: 'company_unavailable'
       }.merge(CompanyDashboard::FreshnessProvider.call)
     end
   end

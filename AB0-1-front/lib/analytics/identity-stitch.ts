@@ -1,8 +1,12 @@
-import { analytics } from './index';
+'use client';
+
+import { alias, identify } from './index';
+
+const ANONYMOUS_ID_STORAGE_KEYS = ['ajs_anonymous_id', 'as_anonymous_id'] as const;
 
 export interface IdentityStitchPayload {
   user_id: string;
-  anonymous_id: string;
+  anonymous_id?: string;
   email?: string;
   name?: string;
 }
@@ -13,18 +17,16 @@ export interface IdentityStitchPayload {
  */
 export const stitchIdentity = async (payload: IdentityStitchPayload) => {
   try {
-    // 1. PostHog identify + alias
-    if (typeof window !== 'undefined' && (window as any).posthog) {
-      const posthog = (window as any).posthog;
-      
-      // Identify the user
-      posthog.identify(payload.user_id, {
-        email: payload.email,
-        name: payload.name
-      });
-      
-      // Alias anonymous_id to user_id
-      posthog.alias(payload.user_id, payload.anonymous_id);
+    const anonymousId = payload.anonymous_id || getAnonymousId();
+
+    // 1. Analytics core identify + alias
+    identify(payload.user_id, {
+      email: payload.email,
+      name: payload.name
+    });
+
+    if (anonymousId) {
+      alias(payload.user_id);
     }
 
     // 2. Backend stitching
@@ -35,8 +37,9 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
       },
       body: JSON.stringify({
         user_id: payload.user_id,
-        anonymous_id: payload.anonymous_id
-      })
+        anonymous_id: anonymousId
+      }),
+      keepalive: true
     });
 
     if (!response.ok) {
@@ -83,7 +86,7 @@ export const trackSession = async (params: {
     
     // Store anonymous_id in localStorage for persistence
     if (data.anonymous_id) {
-      localStorage.setItem('as_anonymous_id', data.anonymous_id);
+      persistAnonymousId(data.anonymous_id);
     }
     
     return data;
@@ -100,12 +103,16 @@ export const trackSession = async (params: {
 export const getAnonymousId = (): string => {
   if (typeof window === 'undefined') return '';
   
-  let anonymousId = localStorage.getItem('as_anonymous_id');
+  const existingAnonymousId = ANONYMOUS_ID_STORAGE_KEYS
+    .map((key) => localStorage.getItem(key))
+    .find((value): value is string => Boolean(value));
   
-  if (!anonymousId) {
-    anonymousId = `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('as_anonymous_id', anonymousId);
+  if (existingAnonymousId) {
+    return existingAnonymousId;
   }
+
+  const anonymousId = `anon-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  persistAnonymousId(anonymousId);
   
   return anonymousId;
 };
@@ -137,3 +144,9 @@ export const handleUserIdentified = async (user: { id: string; email?: string; n
     name: user.name
   });
 };
+
+function persistAnonymousId(anonymousId: string): void {
+  ANONYMOUS_ID_STORAGE_KEYS.forEach((key) => {
+    localStorage.setItem(key, anonymousId);
+  });
+}

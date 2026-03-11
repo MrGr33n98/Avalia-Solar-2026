@@ -40,6 +40,18 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       json = JSON.parse(response.body)
       expect(json).to have_key('last_aggregated_at')
       expect(json).to have_key('data_freshness_seconds')
+      expect(json['data_source']).to eq('company_daily_stats')
+    end
+
+    it 'flags unavailable canonical source explicitly' do
+      allow_any_instance_of(CompanyDashboard::MetricsSource).to receive(:available?).and_return(false)
+
+      get '/api/v1/company_dashboard/analytics/timeseries'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']).to eq([])
+      expect(json['data_source']).to eq('company_daily_stats_unavailable')
     end
   end
 
@@ -51,6 +63,8 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       json = JSON.parse(response.body)
       expect(json['stats']).to have_key('last_aggregated_at')
       expect(json['stats']).to have_key('data_freshness_seconds')
+      expect(json['stats']).to have_key('data_source')
+      expect(json['stats']['data_source']).to eq('company_denormalized_fallback')
     end
   end
 end

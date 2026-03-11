@@ -4,6 +4,19 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
   before_action :authenticate_api_user, except: %i[track conversions events_track]
   before_action :check_rate_limit, only: %i[track events_track]
   ALLOW_ANONYMOUS_EVENTS = %w[page_view search web_vital micro_interaction].freeze
+  LEGACY_EVENT_ALIASES = {
+    'view' => 'profile_view',
+    'Company Profile Viewed' => 'profile_view',
+    'click' => 'cta_click',
+    'CTA Clicked' => 'cta_click',
+    'WhatsApp CTA Clicked' => 'whatsapp_click',
+    'lead' => 'lead_created',
+    'Lead Form Submitted' => 'lead_created',
+    'Quote Request CTA Clicked' => 'lead_created',
+    'badge_click' => 'badge_cta_click',
+    'badges_cta_click' => 'badge_cta_click',
+    'badges_cta_view' => 'badge_cta_view'
+  }.freeze
   CORE_CONVERSION_EVENT_MAP = {
     'profile_view' => :profile_views,
     'Company Profile Viewed' => :profile_views,
@@ -98,6 +111,13 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       normalize_hash_param(params.dig(:analytic, :metadata)) ||
       legacy_properties.presence ||
       {}
+    tracked_at =
+      parse_tracked_at(
+        params[:tracked_at].presence ||
+        params.dig(:analytic, :tracked_at).presence ||
+        metadata['tracked_at'].presence ||
+        metadata[:tracked_at].presence
+      )
 
     unless raw_type.present?
       Rails.logger.warn("[Analytics] Rejecting event: event_type missing. Payload: #{params.to_unsafe_h.slice('event', 'event_type', 'analytic')}")
@@ -105,6 +125,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     end
 
     event_type = map_event_type(raw_type)
+    log_legacy_alias_usage(raw_type: raw_type, canonical_event_type: event_type, company_id: company_id) if raw_type.to_s != event_type.to_s
     
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
       Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'. Payload: #{params.to_unsafe_h.slice('company_id', 'company', 'properties')}")
@@ -116,6 +137,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       event_type: event_type,
       metadata: metadata.merge(request_metadata),
       user: current_user,
+      tracked_at: tracked_at,
       event_id: event_id
     )
 
@@ -169,16 +191,11 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
   private
 
   def map_event_type(raw)
-    case raw.to_s
-    when 'view'
-      'profile_view'
-    when 'Company Profile Viewed'
-      'profile_view'
-    when 'click'
-      'cta_click'
-    when 'CTA Clicked'
-      'cta_click'
-    when 'whatsapp_click', 'WhatsApp CTA Clicked'
+    raw_string = raw.to_s
+    return LEGACY_EVENT_ALIASES[raw_string] if LEGACY_EVENT_ALIASES.key?(raw_string)
+
+    case raw_string
+    when 'whatsapp_click'
       'whatsapp_click'
     when 'Email CTA Clicked'
       'Email CTA Clicked'
@@ -186,18 +203,16 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       'Phone CTA Clicked'
     when 'Website CTA Clicked'
       'Website CTA Clicked'
-    when 'lead', 'Lead Form Submitted', 'Quote Request CTA Clicked'
-      'lead_created'
     when 'review'
       'review_created'
-    when 'badge_cta_click', 'badge_click', 'badges_cta_click'
+    when 'badge_cta_click'
       'badge_cta_click'
-    when 'badge_cta_view', 'badges_cta_view'
+    when 'badge_cta_view'
       'badge_cta_view'
     when 'badges_tab_open'
       'badges_tab_open'
     else
-      raw.to_s
+      raw_string
     end
   end
 
@@ -208,6 +223,27 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     when Hash
       value
     end
+  end
+
+  def parse_tracked_at(value)
+    return nil if value.blank?
+
+    value.is_a?(Time) ? value : Time.zone.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def log_legacy_alias_usage(raw_type:, canonical_event_type:, company_id:)
+    Rails.logger.info(
+      {
+        event: 'analytics_legacy_alias',
+        raw_event_type: raw_type.to_s,
+        canonical_event_type: canonical_event_type,
+        company_id: company_id,
+        user_id: current_user&.id,
+        timestamp: Time.current.iso8601
+      }.to_json
+    )
   end
 
   def canonical_company_conversions(company_id:, scope:, days:, from_day:, to_day:)

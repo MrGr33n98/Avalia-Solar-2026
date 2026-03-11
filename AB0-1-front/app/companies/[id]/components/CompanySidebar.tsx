@@ -1,3 +1,5 @@
+'use client';
+
 import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -5,8 +7,8 @@ import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
-import { track } from '@/lib/analytics/lazy';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
+import { useCopyIntent, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 
 interface CompanySidebarProps {
@@ -14,6 +16,36 @@ interface CompanySidebarProps {
 }
 
 export default function CompanySidebar({ company }: CompanySidebarProps) {
+  const intentCompanyId = String(company.id);
+  const phoneHoverIntent = useHoverIntent(intentCompanyId, 'phone', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-sidebar-phone',
+    metadata: {
+      source: 'company_profile_sidebar',
+    },
+  });
+  const phoneCopyIntent = useCopyIntent(intentCompanyId, 'phone', {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-sidebar-phone',
+    metadata: {
+      source: 'company_profile_sidebar',
+    },
+  });
+  const emailHoverIntent = useHoverIntent(intentCompanyId, 'email', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-sidebar-email',
+    metadata: {
+      source: 'company_profile_sidebar',
+    },
+  });
+  const emailCopyIntent = useCopyIntent(intentCompanyId, 'email', {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-sidebar-email',
+    metadata: {
+      source: 'company_profile_sidebar',
+    },
+  });
+
   const formatUrl = (url?: string) => {
     if (!url) return '';
     return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -52,6 +84,9 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
                 <a 
                   href={`tel:${company.phone.replace(/\D/g, '')}`} 
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4"
+                  onMouseEnter={phoneHoverIntent.onMouseEnter}
+                  onMouseLeave={phoneHoverIntent.onMouseLeave}
+                  onCopy={phoneCopyIntent.onCopy}
                   onClick={async (e) => {
                     await trackCTAClick({
                       ctaType: 'phone',
@@ -126,6 +161,9 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
                 <a 
                   href={`mailto:${company.email || company.email_public}`}
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate block"
+                  onMouseEnter={emailHoverIntent.onMouseEnter}
+                  onMouseLeave={emailHoverIntent.onMouseLeave}
+                  onCopy={emailCopyIntent.onCopy}
                   onClick={async (e) => {
                     await trackCTAClick({
                       ctaType: 'email',

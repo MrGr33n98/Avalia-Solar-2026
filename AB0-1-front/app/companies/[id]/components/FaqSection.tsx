@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { faqApi, type FaqItem } from '@/lib/api-faq';
-import { trackFaqEngagement } from '@/lib/dataLayer';
+import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { Search, HelpCircle, ThumbsUp, ThumbsDown, Layers } from 'lucide-react';
 
 interface FaqSectionProps {

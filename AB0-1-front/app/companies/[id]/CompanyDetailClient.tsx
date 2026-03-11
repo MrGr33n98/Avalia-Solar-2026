@@ -75,6 +75,7 @@ const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false }
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { track } from "@/lib/analytics/lazy";
+import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -213,6 +214,19 @@ export default function CompanyDetailClient({
     ? (extendedCompany.cta_whatsapp_url || extendedCompany.whatsapp_url || (currentCompany as any)?.whatsapp || null)
     : null;
   const wizardCategoryId = resolveWizardCategoryId(currentCompany);
+  const scrollPauseMetadata = useMemo(
+    () => ({
+      source: 'company_profile',
+      active_tab: activeTab,
+    }),
+    [activeTab]
+  );
+
+  useScrollPause(String(companyId || currentCompany.id), 3000, {
+    signalCategory: 'research_intent',
+    elementSelector: 'company-detail-page',
+    metadata: scrollPauseMetadata,
+  });
 
   const tabs = useMemo(() => {
     const baseTabs = [

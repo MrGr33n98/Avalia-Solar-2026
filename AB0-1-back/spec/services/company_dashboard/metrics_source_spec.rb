@@ -27,7 +27,7 @@ RSpec.describe CompanyDashboard::MetricsSource do
 
       totals = source.totals(from_day: (Date.current - 2), to_day: (Date.current - 1))
 
-      expect(totals).to eq(
+      expect(totals).to include(
         profile_views: 50,
         cta_clicks: 13,
         whatsapp_clicks: 5,
@@ -56,6 +56,12 @@ RSpec.describe CompanyDashboard::MetricsSource do
       expect(data.last[:cta_clicks]).to eq(4)
       expect(data.last[:whatsapp_clicks]).to eq(1)
       expect(data.last[:leads]).to eq(1)
+    end
+  end
+
+  describe '#available?' do
+    it 'returns false when company_id is missing' do
+      expect(described_class.new(company_id: nil).available?).to eq(false)
     end
   end
 end

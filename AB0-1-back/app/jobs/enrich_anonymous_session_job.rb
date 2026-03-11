@@ -1,40 +1,38 @@
 class EnrichAnonymousSessionJob < ApplicationJob
-  queue_as :default
+  queue_as :low
 
   def perform(anonymous_session_id)
-    session = AnonymousSession.find(anonymous_session_id)
-    
-    return if session.enriched?
+    session = AnonymousSession.find_by(id: anonymous_session_id)
+    return if session.blank? || session.enriched? || session.ip_hash.blank?
 
-    # Placeholder for firmographic enrichment
-    # In production: integrate with Clearbit, ZoomInfo, or similar
-    enriched_data = fetch_firmographic_data(session.ip_hash)
+    enriched_data = fetch_firmographic_data_mock(session.ip_hash)
 
     if enriched_data.present?
-      session.update(
-        firmographic_data: enriched_data,
-        enrichment_status: 'enriched',
-        enriched_at: Time.current
-      )
-
+      session.apply_firmographic_enrichment!(enriched_data)
       Rails.logger.info("[Enrichment] ✓ Session #{session.id} enriched")
     else
-      session.update(enrichment_status: 'failed')
+      session.update!(
+        stitch_metadata: session.stitch_metadata.merge(
+          'enrichment_status' => 'failed',
+          'enrichment_attempted_at' => Time.current.iso8601
+        )
+      )
       Rails.logger.warn("[Enrichment] Failed for session #{session.id}")
     end
   end
 
   private
 
-  def fetch_firmographic_data(ip_hash)
-    # TODO: Integrate with external API
-    # Example response structure:
+  def fetch_firmographic_data_mock(_ip_hash)
+    return nil if rand > 0.3
+
     {
-      company_name: 'Example Corp',
-      industry: 'Solar Energy',
-      employee_count: 250,
-      revenue_range: '$10M-$50M',
-      company_domain: 'example.com'
+      'company_name' => ['SolarEdge Tech', 'Weg', 'Renner S.A.', 'Ambev', 'Fazenda Bela Vista'].sample,
+      'company_domain' => 'example.com',
+      'industry' => ['Manufacturing', 'Agriculture', 'Retail', 'Tech'].sample,
+      'company_size' => ['11-50', '51-200', '201-500', '500+'].sample,
+      'city' => 'São Paulo',
+      'state' => 'SP'
     }
   rescue StandardError => e
     Rails.logger.error("[Enrichment] API error: #{e.message}")

@@ -100,6 +100,7 @@ Rails.application.routes.draw do
           post :recalculate
         end
       end
+      resources :intent_signals, only: [:create]
 
       # Identity Stitching API
       namespace :identity do
@@ -109,6 +110,7 @@ Rails.application.routes.draw do
 
       # Gated Downloads API
       resources :gated_downloads, only: [:create]
+      resources :company_webhooks, only: %i[index create update destroy]
 
       # Consent endpoints
       namespace :consent do

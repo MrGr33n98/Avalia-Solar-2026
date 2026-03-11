@@ -17,6 +17,7 @@ import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
+import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 const HERO_BADGE_SIZE_PX = 48;
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
@@ -59,6 +60,21 @@ export default function CompanyHero({
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const hasLogo = Boolean(logoUrl) && !logoError;
   const ratingLabel = `${Number(companyStats.rating).toFixed(1)}/5.0`;
+  const intentCompanyId = String(company.id);
+  const heroWhatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-hero-whatsapp-cta',
+    metadata: {
+      source: 'company_hero',
+    },
+  });
+  const heroQuoteHoverIntent = useHoverIntent(intentCompanyId, 'quote_button', 800, {
+    signalCategory: 'contact_intent',
+    elementSelector: 'company-hero-quote-cta',
+    metadata: {
+      source: 'company_hero',
+    },
+  });
 
   const heroBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
@@ -273,7 +289,7 @@ export default function CompanyHero({
                 />
 
                 {ctaEnabled && ctaUrl && (
-                  <div className="w-full sm:w-auto">
+                  <div className="w-full sm:w-auto" {...heroWhatsappHoverIntent}>
                     <WhatsappButton
                       size="default"
                       enabled
@@ -289,6 +305,8 @@ export default function CompanyHero({
                   <Button
                     size="default"
                     className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"
+                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
+                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                     onClick={async () => {
                       await trackCTAClick({
                         ctaType: 'quote',

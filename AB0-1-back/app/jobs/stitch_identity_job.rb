@@ -20,6 +20,12 @@ class StitchIdentityJob < ApplicationJob
       # 2. Migrate analytics events
       AnalyticsEvent.where(anonymous_id: anonymous_id, user_id: nil)
                     .update_all(user_id: user.id, updated_at: Time.current)
+
+      # 2.1. Migrate dedicated buyer intent activities
+      if defined?(BuyerIntentActivity)
+        BuyerIntentActivity.where(anonymous_id: anonymous_id, user_id: nil)
+                           .update_all(user_id: user.id, updated_at: Time.current)
+      end
       
       # 3. Migrate intent scores
       IntentScore.where(anonymous_id: anonymous_id, lead_id: nil).find_each do |score|
@@ -27,14 +33,27 @@ class StitchIdentityJob < ApplicationJob
         existing = IntentScore.find_by(company_id: score.company_id, lead_id: user.id)
         
         if existing
-          # Merge scores (take the higher one)
-          if score.total_score > existing.total_score
-            existing.update!(
-              total_score: score.total_score,
-              score_breakdown: score.score_breakdown,
-              top_signals: score.top_signals
-            )
-          end
+          merged_top_signals = (Array(existing.top_signals) + Array(score.top_signals)).uniq.first(10)
+
+          existing.update!(
+            total_score: [existing.total_score, score.total_score].max,
+            micro_interaction_score: [existing.micro_interaction_score, score.micro_interaction_score].max,
+            research_intent_score: [existing.research_intent_score, score.research_intent_score].max,
+            financial_intent_score: [existing.financial_intent_score, score.financial_intent_score].max,
+            contact_intent_score: [existing.contact_intent_score, score.contact_intent_score].max,
+            total_signals_count: existing.total_signals_count + score.total_signals_count,
+            hot_signals_count: existing.hot_signals_count + score.hot_signals_count,
+            unique_sessions_count: existing.unique_sessions_count + score.unique_sessions_count,
+            unique_pages_count: [existing.unique_pages_count, score.unique_pages_count].max,
+            first_interaction_at: [existing.first_interaction_at, score.first_interaction_at].compact.min,
+            last_interaction_at: [existing.last_interaction_at, score.last_interaction_at].compact.max,
+            last_hot_signal_at: [existing.last_hot_signal_at, score.last_hot_signal_at].compact.max,
+            days_active: [existing.days_active, score.days_active].max,
+            confidence_score: [existing.confidence_score, score.confidence_score].max,
+            decay_factor: [existing.decay_factor, score.decay_factor].max,
+            score_breakdown: existing.score_breakdown.presence || score.score_breakdown,
+            top_signals: merged_top_signals
+          )
           score.destroy
         else
           # Transfer ownership

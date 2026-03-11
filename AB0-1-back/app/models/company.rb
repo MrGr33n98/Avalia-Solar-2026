@@ -71,6 +71,8 @@ class Company < ApplicationRecord
   has_many :company_badges, dependent: :destroy
   has_many :badges, through: :company_badges
   has_many :company_access_requests, dependent: :destroy
+  has_many :company_webhooks, dependent: :destroy
+  has_many :gated_downloads, dependent: :destroy
   has_many :sector_ratings, dependent: :destroy
   has_many :company_sector_questions, dependent: :destroy
   accepts_nested_attributes_for :company_sector_questions, allow_destroy: true

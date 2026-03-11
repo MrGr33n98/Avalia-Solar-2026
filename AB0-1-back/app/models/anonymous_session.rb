@@ -60,6 +60,24 @@ class AnonymousSession < ApplicationRecord
     (last_seen_at - first_seen_at).to_i
   end
 
+  def enriched?
+    firmographic_enrichment.present?
+  end
+
+  def firmographic_enrichment
+    stitch_metadata.fetch('firmographic_enrichment', {})
+  end
+
+  def apply_firmographic_enrichment!(attributes)
+    update!(
+      stitch_metadata: stitch_metadata.merge(
+        'firmographic_enrichment' => attributes,
+        'enrichment_status' => 'enriched',
+        'enriched_at' => Time.current.iso8601
+      )
+    )
+  end
+
   private
 
   def set_first_seen

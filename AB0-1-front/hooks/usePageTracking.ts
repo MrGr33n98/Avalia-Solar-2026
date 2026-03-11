@@ -24,7 +24,7 @@
 
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { trackPageView, PageData, UserData } from '@/lib/dataLayer';
+import { trackPageView, type PageData, type UserData } from '@/lib/analytics/consolidated';
 
 interface UsePageTrackingOptions {
   type: PageData['type'];

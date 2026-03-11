@@ -43,6 +43,13 @@ class Rack::Attack
 
   # === Existing Rules ===
 
+  # Intent signal ingest protection
+  throttle('intent_signals/ip', limit: 120, period: 1.minute) do |req|
+    if req.path == '/api/v1/intent_signals' && req.post?
+      req.ip
+    end
+  end
+
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta
   throttle('logins/ip', limit: 5, period: 20.seconds) do |req|

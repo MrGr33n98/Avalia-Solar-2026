@@ -49,6 +49,7 @@ const customJestConfig = {
     '<rootDir>/tests/',
     '<rootDir>/e2e/',
     '<rootDir>/playwright-report/',
+    '<rootDir>/.next/',
     '<rootDir>/app/__tests__/', // app-router server components not runnable in JSDOM
     '<rootDir>/__tests__/pages/', // page-level integration tests rely on Next runtime
     '<rootDir>/__tests__/app/', // app directory integration tests
