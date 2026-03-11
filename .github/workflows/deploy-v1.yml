@@ -114,12 +114,8 @@ jobs:
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-          cache-from: |
-            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
-            type=gha,scope=frontend
-          cache-to: |
-            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache,mode=max
-            type=gha,scope=frontend,mode=max
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
 
   deploy:
     needs: build-and-push

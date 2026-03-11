@@ -6,9 +6,8 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 # Install dependencies based on the preferred package manager
-COPY AB0-1-front/package.json AB0-1-front/package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps --no-audit
+COPY AB0-1-front/package.json AB0-1-front/package-lock.json* ./
+RUN npm ci --legacy-peer-deps --no-audit --prefer-offline
 
 # Stage 2: Rebuild the source code only when needed
 FROM node:20-alpine AS builder
