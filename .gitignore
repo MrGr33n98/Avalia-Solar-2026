@@ -163,6 +163,9 @@ docs/validation/
 
 CLAYMORPHISM_QA_VALIDATION_REPORT.md
 
+# Local secrets
+local-secrets/
+
 
 # P1 docs (local only)
 P1_*.md
