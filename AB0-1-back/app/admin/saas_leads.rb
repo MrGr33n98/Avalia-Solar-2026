@@ -6,29 +6,29 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
   actions :index, :show
   config.sort_order = 'created_at_desc'
 
-  scope :all, default: true
-  scope :b2b do |scope|
+  scope :all, default: true, show_count: false
+  scope :b2b, show_count: false do |scope|
     b2b_ids = SaasLeads::CategoryAudienceRegistry.b2b_category_ids
     b2b_ids.any? ? scope.where(category_id: b2b_ids) : scope.none
   end
-  scope :b2c_or_outros do |scope|
+  scope :b2c_or_outros, show_count: false do |scope|
     b2b_ids = SaasLeads::CategoryAudienceRegistry.b2b_category_ids
     b2b_ids.any? ? scope.where(category_id: nil).or(scope.where.not(category_id: b2b_ids)) : scope
   end
-  scope :distribuidos do |scope|
+  scope :distribuidos, show_count: false do |scope|
     scope.joins(:lead_distributions).distinct
   end
-  scope :nao_distribuidos do |scope|
+  scope :nao_distribuidos, show_count: false do |scope|
     scope.where.missing(:lead_distributions)
   end
-  scope :score_hot do |scope|
+  scope :score_hot, show_count: false do |scope|
     SaasLeads::LeadInsights.filter_by_score(
       scope,
       min: 70,
       b2b_category_ids: SaasLeads::CategoryAudienceRegistry.b2b_category_ids
     )
   end
-  scope :score_warm do |scope|
+  scope :score_warm, show_count: false do |scope|
     SaasLeads::LeadInsights.filter_by_score(
       scope,
       min: 40,
@@ -36,7 +36,7 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       b2b_category_ids: SaasLeads::CategoryAudienceRegistry.b2b_category_ids
     )
   end
-  scope :score_cold do |scope|
+  scope :score_cold, show_count: false do |scope|
     SaasLeads::LeadInsights.filter_by_score(
       scope,
       max: 39,
@@ -48,7 +48,10 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
   filter :name
   filter :email
   filter :phone
-  filter :category
+  filter :category_id,
+         as: :select,
+         label: 'Categoria',
+         collection: proc { Category.order(:name).pluck(:name, :id) }
   filter :project_type
   filter :product_vertical
   filter :project_profile
@@ -189,16 +192,19 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
 
     def saas_metrics_for(lead)
       @saas_metrics ||= {}
-      @saas_metrics[lead.id] ||= SaasLeads::LeadInsights.new(
-        lead,
-        b2b_category_ids: saas_b2b_category_ids
-      )
+      @saas_metrics[lead.id] ||= build_saas_metrics(lead)
+    rescue StandardError => e
+      Rails.logger.warn("[Admin::SaasLeads] Failed to build metrics for lead=#{lead.id}: #{e.class}: #{e.message}")
+      fallback_saas_metrics
     end
     helper_method :saas_metrics_for
 
     def saas_timeline_for(lead)
       @saas_timeline ||= {}
       @saas_timeline[lead.id] ||= SaasLeads::LeadTimeline.new(lead)
+    rescue StandardError => e
+      Rails.logger.warn("[Admin::SaasLeads] Failed to build timeline for lead=#{lead.id}: #{e.class}: #{e.message}")
+      fallback_saas_timeline
     end
     helper_method :saas_timeline_for
 
@@ -212,8 +218,61 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
 
     private
 
+    def build_saas_metrics(lead)
+      SaasLeads::LeadInsights.new(
+        lead,
+        b2b_category_ids: saas_b2b_category_ids
+      )
+    end
+
     def saas_b2b_category_ids
       @saas_b2b_category_ids ||= SaasLeads::CategoryAudienceRegistry.b2b_category_ids
+    end
+
+    def fallback_saas_metrics
+      @fallback_saas_metrics ||= Struct.new(
+        :score,
+        :score_band,
+        :product_label,
+        :job_title,
+        :company_size_band,
+        :desired_category_label,
+        :funnel_stage,
+        :distributed_count,
+        :last_sent_at,
+        :converted_at,
+        keyword_init: true
+      ) do
+        def b2b?
+          false
+        end
+      end.new(
+        score: 0,
+        score_band: :cold,
+        product_label: '-',
+        job_title: '-',
+        company_size_band: '-',
+        desired_category_label: '-',
+        funnel_stage: '-',
+        distributed_count: 0,
+        last_sent_at: nil,
+        converted_at: nil
+      )
+    end
+
+    def fallback_saas_timeline
+      @fallback_saas_timeline ||= Struct.new(:events, :summary, keyword_init: true).new(
+        events: [],
+        summary: {
+          total_events: 0,
+          pre_lead_events: 0,
+          post_lead_events: 0,
+          unique_sessions_count: 0,
+          first_event_at: nil,
+          last_event_at: nil,
+          top_actions: []
+        }
+      )
     end
   end
 end

@@ -148,10 +148,12 @@ ActiveAdmin.register Plan do
       state = PlanFeatureCatalog.access_state_for(key, current_value)
       hint = render_feature_hint.call(key, definition, default_value)
 
-      input_markup =
-        if definition[:type] == :integer
+      if definition[:type] == :integer
+        view_helpers.content_tag(:li, class: 'input integer optional plan-feature-item') do
           view_helpers.safe_join(
             [
+              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
               view_helpers.label_tag(input_id, 'Valor', class: 'label'),
               view_helpers.number_field_tag(
                 input_name,
@@ -160,13 +162,18 @@ ActiveAdmin.register Plan do
                 min: 1,
                 step: 1,
                 placeholder: default_value || 'Nao definido'
-              )
+              ),
+              view_helpers.content_tag(:p, hint, class: 'inline-hints')
             ]
           )
-        else
-          checked = ActiveModel::Type::Boolean.new.cast(current_value)
+        end
+      else
+        checked = ActiveModel::Type::Boolean.new.cast(current_value)
+        view_helpers.content_tag(:li, class: 'boolean input optional plan-feature-item') do
           view_helpers.safe_join(
             [
+              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
               view_helpers.hidden_field_tag(input_name, '0', id: nil),
               view_helpers.label_tag(input_id, class: 'label') do
                 view_helpers.safe_join(
@@ -175,89 +182,72 @@ ActiveAdmin.register Plan do
                     ' Habilitar'
                   ]
                 )
-              end
+              end,
+              view_helpers.content_tag(:p, hint, class: 'inline-hints')
             ]
           )
         end
-
-      view_helpers.content_tag(:div, class: 'plan-feature-item') do
-        view_helpers.safe_join(
-          [
-            view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
-            view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
-            input_markup,
-            view_helpers.content_tag(:p, hint, class: 'inline-hints')
-          ]
-        )
       end
     end
 
-    f.template.concat(
-      f.inputs('Plano') do
-        f.input :name
-        f.input :description
-        f.input :price
-        f.input :plan_tier_template,
-                as: :select,
-                label: 'Template inicial',
-                collection: PlanFeatureCatalog::PLAN_TIERS.map { |tier| [tier.humanize, tier] },
-                include_blank: false,
-                selected: selected_tier,
-                hint: 'Define o bundle inicial. Depois ajuste feature por feature.'
-        nil
-      end
-    )
+    f.inputs 'Plano' do
+      f.input :name
+      f.input :description
+      f.input :price
+      f.input :plan_tier_template,
+              as: :select,
+              label: 'Template inicial',
+              collection: PlanFeatureCatalog::PLAN_TIERS.map { |tier| [tier.humanize, tier] },
+              include_blank: false,
+              selected: selected_tier,
+              hint: 'Define o bundle inicial. Depois ajuste feature por feature.'
+      nil
+    end
 
     feature_groups.each do |group_key, feature_keys|
-      f.template.concat(
-        f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
-          if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
-            f.template.concat(
-              view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
-            )
-          end
-
+      f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
+        if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
           f.template.concat(
-            view_helpers.content_tag(:div, class: 'plan-feature-grid') do
-              view_helpers.safe_join(feature_keys.map { |key| render_feature_field.call(key) })
-            end
+            view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
           )
-          nil
         end
-      )
-    end
 
-    f.template.concat(
-      f.inputs('Preview do plano resultante') do
-        f.template.concat(
-          view_helpers.content_tag(:p, "Tier considerado: #{selected_tier}", class: 'inline-hints')
-        )
-        enabled = preview_flags.each_with_object([]) do |(key, value), memo|
-          next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
-
-          label = render_feature_label.call(key)
-          memo << (value.is_a?(Integer) ? "#{label}: #{value}" : label)
+        feature_keys.each do |key|
+          f.template.concat(render_feature_field.call(key))
         end
-        f.template.concat(
-          view_helpers.content_tag(
-            :p,
-            "Features habilitadas: #{enabled.any? ? enabled.join(', ') : 'Nenhuma'}",
-            class: 'inline-hints'
-          )
-        )
-        f.template.concat(
-          view_helpers.content_tag(:details) do
-            view_helpers.safe_join(
-              [
-                view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
-                view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
-              ]
-            )
-          end
-        )
         nil
       end
-    )
+    end
+
+    f.inputs 'Preview do plano resultante' do
+      f.template.concat(
+        view_helpers.content_tag(:p, "Tier considerado: #{selected_tier}", class: 'inline-hints')
+      )
+      enabled = preview_flags.each_with_object([]) do |(key, value), memo|
+        next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
+
+        label = render_feature_label.call(key)
+        memo << (value.is_a?(Integer) ? "#{label}: #{value}" : label)
+      end
+      f.template.concat(
+        view_helpers.content_tag(
+          :p,
+          "Features habilitadas: #{enabled.any? ? enabled.join(', ') : 'Nenhuma'}",
+          class: 'inline-hints'
+        )
+      )
+      f.template.concat(
+        view_helpers.content_tag(:details) do
+          view_helpers.safe_join(
+            [
+              view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
+              view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
+            ]
+          )
+        end
+      )
+      nil
+    end
 
     f.actions
   end
