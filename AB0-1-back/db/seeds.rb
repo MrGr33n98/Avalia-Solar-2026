@@ -425,6 +425,9 @@ end
 
 puts "  ✓ Empresas: #{companies_created} criadas, #{companies_updated} atualizadas, #{companies_skipped} sem alterações"
 
+require_relative 'seeds/saas_plan_setup'
+Seeds::SaasPlanSetup.run!
+
 # ================================
 # Financiamento Solar (reviews-only) - mantido
 # ================================

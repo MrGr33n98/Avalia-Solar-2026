@@ -65,7 +65,7 @@ class Lead < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company lead_distributions]
+    %w[category company lead_distributions]
   end
 
   def wizard_validation_required?

@@ -100,14 +100,13 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       timestamp.present? ? l(timestamp, format: :short) : '-'
     end
     column :created_at
-    column('i', sortable: false) do |lead|
-      timeline = saas_timeline_for(lead)
-      details = timeline.tooltip_text
+    column('Timeline', sortable: false) do |lead|
+      # Avoid scanning analytics tables for every row in the index.
       link_to(
-        'i',
+        'Ver',
         admin_saas_lead_path(lead),
-        title: details,
-        style: 'display:inline-block; width:20px; height:20px; line-height:20px; text-align:center; border-radius:50%; border:1px solid #777; font-weight:700; text-decoration:none;'
+        title: 'Abrir timeline completa do lead',
+        class: 'member_link'
       )
     end
 
