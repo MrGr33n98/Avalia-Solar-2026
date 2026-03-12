@@ -14,6 +14,7 @@ module LeadWizard
       landing_path
       referrer_host
     ].freeze
+    IDENTITY_FIELD_KEYS = %w[anonymous_id session_id].freeze
 
     CORE_WIZARD_KEYS = %w[
       full_name fullName name
@@ -74,6 +75,7 @@ module LeadWizard
       if wizard_answers.blank?
         wizard_answers = core_params.except(*CORE_WIZARD_KEYS)
       end
+      merge_identity_into_wizard_answers!(wizard_answers, core_params)
 
       category_id = value_for(core_params, 'category_id', 'categoryId') || @params['category_id']
       company_id = @preferred_company_id || value_for(core_params, 'preferred_company_id', 'preferredCompanyId')
@@ -166,6 +168,10 @@ module LeadWizard
         normalize_hash(core_params['attribution']).presence ||
         normalize_hash(@params['attribution_json']).presence ||
         normalize_hash(core_params['attribution_json']).presence
+      attribution ||= {}
+
+      identity_fields = extract_identity_fields(core_params)
+      attribution.merge!(identity_fields) if identity_fields.present?
 
       assign_if_present(lead, :utm_source, utm['utm_source'])
       assign_if_present(lead, :utm_medium, utm['utm_medium'])
@@ -178,6 +184,26 @@ module LeadWizard
       assign_if_present(lead, :landing_path, utm['landing_path'])
       assign_if_present(lead, :referrer_host, utm['referrer_host'])
       assign_if_present(lead, :attribution_json, attribution) if attribution.present?
+    end
+
+    def merge_identity_into_wizard_answers!(wizard_answers, core_params)
+      identity_fields = extract_identity_fields(core_params)
+      return if identity_fields.blank?
+
+      identity_fields.each do |key, value|
+        wizard_answers[key] = value if wizard_answers[key].blank?
+      end
+    end
+
+    def extract_identity_fields(core_params)
+      identity = {}
+      IDENTITY_FIELD_KEYS.each do |key|
+        value = value_for(@params, key) || value_for(core_params, key)
+        next if value.blank?
+
+        identity[key] = value.to_s.strip[0, 255]
+      end
+      identity
     end
 
     def assign_if_present(record, field, value)

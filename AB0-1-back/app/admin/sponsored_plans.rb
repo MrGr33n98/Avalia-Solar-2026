@@ -1,32 +1,44 @@
 ActiveAdmin.register SponsoredPlan do
-  # Update the permitted parameters if needed
-  permit_params :category_id, :plan_id, :product_id
+  menu label: 'SAAS - Patrocinados', priority: 20
 
-  # Fix the filters section - remove any reference to 'member_id'
+  permit_params :member_id, :product_id, :category_id, :plan_id, :custom_cta, :active, :purchased_at, :start_at, :end_at
+
+  filter :member_id, label: 'Cliente (ID)'
+  filter :product
   filter :category
   filter :plan
-  filter :product
+  filter :active
+  filter :purchased_at
+  filter :start_at
+  filter :end_at
   filter :created_at
   filter :updated_at
-
-  # Remove any default filters that might be causing the issue
-  remove_filter :member
 
   index do
     selectable_column
     id_column
+    column('Cliente') { |record| record.member_id.presence || '-' }
+    column :product
     column :category
     column :plan
-    column :product
+    column('Ativo?') { |record| status_tag(record.active? ? 'Ativo' : 'Inativo', class: record.active? ? 'ok' : 'warning') }
+    column :start_at
+    column :end_at
     column :created_at
     actions
   end
 
   form do |f|
-    f.inputs do
+    f.inputs 'Patrocinio SaaS' do
+      f.input :member_id, label: 'Cliente (ID do User)'
+      f.input :product
       f.input :category
       f.input :plan
-      f.input :product
+      f.input :custom_cta
+      f.input :active
+      f.input :purchased_at
+      f.input :start_at
+      f.input :end_at
     end
     f.actions
   end

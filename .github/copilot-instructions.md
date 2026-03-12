@@ -59,6 +59,25 @@ docs/
 └── guides/         # User and developer guides
 ```
 
+## Ruby on Rails Specialized Knowledge
+
+When working on backend tasks, apply expertise from our specialized Rails skills:
+
+### 💎 Ruby Pro & Rails Patterns
+- **Metaprogramming**: Use mixins, DSLs, and blocks effectively for expressive code.
+- **ActiveRecord**: Avoid N+1 queries, use scopes, and ensure proper indexing (UUID primary keys).
+- **Architecture**: Follow MVC strictly. Use ActiveAdmin for administration (`app/admin`).
+- **Clean Code**: Follow Ruby idioms and community conventions. Use RuboCop for styling.
+
+### 🏗️ Advanced Setup (NextGen Rails)
+- **Stack**: Rails 8 API + PostgreSQL + Inertia.js 2 + React.
+- **Background Jobs**: Use Sidekiq 8 with Redis for asynchronous tasks.
+- **Database**: Use `timestamptz`, JSONB for metadata, and encrypted fields for sensitive data.
+
+### 🔄 Maintenance & Upgrades
+- **Upgrade Path**: Always test before upgrading. Use selective file merging instead of `rails app:update` to preserve local configurations.
+- **JS Integration**: Ensure Hotwire (Turbo/Stimulus) versions align with Rails when applicable.
+
 ## GitHub Copilot-Specific Configuration
 
 ### Requirements

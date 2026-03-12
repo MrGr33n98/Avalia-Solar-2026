@@ -15,6 +15,7 @@ import {
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
+import { useComparisonIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 
 interface ComparisonToggleButtonProps {
@@ -48,7 +49,13 @@ export default function ComparisonToggleButton({
   
   const isSelected = isInComparison(company.id);
   const position = getCompanyPosition(company.id);
-  const isPremium = company.featured || company.plan_status === 'active' || company.has_paid_plan;
+  const isPremium = Boolean(company.featured || company.plan_status === 'active' || company.has_paid_plan);
+  const { trackComparisonUsage } = useComparisonIntent(String(company.id), {
+    elementSelector: `comparison-toggle-${variant}`,
+    metadata: {
+      source: 'comparison_toggle_button',
+    },
+  });
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,6 +75,11 @@ export default function ComparisonToggleButton({
           company_name: company.name,
           position: position 
         });
+        trackComparisonUsage('remove', {
+          company_name: company.name,
+          comparison_count: Math.max(count - 1, 0),
+          position: position || null,
+        });
       } else {
         if (!canAddMore) {
           console.log('[DEBUG] Cannot add more companies, limit reached');
@@ -81,6 +93,11 @@ export default function ComparisonToggleButton({
           company_name: company.name,
           total_companies: count + 1,
           is_premium: isPremium
+        });
+        trackComparisonUsage('add', {
+          company_name: company.name,
+          comparison_count: count + 1,
+          is_premium: isPremium,
         });
       }
     } finally {

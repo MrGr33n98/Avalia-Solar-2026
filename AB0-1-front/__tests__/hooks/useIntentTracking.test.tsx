@@ -1,9 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 
 import {
+  useComparisonIntent,
   useCopyIntent,
+  useFaqExpand,
   useFormHesitation,
   useHoverIntent,
+  useSearchIntent,
   useScrollPause,
 } from '@/lib/analytics/hooks/useIntentTracking';
 
@@ -133,6 +136,63 @@ describe('useIntentTracking hooks', () => {
       expect.objectContaining({
         company_id: '42',
         signal_type: 'form_hesitation',
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('tracks faq interactions with the explicit faq_interaction signal', () => {
+    const { result } = renderHook(() => useFaqExpand('42'));
+
+    act(() => {
+      result.current.trackQuestion('faq-1');
+    });
+
+    expect(trackMock).toHaveBeenCalledWith(
+      'intent_faq_interaction',
+      expect.objectContaining({
+        company_id: '42',
+        signal_type: 'faq_interaction',
+        metadata: expect.objectContaining({
+          faq_id: 'faq-1',
+          interaction: 'expand',
+        }),
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('tracks search_query once per distinct query', () => {
+    const { result } = renderHook(() => useSearchIntent('42'));
+
+    act(() => {
+      result.current.trackSearchQuery('painel solar');
+      result.current.trackSearchQuery('painel solar');
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith(
+      'intent_search_query',
+      expect.objectContaining({
+        company_id: '42',
+        signal_type: 'search_query',
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('tracks comparison usage with explicit comparison_usage signal', () => {
+    const { result } = renderHook(() => useComparisonIntent('42'));
+
+    act(() => {
+      result.current.trackComparisonUsage('add', { comparison_count: 2 });
+    });
+
+    expect(trackMock).toHaveBeenCalledWith(
+      'intent_comparison_usage',
+      expect.objectContaining({
+        company_id: '42',
+        signal_type: 'comparison_usage',
       }),
       expect.any(Object)
     );

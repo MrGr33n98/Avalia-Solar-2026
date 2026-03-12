@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useComparison } from '@/hooks/useComparison';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
@@ -42,6 +43,7 @@ export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['geral', 'tecnico', 'comercial', 'diferenciais']);
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false);
+  const trackedComparisonSnapshotRef = useRef<string>('');
 
   // Check reduced motion preference
   useEffect(() => {
@@ -53,6 +55,29 @@ export default function ComparePage() {
     
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  useEffect(() => {
+    if (comparisonList.length === 0) return;
+
+    const snapshot = comparisonList.slice(0, 3).map((company) => company.id).join(',');
+    if (snapshot === trackedComparisonSnapshotRef.current) return;
+    trackedComparisonSnapshotRef.current = snapshot;
+
+    comparisonList.slice(0, 3).forEach((company, index) => {
+      sendIntentSignal({
+        company_id: company.id,
+        signal_type: 'comparison_usage',
+        signal_category: 'research_intent',
+        element_type: 'comparison_page',
+        element_selector: 'compare-page',
+        metadata: {
+          action: 'view',
+          comparison_count: comparisonList.length,
+          company_position: index + 1,
+        },
+      });
+    });
+  }, [comparisonList]);
 
   // Check if any company is premium
   const hasPremiumCompanies = comparisonList.some(company => 
@@ -76,6 +101,17 @@ export default function ComparePage() {
 
   const handleQuoteClick = (companyId: number) => {
     track('comparison_quote_click', { company_id: companyId });
+    sendIntentSignal({
+      company_id: companyId,
+      signal_type: 'comparison_usage',
+      signal_category: 'research_intent',
+      element_type: 'comparison_quote_button',
+      element_selector: 'compare-quote-cta',
+      metadata: {
+        action: 'quote_click',
+        comparison_count: comparisonList.length,
+      },
+    });
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-page', type: 'quick' });
   };
 

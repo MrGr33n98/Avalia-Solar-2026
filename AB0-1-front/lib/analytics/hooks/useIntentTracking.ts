@@ -11,8 +11,13 @@ export type IntentSignalType =
   | 'form_hesitation'
   | 'scroll_pause'
   | 'tooltip_interaction'
+  | 'faq_interaction'
+  | 'search_query'
   | 'comparison_view'
+  | 'comparison_usage'
   | 'calculator_usage'
+  | 'product_search'
+  | 'review_read'
   | 'review_deep_read'
   | 'phone_hover'
   | 'whatsapp_hover'
@@ -318,14 +323,20 @@ export const useImageGalleryWatch = (companyId: string | number) => {
 
 export const useFaqExpand = (companyId: string | number) => {
   const trackQuestion = useCallback(
-    (questionId: string | number) => {
+    (
+      questionId: string | number,
+      interaction: 'expand' | 'vote_up' | 'vote_down' = 'expand',
+      metadata: IntentMetadataRecord = {}
+    ) => {
       sendIntentSignal({
         company_id: companyId,
-        signal_type: 'tooltip_interaction',
+        signal_type: 'faq_interaction',
         signal_category: 'research_intent',
         element_type: 'faq',
         metadata: {
           faq_id: questionId,
+          interaction,
+          ...metadata,
         },
       });
     },
@@ -333,6 +344,68 @@ export const useFaqExpand = (companyId: string | number) => {
   );
 
   return { trackQuestion };
+};
+
+export const useSearchIntent = (
+  companyId: string | number,
+  options: IntentSignalOptions = {}
+) => {
+  const lastQueryRef = useRef<string>('');
+
+  const trackSearchQuery = useCallback(
+    (query: string, metadata: IntentMetadataRecord = {}) => {
+      const normalizedQuery = query.trim();
+      if (normalizedQuery.length < 2) return;
+
+      const dedupeKey = normalizedQuery.toLowerCase();
+      if (lastQueryRef.current === dedupeKey) return;
+      lastQueryRef.current = dedupeKey;
+
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'search_query',
+        signal_category: options.signalCategory || 'research_intent',
+        element_type: 'search',
+        element_selector: options.elementSelector,
+        metadata: {
+          ...(options.metadata || {}),
+          query_term: normalizedQuery.slice(0, 120),
+          ...metadata,
+        },
+      });
+    },
+    [companyId, options.elementSelector, options.metadata, options.signalCategory]
+  );
+
+  return { trackSearchQuery };
+};
+
+export const useComparisonIntent = (
+  companyId: string | number,
+  options: IntentSignalOptions = {}
+) => {
+  const trackComparisonUsage = useCallback(
+    (
+      action: 'add' | 'remove' | 'quote_click' | 'view',
+      metadata: IntentMetadataRecord = {}
+    ) => {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'comparison_usage',
+        signal_category: options.signalCategory || 'research_intent',
+        element_type: 'comparison',
+        element_selector: options.elementSelector,
+        metadata: {
+          ...(options.metadata || {}),
+          action,
+          ...metadata,
+        },
+      });
+    },
+    [companyId, options.elementSelector, options.metadata, options.signalCategory]
+  );
+
+  return { trackComparisonUsage };
 };
 
 export const detectTextType = (text: string): string => {

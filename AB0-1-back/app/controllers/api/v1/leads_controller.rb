@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require 'json'
 require 'uri'
 
 class Api::V1::LeadsController < Api::V1::BaseController
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
+  IDENTITY_KEYS = %w[anonymous_id session_id].freeze
 
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
   before_action :authenticate_api_user, only: %i[index show update destroy mine]
@@ -98,6 +100,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     attribution = sanitize_attribution_payload(params[:attribution] || params.dig(:lead, :attribution))
     apply_utm_to_lead(@lead, utm_data, attribution)
     if @lead.save
+      persist_identity_on_lead!(@lead)
       render json: @lead, status: :created
     else
       render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity
@@ -120,6 +123,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
     if result[:success]
       lead = result[:lead]
+      persist_identity_on_lead!(lead)
+      identity_metadata = identity_tracking_metadata(lead)
       otp_code = lead.generate_otp!
       log_otp_code(lead, otp_code)
       deliver_otp_email!(lead, otp_code)
@@ -127,7 +132,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
       Analytics::TrackEventService.call(
         event_type: 'lead_initiated',
         company_id: lead.company_id,
-        metadata: request_metadata.merge(
+        metadata: request_metadata.merge(identity_metadata).merge(
           lead_id: lead.id,
           template_key: lead.template_key,
           template_version: lead.template_version
@@ -204,9 +209,15 @@ class Api::V1::LeadsController < Api::V1::BaseController
       return render json: { error: 'Invalid verification code' }, status: :unprocessable_entity
     end
     companies = []
+    persist_identity_on_lead!(@lead)
+    identity_metadata = identity_tracking_metadata(@lead)
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
-      Analytics::TrackEventService.call(event_type: 'lead_verified', company_id: @lead.company_id, metadata: request_metadata.merge(lead_id: @lead.id))
+      Analytics::TrackEventService.call(
+        event_type: 'lead_verified',
+        company_id: @lead.company_id,
+        metadata: request_metadata.merge(identity_metadata).merge(lead_id: @lead.id)
+      )
       Analytics::PostHogService.capture(
         'lead_otp_verified',
         { lead_id: @lead.id, company_id: @lead.company_id },
@@ -215,7 +226,15 @@ class Api::V1::LeadsController < Api::V1::BaseController
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
       @lead.update!(wizard_status: 'distributed')
-      Analytics::TrackEventService.call(event_type: 'lead_distributed', company_id: @lead.company_id, metadata: request_metadata.merge(lead_id: @lead.id, distributed_to_count: companies.count, company_ids: companies.map(&:id)))
+      Analytics::TrackEventService.call(
+        event_type: 'lead_distributed',
+        company_id: @lead.company_id,
+        metadata: request_metadata.merge(identity_metadata).merge(
+          lead_id: @lead.id,
+          distributed_to_count: companies.count,
+          company_ids: companies.map(&:id)
+        )
+      )
     end
     render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok
   rescue StandardError => e
@@ -425,5 +444,100 @@ class Api::V1::LeadsController < Api::V1::BaseController
     return email if local_part.blank? || domain.blank?
     return email if local_part.length <= 2
     "#{local_part[0, 2]}***@#{domain}"
+  end
+
+  def identity_tracking_metadata(lead = nil)
+    data = {}
+    IDENTITY_KEYS.each do |key|
+      candidate =
+        identity_param(key) ||
+        lead_identity_value(lead, key) ||
+        identity_cookie_value(key)
+
+      data[key.to_sym] = sanitize_identity_value(candidate) if candidate.present?
+    end
+    data.compact
+  end
+
+  def persist_identity_on_lead!(lead)
+    return if lead.nil?
+
+    identity = identity_tracking_metadata(lead)
+    return if identity.blank?
+
+    wizard_answers = normalize_json_hash(lead.respond_to?(:wizard_answers) ? lead.wizard_answers : {})
+    attribution = normalize_json_hash(lead.respond_to?(:attribution_json) ? lead.attribution_json : {})
+
+    changed = false
+    identity.each do |key, value|
+      string_key = key.to_s
+
+      if wizard_answers[string_key].blank?
+        wizard_answers[string_key] = value
+        changed = true
+      end
+
+      if attribution[string_key].blank?
+        attribution[string_key] = value
+        changed = true
+      end
+    end
+
+    return unless changed
+
+    attrs = {}
+    attrs[:wizard_answers] = wizard_answers if lead.respond_to?(:wizard_answers)
+    attrs[:attribution_json] = attribution if lead.respond_to?(:attribution_json)
+    attrs[:updated_at] = Time.current if lead.respond_to?(:updated_at)
+
+    lead.update_columns(attrs) if attrs.any?
+  rescue StandardError => e
+    Rails.logger.warn("[LeadsController] Failed to persist lead identity lead_id=#{lead&.id}: #{e.class}: #{e.message}")
+  end
+
+  def lead_identity_value(lead, key)
+    return nil if lead.nil?
+
+    answers = normalize_json_hash(lead.respond_to?(:wizard_answers) ? lead.wizard_answers : {})
+    attribution = normalize_json_hash(lead.respond_to?(:attribution_json) ? lead.attribution_json : {})
+    answers[key.to_s].presence || attribution[key.to_s].presence
+  end
+
+  def identity_param(key)
+    params[key].presence ||
+      params.dig(:lead, key).presence ||
+      params.dig(:metadata, key).presence ||
+      params.dig(:attribution, key).presence ||
+      params.dig(:lead, :attribution, key).presence
+  end
+
+  def identity_cookie_value(key)
+    case key.to_s
+    when 'anonymous_id'
+      cookies[:anonymous_id]
+    when 'session_id'
+      cookies.signed[:as_sid]
+    end
+  end
+
+  def sanitize_identity_value(value)
+    candidate = value.to_s.strip
+    return nil if candidate.blank?
+
+    candidate[0, 255]
+  end
+
+  def normalize_json_hash(value)
+    case value
+    when Hash
+      value.deep_stringify_keys
+    when String
+      parsed = JSON.parse(value)
+      parsed.is_a?(Hash) ? parsed.deep_stringify_keys : {}
+    else
+      {}
+    end
+  rescue JSON::ParserError
+    {}
   end
 end
