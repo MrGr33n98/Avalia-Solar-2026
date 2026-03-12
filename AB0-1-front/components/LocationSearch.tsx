@@ -81,16 +81,21 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           role="combobox"
           aria-expanded={open}
           aria-label="Selecionar localização"
-          className={cn("w-[200px] justify-between", className)}
+          className={cn(
+            "h-11 w-full justify-between rounded-[1.1rem] border-black/10 bg-white/82 px-3 text-left text-sm text-foreground shadow-none transition-colors",
+            "hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",
+            "dark:border-white/10 dark:bg-[#081a2e]/78 dark:text-white dark:hover:bg-[#0b2037]",
+            className
+          )}
         >
-          <div className="flex items-center truncate">
+          <div className="flex min-w-0 items-center truncate">
             <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <span className="truncate">{selectedLabel}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[240px] p-0">
+      <PopoverContent className="w-[260px] rounded-[1.25rem] border-black/10 bg-white/95 p-0 shadow-2xl shadow-slate-900/10 dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
         <Command>
           <CommandInput 
             placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} 

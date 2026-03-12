@@ -8,9 +8,15 @@ module Api
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
         begin
+          freshness = CompanyDashboard::FreshnessProvider.call
           source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
-          stats = source.totals(from_day: 30.days.ago.to_date, to_day: Date.current)
-          return render json: default_overview_payload unless stats
+          stats, data_source = source.realtime_totals(
+            from_day: 30.days.ago.to_date,
+            to_day: Date.current,
+            last_aggregated_at: freshness[:last_aggregated_at]
+          )
+
+          return render json: default_overview_payload.merge(freshness) unless stats
 
           views = stats[:profile_views].to_i
           leads = stats[:leads].to_i
@@ -27,8 +33,8 @@ module Api
             returning_views_30d: stats[:returning_views].to_i,
             leads_30d: leads,
             conversion_rate: conversion,
-            data_source: 'company_daily_stats'
-          }.merge(CompanyDashboard::FreshnessProvider.call)
+            data_source: data_source
+          }.merge(freshness)
         rescue StandardError => e
           log_analytics_error('overview', e)
           render json: default_overview_payload.merge(CompanyDashboard::FreshnessProvider.call)
@@ -38,15 +44,19 @@ module Api
       # GET /api/v1/company_dashboard/analytics/timeseries
       def analytics_timeseries
         days = [(params[:days] || 90).to_i, 365].min
+        freshness = CompanyDashboard::FreshnessProvider.call
         source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
-        unless source.available?
+        series, data_source = source.realtime_timeseries(
+          days: days,
+          last_aggregated_at: freshness[:last_aggregated_at]
+        )
+
+        if data_source == 'company_daily_stats_unavailable'
           return render json: {
             data: [],
             data_source: 'company_daily_stats_unavailable'
-          }.merge(CompanyDashboard::FreshnessProvider.call)
+          }.merge(freshness)
         end
-
-        series = source.timeseries(days:)
 
         data = series.map do |row|
           {
@@ -59,9 +69,9 @@ module Api
         end
 
         render json: { 
-          data:, 
-          data_source: 'company_daily_stats' 
-        }.merge(CompanyDashboard::FreshnessProvider.call)
+          data: data,
+          data_source: data_source
+        }.merge(freshness)
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation

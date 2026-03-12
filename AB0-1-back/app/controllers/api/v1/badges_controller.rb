@@ -5,7 +5,8 @@ module Api
 
       # GET /api/v1/companies/:id/badges
       def index
-        company = ::Company.find_by_slug_or_id!(params[:company_id])
+        company_id = params[:company_id] || params[:id]
+        company = ::Company.find_by_slug_or_id!(company_id)
         badges = company.badges.active.order(position: :asc)
 
         render json: badges.map { |badge| badge_payload(badge) }

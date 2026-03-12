@@ -103,7 +103,7 @@ Rails.application.routes.draw do
       resources :intent_signals, only: [:create]
 
       # Identity Stitching API
-      namespace :identity do
+      scope 'identity', as: :identity do
         post 'stitch', to: 'identity_stitch#create'
         post 'track_session', to: 'identity_stitch#track_session'
       end

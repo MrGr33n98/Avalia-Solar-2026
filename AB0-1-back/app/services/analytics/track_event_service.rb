@@ -12,12 +12,12 @@ module Analytics
     
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       # FEATURE FLAG & KILL SWITCH GLOBAL
-      # Must be explicitly 'true' to run, otherwise it's disabled for safety.
-      # We allow it in tests by default unless explicitly mocked.
-      is_enabled = ENV['G4_ANALYTICS_ENABLED'] == 'true' || Rails.env.test?
+      # Default is enabled. Explicit 'false' disables ingestion.
+      # This keeps dashboard telemetry alive even when legacy GA4 env vars are absent.
+      is_enabled = ENV['G4_ANALYTICS_ENABLED'] != 'false' || Rails.env.test?
 
       unless is_enabled
-        Rails.logger.info("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED")
+        Rails.logger.info("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED=false")
         return Result.new(ok: true, error: 'analytics_disabled_by_flag')
       end
 

@@ -14,34 +14,34 @@ class AnalyticsTrackingJob
     company_id = properties['company_id']
     return unless company_id
 
-    date = Date.current
+    day = Date.current
 
     # Update company_daily_stats based on event type
     case event_name
     when 'Company Profile Viewed'
-      increment_stat(company_id, date, :profile_views)
+      increment_stat(company_id, day, :profile_views)
       
     when 'CTA Clicked'
-      increment_stat(company_id, date, :cta_clicks)
+      increment_stat(company_id, day, :cta_clicks)
       
     when 'WhatsApp CTA Clicked'
-      increment_stat(company_id, date, :cta_clicks)
-      increment_stat(company_id, date, :whatsapp_clicks)
+      increment_stat(company_id, day, :cta_clicks)
+      increment_stat(company_id, day, :whatsapp_clicks)
       
     when 'Email CTA Clicked'
-      increment_stat(company_id, date, :cta_clicks)
-      increment_stat(company_id, date, :email_clicks)
+      increment_stat(company_id, day, :cta_clicks)
+      increment_stat(company_id, day, :email_clicks)
       
     when 'Phone CTA Clicked'
-      increment_stat(company_id, date, :cta_clicks)
-      increment_stat(company_id, date, :phone_clicks)
+      increment_stat(company_id, day, :cta_clicks)
+      increment_stat(company_id, day, :phone_clicks)
       
     when 'Website CTA Clicked'
-      increment_stat(company_id, date, :cta_clicks)
-      increment_stat(company_id, date, :website_clicks)
+      increment_stat(company_id, day, :cta_clicks)
+      increment_stat(company_id, day, :website_clicks)
       
     when 'Quote Request CTA Clicked', 'Lead Form Submitted'
-      increment_stat(company_id, date, :leads)
+      increment_stat(company_id, day, :leads)
     end
 
     # Store UTM attribution data (optional)
@@ -53,7 +53,7 @@ class AnalyticsTrackingJob
 
     Rails.logger.info(
       "[AnalyticsTrackingJob] Processed: event=#{event_name} " \
-      "company_id=#{company_id} date=#{date}"
+      "company_id=#{company_id} day=#{day}"
     )
   rescue StandardError => e
     Rails.logger.error(
@@ -67,10 +67,10 @@ class AnalyticsTrackingJob
   private
 
   # Increment a metric in company_daily_stats atomically
-  def increment_stat(company_id, date, metric)
+  def increment_stat(company_id, day, metric)
     stat = CompanyDailyStat.find_or_initialize_by(
       company_id: company_id,
-      date: date
+      day: day
     )
     
     # Use increment! to update atomically (race-condition safe)
@@ -85,7 +85,7 @@ class AnalyticsTrackingJob
     else
       Rails.logger.error(
         "[AnalyticsTrackingJob] Failed to increment stat after retry: " \
-        "company_id=#{company_id} date=#{date} metric=#{metric}"
+        "company_id=#{company_id} day=#{day} metric=#{metric}"
       )
     end
   end

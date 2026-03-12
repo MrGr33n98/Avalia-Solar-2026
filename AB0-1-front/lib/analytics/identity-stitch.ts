@@ -1,6 +1,7 @@
 'use client';
 
 import { alias, identify } from './index';
+import { buildApiUrl } from '@/lib/api-config';
 
 const ANONYMOUS_ID_STORAGE_KEYS = ['ajs_anonymous_id', 'as_anonymous_id'] as const;
 
@@ -46,7 +47,7 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
     }
 
     // 2. Backend stitching
-    const response = await fetch('/api/v1/identity/stitch', {
+    const response = await fetch(buildApiUrl('identity/stitch'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +61,8 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Identity stitch failed: ${response.statusText}`);
+      const details = await extractErrorDetails(response);
+      throw new Error(`Identity stitch failed: ${details}`);
     }
 
     const data = await response.json();
@@ -87,7 +89,7 @@ export const trackSession = async (params: {
   utm_campaign?: string;
 }) => {
   try {
-    const response = await fetch('/api/v1/identity/track_session', {
+    const response = await fetch(buildApiUrl('identity/track_session'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,7 +98,8 @@ export const trackSession = async (params: {
     });
 
     if (!response.ok) {
-      throw new Error(`Session tracking failed: ${response.statusText}`);
+      const details = await extractErrorDetails(response);
+      throw new Error(`Session tracking failed: ${details}`);
     }
 
     const data = await response.json();
@@ -182,4 +185,13 @@ function persistAnonymousId(anonymousId: string): void {
   ANONYMOUS_ID_STORAGE_KEYS.forEach((key) => {
     localStorage.setItem(key, anonymousId);
   });
+}
+
+async function extractErrorDetails(response: Response): Promise<string> {
+  try {
+    const payload = await response.clone().json();
+    return payload?.error || payload?.message || `${response.status} ${response.statusText}`.trim();
+  } catch {
+    return `${response.status} ${response.statusText}`.trim();
+  }
 }

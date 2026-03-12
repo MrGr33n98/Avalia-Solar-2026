@@ -25,6 +25,7 @@ SIDEKIQ_QUEUES = [
   ['critical', 10],    # Admin alerts, system critical jobs
   ['mailers', 7],      # Email sending
   ['default', 5],      # Standard jobs
+  ['analytics', 4],    # Event processing and feature computation
   ['notifications', 3], # Push notifications
   ['low', 1]           # Cleanup, analytics, non-urgent tasks
 ].freeze

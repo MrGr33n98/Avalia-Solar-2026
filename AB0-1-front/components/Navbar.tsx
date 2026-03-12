@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, ChevronDown, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { Menu, ChevronDown, LogOut, LayoutDashboard, Search, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,43 +79,43 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-[1000] border-b border-black/5 dark:border-white/10 bg-background/80 backdrop-blur-md pt-[var(--safe-area-inset-top)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4 h-16 relative">
-        {/* Logo with Precision Claymorphism - Responsive Theme */}
-        <Link 
-          href="/" 
-          className="flex items-center space-x-2 shrink-0 clay-precision p-1.5 rounded-xl bg-white dark:bg-[#0F172A] hover:scale-[1.02] transition-transform" 
+    <nav className="sticky top-0 z-[1000] border-b border-black/6 bg-background/88 pt-[var(--safe-area-inset-top)] shadow-[0_16px_40px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_22px_48px_-36px_rgba(0,0,0,0.8)]">
+      <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="group flex shrink-0 items-center rounded-[1.35rem] border border-black/8 bg-white/78 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_12px_24px_-22px_rgba(15,23,42,0.38)] transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-brand-blue/25 hover:bg-white dark:border-white/10 dark:bg-[#0b1a2b]/88 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_34px_-24px_rgba(0,0,0,0.82)] dark:hover:border-brand-cyan/30 dark:hover:bg-[#0d2137]"
           aria-label="Home Avalia Solar"
         >
-          <div className="bg-[#002B4D] rounded-lg p-1.5 flex items-center justify-center">
-            <Image 
-              src="/images/logo.png" 
-              alt="Avalia Solar Logo" 
-              width={64} 
-              height={42} 
-              className="h-7 w-auto object-contain brightness-0 invert" 
+          <div className="flex h-10 items-center justify-center rounded-[1rem] border border-black/6 bg-gradient-to-b from-slate-50 to-white px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] dark:border-white/6 dark:bg-gradient-to-b dark:from-[#102740] dark:to-[#091727] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <Image
+              src="/images/logo.png"
+              alt="Avalia Solar Logo"
+              width={64}
+              height={42}
+              className="h-7 w-auto object-contain dark:brightness-110"
               priority={logoPriority}
             />
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex flex-1 items-center gap-6">
-          
-          {/* Search Section with Inset Clay */}
-          <div className="flex flex-1 items-center gap-2 max-w-[500px]">
-             <div className="relative flex-1 group">
-               <NavbarSearch className="flex-1 clay-precision-input bg-black/[0.02] dark:bg-black/20" placeholder="Buscar produtos, serviços..." />
-             </div>
-             <div className="relative w-[180px] shrink-0">
-               <LocationSearch className="w-full clay-precision-input bg-black/[0.02] dark:bg-black/20" onLocationSelect={handleLocationSelect} />
-             </div>
+        <div className="hidden xl:flex flex-1 items-center gap-5">
+          <div className="flex max-w-[580px] flex-1 items-center gap-3">
+            <NavbarSearch
+              className="flex-1"
+              inputClassName="bg-white/78 dark:bg-[#081a2e]/76"
+              placeholder="Buscar produtos, serviços..."
+            />
+            <div className="w-[210px] shrink-0">
+              <LocationSearch
+                className="w-full bg-white/78 dark:bg-[#081a2e]/76"
+                onLocationSelect={handleLocationSelect}
+              />
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4 ml-auto">
-            {/* Mega Menu Trigger */}
-            <div 
-              className="static" 
+          <div className="ml-auto flex items-center gap-4">
+            <div
+              className="static"
               ref={megaMenuRef}
               onMouseEnter={openMegaMenu}
               onMouseLeave={() => setIsMegaMenuOpen(false)}
@@ -123,10 +123,10 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "clay-precision-chip h-9 gap-1.5 font-bold transition-all",
-                  isMegaMenuOpen 
-                    ? "bg-brand-blue text-white border-transparent" 
-                    : "text-foreground/60 hover:bg-brand-blue/5 hover:text-brand-blue"
+                  "h-10 rounded-full border border-black/8 bg-white/64 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] transition-all hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-brand-cyan/25 dark:hover:bg-white/8 dark:hover:text-white",
+                  isMegaMenuOpen
+                    ? "border-transparent bg-brand-blue text-white shadow-[0_12px_24px_-18px_rgba(0,86,210,0.7)] dark:bg-brand-blue dark:text-white"
+                    : ""
                 )}
                 onClick={toggleMegaMenu}
               >
@@ -135,9 +135,9 @@ export default function Navbar() {
               </Button>
 
               {megaMenuMounted && (
-                <CategoriesMegaMenu 
-                  isOpen={isMegaMenuOpen} 
-                  onClose={() => setIsMegaMenuOpen(false)} 
+                <CategoriesMegaMenu
+                  isOpen={isMegaMenuOpen}
+                  onClose={() => setIsMegaMenuOpen(false)}
                 />
               )}
             </div>
@@ -148,54 +148,53 @@ export default function Navbar() {
                 { label: 'Produtos', href: '/products' },
                 { label: 'Blog', href: '/blog' }
               ].map((link) => (
-                <Link 
+                <Link
                   key={link.href}
-                  href={link.href} 
-                  className="text-[11px] uppercase tracking-widest font-bold text-foreground/60 hover:text-brand-blue px-3 py-2 rounded-lg transition-colors hover:bg-brand-blue/5"
+                  href={link.href}
+                  className="rounded-full px-3 py-2 text-sm font-semibold text-foreground/62 transition-colors hover:bg-brand-blue/5 hover:text-brand-blue dark:text-white/62 dark:hover:bg-white/6 dark:hover:text-white"
                 >
                   {link.label}
                 </Link>
               ))}
             </nav>
 
-            {/* Auth Buttons */}
-            <div className="flex items-center gap-2 pl-4 border-l border-black/5 dark:border-white/10">
+            <div className="flex items-center gap-2 border-l border-black/6 pl-4 dark:border-white/10">
               {!isAuthenticated ? (
                 <>
-                  <Button asChild variant="ghost" size="sm" className="text-[11px] font-bold uppercase tracking-widest text-foreground/60 hover:text-brand-blue">
+                  <Button asChild variant="ghost" size="sm" className="h-10 rounded-full px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/62 hover:bg-brand-blue/5 hover:text-brand-blue dark:text-white/60 dark:hover:bg-white/6 dark:hover:text-white">
                     <Link href="/login">Login</Link>
                   </Button>
-                  <Button asChild size="sm" className="clay-precision-btn h-9 rounded-xl px-4 text-xs font-bold uppercase tracking-widest">
+                  <Button asChild size="sm" className="h-10 rounded-full border border-white/20 bg-brand-blue px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_28px_-18px_rgba(0,86,210,0.72)] transition-transform hover:-translate-y-0.5 hover:bg-brand-blue-light">
                     <Link href="/register">Cadastre sua empresa</Link>
                   </Button>
                 </>
               ) : (
                 <div className="flex items-center gap-2">
                   {user?.role !== 'review' && (
-                    <CompanySwitcher className="w-44 h-9" />
+                    <CompanySwitcher className="h-10 w-44" />
                   )}
-                  
-                  <div className="flex items-center bg-black/[0.03] dark:bg-white/5 rounded-xl p-0.5 border border-black/5 dark:border-white/10">
-                    <Button asChild variant="ghost" size="sm" className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider px-3">
-                      <Link 
+
+                  <div className="flex items-center rounded-full border border-black/8 bg-white/68 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+                    <Button asChild variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/70 hover:bg-transparent hover:text-brand-blue dark:text-white/65 dark:hover:text-white">
+                      <Link
                         href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
                         onClick={handleMinhaContaClick}
                       >
-                        <UserIcon className="h-3.5 w-3.5 mr-1.5 opacity-60" />
+                        <UserIcon className="mr-1.5 h-3.5 w-3.5 opacity-60" />
                         Perfil
                       </Link>
                     </Button>
-                    
+
                     {user?.role === 'company' && (
-                      <Button asChild variant="ghost" size="sm" className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider px-3 bg-white dark:bg-white/10 shadow-sm border border-black/5 dark:border-white/5">
+                      <Button asChild variant="ghost" size="sm" className="h-8 rounded-full border border-brand-blue/10 bg-brand-blue/8 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-blue hover:bg-brand-blue/12 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/14">
                         <Link href="/dashboard/company">
-                          <LayoutDashboard className="h-3.5 w-3.5 mr-1.5 text-brand-blue" />
+                          <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
                           Painel
                         </Link>
                       </Button>
                     )}
-                    
-                    <Button variant="ghost" size="sm" onClick={handleLogout} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider px-3 text-red-500 hover:text-red-600 hover:bg-red-500/5">
+
+                    <Button variant="ghost" size="sm" onClick={handleLogout} className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/5 hover:text-red-600">
                       <LogOut className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -205,11 +204,29 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center ml-auto gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2 xl:hidden">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 shrink-0 rounded-[1.05rem] border border-black/8 bg-white/78 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
+          >
+            <Link href="/search" aria-label="Buscar">
+              <Search className="h-[18px] w-[18px]" />
+            </Link>
+          </Button>
+
+          <div className="min-w-0 max-w-[170px] flex-1 sm:max-w-[220px]">
+            <LocationSearch
+              className="max-w-none text-xs sm:text-sm"
+              onLocationSelect={handleLocationSelect}
+            />
+          </div>
+
           {isAuthenticated && user?.role !== 'review' && (
-            <CompanySwitcher className="w-[120px] h-8" />
+            <CompanySwitcher className="hidden h-10 w-[132px] md:block" />
           )}
+
           <Button
             variant="ghost"
             size="icon"
@@ -218,7 +235,7 @@ export default function Navbar() {
               setIsMobileDrawerOpen(true);
             }}
             aria-label="Menu"
-            className="clay-precision h-9 w-9 rounded-xl bg-white dark:bg-white/5 text-foreground/60"
+            className="h-10 w-10 shrink-0 rounded-[1.05rem] border border-black/8 bg-white/78 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
           >
             <Menu className="h-5 w-5" />
           </Button>

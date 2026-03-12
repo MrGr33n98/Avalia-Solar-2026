@@ -19,7 +19,26 @@ RSpec.describe Analytics::TrackEventService do
 
         expect(result.ok).to be(true)
         expect(result.error).to eq('analytics_disabled_by_flag')
-        expect(Rails.logger).to have_received(:info).with("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED")
+        expect(Rails.logger).to have_received(:info).with("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED=false")
+      end
+    end
+
+    context 'when the flag is absent in non-test environments' do
+      it 'keeps analytics ingestion enabled by default' do
+        allow(Rails.env).to receive(:test?).and_return(false)
+        allow(ENV).to receive(:[]).with('G4_ANALYTICS_ENABLED').and_return(nil)
+
+        result = nil
+        expect do
+          result = described_class.call(
+            company_id: company.id,
+            event_type: 'profile_view',
+            metadata: { path: '/companies/foo' }
+          )
+        end.to change(AnalyticsEvent, :count).by(1)
+
+        expect(result.ok).to be(true)
+        expect(result.error).to be_nil
       end
     end
   end

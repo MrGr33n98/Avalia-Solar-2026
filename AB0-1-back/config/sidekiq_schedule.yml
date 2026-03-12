@@ -91,7 +91,7 @@ analytics_daily_aggregation_job:
 
 # 1. Base Aggregation (Events -> Daily Stats)
 analytics_aggregation_worker:
-  cron: '55 23 * * *'  # Run just before midnight
+  cron: '*/15 * * * *'  # Run every 15 minutes to keep dashboard telemetry fresh
   class: Analytics::AggregationWorker
   queue: analytics
   description: 'Canonical event aggregation'
