@@ -10,6 +10,24 @@ ActiveAdmin.register Plan do
     'marketplace_behavior' => 'Experiencia Competitiva'
   }.freeze
 
+  FEATURE_GROUP_ORDER = %w[
+    public_profile
+    conversion
+    trust
+    content
+    marketplace_behavior
+    insights
+  ].freeze
+
+  FEATURE_GROUP_DESCRIPTIONS = {
+    'public_profile' => 'Controle os blocos publicos exibidos no perfil da empresa.',
+    'conversion' => 'Defina recursos comerciais e pontos de conversao do perfil.',
+    'trust' => 'Gerencie sinais de confianca, destaque e prova social.',
+    'content' => 'Libere ou bloqueie biblioteca de materiais e midia.',
+    'marketplace_behavior' => 'Ajuste comportamento competitivo no marketplace.',
+    'insights' => 'Configure analytics, leads e recursos avancados.'
+  }.freeze
+
   filter :name
   filter :description
   filter :price
@@ -29,9 +47,14 @@ ActiveAdmin.register Plan do
   end
 
   show do
-    feature_groups = PlanFeatureCatalog.known_keys.group_by do |key|
+    grouped_features = PlanFeatureCatalog.known_keys.group_by do |key|
       PlanFeatureCatalog.feature_definition(key)[:group]
     end
+    feature_groups =
+      FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
+        next unless grouped_features[group_key].present?
+        memo[group_key] = grouped_features[group_key]
+      end.merge(grouped_features.except(*FEATURE_GROUP_ORDER))
 
     attributes_table do
       row :id
@@ -58,6 +81,7 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       panel(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
+        para(FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints') if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
         table_for feature_keys do
           column('Feature') { |key| key.to_s.humanize }
           column('Tipo') { |key| PlanFeatureCatalog.feature_definition(key)[:type] }
@@ -85,8 +109,27 @@ ActiveAdmin.register Plan do
       else
         tier_defaults
       end
-    feature_groups = PlanFeatureCatalog.known_keys.group_by do |key|
+    grouped_features = PlanFeatureCatalog.known_keys.group_by do |key|
       PlanFeatureCatalog.feature_definition(key)[:group]
+    end
+    feature_groups =
+      FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
+        next unless grouped_features[group_key].present?
+        memo[group_key] = grouped_features[group_key]
+      end.merge(grouped_features.except(*FEATURE_GROUP_ORDER))
+
+    render_feature_label = lambda do |key|
+      key.to_s.humanize
+    end
+
+    render_feature_hint = lambda do |key, definition, default_value|
+      hints = []
+      hints << "Default do tier: #{default_value.inspect}" unless default_value.nil?
+      hints << "Tipo: #{definition[:type]}"
+      hints << "Acesso: #{definition[:access_behavior]}"
+      aliases = Array(definition[:aliases]).map(&:to_s)
+      hints << "Aliases legados: #{aliases.join(', ')}" if aliases.any?
+      "#{render_feature_label.call(key)} | #{hints.join(' | ')}"
     end
 
     render_feature_field = lambda do |key|
@@ -95,22 +138,23 @@ ActiveAdmin.register Plan do
       input_id = "plan_plan_feature_fields_#{key}"
       current_value = preview_flags[key]
       default_value = tier_defaults[key]
-      hint_parts = []
-      hint_parts << "Default do tier: #{default_value.inspect}" unless default_value.nil?
-      hint_parts << "Comportamento: #{definition[:access_behavior]}"
-      hint = hint_parts.join(' | ')
+      state = PlanFeatureCatalog.access_state_for(key, current_value)
+      hint = render_feature_hint.call(key, definition, default_value)
 
       if definition[:type] == :integer
         f.template.content_tag(:li, class: 'input integer optional') do
           f.template.safe_join(
             [
-              f.template.label_tag(input_id, key.to_s.humanize, class: 'label'),
+              f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              f.template.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
+              f.template.label_tag(input_id, 'Valor', class: 'label'),
               f.template.number_field_tag(
                 input_name,
                 current_value,
                 id: input_id,
                 min: 1,
-                step: 1
+                step: 1,
+                placeholder: default_value || 'Nao definido'
               ),
               f.template.content_tag(:p, hint, class: 'inline-hints')
             ]
@@ -121,13 +165,14 @@ ActiveAdmin.register Plan do
         f.template.content_tag(:li, class: 'boolean input optional') do
           f.template.safe_join(
             [
+              f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              f.template.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
               f.template.hidden_field_tag(input_name, '0', id: nil),
               f.template.label_tag(input_id, class: 'label') do
                 f.template.safe_join(
                   [
                     f.template.check_box_tag(input_name, '1', checked, id: input_id),
-                    ' ',
-                    f.template.content_tag(:span, key.to_s.humanize)
+                    ' Habilitar'
                   ]
                 )
               end,
@@ -153,9 +198,14 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
-        feature_keys.each do |key|
-          f.template.concat(render_feature_field.call(key))
+        if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
+          f.template.concat(
+            f.template.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
+          )
         end
+        f.template.concat(
+          f.template.safe_join(feature_keys.map { |key| render_feature_field.call(key) })
+        )
       end
     end
 
@@ -163,7 +213,11 @@ ActiveAdmin.register Plan do
       attributes_table_for f.object do
         row('Tier considerado') { status_tag(selected_tier) }
         row('Features habilitadas') do
-          enabled = preview_flags.select { |_key, value| value == true }.keys.map(&:humanize)
+          enabled = preview_flags.each_with_object([]) do |(key, value), memo|
+            next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
+            label = render_feature_label.call(key)
+            memo << (value.is_a?(Integer) ? "#{label}: #{value}" : label)
+          end
           enabled.any? ? enabled.join(', ') : 'Nenhuma'
         end
         row('Payload canonico') do

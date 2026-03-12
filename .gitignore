@@ -109,6 +109,7 @@ tasks/
 docs/TASK_BOARD_PLANOS_E_MONETIZACAO.md
 docs/prd/PRD_PLANOS_E_FEATURE_GATING_V1.md
 docs/DIAGNOSTICO_PLANOS_MONETIZACAO_E_FEATURE_GATING_*.md
+docs/FIGMA_MCP_SETUP_GUIDE.md
 docs/stories/011.plan-feature-catalog-and-access-resolver.md
 docs/stories/012.activeadmin-plan-console.md
 docs/stories/013.dashboard-feature-access-control.md
