@@ -8,8 +8,8 @@ module Api
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
         begin
-          freshness = CompanyDashboard::FreshnessProvider.call
-          source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
+          freshness = ::CompanyDashboard::FreshnessProvider.call
+          source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
           stats, data_source = source.realtime_totals(
             from_day: 30.days.ago.to_date,
             to_day: Date.current,
@@ -43,15 +43,15 @@ module Api
           }.merge(freshness)
         rescue StandardError => e
           log_analytics_error('overview', e)
-          render json: default_overview_payload.merge(CompanyDashboard::FreshnessProvider.call)
+          render json: default_overview_payload.merge(::CompanyDashboard::FreshnessProvider.call)
         end
       end
 
       # GET /api/v1/company_dashboard/analytics/timeseries
       def analytics_timeseries
         days = [(params[:days] || 90).to_i, 365].min
-        freshness = CompanyDashboard::FreshnessProvider.call
-        source = CompanyDashboard::MetricsSource.new(company_id: @company.id)
+        freshness = ::CompanyDashboard::FreshnessProvider.call
+        source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
         series, data_source = source.realtime_timeseries(
           days: days,
           last_aggregated_at: freshness[:last_aggregated_at]
@@ -80,10 +80,41 @@ module Api
         }.merge(freshness)
       end
 
+      # GET /api/v1/company_dashboard/analytics/top_campaigns
+      def analytics_top_campaigns
+        limit = [[params[:limit].to_i, 1].max, 20].min
+        limit = 5 if params[:limit].blank?
+
+        campaigns = ::CompanyUtmAttribution
+                    .where(company_id: @company.id)
+                    .recent
+                    .by_leads
+                    .limit(limit)
+
+        render json: {
+          campaigns: campaigns.map do |campaign|
+            {
+              id: campaign.id,
+              utm_campaign: campaign.utm_campaign,
+              utm_source: campaign.utm_source,
+              utm_medium: campaign.utm_medium,
+              total_visits: campaign.total_visits,
+              total_cta_clicks: campaign.total_cta_clicks,
+              total_leads: campaign.total_leads,
+              conversion_rate: campaign.conversion_rate.to_f,
+              last_seen_at: campaign.last_seen_at
+            }
+          end
+        }, status: :ok
+      rescue StandardError => e
+        log_analytics_error('top_campaigns', e)
+        render json: { campaigns: [] }, status: :ok
+      end
+
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
         begin
-          service = CompanyDashboard::ReputationService.new(company: @company)
+          service = ::CompanyDashboard::ReputationService.new(company: @company)
           render json: service.reputation_data
         rescue StandardError => e
           log_analytics_error('reputation', e)
@@ -94,7 +125,7 @@ module Api
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
         begin
-          service = CompanyDashboard::RankingService.new(company: @company)
+          service = ::CompanyDashboard::RankingService.new(company: @company)
           data = service.ranking_data
 
           render json: {
@@ -122,7 +153,7 @@ module Api
 
       # GET /api/v1/company_dashboard/stats
       def stats
-        stats_service = CompanyDashboard::StatsService.new(@company)
+        stats_service = ::CompanyDashboard::StatsService.new(@company)
 
         render json: {
           stats: stats_service.call,
@@ -135,7 +166,7 @@ module Api
         )
         Rails.logger.error("[CompanyDashboard#stats] backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
         render json: {
-          stats: CompanyDashboard::StatsService.new(nil).call,
+          stats: ::CompanyDashboard::StatsService.new(nil).call,
           plan_features: {}
         }, status: :ok
       end
@@ -772,7 +803,7 @@ module Api
           leads_30d: 0,
           conversion_rate: 0,
           data_source: 'company_daily_stats_unavailable'
-        }.merge(CompanyDashboard::FreshnessProvider.call)
+        }.merge(::CompanyDashboard::FreshnessProvider.call)
       end
     end
   end
