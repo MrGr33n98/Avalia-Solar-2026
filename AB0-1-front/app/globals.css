@@ -22,17 +22,43 @@
 
 @layer base {
   html {
-    /* Use 100% to prevent scaling issues on mobile while avoiding cross-browser parser warnings. */
+    /* Prevent scaling issues on mobile */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    
+    /* 
+     * COMPACT DESKTOP SCALING 
+     * Reduces the base font size on larger screens so that all REM-based units 
+     * (typography, padding, margin) scale down proportionally, creating a 
+     * denser, more professional desktop experience (simulating ~85% zoom).
+     */
+    font-size: 16px; /* Default for mobile/tablet */
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 14.5px; /* Compact desktop */
+    }
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 14px; /* Standard large desktop */
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 13.5px; /* Ultra-wide optimization */
+    }
   }
 }
 
 @layer base {
   :root {
     --spacing-section-mobile: 2rem;
-    --spacing-section-desktop: 3rem;
-    --banner-height-max: 20rem;
+    --spacing-section-desktop: 2.5rem; /* Reduced from 3rem for better density */
+    --banner-height-max: 18rem; /* Slightly more compact banner */
     --background: 0 0% 100%; /* Pure White Background for Clay */
     --foreground: 0 0% 10%; /* Deep Dark Gray - Professional */
 
