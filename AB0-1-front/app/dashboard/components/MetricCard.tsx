@@ -29,59 +29,59 @@ export default function MetricCard({
 }: MetricCardProps) {
   const colorClasses = {
     primary: {
-      bg: 'bg-primary/10 dark:bg-primary/5',
-      icon: 'text-primary',
-      gradient: 'from-primary/20 to-primary/5'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      gradient: 'from-brand-blue/20 to-brand-blue/5'
     },
     blue: {
-      bg: 'bg-blue-100 dark:bg-blue-950',
-      icon: 'text-blue-600 dark:text-blue-400',
-      gradient: 'from-blue-500/20 to-blue-500/5'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      gradient: 'from-brand-blue/20 to-brand-blue/5'
     },
     green: {
-      bg: 'bg-green-100 dark:bg-green-950',
-      icon: 'text-green-600 dark:text-green-400',
-      gradient: 'from-green-500/20 to-green-500/5'
+      bg: 'bg-brand-green/10',
+      icon: 'text-brand-green',
+      gradient: 'from-brand-green/20 to-brand-green/5'
     },
     purple: {
-      bg: 'bg-purple-100 dark:bg-purple-950',
-      icon: 'text-purple-600 dark:text-purple-400',
-      gradient: 'from-purple-500/20 to-purple-500/5'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      gradient: 'from-brand-blue/20 to-brand-blue/5'
     },
     'brand-cyan': {
-      bg: 'bg-brand-cyan/10 dark:bg-brand-cyan/5',
+      bg: 'bg-brand-cyan/10',
       icon: 'text-brand-cyan',
       gradient: 'from-brand-cyan/20 to-brand-cyan/5'
     },
     'brand-yellow': {
-      bg: 'bg-brand-yellow/10 dark:bg-brand-yellow/5',
+      bg: 'bg-brand-yellow/10',
       icon: 'text-brand-yellow',
       gradient: 'from-brand-yellow/20 to-brand-yellow/5'
     },
     'brand-blue': {
-      bg: 'bg-brand-blue/10 dark:bg-brand-blue/5',
+      bg: 'bg-brand-blue/10',
       icon: 'text-brand-blue',
       gradient: 'from-brand-blue/20 to-brand-blue/5'
     },
     'brand-green': {
-      bg: 'bg-brand-green/10 dark:bg-brand-green/5',
+      bg: 'bg-brand-green/10',
       icon: 'text-brand-green',
       gradient: 'from-brand-green/20 to-brand-green/5'
     },
     yellow: {
-      bg: 'bg-yellow-100 dark:bg-yellow-950',
-      icon: 'text-yellow-600 dark:text-yellow-400',
-      gradient: 'from-yellow-500/20 to-yellow-500/5'
+      bg: 'bg-brand-yellow/10',
+      icon: 'text-brand-yellow',
+      gradient: 'from-brand-yellow/20 to-brand-yellow/5'
     },
     pink: {
-      bg: 'bg-pink-100 dark:bg-pink-950',
-      icon: 'text-pink-600 dark:text-pink-400',
-      gradient: 'from-pink-500/20 to-pink-500/5'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      gradient: 'from-brand-blue/20 to-brand-blue/5'
     },
     emerald: {
-      bg: 'bg-emerald-100 dark:bg-emerald-950',
-      icon: 'text-emerald-600 dark:text-emerald-400',
-      gradient: 'from-emerald-500/20 to-emerald-500/5'
+      bg: 'bg-brand-green/10',
+      icon: 'text-brand-green',
+      gradient: 'from-brand-green/20 to-brand-green/5'
     }
   };
 
@@ -95,8 +95,8 @@ export default function MetricCard({
       whileHover={{ y: -4 }}
     >
       <Card className={cn(
-        'relative overflow-hidden border-muted hover:border-primary/40 transition-all duration-300 group',
-        'hover:shadow-lg hover:shadow-primary/5'
+        'relative overflow-hidden border-white/10 bg-card/95 backdrop-blur-sm transition-all duration-300 group shadow-none',
+        'hover:border-brand-blue/40'
       )}>
         {/* Gradient background on hover */}
         <div className={cn(
@@ -104,15 +104,14 @@ export default function MetricCard({
           colors.gradient
         )} />
 
-        <CardContent className="p-6 relative">
+        <CardContent className="p-4 relative">
           <div className="flex items-start justify-between mb-4">
             {/* Icon */}
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
               className={cn(
-                'p-3 rounded-xl transition-all duration-300',
-                colors.bg,
-                'group-hover:shadow-lg'
+                'p-2.5 rounded-lg transition-all duration-300',
+                colors.bg
               )}
             >
               <Icon className={cn('h-5 w-5', colors.icon)} />
@@ -126,7 +125,12 @@ export default function MetricCard({
                   changeType === 'negative' ? 'destructive' : 
                   'secondary'
                 }
-                className="text-xs font-medium"
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider px-1.5 h-5 border-none",
+                  changeType === 'positive' ? "bg-brand-green text-white" :
+                  changeType === 'negative' ? "bg-red-500 text-white" :
+                  "bg-white/10 text-white/70"
+                )}
               >
                 {change}
               </Badge>
@@ -135,17 +139,17 @@ export default function MetricCard({
 
           {/* Content */}
           <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">
               {title}
             </p>
-            <p className="text-3xl font-bold text-foreground tracking-tight">
+            <p className="text-2xl font-bold text-white tracking-tight font-mono">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
           </div>
 
           {/* Mini Trend Line */}
           {trend && trend.length > 0 && (
-            <div className="mt-4 flex items-end gap-1 h-8">
+            <div className="mt-4 flex items-end gap-1 h-6">
               {trend.map((height, index) => (
                 <motion.div
                   key={index}
@@ -153,10 +157,10 @@ export default function MetricCard({
                   animate={{ height: `${height}%` }}
                   transition={{ delay: delay + (index * 0.05), duration: 0.3 }}
                   className={cn(
-                    'flex-1 rounded-t transition-colors',
-                    changeType === 'positive' ? 'bg-green-500/30' :
-                    changeType === 'negative' ? 'bg-red-500/30' :
-                    'bg-muted'
+                    'flex-1 rounded-t-sm transition-colors',
+                    changeType === 'positive' ? 'bg-brand-green/40' :
+                    changeType === 'negative' ? 'bg-red-500/40' :
+                    'bg-white/10'
                   )}
                 />
               ))}
@@ -167,6 +171,7 @@ export default function MetricCard({
     </motion.div>
   );
 }
+
 
 // Componente para grid de métricas
 interface MetricsGridProps {

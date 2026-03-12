@@ -2,7 +2,10 @@
  * TimeSeriesChart Component
  * 
  * Displays time-series analytics data (views, CTAs, leads) over time
- * Uses Recharts for visualization
+ * Aligned with Precision Energy System:
+ * - Silicon Dark Palette (#002B4D)
+ * - Borders-only depth (0.5px)
+ * - Brand color tokens for visualization
  */
 
 'use client';
@@ -22,6 +25,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface TimeSeriesDataPoint {
   date: string;
@@ -47,13 +51,14 @@ interface TimeSeriesChartProps {
 export default function TimeSeriesChart({
   data,
   loading = false,
-  themeMode = 'light',
+  themeMode = 'dark',
   title = 'Métricas ao Longo do Tempo',
   description = 'Acompanhe a evolução das suas métricas nos últimos dias',
   chartType = 'line',
   showLines = ['views', 'cta_clicks', 'leads'],
 }: TimeSeriesChartProps) {
-  const isDark = themeMode === 'dark';
+  // Lock to dark theme for consistency with Silicon foundation
+  const isDark = true;
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -69,42 +74,42 @@ export default function TimeSeriesChart({
     }));
   }, [data]);
 
-  // Line configurations
+  // Line configurations using Precision Energy tokens
   const lineConfigs = {
     views: {
       dataKey: 'Visualizações',
-      stroke: isDark ? '#60a5fa' : '#3b82f6', // blue
-      fill: isDark ? '#60a5fa' : '#3b82f6',
+      stroke: '#0056D2', // brand-blue
+      fill: '#0056D2',
     },
     cta_clicks: {
       dataKey: 'CTAs',
-      stroke: isDark ? '#34d399' : '#10b981', // green
-      fill: isDark ? '#34d399' : '#10b981',
+      stroke: '#00AFEF', // brand-cyan
+      fill: '#00AFEF',
     },
     leads: {
       dataKey: 'Leads',
-      stroke: isDark ? '#f97316' : '#ea580c', // orange
-      fill: isDark ? '#f97316' : '#ea580c',
+      stroke: '#34C759', // brand-green
+      fill: '#34C759',
     },
     whatsapp: {
       dataKey: 'WhatsApp',
-      stroke: isDark ? '#22c55e' : '#16a34a', // whatsapp green
-      fill: isDark ? '#22c55e' : '#16a34a',
+      stroke: '#28A745', // dark green
+      fill: '#28A745',
     },
     email: {
       dataKey: 'Email',
-      stroke: isDark ? '#8b5cf6' : '#7c3aed', // purple
-      fill: isDark ? '#8b5cf6' : '#7c3aed',
+      stroke: '#6C5CE7', // brand-purple
+      fill: '#6C5CE7',
     },
     phone: {
       dataKey: 'Telefone',
-      stroke: isDark ? '#ec4899' : '#db2777', // pink
-      fill: isDark ? '#ec4899' : '#db2777',
+      stroke: '#FCEE21', // brand-yellow
+      fill: '#FCEE21',
     },
     website: {
       dataKey: 'Website',
-      stroke: isDark ? '#06b6d4' : '#0891b2', // cyan
-      fill: isDark ? '#06b6d4' : '#0891b2',
+      stroke: '#6D6E71', // brand-gray
+      fill: '#6D6E71',
     },
   };
 
@@ -112,13 +117,13 @@ export default function TimeSeriesChart({
 
   if (loading) {
     return (
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-          <Skeleton className="h-4 w-[300px] mt-2" />
+      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+        <CardHeader className="p-4">
+          <Skeleton className="h-6 w-[200px] bg-white/5" />
+          <Skeleton className="h-4 w-[300px] mt-2 bg-white/5" />
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+        <CardContent className="p-4">
+          <Skeleton className="h-[300px] w-full bg-white/5 rounded-xl" />
         </CardContent>
       </Card>
     );
@@ -126,13 +131,13 @@ export default function TimeSeriesChart({
 
   if (!data || data.length === 0) {
     return (
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-        <CardHeader>
-          <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>{title}</CardTitle>
-          <CardDescription className={isDark ? 'text-slate-400' : ''}>{description}</CardDescription>
+      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-white/40">{description}</CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[300px]">
-          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+        <CardContent className="flex items-center justify-center h-[300px] p-4">
+          <p className="text-sm text-white/30 font-medium">
             Sem dados disponíveis para o período selecionado
           </p>
         </CardContent>
@@ -144,46 +149,67 @@ export default function TimeSeriesChart({
     width: 500,
     height: 300,
     data: chartData,
-    margin: { top: 5, right: 30, left: 20, bottom: 5 },
+    margin: { top: 5, right: 10, left: 0, bottom: 5 },
   };
 
   const Chart = chartType === 'area' ? AreaChart : LineChart;
   const DataComponent = chartType === 'area' ? Area : Line;
 
   return (
-    <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-      <CardHeader>
-        <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>{title}</CardTitle>
-        <CardDescription className={isDark ? 'text-slate-400' : ''}>{description}</CardDescription>
+    <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <CardHeader className="p-4 border-b border-white/5">
+        <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
+        <CardDescription className="text-white/40 text-xs">{description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4">
         <ResponsiveContainer width="100%" height={300}>
           <Chart {...commonProps}>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke={isDark ? '#334155' : '#e2e8f0'}
-              opacity={0.5}
+              stroke="#ffffff"
+              opacity={0.05}
+              vertical={false}
             />
             <XAxis
               dataKey="date"
-              stroke={isDark ? '#94a3b8' : '#64748b'}
-              style={{ fontSize: '12px' }}
+              stroke="#ffffff"
+              opacity={0.3}
+              style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
+              tickLine={false}
+              axisLine={false}
+              dy={10}
             />
-            <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} style={{ fontSize: '12px' }} />
+            <YAxis 
+              stroke="#ffffff" 
+              opacity={0.3} 
+              style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
+              tickLine={false}
+              axisLine={false}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                color: isDark ? '#f1f5f9' : '#0f172a',
+                backgroundColor: '#002B4D',
+                border: '0.5px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                boxShadow: 'none',
+                padding: '12px',
               }}
-              labelStyle={{ color: isDark ? '#cbd5e1' : '#475569', fontWeight: 600 }}
+              itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
+              labelStyle={{ color: 'rgba(255,255,255,0.4)', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}
+              cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
             />
             <Legend
+              verticalAlign="top"
+              align="right"
+              iconType="circle"
+              iconSize={8}
               wrapperStyle={{
-                paddingTop: '20px',
-                fontSize: '14px',
-                color: isDark ? '#cbd5e1' : '#475569',
+                paddingBottom: '20px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'rgba(255,255,255,0.5)',
               }}
             />
             {activeLinesConfig.map((config, index) => (
@@ -193,10 +219,10 @@ export default function TimeSeriesChart({
                 dataKey={config.dataKey}
                 stroke={config.stroke}
                 fill={chartType === 'area' ? config.fill : undefined}
-                fillOpacity={chartType === 'area' ? 0.2 : undefined}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                fillOpacity={chartType === 'area' ? 0.1 : undefined}
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 4, stroke: '#ffffff', strokeWidth: 2 }}
               />
             ))}
           </Chart>

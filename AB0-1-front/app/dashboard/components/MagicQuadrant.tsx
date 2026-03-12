@@ -18,10 +18,10 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl text-xs border border-slate-700 min-w-[150px]">
+      <div className="bg-[#002B4D] text-white p-3 rounded-lg shadow-none text-xs border border-white/10 min-w-[150px]">
         <p className="font-bold text-sm mb-1">{data.name}</p>
-        <p className="text-slate-300">Visão (Reviews/Score): <span className="text-white font-bold">{data.completenessOfVision}</span></p>
-        <p className="text-slate-300">Execução (Leads): <span className="text-white font-bold">{data.abilityToExecute}</span></p>
+        <p className="text-white/70">Visão (Reviews/Score): <span className="text-white font-bold">{data.completenessOfVision}</span></p>
+        <p className="text-white/70">Execução (Leads): <span className="text-white font-bold">{data.abilityToExecute}</span></p>
         {data.isCurrentCompany && (
           <div className="mt-2 text-amber-400 font-bold flex items-center gap-1">
             <span>⭐️ Você está aqui</span>
@@ -83,16 +83,16 @@ export default function MagicQuadrant({ data }: Props) {
       </ResponsiveContainer>
 
       {/* Static Labels for Quadrants */}
-      <div className="absolute top-6 left-6 text-[10px] font-black tracking-widest text-slate-400 uppercase pointer-events-none">
+      <div className="absolute top-4 left-6 text-[10px] font-black tracking-widest text-white/40 uppercase pointer-events-none">
         Challengers
       </div>
-      <div className="absolute top-6 right-6 text-[10px] font-black tracking-widest text-blue-500 uppercase pointer-events-none">
+      <div className="absolute top-4 right-6 text-[10px] font-black tracking-widest text-blue-500 uppercase pointer-events-none">
         Líderes
       </div>
-      <div className="absolute bottom-10 left-6 text-[10px] font-black tracking-widest text-slate-400 uppercase pointer-events-none">
+      <div className="absolute bottom-10 left-6 text-[10px] font-black tracking-widest text-white/40 uppercase pointer-events-none">
         Niche Players
       </div>
-      <div className="absolute bottom-10 right-6 text-[10px] font-black tracking-widest text-slate-400 uppercase pointer-events-none">
+      <div className="absolute bottom-10 right-6 text-[10px] font-black tracking-widest text-white/40 uppercase pointer-events-none">
         Visionários
       </div>
     </div>

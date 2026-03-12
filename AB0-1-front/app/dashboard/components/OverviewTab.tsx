@@ -140,7 +140,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
     <div className="space-y-6">
       {/* Onboarding Section - Preserved */}
       {hasNoData && (
-        <Card className="border-blue-200 bg-blue-50/50 shadow-sm">
+        <Card className="border-blue-200 bg-blue-50/50 shadow-none">
           <CardHeader>
             <CardTitle className="text-blue-900 text-lg flex items-center gap-2">
               <Zap className="w-5 h-5 text-blue-600" />
@@ -154,9 +154,9 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 {checklist.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-100 shadow-sm">
+                  <div key={i} className="flex items-center justify-between p-3 bg-[#002B4D] rounded-lg border border-blue-100 shadow-none">
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${item.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${item.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-white/40'}`}>
                         <Check className="w-4 h-4" />
                       </div>
                       <span className={`font-medium ${item.done ? 'text-slate-900 line-through opacity-70' : 'text-slate-900'}`}>{item.label}</span>
@@ -165,15 +165,15 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col justify-center space-y-4 p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+              <div className="flex flex-col justify-center space-y-4 p-4 bg-[#002B4D] rounded-lg border border-blue-100 shadow-none">
                 <h4 className="font-semibold text-slate-800">1. Compartilhe seu Link Público (Rastreado)</h4>
                 <div className="flex items-center gap-2">
-                  <input type="text" readOnly value={assetsQuery.data?.utm_ready_link || ''} className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" />
+                  <input type="text" readOnly value={assetsQuery.data?.utm_ready_link || ''} className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" />
                   <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}><Copy className="w-4 h-4" /></Button>
                 </div>
                 <h4 className="font-semibold text-slate-800 mt-2">2. Instale o Selo no seu Site</h4>
                 <div className="flex items-center gap-2">
-                  <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" />
+                  <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" />
                   <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}><Copy className="w-4 h-4" /></Button>
                 </div>
               </div>
@@ -201,7 +201,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
       </div>
 
       {/* MIDDLE SECTION: Analytics Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {statsQuery.isLoading ? (
           <Skeleton className="h-[340px] w-full rounded-xl" />
         ) : (
@@ -219,13 +219,13 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
       {/* SIDE/SECONDARY SECTION: Operational Metrics & Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Profile Health & Action Items */}
-        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-green-50 rounded-xl">
               <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Completude do Perfil</p>
+              <p className="text-xs text-white/40 font-medium">Completude do Perfil</p>
               <h4 className="text-lg font-bold text-foreground">{stats?.profileCompletion || 0}%</h4>
               <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2">
                 <div className="bg-green-500 h-full rounded-full" style={{ width: `${stats?.profileCompletion || 0}%` }} />
@@ -235,15 +235,15 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         </Card>
 
         {/* Conversion Performance */}
-        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-purple-50 rounded-xl">
               <Star className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Taxa de Conversão</p>
+              <p className="text-xs text-white/40 font-medium">Taxa de Conversão</p>
               <h4 className="text-lg font-bold text-foreground">{stats?.conversionRate?.toFixed(1) || 0}%</h4>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-[10px] text-white/40 mt-0.5">
                 Visitantes que deixaram avaliação
               </p>
             </div>
@@ -261,13 +261,13 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
             rightValue={stats.leadsReceived}
           />
         ) : (
-          <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-3 bg-emerald-50 rounded-xl">
                 <CheckCircle className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Status do Perfil</p>
+                <p className="text-xs text-white/40 font-medium">Status do Perfil</p>
                 <h4 className="text-lg font-bold text-foreground">Ativo</h4>
                 <p className="text-[10px] text-emerald-600 flex items-center gap-0.5 mt-0.5">
                   <CheckCircle className="h-3 w-3" />
@@ -280,7 +280,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
       </div>
 
       {/* GROWTH TOOLS SECTION: Always accessible */}
-      <Card className="border-emerald-200 bg-emerald-50/30 shadow-sm">
+      <Card className="border-emerald-200 bg-emerald-50/30 shadow-none">
         <CardHeader>
           <CardTitle className="text-emerald-900 text-lg flex items-center gap-2">
             <Zap className="w-5 h-5 text-emerald-600" />
@@ -292,7 +292,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4 p-4 bg-white rounded-lg border border-emerald-100 shadow-sm">
+            <div className="space-y-4 p-4 bg-[#002B4D] rounded-lg border border-emerald-100 shadow-none">
               <h4 className="font-semibold text-slate-800">📊 Link Público Rastreado</h4>
               <p className="text-sm text-slate-600">Compartilhe este link para rastrear visitas e leads.</p>
               <div className="flex items-center gap-2">
@@ -300,7 +300,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
                   type="text" 
                   readOnly 
                   value={assetsQuery.data?.utm_ready_link || ''} 
-                  className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" 
+                  className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" 
                 />
                 <Button 
                   variant="outline" 
@@ -311,7 +311,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
                 </Button>
               </div>
             </div>
-            <div className="space-y-4 p-4 bg-white rounded-lg border border-emerald-100 shadow-sm">
+            <div className="space-y-4 p-4 bg-[#002B4D] rounded-lg border border-emerald-100 shadow-none">
               <h4 className="font-semibold text-slate-800">🏆 Selo de Confiança</h4>
               <p className="text-sm text-slate-600">Instale no seu site para mostrar sua reputação.</p>
               <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
                   type="text" 
                   readOnly 
                   value={assetsQuery.data?.badge_embed_code || ''} 
-                  className="flex-1 p-2 text-sm border rounded bg-slate-50 text-slate-500" 
+                  className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" 
                 />
                 <Button 
                   variant="outline" 

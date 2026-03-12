@@ -129,7 +129,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       if (value >= 200) return isDark ? 'text-blue-400' : 'text-blue-600';
       return isDark ? 'text-cyan-400' : 'text-cyan-600';
     }
-    return isDark ? 'text-slate-400' : 'text-muted-foreground';
+    return isDark ? 'text-white/40' : 'text-white/40';
   };
 
   return (
@@ -139,14 +139,14 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
         <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
           Benchmark Competitivo
         </h3>
-        <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+        <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
           Compare sua performance com os líderes da categoria
         </p>
       </div>
 
       {/* Your Position Summary */}
       <Card className={`${isDark ? 'bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-800/30' : 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200'}`}>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className={`p-4 rounded-2xl ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
@@ -156,22 +156,22 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                 <h4 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-foreground'} mb-2`}>
                   Você está em #{yourRank} de {allCompanies.length}
                 </h4>
-                <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'} mb-4`}>
+                <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'} mb-4`}>
                   {yourRank === 1 ? '🎉 Parabéns! Você é o líder da categoria!' :
                    yourRank <= 3 ? '⭐ Excelente posição! Você está no top 3!' :
                    yourRank <= 5 ? '👍 Boa posição! Continue melhorando.' :
                    '📈 Há oportunidades de crescimento.'}
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-slate-300' : ''}`}>
+                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
                     <Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />
                     {yourCompany.rating.toFixed(1)} Rating
                   </Badge>
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-slate-300' : ''}`}>
+                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
                     <Users className="h-3 w-3 mr-1" />
                     {yourCompany.reviewsCount} Reviews
                   </Badge>
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-slate-300' : ''}`}>
+                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
                     <Zap className="h-3 w-3 mr-1" />
                     {yourCompany.responseRate}% Resposta
                   </Badge>
@@ -189,12 +189,12 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       </Card>
 
       {/* Detailed Rankings */}
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+      <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
         <CardHeader>
           <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
             Rankings Detalhados
           </CardTitle>
-          <CardDescription className={isDark ? 'text-slate-400' : ''}>
+          <CardDescription className={isDark ? 'text-white/40' : ''}>
             Comparação com top performers da categoria
           </CardDescription>
         </CardHeader>
@@ -213,8 +213,8 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                         ? 'bg-blue-900/20 border-2 border-blue-700/50'
                         : 'bg-blue-50 border-2 border-blue-300'
                       : isDark
-                      ? 'bg-slate-800/50 border border-slate-700'
-                      : 'bg-gray-50 border border-gray-200'
+                      ? 'bg-[#002B4D]/50 border border-white/10'
+                      : 'bg-[#002B4D] border border-white/10'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -224,7 +224,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                         index === 0 ? 'text-yellow-500' :
                         index === 1 ? 'text-gray-400' :
                         index === 2 ? 'text-cyan-600' :
-                        isDark ? 'text-slate-400' : 'text-gray-600'
+                        isDark ? 'text-white/40' : 'text-gray-600'
                       }`}>
                         #{index + 1}
                       </div>
@@ -275,14 +275,14 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                     </div>
 
                     {/* Metrics */}
-                    <div className="grid grid-cols-3 gap-6 text-center">
+                    <div className="grid grid-cols-3 gap-4 text-center">
                       {/* Rating */}
                       <div>
-                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                           Rating
                         </p>
                         <div className="flex items-center justify-center gap-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-[18px] w-[18px] text-yellow-500 fill-yellow-500" />
                           <span className={`text-lg font-bold ${getScoreColor(company.rating, 'rating')}`}>
                             {company.rating.toFixed(1)}
                           </span>
@@ -297,7 +297,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
 
                       {/* Reviews */}
                       <div>
-                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                           Reviews
                         </p>
                         <span className={`text-lg font-bold ${getScoreColor(company.reviewsCount, 'reviews')}`}>
@@ -313,7 +313,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
 
                       {/* Response Rate */}
                       <div>
-                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                           Resposta
                         </p>
                         <span className={`text-lg font-bold ${getScoreColor(company.responseRate, 'responseRate')}`}>
@@ -338,8 +338,8 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       {/* Gaps & Opportunities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Rating Gap */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-          <CardContent className="p-6">
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
+          <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'}`}>
                 <Star className="h-5 w-5 text-yellow-600" />
@@ -356,7 +356,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                   {yourCompany.rating >= allCompanies[0].rating ? '=' : '-'}
                   {Math.abs(yourCompany.rating - allCompanies[0].rating).toFixed(1)}
                 </p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   {yourCompany.rating >= allCompanies[0].rating
                     ? 'Você é o líder!'
                     : 'pontos para alcançar o líder'
@@ -368,8 +368,8 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
         </Card>
 
         {/* Reviews Gap */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-          <CardContent className="p-6">
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
+          <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
                 <Users className="h-5 w-5 text-blue-600" />
@@ -386,7 +386,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                   {yourCompany.reviewsCount >= allCompanies[0].reviewsCount ? '+' : ''}
                   {yourCompany.reviewsCount - allCompanies[0].reviewsCount}
                 </p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   {yourCompany.reviewsCount >= allCompanies[0].reviewsCount
                     ? 'reviews a mais!'
                     : 'reviews de diferença'
@@ -398,8 +398,8 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
         </Card>
 
         {/* Response Rate Gap */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-          <CardContent className="p-6">
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
+          <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
                 <Target className="h-5 w-5 text-emerald-600" />
@@ -415,7 +415,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                 }`}>
                   {yourCompany.responseRate}%
                 </p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   {yourCompany.responseRate >= categoryAverage.responseRate + 10
                     ? 'Excelente performance!'
                     : `Média: ${categoryAverage.responseRate}%`
@@ -428,13 +428,13 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       </div>
 
       {/* Strategic Recommendations */}
-      <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+      <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
         <CardHeader>
           <CardTitle className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
             <Target className="h-5 w-5 text-blue-500" />
             Recomendações Estratégicas
           </CardTitle>
-          <CardDescription className={isDark ? 'text-slate-400' : ''}>
+          <CardDescription className={isDark ? 'text-white/40' : ''}>
             Ações para melhorar seu posicionamento
           </CardDescription>
         </CardHeader>
@@ -448,7 +448,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                     <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
                       Foco em Reviews
                     </h5>
-                    <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
                       Você precisa de {allCompanies[0].reviewsCount - yourCompany.reviewsCount} reviews adicionais para alcançar o líder. 
                       Incentive clientes satisfeitos a deixarem avaliações.
                     </p>
@@ -464,7 +464,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                     <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
                       Melhore a Taxa de Resposta
                     </h5>
-                    <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
                       Responder a todas as reviews aumenta credibilidade. Você está em {yourCompany.responseRate}%, 
                       tente alcançar 95%+.
                     </p>
@@ -480,7 +480,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
                     <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
                       Foco na Qualidade
                     </h5>
-                    <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
                       Trabalhe para melhorar a experiência do cliente. Um rating acima de 4.6 coloca você 
                       no top 3 da categoria.
                     </p>

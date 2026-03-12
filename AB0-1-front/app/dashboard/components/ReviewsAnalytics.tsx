@@ -76,22 +76,22 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
       {/* Header with Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Reviews */}
-        <Card className={`relative overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`relative overflow-hidden ${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-2`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'} mb-2`}>
                   Total de Reviews
                 </p>
                 <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                   {s.totalReviews}
                 </p>
                 <div className="flex items-center mt-2 gap-1">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <TrendingUp className="h-[18px] w-[18px] text-emerald-500" />
                   <span className="text-sm font-medium text-emerald-600">
                     +{s.monthlyTrend}%
                   </span>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                     vs mês anterior
                   </span>
                 </div>
@@ -107,11 +107,11 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
         </Card>
 
         {/* Average Rating */}
-        <Card className={`relative overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`relative overflow-hidden ${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-2`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'} mb-2`}>
                   Avaliação Média
                 </p>
                 <div className="flex items-end gap-2">
@@ -122,7 +122,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
+                        className={`h-[18px] w-[18px] ${
                           i < Math.floor(stats?.averageRating || 0)
                             ? 'text-yellow-500 fill-yellow-500'
                             : 'text-gray-300'
@@ -131,7 +131,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     ))}
                   </div>
                 </div>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs mt-2 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   {s.verifiedCount} verificados ({(s.totalReviews ? ((s.verifiedCount / s.totalReviews) * 100).toFixed(0) : '0')}%)
                 </p>
               </div>
@@ -146,17 +146,17 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
         </Card>
 
         {/* Response Rate */}
-        <Card className={`relative overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`relative overflow-hidden ${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-2`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'} mb-2`}>
                   Taxa de Resposta
                 </p>
                 <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                   {s.responseRate}%
                 </p>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs mt-2 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   {Math.floor(s.totalReviews * (s.responseRate / 100))} reviews respondidos
                 </p>
               </div>
@@ -171,22 +171,22 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
         </Card>
 
         {/* Industry Rank */}
-        <Card className={`relative overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`relative overflow-hidden ${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-2`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'} mb-2`}>
                   Ranking na Categoria
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                     #{s.industryRank}
                   </p>
-                  <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <span className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                     de {s.totalCompetitors}
                   </span>
                 </div>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-xs mt-2 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   Top {Math.ceil((s.industryRank / s.totalCompetitors) * 100)}% da categoria
                 </p>
               </div>
@@ -202,14 +202,14 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
       </div>
 
       {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Rating Distribution */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
           <CardHeader>
             <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
               Distribuição de Avaliações
             </CardTitle>
-            <CardDescription className={isDark ? 'text-slate-400' : ''}>
+            <CardDescription className={isDark ? 'text-white/40' : ''}>
               Breakdown por estrelas
             </CardDescription>
           </CardHeader>
@@ -235,7 +235,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                       {item.count} reviews
                     </span>
                     <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'} min-w-[3rem] text-right`}>
@@ -245,7 +245,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                 </div>
                 <Progress 
                   value={item.percentage} 
-                  className={`h-2 ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}
+                  className={`h-2 ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}
                 />
               </div>
             ))}
@@ -253,12 +253,12 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
         </Card>
 
         {/* Competitor Comparison */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
           <CardHeader>
             <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
               Comparação com Categoria
             </CardTitle>
-            <CardDescription className={isDark ? 'text-slate-400' : ''}>
+            <CardDescription className={isDark ? 'text-white/40' : ''}>
               Benchmarking com players da categoria
             </CardDescription>
           </CardHeader>
@@ -268,13 +268,13 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
-                    <Building2 className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <Building2 className={`h-[18px] w-[18px] ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                   </div>
                   <div>
                     <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                       Sua Empresa
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                       {s.totalReviews} reviews
                     </p>
                   </div>
@@ -284,7 +284,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
+                        className={`h-[18px] w-[18px] ${
                           i < Math.floor(s.averageRating)
                             ? 'text-yellow-500 fill-yellow-500'
                             : 'text-gray-300'
@@ -299,7 +299,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
               </div>
               <Progress 
                 value={(s.averageRating / 5) * 100} 
-                className={`h-3 ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}
+                className={`h-3 ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}
               />
             </div>
 
@@ -307,14 +307,14 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}>
-                    <BarChart3 className={`h-4 w-4 ${isDark ? 'text-slate-400' : 'text-gray-600'}`} />
+                  <div className={`p-2 rounded-lg ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}>
+                    <BarChart3 className={`h-[18px] w-[18px] ${isDark ? 'text-white/40' : 'text-gray-600'}`} />
                   </div>
                   <div>
                     <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                       Média da Categoria
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                       {s.totalCompetitors} empresas
                     </p>
                   </div>
@@ -324,7 +324,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
+                        className={`h-[18px] w-[18px] ${
                           i < Math.floor(s.categoryAverage)
                             ? 'text-gray-400 fill-gray-400'
                             : 'text-gray-300'
@@ -332,21 +332,21 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       />
                     ))}
                   </div>
-                  <span className={`font-bold ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                  <span className={`font-bold ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
                     {s.categoryAverage.toFixed(1)}
                   </span>
                 </div>
               </div>
               <Progress 
                 value={(s.categoryAverage / 5) * 100} 
-                className={`h-3 ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}
+                className={`h-3 ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}
               />
             </div>
 
             {/* Performance Badge */}
             <div className={`p-4 rounded-xl ${isDark ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-slate-800' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
               <div className="flex items-center gap-3">
-                <Award className={`h-6 w-6 ${s.averageRating > s.categoryAverage ? 'text-yellow-500' : isDark ? 'text-slate-400' : 'text-gray-400'}`} />
+                <Award className={`h-6 w-6 ${s.averageRating > s.categoryAverage ? 'text-yellow-500' : isDark ? 'text-white/40' : 'text-gray-400'}`} />
                 <div>
                   <p className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
                     {s.averageRating > s.categoryAverage 
@@ -354,7 +354,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                       : `${((s.categoryAverage - s.averageRating) / s.categoryAverage * 100).toFixed(1)}% abaixo da média`
                     }
                   </p>
-                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                     {s.averageRating > s.categoryAverage
                       ? 'Você está performando melhor que a maioria!'
                       : 'Há espaço para melhorias'
@@ -368,13 +368,13 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
       </div>
 
       {/* Insights and Recommendations */}
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+      <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
         <CardHeader>
           <CardTitle className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
             <Target className="h-5 w-5 text-blue-500" />
             Insights e Recomendações
           </CardTitle>
-          <CardDescription className={isDark ? 'text-slate-400' : ''}>
+          <CardDescription className={isDark ? 'text-white/40' : ''}>
             Baseado na análise dos seus reviews
           </CardDescription>
         </CardHeader>
@@ -438,7 +438,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'light' }: Rev
                     <h4 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
                       {insight.title}
                     </h4>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                       {insight.description}
                     </p>
                   </div>

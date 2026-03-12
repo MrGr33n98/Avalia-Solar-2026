@@ -103,17 +103,17 @@ function SidebarContent({
         key={item.id}
         variant="ghost"
         className={cn(
-          'w-full justify-start h-10 px-3 rounded-lg transition-all',
+          'w-full justify-start h-10 px-3 rounded-lg transition-all border-[0.5px] border-transparent',
           isCollapsed ? 'justify-center px-0' : 'justify-start',
           isActive
-            ? 'bg-white text-blue-700 shadow-sm border border-blue-100'
-            : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+            ? 'bg-brand-blue text-white border-white/20'
+            : 'text-white/60 hover:bg-white/10 hover:text-white hover:border-white/10'
         )}
         onClick={() => onTabChange(item.id)}
         aria-label={item.label}
         title={item.label}
       >
-        <Icon className={cn('h-4 w-4', isActive ? 'text-blue-600' : 'text-gray-500')} />
+        <Icon className={cn('h-[18px] w-[18px]', isActive ? 'text-white' : 'text-white/50')} />
         {!isCollapsed && <span className="ml-3 text-sm font-medium">{item.label}</span>}
       </Button>
     );
@@ -131,17 +131,17 @@ function SidebarContent({
         type="button"
         onClick={() => onTabChange(child.id)}
         className={cn(
-          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors border-[0.5px] border-transparent',
           isActive
-            ? 'bg-white text-blue-700 border border-blue-100 shadow-sm'
-            : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+            ? 'bg-brand-blue/20 text-white border-brand-blue/40'
+            : 'text-white/50 hover:bg-white/5 hover:text-white'
         )}
         aria-label={child.label}
         title={child.label}
       >
         <span className={cn('ml-7 flex-1 text-left', isCollapsed && 'ml-0')}>{child.label}</span>
         {badgeValue !== null && (
-          <Badge className="h-5 min-w-[20px] justify-center px-1.5 text-[10px] bg-blue-600 text-white">
+          <Badge className="h-5 min-w-[20px] justify-center px-1.5 text-[10px] bg-brand-blue text-white border-none">
             {badgeValue}
           </Badge>
         )}
@@ -156,38 +156,38 @@ function SidebarContent({
     return (
       <AccordionTrigger
         className={cn(
-          'px-3 py-2 rounded-lg hover:no-underline transition-all',
+          'px-3 py-2 rounded-lg hover:no-underline transition-all border-[0.5px] border-transparent',
           isCollapsed ? 'justify-center px-0' : 'justify-between',
-          groupIsActive ? 'bg-white shadow-sm border border-blue-100' : 'hover:bg-white/70'
+          groupIsActive ? 'bg-white/5 text-white border-white/10' : 'text-white/60 hover:bg-white/10 hover:text-white'
         )}
         aria-label={group.label}
         title={group.label}
       >
         <div className={cn('flex items-center', isCollapsed ? 'justify-center w-full' : '')}>
-          <Icon className={cn('h-4 w-4', groupIsActive ? 'text-blue-600' : 'text-gray-500')} />
-          {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-900">{group.label}</span>}
+          <Icon className={cn('h-[18px] w-[18px]', groupIsActive ? 'text-brand-cyan' : 'text-white/50')} />
+          {!isCollapsed && <span className="ml-3 text-sm font-medium">{group.label}</span>}
         </div>
       </AccordionTrigger>
     );
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#f5f5f5]', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
-      <div className={cn('h-16 flex items-center border-b border-gray-200', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
+    <div className={cn('flex flex-col h-full bg-[#002B4D]', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
+      <div className={cn('h-16 flex items-center border-b border-white/10', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
         <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
-          <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shadow-sm">
+          <div className="h-10 w-10 rounded-xl bg-brand-blue flex items-center justify-center border-[0.5px] border-white/20 shadow-lg shadow-brand-blue/20">
             <Home className="h-5 w-5 text-white" />
           </div>
           {!isCollapsed && (
             <div className="leading-tight">
-              <div className="text-sm font-semibold text-gray-900">Avaliasolar</div>
-              <div className="text-xs text-gray-500 font-medium">Advanced</div>
+              <div className="text-sm font-bold text-white tracking-tight">Avaliasolar</div>
+              <div className="text-[10px] text-brand-cyan font-bold uppercase tracking-wider">Precision Energy</div>
             </div>
           )}
         </div>
       </div>
 
-      <nav className={cn('flex-1 overflow-y-auto py-4 space-y-2', isCollapsed ? 'px-2' : 'px-3')}>
+      <nav className={cn('flex-1 overflow-y-auto py-6 space-y-2', isCollapsed ? 'px-2' : 'px-4')}>
         <div className="space-y-1">
           {leafItems.slice(0, 1).map(renderLeafButton)}
         </div>
@@ -204,16 +204,16 @@ function SidebarContent({
                   type="button"
                   variant="ghost"
                   className={cn(
-                    'w-full justify-center h-10 px-0 rounded-lg transition-all',
+                    'w-full justify-center h-10 px-0 rounded-lg transition-all border-[0.5px] border-transparent',
                     groupIsActive
-                      ? 'bg-white text-blue-700 shadow-sm border border-blue-100'
-                      : 'text-gray-700 hover:bg-white/70 hover:text-gray-900'
+                      ? 'bg-brand-blue text-white border-white/20'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
                   )}
                   onClick={() => target && onTabChange(target)}
                   aria-label={group.label}
                   title={group.label}
                 >
-                  <Icon className={cn('h-4 w-4', groupIsActive ? 'text-blue-600' : 'text-gray-500')} />
+                  <Icon className={cn('h-[18px] w-[18px]', groupIsActive ? 'text-white' : 'text-white/50')} />
                 </Button>
               );
             })}
@@ -240,22 +240,22 @@ function SidebarContent({
         </div>
       </nav>
 
-      <div className={cn('border-t border-gray-200', isCollapsed ? 'p-2' : 'p-3')}>
+      <div className={cn('border-t border-white/10', isCollapsed ? 'p-2' : 'p-4')}>
         <Button
           type="button"
           variant="ghost"
           onClick={onToggleCollapse}
           className={cn(
-            'w-full h-10 rounded-lg text-gray-700 hover:bg-white/70 hover:text-gray-900',
+            'w-full h-10 rounded-lg text-white/60 hover:bg-white/10 hover:text-white border-[0.5px] border-transparent hover:border-white/10',
             isCollapsed ? 'justify-center px-0' : 'justify-start px-3'
           )}
           aria-label="Recolher menu"
           title="Recolher menu"
         >
           {isCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-gray-600" />
+            <ChevronRight className="h-[18px] w-[18px] text-white/60" />
           ) : (
-            <ChevronLeft className="h-4 w-4 text-gray-600" />
+            <ChevronLeft className="h-[18px] w-[18px] text-white/60" />
           )}
           {!isCollapsed && <span className="ml-3 text-sm font-medium">Recolher menu</span>}
         </Button>
@@ -311,7 +311,7 @@ export default function EnterpriseSidebar({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent 
           side="left" 
-          className="w-[280px] p-0 bg-[#f5f5f5] border-r border-gray-200"
+          className="w-[280px] p-0 bg-[#002B4D] border-r border-white/10"
         >
           <SidebarContent 
             activeTab={activeTab} 
@@ -326,7 +326,7 @@ export default function EnterpriseSidebar({
       {/* Desktop Fixed Sidebar */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-gray-200 bg-[#f5f5f5] transition-[width] duration-200',
+          'hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-white/10 bg-[#002B4D] transition-[width] duration-200',
           isCollapsed ? 'w-[80px]' : 'w-[280px]'
         )}
       >
@@ -341,3 +341,4 @@ export default function EnterpriseSidebar({
     </>
   );
 }
+

@@ -42,7 +42,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl text-xs border border-slate-700">
+        <div className="bg-[#002B4D] text-white p-3 rounded-lg shadow-none text-xs border border-white/10">
           <p className="font-bold mb-1">{label}</p>
           <p className="text-emerald-400">Posição: {payload[0].value}º</p>
           <p className="text-blue-400">Leads: {payload[1].value}</p>
@@ -68,7 +68,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Score Ranking</p>
@@ -84,7 +84,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         </Card>
 
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Leads (Visão Geral)</p>
@@ -100,7 +100,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         </Card>
 
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Reputação (Trust)</p>
@@ -118,7 +118,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         </Card>
 
         <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">Visualizações de Perfil</p>
@@ -134,9 +134,9 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Gráfico de Evolução */}
-        <Card className="border-slate-200 shadow-sm">
+        <Card className="border-slate-200 shadow-none">
           <CardHeader>
             <CardTitle className="text-lg">Evolução de Leads e CTAs</CardTitle>
             <CardDescription>Acompanhe a geração de oportunidades nas últimas semanas.</CardDescription>
@@ -159,7 +159,7 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
         </Card>
 
         {/* Magic Quadrant */}
-        <Card className="border-slate-200 shadow-sm">
+        <Card className="border-slate-200 shadow-none">
           <CardHeader>
             <CardTitle className="text-lg">Posicionamento de Mercado (Quadrante Mágico)</CardTitle>
             <CardDescription>Sua posição relativa à concorrência na categoria principal.</CardDescription>
@@ -168,11 +168,11 @@ export default function RankingPerformanceTab({ company, stats }: Props) {
             {quadrantData.length > 0 ? (
               <MagicQuadrant data={quadrantData} />
             ) : (
-              <div className="h-[300px] flex items-center justify-center text-slate-500 bg-slate-50 rounded-lg">
+              <div className="h-[300px] flex items-center justify-center text-slate-500 bg-[#002B4D] rounded-lg">
                 Sem dados suficientes de concorrentes para gerar o quadrante ainda.
               </div>
             )}
-            <div className="mt-4 text-xs text-slate-500 text-center bg-slate-50 p-3 rounded-lg">
+            <div className="mt-4 text-xs text-slate-500 text-center bg-[#002B4D] p-3 rounded-lg">
               <span className="font-bold text-slate-700">Dica:</span> Aumente seu número de avaliações 5 estrelas para mover-se mais à direita (Líderes). Responda aos leads rapidamente para subir (Execução).
             </div>
           </CardContent>

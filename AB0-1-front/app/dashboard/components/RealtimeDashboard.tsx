@@ -13,7 +13,7 @@ export default function RealtimeDashboard({ companyId }: { companyId: number }) 
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">Status: {status}</div>
+      <div className="text-sm text-white/40">Status: {status}</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <RealtimeKPICard title="Eventos" value={kpis.events_count} />
         <RealtimeKPICard title="Orçamentos" value={kpis.quote_clicks} />
@@ -63,7 +63,7 @@ export default function RealtimeDashboard({ companyId }: { companyId: number }) 
         <ScrollArea className="h-48">
           <ul className="space-y-1">
             {series.events.slice(-20).map((p, i) => (
-              <li key={i} className="text-xs text-muted-foreground flex justify-between">
+              <li key={i} className="text-xs text-white/40 flex justify-between">
                 <span>{new Date(p.t).toLocaleString()}</span>
                 <span>+{p.value}</span>
               </li>

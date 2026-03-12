@@ -82,7 +82,7 @@ export default function DateRangePicker({
     <div className={`flex items-center gap-2 ${className}`}>
       <Select value={value} onValueChange={handlePresetChange}>
         <SelectTrigger className="w-[200px]">
-          <Calendar className="h-4 w-4 mr-2" />
+          <Calendar className="h-[18px] w-[18px] mr-2" />
           <SelectValue>{getDisplayValue()}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -101,7 +101,7 @@ export default function DateRangePicker({
             size="sm"
             className={value === 'custom' ? '' : 'hidden'}
           >
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-[18px] w-[18px]" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

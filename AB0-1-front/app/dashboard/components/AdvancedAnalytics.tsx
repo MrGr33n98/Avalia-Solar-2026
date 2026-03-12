@@ -135,10 +135,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
     if (active && payload && payload.length) {
       return (
         <div className={cn(
-          'px-3 py-2 rounded-lg shadow-lg border',
-          isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
+          'px-3 py-2 rounded-lg shadow-none border',
+          isDark ? 'bg-[#002B4D] border-white/10' : 'bg-[#002B4D] border-white/10'
         )}>
-          <p className={cn('text-xs font-medium mb-1', isDark ? 'text-slate-200' : 'text-gray-900')}>
+          <p className={cn('text-xs font-medium mb-1', isDark ? 'text-white/80' : 'text-white')}>
             {label}
           </p>
           {payload.map((entry: any, index: number) => (
@@ -169,10 +169,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
       <div className="space-y-4">
         <div className="flex items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-white' : 'text-gray-900')}>
+            <div className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-white' : 'text-white')}>
               Analytics Histórico
             </div>
-            <div className={cn('text-xs', isDark ? 'text-slate-400' : 'text-gray-600')}>
+            <div className={cn('text-xs', isDark ? 'text-white/40' : 'text-gray-600')}>
               Análise detalhada de performance e tendências
             </div>
           </div>
@@ -199,13 +199,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
         <div>
           <h3 className={cn(
             'text-lg font-semibold tracking-tight',
-            isDark ? 'text-white' : 'text-gray-900'
+            isDark ? 'text-white' : 'text-white'
           )}>
             Analytics Histórico
           </h3>
           <p className={cn(
             'text-xs mt-0.5',
-            isDark ? 'text-slate-400' : 'text-gray-600'
+            isDark ? 'text-white/40' : 'text-gray-600'
           )}>
             Análise detalhada de performance e tendências
           </p>
@@ -215,7 +215,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className={cn(
               'w-[130px] h-8 text-xs',
-              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+              isDark ? 'bg-[#002B4D] border-white/10' : 'bg-[#002B4D] border-white/10'
             )}>
               <Calendar className="h-3 w-3 mr-1" />
               <SelectValue />
@@ -232,7 +232,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             size="sm"
             className={cn(
               'h-8 text-xs gap-1.5',
-              isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-gray-200 hover:bg-gray-50'
+              isDark ? 'border-white/10 hover:bg-[#002B4D]' : 'border-white/10 hover:bg-[#002B4D]'
             )}
           >
             <Download className="h-3 w-3" />
@@ -244,7 +244,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
       {/* Main Chart */}
       <Card className={cn(
         'border',
-        isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
+        isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
       )}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -253,18 +253,18 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                 'p-2 rounded-lg',
                 isDark ? 'bg-blue-500/10' : 'bg-blue-50'
               )}>
-                <currentConfig.icon className="h-4 w-4 text-blue-500" />
+                <currentConfig.icon className="h-[18px] w-[18px] text-blue-500" />
               </div>
               <div>
                 <CardTitle className={cn(
                   'text-sm font-medium',
-                  isDark ? 'text-slate-200' : 'text-gray-900'
+                  isDark ? 'text-white/80' : 'text-white'
                 )}>
                   {currentConfig.label} - Tendência
                 </CardTitle>
                 <p className={cn(
                   'text-xs mt-0.5',
-                  isDark ? 'text-slate-400' : 'text-gray-600'
+                  isDark ? 'text-white/40' : 'text-gray-600'
                 )}>
                   Evolução ao longo do tempo
                 </p>
@@ -281,11 +281,11 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                     'px-2 py-1 rounded text-xs font-medium transition-all',
                     selectedMetric === key
                       ? isDark
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'bg-white text-gray-900 shadow-sm'
+                        ? 'bg-[#002B4D] text-white shadow-none'
+                        : 'bg-[#002B4D] text-white shadow-none'
                       : isDark
-                        ? 'text-slate-400 hover:text-slate-300'
-                        : 'text-gray-600 hover:text-gray-900'
+                        ? 'text-white/40 hover:text-white/70'
+                        : 'text-gray-600 hover:text-white'
                   )}
                 >
                   {config.label}
@@ -339,18 +339,18 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
         {/* Conversion Funnel */}
         <Card className={cn(
           'border',
-          isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
+          isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
         )}>
           <CardHeader className="pb-2">
             <CardTitle className={cn(
               'text-sm font-medium',
-              isDark ? 'text-slate-200' : 'text-gray-900'
+              isDark ? 'text-white/80' : 'text-white'
             )}>
               Funil de Conversão
             </CardTitle>
             <p className={cn(
               'text-xs',
-              isDark ? 'text-slate-400' : 'text-gray-600'
+              isDark ? 'text-white/40' : 'text-gray-600'
             )}>
               Jornada do visitante ao lead
             </p>
@@ -366,11 +366,11 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                   className="space-y-1.5"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className={isDark ? 'text-slate-300' : 'text-gray-700'}>
+                    <span className={isDark ? 'text-white/70' : 'text-white/60'}>
                       {item.name}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                      <span className={isDark ? 'text-white/40' : 'text-gray-600'}>
                         {item.value.toLocaleString('pt-BR')}
                       </span>
                       <span className="font-medium" style={{ color: item.color }}>
@@ -397,7 +397,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
               isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'
             )}>
               <div className="flex items-start gap-2">
-                <TrendingUp className="h-4 w-4 text-emerald-500 mt-0.5" />
+                <TrendingUp className="h-[18px] w-[18px] text-emerald-500 mt-0.5" />
                 <div>
                   <p className={cn(
                     'text-xs font-medium',
@@ -420,18 +420,18 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
         {/* Traffic Sources */}
         <Card className={cn(
           'border',
-          isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
+          isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
         )}>
           <CardHeader className="pb-2">
             <CardTitle className={cn(
               'text-sm font-medium',
-              isDark ? 'text-slate-200' : 'text-gray-900'
+              isDark ? 'text-white/80' : 'text-white'
             )}>
               Fontes de Tráfego
             </CardTitle>
             <p className={cn(
               'text-xs',
-              isDark ? 'text-slate-400' : 'text-gray-600'
+              isDark ? 'text-white/40' : 'text-gray-600'
             )}>
               De onde vêm seus visitantes
             </p>
@@ -466,12 +466,12 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className={isDark ? 'text-slate-300' : 'text-gray-700'}>
+                      <span className={isDark ? 'text-white/70' : 'text-white/60'}>
                         {item.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                      <span className={isDark ? 'text-white/40' : 'text-gray-600'}>
                         {item.value.toLocaleString('pt-BR')}
                       </span>
                       <span className="font-medium w-10 text-right" style={{ color: item.color }}>
@@ -489,7 +489,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
               isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'
             )}>
               <div className="flex items-start gap-2">
-                <Users className="h-4 w-4 text-blue-500 mt-0.5" />
+                <Users className="h-[18px] w-[18px] text-blue-500 mt-0.5" />
                 <div>
                   <p className={cn(
                     'text-xs font-medium',
@@ -513,18 +513,18 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
       {topPages.length > 0 && (
         <Card className={cn(
           'border',
-          isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-gray-200'
+          isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
         )}>
           <CardHeader className="pb-2">
             <CardTitle className={cn(
               'text-sm font-medium',
-              isDark ? 'text-slate-200' : 'text-gray-900'
+              isDark ? 'text-white/80' : 'text-white'
             )}>
               Páginas Mais Visitadas
             </CardTitle>
             <p className={cn(
               'text-xs',
-              isDark ? 'text-slate-400' : 'text-gray-600'
+              isDark ? 'text-white/40' : 'text-gray-600'
             )}>
               Performance por página
             </p>
@@ -535,29 +535,29 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                 <thead>
                   <tr className={cn(
                     'border-b text-xs',
-                    isDark ? 'border-slate-800' : 'border-gray-200'
+                    isDark ? 'border-slate-800' : 'border-white/10'
                   )}>
                     <th className={cn(
                       'text-left py-2 font-medium',
-                      isDark ? 'text-slate-400' : 'text-gray-600'
+                      isDark ? 'text-white/40' : 'text-gray-600'
                     )}>
                       Página
                     </th>
                     <th className={cn(
                       'text-right py-2 font-medium',
-                      isDark ? 'text-slate-400' : 'text-gray-600'
+                      isDark ? 'text-white/40' : 'text-gray-600'
                     )}>
                       Visualizações
                     </th>
                     <th className={cn(
                       'text-right py-2 font-medium',
-                      isDark ? 'text-slate-400' : 'text-gray-600'
+                      isDark ? 'text-white/40' : 'text-gray-600'
                     )}>
                       Tempo Médio
                     </th>
                     <th className={cn(
                       'text-right py-2 font-medium',
-                      isDark ? 'text-slate-400' : 'text-gray-600'
+                      isDark ? 'text-white/40' : 'text-gray-600'
                     )}>
                       Taxa Rejeição
                     </th>
@@ -572,29 +572,29 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                       transition={{ delay: index * 0.05 }}
                       className={cn(
                         'border-b text-xs',
-                        isDark ? 'border-slate-800/50' : 'border-gray-100'
+                        isDark ? 'border-slate-800/50' : 'border-white/10'
                       )}
                     >
                       <td className={cn(
                         'py-3 font-medium',
-                        isDark ? 'text-slate-300' : 'text-gray-900'
+                        isDark ? 'text-white/70' : 'text-white'
                       )}>
                         {page.page}
                       </td>
                       <td className={cn(
                         'text-right',
-                        isDark ? 'text-slate-400' : 'text-gray-600'
+                        isDark ? 'text-white/40' : 'text-gray-600'
                       )}>
                         {page.views.toLocaleString('pt-BR')}
                       </td>
                       <td className={cn(
                         'text-right',
-                        isDark ? 'text-slate-400' : 'text-gray-600'
+                        isDark ? 'text-white/40' : 'text-gray-600'
                       )}>
                         {page.avgTime}
                       </td>
                       <td className="text-right">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium bg-muted text-white/40">
                           {page.bounceRate}
                         </span>
                       </td>

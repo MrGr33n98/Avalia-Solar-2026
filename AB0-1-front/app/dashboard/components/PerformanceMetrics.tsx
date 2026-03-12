@@ -172,8 +172,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-              <CardContent className="p-6">
+            <Card key={i} className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
+              <CardContent className="p-4">
                 <Skeleton className="h-12 w-12 rounded-xl mb-4" />
                 <Skeleton className="h-4 w-24 mb-2" />
                 <Skeleton className="h-8 w-32" />
@@ -188,7 +188,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
   if (error) {
     return (
       <Card className={`${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'}`}>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
@@ -215,7 +215,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
           <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
             Métricas de Performance
           </h2>
-          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
             Acompanhe o desempenho do seu perfil
           </p>
         </div>
@@ -236,7 +236,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
             onClick={() => window.print()}
             className="print-button"
           >
-            <Printer className="h-4 w-4 mr-2" />
+            <Printer className="h-[18px] w-[18px] mr-2" />
             Imprimir
           </Button>
         </div>
@@ -247,12 +247,12 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
           <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
             Métricas de Performance
           </h3>
-          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
             Acompanhe o engajamento e interações com seu perfil
           </p>
         </div>
         <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
-          <TabsList className={isDark ? 'bg-slate-800 border-slate-700' : ''}>
+          <TabsList className={isDark ? 'bg-[#002B4D] border-white/10' : ''}>
             <TabsTrigger value="7d">7 dias</TabsTrigger>
             <TabsTrigger value="30d">30 dias</TabsTrigger>
             <TabsTrigger value="90d">90 dias</TabsTrigger>
@@ -263,8 +263,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
       {/* Main Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Profile Views */}
-        <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between mb-4">
               <div className={`p-3 rounded-xl ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
                 <Eye className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -274,7 +274,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
               </Badge>
             </div>
             <div>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+              <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                 Visualizações
               </p>
               <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
@@ -282,13 +282,13 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
               </p>
               <div className="mt-3 pt-3 border-t border-border">
                 <div className="flex justify-between text-xs">
-                  <span className={isDark ? 'text-slate-400' : 'text-muted-foreground'}>Únicos</span>
+                  <span className={isDark ? 'text-white/40' : 'text-white/40'}>Únicos</span>
                   <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                     {metrics.profileViews.unique.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs mt-1">
-                  <span className={isDark ? 'text-slate-400' : 'text-muted-foreground'}>Retornando</span>
+                  <span className={isDark ? 'text-white/40' : 'text-white/40'}>Retornando</span>
                   <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                     {metrics.profileViews.returning.toLocaleString()}
                   </span>
@@ -299,8 +299,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </Card>
 
         {/* Total CTA Clicks */}
-        <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             <div className="flex items-start justify-between mb-4">
               <div className={`p-3 rounded-xl ${isDark ? 'bg-purple-900/20' : 'bg-purple-50'}`}>
                 <MousePointerClick className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
@@ -310,13 +310,13 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
               </Badge>
             </div>
             <div>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+              <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                 Cliques em CTAs
               </p>
               <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                 {metrics.ctaClicks.total.toLocaleString()}
               </p>
-              <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+              <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                 Taxa de conversão: {((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}%
               </p>
             </div>
@@ -324,8 +324,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </Card>
 
         {/* Avg Time on Page */}
-        <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             {metrics.engagement ? (
               <>
                 <div className="flex items-start justify-between mb-4">
@@ -334,13 +334,13 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                   </div>
                 </div>
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                  <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                     Tempo Médio
                   </p>
                   <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                     {formatTime(metrics.engagement.avgTimeOnPage)}
                   </p>
-                  <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                     {metrics.engagement.pagesPerSession.toFixed(1)} páginas/sessão
                   </p>
                 </div>
@@ -348,10 +348,10 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
             ) : (
               <div className="text-center py-8">
                 <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   Dados de Engajamento
                 </p>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}>
+                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-white/40'}`}>
                   Configure GA4 para visualizar
                 </p>
               </div>
@@ -360,8 +360,8 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </Card>
 
         {/* Bounce Rate */}
-        <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <CardContent className="p-6">
+        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
+          <CardContent className="p-4">
             {metrics.engagement ? (
               <>
                 <div className="flex items-start justify-between mb-4">
@@ -370,13 +370,13 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                   </div>
                 </div>
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+                  <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
                     Taxa de Rejeição
                   </p>
                   <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                     {metrics.engagement.bounceRate}%
                   </p>
-                  <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                     {metrics.engagement.bounceRate < 40 ? 'Excelente' : metrics.engagement.bounceRate < 60 ? 'Bom' : 'Pode melhorar'}
                   </p>
                 </div>
@@ -384,10 +384,10 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
             ) : (
               <div className="text-center py-8">
                 <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                   Taxa de Rejeição
                 </p>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}>
+                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-white/40'}`}>
                   Configure GA4 para visualizar
                 </p>
               </div>
@@ -397,14 +397,14 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
       </div>
 
       {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* CTA Breakdown */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
           <CardHeader>
             <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
               Cliques por CTA
             </CardTitle>
-            <CardDescription className={isDark ? 'text-slate-400' : ''}>
+            <CardDescription className={isDark ? 'text-white/40' : ''}>
               Distribuição de interações por tipo
             </CardDescription>
           </CardHeader>
@@ -425,7 +425,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                         cta.type === 'phone' ? isDark ? 'bg-purple-900/20' : 'bg-purple-50' :
                         isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'
                       }`}>
-                        <Icon className={`h-4 w-4 ${
+                        <Icon className={`h-[18px] w-[18px] ${
                           cta.type === 'whatsapp' ? 'text-green-600' :
                           cta.type === 'email' ? 'text-blue-600' :
                           cta.type === 'phone' ? 'text-purple-600' :
@@ -437,7 +437,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                      <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                         {cta.count} cliques
                       </span>
                       <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'} min-w-[3rem] text-right`}>
@@ -445,7 +445,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                       </span>
                     </div>
                   </div>
-                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}>
                     <div
                       className={`h-full transition-all duration-500 ${
                         cta.type === 'whatsapp' ? 'bg-green-500' :
@@ -463,17 +463,17 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </Card>
 
         {/* Traffic Sources */}
-        <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
+        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
           <CardHeader>
             <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
               Fontes de Tráfego
             </CardTitle>
             {(!metrics.sources || metrics.sources.length === 0) && (
-              <CardDescription className={isDark ? 'text-slate-400' : ''}>
+              <CardDescription className={isDark ? 'text-white/40' : ''}>
                 Dados indisponíveis - implemente UTM tracking
               </CardDescription>
             )}
-            <CardDescription className={isDark ? 'text-slate-400' : ''}>
+            <CardDescription className={isDark ? 'text-white/40' : ''}>
               De onde vêm seus visitantes
             </CardDescription>
           </CardHeader>
@@ -492,14 +492,14 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${color.bg}`}>
-                        <Share2 className={`h-4 w-4 ${color.text}`} />
+                        <Share2 className={`h-[18px] w-[18px] ${color.text}`} />
                       </div>
                       <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                         {source.source}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                      <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
                         {source.visits.toLocaleString()} visitas
                       </span>
                       <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'} min-w-[3rem] text-right`}>
@@ -507,7 +507,7 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
                       </span>
                     </div>
                   </div>
-                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}>
                     <div
                       className={`h-full transition-all duration-500 ${color.bar}`}
                       style={{ width: `${source.percentage}%` }}
@@ -523,42 +523,42 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className={`${isDark ? 'bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-slate-800' : 'bg-gradient-to-br from-blue-50 to-purple-50'}`}>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <TrendingUp className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
               <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
                 Crescimento
               </h4>
             </div>
-            <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
               Suas visualizações cresceram <span className="font-bold text-blue-600">+{metrics.profileViews.trend}%</span> nos últimos {timeRange === '7d' ? '7 dias' : timeRange === '30d' ? '30 dias' : '90 dias'}
             </p>
           </CardContent>
         </Card>
 
         <Card className={`${isDark ? 'bg-gradient-to-br from-emerald-900/20 to-green-900/20 border-slate-800' : 'bg-gradient-to-br from-emerald-50 to-green-50'}`}>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <Users className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
               <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
                 Engajamento
               </h4>
             </div>
-            <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
               Tempo médio de <span className="font-bold text-emerald-600">{formatTime(metrics.engagement.avgTimeOnPage)}</span> indica alto interesse no seu perfil
             </p>
           </CardContent>
         </Card>
 
         <Card className={`${isDark ? 'bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-slate-800' : 'bg-gradient-to-br from-purple-50 to-pink-50'}`}>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <MousePointerClick className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
               <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
                 Conversão
               </h4>
             </div>
-            <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-muted-foreground'}`}>
+            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
               <span className="font-bold text-purple-600">{((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}%</span> dos visitantes clicam em algum CTA
             </p>
           </CardContent>

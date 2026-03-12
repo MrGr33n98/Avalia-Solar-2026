@@ -15,7 +15,7 @@ interface TrustWidgetDashboardProps {
 
 export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardProps) {
   const [copied, setCopied] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [size, setSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showRank, setShowRank] = useState(true);
   
@@ -57,8 +57,8 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Marketing Externo (Widget)</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2 tracking-tight">Marketing Externo (Widget)</h2>
+          <p className="text-sm text-white/40">
             Exiba sua reputação e sua posição no Ranking do AvaliaSolar diretamente no seu site.
           </p>
         </div>
@@ -66,87 +66,121 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuração do Widget Dinâmico</CardTitle>
-              <CardDescription>
+          <Card className="bg-[#002B4D] border-white/10 shadow-none">
+            <CardHeader className="p-4 border-b border-white/5">
+              <CardTitle className="text-white text-lg font-bold">Configuração do Widget Dinâmico</CardTitle>
+              <CardDescription className="text-white/40">
                 Personalize a aparência do selo para combinar com o design do seu site.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Cor de Fundo (Tema)</Label>
+            <CardContent className="space-y-6 p-4">
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Cor de Fundo (Tema)</Label>
                 <div className="flex gap-2">
                   <Button 
                     variant={theme === 'light' ? 'default' : 'outline'} 
                     onClick={() => setTheme('light')}
-                    className="flex-1"
+                    className={cn(
+                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
+                      theme === 'light' ? "bg-white text-[#002B4D]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                    )}
                   >
                     Claro
                   </Button>
                   <Button 
                     variant={theme === 'dark' ? 'default' : 'outline'} 
                     onClick={() => setTheme('dark')}
-                    className="flex-1"
+                    className={cn(
+                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
+                      theme === 'dark' ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                    )}
                   >
                     Escuro
                   </Button>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Tamanho</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Tamanho</Label>
                 <div className="flex gap-2">
-                  <Button variant={size === 'small' ? 'default' : 'outline'} onClick={() => setSize('small')} className="flex-1 text-xs">Pequeno</Button>
-                  <Button variant={size === 'medium' ? 'default' : 'outline'} onClick={() => setSize('medium')} className="flex-1 text-sm">Médio</Button>
-                  <Button variant={size === 'large' ? 'default' : 'outline'} onClick={() => setSize('large')} className="flex-1 text-base">Grande</Button>
+                  {(['small', 'medium', 'large'] as const).map((s) => (
+                    <Button 
+                      key={s}
+                      variant={size === s ? 'default' : 'outline'} 
+                      onClick={() => setSize(s)} 
+                      className={cn(
+                        "flex-1 h-9 text-[10px] font-bold uppercase tracking-wider transition-all border-white/10",
+                        size === s ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      )}
+                    >
+                      {s === 'small' ? 'Pequeno' : s === 'medium' ? 'Médio' : 'Grande'}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Exibir Posição no Ranking?</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Exibir Posição no Ranking?</Label>
                 <div className="flex gap-2">
-                  <Button variant={showRank ? 'default' : 'outline'} onClick={() => setShowRank(true)} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"><Trophy className="w-4 h-4 mr-2"/> Sim, exibir troféu</Button>
-                  <Button variant={!showRank ? 'default' : 'outline'} onClick={() => setShowRank(false)} className="flex-1">Apenas notas (Padrão)</Button>
+                  <Button 
+                    variant={showRank ? 'default' : 'outline'} 
+                    onClick={() => setShowRank(true)} 
+                    className={cn(
+                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
+                      showRank ? "bg-brand-yellow text-[#002B4D]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                    )}
+                  >
+                    <Trophy className="w-3.5 h-3.5 mr-2"/> Sim, exibir troféu
+                  </Button>
+                  <Button 
+                    variant={!showRank ? 'default' : 'outline'} 
+                    onClick={() => setShowRank(false)} 
+                    className={cn(
+                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
+                      !showRank ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                    )}
+                  >
+                    Apenas notas (Padrão)
+                  </Button>
                 </div>
               </div>
 
-              <div className="pt-4 space-y-2">
-                <Label>Código para Incorporação (HTML)</Label>
-                <div className="relative">
-                  <pre className="p-4 bg-slate-900 text-slate-300 rounded-xl text-[11px] overflow-x-auto border border-slate-800 leading-relaxed font-mono">
+              <div className="pt-4 space-y-3">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Código para Incorporação (HTML)</Label>
+                <div className="relative group">
+                  <pre className="p-4 bg-black/40 text-brand-cyan rounded-xl text-[11px] overflow-x-auto border-[0.5px] border-white/10 leading-relaxed font-mono">
                     {snippet}
                   </pre>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="absolute top-2 right-2 text-slate-400 hover:text-white hover:bg-slate-800"
+                    className="absolute top-2 right-2 text-white/30 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
                     onClick={handleCopy}
                   >
-                    {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    {copied ? <Check className="h-4 w-4 text-brand-green" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Copie e cole este código antes do fechamento da tag <code>&lt;/body&gt;</code> do seu site, ou dentro de uma div específica no seu rodapé.
+                <p className="text-[10px] text-white/30 mt-2 font-medium">
+                  Copie e cole este código antes do fechamento da tag <code className="text-white/50">&lt;/body&gt;</code> do seu site.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Instruções de Instalação</CardTitle>
+          <Card className="bg-[#002B4D] border-white/10 shadow-none">
+            <CardHeader className="p-4 border-b border-white/5">
+              <CardTitle className="text-white text-base font-bold">Instruções de Instalação</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+            <CardContent className="space-y-4 p-4">
+              <ol className="list-decimal list-inside space-y-2 text-white/50 text-xs font-medium">
                 <li>Escolha o tema que melhor combina com seu site.</li>
                 <li>Copie o código acima clicando no ícone de cópia.</li>
                 <li>No seu site, localize onde deseja exibir o selo.</li>
                 <li>Cole o código HTML e salve a página.</li>
               </ol>
-              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg flex gap-3">
-                <ShieldCheck className="h-5 w-5 text-blue-600 mt-0.5" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+              <div className="bg-brand-blue/10 border-[0.5px] border-brand-blue/20 p-4 rounded-xl flex gap-3">
+                <ShieldCheck className="h-5 w-5 text-brand-cyan mt-0.5" />
+                <p className="text-[11px] font-medium text-brand-cyan/80 leading-relaxed">
                   O widget é carregado de forma assíncrona para garantir que não afete a velocidade de carregamento do seu site.
                 </p>
               </div>
@@ -155,14 +189,14 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
         </div>
 
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-blue-100 shadow-lg shadow-blue-900/5 sticky top-6">
-            <CardHeader className="bg-blue-50/50 rounded-t-xl pb-4 border-b border-blue-100">
-              <CardTitle className="text-sm text-blue-900 flex items-center gap-2">
-                <ExternalLink className="w-4 h-4" />
+          <Card className="bg-[#002B4D] border-brand-blue/20 shadow-none sticky top-6 overflow-hidden">
+            <CardHeader className="bg-brand-blue/10 p-4 border-b border-brand-blue/20">
+              <CardTitle className="text-xs font-bold text-brand-cyan uppercase tracking-widest flex items-center gap-2">
+                <ExternalLink className="w-3.5 h-3.5" />
                 Live Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 bg-slate-50 dark:bg-slate-950 min-h-[300px] flex items-center justify-center rounded-b-xl border-t">
+            <CardContent className="p-6 bg-black/20 min-h-[300px] flex items-center justify-center border-t border-white/5">
                <WidgetBadge companyData={mockCompanyData} theme={theme} />
             </CardContent>
           </Card>

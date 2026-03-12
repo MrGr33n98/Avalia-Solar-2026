@@ -39,7 +39,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-[300px] w-full rounded-xl" />
         ))}
@@ -51,9 +51,9 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Award className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+          <Award className="h-12 w-12 text-white/40 mb-4 opacity-20" />
           <h3 className="text-lg font-semibold">Nenhum selo atribuido</h3>
-          <p className="text-sm text-muted-foreground max-w-xs mt-2">
+          <p className="text-sm text-white/40 max-w-xs mt-2">
             Sua empresa ainda n�o possui selos de distin��o atribuidos pela nossa equipe.
           </p>
         </CardContent>
@@ -63,16 +63,16 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {badges.map((badge) => (
           <Card key={badge.id} className="overflow-hidden flex flex-col">
-            <div className="bg-slate-50 dark:bg-slate-900 p-8 flex justify-center items-center h-48 border-b">
+            <div className="bg-[#002B4D] dark:bg-[#002B4D] p-8 flex justify-center items-center h-48 border-b">
               <OptimizedImage
                 src={badge.image_url || ''}
                 alt={badge.name}
                 width={120}
                 height={120}
-                className="object-contain drop-shadow-lg"
+                className="object-contain drop-shadow-none"
               />
             </div>
             <CardHeader className="pb-2">
@@ -111,7 +111,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase">Snippet HTML</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase">Snippet HTML</label>
                 <div className="relative group">
                   <pre className="p-2 bg-muted rounded text-[9px] overflow-x-hidden truncate border border-border">
                     {`<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`}

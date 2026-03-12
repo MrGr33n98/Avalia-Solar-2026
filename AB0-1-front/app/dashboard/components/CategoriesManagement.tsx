@@ -70,7 +70,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-6 w-3/4" />
@@ -95,14 +95,14 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Gerenciamento de Categorias</h2>
-          <p className="text-muted-foreground">
+          <p className="text-white/40">
             Selecione as categorias em que sua empresa será listada
           </p>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-[18px] w-[18px] mr-2" />
               Adicionar Categorias
             </Button>
           </DialogTrigger>
@@ -129,7 +129,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
                   />
                   <label htmlFor={`cat-${category.id}`} className="flex-1 cursor-pointer">
                     <div className="font-medium">{category.name}</div>
-                    <div className="text-xs text-muted-foreground">{category.seo_url}</div>
+                    <div className="text-xs text-white/40">{category.seo_url}</div>
                   </label>
                 </div>
               ))}
@@ -147,7 +147,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       </div>
 
       <Alert>
-        <FileText className="h-4 w-4" />
+        <FileText className="h-[18px] w-[18px]" />
         <AlertDescription>
           Qualquer alteração nas categorias precisa ser aprovada pela equipe do ActiveAdmin antes de ser publicada.
         </AlertDescription>
@@ -161,17 +161,17 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
           >
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6">
+            <Card className="hover:shadow-none transition-all duration-300">
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       {category.name}
                       {category.featured && (
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <Star className="h-[18px] w-[18px] text-yellow-500 fill-yellow-500" />
                       )}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">{category.seo_url}</p>
+                    <p className="text-xs text-white/40 mt-1">{category.seo_url}</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -179,7 +179,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
                     onClick={() => handleRemoveCategory(category.id)}
                     className="hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-[18px] w-[18px]" />
                   </Button>
                 </div>
 
@@ -217,13 +217,13 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       {categories.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <FileText className="h-12 w-12 text-white/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma categoria adicionada</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-white/40 text-center mb-4">
               Adicione categorias para que sua empresa seja encontrada pelos clientes certos.
             </p>
             <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-[18px] w-[18px] mr-2" />
               Adicionar Primeira Categoria
             </Button>
           </CardContent>

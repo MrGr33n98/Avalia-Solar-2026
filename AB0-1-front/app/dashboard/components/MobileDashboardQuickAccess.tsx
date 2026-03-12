@@ -72,15 +72,15 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
 
   return (
     <section className="lg:hidden mb-6" aria-label="Atalhos mobile do dashboard">
-      <div className="rounded-[28px] border border-border/60 bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border-[0.5px] border-white/10 bg-[#002B4D] p-4 shadow-none">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Mobile first
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cyan">
+              Mobile access
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-foreground">Ações prioritárias</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Leads, avaliações e performance ficam acima da dobra.
+            <h2 className="mt-1 text-lg font-bold text-white tracking-tight">Ações prioritárias</h2>
+            <p className="mt-1 text-xs text-white/40 font-medium">
+              Leads, avaliações e performance em tempo real.
             </p>
           </div>
 
@@ -88,11 +88,11 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 rounded-full"
+            className="shrink-0 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10"
             onClick={props.onOpenNavigation}
           >
-            Mais
-            <ChevronRight className="ml-1 h-4 w-4" />
+            Menu
+            <ChevronRight className="ml-1 h-[18px] w-[18px]" />
           </Button>
         </div>
 
@@ -112,31 +112,44 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
                 type="button"
                 variant="outline"
                 className={cn(
-                  'h-auto min-h-[132px] flex-col items-start justify-start gap-3 rounded-2xl px-4 py-4 text-left',
-                  isActive && 'border-primary bg-primary/5 text-primary'
+                  'h-auto min-h-[140px] flex-col items-start justify-start gap-3 rounded-xl px-4 py-4 text-left transition-all border-[0.5px]',
+                  isActive 
+                    ? 'border-brand-blue/40 bg-brand-blue/10' 
+                    : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'
                 )}
                 onClick={() => props.onTabChange(item.id)}
               >
                 <div className="flex w-full items-start justify-between gap-3">
                   <div
                     className={cn(
-                      'flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground',
-                      isActive && 'bg-primary/10 text-primary'
+                      'flex h-10 w-10 items-center justify-center rounded-lg border-[0.5px]',
+                      isActive 
+                        ? 'bg-brand-blue text-white border-white/20' 
+                        : 'bg-black/20 text-white/40 border-white/5'
                     )}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-[18px] w-[18px]" />
                   </div>
 
-                  {isActive && <Badge className="rounded-full">Atual</Badge>}
+                  {isActive && (
+                    <Badge className="rounded-md bg-brand-blue text-white text-[9px] font-bold uppercase tracking-wider border-none px-1.5 h-4">
+                      Active
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className={cn(
+                    "text-[10px] font-bold uppercase tracking-widest",
+                    isActive ? "text-brand-cyan" : "text-white/30"
+                  )}>
                     {copy.eyebrow}
                   </p>
-                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                  <p className="text-xs text-muted-foreground">{copy.getMetric(props)}</p>
-                  <p className="text-xs leading-5 text-muted-foreground">{copy.getDescription(props)}</p>
+                  <p className={cn(
+                    "text-sm font-bold tracking-tight",
+                    isActive ? "text-white" : "text-white/80"
+                  )}>{item.label}</p>
+                  <p className="text-[10px] font-bold text-white/40 font-mono tracking-tighter">{copy.getMetric(props)}</p>
                 </div>
               </Button>
             );

@@ -107,7 +107,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Configurar Analytics & Métricas Públicas</h2>
-        <p className="text-muted-foreground">Regra de Ouro — Origem dos dados via Dashboard</p>
+        <p className="text-white/40">Regra de Ouro — Origem dos dados via Dashboard</p>
       </div>
 
       <Card>
@@ -120,7 +120,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <Label>Automático (tracking Avalia Solar)</Label>
-                <p className="text-xs text-muted-foreground">views, cliques, leads, tempo de resposta, origem interna, campanhas</p>
+                <p className="text-xs text-white/40">views, cliques, leads, tempo de resposta, origem interna, campanhas</p>
               </div>
               <Switch
                 checked={settings.collection_modes.automatic_tracking}
@@ -135,7 +135,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <Label>Declarado (input manual)</Label>
-                <p className="text-xs text-muted-foreground">projetos, kWp/MWp, anos, EV, comerciais</p>
+                <p className="text-xs text-white/40">projetos, kWp/MWp, anos, EV, comerciais</p>
               </div>
               <Switch
                 checked={settings.collection_modes.declared_input}
@@ -209,21 +209,21 @@ export default function AnalyticsSettings({ companyId }: Props) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <Label>Rating/Reviews</Label>
-                <p className="text-xs text-muted-foreground">sempre público</p>
+                <p className="text-xs text-white/40">sempre público</p>
               </div>
               <Badge variant="secondary">Verificado</Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <Label>Verificação</Label>
-                <p className="text-xs text-muted-foreground">sempre público</p>
+                <p className="text-xs text-white/40">sempre público</p>
               </div>
               <Badge variant="secondary">Verificado</Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <Label>Tempo de resposta (faixa pública)</Label>
-                <p className="text-xs text-muted-foreground">exibido em faixas: até 1h, até 4h, etc.</p>
+                <p className="text-xs text-white/40">exibido em faixas: até 1h, até 4h, etc.</p>
               </div>
               <div className="flex items-center gap-3">
                 <Switch
@@ -322,7 +322,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       <SelectItem value="calculated">Calculado</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">Atualizado em: {claim?.updated_at ? new Date(claim.updated_at).toLocaleDateString() : '-'}</p>
+                  <p className="text-xs text-white/40">Atualizado em: {claim?.updated_at ? new Date(claim.updated_at).toLocaleDateString() : '-'}</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Evidências (links, notas)</Label>
@@ -337,7 +337,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
             );
           })}
           <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="h-[18px] w-[18px] mr-2" />
             {saving ? 'Salvando...' : 'Salvar Configurações'}
           </Button>
         </CardContent>

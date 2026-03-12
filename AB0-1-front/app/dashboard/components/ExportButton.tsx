@@ -158,24 +158,24 @@ export default function ExportButton({
           disabled={disabled || isExporting || timeseriesData.length === 0}
         >
           {isExporting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className="h-[18px] w-[18px] mr-2 animate-spin" />
           ) : (
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-[18px] w-[18px] mr-2" />
           )}
           Exportar
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={exportTimeseries}>
-          <Download className="h-4 w-4 mr-2" />
+          <Download className="h-[18px] w-[18px] mr-2" />
           Série Temporal (CSV)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportSummary} disabled={!aggregatedData}>
-          <Download className="h-4 w-4 mr-2" />
+          <Download className="h-[18px] w-[18px] mr-2" />
           Resumo 30 dias (CSV)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportAll} disabled={!aggregatedData}>
-          <Download className="h-4 w-4 mr-2" />
+          <Download className="h-[18px] w-[18px] mr-2" />
           Exportar Tudo
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -48,7 +48,7 @@ function DashboardTabSkeleton() {
         <Skeleton className="h-10 w-[250px]" />
         <Skeleton className="h-4 w-[400px]" />
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Skeleton className="h-[200px] rounded-xl" />
         <Skeleton className="h-[200px] rounded-xl" />
         <Skeleton className="h-[200px] rounded-xl" />
@@ -141,7 +141,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">Carregando dashboard...</p>
+          <p className="text-sm text-white/40">Carregando dashboard...</p>
         </div>
       </div>
     );
@@ -154,7 +154,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold text-foreground">Acesso pendente</h2>
-          <p className="text-sm text-muted-foreground">Seu acesso ao dashboard está aguardando aprovação ou a empresa não está ativa.</p>
+          <p className="text-sm text-white/40">Seu acesso ao dashboard está aguardando aprovação ou a empresa não está ativa.</p>
         </div>
       </div>
     );
@@ -227,10 +227,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Integrações</h2>
-                    <p className="text-sm text-muted-foreground">Conecte ferramentas e serviços ao seu painel.</p>
+                    <p className="text-sm text-white/40">Conecte ferramentas e serviços ao seu painel.</p>
                   </div>
                   <Card>
-                    <CardContent className="p-6 text-sm text-muted-foreground">
+                    <CardContent className="p-4 text-sm text-white/40">
                       Em breve.
                     </CardContent>
                   </Card>
@@ -245,7 +245,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Selos Avalia Solar</h2>
-                    <p className="text-sm text-muted-foreground">Gerencie e compartilhe seus selos oficiais de distinção.</p>
+                    <p className="text-sm text-white/40">Gerencie e compartilhe seus selos oficiais de distinção.</p>
                   </div>
                   <BadgesManagement companyId={companyId} />
                 </div>
@@ -258,7 +258,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                         Analytics Avançado
                       </h2>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-white/40">
                         Métricas detalhadas de performance e engajamento
                       </p>
                     </div>
@@ -273,7 +273,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Benchmark Competitivo
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Compare sua performance com os líderes da categoria
                     </p>
                   </div>
@@ -287,7 +287,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Informações gerais
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Atualize as informações principais do seu produto/empresa no Avaliasolar.
                     </p>
                   </div>
@@ -301,7 +301,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Categorias
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Selecione as categorias onde seu produto estará presente.
                     </p>
                   </div>
@@ -315,7 +315,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Planos e preços
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Ajuste configurações relacionadas ao seu plano e comercialização.
                     </p>
                   </div>
@@ -329,7 +329,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Suporte e treinamento
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Configure canais e informações de suporte para seus clientes.
                     </p>
                   </div>
@@ -343,7 +343,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Banner
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie seu banner e opções de patrocínio.
                     </p>
                   </div>
@@ -357,7 +357,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Descrição patrocinada
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Ajuste o conteúdo e a apresentação do seu produto.
                     </p>
                   </div>
@@ -371,7 +371,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Conteúdo Baixável
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Envie arquivos e materiais para seus clientes.
                     </p>
                   </div>
@@ -385,7 +385,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Funcionalidades
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
                     </p>
                   </div>
@@ -399,7 +399,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Vídeos
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie vídeos e mídias do seu produto.
                     </p>
                   </div>
@@ -413,7 +413,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Imagens
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie imagens do seu produto.
                     </p>
                   </div>
@@ -427,7 +427,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Minha Empresa
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie as informações e dados da sua empresa
                     </p>
                   </div>
@@ -441,7 +441,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Categorias
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Selecione as categorias onde sua empresa estará presente
                     </p>
                   </div>
@@ -455,7 +455,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Banners & Patrocínios
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie suas campanhas publicitárias e patrocínios
                     </p>
                   </div>
@@ -469,7 +469,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Produtos & Serviços
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie seu catálogo de produtos e serviços
                     </p>
                   </div>
@@ -483,7 +483,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Avaliações
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie e responda às avaliações dos clientes
                     </p>
                   </div>
@@ -503,7 +503,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Galeria de Mídia
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie fotos e vídeos da sua empresa
                     </p>
                   </div>
@@ -517,7 +517,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Oportunidades
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Gerencie seus leads e oportunidades de negócio
                     </p>
                   </div>
@@ -531,7 +531,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Aprovações
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Acompanhe o status das alterações submetidas para aprovação
                     </p>
                   </div>
@@ -545,7 +545,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Campanhas
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Acompanhe o desempenho das suas campanhas de marketing
                     </p>
                   </div>
@@ -559,7 +559,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Configurações
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       Ajuste as configurações da sua conta
                     </p>
                   </div>

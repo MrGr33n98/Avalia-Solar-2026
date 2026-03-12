@@ -2,7 +2,10 @@
  * TopCampaignsCard Component
  * 
  * Displays top performing UTM campaigns
- * Shows: Campaign name, visits, CTAs, leads, conversion rate
+ * Aligned with Precision Energy System:
+ * - Silicon Dark Palette (#002B4D)
+ * - Borders-only depth (0.5px)
+ * - Mono fonts for technical data
  */
 
 'use client';
@@ -13,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, ExternalLink, Target, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface Campaign {
   id: number;
@@ -34,10 +38,11 @@ interface TopCampaignsCardProps {
 
 export default function TopCampaignsCard({
   companyId,
-  themeMode = 'light',
+  themeMode = 'dark',
   limit = 5,
 }: TopCampaignsCardProps) {
-  const isDark = themeMode === 'dark';
+  // Lock to dark theme for consistency with the Silicon foundation
+  const isDark = true; 
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['top-campaigns', companyId, limit],
@@ -53,16 +58,16 @@ export default function TopCampaignsCard({
 
   if (isLoading) {
     return (
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-        <CardHeader>
-          <Skeleton className="h-6 w-[180px]" />
-          <Skeleton className="h-4 w-[240px] mt-2" />
+      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+        <CardHeader className="p-4">
+          <Skeleton className="h-6 w-[180px] bg-white/5" />
+          <Skeleton className="h-4 w-[240px] mt-2 bg-white/5" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="mb-4">
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full mb-2 bg-white/5" />
+              <Skeleton className="h-6 w-3/4 bg-white/5" />
             </div>
           ))}
         </CardContent>
@@ -72,22 +77,22 @@ export default function TopCampaignsCard({
 
   if (!campaigns || campaigns.length === 0) {
     return (
-      <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-        <CardHeader>
-          <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
+      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="text-white text-lg font-bold tracking-tight">
             Top Campanhas
           </CardTitle>
-          <CardDescription className={isDark ? 'text-slate-400' : ''}>
+          <CardDescription className="text-white/40">
             Nenhuma campanha com UTM rastreada ainda
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[200px]">
+        <CardContent className="flex items-center justify-center h-[200px] p-4">
           <div className="text-center">
-            <Target className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+            <Target className="h-12 w-12 mx-auto mb-3 text-white/20" />
+            <p className="text-sm text-white/50">
               Adicione parâmetros UTM aos seus links
             </p>
-            <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}>
+            <p className="text-[10px] mt-1 text-white/30 font-mono">
               Ex: ?utm_source=google&utm_medium=cpc&utm_campaign=solar2024
             </p>
           </div>
@@ -97,24 +102,24 @@ export default function TopCampaignsCard({
   }
 
   return (
-    <Card className={isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}>
-      <CardHeader>
-        <CardTitle className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
-          <TrendingUp className="h-5 w-5" />
+    <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <CardHeader className="p-4">
+        <CardTitle className="flex items-center gap-2 text-white text-lg font-bold tracking-tight">
+          <TrendingUp className="h-5 w-5 text-brand-cyan" />
           Top Campanhas
         </CardTitle>
-        <CardDescription className={isDark ? 'text-slate-400' : ''}>
+        <CardDescription className="text-white/40">
           Performance por campanha de marketing
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 p-4">
         {campaigns.map((campaign, index) => {
           const rankColors = [
-            { bg: isDark ? 'bg-yellow-900/20' : 'bg-yellow-50', text: 'text-yellow-600', badge: 'bg-yellow-500' },
-            { bg: isDark ? 'bg-slate-800' : 'bg-gray-50', text: 'text-gray-600', badge: 'bg-gray-400' },
-            { bg: isDark ? 'bg-orange-900/20' : 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-500' },
+            { bg: 'bg-brand-blue/10', text: 'text-brand-blue', badge: 'bg-brand-blue' },
+            { bg: 'bg-white/5', text: 'text-white/60', badge: 'bg-white/20' },
+            { bg: 'bg-brand-cyan/10', text: 'text-brand-cyan', badge: 'bg-brand-cyan' },
           ];
-          const color = index < 3 ? rankColors[index] : rankColors[2];
+          const color = index < 3 ? rankColors[index] : rankColors[1];
 
           const ctr = campaign.total_visits > 0
             ? ((campaign.total_cta_clicks / campaign.total_visits) * 100).toFixed(1)
@@ -123,39 +128,43 @@ export default function TopCampaignsCard({
           return (
             <div
               key={campaign.id}
-              className={`p-4 rounded-lg border ${
-                isDark ? 'border-slate-700 bg-slate-800/50' : 'border-gray-200 bg-gray-50/50'
-              }`}
+              className={cn(
+                "p-4 rounded-xl border-[0.5px] transition-all duration-300 hover:bg-white/5",
+                "border-white/10 bg-white/5"
+              )}
             >
               {/* Campaign Header */}
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-2">
                     <span
-                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white ${color.badge}`}
+                      className={cn(
+                        "inline-flex items-center justify-center w-6 h-6 rounded-lg text-[10px] font-bold text-white border-[0.5px] border-white/20",
+                        color.badge
+                      )}
                     >
                       #{index + 1}
                     </span>
-                    <h4 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <h4 className="font-bold text-sm text-white tracking-tight">
                       {campaign.utm_campaign || 'Sem nome'}
                     </h4>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
                       {campaign.utm_source}
                     </Badge>
                     {campaign.utm_medium && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
                         {campaign.utm_medium}
                       </Badge>
                     )}
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-2xl font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                  <p className="text-2xl font-bold text-brand-green font-mono tracking-tighter">
                     {campaign.conversion_rate}%
                   </p>
-                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     conversão
                   </p>
                 </div>
@@ -163,48 +172,53 @@ export default function TopCampaignsCard({
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <Users className={`h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Users className="h-3.5 w-3.5 text-brand-blue" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                       Visitas
                     </p>
                   </div>
-                  <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className="text-lg font-bold text-white font-mono">
                     {campaign.total_visits.toLocaleString()}
                   </p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <ExternalLink className={`h-3 w-3 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <ExternalLink className="h-3.5 w-3.5 text-brand-cyan" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                       CTAs
                     </p>
                   </div>
-                  <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className="text-lg font-bold text-white font-mono">
                     {campaign.total_cta_clicks}
                   </p>
-                  <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>
+                  <p className="text-[10px] font-bold text-white/30 font-mono mt-0.5">
                     {ctr}% CTR
                   </p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <Target className={`h-3 w-3 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Target className="h-3.5 w-3.5 text-brand-green" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                       Leads
                     </p>
                   </div>
-                  <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className="text-lg font-bold text-white font-mono">
                     {campaign.total_leads}
                   </p>
                 </div>
               </div>
 
               {/* Last Seen */}
-              <p className={`text-xs mt-3 ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>
-                Última atividade: {new Date(campaign.last_seen_at).toLocaleDateString('pt-BR')}
-              </p>
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+                  Última atividade
+                </p>
+                <p className="text-[10px] font-bold text-white/40 font-mono">
+                  {new Date(campaign.last_seen_at).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
             </div>
           );
         })}

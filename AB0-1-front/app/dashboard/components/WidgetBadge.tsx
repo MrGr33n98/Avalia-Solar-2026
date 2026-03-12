@@ -20,11 +20,11 @@ interface WidgetBadgeProps {
 
 export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
   const bgColor = theme === 'light' 
-    ? 'bg-white border-gray-200' 
-    : 'bg-slate-900 border-slate-700';
+    ? 'bg-[#002B4D] border-white/10' 
+    : 'bg-[#002B4D] border-white/10';
   
   const textColor = theme === 'light' 
-    ? 'text-gray-900' 
+    ? 'text-white' 
     : 'text-white';
   
   const mutedColor = theme === 'light' 
@@ -32,10 +32,10 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
     : 'text-gray-400';
 
   return (
-    <div className={`${bgColor} border rounded-lg p-6 shadow-lg max-w-sm w-full`}>
+    <div className={`${bgColor} border rounded-lg p-4 shadow-none max-w-sm w-full`}>
       {/* Company Logo/Header */}
       <div className="flex items-center gap-4 mb-4">
-        <div className={`w-12 h-12 rounded-full ${theme === 'light' ? 'bg-gray-100' : 'bg-slate-800'} flex items-center justify-center`}>
+        <div className={`w-12 h-12 rounded-full ${theme === 'light' ? 'bg-gray-100' : 'bg-[#002B4D]'} flex items-center justify-center`}>
           {companyData.verified_badge_image_url ? (
             <img 
               src={companyData.verified_badge_image_url} 
@@ -62,7 +62,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
       </div>
 
       {/* Rating Section */}
-      <div className={`py-3 border-y ${theme === 'light' ? 'border-gray-200' : 'border-slate-700'} mb-4`}>
+      <div className={`py-3 border-y ${theme === 'light' ? 'border-white/10' : 'border-white/10'} mb-4`}>
         <div className="flex items-center gap-2 mb-2">
           <div className="flex gap-0.5">
             {[...Array(5)].map((_, i) => (

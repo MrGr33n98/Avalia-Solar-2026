@@ -159,7 +159,7 @@ function CheckoutDialog({ trigger }: { trigger: ReactNode }) {
                 <strong>Checkout Session:</strong> {checkout.subscription.checkout_session_id}
               </div>
               {checkout.webhook_example && (
-                <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+                <pre className="whitespace-pre-wrap text-xs text-white/40">
 {JSON.stringify(checkout.webhook_example, null, 2)}
                 </pre>
               )}
@@ -211,22 +211,22 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold">Banners & Patrocínios</h2>
-          <p className="text-muted-foreground">Disponível somente para planos com a funcionalidade de banners.</p>
+          <p className="text-white/40">Disponível somente para planos com a funcionalidade de banners.</p>
         </div>
 
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex items-center gap-2 text-muted-foreground">
+            <div className="mb-4 flex items-center gap-2 text-white/40">
               <Lock className="h-5 w-5" />
               <span>Feature bloqueada pelo plano</span>
             </div>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-white/40 mb-4">
               Você pode fazer upgrade do plano ou contratar banners como add-on.
             </p>
             <CheckoutDialog
               trigger={
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-[18px] w-[18px] mr-2" />
                   Contratar Banner
                 </Button>
               }
@@ -242,19 +242,19 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Banners & Patrocínios</h2>
-          <p className="text-muted-foreground">Gerencie seus banners publicados na plataforma</p>
+          <p className="text-white/40">Gerencie seus banners publicados na plataforma</p>
         </div>
         <div className="flex items-center gap-2">
           <CheckoutDialog
             trigger={
               <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-[18px] w-[18px] mr-2" />
                 Contratar (Add-on)
               </Button>
             }
           />
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-[18px] w-[18px] mr-2" />
             Novo Banner
           </Button>
         </div>
@@ -262,14 +262,14 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
 
       {loading ? (
         <Card>
-          <CardContent className="p-6 text-muted-foreground">Carregando banners...</CardContent>
+          <CardContent className="p-4 text-white/40">Carregando banners...</CardContent>
         </Card>
       ) : error ? (
         <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex flex-col items-center justify-center text-center">
               <p className="text-destructive font-medium mb-2">Erro ao carregar dados</p>
-              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <p className="text-sm text-white/40 mb-4">{error}</p>
               <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
                 Tentar novamente
               </Button>
@@ -279,13 +279,13 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
       ) : banners.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+            <Sparkles className="h-12 w-12 text-white/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhum banner cadastrado</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-white/40 text-center mb-4">
               Crie seu primeiro banner para aumentar sua visibilidade.
             </p>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-[18px] w-[18px] mr-2" />
               Criar Primeiro Banner
             </Button>
           </CardContent>
@@ -294,14 +294,14 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {banners.map((banner) => (
             <Card key={banner.id}>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="h-5 w-5 text-primary" />
                       <h3 className="font-semibold">{banner.title}</h3>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/40">
                       {banner.banner_type} • {banner.position}
                     </p>
                   </div>
@@ -311,7 +311,7 @@ export default function BannersSponsorship({ companyId, planFeatures }: BannersS
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-white/40">
                     Link: {(banner.link_url || banner.link || '').toString().slice(0, 40) || '—'}
                   </span>
                   <Button

@@ -33,24 +33,24 @@ export default function ApprovalsPanel({ companyId }: ApprovalsPanelProps) {
   }, [companyId]);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Carregando pendências...</p>;
+    return <p className="text-sm text-white/40">Carregando pendências...</p>;
   }
   if (error) {
     return <p className="text-sm text-destructive">{error}</p>;
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhuma alteração pendente.</p>;
+    return <p className="text-sm text-white/40">Nenhuma alteração pendente.</p>;
   }
 
   return (
     <div className="space-y-4">
       {items.map((pc) => (
-        <Card key={pc.id} className="hover:shadow-md transition-shadow">
+        <Card key={pc.id} className="hover:shadow-none transition-shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{String(pc.change_type).replace(/_/g,' ').toUpperCase()}</p>
-              <p className="text-xs text-muted-foreground">Criado em {new Date(pc.created_at).toLocaleString()}</p>
+              <p className="text-xs text-white/40">Criado em {new Date(pc.created_at).toLocaleString()}</p>
             </div>
             <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
               Pendente

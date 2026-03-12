@@ -55,9 +55,9 @@ export function CommandMenu({ onSelectTab }: CommandMenuProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="relative inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full sm:w-64 lg:w-80"
+        className="relative inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full sm:w-64 lg:w-80"
       >
-        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+        <Search className="mr-2 h-[18px] w-[18px] shrink-0 opacity-50" />
         <span className="inline-flex">Buscar no dashboard...</span>
         <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
           <span className="text-xs">⌘</span>K
@@ -79,7 +79,7 @@ export function CommandMenu({ onSelectTab }: CommandMenuProps) {
                         key={item.id}
                         onSelect={() => runCommand(() => onSelectTab(item.id))}
                       >
-                        <Icon className="mr-2 h-4 w-4" />
+                        <Icon className="mr-2 h-[18px] w-[18px]" />
                         <span>{item.label}</span>
                       </CommandItem>
                     );

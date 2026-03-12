@@ -27,10 +27,10 @@ export default function StatsCard({
   isDark = false
 }: StatsCardProps) {
   return (
-    <Card className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} ${className}`}>
-      <CardContent className="p-6">
+    <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'} ${className}`}>
+      <CardContent className="p-4">
         <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-100'} ${iconClassName}`}>
+          <div className={`p-3 rounded-xl ${isDark ? 'bg-[#002B4D]' : 'bg-slate-100'} ${iconClassName}`}>
             <Icon className={`h-6 w-6`} />
           </div>
           {trend && (
@@ -40,14 +40,14 @@ export default function StatsCard({
           )}
         </div>
         <div>
-          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'} mb-1`}>
+          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
             {title}
           </p>
           <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
             {value}
           </p>
           {description && (
-            <p className={`text-xs mt-3 ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
+            <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
               {description}
             </p>
           )}

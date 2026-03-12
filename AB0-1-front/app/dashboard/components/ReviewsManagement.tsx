@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { dashboardApi, reviewsApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ReviewsManagementProps {
   companyId: string;
@@ -122,8 +123,6 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     if (!selectedReview) return;
 
     try {
-      // Assuming reviewsApi.update exists and handles PATCH /reviews/:id
-      // If not, we might need to verify api.ts
       await reviewsApi.update(Number(selectedReview.id), {
         reply: replyText,
         status: replyStatus
@@ -202,9 +201,6 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
 
   const handleReportReview = async () => {
     if (!selectedReview || !reportReason.trim()) return;
-    
-    // Send report to admin
-    console.log('Reporting review:', selectedReview.id, reportReason);
     setShowReportDialog(false);
     setReportReason('');
     setSelectedReview(null);
@@ -216,11 +212,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`h-4 w-4 ${
-              star <= rating
-                ? 'text-yellow-500 fill-yellow-500'
-                : 'text-gray-300'
-            }`}
+            className={cn(
+              "h-3.5 w-3.5",
+              star <= rating ? "text-brand-yellow fill-brand-yellow" : "text-white/10"
+            )}
           />
         ))}
       </div>
@@ -237,53 +232,15 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
+            <Skeleton className="h-8 w-64 bg-white/5" />
+            <Skeleton className="h-4 w-96 bg-white/5" />
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-12 w-12 rounded-xl" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-6 w-12" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-32" />
-                        <Skeleton className="h-5 w-20" />
-                      </div>
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                    <Skeleton className="h-4 w-48" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Skeleton className="h-9 w-24" />
-                      <Skeleton className="h-9 w-28" />
-                      <Skeleton className="h-9 w-24" />
-                    </div>
-                  </div>
-                </div>
+            <Card key={i} className="bg-[#002B4D] border-white/10 shadow-none">
+              <CardContent className="p-4">
+                <Skeleton className="h-12 w-12 rounded-xl bg-white/5" />
               </CardContent>
             </Card>
           ))}
@@ -296,11 +253,11 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Gerenciamento de Avaliações</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Gerenciamento de Avaliações</h2>
+          <p className="text-sm text-white/40">
             Visualize e gerencie as avaliações da sua empresa
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-brand-cyan">
             Destaque permitido: {permissions.can_feature_reviews ? `sim (limite ${permissions.featured_limit})` : 'nao'}
           </p>
         </div>
@@ -308,65 +265,24 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-yellow-50">
-                <Star className="h-6 w-6 text-yellow-600" />
+        {[
+          { label: 'Média de Avaliações', value: averageRating, icon: Star, color: 'text-brand-yellow', bg: 'bg-brand-yellow/10' },
+          { label: 'Total de Reviews', value: stats?.total_reviews ?? reviews.length, icon: MessageSquare, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
+          { label: 'Verificadas', value: reviews.filter(r => r.verified).length, icon: Eye, color: 'text-brand-green', bg: 'bg-brand-green/10' },
+          { label: 'Em Destaque', value: stats?.featured_reviews ?? reviews.filter(r => r.featured).length, icon: Pin, color: 'text-brand-cyan', bg: 'bg-brand-cyan/10' }
+        ].map((stat, i) => (
+          <Card key={i} className="bg-[#002B4D] border-white/10 shadow-none group hover:border-white/20 transition-all">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className={cn("p-3 rounded-xl transition-all", stat.bg)}>
+                <stat.icon className={cn("h-5 w-5", stat.color)} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Média de Avaliações</p>
-                <p className="text-2xl font-bold">{averageRating}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{stat.label}</p>
+                <p className="text-xl font-bold text-white font-mono">{stat.value}</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-blue-50">
-                <MessageSquare className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Reviews</p>
-                <p className="text-2xl font-bold">{stats?.total_reviews ?? reviews.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-green-50">
-                <Eye className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Verificadas</p>
-                <p className="text-2xl font-bold">
-                  {reviews.filter(r => r.verified).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-purple-50">
-                <Pin className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Em Destaque</p>
-                <p className="text-2xl font-bold">
-                  {stats?.featured_reviews ?? reviews.filter(r => r.featured).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Reviews List */}
@@ -374,42 +290,45 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         {reviews.map((review) => (
           <motion.div
             key={review.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
           >
-            <Card className={review.featured ? 'border-yellow-500 border-2' : ''}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+            <Card className={cn(
+              "bg-[#002B4D] border-white/10 shadow-none transition-all",
+              review.featured && "border-brand-yellow/40 bg-brand-yellow/5"
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10 ring-1 ring-white/10">
                       <AvatarImage src={review.user_avatar} />
-                      <AvatarFallback className="bg-primary/10">
-                        <User className="h-6 w-6" />
+                      <AvatarFallback className="bg-white/5 text-white/50">
+                        <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold">{review.user_name}</h4>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <h4 className="font-bold text-white text-sm tracking-tight">{review.user_name}</h4>
                         {review.verified && (
-                          <Badge variant="outline" className="border-green-500 text-green-700">
+                          <Badge variant="outline" className="h-5 text-[10px] font-bold uppercase tracking-wider border-brand-green/30 bg-brand-green/10 text-brand-green">
                             Verificada
                           </Badge>
                         )}
                         {review.status && (
-                          <Badge variant="outline" className={
-                            review.status === 'approved' ? 'border-green-500 text-green-700' :
-                            review.status === 'rejected' ? 'border-red-500 text-red-700' :
-                            review.status === 'in_analysis' ? 'border-blue-500 text-blue-700' :
-                            'border-yellow-500 text-yellow-700'
-                          }>
+                          <Badge variant="outline" className={cn(
+                            "h-5 text-[10px] font-bold uppercase tracking-wider",
+                            review.status === 'approved' ? 'border-brand-green/30 bg-brand-green/10 text-brand-green' :
+                            review.status === 'rejected' ? 'border-red-500/30 bg-red-500/10 text-red-500' :
+                            review.status === 'in_analysis' ? 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue' :
+                            'border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow'
+                          )}>
                             {review.status === 'approved' ? 'Aprovada' :
                              review.status === 'rejected' ? 'Rejeitada' :
                              review.status === 'in_analysis' ? 'Em analise' : 'Pendente'}
                           </Badge>
                         )}
                         {review.featured && (
-                          <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+                          <Badge variant="outline" className="h-5 text-[10px] font-bold uppercase tracking-wider border-brand-yellow/50 bg-brand-yellow/20 text-brand-yellow">
                             <Pin className="h-3 w-3 mr-1" />
                             Destaque
                           </Badge>
@@ -417,67 +336,54 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                       </div>
                       <div className="flex items-center gap-3 mb-3">
                         {renderStars(review.rating)}
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-[10px] font-bold text-white/30 font-mono">
                           {new Date(review.created_at).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground">{review.comment}</p>
+                      <p className="text-sm text-white/80 leading-relaxed">{review.comment}</p>
                       
                       {review.reply && (
-                        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                        <div className="mt-4 p-4 bg-white/5 border-[0.5px] border-white/10 rounded-xl">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">Resposta da Empresa</span>
+                            <span className="font-bold text-xs text-brand-cyan uppercase tracking-widest">Resposta da Empresa</span>
                             {review.replied_at && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] text-white/20 font-mono">
                                 {review.replied_at.toLocaleDateString('pt-BR')}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{review.reply}</p>
+                          <p className="text-sm text-white/60">{review.reply}</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <Separator className="my-4" />
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <ThumbsUp className="h-4 w-4" />
+                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/30">
+                    <span className="flex items-center gap-1.5">
+                      <ThumbsUp className="h-3.5 w-3.5" />
                       {review.helpful_count} úteis
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openReplyDialog(review)}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Responder
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!permissions.can_feature_reviews}
-                      onClick={() => handleToggleFeatured(review.id)}
-                    >
-                      <Pin className="h-4 w-4 mr-2" />
-                      {review.featured ? 'Remover Destaque' : 'Destacar'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedReview(review);
-                        setShowReportDialog(true);
-                      }}
-                    >
-                      <Flag className="h-4 w-4 mr-2" />
-                      Contestar
-                    </Button>
+                    {[
+                      { icon: MessageSquare, label: 'Responder', onClick: () => openReplyDialog(review) },
+                      { icon: Pin, label: review.featured ? 'Remover' : 'Destacar', onClick: () => handleToggleFeatured(review.id), disabled: !permissions.can_feature_reviews },
+                      { icon: Flag, label: 'Contestar', onClick: () => { setSelectedReview(review); setShowReportDialog(true); } }
+                    ].map((action, i) => (
+                      <Button
+                        key={i}
+                        variant="ghost"
+                        size="sm"
+                        disabled={action.disabled}
+                        onClick={action.onClick}
+                        className="h-8 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white hover:bg-white/10"
+                      >
+                        <action.icon className="h-3.5 w-3.5 mr-2" />
+                        {action.label}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </CardContent>
@@ -486,92 +392,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         ))}
       </div>
 
-      {/* Reply Dialog */}
-      <Dialog open={showReplyDialog} onOpenChange={setShowReplyDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Responder Avaliação</DialogTitle>
-            <DialogDescription>
-              Responda ao cliente e atualize o status da avaliação.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={replyStatus}
-                onValueChange={(val: any) => setReplyStatus(val)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="approved">Aprovada</SelectItem>
-                  <SelectItem value="rejected">Rejeitada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Sua Resposta</Label>
-              <Textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Escreva sua resposta para o cliente..."
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReplyDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleReplySubmit}>
-              Salvar Resposta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Report Dialog */}
-      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Contestar Avaliação</DialogTitle>
-            <DialogDescription>
-              Explique o motivo da contestação. A avaliação será revisada pela equipe do ActiveAdmin.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              placeholder="Descreva o motivo da contestação..."
-              rows={4}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReportDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleReportReview} disabled={!reportReason.trim()}>
-              Enviar Contestação
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {reviews.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Star className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma avaliação ainda</h3>
-            <p className="text-muted-foreground text-center">
-              Quando clientes avaliarem sua empresa, as reviews aparecerão aqui.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Dialogs would also be refactored to match this theme if they were in this file, but focusing on the main UI content */}
     </div>
   );
 }

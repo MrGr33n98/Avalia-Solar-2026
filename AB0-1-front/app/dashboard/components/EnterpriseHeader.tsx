@@ -104,16 +104,16 @@ export default function EnterpriseHeader({
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'approval': return 'bg-green-500/10 text-green-600 dark:text-green-400';
-      case 'review': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
-      case 'lead': return 'bg-purple-500/10 text-purple-600 dark:text-purple-400';
-      case 'warning': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
-      default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
+      case 'approval': return 'bg-brand-green/10 text-brand-green';
+      case 'review': return 'bg-brand-blue/10 text-brand-blue';
+      case 'lead': return 'bg-brand-cyan/10 text-brand-cyan';
+      case 'warning': return 'bg-brand-yellow/10 text-brand-yellow';
+      default: return 'bg-white/10 text-white/60';
     }
   };
 
   return (
-    <header className="sticky top-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border/50 z-50">
+    <header className="sticky top-0 h-16 bg-[#002B4D]/80 backdrop-blur-md border-b border-white/10 z-50">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Left: Menu Button + Company Info */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -122,30 +122,30 @@ export default function EnterpriseHeader({
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="lg:hidden shrink-0 hover:bg-muted/60"
+            className="lg:hidden shrink-0 hover:bg-white/10 text-white/70"
           >
             <Menu className="h-5 w-5" />
           </Button>
 
           {/* Company Info */}
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="h-9 w-9 ring-2 ring-border/50 shrink-0">
+            <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
               <AvatarImage src={company?.logo_url} alt={company?.name} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-500 text-white text-xs font-semibold">
+              <AvatarFallback className="bg-brand-blue text-white text-xs font-bold">
                 {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
               </AvatarFallback>
             </Avatar>
             
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-foreground truncate">
+                <h1 className="text-sm font-bold text-white tracking-tight truncate">
                   {company?.name || 'Minha Empresa'}
                 </h1>
                 {company?.verified && (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-cyan shrink-0" />
                 )}
               </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
+              <p className="text-[11px] sm:text-xs text-white/50 truncate">
                 {company?.city}, {company?.state}
               </p>
             </div>
@@ -164,20 +164,20 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative md:hidden hover:bg-muted/60"
+                className="relative md:hidden hover:bg-white/10 text-white/70"
                 aria-label="Mais ações do dashboard"
               >
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
               <DropdownMenuLabel>Ações rápidas</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={handleExportCSV}>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={handleExportCSV}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 <span>Exportar como CSV</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => {
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={() => {
                 track('Report Exported', {
                   export_type: 'pdf',
                   company_id: company?.id,
@@ -188,19 +188,6 @@ export default function EnterpriseHeader({
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Imprimir página</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://horizon-ui.com/boilerplate-shadcn#pricing', '_blank')}>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Planos e preços</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = 'mailto:suporte@ab01.com'}>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Suporte técnico</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('/#faqs', '_blank')}>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Perguntas frequentes</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -210,20 +197,20 @@ export default function EnterpriseHeader({
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden md:flex items-center gap-2 bg-muted/30 border-border/50 hover:bg-muted/60"
+                className="hidden md:flex items-center gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-white"
               >
                 <Download className="h-4 w-4" />
                 <span>Relatórios</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
               <DropdownMenuLabel>Exportar Dados</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={handleExportCSV}>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={handleExportCSV}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 <span>Exportar como CSV</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => {
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={() => {
                 track('Report Exported', {
                   export_type: 'pdf',
                   company_id: company?.id,
@@ -233,12 +220,6 @@ export default function EnterpriseHeader({
               }}>
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Imprimir Página (PDF)</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">Relatórios Agendados</DropdownMenuLabel>
-              <DropdownMenuItem disabled>
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Receber semanalmente</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -252,22 +233,19 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hidden md:inline-flex hover:bg-muted/60"
+                className="relative hidden md:inline-flex hover:bg-white/10 text-white/70"
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 bg-[#002B4D] border-white/10 text-white">
               <DropdownMenuLabel>Ajuda</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://horizon-ui.com/boilerplate-shadcn#pricing', '_blank')}>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={() => window.open('https://horizon-ui.com/boilerplate-shadcn#pricing', '_blank')}>
                 Planos e Preços
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = 'mailto:suporte@ab01.com'}>
+              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={() => window.location.href = 'mailto:suporte@ab01.com'}>
                 Suporte Técnico
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('/#faqs', '_blank')}>
-                Perguntas Frequentes
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -278,11 +256,11 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hover:bg-muted/60"
+                className="relative hover:bg-white/10 text-white/70"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-red-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-brand-blue text-white text-[10px] rounded-full flex items-center justify-center font-bold border-[0.5px] border-white/20">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -291,13 +269,13 @@ export default function EnterpriseHeader({
             
             <DropdownMenuContent 
               align="end" 
-              className="w-80 p-0 max-h-[480px] overflow-hidden"
+              className="w-80 p-0 max-h-[480px] overflow-hidden bg-[#002B4D] border-white/10 text-white"
             >
               {/* Header */}
-              <div className="p-4 border-b border-border/50 bg-muted/30">
+              <div className="p-4 border-b border-white/10 bg-white/5">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-foreground">Notificações</h3>
-                  <Badge variant="secondary" className="text-xs">
+                  <h3 className="font-bold text-sm text-white">Notificações</h3>
+                  <Badge variant="secondary" className="text-xs bg-brand-blue text-white border-none">
                     {unreadCount} novas
                   </Badge>
                 </div>
@@ -307,8 +285,8 @@ export default function EnterpriseHeader({
               <div className="max-h-[360px] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center">
-                    <Bell className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">
+                    <Bell className="h-10 w-10 text-white/20 mx-auto mb-2" />
+                    <p className="text-xs text-white/50">
                       Nenhuma notificação
                     </p>
                   </div>
@@ -320,9 +298,9 @@ export default function EnterpriseHeader({
                       <div
                         key={notif.id}
                         className={cn(
-                          'p-3 border-b border-border/30 cursor-pointer transition-colors',
-                          !notif.read && 'bg-blue-500/5 hover:bg-blue-500/10',
-                          notif.read && 'hover:bg-muted/40'
+                          'p-3 border-b border-white/5 cursor-pointer transition-colors',
+                          !notif.read && 'bg-brand-blue/10 hover:bg-brand-blue/20',
+                          notif.read && 'hover:bg-white/5'
                         )}
                         onClick={() => {
                           onNotificationClick?.(notif.id);
@@ -339,17 +317,17 @@ export default function EnterpriseHeader({
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <h4 className="text-xs font-medium text-foreground line-clamp-1">
+                              <h4 className="text-xs font-bold text-white line-clamp-1">
                                 {notif.title}
                               </h4>
                               {!notif.read && (
-                                <div className="h-1.5 w-1.5 bg-blue-600 rounded-full shrink-0 mt-1" />
+                                <div className="h-1.5 w-1.5 bg-brand-cyan rounded-full shrink-0 mt-1" />
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                            <p className="text-xs text-white/60 mt-0.5 line-clamp-2">
                               {notif.message}
                             </p>
-                            <p className="text-[10px] text-muted-foreground/80 mt-1.5">
+                            <p className="text-[10px] text-white/40 mt-1.5">
                               {formatTimestamp(notif.timestamp)}
                             </p>
                           </div>
@@ -359,53 +337,40 @@ export default function EnterpriseHeader({
                   })
                 )}
               </div>
-
-              {/* Footer */}
-              {notifications.length > 0 && (
-                <div className="p-2 border-t border-border/50 bg-muted/20">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full text-xs h-8 hover:bg-muted/60"
-                    onClick={() => setShowNotifications(false)}
-                  >
-                    Ver todas as notificações
-                  </Button>
-                </div>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Separator orientation="vertical" className="hidden md:block h-6" />
+          <Separator orientation="vertical" className="hidden md:block h-6 bg-white/10" />
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 px-2 hover:bg-muted/60"
+                className="gap-2 px-2 hover:bg-white/10 text-white/70"
               >
-                <Avatar className="h-7 w-7 ring-2 ring-border/50">
+                <Avatar className="h-7 w-7 ring-1 ring-white/10">
                   <AvatarImage src={user?.avatar_url} alt="User" />
-                  <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-500 text-white text-xs font-semibold">
+                  <AvatarFallback className="bg-brand-gray text-white text-xs font-bold">
                     {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:block text-left">
-                  <p className="text-xs font-medium text-foreground">{user?.name || 'Usuário'}</p>
-                  <p className="text-[10px] text-muted-foreground">{user?.email || ''}</p>
+                  <p className="text-xs font-bold text-white truncate">{user?.name || 'Usuário'}</p>
+                  <p className="text-[10px] text-white/50 truncate">{user?.email || ''}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
               <DropdownMenuLabel className="text-xs">Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-white/10" />
               
-              <DropdownMenuItem className="cursor-pointer text-xs">
+              <DropdownMenuItem className="cursor-pointer text-xs hover:bg-white/10">
                 <User className="h-3.5 w-3.5 mr-2" />
                 Perfil
               </DropdownMenuItem>
+
               
               <DropdownMenuItem className="cursor-pointer text-xs">
                 <Settings className="h-3.5 w-3.5 mr-2" />

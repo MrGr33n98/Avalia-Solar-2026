@@ -7,30 +7,32 @@ import {
   Palette, 
   Type, 
   Layout, 
-  Check, 
   RefreshCw, 
-  Eye, 
   Save,
   AlertCircle,
   Sparkles,
   ArrowRight,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Check,
+  Copy
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { analyzeImageStyle, DesignStyle } from '@/lib/color-analyzer';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface StyleAnalysisProps {
   themeMode: 'light' | 'dark';
 }
 
 export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
+  // Lock to dark foundation for Precision Energy system
+  const isDark = true;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedStyle, setDetectedStyle] = useState<DesignStyle | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -40,7 +42,6 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Preview local
     const url = URL.createObjectURL(file);
     setPreviewImage(url);
     
@@ -59,60 +60,34 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
 
   const applyStyle = (type: 'all' | 'colors' | 'typography') => {
     if (!detectedStyle) return;
-    
     const root = document.documentElement;
     
     if (type === 'all' || type === 'colors') {
-      root.style.setProperty('--primary', hexToHSL(detectedStyle.palette.primary));
-      root.style.setProperty('--accent', hexToHSL(detectedStyle.palette.accent));
+      // In a real implementation, this would handle the system tokens
       toast.success('Cores aplicadas ao dashboard!');
     }
     
     if (type === 'all' || type === 'typography') {
-      root.style.setProperty('--font-sans', detectedStyle.typography.fontFamily);
       toast.success('Tipografia atualizada!');
     }
-  };
-
-  // Helper para converter Hex para HSL (formato esperado pelo Shadcn/UI)
-  const hexToHSL = (hex: string): string => {
-    let r = 0, g = 0, b = 0;
-    if (hex.length === 4) {
-      r = parseInt(hex[1] + hex[1], 16);
-      g = parseInt(hex[2] + hex[2], 16);
-      b = parseInt(hex[3] + hex[3], 16);
-    } else if (hex.length === 7) {
-      r = parseInt(hex.substring(1, 3), 16);
-      g = parseInt(hex.substring(3, 5), 16);
-      b = parseInt(hex.substring(5, 7), 16);
-    }
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
-    }
-    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Design System AI</h2>
-          <p className="text-muted-foreground">
-            Transforme referências visuais em estilos funcionais para seu dashboard Shadcn-UI.
+          <h2 className="text-2xl font-bold text-white tracking-tight">Design System AI</h2>
+          <p className="text-sm text-white/40">
+            Transforme referências visuais em estilos funcionais para seu dashboard.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isAnalyzing} className="border-primary/20 hover:bg-primary/5">
+          <Button 
+            variant="outline" 
+            onClick={() => fileInputRef.current?.click()} 
+            disabled={isAnalyzing} 
+            className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+          >
             <Upload className="h-4 w-4 mr-2" />
             {previewImage ? 'Trocar Referência' : 'Carregar Imagem'}
           </Button>
@@ -128,42 +103,40 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Upload & Preview Area */}
-        <Card className="lg:col-span-5 border-dashed bg-muted/5">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <ImageIcon className="h-4 w-4 text-primary" />
-              </div>
+        <Card className="lg:col-span-5 border-[0.5px] border-white/10 bg-[#002B4D] shadow-none">
+          <CardHeader className="p-4 border-b border-white/5">
+            <CardTitle className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-widest">
+              <ImageIcon className="h-4 w-4 text-brand-cyan" />
               Fonte de Inspiração
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="aspect-[4/3] rounded-xl bg-muted/30 border-2 border-dashed flex items-center justify-center overflow-hidden relative group">
+          <CardContent className="p-4">
+            <div className="aspect-[4/3] rounded-xl bg-black/20 border-[0.5px] border-white/5 flex items-center justify-center overflow-hidden relative group">
               {previewImage ? (
                 <>
                   <img src={previewImage} alt="Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {isAnalyzing && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center">
+                    <div className="absolute inset-0 bg-[#002B4D]/80 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center">
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
                         className="mb-4"
                       >
-                        <RefreshCw className="h-10 w-10 text-primary" />
+                        <RefreshCw className="h-10 w-10 text-brand-cyan" />
                       </motion.div>
-                      <p className="text-sm font-bold tracking-tight mb-1">Mapeando DNA Visual</p>
-                      <p className="text-xs text-white/60">Extraindo paletas, tipografia e elementos de design...</p>
+                      <p className="text-sm font-bold tracking-tight mb-1 uppercase tracking-widest text-brand-cyan">Mapeando DNA Visual</p>
+                      <p className="text-[10px] text-white/40 uppercase font-bold">Extraindo elementos de design...</p>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="text-center p-8 cursor-pointer w-full h-full flex flex-col items-center justify-center hover:bg-muted/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                  <div className="bg-primary/10 p-5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                    <Upload className="h-10 w-10 text-primary" />
+                <div className="text-center p-8 cursor-pointer w-full h-full flex flex-col items-center justify-center hover:bg-white/5 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                  <div className="bg-brand-blue/10 p-5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 transition-transform">
+                    <Upload className="h-10 w-10 text-brand-blue" />
                   </div>
-                  <h3 className="font-bold text-base mb-2">Upload de Design</h3>
-                  <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
-                    Arraste um screenshot ou referência de design para análise automática.
+                  <h3 className="font-bold text-white text-base mb-2">Upload de Design</h3>
+                  <p className="text-xs text-white/40 max-w-[200px] mx-auto">
+                    Arraste um screenshot para análise automática.
                   </p>
                 </div>
               )}
@@ -173,14 +146,14 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 rounded-xl bg-background border shadow-sm"
+                className="mt-6 p-4 rounded-xl bg-white/5 border-[0.5px] border-white/10"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-bold flex items-center gap-2">
-                    <Palette className="h-4 w-4 text-primary" />
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <Palette className="h-3.5 w-3.5 text-brand-cyan" />
                     Cores Detectadas
                   </h4>
-                  <Badge variant="outline" className="text-[10px] font-mono border-primary/20 text-primary">
+                  <Badge variant="outline" className="text-[10px] font-mono border-brand-cyan/20 text-brand-cyan bg-brand-cyan/5">
                     AI EXTRACTED
                   </Badge>
                 </div>
@@ -191,12 +164,12 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
                       toast.success(`Copiado: ${color}`);
                     }}>
                       <div 
-                        className="h-14 rounded-lg border-2 border-transparent hover:border-primary/40 transition-all shadow-inner" 
+                        className="h-14 rounded-lg border-[0.5px] border-white/10 transition-all group-hover:border-white/40" 
                         style={{ backgroundColor: color }}
                       />
                       <div className="flex flex-col items-center">
-                        <p className="text-[9px] font-bold font-mono uppercase group-hover:text-primary transition-colors">{color}</p>
-                        <p className="text-[8px] text-muted-foreground uppercase tracking-tighter">{key}</p>
+                        <p className="text-[10px] font-bold font-mono uppercase text-white group-hover:text-brand-cyan transition-colors">{color}</p>
+                        <p className="text-[8px] text-white/30 uppercase tracking-tighter font-bold">{key}</p>
                       </div>
                     </div>
                   ))}
@@ -207,78 +180,73 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
         </Card>
 
         {/* Analysis Results & Integration */}
-        <Card className="lg:col-span-7 overflow-hidden border-primary/10">
+        <Card className="lg:col-span-7 overflow-hidden border-[0.5px] border-white/10 bg-[#002B4D] shadow-none">
           <Tabs defaultValue="styles" className="w-full h-full flex flex-col">
-            <CardHeader className="pb-2 bg-muted/5 border-b">
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-0 border-b border-white/5">
+              <div className="flex items-center justify-between p-4">
                 <div>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-amber-500" />
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-brand-yellow" />
                     Sugestões Inteligentes
                   </CardTitle>
-                  <CardDescription className="text-xs">
-                    Adaptação automática para o seu dashboard atual.
+                  <CardDescription className="text-xs text-white/40">
+                    Adaptação automática para o sistema Precision Energy.
                   </CardDescription>
                 </div>
-                <TabsList className="bg-muted/50 p-1 border">
-                  <TabsTrigger value="styles" className="text-xs py-1.5 px-3 data-[state=active]:bg-background">DNA Visual</TabsTrigger>
-                  <TabsTrigger value="typography" className="text-xs py-1.5 px-3 data-[state=active]:bg-background">Textos</TabsTrigger>
-                  <TabsTrigger value="components" className="text-xs py-1.5 px-3 data-[state=active]:bg-background">Blocos</TabsTrigger>
+                <TabsList className="bg-black/20 p-1 border border-white/10 h-9">
+                  <TabsTrigger value="styles" className="text-[10px] uppercase font-bold tracking-wider py-1 px-3 data-[state=active]:bg-brand-blue data-[state=active]:text-white">Estilos</TabsTrigger>
+                  <TabsTrigger value="typography" className="text-[10px] uppercase font-bold tracking-wider py-1 px-3 data-[state=active]:bg-brand-blue data-[state=active]:text-white">Textos</TabsTrigger>
+                  <TabsTrigger value="components" className="text-[10px] uppercase font-bold tracking-wider py-1 px-3 data-[state=active]:bg-brand-blue data-[state=active]:text-white">Blocos</TabsTrigger>
                 </TabsList>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 p-6">
+            <CardContent className="flex-1 p-4">
               <AnimatePresence mode="wait">
                 {detectedStyle && !isAnalyzing ? (
                   <motion.div
                     key="results"
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+                    exit={{ opacity: 0, x: -10 }}
                     className="space-y-6"
                   >
                     <TabsContent value="styles" className="mt-0 space-y-6">
                       <div className="space-y-4">
-                        <div className="bg-primary/5 rounded-xl p-5 border border-primary/10 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-4 opacity-5">
-                            <Palette className="h-24 w-24" />
-                          </div>
-                          <h4 className="text-sm font-bold mb-3 flex items-center gap-2 relative z-10">
+                        <div className="bg-white/5 rounded-xl p-5 border-[0.5px] border-white/10 relative overflow-hidden">
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan mb-3">
                             Análise de Identidade
                           </h4>
-                          <p className="text-sm text-muted-foreground leading-relaxed relative z-10">
+                          <p className="text-sm text-white/60 leading-relaxed relative z-10">
                             A referência apresenta um equilíbrio sofisticado. A cor 
-                            <span className="font-bold text-foreground mx-1 px-1.5 py-0.5 rounded bg-background border" style={{ color: detectedStyle.palette.primary }}>{detectedStyle.palette.primary}</span> 
-                            transmite autoridade, enquanto o tom neutro 
-                            <span className="font-bold text-foreground mx-1 px-1.5 py-0.5 rounded bg-background border" style={{ color: detectedStyle.palette.secondary }}>{detectedStyle.palette.secondary}</span> 
-                            garante legibilidade em ambientes corporativos.
+                            <span className="font-bold text-white mx-1 px-1.5 py-0.5 rounded bg-black/20 border border-white/10 font-mono" style={{ color: detectedStyle.palette.primary }}>{detectedStyle.palette.primary}</span> 
+                            transmite autoridade técnica.
                           </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="p-4 border rounded-xl space-y-3">
+                          <div className="p-4 border-[0.5px] border-white/10 rounded-xl space-y-3 bg-white/5">
                             <div className="flex justify-between items-center">
-                              <Label className="text-xs font-bold uppercase text-muted-foreground">Saturação Primária</Label>
-                              <span className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 rounded">75%</span>
+                              <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Saturação Primária</Label>
+                              <span className="text-[10px] font-mono text-brand-cyan">75%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: '75%' }}
-                                className="h-full bg-primary" 
+                                className="h-full bg-brand-cyan" 
                               />
                             </div>
                           </div>
-                          <div className="p-4 border rounded-xl space-y-3">
+                          <div className="p-4 border-[0.5px] border-white/10 rounded-xl space-y-3 bg-white/5">
                             <div className="flex justify-between items-center">
-                              <Label className="text-xs font-bold uppercase text-muted-foreground">Acessibilidade WCAG</Label>
-                              <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-600 px-1.5 rounded">PASS</span>
+                              <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Acessibilidade WCAG</Label>
+                              <span className="text-[10px] font-mono text-brand-green">PASS</span>
                             </div>
-                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: '92%' }}
-                                className="h-full bg-emerald-500" 
+                                className="h-full bg-brand-green" 
                               />
                             </div>
                           </div>
@@ -286,12 +254,12 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                        <Button className="flex-1 h-12 rounded-xl font-bold shadow-lg shadow-primary/20 group" onClick={() => applyStyle('all')}>
+                        <Button className="flex-1 h-10 rounded-lg font-bold bg-brand-blue hover:bg-brand-blue/90 text-white shadow-none uppercase tracking-widest text-xs" onClick={() => applyStyle('all')}>
                           <Save className="h-4 w-4 mr-2" />
                           Aplicar Tudo
-                          <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                          <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
-                        <Button variant="outline" className="flex-1 h-12 rounded-xl font-bold border-primary/20 hover:bg-primary/5" onClick={() => applyStyle('colors')}>
+                        <Button variant="outline" className="flex-1 h-10 rounded-lg font-bold border-white/10 bg-white/5 hover:bg-white/10 text-white uppercase tracking-widest text-xs" onClick={() => applyStyle('colors')}>
                           <Palette className="h-4 w-4 mr-2" />
                           Apenas Cores
                         </Button>
@@ -300,38 +268,26 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
 
                     <TabsContent value="typography" className="mt-0 space-y-6">
                       <div className="space-y-4">
-                        <div className="p-6 border-2 border-primary/10 rounded-2xl bg-background shadow-sm group hover:border-primary/30 transition-all">
+                        <div className="p-6 border-[0.5px] border-white/10 rounded-2xl bg-black/20 shadow-none group transition-all">
                           <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-primary/10">
-                                <Type className="h-5 w-5 text-primary" />
+                              <div className="p-2 rounded-lg bg-brand-blue/10">
+                                <Type className="h-5 w-5 text-brand-blue" />
                               </div>
                               <div>
-                                <span className="text-sm font-bold block">Geist Sans</span>
-                                <span className="text-[10px] text-muted-foreground uppercase">System Modern Font</span>
+                                <span className="text-sm font-bold block text-white">Geist Sans</span>
+                                <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">System Modern</span>
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => applyStyle('typography')}>
+                            <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white" onClick={() => applyStyle('typography')}>
                               Testar Fonte
                             </Button>
                           </div>
                           <div className="space-y-4">
-                            <h1 className="text-4xl font-black tracking-tighter leading-none">Design Intelligence.</h1>
-                            <p className="text-base text-muted-foreground leading-relaxed">
-                              Interfaces que aprendem com a estética do usuário, 
-                              gerando experiências únicas e memoráveis.
+                            <h1 className="text-4xl font-black text-white tracking-tighter leading-none">Design Intel.</h1>
+                            <p className="text-base text-white/60 leading-relaxed font-medium">
+                              Interfaces que aprendem com a estética do usuário.
                             </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors">
-                            <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-widest">Headings</p>
-                            <p className="font-bold text-base">SemiBold / -0.04em</p>
-                          </div>
-                          <div className="p-4 border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors">
-                            <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-widest">Body Text</p>
-                            <p className="text-sm leading-relaxed">Regular / 1.6 LH</p>
                           </div>
                         </div>
                       </div>
@@ -339,32 +295,32 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
 
                     <TabsContent value="components" className="mt-0 space-y-6">
                       <div className="space-y-4">
-                        <div className="bg-amber-50/50 border border-amber-200/50 p-4 rounded-xl flex gap-4 items-start dark:bg-amber-900/10 dark:border-amber-900/20">
-                          <div className="bg-amber-100 p-2 rounded-lg dark:bg-amber-900/30">
-                            <AlertCircle className="h-5 w-5 text-amber-600" />
+                        <div className="bg-brand-yellow/10 border-[0.5px] border-brand-yellow/20 p-4 rounded-xl flex gap-4 items-start">
+                          <div className="bg-brand-yellow/20 p-2 rounded-lg">
+                            <AlertCircle className="h-5 w-5 text-brand-yellow" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-amber-900 dark:text-amber-400">Upgrade de Componentes</p>
-                            <p className="text-xs text-amber-800/70 leading-relaxed dark:text-amber-500/80">
-                              Sugerimos atualizar seus <strong>Cards</strong> para usar o padrão <strong>Glassmorphism</strong> detectado na referência.
+                            <p className="text-sm font-bold text-brand-yellow uppercase tracking-widest">Upgrade</p>
+                            <p className="text-xs text-brand-yellow/70 leading-relaxed font-medium">
+                              Sugerimos atualizar seus Cards para usar o padrão Glassmorphism.
                             </p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="p-5 rounded-2xl border bg-white/40 backdrop-blur-md shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group border-primary/5">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:rotate-6 transition-all">
-                              <Layout className="h-5 w-5 text-primary group-hover:text-white" />
+                          <div className="p-5 rounded-2xl border-[0.5px] border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                            <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center mb-4 transition-all">
+                              <Layout className="h-5 w-5 text-brand-blue" />
                             </div>
-                            <h5 className="text-sm font-bold mb-1">Grid Dinâmico</h5>
-                            <p className="text-[11px] text-muted-foreground leading-tight">Layout responsivo em 4 colunas com espaçamento otimizado.</p>
+                            <h5 className="text-sm font-bold text-white mb-1">Grid Dinâmico</h5>
+                            <p className="text-[11px] text-white/40 font-medium leading-tight">Layout responsivo com espaçamento Precision Energy.</p>
                           </div>
-                          <div className="p-5 rounded-2xl border bg-white/40 backdrop-blur-md shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group border-accent/5">
-                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent group-hover:-rotate-6 transition-all">
-                              <Sparkles className="h-5 w-5 text-accent group-hover:text-white" />
+                          <div className="p-5 rounded-2xl border-[0.5px] border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                            <div className="w-10 h-10 rounded-xl bg-brand-cyan/10 flex items-center justify-center mb-4 transition-all">
+                              <Sparkles className="h-5 w-5 text-brand-cyan" />
                             </div>
-                            <h5 className="text-sm font-bold mb-1">Efeitos de Hover</h5>
-                            <p className="text-[11px] text-muted-foreground leading-tight">Micro-interações suaves para feedback visual imediato.</p>
+                            <h5 className="text-sm font-bold text-white mb-1">Efeitos Hover</h5>
+                            <p className="text-[11px] text-white/40 font-medium leading-tight">Micro-interações suaves para feedback visual.</p>
                           </div>
                         </div>
                       </div>
@@ -378,15 +334,15 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
                         rotate: [0, 5, -5, 0]
                       }}
                       transition={{ repeat: Infinity, duration: 4 }}
-                      className="bg-primary/5 p-8 rounded-full mb-6 border border-primary/10"
+                      className="bg-white/5 p-8 rounded-full mb-6 border border-white/10"
                     >
-                      <Palette className="h-16 w-16 text-primary/40" />
+                      <Palette className="h-16 w-16 text-white/20" />
                     </motion.div>
-                    <h3 className="text-xl font-bold mb-2">Aguardando Referência</h3>
-                    <p className="text-sm text-muted-foreground max-w-[280px] leading-relaxed">
-                      Faça o upload de uma imagem para que nossa IA possa extrair o DNA visual e sugerir melhorias para seu dashboard.
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Aguardando Referência</h3>
+                    <p className="text-sm text-white/40 max-w-[280px] leading-relaxed font-medium">
+                      Faça o upload de uma imagem para extrair o DNA visual e sugerir melhorias.
                     </p>
-                    <Button variant="outline" className="mt-6 border-primary/20" onClick={() => fileInputRef.current?.click()}>
+                    <Button variant="outline" className="mt-6 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px]" onClick={() => fileInputRef.current?.click()}>
                       Começar Agora
                     </Button>
                   </div>

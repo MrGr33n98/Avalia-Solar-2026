@@ -42,10 +42,10 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Campanhas de Marketing</h2>
-          <p className="text-muted-foreground">Gerencie e acompanhe suas campanhas</p>
+          <p className="text-white/40">Gerencie e acompanhe suas campanhas</p>
         </div>
         <Button>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-[18px] w-[18px] mr-2" />
           Nova Campanha
         </Button>
       </div>
@@ -53,14 +53,14 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
       <div className="space-y-4">
         {campaigns.map((campaign) => (
           <Card key={campaign.id}>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Megaphone className="h-5 w-5 text-primary" />
                     <h3 className="font-semibold text-lg">{campaign.name}</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/40">
                     {campaign.start_date} - {campaign.end_date}
                   </p>
                 </div>
@@ -69,31 +69,31 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Meta de Conversões</span>
+                    <span className="text-sm text-white/40">Meta de Conversões</span>
                     <span className="text-sm font-semibold">
                       {campaign.achieved} / {campaign.goal}
                     </span>
                   </div>
                   <Progress value={(campaign.achieved / campaign.goal) * 100} className="h-2" />
                   <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
-                    <TrendingUp className="h-4 w-4" />
+                    <TrendingUp className="h-[18px] w-[18px]" />
                     {((campaign.achieved / campaign.goal) * 100).toFixed(1)}% atingido
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Orçamento</span>
+                    <span className="text-sm text-white/40">Orçamento</span>
                     <span className="text-sm font-semibold">
                       R$ {campaign.spent.toLocaleString()} / R$ {campaign.budget.toLocaleString()}
                     </span>
                   </div>
                   <Progress value={(campaign.spent / campaign.budget) * 100} className="h-2" />
-                  <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                    <BarChart3 className="h-4 w-4" />
+                  <div className="flex items-center gap-1 mt-2 text-sm text-white/40">
+                    <BarChart3 className="h-[18px] w-[18px]" />
                     {((campaign.spent / campaign.budget) * 100).toFixed(1)}% utilizado
                   </div>
                 </div>
@@ -111,13 +111,13 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
       {campaigns.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Megaphone className="h-12 w-12 text-muted-foreground mb-4" />
+            <Megaphone className="h-12 w-12 text-white/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma campanha criada</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-white/40 text-center mb-4">
               Crie campanhas para promover seus produtos e serviços.
             </p>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-[18px] w-[18px] mr-2" />
               Criar Primeira Campanha
             </Button>
           </CardContent>

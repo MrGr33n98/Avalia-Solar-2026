@@ -223,7 +223,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300"
         >
           <Alert className="bg-emerald-50 border-emerald-200 text-emerald-800">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className="h-[18px] w-[18px] text-emerald-600" />
             <AlertDescription className="font-medium">
               Suas alterações foram enviadas e estão em análise. Elas aparecerão no perfil público em breve.
             </AlertDescription>
@@ -235,23 +235,23 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-2">InformaÃ§Ãµes da Empresa</h2>
-          <p className="text-muted-foreground">
+          <p className="text-white/40">
             Gerencie as informaÃ§Ãµes bÃ¡sicas e detalhes da sua empresa
           </p>
         </div>
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className="h-[18px] w-[18px] mr-2" />
             Editar InformaÃ§Ãµes
           </Button>
         ) : (
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleCancel} disabled={saving}>
-              <X className="h-4 w-4 mr-2" />
+              <X className="h-[18px] w-[18px] mr-2" />
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="h-[18px] w-[18px] mr-2" />
               {saving ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
             </Button>
           </div>
@@ -265,7 +265,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           <CardDescription>Logo e banner da empresa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Logo */}
             <div className="space-y-3">
               <Label>Logo da Empresa</Label>
@@ -288,12 +288,12 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                     <Label htmlFor="logo-upload" className="cursor-pointer">
                       <Button type="button" variant="outline" size="sm" asChild>
                         <span>
-                          <Upload className="h-4 w-4 mr-2" />
+                          <Upload className="h-[18px] w-[18px] mr-2" />
                           Upload Logo
                         </span>
                       </Button>
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-white/40 mt-2">
                       PNG ou JPG, atÃ© 2MB
                     </p>
                   </div>
@@ -326,12 +326,12 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                     <Label htmlFor="banner-upload" className="cursor-pointer">
                       <Button type="button" variant="outline" size="sm" asChild>
                         <span>
-                          <Upload className="h-4 w-4 mr-2" />
+                          <Upload className="h-[18px] w-[18px] mr-2" />
                           Upload Banner
                         </span>
                       </Button>
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-white/40 mt-2">
                       PNG ou JPG, atÃ© 5MB. Recomendado: 1920x600px
                     </p>
                   </div>
@@ -411,7 +411,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-[18px] w-[18px] text-white/40" />
                   {company?.founded_year || '-'}
                 </p>
               )}
@@ -429,7 +429,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Users className="h-[18px] w-[18px] text-white/40" />
                   {company?.employees_count || '-'}
                 </p>
               )}
@@ -446,7 +446,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <Label>Tipos de Projetos</Label>
               {isEditing ? (
@@ -533,7 +533,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <Phone className="h-[18px] w-[18px] text-white/40" />
                   {company?.phone}
                 </p>
               )}
@@ -550,7 +550,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <Phone className="h-[18px] w-[18px] text-white/40" />
                   {company?.phone_alt || '-'}
                 </p>
               )}
@@ -582,7 +582,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Mail className="h-[18px] w-[18px] text-white/40" />
                   {company?.email_public || '-'}
                 </p>
               )}
@@ -599,7 +599,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 />
               ) : (
                 <p className="text-sm flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <Globe className="h-[18px] w-[18px] text-white/40" />
                   <a href={company?.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     {company?.website || '-'}
                   </a>
@@ -717,7 +717,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               />
             ) : (
               <p className="text-sm flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-[18px] w-[18px] text-white/40" />
                 {company?.working_hours || '-'}
               </p>
             )}
@@ -734,7 +734,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               />
             ) : (
               <p className="text-sm flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="h-[18px] w-[18px] text-white/40" />
                 {company?.payment_methods || '-'}
               </p>
             )}
@@ -752,7 +752,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               />
             ) : (
               <p className="text-sm flex items-center gap-2">
-                <Award className="h-4 w-4 text-muted-foreground" />
+                <Award className="h-[18px] w-[18px] text-white/40" />
                 {company?.certifications || '-'}
               </p>
             )}

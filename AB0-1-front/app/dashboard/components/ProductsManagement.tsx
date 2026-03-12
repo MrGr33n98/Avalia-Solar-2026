@@ -201,21 +201,21 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Produtos e Serviços</h2>
-          <p className="text-muted-foreground">
+          <p className="text-white/40">
             Gerencie seu catálogo de produtos e serviços
           </p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-[18px] w-[18px] mr-2" />
           Adicionar Produto
         </Button>
       </div>
 
       {/* Search */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40" />
             <Input
               placeholder="Buscar produtos..."
               value={searchQuery}
@@ -228,11 +228,11 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
 
       {/* Products Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="aspect-video w-full" />
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between items-start">
                   <Skeleton className="h-6 w-2/3" />
                   <Skeleton className="h-5 w-16" />
@@ -256,33 +256,33 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       ) : filteredProducts.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <Package className="h-12 w-12 text-white/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">
               {searchQuery ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
             </h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-white/40 text-center mb-4">
               {searchQuery
                 ? 'Tente ajustar sua busca.'
                 : 'Adicione produtos para exibir no seu perfil.'}
             </p>
             {!searchQuery && (
               <Button onClick={openCreateDialog}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-[18px] w-[18px] mr-2" />
                 Adicionar Primeiro Produto
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+            <Card key={product.id} className="group hover:shadow-none transition-shadow">
               <CardHeader className="p-0">
                 <div className="aspect-video bg-muted flex items-center justify-center rounded-t-lg">
-                  <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                  <ImageIcon className="h-12 w-12 text-white/40" />
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
@@ -299,7 +299,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-sm text-white/40 line-clamp-2">
                     {product.description}
                   </p>
 
@@ -310,7 +310,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                         : formatCurrency(product.price)}
                     </p>
                     {product.stock !== undefined && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-white/40">
                         Est: {product.stock}
                       </p>
                     )}
@@ -330,7 +330,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                   className="flex-1"
                   onClick={() => openEditDialog(product)}
                 >
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-[18px] w-[18px] mr-2" />
                   Editar
                 </Button>
                 <Button
@@ -339,7 +339,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                   onClick={() => openDeleteDialog(product)}
                   className="hover:bg-destructive hover:text-destructive-foreground"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
               </CardFooter>
             </Card>
@@ -549,7 +549,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-[18px] w-[18px] mr-2 animate-spin" />
                       Salvando...
                     </>
                   ) : (
@@ -581,7 +581,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-[18px] w-[18px] mr-2 animate-spin" />
                   Excluindo...
                 </>
               ) : (

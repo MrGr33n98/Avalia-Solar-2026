@@ -228,17 +228,17 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Galeria de Mídia</h2>
-            <p className="text-muted-foreground">Fotos e vídeos da empresa</p>
+            <p className="text-white/40">Fotos e vídeos da empresa</p>
           </div>
           {controlsVisible && (
             <div className="flex gap-2">
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFilesSelected} />
               <Button onClick={handleUpload} disabled={!canUpload}>
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="h-[18px] w-[18px] mr-2" />
                 Upload de Fotos
               </Button>
               <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
-                <Video className="h-4 w-4 mr-2" />
+                <Video className="h-[18px] w-[18px] mr-2" />
                 Adicionar Vídeo
               </Button>
             </div>
@@ -278,14 +278,14 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                <ImageIcon className="h-12 w-12 text-white/40 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Nenhuma foto adicionada</h3>
-                <p className="text-muted-foreground text-center mb-4">
+                <p className="text-white/40 text-center mb-4">
                   Adicione fotos para mostrar seus projetos e instalações.
                 </p>
                 {controlsVisible && (
                   <Button onClick={handleUpload} disabled={!canUpload}>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-[18px] w-[18px] mr-2" />
                     Upload de Fotos
                   </Button>
                 )}
@@ -324,14 +324,14 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Video className="h-12 w-12 text-muted-foreground mb-4" />
+                <Video className="h-12 w-12 text-white/40 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Nenhum vídeo adicionado</h3>
-                <p className="text-muted-foreground text-center mb-4">
+                <p className="text-white/40 text-center mb-4">
                   Adicione vídeos do YouTube com suas instalações e projetos.
                 </p>
                 {controlsVisible && (
                   <Button variant="outline" onClick={() => setShowVideoDialog(true)} disabled={!canUpload}>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-[18px] w-[18px] mr-2" />
                     Adicionar Vídeo
                   </Button>
                 )}

@@ -17,7 +17,7 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Configurações</h2>
-        <p className="text-muted-foreground">Configure CTAs e preferências da empresa</p>
+        <p className="text-white/40">Configure CTAs e preferências da empresa</p>
       </div>
 
       {/* Tour Controls */}
@@ -28,7 +28,7 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/40">
               Faça um tour pelas principais funcionalidades do dashboard
             </p>
             <div className="flex gap-2">
@@ -91,7 +91,7 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
             </div>
           </div>
           <Button>
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="h-[18px] w-[18px] mr-2" />
             Salvar Configurações
           </Button>
         </CardContent>
