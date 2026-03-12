@@ -147,6 +147,7 @@ Rails.application.routes.draw do
         # New derived-only analytics endpoints
         get 'analytics/overview', to: 'company_dashboard#analytics_overview'
         get 'analytics/timeseries', to: 'company_dashboard#analytics_timeseries'
+        get 'analytics/top_campaigns', to: 'company_dashboard#analytics_top_campaigns'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
         get 'assets', to: 'company_dashboard#assets'

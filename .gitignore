@@ -111,6 +111,7 @@ test-artifacts/
 playwright-report/
 test-results/
 test-sentinel/
+.playwright-cli/
 .cache/
 logs/
 *.webm
@@ -124,6 +125,12 @@ login_modal.png
 register_modal.png
 /AB0-1-front/components/categories/LeadCTA.test.tsx
 /AB0-1-front/e2e/
+/AB0-1-front/.cache/
+
+############################
+# Nested local workspaces
+############################
+interface-design/
 
 ############################
 # Optional: backups
