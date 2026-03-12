@@ -18,7 +18,11 @@ import {
   AlertCircle,
   CheckCircle2,
   Pencil,
-  ImageIcon
+  ImageIcon,
+  Hash,
+  Instagram,
+  Facebook,
+  Linkedin
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,9 +34,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useCompany } from '../hooks';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
+import { cn } from '@/lib/utils';
 
 interface CompanyInfoProps {
   companyId: string;
@@ -92,7 +96,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       }
       const data = await response.json();
       if (!data?.company) {
-        setLoadError('Empresa nÃ£o encontrada ou nÃ£o associada Ã  sua conta.');
+        setLoadError('Empresa não encontrada ou não associada à sua conta.');
       } else {
         setCompany(data.company);
         setFormData(data.company);
@@ -139,7 +143,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/png','image/jpeg'].includes(file.type)) {
-      alert('Formato invÃ¡lido. Use PNG ou JPG');
+      alert('Formato inválido. Use PNG ou JPG');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -151,9 +155,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     try {
       const res = await fetch(buildApiUrl('company_dashboard/update_logo'), {
         method: 'POST',
-        headers: {
-          ...getApiRequestHeaders(),
-        },
+        headers: { ...getApiRequestHeaders() },
         credentials: 'include',
         body: fd
       });
@@ -162,6 +164,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         throw new Error(err.error || 'Falha ao enviar logo');
       }
       setPendingApproval(true);
+      fetchCompanyData();
       setTimeout(() => setPendingApproval(false), 5000);
     } catch (err) {
       console.error('Upload logo error:', err);
@@ -173,7 +176,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/png','image/jpeg'].includes(file.type)) {
-      alert('Formato invÃ¡lido. Use PNG ou JPG');
+      alert('Formato inválido. Use PNG ou JPG');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -185,9 +188,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     try {
       const res = await fetch(buildApiUrl('company_dashboard/update_banner'), {
         method: 'POST',
-        headers: {
-          ...getApiRequestHeaders(),
-        },
+        headers: { ...getApiRequestHeaders() },
         credentials: 'include',
         body: fd
       });
@@ -196,6 +197,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         throw new Error(err.error || 'Falha ao enviar banner');
       }
       setPendingApproval(true);
+      fetchCompanyData();
       setTimeout(() => setPendingApproval(false), 5000);
     } catch (err) {
       console.error('Upload banner error:', err);
@@ -204,658 +206,350 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   };
 
   if (loading) {
-    return <div>Carregando...</div>;
-  }
-
-  if (loadError) {
     return (
-      <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-4">
-        {loadError}
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-bold uppercase tracking-widest text-white/40">Carregando dados técnicos...</p>
       </div>
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl p-6 flex items-center gap-4">
+        <AlertCircle className="h-6 w-6" />
+        <p className="font-bold text-sm uppercase tracking-wider">{loadError}</p>
+      </div>
+    );
+  }
+
+  const TechnicalLabel = ({ children, htmlFor }: { children: React.ReactNode, htmlFor?: string }) => (
+    <Label htmlFor={htmlFor} className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 mb-1.5 block">
+      {children}
+    </Label>
+  );
+
+  const InfoBlock = ({ icon: Icon, label, value, className }: any) => (
+    <div className={cn("space-y-1.5", className)}>
+      <TechnicalLabel>{label}</TechnicalLabel>
+      <div className="flex items-center gap-2.5">
+        <div className="p-2 rounded-lg bg-black/20 dark:bg-white/5 border border-white/5 shadow-inner">
+          <Icon className="h-3.5 w-3.5 text-brand-cyan" />
+        </div>
+        <p className="text-sm font-bold text-white/80">{value || '-'}</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-5xl mx-auto pb-20">
       {/* Pending Approval Alert */}
       {pendingApproval && (
-        <div
-          className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300"
-        >
-          <Alert className="bg-emerald-50 border-emerald-200 text-emerald-800">
-            <CheckCircle2 className="h-[18px] w-[18px] text-emerald-600" />
-            <AlertDescription className="font-medium">
-              Suas alterações foram enviadas e estão em análise. Elas aparecerão no perfil público em breve.
-            </AlertDescription>
-          </Alert>
-        </div>
+        <Alert className="clay-precision bg-emerald-500/10 border-emerald-500/20 text-emerald-500 rounded-2xl animate-in fade-in slide-in-from-top-4">
+          <CheckCircle2 className="h-5 w-5" />
+          <AlertDescription className="font-bold uppercase tracking-widest text-[11px] ml-2">
+            Alterações em análise técnica. Publicação em breve.
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">InformaÃ§Ãµes da Empresa</h2>
-          <p className="text-white/40">
-            Gerencie as informaÃ§Ãµes bÃ¡sicas e detalhes da sua empresa
+          <h2 className="text-3xl font-black text-white tracking-tighter mb-1">Informações da Empresa</h2>
+          <p className="text-sm font-medium text-white/40">
+            Gerenciamento de ativos, identidade e metadados corporativos.
           </p>
         </div>
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Pencil className="h-[18px] w-[18px] mr-2" />
-            Editar InformaÃ§Ãµes
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={saving}>
-              <X className="h-[18px] w-[18px] mr-2" />
-              Cancelar
+        <div className="flex shrink-0">
+          {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)} className="clay-precision-btn h-11 rounded-xl px-6 text-xs uppercase tracking-[0.1em]">
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar Informações
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              <Save className="h-[18px] w-[18px] mr-2" />
-              {saving ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
-            </Button>
-          </div>
-        )}
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleCancel} disabled={saving} className="h-11 rounded-xl px-6 text-xs border-white/10 bg-white/5 hover:bg-white/10 text-white uppercase tracking-[0.1em]">
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="clay-precision-btn h-11 rounded-xl px-6 text-xs uppercase tracking-[0.1em] bg-brand-green">
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Processando...' : 'Salvar Alterações'}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Logo and Banner */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Identidade Visual</CardTitle>
-          <CardDescription>Logo e banner da empresa</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Logo */}
-            <div className="space-y-3">
-              <Label>Logo da Empresa</Label>
-              <div className="flex items-center gap-4">
-                <Avatar className="h-24 w-24 border-2 border-border">
-                  <AvatarImage src={formData?.logo_url} alt="Logo" />
-                  <AvatarFallback className="text-2xl">
-                    {formData?.name?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+      {/* Identity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Banner Card */}
+        <Card className="lg:col-span-8 clay-precision bg-[#002B4D] overflow-hidden shadow-none border-none">
+          <CardHeader className="p-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-cyan flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Viewport do Banner
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="relative group">
+              <div className={cn(
+                "relative rounded-2xl overflow-hidden border-[0.5px] border-white/10 bg-black/40 shadow-2xl transition-all duration-500",
+                formData?.banner_url ? "aspect-[21/7]" : "aspect-[21/7] flex items-center justify-center"
+              )}>
+                {formData?.banner_url ? (
+                  <img src={formData.banner_url} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                ) : (
+                  <div className="text-center space-y-2 opacity-20">
+                    <ImageIcon className="h-12 w-12 mx-auto" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white">Sem banner configurado</p>
+                  </div>
+                )}
+                
                 {isEditing && (
-                  <div>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      id="logo-upload"
-                    />
-                    <Label htmlFor="logo-upload" className="cursor-pointer">
-                      <Button type="button" variant="outline" size="sm" asChild>
-                        <span>
-                          <Upload className="h-[18px] w-[18px] mr-2" />
-                          Upload Logo
-                        </span>
-                      </Button>
-                    </Label>
-                    <p className="text-xs text-white/40 mt-2">
-                      PNG ou JPG, atÃ© 2MB
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Banner */}
-            <div className="space-y-3">
-              <Label>Banner da Empresa</Label>
-              <div className="space-y-2">
-                {formData?.banner_url && (
-                  <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-border">
-                    <img
-                      src={formData.banner_url}
-                      alt="Banner"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                {isEditing && (
-                  <div>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleBannerUpload}
-                      className="hidden"
-                      id="banner-upload"
-                    />
-                    <Label htmlFor="banner-upload" className="cursor-pointer">
-                      <Button type="button" variant="outline" size="sm" asChild>
-                        <span>
-                          <Upload className="h-[18px] w-[18px] mr-2" />
-                          Upload Banner
-                        </span>
-                      </Button>
-                    </Label>
-                    <p className="text-xs text-white/40 mt-2">
-                      PNG ou JPG, atÃ© 5MB. Recomendado: 1920x600px
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Basic Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            InformaÃ§Ãµes BÃ¡sicas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome da Empresa *</Label>
-              {isEditing ? (
-                <Input
-                  id="name"
-                  value={formData?.name || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Nome da empresa"
-                />
-              ) : (
-                <p className="text-sm font-medium">{company?.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
-              {isEditing ? (
-                <Input
-                  id="cnpj"
-                  value={formData?.cnpj || ''}
-                  onChange={(e) => handleInputChange('cnpj', e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                />
-              ) : (
-                <p className="text-sm font-medium">{company?.cnpj || '-'}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">DescriÃ§Ã£o *</Label>
-            {isEditing ? (
-              <Textarea
-                id="description"
-                value={formData?.description || ''}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Descreva sua empresa, produtos e serviÃ§os..."
-                rows={4}
-              />
-            ) : (
-              <p className="text-sm whitespace-pre-wrap">{company?.description}</p>
-            )}
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="founded_year">Ano de FundaÃ§Ã£o</Label>
-              {isEditing ? (
-                <Input
-                  id="founded_year"
-                  type="number"
-                  value={formData?.founded_year || ''}
-                  onChange={(e) => handleInputChange('founded_year', parseInt(e.target.value))}
-                  placeholder="2020"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Calendar className="h-[18px] w-[18px] text-white/40" />
-                  {company?.founded_year || '-'}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="employees_count">NÃºmero de FuncionÃ¡rios</Label>
-              {isEditing ? (
-                <Input
-                  id="employees_count"
-                  type="number"
-                  value={formData?.employees_count || ''}
-                  onChange={(e) => handleInputChange('employees_count', parseInt(e.target.value))}
-                  placeholder="50"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Users className="h-[18px] w-[18px] text-white/40" />
-                  {company?.employees_count || '-'}
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Projects & Services */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Tipos de Projetos e ServiÃ§os
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <Label>Tipos de Projetos</Label>
-              {isEditing ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {['Residenciais','Comerciais','Rurais'].map((type) => (
-                    <label key={type} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={(formData?.project_types || []).includes(type)}
-                        onChange={(e) => {
-                          const current = new Set(formData?.project_types || []);
-                          if (e.target.checked) current.add(type); else current.delete(type);
-                          handleInputChange('project_types', Array.from(current));
-                        }}
-                      />
-                      <span>{type}</span>
+                  <div className="absolute inset-0 bg-[#002B4D]/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                    <label htmlFor="banner-upload" className="cursor-pointer">
+                      <div className="bg-white text-[#002B4D] h-10 px-5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                        <Upload className="h-4 w-4" />
+                        Trocar Banner
+                      </div>
+                      <input type="file" id="banner-upload" className="hidden" accept="image/*" onChange={handleBannerUpload} />
                     </label>
-                  ))}
-                </div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex justify-between items-center px-1">
+                <p className="text-[9px] font-bold text-white/20 uppercase tracking-tighter">Resolução recomendada: 1920x640px · Proporção Técnica 3:1</p>
+                {formData?.banner_url && <Badge variant="outline" className="h-5 text-[8px] border-white/10 text-white/40 uppercase">Ativo</Badge>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Logo Card */}
+        <Card className="lg:col-span-4 clay-precision bg-[#002B4D] overflow-hidden shadow-none border-none">
+          <CardHeader className="p-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-cyan flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Símbolo de Marca
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+            <div className="relative group">
+              <Avatar className="h-28 w-28 rounded-[2rem] border-[0.5px] border-white/10 clay-precision p-1 bg-white/5">
+                <AvatarImage src={formData?.logo_url} className="rounded-[1.8rem] object-contain bg-white dark:bg-[#0F172A] p-4" />
+                <AvatarFallback className="text-3xl font-black text-brand-blue bg-[#002B4D] rounded-[1.8rem]">
+                  {formData?.name?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {isEditing && (
+                <label htmlFor="logo-upload" className="absolute -bottom-2 -right-2 cursor-pointer">
+                  <div className="bg-brand-blue text-white h-9 w-9 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all border border-white/20">
+                    <Upload className="h-4 w-4" />
+                  </div>
+                  <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                </label>
+              )}
+            </div>
+            <div className="mt-6 space-y-1">
+              <h4 className="text-sm font-black text-white tracking-tight uppercase">{formData?.name || 'Sua Empresa'}</h4>
+              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Identidade Oficial</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Basic Info & Contact */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Basic Information */}
+        <Card className="clay-precision bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Informações Técnicas</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <TechnicalLabel htmlFor="name">Nome da Empresa *</TechnicalLabel>
+                {isEditing ? (
+                  <Input id="name" value={formData?.name || ''} onChange={(e) => handleInputChange('name', e.target.value)} className="clay-precision-input" />
+                ) : (
+                  <p className="text-sm font-black text-white">{company?.name}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <TechnicalLabel htmlFor="cnpj">CNPJ</TechnicalLabel>
+                {isEditing ? (
+                  <Input id="cnpj" value={formData?.cnpj || ''} onChange={(e) => handleInputChange('cnpj', e.target.value)} className="clay-precision-input font-mono" />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-3.5 w-3.5 text-white/20" />
+                    <p className="text-sm font-bold text-white/80 font-mono">{company?.cnpj || '-'}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <TechnicalLabel htmlFor="description">Descrição Corporativa *</TechnicalLabel>
+              {isEditing ? (
+                <Textarea id="description" value={formData?.description || ''} onChange={(e) => handleInputChange('description', e.target.value)} className="clay-precision-input min-h-[120px] resize-none" rows={4} />
               ) : (
+                <p className="text-sm text-white/60 leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">{company?.description}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 pt-2">
+              <InfoBlock icon={Calendar} label="Fundação" value={company?.founded_year} />
+              <InfoBlock icon={Users} label="Efetivo" value={`${company?.employees_count} colaboradores`} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contact Information */}
+        <Card className="clay-precision bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Canais de Comunicação</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InfoBlock icon={Phone} label="Telefone Master" value={company?.phone} />
+              <InfoBlock icon={Phone} label="Suporte Alternativo" value={company?.phone_alt} />
+              <InfoBlock icon={Mail} label="E-mail Público" value={company?.email_public} />
+              <InfoBlock icon={Globe} label="Portal Web" value={company?.website} className="md:col-span-1" />
+            </div>
+            
+            <Separator className="bg-white/5" />
+            
+            <div className="space-y-4">
+              <TechnicalLabel>Social & Engagement</TechnicalLabel>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { icon: Instagram, label: 'Instagram', field: 'instagram' as const },
+                  { icon: Facebook, label: 'Facebook', field: 'facebook' as const },
+                  { icon: Linkedin, label: 'LinkedIn', field: 'linkedin' as const }
+                ].map((social) => (
+                  <div key={social.label} className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center gap-2">
+                    <social.icon className="h-4 w-4 text-white/40" />
+                    <span className="text-[9px] font-black uppercase text-white/20 tracking-tighter">{social.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Services & Awards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 clay-precision bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Projetos e Serviços</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <TechnicalLabel>Segmentos Atendidos</TechnicalLabel>
                 <div className="flex flex-wrap gap-2">
                   {(company?.project_types || []).map((t) => (
-                    <Badge key={t} variant="outline">{t}</Badge>
+                    <Badge key={t} className="bg-brand-blue/10 text-brand-cyan border-none hover:bg-brand-blue/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      {t}
+                    </Badge>
                   ))}
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <Label>ServiÃ§os Oferecidos</Label>
-              {isEditing ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {[
-                    'InstalaÃ§Ã£o Residencial',
-                    'InstalaÃ§Ã£o Comercial',
-                    'InstalaÃ§Ã£o Industrial',
-                    'ManutenÃ§Ã£o e Suporte',
-                    'Consultoria EnergÃ©tica',
-                  ].map((svc) => (
-                    <label key={svc} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={(formData?.services_offered || []).includes(svc)}
-                        onChange={(e) => {
-                          const current = new Set(formData?.services_offered || []);
-                          if (e.target.checked) current.add(svc); else current.delete(svc);
-                          handleInputChange('services_offered', Array.from(current));
-                        }}
-                      />
-                      <span>{svc}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
+              </div>
+              <div className="space-y-4">
+                <TechnicalLabel>Portfólio de Serviços</TechnicalLabel>
                 <div className="flex flex-wrap gap-2">
                   {(company?.services_offered || []).map((s) => (
-                    <Badge key={s} variant="outline">{s}</Badge>
+                    <Badge key={s} className="bg-white/5 text-white/60 border-white/10 hover:bg-white/10 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      {s}
+                    </Badge>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-primary" />
-            InformaÃ§Ãµes de Contato
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone Principal *</Label>
-              {isEditing ? (
-                <Input
-                  id="phone"
-                  value={formData?.phone || ''}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="(11) 1234-5678"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Phone className="h-[18px] w-[18px] text-white/40" />
-                  {company?.phone}
-                </p>
-              )}
+        <Card className="clay-precision bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Diferenciais</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-1.5">
+              <TechnicalLabel>Certificações Técnicas</TechnicalLabel>
+              <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+                <p className="text-xs font-bold text-white/60 leading-relaxed">{company?.certifications || 'Nenhuma certificação listada.'}</p>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone_alt">Telefone Alternativo</Label>
-              {isEditing ? (
-                <Input
-                  id="phone_alt"
-                  value={formData?.phone_alt || ''}
-                  onChange={(e) => handleInputChange('phone_alt', e.target.value)}
-                  placeholder="(11) 98765-4321"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Phone className="h-[18px] w-[18px] text-white/40" />
-                  {company?.phone_alt || '-'}
-                </p>
-              )}
+            <div className="space-y-1.5">
+              <TechnicalLabel>Reconhecimentos</TechnicalLabel>
+              <div className="p-3 rounded-xl bg-brand-yellow/5 border border-brand-yellow/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <Award className="h-3.5 w-3.5 text-brand-yellow" />
+                  <span className="text-[9px] font-black uppercase text-brand-yellow tracking-widest">Prêmios</span>
+                </div>
+                <p className="text-xs font-bold text-white/60 leading-relaxed">{company?.awards || 'Sem premiações registradas.'}</p>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp</Label>
-              {isEditing ? (
-                <Input
-                  id="whatsapp"
-                  value={formData?.whatsapp || ''}
-                  onChange={(e) => handleInputChange('whatsapp', e.target.value)}
-                  placeholder="+5511987654321"
-                />
-              ) : (
-                <p className="text-sm">{company?.whatsapp || '-'}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email_public">E-mail PÃºblico</Label>
-              {isEditing ? (
-                <Input
-                  id="email_public"
-                  type="email"
-                  value={formData?.email_public || ''}
-                  onChange={(e) => handleInputChange('email_public', e.target.value)}
-                  placeholder="contato@empresa.com"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Mail className="h-[18px] w-[18px] text-white/40" />
-                  {company?.email_public || '-'}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="website">Website</Label>
-              {isEditing ? (
-                <Input
-                  id="website"
-                  value={formData?.website || ''}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  placeholder="https://www.empresa.com"
-                />
-              ) : (
-                <p className="text-sm flex items-center gap-2">
-                  <Globe className="h-[18px] w-[18px] text-white/40" />
-                  <a href={company?.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    {company?.website || '-'}
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Location */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            LocalizaÃ§Ã£o
+      <Card className="clay-precision bg-[#002B4D] border-none">
+        <CardHeader className="p-5 border-b border-white/5">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-brand-cyan" />
+            Base de Operações
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="address">EndereÃ§o Completo</Label>
-            {isEditing ? (
-              <Textarea
-                id="address"
-                value={formData?.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Rua, nÃºmero, complemento, bairro"
-                rows={2}
-              />
-            ) : (
-              <p className="text-sm">{company?.address || '-'}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">Cidade</Label>
-              {isEditing ? (
-                <Input
-                  id="city"
-                  value={formData?.city || ''}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="SÃ£o Paulo"
-                />
-              ) : (
-                <p className="text-sm">{company?.city || '-'}</p>
-              )}
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-4">
+              <InfoBlock icon={MapPin} label="Endereço Fiscal/Operacional" value={company?.address} />
+              <div className="grid grid-cols-2 gap-6">
+                <InfoBlock icon={Building2} label="Cidade" value={company?.city} />
+                <InfoBlock icon={MapPin} label="Estado (UF)" value={company?.state} />
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="state">Estado</Label>
-              {isEditing ? (
-                <Input
-                  id="state"
-                  value={formData?.state || ''}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  placeholder="SP"
-                  maxLength={2}
-                />
-              ) : (
-                <p className="text-sm">{company?.state || '-'}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude</Label>
-              {isEditing ? (
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="0.000001"
-                  value={formData?.latitude || ''}
-                  onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value))}
-                  placeholder="-23.550520"
-                />
-              ) : (
-                <p className="text-sm">{company?.latitude || '-'}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude</Label>
-              {isEditing ? (
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="0.000001"
-                  value={formData?.longitude || ''}
-                  onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value))}
-                  placeholder="-46.633308"
-                />
-              ) : (
-                <p className="text-sm">{company?.longitude || '-'}</p>
-              )}
+            <div className="space-y-4 bg-black/20 p-5 rounded-2xl border border-white/5">
+              <TechnicalLabel>Coordenadas Geográficas</TechnicalLabel>
+              <div className="space-y-3 font-mono text-[11px] font-bold">
+                <div className="flex justify-between items-center text-white/40">
+                  <span>LATITUDE</span>
+                  <span className="text-brand-cyan">{company?.latitude || '0.000000'}</span>
+                </div>
+                <div className="flex justify-between items-center text-white/40">
+                  <span>LONGITUDE</span>
+                  <span className="text-brand-cyan">{company?.longitude || '0.000000'}</span>
+                </div>
+              </div>
+              <Button variant="outline" className="w-full mt-4 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest border-white/10 bg-white/5 hover:bg-white/10 text-white">
+                Validar no Mapa
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Additional Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>InformaÃ§Ãµes Adicionais</CardTitle>
+      {/* Operations */}
+      <Card className="clay-precision bg-[#002B4D] border-none">
+        <CardHeader className="p-5 border-b border-white/5">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-brand-cyan" />
+            Metadados Operacionais
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="working_hours">HorÃ¡rio de Funcionamento</Label>
-            {isEditing ? (
-              <Textarea
-                id="working_hours"
-                value={formData?.working_hours || ''}
-                onChange={(e) => handleInputChange('working_hours', e.target.value)}
-                placeholder="Seg-Sex: 9h-18h, SÃ¡b: 9h-13h"
-                rows={2}
-              />
-            ) : (
-              <p className="text-sm flex items-center gap-2">
-                <Clock className="h-[18px] w-[18px] text-white/40" />
-                {company?.working_hours || '-'}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="payment_methods">MÃ©todos de Pagamento</Label>
-            {isEditing ? (
-              <Input
-                id="payment_methods"
-                value={formData?.payment_methods || ''}
-                onChange={(e) => handleInputChange('payment_methods', e.target.value)}
-                placeholder="Dinheiro, CartÃ£o, Pix, Boleto"
-              />
-            ) : (
-              <p className="text-sm flex items-center gap-2">
-                <DollarSign className="h-[18px] w-[18px] text-white/40" />
-                {company?.payment_methods || '-'}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="certifications">CertificaÃ§Ãµes</Label>
-            {isEditing ? (
-              <Textarea
-                id="certifications"
-                value={formData?.certifications || ''}
-                onChange={(e) => handleInputChange('certifications', e.target.value)}
-                placeholder="ISO 9001, ISO 14001, etc."
-                rows={2}
-              />
-            ) : (
-              <p className="text-sm flex items-center gap-2">
-                <Award className="h-[18px] w-[18px] text-white/40" />
-                {company?.certifications || '-'}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="awards">PrÃªmios e Reconhecimentos</Label>
-            {isEditing ? (
-              <Textarea
-                id="awards"
-                value={formData?.awards || ''}
-                onChange={(e) => handleInputChange('awards', e.target.value)}
-                placeholder="Lista de prÃªmios e reconhecimentos"
-                rows={2}
-              />
-            ) : (
-              <p className="text-sm">{company?.awards || '-'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="languages">Idiomas Atendidos</Label>
-            {isEditing ? (
-              <Input
-                id="languages"
-                value={formData?.languages || ''}
-                onChange={(e) => handleInputChange('languages', e.target.value)}
-                placeholder="PortuguÃªs, InglÃªs, Espanhol"
-              />
-            ) : (
-              <p className="text-sm">{company?.languages || '-'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="response_time_sla">SLA de Resposta</Label>
-            {isEditing ? (
-              <Input
-                id="response_time_sla"
-                value={formData?.response_time_sla || ''}
-                onChange={(e) => handleInputChange('response_time_sla', e.target.value)}
-                placeholder="24 horas"
-              />
-            ) : (
-              <p className="text-sm">{company?.response_time_sla || '-'}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Social Media */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Redes Sociais</CardTitle>
-          <CardDescription>Links para suas redes sociais</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram</Label>
-              {isEditing ? (
-                <Input
-                  id="instagram"
-                  value={formData?.instagram || ''}
-                  onChange={(e) => handleInputChange('instagram', e.target.value)}
-                  placeholder="@empresa"
-                />
-              ) : (
-                <p className="text-sm">{company?.instagram || '-'}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="facebook">Facebook</Label>
-              {isEditing ? (
-                <Input
-                  id="facebook"
-                  value={formData?.facebook || ''}
-                  onChange={(e) => handleInputChange('facebook', e.target.value)}
-                  placeholder="facebook.com/empresa"
-                />
-              ) : (
-                <p className="text-sm">{company?.facebook || '-'}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn</Label>
-              {isEditing ? (
-                <Input
-                  id="linkedin"
-                  value={formData?.linkedin || ''}
-                  onChange={(e) => handleInputChange('linkedin', e.target.value)}
-                  placeholder="linkedin.com/company/empresa"
-                />
-              ) : (
-                <p className="text-sm">{company?.linkedin || '-'}</p>
-              )}
-            </div>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <InfoBlock icon={Clock} label="Horário de Funcionamento" value={company?.working_hours} className="md:col-span-2" />
+            <InfoBlock icon={DollarSign} label="Ticket Médio" value={company?.minimum_ticket ? `R$ ${company.minimum_ticket.toLocaleString()} - R$ ${company.maximum_ticket?.toLocaleString()}` : '-'} />
+            <InfoBlock icon={CheckCircle2} label="SLA de Resposta" value={company?.response_time_sla} />
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
