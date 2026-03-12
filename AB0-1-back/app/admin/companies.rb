@@ -93,6 +93,41 @@ ActiveAdmin.register Company do
     end
   end
 
+  sidebar 'Plan access preview', only: %i[show edit] do
+    group_labels = {
+      'public_profile' => 'Perfil Publico',
+      'conversion' => 'Conversao',
+      'trust' => 'Prova Social e Destaque',
+      'content' => 'Conteudo',
+      'insights' => 'Inteligencia e Dados',
+      'marketplace_behavior' => 'Experiencia Competitiva'
+    }
+    access = resource.feature_access || {}
+    enabled_count = access.values.count { |entry| entry['state'] == 'enabled' }
+    locked_count = access.values.count { |entry| entry['state'] == 'locked' }
+    hidden_count = access.values.count { |entry| entry['state'] == 'hidden' }
+
+    attributes_table_for resource do
+      row('Plan') { resource.plan&.name || 'No plan' }
+      row('Tier') { status_tag(resource.inferred_plan_tier) }
+      row('Enabled') { enabled_count }
+      row('Locked') { locked_count }
+      row('Hidden') { hidden_count }
+    end
+
+    access.group_by { |_feature, entry| entry['group'] || 'other' }.each do |group_key, entries|
+      panel(group_labels[group_key] || group_key.to_s.humanize) do
+        table_for entries.sort_by(&:first) do
+          column('Feature') { |(feature, _entry)| feature.to_s.humanize }
+          column('State') { |(_feature, entry)| status_tag(entry['state']) }
+          column('Value') do |(_feature, entry)|
+            entry['value'].nil? ? status_tag('unset', class: 'warning') : entry['value'].inspect
+          end
+        end
+      end
+    end
+  end
+
   form html: { multipart: true } do |f|
     f.semantic_errors(*f.object.errors.attribute_names)
     safe_preview = lambda do |attachment, max_width:, empty_text:|
@@ -332,6 +367,28 @@ ActiveAdmin.register Company do
         end
         if Company.column_names.include?('plan_status')
           f.input :plan_status, as: :select, collection: %w[active inactive trial expired]
+        end
+
+        if f.object.persisted?
+          access = f.object.feature_access || {}
+          enabled_count = access.values.count { |entry| entry['state'] == 'enabled' }
+          locked_count = access.values.count { |entry| entry['state'] == 'locked' }
+          hidden_count = access.values.count { |entry| entry['state'] == 'hidden' }
+
+          f.template.concat(
+            f.template.content_tag(:div, class: 'admin-plan-preview') do
+              f.template.safe_join(
+                [
+                  f.template.content_tag(:p, "Tier resolvido: #{f.object.inferred_plan_tier}", class: 'inline-hints'),
+                  f.template.content_tag(
+                    :p,
+                    "Enabled: #{enabled_count} | Locked: #{locked_count} | Hidden: #{hidden_count}",
+                    class: 'inline-hints'
+                  )
+                ]
+              )
+            end
+          )
         end
       end
     end

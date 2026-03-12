@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Phone } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
-import { resolveWizardCategoryId } from '@/lib/lead-engine';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
@@ -13,14 +12,14 @@ import { cn } from '@/lib/utils';
 
 interface StickyCTAProps {
   company: Company;
+  canRequestQuote?: boolean;
   ctaEnabled: boolean;
   ctaUrl: string | null;
 }
 
-export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProps) {
+export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const canRequestQuote = (company as any).active_admin === true;
-  const wizardCategoryId = resolveWizardCategoryId(company);
+  const quoteEnabled = canRequestQuote ?? ((company as any).active_admin === true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,7 +50,7 @@ export default function StickyCTA({ company, ctaEnabled, ctaUrl }: StickyCTAProp
     });
   };
 
-  if (!canRequestQuote) return null;
+  if (!quoteEnabled) return null;
 
   return (
     <AnimatePresence>

@@ -3,12 +3,15 @@ module Api
     module Dashboard
       class MeController < BaseController
         def show
+          company = current_company
+
           render json: {
             user: user_payload,
             permissions: {
               approved: current_user.approved_for_dashboard?,
-              plan: current_company.plan&.name,
-              features: current_company.plan_features
+              plan: company&.plan&.name,
+              features: company&.effective_plan_features || {},
+              feature_access: company&.feature_access || {}
             }
           }
         end

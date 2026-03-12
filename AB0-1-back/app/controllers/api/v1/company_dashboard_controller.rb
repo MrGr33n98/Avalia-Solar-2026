@@ -157,7 +157,8 @@ module Api
 
         render json: {
           stats: stats_service.call,
-          plan_features: @company.effective_plan_features || {}
+          plan_features: @company.effective_plan_features || {},
+          feature_access: @company.feature_access || {}
         }, status: :ok
       rescue StandardError => e
         Rails.logger.error(
@@ -167,7 +168,8 @@ module Api
         Rails.logger.error("[CompanyDashboard#stats] backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
         render json: {
           stats: ::CompanyDashboard::StatsService.new(nil).call,
-          plan_features: {}
+          plan_features: {},
+          feature_access: {}
         }, status: :ok
       end
 

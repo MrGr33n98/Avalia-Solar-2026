@@ -20,6 +20,7 @@ interface MobileDashboardQuickAccessProps {
   } | null;
   onTabChange: (tabId: string) => void;
   onOpenNavigation: () => void;
+  visibleTabIds?: string[];
 }
 
 const QUICK_ACTION_COPY: Record<
@@ -65,9 +66,10 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
   const primaryActions = useMemo(
     () =>
       getFlatNavigationByContext('quick_access')
+        .filter((item) => !props.visibleTabIds || props.visibleTabIds.includes(item.id))
         .filter((item) => QUICK_ACTION_COPY[item.id])
         .slice(0, 5),
-    []
+    [props.visibleTabIds]
   );
 
   return (
@@ -97,7 +99,7 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
         </div>
 
         <div className="mt-4">
-          <CommandMenu onSelectTab={props.onTabChange} />
+          <CommandMenu onSelectTab={props.onTabChange} visibleTabIds={props.visibleTabIds} />
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">

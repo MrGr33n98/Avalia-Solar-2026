@@ -500,16 +500,25 @@ class Company < ApplicationRecord
   end
 
   def can_use_social_proof?
-    return false if respond_to?(:social_proof_enabled) && !social_proof_enabled
+    return false if respond_to?(:social_proof_enabled) && social_proof_enabled == false
 
-    plan_flag = feature_enabled_from_plan?(
+    explicit_flag = explicit_feature_value_from_plan?(
       :social_proof,
       :social_proof_enabled,
       :social_proof_feature,
       :featured_reviews
     )
+    return explicit_flag unless explicit_flag.nil?
 
-    plan_flag.nil? ? has_paid_plan? : plan_flag
+    return true if respond_to?(:social_proof_enabled) && social_proof_enabled == true
+
+    feature_enabled_from_plan?(
+      :social_proof,
+      :social_proof_enabled,
+      :social_proof_feature,
+      :featured_reviews,
+      include_defaults: true
+    )
   rescue StandardError
     has_paid_plan?
   end
@@ -519,9 +528,28 @@ class Company < ApplicationRecord
     can_use_social_proof?
   end
 
-  # Business rule: quote/whatsapp CTAs are paid features and require active_admin.
   def quote_feature_enabled?
-    respond_to?(:active_admin) ? !!active_admin : false
+    explicit_flag = explicit_feature_value_from_plan?(
+      :custom_ctas,
+      :active_admin,
+      :quote_feature,
+      :quote_feature_enabled,
+      :quote_requests,
+      :quote_requests_enabled
+    )
+    return explicit_flag unless explicit_flag.nil?
+
+    return true if respond_to?(:active_admin) && active_admin
+
+    feature_enabled_from_plan?(
+      :custom_ctas,
+      :active_admin,
+      :quote_feature,
+      :quote_feature_enabled,
+      :quote_requests,
+      :quote_requests_enabled,
+      include_defaults: true
+    ) == true
   end
 
   # Backward-compatible CTA aliases used by API payloads and serializers.
@@ -538,15 +566,23 @@ class Company < ApplicationRecord
   end
 
   def financing_feature_allowed?
-    flag = feature_enabled_from_plan?(:financing_simulation)
-    flag.nil? ? has_paid_plan? : flag
+    explicit_flag = explicit_feature_value_from_plan?(:financing_simulation, :financing, :financing_tab_visible)
+    return explicit_flag unless explicit_flag.nil?
+
+    return true if respond_to?(:financing_tab_visible) && financing_tab_visible
+
+    feature_enabled_from_plan?(:financing_simulation, :financing, :financing_tab_visible, include_defaults: true)
   rescue StandardError
     has_paid_plan?
   end
 
   def media_upload_allowed?
-    flag = feature_enabled_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media)
-    flag.nil? ? (featured? || verified? || has_paid_plan?) : flag
+    explicit_flag = explicit_feature_value_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media)
+    return explicit_flag unless explicit_flag.nil?
+
+    return true if featured? || verified?
+
+    feature_enabled_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media, include_defaults: true)
   rescue StandardError
     featured? || verified? || has_paid_plan?
   end
@@ -586,15 +622,7 @@ class Company < ApplicationRecord
 
   # Public feature hash used by dashboard and serializers.
   def effective_plan_features
-    company_overrides =
-      if respond_to?(:plan_features) && plan_features.present?
-        parse_features(plan_features)
-      else
-        {}
-      end
-
-    plan_hash = parse_features(raw_plan_features)
-    plan_hash.merge(company_overrides)
+    PlanFeatureCatalog.normalize(raw_effective_plan_features, plan_tier: inferred_plan_tier)
   rescue StandardError => e
     Rails.logger.error("[Company#effective_plan_features] company_id=#{id} error=#{e.class}: #{e.message}")
     {}
@@ -608,23 +636,57 @@ class Company < ApplicationRecord
     @resolved_plan_features = {}
   end
 
-  def feature_enabled_from_plan?(*keys)
-    value = feature_value_from_plan(*keys)
-    return false if value.nil?
+  def explicit_feature_value_from_plan(*keys)
+    keys.flatten.each do |key|
+      value = PlanFeatureCatalog.explicit_value(raw_effective_plan_features, key)
+      return value unless value.nil?
+    end
+    nil
+  end
+
+  def explicit_feature_value_from_plan?(*keys)
+    value = explicit_feature_value_from_plan(*keys)
+    return nil if value.nil?
 
     ActiveModel::Type::Boolean.new.cast(value)
   end
 
-  def feature_value_from_plan(*keys)
-    features = resolved_plan_features
+  def feature_enabled_from_plan?(*keys, include_defaults: true)
+    value = feature_value_from_plan(*keys, include_defaults: include_defaults)
+    return nil if value.nil?
+
+    ActiveModel::Type::Boolean.new.cast(value)
+  end
+
+  def feature_value_from_plan(*keys, include_defaults: true)
+    features = include_defaults ? resolved_plan_features : PlanFeatureCatalog.normalize(raw_effective_plan_features, apply_defaults: false)
     keys.flatten.each do |key|
       value = features[key.to_s]
       return value unless value.nil?
 
       value = features[key.to_sym]
       return value unless value.nil?
+
+      canonical_key = PlanFeatureCatalog.canonical_key_for(key)
+      value = features[canonical_key]
+      return value unless value.nil?
     end
     nil
+  end
+
+  def feature_access
+    @feature_access ||= CompanyFeatureAccessResolver.call(company: self)
+  rescue StandardError => e
+    Rails.logger.error("[Company#feature_access] company_id=#{id} error=#{e.class}: #{e.message}")
+    {}
+  end
+
+  def inferred_plan_tier
+    return plan.inferred_plan_tier if plan.respond_to?(:inferred_plan_tier)
+
+    has_paid_plan? ? 'pro' : 'free'
+  rescue StandardError
+    'free'
   end
 
   def financing_tab_visible?
@@ -770,8 +832,8 @@ class Company < ApplicationRecord
   def raw_plan_features
     return {} unless respond_to?(:plan) && plan.present?
 
-    if plan.respond_to?(:feature_flags)
-      plan.feature_flags
+    if plan.respond_to?(:raw_feature_flags)
+      plan.raw_feature_flags
     elsif plan.respond_to?(:features_json) && plan.features_json.present?
       plan.features_json
     elsif plan.respond_to?(:features) && plan.features.present?
@@ -779,6 +841,29 @@ class Company < ApplicationRecord
     else
       {}
     end
+  end
+
+  def raw_company_plan_overrides
+    return {} unless respond_to?(:plan_features) && plan_features.present?
+
+    parse_features(plan_features)
+  end
+
+  def raw_company_feature_overrides
+    {}.tap do |overrides|
+      overrides['custom_ctas'] = true if respond_to?(:active_admin) && active_admin
+      overrides['social_proof'] = true if respond_to?(:social_proof_enabled) && social_proof_enabled
+      overrides['financing_simulation'] = true if respond_to?(:financing_tab_visible) && financing_tab_visible
+      overrides['media_upload'] = true if featured? || verified?
+      overrides['intent_scores'] = true if respond_to?(:intent_pro?) && intent_pro?
+      overrides['webhooks'] = true if respond_to?(:intent_enterprise?) && intent_enterprise?
+    end
+  end
+
+  def raw_effective_plan_features
+    raw_plan_features
+      .merge(raw_company_plan_overrides)
+      .merge(raw_company_feature_overrides)
   end
 
   def generate_attachment_url(attachment)
@@ -865,11 +950,21 @@ class Company < ApplicationRecord
   end
 
   def can_view_intent_scores?
-    intent_pro?
+    explicit_flag = explicit_feature_value_from_plan?(:intent_scores, :intent_engine, :intent_score_access)
+    return explicit_flag unless explicit_flag.nil?
+
+    return true if intent_pro?
+
+    feature_enabled_from_plan?(:intent_scores, :intent_engine, :intent_score_access, include_defaults: true) == true
   end
 
   def can_use_webhooks?
-    intent_enterprise?
+    explicit_flag = explicit_feature_value_from_plan?(:webhooks, :webhook, :webhook_access)
+    return explicit_flag unless explicit_flag.nil?
+
+    return true if intent_enterprise?
+
+    feature_enabled_from_plan?(:webhooks, :webhook, :webhook_access, include_defaults: true) == true
   end
 
   def max_intent_history_days

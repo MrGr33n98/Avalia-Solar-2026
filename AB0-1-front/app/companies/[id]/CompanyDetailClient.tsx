@@ -76,6 +76,7 @@ import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { track } from "@/lib/analytics/lazy";
 import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
+import { isFeatureEnabled } from "@/lib/feature-access";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -203,7 +204,31 @@ export default function CompanyDetailClient({
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
-  const canRequestQuote = extendedCompany.active_admin === true;
+  const canRequestQuote =
+    currentCompany.feature_access
+      ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
+      : extendedCompany.active_admin === true;
+  const showFaq = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'faq_block')
+    : Boolean(currentCompany.faqs?.length);
+  const showGallery = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'media_gallery')
+    : Boolean(currentCompany.media_urls?.length || currentCompany.videos?.length);
+  const showSocialProof = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'social_proof')
+    : Boolean(currentCompany.can_use_social_proof ?? currentCompany.social_proof_enabled);
+  const showAlternatives = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'show_alternatives')
+    : true;
+  const showCompetitorBanners = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'show_competitor_banners')
+    : true;
+  const showFinancing = Boolean(
+    currentCompany?.financing_tab_visible &&
+      (currentCompany.feature_access
+        ? isFeatureEnabled(currentCompany.feature_access, 'financing_simulation')
+        : true)
+  );
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
   const ctaEnabled = canRequestQuote
@@ -238,12 +263,14 @@ export default function CompanyDetailClient({
       { id: "faq", label: "FAQ", icon: HelpCircle },
       { id: "stats", label: "Estatísticas", icon: BarChart3 },
     ].filter(tab => {
-      if (tab.id === "financing") return !!currentCompany?.financing_tab_visible;
+      if (tab.id === "financing") return showFinancing;
+      if (tab.id === "gallery") return showGallery;
+      if (tab.id === "faq") return showFaq;
       return true;
     });
     if (canEdit) baseTabs.push({ id: "edit", label: "Editar", icon: Edit });
     return baseTabs;
-  }, [canEdit, currentCompany?.financing_tab_visible]);
+  }, [canEdit, showFaq, showFinancing, showGallery]);
 
   const companyStats = useMemo(() => {
     const normalizedRatings = reviews.map((rev) => toSafeRating((rev as any)?.rating, 0));
@@ -295,6 +322,11 @@ export default function CompanyDetailClient({
     fetchData();
   }, [companyId, analyticsEnabled, canViewAnalytics, reviewsLoaded, initialReviews]);
 
+  useEffect(() => {
+    if (tabs.some((tab) => tab.id === activeTab)) return;
+    setActiveTab('overview');
+  }, [activeTab, tabs]);
+
   const bannerUrl = useMemo(() => {
     if (!currentCompany?.banner_url) return null;
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
@@ -330,6 +362,7 @@ export default function CompanyDetailClient({
               logoUrl={logoUrl}
               logoError={logoError}
               setLogoError={setLogoError}
+              canRequestQuote={canRequestQuote}
               ctaEnabled={ctaEnabled}
               ctaUrl={ctaUrl}
             />
@@ -378,8 +411,15 @@ export default function CompanyDetailClient({
                         city={currentCompany.city || 'Sua Região'}
                       />
                     )}
-                    <CompanyOverview company={currentCompany} reviews={reviews} reviewsLoading={reviewsLoading} />
-                    <SocialProof companyId={companyId} companyName={currentCompany.name} />
+                    <CompanyOverview
+                      company={currentCompany}
+                      reviews={reviews}
+                      reviewsLoading={reviewsLoading}
+                      showCompetitorBanners={showCompetitorBanners}
+                    />
+                    {showSocialProof && (
+                      <SocialProof companyId={companyId} companyName={currentCompany.name} />
+                    )}
                   </TabsContent>
 
                   <TabsContent value="products" className="mt-0 focus-visible:outline-none">
@@ -437,7 +477,11 @@ export default function CompanyDetailClient({
             </div>
 
             <aside className="space-y-6 lg:col-span-4">
-              <CompanySidebar company={currentCompany} />
+              <CompanySidebar
+                company={currentCompany}
+                showFaq={showFaq}
+                showCompetitorBanners={showCompetitorBanners}
+              />
 
               {canRequestQuote && (
                 <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-white shadow-sm">
@@ -466,7 +510,7 @@ export default function CompanyDetailClient({
             </aside>
           </div>
 
-          <CompanyComparisonSection currentCompany={currentCompany} />
+          <CompanyComparisonSection currentCompany={currentCompany} enabled={showAlternatives} />
         </main>
       </Tabs>
 
@@ -475,8 +519,9 @@ export default function CompanyDetailClient({
         rank={(currentCompany as any).priority_score >= 100 ? 1 : 0} 
       />
 
-      <StickyCTA 
-        company={currentCompany} 
+      <StickyCTA
+        company={currentCompany}
+        canRequestQuote={canRequestQuote}
         ctaEnabled={ctaEnabled} 
         ctaUrl={ctaUrl} 
       />

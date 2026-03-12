@@ -85,6 +85,15 @@ export interface SectorQuestion {
   enabled: boolean;
 }
 
+export interface FeatureAccessEntry {
+  state: 'enabled' | 'locked' | 'hidden';
+  value?: boolean | number | string | null;
+  group?: string;
+  source?: string;
+  reason?: string;
+  upsell_copy?: string;
+}
+
 export interface Company {
   id: number;
   slug: string;
@@ -187,6 +196,7 @@ export interface Company {
   social_proof_enabled?: boolean;
   can_use_social_proof?: boolean;
   plan_features?: Record<string, any>;
+  feature_access?: Record<string, FeatureAccessEntry>;
   media_upload_allowed?: boolean;
   project_types?: string[];
   services_offered?: string[];

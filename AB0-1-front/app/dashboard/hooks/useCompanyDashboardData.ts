@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchApi, companiesApi } from '@/lib/api';
+import { fetchApi, companiesApi, FeatureAccessEntry } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 
 type RealtimeSubscription =
@@ -57,6 +57,7 @@ export function useCompanyDashboardData(companyId: string) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [planFeatures, setPlanFeatures] = useState<Record<string, any>>({});
+  const [featureAccess, setFeatureAccess] = useState<Record<string, FeatureAccessEntry>>({});
 
   const fetchCompanyData = useCallback(async () => {
     try {
@@ -83,7 +84,11 @@ export function useCompanyDashboardData(companyId: string) {
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard stats', { companyId });
 
-      const data = await fetchApi<{ stats: any; plan_features?: Record<string, any> }>('/company_dashboard/stats', {
+      const data = await fetchApi<{
+        stats: any;
+        plan_features?: Record<string, any>;
+        feature_access?: Record<string, FeatureAccessEntry>;
+      }>('/company_dashboard/stats', {
         params: { company_id: companyId },
       });
       const s = data?.stats || {};
@@ -100,6 +105,7 @@ export function useCompanyDashboardData(companyId: string) {
         conversionRate: s.conversion_rate ?? 0,
       });
       setPlanFeatures(data?.plan_features || {});
+      setFeatureAccess(data?.feature_access || {});
     } catch (error) {
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
@@ -168,6 +174,7 @@ export function useCompanyDashboardData(companyId: string) {
     companyError,
     stats,
     planFeatures,
+    featureAccess,
     notifications,
     markNotificationAsRead,
     refreshData,

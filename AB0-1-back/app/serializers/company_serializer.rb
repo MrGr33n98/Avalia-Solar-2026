@@ -191,6 +191,8 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def faqs
+    return [] unless faq_block_enabled?
+
     # Use loaded association to avoid N+1
     faq_list = if object.association(:company_faqs).loaded?
                 object.company_faqs.select(&:published?).sort_by { |f| f.position || 999 }
@@ -302,6 +304,15 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   private
+
+  def faq_block_enabled?
+    access_entry = object.respond_to?(:feature_access) ? object.feature_access['faq_block'] : nil
+    return access_entry['state'] == 'enabled' && access_entry['value'] != false if access_entry.present?
+
+    return object.feature_enabled_from_plan?(:faq_block, :faq, :faqs, include_defaults: true) if object.respond_to?(:feature_enabled_from_plan?)
+
+    false
+  end
 
   def generate_attachment_url(attachment)
     return nil unless attachment.attached?

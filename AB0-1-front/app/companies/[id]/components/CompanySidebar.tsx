@@ -13,9 +13,15 @@ import { useCopyIntent, useFaqExpand, useHoverIntent } from '@/lib/analytics/hoo
 
 interface CompanySidebarProps {
   company: Company;
+  showFaq?: boolean;
+  showCompetitorBanners?: boolean;
 }
 
-export default function CompanySidebar({ company }: CompanySidebarProps) {
+export default function CompanySidebar({
+  company,
+  showFaq = true,
+  showCompetitorBanners = true,
+}: CompanySidebarProps) {
   const intentCompanyId = String(company.id);
   const visibleFaqs = company.faqs?.slice(0, 5) ?? [];
   const phoneHoverIntent = useHoverIntent(intentCompanyId, 'phone', 800, {
@@ -62,11 +68,13 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
       <CompanyAwardsCard company={company} />
 
       {/* Sponsored Square Banner */}
-      <SponsoredBanner
-        slotKey="company_sidebar_square"
-        companyId={company.id}
-        variant="square"
-      />
+      {showCompetitorBanners && (
+        <SponsoredBanner
+          slotKey="company_sidebar_square"
+          companyId={company.id}
+          variant="square"
+        />
+      )}
 
       {/* Contact Info Card */}
       <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">
@@ -205,7 +213,7 @@ export default function CompanySidebar({ company }: CompanySidebarProps) {
         </Card>
       )}
 
-      {visibleFaqs.length > 0 && (
+      {showFaq && visibleFaqs.length > 0 && (
         <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">
           <CardHeader className="bg-muted/30 pb-4 border-b">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">

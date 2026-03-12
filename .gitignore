@@ -104,6 +104,17 @@ STORY_VALIDATION_CHECKLIST.md
 WCAG_ACCESSIBILITY_REPORT.md
 docs/qa/
 
+# Planejamento de monetizacao/local task board (nao sobe para prod)
+tasks/
+docs/TASK_BOARD_PLANOS_E_MONETIZACAO.md
+docs/prd/PRD_PLANOS_E_FEATURE_GATING_V1.md
+docs/DIAGNOSTICO_PLANOS_MONETIZACAO_E_FEATURE_GATING_*.md
+docs/stories/011.plan-feature-catalog-and-access-resolver.md
+docs/stories/012.activeadmin-plan-console.md
+docs/stories/013.dashboard-feature-access-control.md
+docs/stories/014.public-profile-plan-rendering.md
+docs/stories/015.pricing-page-and-upgrade-funnel.md
+
 ############################
 # Local test artifacts
 ############################

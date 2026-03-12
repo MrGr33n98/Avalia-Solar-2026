@@ -10,9 +10,15 @@ interface CompanyOverviewProps {
   company: Company;
   reviews?: Review[];
   reviewsLoading?: boolean;
+  showCompetitorBanners?: boolean;
 }
 
-export default function CompanyOverview({ company, reviews = [], reviewsLoading = false }: CompanyOverviewProps) {
+export default function CompanyOverview({
+  company,
+  reviews = [],
+  reviewsLoading = false,
+  showCompetitorBanners = true,
+}: CompanyOverviewProps) {
   const averageRating = Number(
     (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0
   );
@@ -69,11 +75,13 @@ export default function CompanyOverview({ company, reviews = [], reviewsLoading 
       </section>
 
       {/* Sponsored Inline Banner */}
-      <SponsoredBanner
-        slotKey="company_overview_inline"
-        companyId={company.id}
-        variant="inline"
-      />
+      {showCompetitorBanners && (
+        <SponsoredBanner
+          slotKey="company_overview_inline"
+          companyId={company.id}
+          variant="inline"
+        />
+      )}
 
       {/* Tipos de Projetos */}
       {company.project_types && company.project_types.length > 0 && (

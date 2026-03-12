@@ -35,6 +35,7 @@ interface CompanyHeroProps {
   logoUrl: string | null;
   logoError: boolean;
   setLogoError: (error: boolean) => void;
+  canRequestQuote?: boolean;
   ctaEnabled: boolean;
   ctaUrl: string | null;
 }
@@ -48,13 +49,14 @@ export default function CompanyHero({
   logoUrl,
   logoError,
   setLogoError,
+  canRequestQuote,
   ctaEnabled,
   ctaUrl
 }: CompanyHeroProps) {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
-  const canRequestQuote = (company as any).active_admin === true;
+  const quoteEnabled = canRequestQuote ?? ((company as any).active_admin === true);
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
@@ -301,7 +303,7 @@ export default function CompanyHero({
                   </div>
                 )}
 
-                {canRequestQuote ? (
+                {quoteEnabled ? (
                   <Button
                     size="default"
                     className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"

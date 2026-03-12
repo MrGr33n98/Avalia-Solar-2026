@@ -26,6 +26,7 @@ import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { isFeatureEnabled } from '@/lib/feature-access';
 
 interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
@@ -214,8 +215,10 @@ export default function CompanyCard({
       source: 'company_card',
     },
   });
-  // Paid feature gate: quote/WhatsApp CTAs only when active_admin is true.
-  const canRequestQuote = company.active_admin === true;
+  const canRequestQuote =
+    company.feature_access
+      ? isFeatureEnabled(company.feature_access, 'custom_ctas')
+      : company.active_admin === true;
   const wizardCategoryId = resolveWizardCategoryId(company);
 
   const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];

@@ -18,9 +18,10 @@ import { getFlatNavigationByContext } from '@/config/navigation';
 
 interface CommandMenuProps {
   onSelectTab: (tabId: string) => void;
+  visibleTabIds?: string[];
 }
 
-export function CommandMenu({ onSelectTab }: CommandMenuProps) {
+export function CommandMenu({ onSelectTab, visibleTabIds }: CommandMenuProps) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -41,13 +42,15 @@ export function CommandMenu({ onSelectTab }: CommandMenuProps) {
   }, []);
 
   const menuItems = React.useMemo(() => {
-    return getFlatNavigationByContext('operational').map((item) => ({
-      id: item.id,
-      label: item.label,
-      icon: item.icon,
-      group: item.parentLabel || item.group || 'Geral',
-    }));
-  }, []);
+    return getFlatNavigationByContext('operational')
+      .filter((item) => !visibleTabIds || visibleTabIds.includes(item.id))
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+        group: item.parentLabel || item.group || 'Geral',
+      }));
+  }, [visibleTabIds]);
 
   const groups = Array.from(new Set(menuItems.map((item) => item.group)));
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -16,10 +16,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics/lazy';
+import { getFlatNavigationByContext } from '@/config/navigation';
+import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
 
 // Components
 import ThemeToggle from './ThemeToggle';
 import ApprovalsPanel from './ApprovalsPanel';
+import FeatureGuard from './FeatureGuard';
 
 // Lazy Loaded Feature Components for Performance
 const CompanyInfo = dynamic(() => import('./CompanyInfo'), { loading: () => <DashboardTabSkeleton /> });
@@ -62,6 +65,57 @@ interface CompanyDashboardProps {
   companyId: string;
 }
 
+const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
+  analytics: 'advanced_analytics',
+  leads: 'leads_marketplace',
+  integrations: 'webhooks',
+  'product-banner': 'promo_banner',
+  'product-sponsored-description': 'sponsored_description',
+  'product-downloads': 'downloadable_materials',
+  'product-videos': 'media_gallery',
+  'product-images': 'media_gallery',
+  media: 'media_gallery',
+};
+
+const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
+  analytics: {
+    title: 'Analytics avancado bloqueado',
+    description: 'Seu plano atual nao inclui acesso completo a metricas avancadas.',
+  },
+  leads: {
+    title: 'Leads do marketplace indisponiveis',
+    description: 'Essa area depende de um plano com distribuicao de oportunidades.',
+  },
+  integrations: {
+    title: 'Integracoes bloqueadas',
+    description: 'Os recursos de webhook e integracao exigem upgrade de plano.',
+  },
+  'product-banner': {
+    title: 'Banner promocional bloqueado',
+    description: 'Seu plano atual nao libera gerenciamento de banner promocional.',
+  },
+  'product-sponsored-description': {
+    title: 'Descricao patrocinada bloqueada',
+    description: 'Esse espaco comercial so fica disponivel em planos elegiveis.',
+  },
+  'product-downloads': {
+    title: 'Conteudo baixavel bloqueado',
+    description: 'Seu plano atual nao permite publicar materiais para download.',
+  },
+  'product-videos': {
+    title: 'Galeria de videos bloqueada',
+    description: 'Seu plano atual nao inclui a galeria premium de midia.',
+  },
+  'product-images': {
+    title: 'Galeria de imagens bloqueada',
+    description: 'Seu plano atual nao inclui a galeria premium de midia.',
+  },
+  media: {
+    title: 'Galeria de midia bloqueada',
+    description: 'Seu plano atual nao inclui upload e gestao completos de midia.',
+  },
+};
+
 export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -74,6 +128,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     companyError, 
     stats, 
     planFeatures,
+    featureAccess,
     notifications, 
     markNotificationAsRead 
   } = useCompanyDashboardData(companyId);
@@ -81,6 +136,42 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+
+  const tabAccessEntries = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(DASHBOARD_TAB_FEATURE_KEYS).map(([tabId, featureKey]) => [
+          tabId,
+          getFeatureAccessEntry(featureAccess, featureKey),
+        ])
+      ),
+    [featureAccess]
+  );
+
+  const visibleTabIds = useMemo(
+    () =>
+      getFlatNavigationByContext('operational')
+        .map((item) => item.id)
+        .filter((tabId) => !isFeatureHiddenEntry(tabAccessEntries[tabId])),
+    [tabAccessEntries]
+  );
+
+  const renderGuardedTab = useCallback(
+    (tabId: string, children: ReactNode) => {
+      const entry = tabAccessEntries[tabId];
+      if (isFeatureHiddenEntry(entry)) return null;
+
+      const copy = DASHBOARD_TAB_GUARD_COPY[tabId];
+      if (!copy) return children;
+
+      return (
+        <FeatureGuard entry={entry} title={copy.title} description={copy.description}>
+          {children}
+        </FeatureGuard>
+      );
+    },
+    [tabAccessEntries]
+  );
 
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
@@ -105,6 +196,18 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       setActiveTab(tab);
     }
   }, [searchParams, activeTab]);
+
+  useEffect(() => {
+    if (visibleTabIds.length === 0 || visibleTabIds.includes(activeTab)) return;
+
+    const fallbackTab = visibleTabIds.includes('overview') ? 'overview' : visibleTabIds[0];
+    if (!fallbackTab) return;
+
+    setActiveTab(fallbackTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', fallbackTab);
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [activeTab, pathname, router, searchParams, visibleTabIds]);
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
@@ -179,6 +282,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         pendingCount={stats?.pendingApprovals || 0}
+        visibleTabIds={visibleTabIds}
       />
 
       <div className="lg:pl-[var(--enterprise-sidebar-width,280px)] flex flex-col min-h-screen">
@@ -201,6 +305,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               stats={stats}
               onTabChange={handleTabChange}
               onOpenNavigation={() => setSidebarOpen(true)}
+              visibleTabIds={visibleTabIds}
             />
 
             {/* Content based on active tab using Shadcn Tabs */}
@@ -224,17 +329,20 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Integrações</h2>
-                    <p className="text-sm text-white/40">Conecte ferramentas e serviços ao seu painel.</p>
+                {renderGuardedTab(
+                  'integrations',
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Integrações</h2>
+                      <p className="text-sm text-white/40">Conecte ferramentas e serviços ao seu painel.</p>
+                    </div>
+                    <Card>
+                      <CardContent className="p-4 text-sm text-white/40">
+                        Em breve.
+                      </CardContent>
+                    </Card>
                   </div>
-                  <Card>
-                    <CardContent className="p-4 text-sm text-white/40">
-                      Em breve.
-                    </CardContent>
-                  </Card>
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
@@ -252,17 +360,20 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="analytics" className="mt-0 focus-visible:outline-none" data-tour="analytics">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Analytics Avançado
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Métricas detalhadas de performance e engajamento
-                    </p>
+                {renderGuardedTab(
+                  'analytics',
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Analytics Avançado
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Métricas detalhadas de performance e engajamento
+                      </p>
+                    </div>
+                    <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
                   </div>
-                  <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="benchmark" className="mt-0 focus-visible:outline-none">
@@ -336,45 +447,54 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="product-banner" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Banner
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie seu banner e opções de patrocínio.
-                    </p>
+                {renderGuardedTab(
+                  'product-banner',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Banner
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Gerencie seu banner e opções de patrocínio.
+                      </p>
+                    </div>
+                    <BannersSponsorship companyId={companyId} />
                   </div>
-                  <BannersSponsorship companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="product-sponsored-description" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Descrição patrocinada
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Ajuste o conteúdo e a apresentação do seu produto.
-                    </p>
+                {renderGuardedTab(
+                  'product-sponsored-description',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Descrição patrocinada
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Ajuste o conteúdo e a apresentação do seu produto.
+                      </p>
+                    </div>
+                    <ProductsManagement companyId={companyId} />
                   </div>
-                  <ProductsManagement companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Conteúdo Baixável
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Envie arquivos e materiais para seus clientes.
-                    </p>
+                {renderGuardedTab(
+                  'product-downloads',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Conteúdo Baixável
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Envie arquivos e materiais para seus clientes.
+                      </p>
+                    </div>
+                    <MediaGallery companyId={companyId} />
                   </div>
-                  <MediaGallery companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="product-features" className="mt-0 focus-visible:outline-none">
@@ -392,31 +512,37 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="product-videos" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Vídeos
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie vídeos e mídias do seu produto.
-                    </p>
+                {renderGuardedTab(
+                  'product-videos',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Vídeos
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Gerencie vídeos e mídias do seu produto.
+                      </p>
+                    </div>
+                    <MediaGallery companyId={companyId} />
                   </div>
-                  <MediaGallery companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="product-images" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Imagens
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie imagens do seu produto.
-                    </p>
+                {renderGuardedTab(
+                  'product-images',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Imagens
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Gerencie imagens do seu produto.
+                      </p>
+                    </div>
+                    <MediaGallery companyId={companyId} />
                   </div>
-                  <MediaGallery companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="info" className="mt-0 focus-visible:outline-none">
@@ -496,31 +622,37 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="media" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Galeria de Mídia
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie fotos e vídeos da sua empresa
-                    </p>
+                {renderGuardedTab(
+                  'media',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Galeria de Mídia
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Gerencie fotos e vídeos da sua empresa
+                      </p>
+                    </div>
+                    <MediaGallery companyId={companyId} />
                   </div>
-                  <MediaGallery companyId={companyId} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="leads" className="mt-0 focus-visible:outline-none" data-tour="leads">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Oportunidades
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie seus leads e oportunidades de negócio
-                    </p>
+                {renderGuardedTab(
+                  'leads',
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                        Oportunidades
+                      </h2>
+                      <p className="text-sm text-white/40">
+                        Gerencie seus leads e oportunidades de negócio
+                      </p>
+                    </div>
+                    <LeadsOpportunities companyId={companyId} companyName={company?.name} />
                   </div>
-                  <LeadsOpportunities companyId={companyId} companyName={company?.name} />
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">

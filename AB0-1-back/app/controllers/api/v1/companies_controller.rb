@@ -102,6 +102,10 @@ module Api
         limit = 3 if limit <= 0
         limit = [limit, 10].min
 
+        unless @company.can_use_social_proof?
+          return render json: empty_social_proof_payload(@company, limit: limit), status: :ok
+        end
+
         cache_key = Review.social_proof_cache_key(@company.id, limit: limit)
         payload = Rails.cache.fetch(cache_key, expires_in: 20.minutes) do
           base_scope = @company.reviews.includes(:user).for_social_proof
@@ -535,7 +539,8 @@ module Api
             logo_url: company.logo_url,
             banner_url: company.banner_url,
             primary_category: primary_category&.name,
-            category_ids: categories_array.take(5).map(&:id)
+            category_ids: categories_array.take(5).map(&:id),
+            feature_access: company.respond_to?(:feature_access) ? company.feature_access : {}
           }
         else
           company_detail_payload(company)
@@ -562,27 +567,29 @@ module Api
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
-          has_paid_plan: company.respond_to?(:plan_status) && company.respond_to?(:plan) ? company.has_paid_plan? : false,
+          has_paid_plan: company.respond_to?(:has_paid_plan?) ? company.has_paid_plan? : false,
+          plan_features: company.respond_to?(:effective_plan_features) ? company.effective_plan_features : {},
+          feature_access: company.respond_to?(:feature_access) ? company.feature_access : {},
           social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
-                      can_use_social_proof: company.can_use_social_proof?,
-                      project_types: company.project_types || [],
-                      services_offered: company.services_offered || [],
-                      services: company.services_offered || [],
-                      seo_metadata: {
-                        json_ld: {
-                          "@context": "https://schema.org",
-                          "@type": "Organization",
-                          "name": company.name,
-                          "aggregateRating": {
-                            "@type": "AggregateRating",
-                            "ratingValue": company.rating_avg.to_f > 0 ? company.rating_avg.to_f : 5.0,
-                            "reviewCount": company.rating_count.to_i > 0 ? company.rating_count.to_i : 1,
-                            "bestRating": "5",
-                            "worstRating": "1"
-                          }
-                        }
-                      }
-                    )
+          can_use_social_proof: company.can_use_social_proof?,
+          project_types: company.project_types || [],
+          services_offered: company.services_offered || [],
+          services: company.services_offered || [],
+          seo_metadata: {
+            json_ld: {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": company.name,
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": company.rating_avg.to_f > 0 ? company.rating_avg.to_f : 5.0,
+                "reviewCount": company.rating_count.to_i > 0 ? company.rating_count.to_i : 1,
+                "bestRating": "5",
+                "worstRating": "1"
+              }
+            }
+          }
+        )
       end
 
       def company_verified_badge_url(company)
@@ -835,6 +842,17 @@ module Api
           user: {
             name: review.public_reviewer_name
           }
+        }
+      end
+
+      def empty_social_proof_payload(company, limit:)
+        {
+          company_id: company.id,
+          company_slug: company.slug,
+          total_featured_reviews: 0,
+          generated_at: Time.current.iso8601,
+          limit: limit,
+          reviews: []
         }
       end
 

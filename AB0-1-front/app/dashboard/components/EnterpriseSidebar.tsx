@@ -27,6 +27,7 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   pendingCount?: number;
+  visibleTabIds?: string[];
 }
 
 type SidebarLeafItem = {
@@ -50,16 +51,22 @@ function SidebarContent({
   pendingCount = 0,
   isCollapsed,
   onToggleCollapse,
+  visibleTabIds,
 }: { 
   activeTab: string; 
   onTabChange: (tab: string) => void; 
   pendingCount?: number;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  visibleTabIds?: string[];
 }) {
   const groups: SidebarGroupItem[] = useMemo(() => {
     const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
     return navItems
+      .map((item) => ({
+        ...item,
+        children: item.children?.filter((child) => !visibleTabIds || visibleTabIds.includes(child.id)),
+      }))
       .filter(item => item.children && item.children.length > 0)
       .map(item => ({
         id: item.id,
@@ -67,18 +74,19 @@ function SidebarContent({
         icon: item.icon,
         children: item.children!.map(child => ({ id: child.id, label: child.label })),
       }));
-  }, []);
+  }, [visibleTabIds]);
 
   const leafItems: SidebarLeafItem[] = useMemo(() => {
     const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
     return navItems
       .filter(item => !item.children)
+      .filter((item) => !visibleTabIds || visibleTabIds.includes(item.id))
       .map(item => ({
         id: item.id,
         label: item.label,
         icon: item.icon,
       }));
-  }, []);
+  }, [visibleTabIds]);
 
   const groupByActiveTab = useMemo(() => {
     if (activeTab === 'analytics') return 'analytics-group';
@@ -269,7 +277,8 @@ export default function EnterpriseSidebar({
   onTabChange, 
   isOpen,
   onClose,
-  pendingCount = 0
+  pendingCount = 0,
+  visibleTabIds
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -319,6 +328,7 @@ export default function EnterpriseSidebar({
             pendingCount={pendingCount} 
             isCollapsed={false}
             onToggleCollapse={() => {}}
+            visibleTabIds={visibleTabIds}
           />
         </SheetContent>
       </Sheet>
@@ -336,6 +346,7 @@ export default function EnterpriseSidebar({
           pendingCount={pendingCount} 
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleCollapse}
+          visibleTabIds={visibleTabIds}
         />
       </aside>
     </>

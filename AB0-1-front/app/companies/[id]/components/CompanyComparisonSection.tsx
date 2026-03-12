@@ -27,9 +27,13 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 
 interface CompanyComparisonSectionProps {
   currentCompany: Company;
+  enabled?: boolean;
 }
 
-export default function CompanyComparisonSection({ currentCompany }: CompanyComparisonSectionProps) {
+export default function CompanyComparisonSection({
+  currentCompany,
+  enabled = true,
+}: CompanyComparisonSectionProps) {
   const { comparisonList, addToComparison, removeFromComparison, clearComparison } = useComparison();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
@@ -95,6 +99,8 @@ export default function CompanyComparisonSection({ currentCompany }: CompanyComp
   }, [comparisonList, currentCompany]);
 
   const slotsRemaining = 3 - displayedCompanies.length;
+
+  if (!enabled) return null;
 
   return (
     <section className="mt-20 border-t border-slate-200 bg-slate-50/30 -mx-4 px-4 md:-mx-8 md:px-8 py-20 overflow-hidden">
