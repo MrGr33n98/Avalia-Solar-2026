@@ -1,4 +1,6 @@
 ActiveAdmin.register Plan do
+  menu label: 'Planos (Catalogo)', priority: 18
+
   permit_params :name, :description, :price, :plan_tier_template, features_json: {}, plan_feature_fields: {}
 
   FEATURE_GROUP_LABELS = {
@@ -33,6 +35,10 @@ ActiveAdmin.register Plan do
   filter :price
   filter :created_at
   filter :updated_at
+
+  action_item :manage_subscriptions, only: :index do
+    link_to 'Ir para SAAS - Gestao de planos', admin_subscription_plans_path
+  end
 
   index do
     selectable_column
@@ -101,6 +107,7 @@ ActiveAdmin.register Plan do
   end
 
   form do |f|
+    view_helpers = f.template.helpers
     selected_tier = f.object.plan_tier_template.presence || f.object.inferred_plan_tier
     tier_defaults = PlanFeatureCatalog.defaults_for_tier(selected_tier)
     preview_flags =
@@ -142,13 +149,13 @@ ActiveAdmin.register Plan do
       hint = render_feature_hint.call(key, definition, default_value)
 
       if definition[:type] == :integer
-        f.template.content_tag(:li, class: 'input integer optional plan-feature-item') do
-          f.template.safe_join(
+        view_helpers.content_tag(:li, class: 'input integer optional plan-feature-item') do
+          view_helpers.safe_join(
             [
-              f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
-              f.template.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
-              f.template.label_tag(input_id, 'Valor', class: 'label'),
-              f.template.number_field_tag(
+              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
+              view_helpers.label_tag(input_id, 'Valor', class: 'label'),
+              view_helpers.number_field_tag(
                 input_name,
                 current_value,
                 id: input_id,
@@ -156,27 +163,27 @@ ActiveAdmin.register Plan do
                 step: 1,
                 placeholder: default_value || 'Nao definido'
               ),
-              f.template.content_tag(:p, hint, class: 'inline-hints')
+              view_helpers.content_tag(:p, hint, class: 'inline-hints')
             ]
           )
         end
       else
         checked = ActiveModel::Type::Boolean.new.cast(current_value)
-        f.template.content_tag(:li, class: 'boolean input optional plan-feature-item') do
-          f.template.safe_join(
+        view_helpers.content_tag(:li, class: 'boolean input optional plan-feature-item') do
+          view_helpers.safe_join(
             [
-              f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
-              f.template.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
-              f.template.hidden_field_tag(input_name, '0', id: nil),
-              f.template.label_tag(input_id, class: 'label') do
-                f.template.safe_join(
+              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
+              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
+              view_helpers.hidden_field_tag(input_name, '0', id: nil),
+              view_helpers.label_tag(input_id, class: 'label') do
+                view_helpers.safe_join(
                   [
-                    f.template.check_box_tag(input_name, '1', checked, id: input_id),
+                    view_helpers.check_box_tag(input_name, '1', checked, id: input_id),
                     ' Habilitar'
                   ]
                 )
               end,
-              f.template.content_tag(:p, hint, class: 'inline-hints')
+              view_helpers.content_tag(:p, hint, class: 'inline-hints')
             ]
           )
         end
@@ -200,7 +207,7 @@ ActiveAdmin.register Plan do
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
         if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
           f.template.concat(
-            f.template.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
+            view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
           )
         end
         feature_keys.each do |key|
@@ -221,11 +228,11 @@ ActiveAdmin.register Plan do
           enabled.any? ? enabled.join(', ') : 'Nenhuma'
         end
         row('Payload canonico') do
-          f.template.content_tag(:details) do
-            f.template.safe_join(
+          view_helpers.content_tag(:details) do
+            view_helpers.safe_join(
               [
-                f.template.content_tag(:summary, 'Ver JSON do payload canonico'),
-                f.template.content_tag(:pre, JSON.pretty_generate(preview_flags))
+                view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
+                view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
               ]
             )
           end

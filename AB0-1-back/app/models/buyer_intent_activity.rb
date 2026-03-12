@@ -8,8 +8,13 @@ class BuyerIntentActivity < ApplicationRecord
     form_hesitation
     scroll_pause
     tooltip_interaction
+    faq_interaction
+    search_query
     comparison_view
+    comparison_usage
     calculator_usage
+    product_search
+    review_read
     review_deep_read
     phone_hover
     whatsapp_hover
@@ -28,9 +33,14 @@ class BuyerIntentActivity < ApplicationRecord
     'hover_intent' => 2,
     'scroll_pause' => 2,
     'tooltip_interaction' => 3,
+    'faq_interaction' => 4,
+    'search_query' => 4,
     'copy_clipboard' => 5,
     'form_hesitation' => 4,
     'comparison_view' => 6,
+    'comparison_usage' => 6,
+    'product_search' => 5,
+    'review_read' => 4,
     'review_deep_read' => 5,
     'calculator_usage' => 7,
     'phone_hover' => 6,

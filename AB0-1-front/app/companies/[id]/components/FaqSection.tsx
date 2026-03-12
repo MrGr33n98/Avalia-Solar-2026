@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { faqApi, type FaqItem } from '@/lib/api-faq';
 import { trackFaqEngagement } from '@/lib/analytics/consolidated';
+import { useFaqExpand, useSearchIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { Search, HelpCircle, ThumbsUp, ThumbsDown, Layers } from 'lucide-react';
 
 interface FaqSectionProps {
@@ -17,6 +18,12 @@ export default function FaqSection({ companyId }: FaqSectionProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const intentCompanyId = String(companyId);
+  const { trackQuestion } = useFaqExpand(intentCompanyId);
+  const { trackSearchQuery } = useSearchIntent(intentCompanyId, {
+    elementSelector: 'company-faq-search',
+    metadata: { source: 'company_faq_section' },
+  });
 
   const categories = useMemo(() => {
     const unique = new Set(faqs.map((f) => f.category));
@@ -36,13 +43,26 @@ export default function FaqSection({ companyId }: FaqSectionProps) {
       }
     };
     load();
-  }, [query, category]);
+  }, [query, category, companyId]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      trackSearchQuery(query, {
+        faq_category: category || 'all',
+      });
+    }, 450);
+
+    return () => clearTimeout(timeout);
+  }, [category, query, trackSearchQuery]);
 
   const handleVote = async (id: number, helpful: boolean) => {
     // Track FAQ engagement
     const faq = faqs.find(f => f.id === id);
     if (faq) {
       trackFaqEngagement(helpful ? 'vote_up' : 'vote_down', faq.question);
+      trackQuestion(id, helpful ? 'vote_up' : 'vote_down', {
+        faq_question: faq.question,
+      });
     }
 
     try {

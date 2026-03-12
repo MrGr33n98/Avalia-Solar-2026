@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api';
 import { trackSearchPerformance } from '@/lib/analytics/consolidated';
 import type { SearchAllResponse } from '@/lib/api';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -149,6 +150,20 @@ export default function SearchBar({
         company_id: id,
         company_name: name,
         source: 'search_results'
+      });
+      sendIntentSignal({
+        company_id: id,
+        signal_type: 'search_query',
+        signal_category: 'research_intent',
+        element_type: 'search_result',
+        element_selector: 'global-search-bar',
+        metadata: {
+          action: 'result_click',
+          query_term: query.trim().slice(0, 120),
+          result_type: 'company',
+          result_count: flatItems.length,
+          selected_name: name || null,
+        },
       });
     } else if (type === 'categories') {
       track('category_selected', {
