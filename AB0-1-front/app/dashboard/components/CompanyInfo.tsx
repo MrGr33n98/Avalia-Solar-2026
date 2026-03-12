@@ -209,7 +209,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-bold uppercase tracking-widest text-white/40">Carregando dados técnicos...</p>
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground dark:text-white/40">Carregando dados técnicos...</p>
       </div>
     );
   }
@@ -224,7 +224,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   }
 
   const TechnicalLabel = ({ children, htmlFor }: { children: React.ReactNode, htmlFor?: string }) => (
-    <Label htmlFor={htmlFor} className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 mb-1.5 block">
+    <Label htmlFor={htmlFor} className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground dark:text-white/40 mb-1.5 block">
       {children}
     </Label>
   );
@@ -233,10 +233,10 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     <div className={cn("space-y-1.5", className)}>
       <TechnicalLabel>{label}</TechnicalLabel>
       <div className="flex items-center gap-2.5">
-        <div className="p-2 rounded-lg bg-black/20 dark:bg-white/5 border border-white/5 shadow-inner">
+        <div className="p-2 rounded-lg bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/5 shadow-inner">
           <Icon className="h-3.5 w-3.5 text-brand-cyan" />
         </div>
-        <p className="text-sm font-bold text-white/80">{value || '-'}</p>
+        <p className="text-sm font-bold text-foreground dark:text-white/80">{value || '-'}</p>
       </div>
     </div>
   );
@@ -256,8 +256,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tighter mb-1">Informações da Empresa</h2>
-          <p className="text-sm font-medium text-white/40">
+          <h2 className="text-3xl font-black text-foreground dark:text-white tracking-tighter mb-1">Informações da Empresa</h2>
+          <p className="text-sm font-medium text-muted-foreground dark:text-white/40">
             Gerenciamento de ativos, identidade e metadados corporativos.
           </p>
         </div>
@@ -269,11 +269,11 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </Button>
           ) : (
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleCancel} disabled={saving} className="h-11 rounded-xl px-6 text-xs border-white/10 bg-white/5 hover:bg-white/10 text-white uppercase tracking-[0.1em]">
+              <Button variant="outline" onClick={handleCancel} disabled={saving} className="h-11 rounded-xl px-6 text-xs border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground dark:text-white uppercase tracking-[0.1em]">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="clay-precision-btn h-11 rounded-xl px-6 text-xs uppercase tracking-[0.1em] bg-brand-green">
+              <Button onClick={handleSave} disabled={saving} className="clay-precision-btn h-11 rounded-xl px-6 text-xs uppercase tracking-[0.1em] bg-brand-green border-none">
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? 'Processando...' : 'Salvar Alterações'}
               </Button>
@@ -285,8 +285,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Identity Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Banner Card */}
-        <Card className="lg:col-span-8 clay-precision bg-[#002B4D] overflow-hidden shadow-none border-none">
-          <CardHeader className="p-5 border-b border-white/5 bg-white/5">
+        <Card className="lg:col-span-8 clay-precision bg-card dark:bg-[#002B4D] overflow-hidden shadow-none border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
             <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-cyan flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               Viewport do Banner
@@ -295,7 +295,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           <CardContent className="p-6">
             <div className="relative group">
               <div className={cn(
-                "relative rounded-2xl overflow-hidden border-[0.5px] border-white/10 bg-black/40 shadow-2xl transition-all duration-500",
+                "relative rounded-2xl overflow-hidden border-[0.5px] border-black/10 dark:border-white/10 bg-black/[0.05] dark:bg-black/40 shadow-2xl transition-all duration-500",
                 formData?.banner_url ? "aspect-[21/7]" : "aspect-[21/7] flex items-center justify-center"
               )}>
                 {formData?.banner_url ? (
@@ -303,7 +303,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 ) : (
                   <div className="text-center space-y-2 opacity-20">
                     <ImageIcon className="h-12 w-12 mx-auto" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white">Sem banner configurado</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-foreground dark:text-white">Sem banner configurado</p>
                   </div>
                 )}
                 
@@ -320,16 +320,16 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 )}
               </div>
               <div className="mt-4 flex justify-between items-center px-1">
-                <p className="text-[9px] font-bold text-white/20 uppercase tracking-tighter">Resolução recomendada: 1920x640px · Proporção Técnica 3:1</p>
-                {formData?.banner_url && <Badge variant="outline" className="h-5 text-[8px] border-white/10 text-white/40 uppercase">Ativo</Badge>}
+                <p className="text-[9px] font-bold text-muted-foreground dark:text-white/20 uppercase tracking-tighter">Resolução recomendada: 1920x640px · Proporção Técnica 3:1</p>
+                {formData?.banner_url && <Badge variant="outline" className="h-5 text-[8px] border-black/5 dark:border-white/10 text-muted-foreground dark:text-white/40 uppercase">Ativo</Badge>}
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Logo Card */}
-        <Card className="lg:col-span-4 clay-precision bg-[#002B4D] overflow-hidden shadow-none border-none">
-          <CardHeader className="p-5 border-b border-white/5 bg-white/5">
+        <Card className="lg:col-span-4 clay-precision bg-card dark:bg-[#002B4D] overflow-hidden shadow-none border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
             <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-cyan flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Símbolo de Marca
@@ -337,9 +337,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </CardHeader>
           <CardContent className="p-6 flex flex-col items-center justify-center text-center">
             <div className="relative group">
-              <Avatar className="h-28 w-28 rounded-[2rem] border-[0.5px] border-white/10 clay-precision p-1 bg-white/5">
+              <Avatar className="h-28 w-28 rounded-[2rem] border-[0.5px] border-black/10 dark:border-white/10 clay-precision p-1 bg-white dark:bg-white/5">
                 <AvatarImage src={formData?.logo_url} className="rounded-[1.8rem] object-contain bg-white dark:bg-[#0F172A] p-4" />
-                <AvatarFallback className="text-3xl font-black text-brand-blue bg-[#002B4D] rounded-[1.8rem]">
+                <AvatarFallback className="text-3xl font-black text-brand-blue bg-slate-50 dark:bg-[#002B4D] rounded-[1.8rem]">
                   {formData?.name?.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -353,8 +353,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               )}
             </div>
             <div className="mt-6 space-y-1">
-              <h4 className="text-sm font-black text-white tracking-tight uppercase">{formData?.name || 'Sua Empresa'}</h4>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Identidade Oficial</p>
+              <h4 className="text-sm font-black text-foreground dark:text-white tracking-tight uppercase">{formData?.name || 'Sua Empresa'}</h4>
+              <p className="text-[10px] font-bold text-muted-foreground dark:text-white/30 uppercase tracking-widest">Identidade Oficial</p>
             </div>
           </CardContent>
         </Card>
@@ -363,9 +363,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Basic Info & Contact */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Basic Information */}
-        <Card className="clay-precision bg-[#002B4D] border-none">
-          <CardHeader className="p-5 border-b border-white/5">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Informações Técnicas</CardTitle>
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80">Informações Técnicas</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -374,7 +374,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 {isEditing ? (
                   <Input id="name" value={formData?.name || ''} onChange={(e) => handleInputChange('name', e.target.value)} className="clay-precision-input" />
                 ) : (
-                  <p className="text-sm font-black text-white">{company?.name}</p>
+                  <p className="text-sm font-black text-foreground dark:text-white">{company?.name}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -383,8 +383,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   <Input id="cnpj" value={formData?.cnpj || ''} onChange={(e) => handleInputChange('cnpj', e.target.value)} className="clay-precision-input font-mono" />
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Hash className="h-3.5 w-3.5 text-white/20" />
-                    <p className="text-sm font-bold text-white/80 font-mono">{company?.cnpj || '-'}</p>
+                    <Hash className="h-3.5 w-3.5 text-muted-foreground dark:text-white/20" />
+                    <p className="text-sm font-bold text-foreground/80 dark:text-white/80 font-mono">{company?.cnpj || '-'}</p>
                   </div>
                 )}
               </div>
@@ -395,21 +395,21 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               {isEditing ? (
                 <Textarea id="description" value={formData?.description || ''} onChange={(e) => handleInputChange('description', e.target.value)} className="clay-precision-input min-h-[120px] resize-none" rows={4} />
               ) : (
-                <p className="text-sm text-white/60 leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">{company?.description}</p>
+                <p className="text-sm text-foreground/60 dark:text-white/60 leading-relaxed bg-black/[0.03] dark:bg-black/20 p-4 rounded-xl border border-black/5 dark:border-white/5">{company?.description}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-6 pt-2">
               <InfoBlock icon={Calendar} label="Fundação" value={company?.founded_year} />
-              <InfoBlock icon={Users} label="Efetivo" value={`${company?.employees_count} colaboradores`} />
+              <InfoBlock icon={Users} label="Efetivo" value={company?.employees_count ? `${company.employees_count} colaboradores` : '-'} />
             </div>
           </CardContent>
         </Card>
 
         {/* Contact Information */}
-        <Card className="clay-precision bg-[#002B4D] border-none">
-          <CardHeader className="p-5 border-b border-white/5">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Canais de Comunicação</CardTitle>
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80">Canais de Comunicação</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -419,7 +419,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               <InfoBlock icon={Globe} label="Portal Web" value={company?.website} className="md:col-span-1" />
             </div>
             
-            <Separator className="bg-white/5" />
+            <Separator className="bg-black/5 dark:bg-white/5" />
             
             <div className="space-y-4">
               <TechnicalLabel>Social & Engagement</TechnicalLabel>
@@ -429,9 +429,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   { icon: Facebook, label: 'Facebook', field: 'facebook' as const },
                   { icon: Linkedin, label: 'LinkedIn', field: 'linkedin' as const }
                 ].map((social) => (
-                  <div key={social.label} className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center gap-2">
-                    <social.icon className="h-4 w-4 text-white/40" />
-                    <span className="text-[9px] font-black uppercase text-white/20 tracking-tighter">{social.label}</span>
+                  <div key={social.label} className="p-3 rounded-xl bg-black/[0.03] dark:bg-black/20 border border-black/5 dark:border-white/5 flex flex-col items-center gap-2">
+                    <social.icon className="h-4 w-4 text-muted-foreground dark:text-white/40" />
+                    <span className="text-[9px] font-black uppercase text-muted-foreground/40 dark:text-white/20 tracking-tighter">{social.label}</span>
                   </div>
                 ))}
               </div>
@@ -442,9 +442,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       {/* Services & Awards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 clay-precision bg-[#002B4D] border-none">
-          <CardHeader className="p-5 border-b border-white/5">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Projetos e Serviços</CardTitle>
+        <Card className="lg:col-span-2 clay-precision bg-card dark:bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80">Projetos e Serviços</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -452,7 +452,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <TechnicalLabel>Segmentos Atendidos</TechnicalLabel>
                 <div className="flex flex-wrap gap-2">
                   {(company?.project_types || []).map((t) => (
-                    <Badge key={t} className="bg-brand-blue/10 text-brand-cyan border-none hover:bg-brand-blue/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    <Badge key={t} className="bg-brand-blue/10 text-brand-blue dark:text-brand-cyan border-none hover:bg-brand-blue/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
                       {t}
                     </Badge>
                   ))}
@@ -462,7 +462,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <TechnicalLabel>Portfólio de Serviços</TechnicalLabel>
                 <div className="flex flex-wrap gap-2">
                   {(company?.services_offered || []).map((s) => (
-                    <Badge key={s} className="bg-white/5 text-white/60 border-white/10 hover:bg-white/10 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    <Badge key={s} className="bg-black/[0.03] dark:bg-white/5 text-foreground/60 dark:text-white/60 border border-black/5 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
                       {s}
                     </Badge>
                   ))}
@@ -472,25 +472,25 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </CardContent>
         </Card>
 
-        <Card className="clay-precision bg-[#002B4D] border-none">
-          <CardHeader className="p-5 border-b border-white/5">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Diferenciais</CardTitle>
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none">
+          <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80">Diferenciais</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="space-y-1.5">
               <TechnicalLabel>Certificações Técnicas</TechnicalLabel>
-              <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-                <p className="text-xs font-bold text-white/60 leading-relaxed">{company?.certifications || 'Nenhuma certificação listada.'}</p>
+              <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-black/20 border border-black/5 dark:border-white/5">
+                <p className="text-xs font-bold text-foreground/60 dark:text-white/60 leading-relaxed">{company?.certifications || 'Nenhuma certificação listada.'}</p>
               </div>
             </div>
             <div className="space-y-1.5">
               <TechnicalLabel>Reconhecimentos</TechnicalLabel>
-              <div className="p-3 rounded-xl bg-brand-yellow/5 border border-brand-yellow/10">
+              <div className="p-3 rounded-xl bg-brand-yellow/10 dark:bg-brand-yellow/5 border border-brand-yellow/20 dark:border-brand-yellow/10">
                 <div className="flex items-center gap-2 mb-1">
                   <Award className="h-3.5 w-3.5 text-brand-yellow" />
                   <span className="text-[9px] font-black uppercase text-brand-yellow tracking-widest">Prêmios</span>
                 </div>
-                <p className="text-xs font-bold text-white/60 leading-relaxed">{company?.awards || 'Sem premiações registradas.'}</p>
+                <p className="text-xs font-bold text-foreground/60 dark:text-white/60 leading-relaxed">{company?.awards || 'Sem premiações registradas.'}</p>
               </div>
             </div>
           </CardContent>
@@ -498,9 +498,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       </div>
 
       {/* Location */}
-      <Card className="clay-precision bg-[#002B4D] border-none">
-        <CardHeader className="p-5 border-b border-white/5">
-          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
+      <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none">
+        <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80 flex items-center gap-2">
             <MapPin className="h-4 w-4 text-brand-cyan" />
             Base de Operações
           </CardTitle>
@@ -514,19 +514,19 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <InfoBlock icon={MapPin} label="Estado (UF)" value={company?.state} />
               </div>
             </div>
-            <div className="space-y-4 bg-black/20 p-5 rounded-2xl border border-white/5">
+            <div className="space-y-4 bg-black/[0.03] dark:bg-black/20 p-5 rounded-2xl border border-black/5 dark:border-white/5">
               <TechnicalLabel>Coordenadas Geográficas</TechnicalLabel>
               <div className="space-y-3 font-mono text-[11px] font-bold">
-                <div className="flex justify-between items-center text-white/40">
+                <div className="flex justify-between items-center text-muted-foreground dark:text-white/40">
                   <span>LATITUDE</span>
                   <span className="text-brand-cyan">{company?.latitude || '0.000000'}</span>
                 </div>
-                <div className="flex justify-between items-center text-white/40">
+                <div className="flex justify-between items-center text-muted-foreground dark:text-white/40">
                   <span>LONGITUDE</span>
                   <span className="text-brand-cyan">{company?.longitude || '0.000000'}</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-4 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest border-white/10 bg-white/5 hover:bg-white/10 text-white">
+              <Button variant="outline" className="w-full mt-4 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground dark:text-white">
                 Validar no Mapa
               </Button>
             </div>
@@ -535,9 +535,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       </Card>
 
       {/* Operations */}
-      <Card className="clay-precision bg-[#002B4D] border-none">
-        <CardHeader className="p-5 border-b border-white/5">
-          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
+      <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none">
+        <CardHeader className="p-5 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80 dark:text-white/80 flex items-center gap-2">
             <Clock className="h-4 w-4 text-brand-cyan" />
             Metadados Operacionais
           </CardTitle>

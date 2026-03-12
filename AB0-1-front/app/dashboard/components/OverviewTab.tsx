@@ -12,25 +12,30 @@ import {
   Copy,
   Link,
   ShieldCheck,
-  Check
+  Check,
+  ArrowRight,
+  TrendingDown,
+  CheckCircle2
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 import MetricCard from './MetricCard';
 import OpportunitiesCard from '@/components/ui/OpportunitiesCard';
-import OnboardingIncentive from '@/components/ui/OnboardingIncentive';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
 import RankingTable, { type RankingRow } from '@/components/ui/RankingTable';
 import dynamic from 'next/dynamic';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 rounded-lg" />,
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl" />,
   ssr: false
 });
 
@@ -41,7 +46,7 @@ type OverviewTabProps = {
   onNavigateToReviews?: () => void;
 };
 
-export default function OverviewTab({ companyId, company, themeMode = 'light', onNavigateToReviews }: OverviewTabProps) {
+export default function OverviewTab({ companyId, company, themeMode, onNavigateToReviews }: OverviewTabProps) {
   const queryClient = useQueryClient();
   const [reviewLink, setReviewLink] = useState<string>('');
   const { toast } = useToast();
@@ -77,7 +82,6 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         reviewsCount: company?.reviews_count ?? 0,
         averageRating: company?.rating_avg ?? 0,
         profileCompletion,
-        // Removed fake metrics: pendingApprovals, averageResponseTime
       };
     },
     enabled: Boolean(companyId),
@@ -121,7 +125,7 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
   const copyToClipboard = async (text: string, description: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast({ title: 'Copiado!', description: `${description} copiado para a área de transferência.` });
+      toast({ title: 'Copiado!', description: `${description} copiado com sucesso.` });
     } catch (err) {
       toast({ title: 'Erro', description: 'Falha ao copiar.', variant: 'destructive' });
     }
@@ -137,44 +141,94 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Onboarding Section - Preserved */}
+    <div className="space-y-8 pb-20">
+      {/* 🛠️ TOP KPI SECTION - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="metrics">
+        {statsQuery.isLoading ? (
+          <>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-[140px] w-full rounded-2xl bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
+            ))}
+          </>
+        ) : (
+          <>
+            <MetricCard title="Visualizações" value={stats?.profileViews || 0} icon={Eye} color="brand-blue" />
+            <MetricCard title="Interações (CTA)" value={stats?.ctaClicks || 0} icon={Zap} color="brand-cyan" />
+            <MetricCard title="WhatsApp" value={stats?.whatsappClicks || 0} icon={MessageSquare} color="brand-green" />
+            <MetricCard title="Oportunidades" value={stats?.leadsReceived || 0} icon={Target} color="brand-yellow" />
+          </>
+        )}
+      </div>
+
+      {/* 🚀 ONBOARDING - Responsive Theme */}
       {hasNoData && (
-        <Card className="border-blue-200 bg-blue-50/50 shadow-none">
-          <CardHeader>
-            <CardTitle className="text-blue-900 text-lg flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-600" />
-              Sua jornada começa aqui!
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none overflow-hidden group">
+          <CardHeader className="p-6 border-b border-black/5 dark:border-white/5 bg-brand-blue/5 dark:bg-brand-blue/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/10 to-transparent opacity-50" />
+            <CardTitle className="text-xl font-black text-foreground dark:text-white flex items-center gap-2 tracking-tight relative z-10">
+              <Zap className="w-6 h-6 text-brand-yellow animate-pulse" />
+              Sua jornada estratégica começa aqui
             </CardTitle>
-            <CardDescription className="text-blue-700">
-              Parece que seu perfil ainda não recebeu interações suficientes. Siga o checklist abaixo para ativar seu dashboard e começar a capturar leads.
+            <CardDescription className="text-muted-foreground dark:text-white/60 font-medium max-w-2xl relative z-10">
+              Detectamos baixo volume de interações. Execute o checklist de precisão para otimizar seu ranqueamento e capturar leads.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue dark:text-brand-cyan mb-4">Checklist de Ativação</p>
                 {checklist.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-[#002B4D] rounded-lg border border-blue-100 shadow-none">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${item.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-white/40'}`}>
-                        <Check className="w-4 h-4" />
+                  <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-black/[0.02] dark:bg-black/20 border border-black/5 dark:border-white/5 group/item transition-all hover:border-black/10 dark:hover:border-white/20">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                        item.done 
+                          ? "bg-brand-green/10 dark:bg-brand-green/20 text-brand-green shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" 
+                          : "bg-black/5 dark:bg-white/5 text-muted-foreground dark:text-white/20"
+                      )}>
+                        {item.done ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                       </div>
-                      <span className={`font-medium ${item.done ? 'text-slate-900 line-through opacity-70' : 'text-slate-900'}`}>{item.label}</span>
+                      <span className={cn(
+                        "text-sm font-bold tracking-tight",
+                        item.done 
+                          ? "text-muted-foreground/40 dark:text-white/40 line-through" 
+                          : "text-foreground/80 dark:text-white/80"
+                      )}>{item.label}</span>
                     </div>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{item.impact}</span>
+                    <Badge variant="outline" className="bg-brand-blue/5 dark:bg-brand-blue/10 border-brand-blue/10 dark:border-brand-blue/20 text-brand-blue dark:text-brand-cyan text-[9px] font-black uppercase tracking-widest px-2 py-0.5">
+                      {item.impact}
+                    </Badge>
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col justify-center space-y-4 p-4 bg-[#002B4D] rounded-lg border border-blue-100 shadow-none">
-                <h4 className="font-semibold text-slate-800">1. Compartilhe seu Link Público (Rastreado)</h4>
-                <div className="flex items-center gap-2">
-                  <input type="text" readOnly value={assetsQuery.data?.utm_ready_link || ''} className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" />
-                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}><Copy className="w-4 h-4" /></Button>
+              <div className="flex flex-col justify-center space-y-6 p-6 bg-black/[0.03] dark:bg-black/40 rounded-2xl border border-black/5 dark:border-white/5 shadow-inner">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40">1. Ativo de Distribuição (Link UTM)</label>
+                  <div className="flex items-center gap-2 group/input">
+                    <input type="text" readOnly value={assetsQuery.data?.utm_ready_link || ''} className="flex-1 h-10 px-4 text-xs font-mono font-bold border-none rounded-xl bg-white/50 dark:bg-[#002B4D] text-brand-blue dark:text-brand-cyan focus:ring-0" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}
+                      className="h-10 w-10 bg-white/80 dark:bg-white/5 hover:bg-brand-blue hover:text-white rounded-xl transition-all border border-black/5 dark:border-none"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <h4 className="font-semibold text-slate-800 mt-2">2. Instale o Selo no seu Site</h4>
-                <div className="flex items-center gap-2">
-                  <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" />
-                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}><Copy className="w-4 h-4" /></Button>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40">2. Integração Web (Selo de Confiança)</label>
+                  <div className="flex items-center gap-2 group/input">
+                    <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 h-10 px-4 text-xs font-mono font-bold border-none rounded-xl bg-white/50 dark:bg-[#002B4D] text-brand-blue dark:text-brand-cyan focus:ring-0" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}
+                      className="h-10 w-10 bg-white/80 dark:bg-white/5 hover:bg-brand-blue hover:text-white rounded-xl transition-all border border-black/5 dark:border-none"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -182,151 +236,147 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         </Card>
       )}
 
-      {/* TOP SECTION: Main KPIs - Moved to absolute top for value-first hierarchy */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="metrics">
+      {/* 📊 CORE ANALYTICS - Responsive Depth */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {statsQuery.isLoading ? (
-          <>
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-[138px] w-full rounded-lg" />
-            ))}
-          </>
+          <Skeleton className="h-[360px] w-full rounded-[2rem] bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
         ) : (
-          <>
-            <MetricCard title="Visualizações" value={stats?.profileViews || 0} icon={Eye} color="blue" />
-            <MetricCard title="Cliques em CTAs" value={stats?.ctaClicks || 0} icon={Zap} color="purple" />
-            <MetricCard title="WhatsApp" value={stats?.whatsappClicks || 0} icon={MessageSquare} color="green" />
-            <MetricCard title="Leads" value={stats?.leadsReceived || 0} icon={Target} color="brand-cyan" />
-          </>
-        )}
-      </div>
-
-      {/* MIDDLE SECTION: Analytics Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {statsQuery.isLoading ? (
-          <Skeleton className="h-[340px] w-full rounded-xl" />
-        ) : (
-          <div data-tour="reputation">
+          <div data-tour="reputation" className="clay-precision bg-card dark:bg-[#002B4D] rounded-[2rem] overflow-hidden">
             <NPSDetailedCard averageRating={Number(stats?.averageRating || 0)} reviewsCount={Number(stats?.reviewsCount || 0)} />
           </div>
         )}
         {statsQuery.isLoading ? (
-          <Skeleton className="h-[340px] w-full rounded-xl" />
+          <Skeleton className="h-[360px] w-full rounded-[2rem] bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
         ) : (
-          <RankingTable rows={rankingRows} />
+          <div className="clay-precision bg-card dark:bg-[#002B4D] rounded-[2rem] overflow-hidden p-1">
+            <RankingTable rows={rankingRows} />
+          </div>
         )}
       </div>
 
-      {/* SIDE/SECONDARY SECTION: Operational Metrics & Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Profile Health & Action Items */}
-        <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-green-50 rounded-xl">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+      {/* ⚙️ OPERATIONAL GRID - Responsive */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Health */}
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group hover:scale-[1.02] transition-all">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="p-3.5 bg-brand-green/10 rounded-2xl shadow-inner border border-brand-green/10">
+              <CheckCircle className="h-6 w-6 text-brand-green" />
             </div>
-            <div>
-              <p className="text-xs text-white/40 font-medium">Completude do Perfil</p>
-              <h4 className="text-lg font-bold text-foreground">{stats?.profileCompletion || 0}%</h4>
-              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2">
-                <div className="bg-green-500 h-full rounded-full" style={{ width: `${stats?.profileCompletion || 0}%` }} />
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30">Saúde dos Dados</p>
+              <h4 className="text-xl font-black text-foreground dark:text-white tracking-tighter">{stats?.profileCompletion || 0}%</h4>
+              <div className="w-full bg-black/[0.05] dark:bg-black/40 h-1.5 rounded-full mt-2.5 overflow-hidden border border-black/5 dark:border-white/5">
+                <div className="bg-brand-green h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(52,199,89,0.4)]" style={{ width: `${stats?.profileCompletion || 0}%` }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Conversion Performance */}
-        <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-purple-50 rounded-xl">
-              <Star className="h-5 w-5 text-purple-600" />
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group hover:scale-[1.02] transition-all">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="p-3.5 bg-brand-blue/10 rounded-2xl shadow-inner border border-brand-blue/10">
+              <Star className="h-6 w-6 text-brand-blue" />
             </div>
             <div>
-              <p className="text-xs text-white/40 font-medium">Taxa de Conversão</p>
-              <h4 className="text-lg font-bold text-foreground">{stats?.conversionRate?.toFixed(1) || 0}%</h4>
-              <p className="text-[10px] text-white/40 mt-0.5">
-                Visitantes que deixaram avaliação
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30">Eficiência de Funil</p>
+              <h4 className="text-xl font-black text-foreground dark:text-white tracking-tighter">{stats?.conversionRate?.toFixed(1) || 0}%</h4>
+              <p className="text-[10px] font-bold text-brand-blue/60 dark:text-brand-cyan/60 mt-1 uppercase tracking-widest">
+                Conversão em Avaliações
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Real Opportunities - Only if has meaningful data */}
+        {/* Status / Opportunities */}
         {statsQuery.isLoading ? (
-          <Skeleton className="h-[88px] w-full rounded-xl" />
+          <Skeleton className="h-[96px] w-full rounded-2xl bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
         ) : stats && !hasNoData && stats.leadsReceived > 0 ? (
           <OpportunitiesCard
-            leftLabel="Categoria"
+            leftLabel="Setor"
             leftValue={stats.leadsReceived}
-            rightLabel={`Para ${companyName}`}
+            rightLabel="Sua Empresa"
             rightValue={stats.leadsReceived}
           />
         ) : (
-          <Card className="border-white/10 shadow-none hover:shadow-none transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 rounded-xl">
-                <CheckCircle className="h-5 w-5 text-emerald-600" />
+          <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group hover:scale-[1.02] transition-all">
+            <CardContent className="p-5 flex items-center gap-5">
+              <div className="p-3.5 bg-brand-cyan/10 rounded-2xl shadow-inner border border-brand-cyan/10">
+                <ShieldCheck className="h-6 w-6 text-brand-cyan" />
               </div>
               <div>
-                <p className="text-xs text-white/40 font-medium">Status do Perfil</p>
-                <h4 className="text-lg font-bold text-foreground">Ativo</h4>
-                <p className="text-[10px] text-emerald-600 flex items-center gap-0.5 mt-0.5">
-                  <CheckCircle className="h-3 w-3" />
-                  Publicado
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30">Visibilidade</p>
+                <h4 className="text-xl font-black text-foreground dark:text-white tracking-tighter uppercase">Perfil Ativo</h4>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                  <p className="text-[10px] font-black text-brand-green uppercase tracking-widest">Público</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* GROWTH TOOLS SECTION: Always accessible */}
-      <Card className="border-emerald-200 bg-emerald-50/30 shadow-none">
-        <CardHeader>
-          <CardTitle className="text-emerald-900 text-lg flex items-center gap-2">
-            <Zap className="w-5 h-5 text-emerald-600" />
-            Ferramentas de Crescimento
+      {/* 🏆 GROWTH TOOLS - Responsive Hardware Signature */}
+      <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none overflow-hidden">
+        <CardHeader className="p-6 border-b border-black/5 dark:border-white/5 bg-brand-cyan/5">
+          <CardTitle className="text-lg font-black text-foreground dark:text-white flex items-center gap-3 tracking-tighter">
+            <Zap className="w-5 h-5 text-brand-cyan" />
+            Growth Engineering
           </CardTitle>
-          <CardDescription className="text-emerald-700">
-            Use essas ferramentas para aumentar sua visibilidade e capturar mais leads.
+          <CardDescription className="text-muted-foreground dark:text-white/40 font-medium">
+            Protocolos avançados para amplificação de prova social e captura orgânica.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4 p-4 bg-[#002B4D] rounded-lg border border-emerald-100 shadow-none">
-              <h4 className="font-semibold text-slate-800">📊 Link Público Rastreado</h4>
-              <p className="text-sm text-slate-600">Compartilhe este link para rastrear visitas e leads.</p>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-black/[0.03] dark:bg-black/20 rounded-[1.5rem] border border-black/5 dark:border-white/5 flex flex-col justify-between group hover:border-brand-blue/20 transition-all">
+              <div className="space-y-2 mb-6">
+                <h4 className="text-sm font-black text-foreground dark:text-white uppercase tracking-tight flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-brand-blue" />
+                  Ativo de Rastreamento
+                </h4>
+                <p className="text-xs text-muted-foreground dark:text-white/40 leading-relaxed">Compartilhe sua identidade única para monitorar o ROI de cada interação digital.</p>
+              </div>
               <div className="flex items-center gap-2">
                 <input 
                   type="text" 
                   readOnly 
                   value={assetsQuery.data?.utm_ready_link || ''} 
-                  className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" 
+                  className="flex-1 h-9 px-4 text-[10px] font-mono font-bold border-none rounded-lg bg-white dark:bg-[#002B4D] text-brand-blue focus:ring-0 shadow-inner" 
                 />
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link rastreado')}
+                  onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}
+                  className="h-9 rounded-lg border-black/10 dark:border-white/10 bg-white/5 dark:bg-white/5 hover:bg-brand-blue hover:text-white text-muted-foreground dark:text-white transition-all shadow-sm"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
-            <div className="space-y-4 p-4 bg-[#002B4D] rounded-lg border border-emerald-100 shadow-none">
-              <h4 className="font-semibold text-slate-800">🏆 Selo de Confiança</h4>
-              <p className="text-sm text-slate-600">Instale no seu site para mostrar sua reputação.</p>
+            <div className="p-6 bg-black/[0.03] dark:bg-black/20 rounded-[1.5rem] border border-black/5 dark:border-white/5 flex flex-col justify-between group hover:border-brand-cyan/20 transition-all">
+              <div className="space-y-2 mb-6">
+                <h4 className="text-sm font-black text-foreground dark:text-white uppercase tracking-tight flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-brand-cyan" />
+                  Validação Externa
+                </h4>
+                <p className="text-xs text-muted-foreground dark:text-white/40 leading-relaxed">Instale o componente de autoridade técnica diretamente no seu ecossistema web.</p>
+              </div>
               <div className="flex items-center gap-2">
                 <input 
                   type="text" 
                   readOnly 
                   value={assetsQuery.data?.badge_embed_code || ''} 
-                  className="flex-1 p-2 text-sm border rounded bg-[#002B4D] text-slate-500" 
+                  className="flex-1 h-9 px-4 text-[10px] font-mono font-bold border-none rounded-lg bg-white dark:bg-[#002B4D] text-brand-blue dark:text-brand-cyan focus:ring-0 shadow-inner" 
                 />
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Código do selo')}
+                  onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}
+                  className="h-9 rounded-lg border-black/10 dark:border-white/10 bg-white/5 dark:bg-white/5 hover:bg-brand-cyan hover:text-white text-muted-foreground dark:text-white transition-all shadow-sm"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
@@ -334,8 +384,10 @@ export default function OverviewTab({ companyId, company, themeMode = 'light', o
         </CardContent>
       </Card>
 
-      {/* BOTTOM SECTION: Advanced Analytics */}
-      <AdvancedAnalytics themeMode={themeMode} companyId={companyId} />
+      {/* 📈 ADVANCED ANALYTICS */}
+      <div className="pt-4">
+        <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} />
+      </div>
     </div>
   );
 }
