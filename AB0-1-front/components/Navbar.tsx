@@ -79,35 +79,41 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-[1000] border-b border-black/6 bg-background/88 pt-[var(--safe-area-inset-top)] shadow-[0_16px_40px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_22px_48px_-36px_rgba(0,0,0,0.8)]">
+    <nav className="sticky top-0 z-[1000] border-b border-slate-200/70 bg-background/90 pt-[var(--safe-area-inset-top)] shadow-[0_14px_36px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_20px_46px_-36px_rgba(0,0,0,0.78)]">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="group flex shrink-0 items-center rounded-[1.35rem] border border-black/8 bg-white/78 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_12px_24px_-22px_rgba(15,23,42,0.38)] transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-brand-blue/25 hover:bg-white dark:border-white/10 dark:bg-[#0b1a2b]/88 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_34px_-24px_rgba(0,0,0,0.82)] dark:hover:border-brand-cyan/30 dark:hover:bg-[#0d2137]"
+          className="group flex shrink-0 items-center gap-2 rounded-[1.1rem] px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5 sm:gap-3"
           aria-label="Home Avalia Solar"
         >
-          <div className="flex h-10 items-center justify-center rounded-[1rem] border border-black/6 bg-gradient-to-b from-slate-50 to-white px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] dark:border-white/6 dark:bg-gradient-to-b dark:from-[#102740] dark:to-[#091727] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-            <Image
-              src="/images/logo.png"
-              alt="Avalia Solar Logo"
-              width={64}
-              height={42}
-              className="h-7 w-auto object-contain dark:brightness-110"
-              priority={logoPriority}
-            />
+          <Image
+            src="/favicon.ico"
+            alt="Avalia Solar Logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain transition-transform duration-200 group-hover:scale-[1.04]"
+            priority={logoPriority}
+          />
+          <div className="hidden min-[430px]:flex flex-col leading-none">
+            <span className="text-[1.03rem] font-semibold tracking-[-0.05em] text-[#0A376C] dark:text-white">
+              Avalia
+            </span>
+            <span className="mt-0.5 text-[0.62rem] font-bold uppercase tracking-[0.3em] text-[#5E7FA3] dark:text-white/60">
+              Solar
+            </span>
           </div>
         </Link>
 
         <div className="hidden xl:flex flex-1 items-center gap-5">
-          <div className="flex max-w-[580px] flex-1 items-center gap-3">
+          <div className="flex min-w-0 max-w-[760px] flex-1 items-center gap-3">
             <NavbarSearch
               className="flex-1"
-              inputClassName="bg-white/78 dark:bg-[#081a2e]/76"
-              placeholder="Buscar produtos, serviços..."
+              inputClassName="bg-white/92 dark:bg-[#081a2e]/82"
+              placeholder="Buscar empresas, produtos e serviços"
             />
-            <div className="w-[210px] shrink-0">
+            <div className="w-[232px] shrink-0">
               <LocationSearch
-                className="w-full bg-white/78 dark:bg-[#081a2e]/76"
+                className="w-full bg-white/92 dark:bg-[#081a2e]/82"
                 onLocationSelect={handleLocationSelect}
               />
             </div>
@@ -123,7 +129,7 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "h-10 rounded-full border border-black/8 bg-white/64 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] transition-all hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-brand-cyan/25 dark:hover:bg-white/8 dark:hover:text-white",
+                  "h-10 rounded-full border border-slate-200/80 bg-white/76 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] transition-all hover:border-brand-blue/18 hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-brand-cyan/25 dark:hover:bg-white/8 dark:hover:text-white",
                   isMegaMenuOpen
                     ? "border-transparent bg-brand-blue text-white shadow-[0_12px_24px_-18px_rgba(0,86,210,0.7)] dark:bg-brand-blue dark:text-white"
                     : ""
@@ -158,7 +164,7 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2 border-l border-black/6 pl-4 dark:border-white/10">
+            <div className="flex items-center gap-2 border-l border-slate-200/70 pl-4 dark:border-white/10">
               {!isAuthenticated ? (
                 <>
                   <Button asChild variant="ghost" size="sm" className="h-10 rounded-full px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/62 hover:bg-brand-blue/5 hover:text-brand-blue dark:text-white/60 dark:hover:bg-white/6 dark:hover:text-white">
@@ -174,7 +180,7 @@ export default function Navbar() {
                     <CompanySwitcher className="h-10 w-44" />
                   )}
 
-                  <div className="flex items-center rounded-full border border-black/8 bg-white/68 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+                  <div className="flex items-center rounded-full border border-slate-200/80 bg-white/76 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:border-white/10 dark:bg-white/5 dark:shadow-none">
                     <Button asChild variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/70 hover:bg-transparent hover:text-brand-blue dark:text-white/65 dark:hover:text-white">
                       <Link
                         href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
@@ -208,15 +214,15 @@ export default function Navbar() {
           <Button
             asChild
             variant="ghost"
-            size="icon"
-            className="h-10 w-10 shrink-0 rounded-[1.05rem] border border-black/8 bg-white/78 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
+            className="h-11 shrink-0 rounded-[1.15rem] border border-slate-200/80 bg-white/90 px-3 text-sm font-semibold text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
           >
             <Link href="/search" aria-label="Buscar">
-              <Search className="h-[18px] w-[18px]" />
+              <Search className="mr-2 h-[18px] w-[18px]" />
+              <span>Buscar</span>
             </Link>
           </Button>
 
-          <div className="min-w-0 max-w-[170px] flex-1 sm:max-w-[220px]">
+          <div className="min-w-0 max-w-[220px] flex-1 sm:max-w-[250px]">
             <LocationSearch
               className="max-w-none text-xs sm:text-sm"
               onLocationSelect={handleLocationSelect}
@@ -235,7 +241,7 @@ export default function Navbar() {
               setIsMobileDrawerOpen(true);
             }}
             aria-label="Menu"
-            className="h-10 w-10 shrink-0 rounded-[1.05rem] border border-black/8 bg-white/78 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
+            className="h-11 w-11 shrink-0 rounded-[1.15rem] border border-slate-200/80 bg-white/90 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
           >
             <Menu className="h-5 w-5" />
           </Button>

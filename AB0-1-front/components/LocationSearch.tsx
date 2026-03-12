@@ -82,9 +82,9 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           aria-expanded={open}
           aria-label="Selecionar localização"
           className={cn(
-            "h-11 w-full justify-between rounded-[1.1rem] border-black/10 bg-white/82 px-3 text-left text-sm text-foreground shadow-none transition-colors",
-            "hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",
-            "dark:border-white/10 dark:bg-[#081a2e]/78 dark:text-white dark:hover:bg-[#0b2037]",
+            "h-12 w-full justify-between rounded-[1.25rem] border-slate-200/80 bg-white/92 px-4 text-left text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-colors",
+            "hover:border-slate-300 hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",
+            "dark:border-white/10 dark:bg-[#081a2e]/82 dark:text-white dark:hover:bg-[#0b2037]",
             className
           )}
         >
@@ -95,7 +95,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[260px] rounded-[1.25rem] border-black/10 bg-white/95 p-0 shadow-2xl shadow-slate-900/10 dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
+      <PopoverContent className="w-[280px] rounded-[1.35rem] border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
         <Command>
           <CommandInput 
             placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} 

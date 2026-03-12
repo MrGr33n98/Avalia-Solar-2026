@@ -132,7 +132,7 @@ describe('Navbar', () => {
     
     const logo = screen.getByRole('img', { name: /Avalia Solar/ });
     expect(logo).toBeInTheDocument();
-    expect(logo).toHaveAttribute('src', '/images/logo.png');
+    expect(logo).toHaveAttribute('src', '/favicon.ico');
     
     const homeLink = screen.getByRole('link', { name: 'Home Avalia Solar' });
     expect(homeLink).toBeInTheDocument();
