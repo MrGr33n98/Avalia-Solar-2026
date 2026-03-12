@@ -30,6 +30,7 @@ jest.mock('lucide-react', () => ({
   Building2: () => <svg data-testid="building-icon" />,
   Share2: () => <svg data-testid="share-icon" />,
   Check: () => <svg data-testid="check-icon" />,
+  BadgeCheck: () => <svg data-testid="badge-check-icon" />,
   Scale: () => <svg data-testid="scale-icon" />,
   MessageCircle: () => <svg data-testid="message-circle-icon" />,
   Globe: () => <svg data-testid="globe-icon" />,
@@ -107,6 +108,47 @@ describe('CompanyCard', () => {
     render(<CompanyCard company={setupCompany} />);
 
     expect(screen.getByRole('button', { name: /WhatsApp/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /or.amento/i })).not.toBeInTheDocument();
+  });
+
+  it('usa feature_access.custom_ctas como fonte canonica para liberar CTA premium', () => {
+    const setupCompany: Company = {
+      ...mockCompany,
+      id: 13,
+      active_admin: false,
+      whatsapp_enabled: false,
+      whatsapp: '',
+      feature_access: {
+        custom_ctas: {
+          state: 'enabled',
+          value: true,
+        },
+      },
+    };
+
+    render(<CompanyCard company={setupCompany} />);
+
+    expect(screen.getByRole('button', { name: /or.amento/i })).toBeInTheDocument();
+  });
+
+  it('prioriza feature_access bloqueado mesmo se active_admin legado estiver true', () => {
+    const setupCompany: Company = {
+      ...mockCompany,
+      id: 14,
+      active_admin: true,
+      whatsapp_enabled: true,
+      whatsapp: '+55 31 99876-5432',
+      feature_access: {
+        custom_ctas: {
+          state: 'locked',
+          value: false,
+        },
+      },
+    };
+
+    render(<CompanyCard company={setupCompany} />);
+
+    expect(screen.queryByRole('button', { name: /WhatsApp/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /or.amento/i })).not.toBeInTheDocument();
   });
 

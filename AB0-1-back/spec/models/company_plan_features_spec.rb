@@ -17,6 +17,35 @@ RSpec.describe Company, type: :model do
       expect(features).to be_a(Hash)
       expect(features['social_proof']).to eq(true)
       expect(features['sector_question_limit']).to eq(6)
+      expect(features['product_description']).to eq(true)
+      expect(features['show_alternatives']).to eq(false)
+    end
+  end
+
+  describe '#quote_feature_enabled?' do
+    context 'when plan explicitly enables custom CTAs' do
+      let(:plan) do
+        create(
+          :plan,
+          name: 'Plano Pro',
+          price: 149.0,
+          features_json: { custom_ctas: true }
+        )
+      end
+      let(:company) { create(:company, plan: plan, active_admin: false) }
+
+      it 'uses the canonical feature flag instead of legacy active_admin' do
+        expect(company.quote_feature_enabled?).to be(true)
+      end
+    end
+
+    context 'when there is no explicit plan flag but legacy active_admin is true' do
+      let(:plan) { create(:plan, name: 'Gratuito', price: 0, features: nil) }
+      let(:company) { create(:company, plan: plan, active_admin: true) }
+
+      it 'keeps transitional compatibility' do
+        expect(company.quote_feature_enabled?).to be(true)
+      end
     end
   end
 
@@ -36,6 +65,15 @@ RSpec.describe Company, type: :model do
 
       it 'returns configured limit' do
         expect(company.sector_question_limit).to eq(8)
+      end
+    end
+
+    context 'when pro company has no explicit limit' do
+      let(:plan) { create(:plan, name: 'Plano Pro', price: 299.0, features_json: {}) }
+      let(:company) { create(:company, plan: plan, active_admin: false) }
+
+      it 'returns the tier default limit' do
+        expect(company.sector_question_limit).to eq(10)
       end
     end
   end

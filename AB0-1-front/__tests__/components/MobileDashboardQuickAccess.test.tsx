@@ -45,7 +45,17 @@ describe('MobileDashboardQuickAccess', () => {
   it('opens secondary navigation through the more button', () => {
     render(<MobileDashboardQuickAccess {...baseProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /mais/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^menu$/i }));
     expect(baseProps.onOpenNavigation).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides quick actions whose tabs are hidden by feature access', () => {
+    render(<MobileDashboardQuickAccess {...baseProps} visibleTabIds={['overview', 'reviews', 'trust-widget']} />);
+
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('Avaliações')).toBeInTheDocument();
+    expect(screen.getByText('Selo de Confiança')).toBeInTheDocument();
+    expect(screen.queryByText('Oportunidades')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ranking Performance')).not.toBeInTheDocument();
   });
 });

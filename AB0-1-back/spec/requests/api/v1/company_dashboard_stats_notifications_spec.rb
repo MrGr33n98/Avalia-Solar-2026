@@ -26,6 +26,7 @@ RSpec.describe 'Company dashboard stats and notifications', type: :request do
       body = JSON.parse(response.body)
       expect(body['stats']).to be_a(Hash)
       expect(body).to have_key('plan_features')
+      expect(body).to have_key('feature_access')
     end
   end
 

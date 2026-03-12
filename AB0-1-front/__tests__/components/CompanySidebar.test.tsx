@@ -85,4 +85,17 @@ describe('CompanySidebar', () => {
     expect(mockTrackQuestion).toHaveBeenCalledWith(101);
     expect(screen.getByText('Entre 30 e 45 dias.')).toBeInTheDocument();
   });
+
+  it('oculta FAQ e banners de concorrentes quando os guards publicos desabilitam esses blocos', () => {
+    render(
+      <CompanySidebar
+        company={getMockCompany()}
+        showFaq={false}
+        showCompetitorBanners={false}
+      />
+    );
+
+    expect(screen.queryByText('Dúvidas frequentes')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sponsored-banner')).not.toBeInTheDocument();
+  });
 });

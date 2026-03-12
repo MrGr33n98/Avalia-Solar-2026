@@ -98,6 +98,26 @@ RSpec.describe 'Social proof APIs', type: :request do
       expect(body['reviews'].first['status']).to eq('approved')
       expect(body['reviews'].first['featured']).to eq(true)
     end
+
+    it 'returns an empty payload when the company plan is not eligible' do
+      create(
+        :review,
+        company: free_company,
+        user: create_reviewer('free-public@example.com'),
+        status: :approved,
+        featured: true,
+        display_order: 1
+      )
+
+      get "/api/v1/companies/#{free_company.id}/social_proof"
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+
+      expect(body['company_id']).to eq(free_company.id)
+      expect(body['total_featured_reviews']).to eq(0)
+      expect(body['reviews']).to eq([])
+    end
   end
 
   describe 'PATCH /api/v1/company_dashboard/social_proof_reviews/:id' do
