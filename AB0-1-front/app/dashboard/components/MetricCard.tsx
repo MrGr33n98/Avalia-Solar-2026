@@ -95,26 +95,21 @@ export default function MetricCard({
       whileHover={{ y: -4 }}
     >
       <Card className={cn(
-        'relative overflow-hidden border-white/10 bg-card/95 backdrop-blur-sm transition-all duration-300 group shadow-none',
-        'hover:border-brand-blue/40'
+        'relative overflow-hidden transition-all duration-300 group shadow-none border-none clay-precision bg-card dark:bg-[#002B4D]',
+        'hover:scale-[1.02]'
       )}>
-        {/* Gradient background on hover */}
-        <div className={cn(
-          'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
-          colors.gradient
-        )} />
-
-        <CardContent className="p-4 relative">
-          <div className="flex items-start justify-between mb-4">
+        <CardContent className="p-5 relative">
+          <div className="flex items-start justify-between mb-5">
             {/* Icon */}
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
               className={cn(
-                'p-2.5 rounded-lg transition-all duration-300',
-                colors.bg
+                'p-3 rounded-2xl transition-all duration-300 shadow-inner border',
+                colors.bg,
+                'border-black/5 dark:border-white/5'
               )}
             >
-              <Icon className={cn('h-5 w-5', colors.icon)} />
+              <Icon className={cn('h-6 w-6', colors.icon)} />
             </motion.div>
 
             {/* Change Badge */}
@@ -126,10 +121,10 @@ export default function MetricCard({
                   'secondary'
                 }
                 className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider px-1.5 h-5 border-none",
-                  changeType === 'positive' ? "bg-brand-green text-white" :
-                  changeType === 'negative' ? "bg-red-500 text-white" :
-                  "bg-white/10 text-white/70"
+                  "text-[10px] font-black uppercase tracking-widest px-2 h-5 border-none",
+                  changeType === 'positive' ? "bg-brand-green/10 text-brand-green shadow-none" :
+                  changeType === 'negative' ? "bg-red-500/10 text-red-500 shadow-none" :
+                  "bg-black/5 dark:bg-white/10 text-muted-foreground dark:text-white/70"
                 )}
               >
                 {change}
@@ -139,17 +134,17 @@ export default function MetricCard({
 
           {/* Content */}
           <div className="space-y-1">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30">
               {title}
             </p>
-            <p className="text-2xl font-bold text-white tracking-tight font-mono">
+            <p className="text-3xl font-black text-foreground dark:text-white tracking-tighter font-mono">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
           </div>
 
           {/* Mini Trend Line */}
           {trend && trend.length > 0 && (
-            <div className="mt-4 flex items-end gap-1 h-6">
+            <div className="mt-5 flex items-end gap-1.5 h-8">
               {trend.map((height, index) => (
                 <motion.div
                   key={index}
@@ -157,10 +152,10 @@ export default function MetricCard({
                   animate={{ height: `${height}%` }}
                   transition={{ delay: delay + (index * 0.05), duration: 0.3 }}
                   className={cn(
-                    'flex-1 rounded-t-sm transition-colors',
-                    changeType === 'positive' ? 'bg-brand-green/40' :
-                    changeType === 'negative' ? 'bg-red-500/40' :
-                    'bg-white/10'
+                    'flex-1 rounded-t-lg transition-colors border-t border-white/5',
+                    changeType === 'positive' ? 'bg-brand-green/20' :
+                    changeType === 'negative' ? 'bg-red-500/20' :
+                    'bg-black/5 dark:bg-white/5'
                   )}
                 />
               ))}

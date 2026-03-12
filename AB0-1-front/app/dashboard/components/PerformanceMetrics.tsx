@@ -31,6 +31,7 @@ import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
 import ExportButton from './ExportButton';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import '../styles/print.css';
 
 interface PerformanceMetricsProps {
@@ -62,11 +63,10 @@ interface Metrics {
   }[];
 }
 
-export default function PerformanceMetrics({ companyId, themeMode = 'light' }: PerformanceMetricsProps) {
+export default function PerformanceMetrics({ companyId, themeMode }: PerformanceMetricsProps) {
   const [timeRange, setTimeRange] = useState<DateRangePreset>('30d');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>();
   
-  // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(`analytics-date-range-${companyId}`);
     if (saved) {
@@ -85,7 +85,6 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
     }
   }, [companyId]);
 
-  // Save to localStorage when changed
   const handleDateRangeChange = (preset: DateRangePreset, customRange?: { from: Date; to: Date }) => {
     setTimeRange(preset);
     setCustomDateRange(customRange);
@@ -96,13 +95,12 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
     );
   };
   
-  const { data: analyticsData, loading, error, refresh } = useCompanyAnalytics({
+  const { data: analyticsData, loading, error } = useCompanyAnalytics({
     companyId,
     autoRefresh: true,
     refreshInterval: 30000,
   });
 
-  // Fetch timeseries data for charts
   const { data: timeseriesData, isLoading: timeseriesLoading } = useQuery({
     queryKey: ['analytics-timeseries', companyId, timeRange],
     queryFn: async () => {
@@ -126,33 +124,15 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
       total: analyticsData?.cta_clicks_30d || 0,
       trend: analyticsData?.cta_clicks_trend || 0,
       byType: [
-        { 
-          type: 'whatsapp', 
-          count: analyticsData?.whatsapp_clicks_30d || 0, 
-          label: 'WhatsApp' 
-        },
-        { 
-          type: 'email', 
-          count: analyticsData?.email_clicks_30d || 0, 
-          label: 'Email' 
-        },
-        { 
-          type: 'phone', 
-          count: analyticsData?.phone_clicks_30d || 0, 
-          label: 'Telefone' 
-        },
-        { 
-          type: 'website', 
-          count: analyticsData?.website_clicks_30d || 0, 
-          label: 'Website' 
-        },
+        { type: 'whatsapp', count: analyticsData?.whatsapp_clicks_30d || 0, label: 'WhatsApp' },
+        { type: 'email', count: analyticsData?.email_clicks_30d || 0, label: 'Email' },
+        { type: 'phone', count: analyticsData?.phone_clicks_30d || 0, label: 'Telefone' },
+        { type: 'website', count: analyticsData?.website_clicks_30d || 0, label: 'Website' },
       ],
     },
     engagement: analyticsData?.engagement || null,
     sources: analyticsData?.traffic_sources || [],
   };
-
-  const isDark = themeMode === 'dark';
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -163,22 +143,10 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
+        <Skeleton className="h-10 w-64 rounded-xl bg-black/[0.03] dark:bg-white/5" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-              <CardContent className="p-4">
-                <Skeleton className="h-12 w-12 rounded-xl mb-4" />
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-8 w-32" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-32 rounded-2xl bg-black/[0.03] dark:bg-white/5" />
           ))}
         </div>
       </div>
@@ -187,111 +155,60 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
 
   if (error) {
     return (
-      <Card className={`${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <div>
-              <h4 className="font-semibold text-red-900">Erro ao carregar métricas</h4>
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Alert variant="destructive" className="rounded-2xl border-none clay-precision bg-red-500/10 text-red-500">
+        <AlertCircle className="h-5 w-5" />
+        <AlertDescription className="font-bold uppercase tracking-widest text-xs ml-2">
+          Falha na integridade dos dados: {error}
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Print Header - Hidden on screen */}
-      <div className="print-header hidden">
-        <h1>Relatório de Analytics</h1>
-        <p>Gerado em {new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' })}</p>
-      </div>
-
+    <div className="space-y-8 pb-20">
       {/* Header with filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 no-print">
         <div>
-          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-            Métricas de Performance
-          </h2>
-          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-            Acompanhe o desempenho do seu perfil
-          </p>
+          <h2 className="text-3xl font-black text-foreground dark:text-white tracking-tighter mb-1 uppercase">Performance</h2>
+          <p className="text-sm font-medium text-muted-foreground dark:text-white/40">Inteligência de tráfego e engajamento em tempo real.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <DateRangePicker
-            value={timeRange}
-            customRange={customDateRange}
-            onChange={handleDateRangeChange}
-          />
-          <ExportButton
-            timeseriesData={timeseriesData}
-            aggregatedData={analyticsData}
-            companyName="Empresa"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.print()}
-            className="print-button"
-          >
-            <Printer className="h-[18px] w-[18px] mr-2" />
-            Imprimir
+        <div className="flex items-center gap-3">
+          <DateRangePicker value={timeRange} customRange={customDateRange} onChange={handleDateRangeChange} />
+          <ExportButton timeseriesData={timeseriesData} aggregatedData={analyticsData} companyName="Empresa" />
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="h-9 rounded-xl border-black/10 dark:border-white/10 bg-card dark:bg-[#002B4D] text-[10px] font-black uppercase tracking-widest text-foreground/60 dark:text-white/60">
+            <Printer className="h-3.5 w-3.5 mr-2" />
+            PDF
           </Button>
         </div>
-      </div>
-      {/* Time Range Selector */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-            Métricas de Performance
-          </h3>
-          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-            Acompanhe o engajamento e interações com seu perfil
-          </p>
-        </div>
-        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
-          <TabsList className={isDark ? 'bg-[#002B4D] border-white/10' : ''}>
-            <TabsTrigger value="7d">7 dias</TabsTrigger>
-            <TabsTrigger value="30d">30 dias</TabsTrigger>
-            <TabsTrigger value="90d">90 dias</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
       {/* Main Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Profile Views */}
-        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
-                <Eye className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-5">
+              <div className="p-3.5 rounded-2xl bg-brand-blue/10 border border-brand-blue/10 shadow-inner">
+                <Eye className="h-6 w-6 text-brand-blue" />
               </div>
-              <Badge variant={metrics.profileViews.trend > 0 ? 'default' : 'secondary'} className="text-xs">
+              <Badge variant={metrics.profileViews.trend > 0 ? 'default' : 'secondary'} className={cn(
+                "text-[10px] font-black uppercase tracking-widest h-5 border-none",
+                metrics.profileViews.trend > 0 ? "bg-brand-green/10 text-brand-green" : "bg-black/5 dark:bg-white/5 text-muted-foreground"
+              )}>
                 {metrics.profileViews.trend > 0 ? '+' : ''}{metrics.profileViews.trend}%
               </Badge>
             </div>
             <div>
-              <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                Visualizações
-              </p>
-              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                {metrics.profileViews.total.toLocaleString()}
-              </p>
-              <div className="mt-3 pt-3 border-t border-border">
-                <div className="flex justify-between text-xs">
-                  <span className={isDark ? 'text-white/40' : 'text-white/40'}>Únicos</span>
-                  <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {metrics.profileViews.unique.toLocaleString()}
-                  </span>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30 mb-1">Visualizações</p>
+              <p className="text-3xl font-black text-foreground dark:text-white tracking-tighter font-mono">{metrics.profileViews.total.toLocaleString()}</p>
+              <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-muted-foreground/40 dark:text-white/30">Únicos</span>
+                  <span className="text-foreground/80 dark:text-white/80 font-mono">{metrics.profileViews.unique.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-xs mt-1">
-                  <span className={isDark ? 'text-white/40' : 'text-white/40'}>Retornando</span>
-                  <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {metrics.profileViews.returning.toLocaleString()}
-                  </span>
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-muted-foreground/40 dark:text-white/30">Retornando</span>
+                  <span className="text-foreground/80 dark:text-white/80 font-mono">{metrics.profileViews.returning.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -299,302 +216,79 @@ export default function PerformanceMetrics({ companyId, themeMode = 'light' }: P
         </Card>
 
         {/* Total CTA Clicks */}
-        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-purple-900/20' : 'bg-purple-50'}`}>
-                <MousePointerClick className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-5">
+              <div className="p-3.5 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/10 shadow-inner">
+                <MousePointerClick className="h-6 w-6 text-brand-cyan" />
               </div>
-              <Badge variant={metrics.ctaClicks.trend > 0 ? 'default' : 'secondary'} className="text-xs">
-                {metrics.ctaClicks.trend > 0 ? '+' : ''}{metrics.ctaClicks.trend}%
+              <Badge className="bg-brand-blue/10 text-brand-blue text-[10px] font-black uppercase tracking-widest border-none">
+                {metrics.ctaClicks.total} TOTAL
               </Badge>
             </div>
             <div>
-              <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                Cliques em CTAs
-              </p>
-              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                {metrics.ctaClicks.total.toLocaleString()}
-              </p>
-              <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                Taxa de conversão: {((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}%
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30 mb-1">Interações Ativas</p>
+              <p className="text-3xl font-black text-foreground dark:text-white tracking-tighter font-mono">{metrics.ctaClicks.total.toLocaleString()}</p>
+              <p className="text-[10px] font-black text-brand-cyan/60 mt-4 uppercase tracking-widest">
+                Conversão: {((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}% de cliques
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Avg Time on Page */}
-        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
-          <CardContent className="p-4">
-            {metrics.engagement ? (
-              <>
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
-                    <Calendar className={`h-6 w-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                  </div>
-                </div>
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                    Tempo Médio
-                  </p>
-                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {formatTime(metrics.engagement.avgTimeOnPage)}
-                  </p>
-                  <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                    {metrics.engagement.pagesPerSession.toFixed(1)} páginas/sessão
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                  Dados de Engajamento
-                </p>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-white/40'}`}>
-                  Configure GA4 para visualizar
-                </p>
+        {/* Engagement Performance */}
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-5">
+              <div className="p-3.5 rounded-2xl bg-brand-green/10 border border-brand-green/10 shadow-inner">
+                <Users className="h-6 w-6 text-brand-green" />
               </div>
-            )}
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30 mb-1">Tempo de Sessão</p>
+              <p className="text-3xl font-black text-foreground dark:text-white tracking-tighter font-mono">
+                {metrics.engagement ? formatTime(metrics.engagement.avgTimeOnPage) : '--:--'}
+              </p>
+              <p className="text-[10px] font-black text-brand-green/60 mt-4 uppercase tracking-widest">
+                Qualidade: {metrics.engagement?.pagesPerSession.toFixed(1) || '0.0'} páginas / sessão
+              </p>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Bounce Rate */}
-        <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
-          <CardContent className="p-4">
-            {metrics.engagement ? (
-              <>
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'}`}>
-                    <ArrowUpRight className={`h-6 w-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                  </div>
-                </div>
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                    Taxa de Rejeição
-                  </p>
-                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                    {metrics.engagement.bounceRate}%
-                  </p>
-                  <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                    {metrics.engagement.bounceRate < 40 ? 'Excelente' : metrics.engagement.bounceRate < 60 ? 'Bom' : 'Pode melhorar'}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <AlertCircle className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-                <p className={`text-sm font-medium ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                  Taxa de Rejeição
-                </p>
-                <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-white/40'}`}>
-                  Configure GA4 para visualizar
-                </p>
+        {/* Rejection Rate */}
+        <Card className="clay-precision bg-card dark:bg-[#002B4D] border-none group overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-5">
+              <div className="p-3.5 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/10 shadow-inner">
+                <ArrowUpRight className="h-6 w-6 text-brand-yellow" />
               </div>
-            )}
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 dark:text-white/30 mb-1">Taxa de Rejeição</p>
+              <p className="text-3xl font-black text-foreground dark:text-white tracking-tighter font-mono">
+                {metrics.engagement ? `${metrics.engagement.bounceRate}%` : '--%'}
+              </p>
+              <p className="text-[10px] font-black text-brand-yellow/60 mt-4 uppercase tracking-widest">
+                Status: {metrics.engagement ? (metrics.engagement.bounceRate < 50 ? 'Retenção Alta' : 'Alerta de Fuga') : 'Monitorando'}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* CTA Breakdown */}
-        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-          <CardHeader>
-            <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
-              Cliques por CTA
-            </CardTitle>
-            <CardDescription className={isDark ? 'text-white/40' : ''}>
-              Distribuição de interações por tipo
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {metrics.ctaClicks.byType.map((cta) => {
-              const percentage = (cta.count / metrics.ctaClicks.total) * 100;
-              const Icon = cta.type === 'whatsapp' ? MessageSquare :
-                          cta.type === 'email' ? Mail :
-                          cta.type === 'phone' ? Phone : Globe;
-              
-              return (
-                <div key={cta.type} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        cta.type === 'whatsapp' ? isDark ? 'bg-green-900/20' : 'bg-green-50' :
-                        cta.type === 'email' ? isDark ? 'bg-blue-900/20' : 'bg-blue-50' :
-                        cta.type === 'phone' ? isDark ? 'bg-purple-900/20' : 'bg-purple-50' :
-                        isDark ? 'bg-cyan-900/20' : 'bg-cyan-50'
-                      }`}>
-                        <Icon className={`h-[18px] w-[18px] ${
-                          cta.type === 'whatsapp' ? 'text-green-600' :
-                          cta.type === 'email' ? 'text-blue-600' :
-                          cta.type === 'phone' ? 'text-purple-600' :
-                          'text-cyan-600'
-                        }`} />
-                      </div>
-                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
-                        {cta.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                        {cta.count} cliques
-                      </span>
-                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'} min-w-[3rem] text-right`}>
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}>
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        cta.type === 'whatsapp' ? 'bg-green-500' :
-                        cta.type === 'email' ? 'bg-blue-500' :
-                        cta.type === 'phone' ? 'bg-purple-500' :
-                        'bg-cyan-500'
-                      }`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        {/* Traffic Sources */}
-        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-          <CardHeader>
-            <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
-              Fontes de Tráfego
-            </CardTitle>
-            {(!metrics.sources || metrics.sources.length === 0) && (
-              <CardDescription className={isDark ? 'text-white/40' : ''}>
-                Dados indisponíveis - implemente UTM tracking
-              </CardDescription>
-            )}
-            <CardDescription className={isDark ? 'text-white/40' : ''}>
-              De onde vêm seus visitantes
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {metrics.sources.map((source, index) => {
-              const colors = [
-                { bg: isDark ? 'bg-blue-900/20' : 'bg-blue-50', text: 'text-blue-600', bar: 'bg-blue-500' },
-                { bg: isDark ? 'bg-purple-900/20' : 'bg-purple-50', text: 'text-purple-600', bar: 'bg-purple-500' },
-                { bg: isDark ? 'bg-emerald-900/20' : 'bg-emerald-50', text: 'text-emerald-600', bar: 'bg-emerald-500' },
-                { bg: isDark ? 'bg-cyan-900/20' : 'bg-cyan-50', text: 'text-cyan-600', bar: 'bg-cyan-500' },
-              ];
-              const color = colors[index];
-
-              return (
-                <div key={source.source} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${color.bg}`}>
-                        <Share2 className={`h-[18px] w-[18px] ${color.text}`} />
-                      </div>
-                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
-                        {source.source}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                        {source.visits.toLocaleString()} visitas
-                      </span>
-                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'} min-w-[3rem] text-right`}>
-                        {source.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#002B4D]' : 'bg-gray-100'}`}>
-                    <div
-                      className={`h-full transition-all duration-500 ${color.bar}`}
-                      style={{ width: `${source.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className={`${isDark ? 'bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-slate-800' : 'bg-gradient-to-br from-blue-50 to-purple-50'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <TrendingUp className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                Crescimento
-              </h4>
-            </div>
-            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-              Suas visualizações cresceram <span className="font-bold text-blue-600">+{metrics.profileViews.trend}%</span> nos últimos {timeRange === '7d' ? '7 dias' : timeRange === '30d' ? '30 dias' : '90 dias'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className={`${isDark ? 'bg-gradient-to-br from-emerald-900/20 to-green-900/20 border-slate-800' : 'bg-gradient-to-br from-emerald-50 to-green-50'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Users className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
-              <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                Engajamento
-              </h4>
-            </div>
-            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-              Tempo médio de <span className="font-bold text-emerald-600">{formatTime(metrics.engagement.avgTimeOnPage)}</span> indica alto interesse no seu perfil
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className={`${isDark ? 'bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-slate-800' : 'bg-gradient-to-br from-purple-50 to-pink-50'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <MousePointerClick className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-              <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                Conversão
-              </h4>
-            </div>
-            <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-              <span className="font-bold text-purple-600">{((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}%</span> dos visitantes clicam em algum CTA
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Time Series Chart - NEW */}
-      <TimeSeriesChart
-        data={timeseriesData || []}
-        loading={timeseriesLoading}
-        themeMode={themeMode}
-        title="Evolução de Métricas"
-        description="Acompanhe visualizações, CTAs e leads ao longo do tempo"
-        showLines={['views', 'cta_clicks', 'leads']}
-      />
-
-      {/* CTA Breakdown Chart - NEW */}
-      <CTABreakdownChart
-        data={{
+      {/* Analytics Visualization Layer */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
+        <CTABreakdownChart data={{
           whatsapp_clicks: analyticsData?.whatsapp_clicks_30d || 0,
           email_clicks: analyticsData?.email_clicks_30d || 0,
           phone_clicks: analyticsData?.phone_clicks_30d || 0,
           website_clicks: analyticsData?.website_clicks_30d || 0,
-        }}
-        loading={loading}
-        themeMode={themeMode}
-        title="Performance por Tipo de CTA"
-        description="Quais CTAs geram mais engajamento?"
-      />
+        }} loading={loading} themeMode={themeMode || 'dark'} />
+      </div>
 
-      {/* Top Campaigns Card - NEW */}
-      <TopCampaignsCard
-        companyId={companyId}
-        themeMode={themeMode}
-        limit={5}
-      />
+      <TopCampaignsCard companyId={companyId} themeMode={themeMode || 'dark'} limit={5} />
     </div>
   );
 }
