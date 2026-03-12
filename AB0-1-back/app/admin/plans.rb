@@ -129,7 +129,7 @@ ActiveAdmin.register Plan do
       hints << "Acesso: #{definition[:access_behavior]}"
       aliases = Array(definition[:aliases]).map(&:to_s)
       hints << "Aliases legados: #{aliases.join(', ')}" if aliases.any?
-      "#{render_feature_label.call(key)} | #{hints.join(' | ')}"
+      hints.join(' | ')
     end
 
     render_feature_field = lambda do |key|
@@ -142,7 +142,7 @@ ActiveAdmin.register Plan do
       hint = render_feature_hint.call(key, definition, default_value)
 
       if definition[:type] == :integer
-        f.template.content_tag(:li, class: 'input integer optional') do
+        f.template.content_tag(:li, class: 'input integer optional plan-feature-item') do
           f.template.safe_join(
             [
               f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
@@ -162,7 +162,7 @@ ActiveAdmin.register Plan do
         end
       else
         checked = ActiveModel::Type::Boolean.new.cast(current_value)
-        f.template.content_tag(:li, class: 'boolean input optional') do
+        f.template.content_tag(:li, class: 'boolean input optional plan-feature-item') do
           f.template.safe_join(
             [
               f.template.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
@@ -203,9 +203,9 @@ ActiveAdmin.register Plan do
             f.template.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
           )
         end
-        f.template.concat(
-          f.template.safe_join(feature_keys.map { |key| render_feature_field.call(key) })
-        )
+        feature_keys.each do |key|
+          f.template.concat(render_feature_field.call(key))
+        end
       end
     end
 
@@ -221,7 +221,14 @@ ActiveAdmin.register Plan do
           enabled.any? ? enabled.join(', ') : 'Nenhuma'
         end
         row('Payload canonico') do
-          pre JSON.pretty_generate(preview_flags)
+          f.template.content_tag(:details) do
+            f.template.safe_join(
+              [
+                f.template.content_tag(:summary, 'Ver JSON do payload canonico'),
+                f.template.content_tag(:pre, JSON.pretty_generate(preview_flags))
+              ]
+            )
+          end
         end
       end
     end
