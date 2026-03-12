@@ -180,3 +180,4 @@ DEVOPS_HANDOFF_TYPESCRIPT_FIXES.md
 .spec-workflow/templates/tech-template.md
 docs/stories/007.integrate_real_performance_metrics.md
 docs/stories/008.secure_webhook_authentication.md
+.playwright/
