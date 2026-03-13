@@ -42,10 +42,14 @@ ActiveAdmin.register Category, namespace: :admin do
   form do |f|
     f.inputs 'Basic Information' do
       f.input :name
-      f.input :short_description, label: 'Meta Description / Short Description', hint: 'Used for SEO and card previews'
+      f.input :short_description, 
+              label: 'Meta Description / Short Description', 
+              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.short_description&.length || 0}. Usado para SEO e previews."
       f.input :description, as: :text, input_html: { rows: 10 }
-      f.input :seo_url, hint: 'URL-friendly slug (leave blank to auto-generate)'
-      f.input :seo_title, hint: 'SEO title for search engines'
+      f.input :seo_url, hint: 'URL-friendly slug (deixe em branco para gerar automaticamente)'
+      f.input :seo_title, 
+              label: 'SEO Title',
+              hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Título para motores de busca."
     end
 
     f.inputs 'Settings' do

@@ -1,6 +1,7 @@
 require 'securerandom'
 
 class Company < ApplicationRecord
+  include SeoStandardizable
   include PgSearch::Model
   include QueryCacheable # TASK-016: Query Caching
   include Moderation

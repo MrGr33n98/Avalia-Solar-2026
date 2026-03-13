@@ -1,4 +1,5 @@
 class Category < ApplicationRecord
+  include SeoStandardizable
   include QueryCacheable # TASK-016: Query Caching
 
   # permissions_config is a native JSON column, no need to serialize manually in Rails 7+

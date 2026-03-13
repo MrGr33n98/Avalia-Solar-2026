@@ -1,4 +1,5 @@
 class Article < ApplicationRecord
+  include SeoStandardizable
   extend FriendlyId
 
   friendly_id :title, use: :slugged
