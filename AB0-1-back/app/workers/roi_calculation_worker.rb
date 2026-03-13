@@ -27,8 +27,8 @@ class RoiCalculationWorker
 
     annual_savings = monthly_kwh * tariff * 12
 
-    # estimated_budget might be a string or decimal depending on the schema
-    total_investment = lead.respond_to?(:estimated_budget) ? lead.estimated_budget.to_f : 15_000.0
+    # total_investment uses the safe accessor from Lead model
+    total_investment = lead.estimated_budget.to_f
     total_investment = 15_000.0 if total_investment <= 0
 
     roi = (annual_savings / total_investment) * 100

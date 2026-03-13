@@ -73,6 +73,13 @@ class Lead < ApplicationRecord
     ]
   end
 
+  # Safe accessor for estimated_budget to prevent undefined method error if column is missing
+  def estimated_budget
+    has_attribute?(:estimated_budget) ? super : self[:estimated_budget]
+  rescue ActiveModel::MissingAttributeError, NoMethodError
+    nil
+  end
+
   def self.ransackable_associations(_auth_object = nil)
     %w[category company lead_distributions]
   end

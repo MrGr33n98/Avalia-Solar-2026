@@ -1,10 +1,8 @@
 class ReviewDecisionNotifier < ApplicationNotifier
-  deliver_by :database
-
-  param :review
-  param :previous_status
-  param :new_status
-  param :admin_name
+  required_param :review
+  required_param :previous_status
+  required_param :new_status
+  required_param :admin_name
 
   def message
     case params[:new_status].to_s
