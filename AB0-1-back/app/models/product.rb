@@ -246,6 +246,8 @@ class Product < ApplicationRecord
   def can_upload_more_images?
     can_upload_images? && remaining_image_slots > 0
   end
+
+  def upload_restriction_message
     return nil if can_upload_images?
     
     current_plan = company&.plan&.inferred_plan_tier || 'free'
