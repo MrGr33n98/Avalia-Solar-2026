@@ -1,3 +1,4 @@
++
 # 🚀 Dashboard - Guia Rápido de Inicialização
 
 ## ⚡ Start Rápido (3 comandos)

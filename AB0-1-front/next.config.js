@@ -38,9 +38,20 @@ const nextConfig = {
     ...(isProduction ? { removeConsole: { exclude: ['error', 'warn'] } } : {}),
   },
   
+  
+  // � FIX: Desabilitar minificação SWC para corrigir erro de digest
+  swcMinify: enableSwcMinify,
+  compress: true,
+  compiler: {
+    ...(isProduction ? { removeConsole: { exclude: ['error', 'warn'] } } : {}),
+  },
+
   experimental: {
     // webpackBuildWorker: true,
     optimizeCss: enableOptimizeCss,
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
     optimizePackageImports: [
       'lucide-react',
       'date-fns',
