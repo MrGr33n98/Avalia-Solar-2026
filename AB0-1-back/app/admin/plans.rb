@@ -218,45 +218,43 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
-        if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
-          f.template.concat(
-            view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
-          )
-        end
-
-        f.template.concat(render_feature_group.call(feature_keys))
-        nil
+        view_helpers.safe_join(
+          [
+            FEATURE_GROUP_DESCRIPTIONS[group_key].present? ?
+              view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints') :
+              nil,
+            render_feature_group.call(feature_keys)
+          ].compact
+        )
       end
     end
 
     f.inputs 'Preview do plano resultante' do
-      f.template.concat(
-        view_helpers.content_tag(:p, "Tier considerado: #{selected_tier}", class: 'inline-hints')
-      )
       enabled = preview_flags.each_with_object([]) do |(key, value), memo|
         next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
 
         label = render_feature_label.call(key)
         memo << (value.is_a?(Integer) ? "#{label}: #{value}" : label)
       end
-      f.template.concat(
-        view_helpers.content_tag(
-          :p,
-          "Features habilitadas: #{enabled.any? ? enabled.join(', ') : 'Nenhuma'}",
-          class: 'inline-hints'
-        )
+
+      view_helpers.safe_join(
+        [
+          view_helpers.content_tag(:p, "Tier considerado: #{selected_tier}", class: 'inline-hints'),
+          view_helpers.content_tag(
+            :p,
+            "Features habilitadas: #{enabled.any? ? enabled.join(', ') : 'Nenhuma'}",
+            class: 'inline-hints'
+          ),
+          view_helpers.content_tag(:details) do
+            view_helpers.safe_join(
+              [
+                view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
+                view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
+              ]
+            )
+          end
+        ]
       )
-      f.template.concat(
-        view_helpers.content_tag(:details) do
-          view_helpers.safe_join(
-            [
-              view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
-              view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
-            ]
-          )
-        end
-      )
-      nil
     end
 
     f.actions
