@@ -190,6 +190,14 @@ ActiveAdmin.register Plan do
       end
     end
 
+    render_feature_group = lambda do |feature_keys|
+      view_helpers.content_tag(
+        :ol,
+        view_helpers.safe_join(feature_keys.map { |key| render_feature_field.call(key) }),
+        class: 'plan-feature-list'
+      )
+    end
+
     f.inputs 'Plano' do
       f.input :name
       f.input :description
@@ -212,9 +220,7 @@ ActiveAdmin.register Plan do
           )
         end
 
-        feature_keys.each do |key|
-          f.template.concat(render_feature_field.call(key))
-        end
+        f.template.concat(render_feature_group.call(feature_keys))
         nil
       end
     end
