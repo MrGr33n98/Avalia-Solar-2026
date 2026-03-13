@@ -2,7 +2,8 @@ ActiveAdmin.register Product do
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
   # Your existing permit_params
-  permit_params :name, :description, :price, :image_url, :company_id, :seo_title, :meta_description, category_ids: []
+  permit_params :name, :description, :price, :image_url, :company_id, :seo_title, :meta_description, 
+                category_ids: [], images: []
 
   # Explicitly define filters to avoid the error
   filter :name
@@ -14,48 +15,69 @@ ActiveAdmin.register Product do
   # Remove the automatic categories filter that's causing the error
   remove_filter :categories
 
-  controller do
-    def scoped_collection
-      scope = super.includes(:company)
-      # If we're in a nested route, super already filtered by parent
-      return scope if parent?
-
-      if params[:company_id]
-        company = Company.find_by_slug_or_id(params[:company_id])
-        scope = scope.where(company_id: company.id) if company
+  index do
+    selectable_column
+    id_column
+    column :name
+    column :price
+    column :company
+    column "Imagens" do |product|
+      if product.images.attached?
+        product.images.each do |img|
+          span do
+            image_tag url_for(img), size: "50x50"
+          end
+        end
+      else
+        "Sem imagens"
       end
-      scope
     end
+    column :status
+    actions
+  end
 
-    def build_new_resource
-      super.tap do |product|
-        if parent?
-          product.company = parent
-        else
-          company_param = params[:company_id] || params.dig(:product, :company_id)
-          if company_param.present?
-            company = Company.find_by_slug_or_id(company_param)
-            product.company_id ||= company.id if company
+  show do
+    attributes_table do
+      row :id
+      row :name
+      row :description
+      row :price
+      row :company
+      row :status
+      row "Imagens" do |product|
+        if product.images.attached?
+          div class: "product-images" do
+            product.images.each do |img|
+              div style: "display: inline-block; margin-right: 10px;" do
+                image_tag url_for(img), size: "200x200"
+              end
+            end
           end
         end
       end
+      row :created_at
+      row :updated_at
     end
   end
 
   form do |f|
     f.object.company_id ||= params[:company_id] if params[:company_id]
-    f.inputs do
+    f.inputs "Detalhes do Produto" do
       f.input :name
       f.input :description
       f.input :price
-      f.input :image_url
       f.input :company, collection: Company.all
+
+      # Multiple image upload
+      f.input :images, as: :file, input_html: { multiple: true }, label: "Fotos do Produto (Upload Múltiplo)"
+
+      # Keep image_url as optional fallback if needed for external URLs
+      f.input :image_url, label: "URL de imagem externa (opcional)"
 
       # Add categories select2
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
-                           collection: Category.all.order(:name)
+                           collection: Category.all.order(:name)   
     end
-
     f.inputs 'SEO & Metadados' do
       f.input :seo_title, 
               label: 'Título SEO (Meta Title)',

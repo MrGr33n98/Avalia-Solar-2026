@@ -4,7 +4,7 @@ class Product < ApplicationRecord
   # Associations
   belongs_to :company, optional: true
   has_and_belongs_to_many :categories
-  has_one_attached :image
+  has_many_attached :images
   has_many :product_specifications, dependent: :destroy
   has_many :spec_templates, through: :product_specifications
   has_many :product_price_histories, dependent: :destroy
@@ -29,17 +29,29 @@ class Product < ApplicationRecord
   validates :sku, uniqueness: true
   validate :blocked_transition_guard
 
-  # Method to get image URL (prefers DB column, falls back to ActiveStorage)
+  # Method to get primary image URL
   def image_url
     db_value = self[:image_url]
     return db_value if db_value.present?
 
-    return nil unless image.attached?
+    return nil unless images.attached?
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
 
-    Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(images.first, options)
+  end
+
+  # Returns all attached image URLs
+  def image_urls
+    return [image_url].compact if images.blank?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    images.map do |img|
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(img, options)
+    end
   end
 
   # Ransack configuration
@@ -52,7 +64,7 @@ class Product < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company categories image_attachment image_blob]
+    %w[company categories images_attachments images_blobs]
   end
 
   # Custom JSON
@@ -66,7 +78,7 @@ class Product < ApplicationRecord
         categories: { only: %i[id name] },
         company: { only: %i[id name] }
       },
-      methods: [:image_url],
+      methods: %i[image_url image_urls],
       except: %i[created_at updated_at]
     )).merge(specs: specs_payload).compact
   end
