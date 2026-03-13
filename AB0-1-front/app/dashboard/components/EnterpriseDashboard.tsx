@@ -292,7 +292,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   }
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-[hsl(var(--clay-bg))] transition-colors duration-300">
       {/* Sidebar (Drawer on mobile, Fixed on desktop) */}
       <EnterpriseSidebar
         activeTab={activeTab}

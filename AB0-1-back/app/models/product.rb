@@ -1,5 +1,6 @@
 # app/models/product.rb
 class Product < ApplicationRecord
+  include SeoStandardizable
   # Associations
   belongs_to :company, optional: true
   has_and_belongs_to_many :categories

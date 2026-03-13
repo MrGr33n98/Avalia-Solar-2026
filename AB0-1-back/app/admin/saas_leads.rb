@@ -66,21 +66,24 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
     selectable_column
     id_column
 
-    column('Score', sortable: false) do |lead|
-      metrics = saas_metrics_for(lead)
-      if metrics.is_a?(SaasLeads::LeadInsights) # Check if it's not the fallback
+    column('Score', sortable: :cached_score) do |lead|
+      if lead.respond_to?(:score_band) && lead.score_band.present?
         status_tag(
-          metrics.score_band.to_s.upcase,
-          class: case metrics.score_band
+          lead.score_band.upcase,
+          class: case lead.score_band.to_sym
                  when :hot then 'ok'
                  when :warm then 'warning'
                  else 'error'
                  end
         )
       else
-        status_tag 'N/A', class: 'error'
+        # Fallback for records not yet migrated/processed
+        metrics = saas_metrics_for(lead)
+        status_tag(metrics&.score_band.to_s.upcase || 'N/A', class: 'warning')
       end
     end
+
+    column('Pontos', sortable: :cached_score) { |l| l.try(:cached_score) || '-' }
 
     column('Usuario B2B', sortable: false) do |lead|
       metrics = saas_metrics_for(lead)

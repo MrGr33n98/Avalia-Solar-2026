@@ -2,13 +2,14 @@ ActiveAdmin.register Product do
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
   # Your existing permit_params
-  permit_params :name, :description, :price, :image_url, :company_id, category_ids: []
+  permit_params :name, :description, :price, :image_url, :company_id, :seo_title, :meta_description, category_ids: []
 
   # Explicitly define filters to avoid the error
   filter :name
   filter :description
   filter :price
   filter :company
+  filter :seo_title
   filter :created_at
   # Remove the automatic categories filter that's causing the error
   remove_filter :categories
@@ -53,6 +54,17 @@ ActiveAdmin.register Product do
       # Add categories select2
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
                            collection: Category.all.order(:name)
+    end
+
+    f.inputs 'SEO & Metadados' do
+      f.input :seo_title, 
+              label: 'Título SEO (Meta Title)',
+              hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Se vazio, usará o nome do produto."
+      f.input :meta_description, 
+              label: 'Meta Descrição',
+              as: :text,
+              input_html: { rows: 3 },
+              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.meta_description&.length || 0}. Se vazio, usará a descrição."
     end
     f.actions
   end

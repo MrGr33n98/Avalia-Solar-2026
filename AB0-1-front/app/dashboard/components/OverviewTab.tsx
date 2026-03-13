@@ -15,7 +15,8 @@ import {
   Check,
   ArrowRight,
   TrendingDown,
-  CheckCircle2
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
-import MetricCard from './MetricCard';
+import MetricCard, { MetricsGrid } from './MetricCard';
 import OpportunityBoard from './OpportunityBoard';
 import OpportunitiesCard from '@/components/ui/OpportunitiesCard';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
@@ -144,8 +145,54 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
     { label: 'Instalar Selo de Confiança', done: false, impact: '+ cliques orgânicos' }
   ];
 
+  const mainMetrics = [
+    {
+      title: 'Total de Visualizações',
+      value: stats?.profileViews || 0,
+      icon: Eye,
+      change: '+12.5%',
+      changeType: 'positive' as const,
+      color: 'blue'
+    },
+    {
+      title: 'Avaliações',
+      value: stats?.reviewsCount || 0,
+      icon: Star,
+      change: '+8.2%',
+      changeType: 'positive' as const,
+      color: 'yellow'
+    },
+    {
+      title: 'Taxa de Conversão',
+      value: `${(stats?.conversionRate || 0).toFixed(1)}%`,
+      icon: TrendingUp,
+      change: '+4.3%',
+      changeType: 'positive' as const,
+      color: 'green'
+    },
+    {
+      title: 'Leads Recebidos',
+      value: stats?.leadsReceived || 0,
+      icon: Users,
+      change: '+15.7%',
+      changeType: 'positive' as const,
+      color: 'purple'
+    }
+  ];
+
   return (
     <div className="space-y-8 pb-20">
+      {/* 🚀 MAIN KPIs */}
+      {statsQuery.isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32 rounded-2xl bg-black/[0.03] dark:bg-white/5" />
+          ))}
+        </div>
+      ) : (
+        <MetricsGrid metrics={mainMetrics} />
+      )}
+
       {/* 🛠️ OPPORTUNITY BOARD - High Impact Radar */}
       {statsQuery.isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">

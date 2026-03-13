@@ -180,8 +180,8 @@ function SidebarContent({
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#002B4D]', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
-      <div className={cn('h-16 flex items-center border-b border-white/10', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
+    <div className={cn('flex flex-col h-full bg-[#002B4D] border-r border-white/5 shadow-2xl', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
+      <div className={cn('h-16 flex items-center border-b border-white/10 bg-white/5', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
         <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
           <div className="h-10 w-10 rounded-xl bg-brand-blue flex items-center justify-center border-[0.5px] border-white/20 shadow-lg shadow-brand-blue/20">
             <Home className="h-5 w-5 text-white" />

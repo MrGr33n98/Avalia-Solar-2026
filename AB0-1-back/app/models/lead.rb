@@ -31,6 +31,15 @@ class Lead < ApplicationRecord
   before_validation :normalize_contact_fields
   before_validation :apply_address_fallbacks
   before_validation :ensure_otp_attempts_default
+  before_save :update_score_cache
+
+  def update_score_cache
+    return unless respond_to?(:cached_score=)
+    
+    insights = SaasLeads::LeadInsights.new(self)
+    self.cached_score = insights.score
+    self.score_band = insights.score_band.to_s
+  end
 
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
