@@ -3,6 +3,7 @@
 import { page, track } from './lazy';
 
 export { alias, identify, initializeAnalytics, preloadAnalytics, reset, setUserProperties, updateContext } from './lazy';
+export { page, track } from './lazy';
 export type { AnalyticsContext, EventOptions, UserTraits } from './types';
 
 /**
