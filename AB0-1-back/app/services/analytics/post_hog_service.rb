@@ -37,7 +37,7 @@ module Analytics
         item_category: lead.product_vertical, # VAR-016
         status: lead.status,
         created_at: lead.created_at,
-        $set: {
+        "$set" => {
           last_lead_at: lead.created_at
         }
       }
