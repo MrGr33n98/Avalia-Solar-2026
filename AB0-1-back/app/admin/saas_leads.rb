@@ -121,13 +121,13 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       # Avoid scanning analytics tables for every row in the index.
       link_to(
         'Ver',
-        admin_saas_lead_path(lead),
+        admin_saa_s_lead_path(lead),
         class: 'member_link'
       )
     end
 
     actions defaults: true do |lead|
-      a 'Linha do Tempo', href: admin_saas_lead_path(lead, anchor: 'timeline'), class: 'member_link'
+      a 'Linha do Tempo', href: admin_saa_s_lead_path(lead, anchor: 'timeline'), class: 'member_link'
       a 'Distribuicoes', href: admin_lead_distributions_path(q: { lead_id_eq: lead.id }), class: 'member_link'
     end
   end
