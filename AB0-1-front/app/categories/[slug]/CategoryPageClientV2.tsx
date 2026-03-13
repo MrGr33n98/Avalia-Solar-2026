@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
@@ -27,9 +27,9 @@ import {
 } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
 import { trackCategorySelected } from '@/lib/analytics/consolidated';
+import { track } from '@/lib/analytics/lazy';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
-import { useEffect } from 'react';
 
 interface CategoryPageClientProps {
   initialCategory: any;
@@ -57,6 +57,16 @@ export default function CategoryPageClient({
   const slug = initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
   const categoryId = initialCategory?.id || '';
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
+  const [sidebarFilters, setSidebarFilters] = useState({
+    verified: false,
+    minRating: 0,
+    state: '',
+    projectType: undefined as string | undefined,
+  });
+  const [sortBy, setSortBy] = useState('rating_desc');
+  const isLoading = false;
 
   // Track page view / category selected on mount
   useEffect(() => {
@@ -84,13 +94,17 @@ export default function CategoryPageClient({
       result = result.filter((c) => c.verified);
     }
     if (activeQuickFilters.has('rated')) {
-      result = result.filter((c) => (c.rating || 0) >= 4.5);
+      result = result.filter((c) => (c.rating_avg || 0) >= 4.5);
     }
     if (activeQuickFilters.has('industrial')) {
-      result = result.filter((c) => c.project_types?.includes('Industrial') || c.services?.includes('Industrial'));
+      result = result.filter(
+        (c) =>
+          c.project_types?.includes('Industrial') ||
+          c.services_offered?.includes('Industrial')
+      );
     }
     if (activeQuickFilters.has('my_state') && sidebarFilters.state) {
-        result = result.filter((c) => c.state === sidebarFilters.state);
+      result = result.filter((c) => c.state === sidebarFilters.state);
     }
 
     // Filtros sidebar
@@ -98,16 +112,15 @@ export default function CategoryPageClient({
       result = result.filter((c) => c.verified);
     }
     if (sidebarFilters.minRating > 0) {
-      result = result.filter((c) => (c.rating || 0) >= sidebarFilters.minRating);
+      result = result.filter((c) => (c.rating_avg || 0) >= sidebarFilters.minRating);
     }
     if (sidebarFilters.state) {
       result = result.filter((c) => c.state === sidebarFilters.state);
     }
     if (sidebarFilters.projectType) {
-      result = result.filter((c) => 
-        c.project_types?.includes(sidebarFilters.projectType!) || 
-        c.services?.includes(sidebarFilters.projectType!) ||
-        // Fallback for V1 data structure if needed
+      result = result.filter((c) =>
+        c.project_types?.includes(sidebarFilters.projectType!) ||
+        c.services_offered?.includes(sidebarFilters.projectType!) ||
         c.description?.toLowerCase().includes(sidebarFilters.projectType!.toLowerCase())
       );
     }
@@ -118,7 +131,7 @@ export default function CategoryPageClient({
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'rating_desc':
-        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        result.sort((a, b) => (b.rating_avg || 0) - (a.rating_avg || 0));
         break;
       case 'reviews_desc':
         result.sort((a, b) => (b.rating_count || 0) - (a.rating_count || 0));

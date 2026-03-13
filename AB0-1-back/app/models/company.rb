@@ -938,6 +938,8 @@ class Company < ApplicationRecord
     Rails.logger.error("[Company] Failed to invalidate cache: #{e.message}")
   end
 
+  public
+
   # Intent Tier Methods
   validates :intent_tier, inclusion: { in: INTENT_TIERS }
 
