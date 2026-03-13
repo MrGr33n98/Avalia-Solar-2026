@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WizardSchema, WizardSessionData, WizardStateStatus } from '../types/wizard.types';
 import { wizardApi } from '../api/wizard.api';
-import { track } from '@/lib/analytics';
+import { 
+  trackWizardStart, 
+  trackWizardContactSubmitted, 
+  trackOtpVerified, 
+  trackLeadSuccess, 
+  trackLeadDispatched,
+  track
+} from '@/lib/analytics/consolidated';
 import { buildWizardPayload } from '../utils/payload';
 
 const SESSION_KEY = 'leadWizardSession';
@@ -70,7 +77,10 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
         } else {
           setStatus('STEP_ACTIVE');
         }
-        track('wizard_started', {
+
+        trackWizardStart(String(categoryId), preferredCompanyId ? 'preferred_company' : 'direct', categoryId);
+
+        track('wizard_started_details', {
           category_id: categoryId,
           template_key: fetchedSchema.template_key,
           availability_reason: fetchedSchema.availability?.reason,
@@ -149,7 +159,11 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
 
     setStatus('VALIDATING');
     if (validateCurrentStep()) {
-      track('wizard_step_completed', { step_index: currentStepIndex });
+      track('wizard_step_completed', { 
+        step_index: currentStepIndex,
+        step_name: schema?.schema.steps[currentStepIndex]?.title,
+        category_id: categoryId
+      });
       if (schema && currentStepIndex < schema.schema.steps.length - 1) {
         setCurrentStepIndex(prev => prev + 1);
         setStatus('STEP_ACTIVE');
@@ -184,7 +198,10 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setLeadResult(result);
       setStatus('OTP_VERIFICATION');
       setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS);
-      // localStorage.removeItem(SESSION_KEY); // DO NOT REMOVE YET
+      
+      // PostHog Semantic Event
+      trackWizardContactSubmitted(String(result.lead_id), categoryId);
+
       track('wizard_otp_viewed', { category_id: categoryId, lead_id: result.lead_id });
     } catch (error: any) {
       console.error(error);
@@ -202,6 +219,20 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setDistributedCompanies(response.companies || []);
       setStatus('SUCCESS');
       localStorage.removeItem(SESSION_KEY); // ONLY CLEAR AFTER SUCCESS
+
+      // PostHog Semantic Events Sequence
+      trackOtpVerified(String(leadResult.lead_id));
+      trackLeadSuccess({
+        lead_id: String(leadResult.lead_id),
+        category: String(categoryId),
+      });
+
+      if (response.companies && response.companies.length > 0) {
+        response.companies.forEach((comp: any) => {
+          trackLeadDispatched(String(leadResult.lead_id), comp.id);
+        });
+      }
+
       track('wizard_success', { 
         category_id: categoryId, 
         lead_id: leadResult.lead_id,

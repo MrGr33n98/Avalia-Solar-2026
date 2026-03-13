@@ -169,7 +169,9 @@ module Api
                     company_name: @company.name,
                     city: @company.city,
                     state: @company.state,
-                    status: @company.status
+                    status: @company.status,
+                    plan_tier: @company.respond_to?(:inferred_plan_tier) ? @company.inferred_plan_tier : 'free',
+                    company_segment: @company.respond_to?(:project_types) ? @company.project_types&.join(',') : nil
                   }
                 )
               end
@@ -249,7 +251,22 @@ module Api
           Rails.logger.info "[Audit] Photo Flow: New logo upload detected for Company ID #{@company.id}"
         end
 
+        was_ready = @company.ready_for_activation?
+        
         if @company.update(company_params)
+          # Track profile completion
+          if !was_ready && @company.ready_for_activation? && current_user
+            PostHog.capture(
+              distinct_id: current_user.posthog_distinct_id,
+              event: 'company_profile_completed',
+              properties: {
+                company_id: @company.id,
+                company_name: @company.name,
+                plan_tier: @company.respond_to?(:inferred_plan_tier) ? @company.inferred_plan_tier : 'free'
+              }
+            )
+          end
+
           if @company.logo.attached? && params[:company][:logo].present?
             Rails.logger.info "[Audit] Photo Flow: Company logo updated successfully for ID #{@company.id}"
           end

@@ -74,6 +74,7 @@ const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false }
 
 import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
+import { trackCompanyProfileViewed, trackDashboardViewed } from "@/lib/analytics/consolidated";
 import { track } from "@/lib/analytics/lazy";
 import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
 import { isFeatureEnabled } from "@/lib/feature-access";
@@ -184,6 +185,13 @@ export default function CompanyDetailClient({
   const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
   const companyId = Number(currentCompany?.id || company?.id);
   
+  // Track profile view on mount
+  useEffect(() => {
+    if (companyId && currentCompany?.name) {
+      trackCompanyProfileViewed(companyId, currentCompany.name, (currentCompany as any).plan_tier);
+    }
+  }, [companyId, currentCompany?.name, currentCompany]);
+
   const isAdmin = user?.role === 'admin';
   const isReviewer = user?.role === 'review';
 
@@ -341,6 +349,10 @@ export default function CompanyDetailClient({
 
   const handleTabChange = (value: string) => {
     const tab = tabs.find(t => t.id === value);
+    
+    // Canonical Dashboard View tracking
+    trackDashboardViewed(companyId, value);
+    
     track('company_tab_change', { company_id: companyId, company_name: company.name, tab_id: value, tab_label: tab?.label || value });
     setActiveTab(value);
   };

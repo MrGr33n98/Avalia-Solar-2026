@@ -26,9 +26,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
-import { track } from '@/lib/analytics/lazy';
+import { trackCategorySelected } from '@/lib/analytics/consolidated';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { useEffect } from 'react';
 
 interface CategoryPageClientProps {
   initialCategory: any;
@@ -55,30 +56,19 @@ export default function CategoryPageClient({
 
   const slug = initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
+  const categoryId = initialCategory?.id || '';
+
+  // Track page view / category selected on mount
+  useEffect(() => {
+    if (slug && categoryId) {
+      trackCategorySelected(categoryId, slug, {
+        category_name: categoryName,
+        source: searchParams.get('source') || 'direct',
+      });
+    }
+  }, [slug, categoryId, categoryName, searchParams]);
 
   // Estado de busca e filtros
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'rating_desc');
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(
-    new Set(searchParams.get('filters')?.split(',') || [])
-  );
-  const [sidebarFilters, setSidebarFilters] = useState({
-    verified: searchParams.get('verified') === 'true',
-    minRating: searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : 0,
-    state: searchParams.get('state') || '',
-    projectType: searchParams.get('projectType') || undefined,
-  });
-  const [isLoading] = useState(false);
-
-  // Track page view
-  const trackPageView = useCallback(() => {
-    track('category_page_view', {
-      category: slug,
-      filters_applied: Array.from(activeQuickFilters).join(','),
-    });
-  }, [slug, activeQuickFilters]);
-
-  // Aplicar filtros
   const filteredCompanies = useMemo(() => {
     let result = [...initialCompanies];
 

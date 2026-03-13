@@ -140,10 +140,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
       )
 
       Analytics::PostHogService.capture(
-        'lead_submitted',
+        'wizard_contact_submitted',
         {
           lead_id: lead.id,
           company_id: lead.company_id,
+          category_id: lead.respond_to?(:product_vertical) ? lead.product_vertical : nil,
           template_key: lead.respond_to?(:template_key) ? lead.template_key : nil
         }.compact,
         distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{lead.id}"
@@ -213,19 +214,46 @@ class Api::V1::LeadsController < Api::V1::BaseController
     identity_metadata = identity_tracking_metadata(@lead)
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
+      
+      distinct_id = current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}"
+      
+      # 1. OTP Verified
+      Analytics::PostHogService.capture(
+        'otp_verified',
+        { lead_id: @lead.id, auth_method: 'email' },
+        distinct_id: distinct_id
+      )
+      
+      # 2. Lead Created (Successfully persisted and verified)
+      Analytics::PostHogService.capture(
+        'lead_created',
+        { 
+          lead_id: @lead.id, 
+          company_id: @lead.company_id,
+          category_id: @lead.respond_to?(:product_vertical) ? @lead.product_vertical : nil
+        }.compact,
+        distinct_id: distinct_id
+      )
+
       Analytics::TrackEventService.call(
         event_type: 'lead_verified',
         company_id: @lead.company_id,
         metadata: request_metadata.merge(identity_metadata).merge(lead_id: @lead.id)
       )
-      Analytics::PostHogService.capture(
-        'lead_otp_verified',
-        { lead_id: @lead.id, company_id: @lead.company_id },
-        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}"
-      )
+
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
       @lead.update!(wizard_status: 'distributed')
+      
+      # 3. Lead Dispatched (One event per recipient as per V2)
+      companies.each do |comp|
+        Analytics::PostHogService.capture(
+          'lead_dispatched',
+          { lead_id: @lead.id, recipient_id: comp.id },
+          distinct_id: distinct_id
+        )
+      end
+
       Analytics::TrackEventService.call(
         event_type: 'lead_distributed',
         company_id: @lead.company_id,

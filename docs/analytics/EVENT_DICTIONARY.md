@@ -1,70 +1,78 @@
 # Event Dictionary
 
 ## Version
-- Version: `2026-03-11`
+- Version: `2.0 (PostHog Unified)`
 - Status: `active`
-- Owner: `Data + Backend + Frontend`
+- Date: `2026-03-13`
+- Owner: `Product Analytics + Platform Engineering`
 
-## Measurement Readiness
-- Score: `78/100`
-- Verdict: `Usable with Gaps`
+## Taxonomy V2: Unified Analytics Governance
+This version consolidates frontend and backend tracking into a single source of truth (PostHog), separating business logic from journey and diagnostic telemetry.
 
-## Gaps Driving This Version
-- Legacy aliases still reach `/api/v1/analytics/track`
-- Some frontend surfaces still used deprecated analytics wrappers before this migration
-- Backend contract validation depends on registry coverage in `event_definitions`
+---
 
-## Core Events
-| Event | Description | Required Context | Primary Producer | Primary Consumers | Aggregation Rule |
-| --- | --- | --- | --- | --- | --- |
-| `page_view` | Global page exposure for anonymous or logged-in traffic | `path`, `session_id` | Frontend analytics layer | tracking quality, page analytics | event count by path/day |
-| `profile_view` | Company profile view | `company_id`, `session_id`, `page` | Frontend analytics layer | `company_dashboard`, `analytics/conversions`, reconciliation jobs | `company_daily_stats.profile_views` |
-| `cta_click` | Primary CTA interaction on company surfaces | `company_id`, `session_id` | Frontend analytics layer | `company_dashboard`, `analytics/conversions` | `company_daily_stats.cta_clicks` |
-| `whatsapp_click` | WhatsApp CTA interaction | `company_id`, `session_id` | Frontend analytics layer | `company_dashboard`, `analytics/conversions`, buyer-intent scoring | `company_daily_stats.whatsapp_clicks` |
-| `lead_created` | Lead successfully created | `company_id` | Lead wizard / backend | `company_dashboard`, `analytics/conversions`, reconciliation jobs | `company_daily_stats.leads` + `leads` table |
-| `review_created` | Review submission created | `company_id`, `review_id` | Review flows / backend | reputation and review telemetry | direct event count |
+## 1. Core Business Events (Conversion Funnel)
+*Events that drive the North Star Metric and primary business KPIs.*
 
-## Supporting Events
-| Event | Description | Producer | Notes |
+| Event | Description | Required Properties | Producer | Owner |
+| --- | --- | --- | --- | --- |
+| `landing_viewed` | Visitor views any landing page | `source`, `utm_campaign` | Frontend | Growth |
+| `category_selected` | User selects a vertical/category | `category_id`, `category_slug` | Frontend | Product |
+| `company_profile_viewed`| Company profile detail exposure | `company_id`, `plan_tier` | Frontend | Product |
+| `company_cta_clicked` | Click on primary conversion CTA | `company_id`, `cta_type` | Frontend | Product |
+| `wizard_started` | User enters the lead wizard | `category_id`, `entry_point` | Frontend | Product |
+| `wizard_contact_submitted`| Contact info provided (pre-OTP) | `category_id`, `session_id` | Frontend | Product |
+| `otp_verified` | OTP code successfully validated | `user_id`, `auth_method` | Backend | Platform |
+| `lead_created` | Lead record persisted in DB | `lead_id`, `company_id` | Backend | Platform |
+| `lead_dispatched` | Lead sent to integration/email | `lead_id`, `recipient_id` | Backend | Platform |
+| `review_created` | Review successfully published | `company_id`, `rating` | Backend | Product |
+| `upgrade_completed` | Subscription/Plan upgrade success | `plan_id`, `revenue` | Backend | Growth |
+
+---
+
+## 2. Journey Events (UX & Engagement)
+*Events used to analyze drop-off, usability, and secondary interactions.*
+
+| Event | Description | Required Properties | Producer |
 | --- | --- | --- | --- |
-| `search_performance` | Search term + results volume | Frontend consolidated analytics | used for search quality |
-| `search_no_results` | Search with zero hits | Frontend consolidated analytics | derivative event from `search_performance` |
-| `faq_interaction` | FAQ expand/helpfulness interaction | Frontend consolidated analytics | non-core engagement event |
-| `micro_interaction` | UI micro-interaction telemetry | Frontend/backend validators | validated by `MicroInteractionValidator` |
-| `web_vital` | Core web vitals / frontend perf | Frontend analytics layer | anonymous-safe global event |
-| `badge_cta_click` | Badge CTA click | Frontend/backend | stays in `analytics_events` |
-| `badge_cta_view` | Badge CTA exposure | Frontend/backend | stays in `analytics_events` |
-| `company_card_click` | Company card result click | Frontend analytics layer | intent signal, not core conversion |
-| `category_selected` | Category selection from search/navigation | Frontend analytics layer | discovery telemetry |
-| `blog_article_click` | Blog article click from internal surfaces | Frontend analytics layer | content telemetry |
+| `wizard_step_viewed` | Exposure to a specific wizard step | `step_index`, `step_name` | Frontend |
+| `wizard_step_completed` | Success move to next step | `step_index`, `duration_ms` | Frontend |
+| `wizard_abandoned` | User leaves the wizard flow | `last_step_index` | Frontend |
+| `search_performed` | Search query executed | `query`, `results_count` | Frontend |
+| `search_no_results` | Search with zero results | `query` | Frontend |
+| `faq_interaction` | FAQ expand/helpfulness vote | `faq_id`, `action` | Frontend |
+| `dashboard_viewed` | Company dashboard exposure | `company_id`, `tab` | Frontend |
 
-## Deprecated Aliases
-| Alias | Canonical Event | Status | Notes |
+---
+
+## 3. Diagnostic Events (Reliability & Performance)
+*Engineering-focused events for system health monitoring.*
+
+| Event | Description | Required Properties | Producer |
 | --- | --- | --- | --- |
-| `view` | `profile_view` | deprecated | still accepted by backend |
-| `Company Profile Viewed` | `profile_view` | deprecated | legacy frontend/vendor name |
-| `click` | `cta_click` | deprecated | legacy generic click |
-| `CTA Clicked` | `cta_click` | deprecated | legacy vendor mapping |
-| `WhatsApp CTA Clicked` | `whatsapp_click` | deprecated | legacy vendor mapping |
-| `lead` | `lead_created` | deprecated | legacy short alias |
-| `Lead Form Submitted` | `lead_created` | deprecated | legacy vendor mapping |
-| `Quote Request CTA Clicked` | `lead_created` | deprecated | legacy vendor mapping |
-| `badge_click` | `badge_cta_click` | deprecated | temporary alias kept for compatibility |
-| `badges_cta_click` | `badge_cta_click` | deprecated | temporary alias kept for compatibility |
-| `badges_cta_view` | `badge_cta_view` | deprecated | temporary alias kept for compatibility |
+| `page_view` | Technical page load | `path`, `referrer` | Frontend |
+| `web_vital` | LCP, FID, CLS metrics | `metric_name`, `value` | Frontend |
+| `micro_interaction` | Low-level UI telemetry | `element_id`, `action` | Frontend |
+| `error_boundary_triggered` | Frontend JS error caught | `component`, `message` | Frontend |
+| `analytics_validation_failed`| Invalid event payload detected | `event_name`, `error` | Backend |
 
-## Endpoint Consumers
-| Endpoint | Canonical Source | Events Used |
-| --- | --- | --- |
-| `POST /api/v1/analytics/track` | ingestion | accepts canonical events + deprecated aliases |
-| `POST /api/v1/events/track` | ingestion | normalized to `Analytics::TrackEventService` |
-| `GET /api/v1/company_dashboard/analytics/overview` | `company_daily_stats` | `profile_view`, `cta_click`, `whatsapp_click`, `lead_created` |
-| `GET /api/v1/company_dashboard/analytics/timeseries` | `company_daily_stats` | `profile_view`, `cta_click`, `whatsapp_click`, `lead_created` |
-| `GET /api/v1/company_dashboard/stats` | `company_daily_stats` + `leads` | `profile_view`, `cta_click`, `whatsapp_click`, `lead_created` |
-| `GET /api/v1/analytics/conversions` | `company_daily_stats` + `analytics_events` | core events + non-core residual events |
+---
+
+## Global Required Properties
+Every event MUST include these properties for cross-platform reconciliation:
+
+- `distinct_id`: Unique identifier (UUID or User ID)
+- `session_id`: Unique session identifier
+- `tracked_at`: ISO 8601 timestamp
+- `platform`: `web` | `ios` | `android`
+- `environment`: `production` | `staging` | `development`
+- `version`: App/API version (e.g., `1.2.0`)
+
+---
 
 ## Governance Rules
-1. New business-critical events must be added here before rollout.
-2. Deprecated aliases can be accepted temporarily, but must log deprecation telemetry on ingestion.
-3. Core conversion events must preserve `event_id`, `tracked_at`, and `session_id` through the ingestion path.
-4. Frontend app code must not import `@/lib/dataLayer`; use `@/lib/analytics/consolidated`.
+1. **Schema First:** No core event can be implemented without an entry in this dictionary.
+2. **Naming Convention:** All events use `snake_case`.
+3. **No PII:** Never send email, phone, or raw names in event properties. Use `distinct_id` or hashed identifiers.
+4. **Owner Review:** Any change to a Core Business event requires approval from its documented Owner.
+5. **Deduplication:** Events triggered by both front/back (e.g., `lead_created`) must share a `correlation_id`.

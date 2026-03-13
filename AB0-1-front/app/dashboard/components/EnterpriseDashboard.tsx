@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
-import { track } from '@/lib/analytics/lazy';
+import { trackDashboardViewed, trackChurnIntent, trackCheckoutStarted, track } from '@/lib/analytics/consolidated';
 import { getFlatNavigationByContext } from '@/config/navigation';
 import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
 
@@ -177,7 +177,25 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     
-    // Track using unified analytics
+    // Canonical Dashboard View tracking
+    trackDashboardViewed(companyId, tab, {
+      plan_tier: (company as any)?.plan_tier || 'free'
+    });
+
+    // Churn Intent Tracking
+    if (tab === 'product-pricing' || tab === 'settings') {
+      trackChurnIntent(`Visited ${tab} page`);
+    }
+
+    // Checkout/Upgrade Intent Tracking
+    if (tab === 'analytics' || tab === 'leads') {
+      const entry = tabAccessEntries[tab];
+      if (entry && entry.status === 'locked') {
+        trackCheckoutStarted(tab, (company as any)?.plan_id);
+      }
+    }
+
+    // Legacy/Internal Tracking
     track('Dashboard Tab Viewed', {
       tab_name: tab,
       company_id: companyId,

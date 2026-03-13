@@ -64,6 +64,9 @@ module Analytics
       persist_platform_event!
       event = persist_analytics_event!
       
+      # Forward to PostHog for Product Analytics (Sprint 3)
+      forward_to_posthog if ENV['POSTHOG_API_KEY'].present?
+
       # Sync Review Telemetry Cache (Solar Reviews 2.0)
       if @event_type.start_with?('review_')
         Reviews::TelemetryAggregator.call(@event_type, @metadata)
@@ -180,6 +183,30 @@ module Analytics
       )
     rescue ActiveRecord::RecordNotUnique
       nil
+    end
+
+    def forward_to_posthog
+      distinct_id = @user&.posthog_distinct_id || @metadata['distinct_id'] || "company_#{@company_id}"
+      
+      # Map internal event types to PostHog V2 Taxonomy
+      ph_event_name = @event_type
+      ph_properties = @metadata.dup
+      
+      case @event_type
+      when 'plan_changed'
+        ph_event_name = 'plan_upgraded'
+      when 'company_activated'
+        ph_event_name = 'company_profile_completed' # Use consistent terminology
+      end
+
+      Analytics::PostHogService.capture(
+        ph_event_name,
+        ph_properties.merge(company_id: @company_id),
+        distinct_id: distinct_id,
+        timestamp: @occurred_at
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[G4-Analytics] PostHog Forwarding Failed: #{e.message}")
     end
 
     def normalized_event_type

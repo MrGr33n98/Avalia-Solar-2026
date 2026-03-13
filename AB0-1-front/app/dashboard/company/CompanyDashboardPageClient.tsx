@@ -6,6 +6,7 @@ import EnterpriseDashboard from '../components/EnterpriseDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { TourProvider } from '@/providers/TourProvider';
+import { trackDashboardViewed } from '@/lib/analytics/consolidated';
 
 const parseCompanyId = (value: string | null): number | null => {
   if (!value) return null;
@@ -93,6 +94,13 @@ function CompanyDashboardPageInner() {
           console.warn('[CompanyDashboardPage] Failed to sync active company selection', error);
         }
       }
+
+      // Track B2B Dashboard View with PostHog
+      trackDashboardViewed(resolvedCompany.id, 'admin_main', {
+        plan_tier: (resolvedCompany as any).plan_tier || (resolvedCompany as any).plan?.name || 'free',
+        company_segment: (resolvedCompany as any).company_segment || (resolvedCompany as any).category || 'solar',
+        source: 'b2b_direct'
+      });
 
       setCompanyId(String(resolvedCompany.id));
       setLoading(false);

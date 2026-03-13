@@ -21,6 +21,7 @@ const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod
 
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { initializeAnalytics, page } from '@/lib/analytics/lazy';
+import { trackUserReturned } from '@/lib/analytics/consolidated';
 import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 
@@ -40,6 +41,27 @@ export default function ClientBody({
     }
     initializeAnalytics();
     page();
+  }, []);
+
+  useEffect(() => {
+    // Check for returning user
+    const lastVisitKey = 'avalia.last_visit_at';
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const lastVisit = localStorage.getItem(lastVisitKey);
+
+    if (lastVisit && lastVisit !== today) {
+      const lastVisitDate = new Date(lastVisit);
+      const diffTime = Math.abs(now.getTime() - lastVisitDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Delay to ensure analytics is loaded
+      setTimeout(() => {
+        trackUserReturned(diffDays);
+      }, 3000);
+    }
+    
+    localStorage.setItem(lastVisitKey, today);
   }, []);
 
   useEffect(() => {

@@ -169,6 +169,23 @@ class LeadDistributionService
           status: 'queued',
           assigned_at: Time.current
         )
+
+        # Track "First Value" - First Lead Received
+        if company.lead_distributions.count == 1
+          owner = company.company_members.find_by(role: 'owner')&.user
+          distinct_id = owner&.posthog_distinct_id || "company_#{company.id}"
+          
+          Analytics::PostHogService.capture(
+            'first_lead_received',
+            { 
+              company_id: company.id, 
+              company_name: company.name,
+              lead_id: lead.id,
+              plan_tier: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free'
+            },
+            distinct_id: distinct_id
+          )
+        end
       end
     end
   end

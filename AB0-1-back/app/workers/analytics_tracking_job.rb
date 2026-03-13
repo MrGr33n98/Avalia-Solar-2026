@@ -73,8 +73,37 @@ class AnalyticsTrackingJob
       day: day
     )
     
+    # Check if this is the first value for this metric across all time for this company
+    # We check if the sum of this metric for all days is zero before incrementing
+    is_first_value = false
+    if [:profile_views, :cta_clicks].include?(metric)
+      is_first_value = !CompanyDailyStat.where(company_id: company_id).where("#{metric} > 0").exists?
+    end
+
     # Use increment! to update atomically (race-condition safe)
     stat.increment!(metric, 1)
+
+    # Track "First Value" in PostHog if it's the first one
+    if is_first_value
+      company = Company.find_by(id: company_id)
+      if company
+        event_name = metric == :profile_views ? 'first_profile_view_received' : 'first_cta_click_received'
+        
+        owner = company.company_members.find_by(role: 'owner')&.user
+        distinct_id = owner&.posthog_distinct_id || "company_#{company.id}"
+
+        PostHog.capture({
+          distinct_id: distinct_id,
+          event: event_name,
+          properties: {
+            company_id: company.id,
+            company_name: company.name,
+            plan_tier: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free',
+            metric_type: metric
+          }
+        })
+      end
+    end
   rescue ActiveRecord::RecordNotFound
     # Race condition: record was deleted between find_or_initialize and increment
     # Retry once
