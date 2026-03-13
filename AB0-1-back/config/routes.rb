@@ -141,6 +141,8 @@ Rails.application.routes.draw do
       end
 
       get 'dashboard/stats', to: 'dashboard#stats'
+      get 'dashboard/charts/:metric', to: 'dashboard#charts'
+      get 'dashboard/activity', to: 'dashboard#activity'
       get 'dashboard/export', to: 'dashboard_exports#export'
 
       scope :company_dashboard do

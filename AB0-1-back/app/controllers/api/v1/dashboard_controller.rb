@@ -3,6 +3,8 @@ module Api
   module V1
     class DashboardController < BaseController
       before_action :require_admin
+      
+      # GET /api/v1/dashboard/stats
       def stats
         companies_count = Company.count
         products_count = Product.count
@@ -14,7 +16,7 @@ module Api
                            else
                              0
                            end
-        monthly_revenue = 0 # Ajuste conforme sua lógica de faturamento
+        monthly_revenue = calculate_monthly_revenue
 
         render json: {
           companies_count: companies_count,
@@ -28,6 +30,182 @@ module Api
         Rails.logger.error("Dashboard stats error: #{e.message}")
         render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
+
+      # GET /api/v1/dashboard/charts/:metric
+      # Params: metric (companies|revenue|leads), period (weekly|monthly|quarterly)
+      def charts
+        metric = params[:metric] || 'companies'
+        period = params[:period] || 'monthly'
+        
+        chart_data = case metric
+                    when 'companies'
+                      get_companies_chart_data(period)
+                    when 'revenue'
+                      get_revenue_chart_data(period)
+                    when 'leads'
+                      get_leads_chart_data(period)
+                    else
+                      []
+                    end
+
+        render json: chart_data
+      rescue StandardError => e
+        Rails.logger.error("Dashboard charts error: #{e.message}")
+        render json: { error: 'Erro ao buscar dados do gráfico' }, status: :internal_server_error
+      end
+
+      # GET /api/v1/dashboard/activity
+      # Recent activity feed
+      def activity
+        limit = [params[:limit].to_i, 20].min
+        limit = 10 if limit <= 0
+
+        activities = []
+
+        # Recent companies
+        recent_companies = Company.order(created_at: :desc).limit(5)
+        recent_companies.each do |company|
+          activities << {
+            id: "company_#{company.id}",
+            type: 'company',
+            title: 'Nova empresa cadastrada',
+            description: "#{company.name} foi adicionada ao sistema",
+            time: time_ago_in_words(company.created_at),
+            created_at: company.created_at
+          }
+        end
+
+        # Recent leads
+        recent_leads = Lead.order(created_at: :desc).limit(5)
+        recent_leads.each do |lead|
+          activities << {
+            id: "lead_#{lead.id}",
+            type: 'proposal',
+            title: 'Nova proposta recebida',
+            description: "Proposta de #{lead.name || lead.email}",
+            time: time_ago_in_words(lead.created_at),
+            created_at: lead.created_at
+          }
+        end
+
+        # Recent reviews
+        recent_reviews = Review.order(created_at: :desc).limit(5)
+        recent_reviews.each do |review|
+          activities << {
+            id: "review_#{review.id}",
+            type: 'review',
+            title: 'Nova avaliação',
+            description: "#{review.company.name} recebeu #{review.rating} estrelas",
+            time: time_ago_in_words(review.created_at),
+            created_at: review.created_at
+          }
+        end
+
+        # Sort by most recent and limit
+        activities.sort_by! { |a| a[:created_at] }
+        activities.reverse!
+        activities = activities.take(limit)
+
+        render json: activities
+      rescue StandardError => e
+        Rails.logger.error("Dashboard activity error: #{e.message}")
+        render json: { error: 'Erro ao buscar atividades recentes' }, status: :internal_server_error
+      end
+
+      private
+
+      def calculate_monthly_revenue
+        # TODO: Implementar lógica real de cálculo de receita
+        # Por enquanto, retorna um valor mock baseado em leads/reviews
+        lead_value = Lead.where('created_at >= ?', 1.month.ago).count * 5000
+        review_value = Review.where('created_at >= ?', 1.month.ago).count * 1000
+        lead_value + review_value
+      end
+
+      def get_companies_chart_data(period)
+        months = case period
+                when 'weekly'
+                  6.downto(0).map { |i| i.weeks.ago.beginning_of_week }
+                when 'quarterly'
+                  6.downto(0).map { |i| i.months.ago.beginning_of_month }
+                else # monthly
+                  6.downto(0).map { |i| i.months.ago.beginning_of_month }
+                end
+
+        months.map do |start_date|
+          end_date = case period
+                    when 'weekly'
+                      start_date.end_of_week
+                    else
+                      start_date.end_of_month
+                    end
+
+          count = Company.where(created_at: start_date..end_date).count
+          
+          {
+            month: I18n.l(start_date, format: '%b'),
+            value: count,
+            label: I18n.l(start_date, format: '%B %Y')
+          }
+        end
+      end
+
+      def get_revenue_chart_data(period)
+        # Mock revenue data - replace with real revenue calculation
+        get_companies_chart_data(period).map do |data|
+          {
+            month: data[:month],
+            value: data[:value] * 50000 + rand(100000), # Mock calculation
+            label: data[:label]
+          }
+        end
+      end
+
+      def get_leads_chart_data(period)
+        months = case period
+                when 'weekly'
+                  6.downto(0).map { |i| i.weeks.ago.beginning_of_week }
+                when 'quarterly'
+                  6.downto(0).map { |i| i.months.ago.beginning_of_month }
+                else # monthly
+                  6.downto(0).map { |i| i.months.ago.beginning_of_month }
+                end
+
+        months.map do |start_date|
+          end_date = case period
+                    when 'weekly'
+                      start_date.end_of_week
+                    else
+                      start_date.end_of_month
+                    end
+
+          count = Lead.where(created_at: start_date..end_date).count
+          
+          {
+            month: I18n.l(start_date, format: '%b'),
+            value: count,
+            label: I18n.l(start_date, format: '%B %Y')
+          }
+        end
+      end
+
+      def time_ago_in_words(time)
+        seconds = Time.now - time
+        
+        case seconds
+        when 0..59
+          'agora mesmo'
+        when 60..3599
+          "há #{(seconds / 60).to_i} minutos"
+        when 3600..86399
+          "há #{(seconds / 3600).to_i} horas"
+        when 86400..604799
+          "há #{(seconds / 86400).to_i} dias"
+        else
+          "há #{(seconds / 604800).to_i} semanas"
+        end
+      end
     end
   end
 end
+

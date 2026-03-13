@@ -32,7 +32,8 @@ export default function DashboardPage() {
       return;
     }
 
-    router.replace('/dashboard/company');
+    // Redireciona para a nova página de overview
+    router.replace('/dashboard/overview');
   }, [activeCompany, authLoading, companyLoading, router, user]);
 
   if (authError) {

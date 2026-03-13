@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import EnterpriseDashboard from '../components/EnterpriseDashboard';
+import CompanyDashboardModern from '../components/CompanyDashboardModern';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { TourProvider } from '@/providers/TourProvider';
@@ -135,7 +135,7 @@ function CompanyDashboardPageInner() {
   return (
     <TourProvider>
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel...</div>}>
-        <EnterpriseDashboard companyId={companyId} />
+        <CompanyDashboardModern companyId={companyId} />
       </Suspense>
     </TourProvider>
   );

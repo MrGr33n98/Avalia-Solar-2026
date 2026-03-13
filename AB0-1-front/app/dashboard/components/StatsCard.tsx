@@ -1,58 +1,67 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+"use client";
+
+import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
-  description?: string;
-  trend?: {
+  change?: {
     value: number;
-    label?: string;
+    label: string;
   };
-  iconClassName?: string;
+  icon: LucideIcon;
+  iconColor?: "blue" | "green" | "purple" | "cyan" | "yellow";
   className?: string;
-  isDark?: boolean;
 }
+
+const iconColorClasses = {
+  blue: "text-primary bg-primary/10",
+  green: "text-accent bg-accent/10",
+  purple: "text-secondary bg-secondary/10",
+  cyan: "text-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/10",
+  yellow: "text-[hsl(var(--chart-4))] bg-[hsl(var(--chart-4))]/10",
+};
 
 export default function StatsCard({
   title,
   value,
+  change,
   icon: Icon,
-  description,
-  trend,
-  iconClassName,
+  iconColor = "blue",
   className,
-  isDark = false
 }: StatsCardProps) {
+  const isPositive = change && change.value > 0;
+  const isNegative = change && change.value < 0;
+
   return (
-    <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'} ${className}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${isDark ? 'bg-[#002B4D]' : 'bg-slate-100'} ${iconClassName}`}>
-            <Icon className={`h-6 w-6`} />
-          </div>
-          {trend && (
-            <Badge variant={trend.value > 0 ? 'default' : 'secondary'} className="text-xs">
-              {trend.value > 0 ? '+' : ''}{trend.value}%
-            </Badge>
-          )}
+    <div className={cn("clay-card p-6 space-y-4", className)}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <div className={cn(
+          "p-2 rounded-xl",
+          iconColorClasses[iconColor]
+        )}>
+          <Icon className="h-5 w-5" />
         </div>
-        <div>
-          <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-            {title}
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+        
+        {change && (
+          <p className={cn(
+            "text-xs font-medium flex items-center gap-1",
+            isPositive && "text-accent",
+            isNegative && "text-destructive"
+          )}>
+            <span>
+              {isPositive ? "+" : ""}{change.value}%
+            </span>
+            <span className="text-muted-foreground">{change.label}</span>
           </p>
-          <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-            {value}
-          </p>
-          {description && (
-            <p className={`text-xs mt-3 ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-              {description}
-            </p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 }
