@@ -286,22 +286,24 @@ module Api
       # =========================
       def tree
         begin
-          last_update = ::Category.where(status: 'active').maximum(:updated_at).to_i
-          cache_key = "api/v1/categories/tree/#{last_update}"
+          # Simplificando: não usar cache se estiver dando problema
+          roots = ::Category.where(status: 'active', parent_id: nil)
+                            .order(:name)
 
-          # Usando cache mas com fallback imediato
-          data = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-            roots = ::Category.where(status: 'active', parent_id: nil)
-                              .order(:name)
-                              .includes(:icon_attachment, children: :icon_attachment)
+          Rails.logger.info("[CategoriesController#tree] Found #{roots.count} root categories")
+          
+          # Eager load apenas icon para evitar N+1
+          roots = roots.includes(:icon_attachment)
 
-            roots.map { |root| category_tree_json(root) }
-          end
+          data = roots.map { |root| category_tree_json(root) }
 
-          render json: data || []
+          Rails.logger.info("[CategoriesController#tree] Returning #{data.size} categories")
+          render json: data, status: :ok
         rescue StandardError => e
-          Rails.logger.error("[CategoriesController#tree] Error: #{e.message}")
-          render json: []
+          Rails.logger.error("[CategoriesController#tree] Error: #{e.message}\n#{e.backtrace.take(10).join("\n")}")
+          # Fallback: retornar categorias sem hierarquia
+          fallback = ::Category.where(status: 'active').order(:name).limit(20)
+          render json: fallback.map { |c| { id: c.id, name: c.name, slug: c.seo_url, icon_url: c.try(:icon_url), companies_count: c.companies_count || 0, children: [] } }, status: :ok
         end
       end
 
@@ -330,16 +332,24 @@ module Api
         return nil if visited.include?(category.id)
         visited.add(category.id)
 
+        # Load children safely with error handling
+        children_data = begin
+          active_children = category.children.select { |c| c.status == 'active' }
+          active_children.sort_by(&:name).map do |child|
+            category_tree_json(child, visited.dup)
+          end.compact
+        rescue StandardError => e
+          Rails.logger.error("[CategoriesController#tree] Error loading children for category #{category.id}: #{e.message}")
+          []
+        end
+
         {
           id: category.id,
           name: category.name,
-          slug: category.seo_url, # Mantendo seo_url mas garantindo que o frontend leia corretamente
-          icon_url: category.icon_url,
+          slug: category.seo_url,
+          icon_url: category.try(:icon_url),
           companies_count: category.companies_count || 0,
-          children: (category.children.select { |c| c.status == 'active' } || [])
-                    .sort_by(&:name)
-                    .map { |child| category_tree_json(child, visited.dup) }
-                    .compact
+          children: children_data
         }
       end
 
