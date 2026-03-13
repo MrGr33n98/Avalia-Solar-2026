@@ -134,14 +134,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
         )
       )
 
-      PostHog.capture(
-        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{lead.id}",
-        event: 'lead_submitted',
-        properties: {
+      Analytics::PostHogService.capture(
+        'lead_submitted',
+        {
           lead_id: lead.id,
           company_id: lead.company_id,
           template_key: lead.respond_to?(:template_key) ? lead.template_key : nil
-        }.compact
+        }.compact,
+        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{lead.id}"
       )
 
       render json: {
@@ -207,10 +207,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
       Analytics::TrackEventService.call(event_type: 'lead_verified', company_id: @lead.company_id, metadata: request_metadata.merge(lead_id: @lead.id))
-      PostHog.capture(
-        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}",
-        event: 'lead_otp_verified',
-        properties: { lead_id: @lead.id, company_id: @lead.company_id }
+      Analytics::PostHogService.capture(
+        'lead_otp_verified',
+        { lead_id: @lead.id, company_id: @lead.company_id },
+        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}"
       )
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
