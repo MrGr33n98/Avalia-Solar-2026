@@ -141,7 +141,7 @@ function flushEventQueue(): void {
 }
 
 /**
- * Get common analytics context
+ * Get common analytics context (Matrix VAR-001 to VAR-019)
  */
 export function getAnalyticsContext(): AnalyticsContext {
   if (typeof window === 'undefined') {
@@ -151,9 +151,6 @@ export function getAnalyticsContext(): AnalyticsContext {
       platform: 'web',
       pathname: '',
       referrer: '',
-      referrer_host: undefined,
-      session_id: '',
-      is_logged_in: false,
       source: 'server'
     };
   }
@@ -161,7 +158,7 @@ export function getAnalyticsContext(): AnalyticsContext {
   const utms = getCurrentUTMs();
   const attribution = getAttribution();
   
-  // Determine traffic source
+  // Matrix VAR-003 & Source Logic
   let source = 'direct';
   if (utms.utm_source) {
     source = utms.utm_source;
@@ -176,94 +173,112 @@ export function getAnalyticsContext(): AnalyticsContext {
     }
   }
 
-  let referrer_host: string | undefined = undefined;
-  try {
-    referrer_host = document.referrer ? new URL(document.referrer).hostname : undefined;
-  } catch {
-    referrer_host = undefined;
-  }
-  
   return {
+    // VAR-001, VAR-002, VAR-003
+    page_url: window.location.href,
+    pathname: window.location.pathname,
+    referrer: document.referrer,
+    
+    // VAR-005, VAR-006
+    event_id: generateEventId(),
+    session_id: getSessionId(),
+    
     environment: process.env.NODE_ENV || 'production',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     platform: 'web',
-    pathname: window.location.pathname,
-    referrer: document.referrer,
-    referrer_host,
-    session_id: getSessionId(),
     is_logged_in: !!currentUserId,
     user_id: currentUserId || undefined,
     source,
-    landing_path: attribution?.last_touch?.landing_path || attribution?.first_touch?.landing_path,
-    attribution: attribution || undefined,
+    
+    // UTMs
     ...utms,
     ...currentContext
   };
 }
 
 /**
- * Track event
+ * Track event - Unified Matrix Logic
  */
 export function track(
   eventName: string,
   properties: Record<string, any> = {},
   options: EventOptions = {}
 ): void {
-  if (!hasAnalyticsConsent()) {
-    console.debug('[Analytics] Event blocked: no consent');
-    return;
-  }
+  if (!hasAnalyticsConsent()) return;
   
   if (!initialized) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[Analytics] Not initialized, queueing event:', eventName);
-    }
     enqueueEvent(eventName, properties, options);
     void initializeSDKs();
     return;
   }
   
-  // ALWAYS generate event ID for EVERY interaction
-  const eventId = options.eventId || generateEventId();
+  const context = getAnalyticsContext();
+  const eventId = options.eventId || context.event_id;
   
   // Dedupe check
-  if (!shouldTrackEvent(eventName, eventId, options.critical)) {
-    return;
-  }
+  if (!shouldTrackEvent(eventName, eventId, options.critical)) return;
   
-  // Merge context
-  const context = getAnalyticsContext();
-  const eventProps = {
+  // Matrix Property Mapping (VAR-007 to VAR-016)
+  const matrixProps = {
     ...context,
     ...properties,
+    original_event: eventName, // VAR-004: Required for GTM triggers
     event_id: eventId,
-    timestamp: new Date().toISOString()
+    gtm_timestamp: Date.now(), // VAR-019
+    company_id: properties.company_id || context.company_id,
+    company_name: properties.company_name || context.company_name,
+    category_id: properties.category_id || context.category_id,
+    search_term: properties.search_term || properties.query, // VAR-010
+    results_count: properties.results_count, // VAR-011
+    cta_type: properties.cta_type, // VAR-012
+    cta_location: properties.cta_location || properties.placement, // VAR-013
+    item_id: properties.company_id, // VAR-014 (GA4 Style)
+    item_name: properties.company_name, // VAR-015
+    item_category: properties.category_name, // VAR-016
   };
   
-  // Envia para backend (fire-and-forget) com payload mínimo
-  sendToBackend(eventName, eventId, context, {
-    ...properties,
-    company_id: properties.company_id ?? context.company_id,
-    banner_id: properties.banner_id,
-    category_id: properties.category_id,
-    timestamp: eventProps.timestamp
-  });
-
-  // Remove PII
-  const sanitized = sanitizeProperties(eventProps);
-
-  // Frontend sinks: PostHog + backend only.
+  // 1. Centralize in POSTHOG (Canonical Data)
   if (options.sendTo?.posthog !== false && posthogInstance) {
     try {
+      const sanitized = sanitizeProperties(matrixProps);
       posthogInstance.capture(eventName, sanitized);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('[PostHog] Event:', eventName, sanitized);
+        console.log('[PostHog] Unified Event:', eventName, sanitized);
       }
     } catch (e) {
-      console.error('[Analytics] PostHog track failed:', e);
+      console.error('[Analytics] PostHog capture failed:', e);
     }
   }
+
+  // 2. Dispatch to GTM DataLayer (For Meta/Google Pixels)
+  if (typeof window !== 'undefined' && (window as any).dataLayer) {
+    // Mapeia o evento para o padrão GA4 conforme a Matrix (TRG-003 a TRG-009)
+    const gtmEventName = mapToGtmEvent(eventName);
+    (window as any).dataLayer.push({
+      event: gtmEventName,
+      ...matrixProps
+    });
+  }
+
+  // 3. Sync with Backend
+  sendToBackend(eventName, eventId, context, matrixProps);
+}
+
+/**
+ * Map canonical events to GTM/GA4 standard names (Matrix Triggers)
+ */
+function mapToGtmEvent(name: string): string {
+  const map: Record<string, string> = {
+    'search_performance': 'search',
+    'search_submitted': 'search',
+    'company_card_click': 'select_item',
+    'whatsapp_click': 'contact',
+    'wizard_started': 'begin_checkout',
+    'wizard_step_completed': 'checkout_progress',
+    'wizard_success': 'wizard_success', // TRG-009
+  };
+  return map[name] || name;
 }
 
 /**

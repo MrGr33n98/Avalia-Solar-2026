@@ -30,9 +30,11 @@ module Analytics
       properties = {
         lead_id: lead.id,
         company_id: lead.company_id,
+        item_id: lead.company_id, # VAR-014
         company_name: lead.company&.name,
-        category: lead.category,
-        product_vertical: lead.product_vertical,
+        item_name: lead.company&.name, # VAR-015
+        category: lead.product_vertical,
+        item_category: lead.product_vertical, # VAR-016
         status: lead.status,
         created_at: lead.created_at,
         $set: {
@@ -40,7 +42,7 @@ module Analytics
         }
       }
 
-      capture('lead_generated', properties, distinct_id: lead.email)
+      capture('wizard_success', properties, distinct_id: lead.email)
     end
 
     def self.track_company_view(company, user)
