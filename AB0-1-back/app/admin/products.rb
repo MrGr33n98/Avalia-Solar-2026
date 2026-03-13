@@ -2,7 +2,7 @@ ActiveAdmin.register Product do
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
   # Your existing permit_params
-  permit_params :name, :description, :price, :image_url, :company_id, :seo_title, :meta_description, 
+  permit_params :name, :description, :price, :company_id, :seo_title, :meta_description, 
                 category_ids: [], images: []
 
   # Explicitly define filters to avoid the error
@@ -71,14 +71,10 @@ ActiveAdmin.register Product do
       # Multiple image upload
       f.input :images, as: :file, input_html: { multiple: true }, label: "Fotos do Produto (Upload Múltiplo)"
 
-      # Keep image_url as optional fallback if needed for external URLs
-      f.input :image_url, label: "URL de imagem externa (opcional)"
-
       # Add categories select2
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
                            collection: Category.all.order(:name)   
-    end
-    f.inputs 'SEO & Metadados' do
+    end    f.inputs 'SEO & Metadados' do
       f.input :seo_title, 
               label: 'Título SEO (Meta Title)',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Se vazio, usará o nome do produto."

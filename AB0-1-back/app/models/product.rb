@@ -29,11 +29,8 @@ class Product < ApplicationRecord
   validates :sku, uniqueness: true
   validate :blocked_transition_guard
 
-  # Method to get primary image URL
+  # Method to get primary image URL from Active Storage
   def image_url
-    db_value = self[:image_url]
-    return db_value if db_value.present?
-
     return nil unless images.attached?
 
     options = Rails.application.routes.default_url_options.dup
