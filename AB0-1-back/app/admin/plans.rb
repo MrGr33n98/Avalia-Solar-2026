@@ -148,13 +148,21 @@ ActiveAdmin.register Plan do
       state = PlanFeatureCatalog.access_state_for(key, current_value)
       hint = render_feature_hint.call(key, definition, default_value)
 
-      if definition[:type] == :integer
-        view_helpers.content_tag(:li, class: 'input integer optional plan-feature-item') do
-          view_helpers.safe_join(
-            [
-              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
-              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
-              view_helpers.label_tag(input_id, 'Valor', class: 'label'),
+      view_helpers.content_tag(
+        :li,
+        class: definition[:type] == :integer ? 'input integer optional plan-feature-item' : 'boolean input optional plan-feature-item'
+      ) do
+        view_helpers.capture do
+          view_helpers.concat(
+            view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title')
+          )
+          view_helpers.concat(
+            view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints')
+          )
+
+          if definition[:type] == :integer
+            view_helpers.concat(view_helpers.label_tag(input_id, 'Valor', class: 'label'))
+            view_helpers.concat(
               view_helpers.number_field_tag(
                 input_name,
                 current_value,
@@ -162,30 +170,22 @@ ActiveAdmin.register Plan do
                 min: 1,
                 step: 1,
                 placeholder: default_value || 'Nao definido'
-              ),
-              view_helpers.content_tag(:p, hint, class: 'inline-hints')
-            ]
-          )
-        end
-      else
-        checked = ActiveModel::Type::Boolean.new.cast(current_value)
-        view_helpers.content_tag(:li, class: 'boolean input optional plan-feature-item') do
-          view_helpers.safe_join(
-            [
-              view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title'),
-              view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints'),
-              view_helpers.hidden_field_tag(input_name, '0', id: nil),
+              )
+            )
+          else
+            checked = ActiveModel::Type::Boolean.new.cast(current_value)
+            view_helpers.concat(view_helpers.hidden_field_tag(input_name, '0', id: nil))
+            view_helpers.concat(
               view_helpers.label_tag(input_id, class: 'label') do
-                view_helpers.safe_join(
-                  [
-                    view_helpers.check_box_tag(input_name, '1', checked, id: input_id),
-                    ' Habilitar'
-                  ]
-                )
-              end,
-              view_helpers.content_tag(:p, hint, class: 'inline-hints')
-            ]
-          )
+                view_helpers.capture do
+                  view_helpers.concat(view_helpers.check_box_tag(input_name, '1', checked, id: input_id))
+                  view_helpers.concat(' Habilitar')
+                end
+              end
+            )
+          end
+
+          view_helpers.concat(view_helpers.content_tag(:p, hint, class: 'inline-hints'))
         end
       end
     end
@@ -193,7 +193,11 @@ ActiveAdmin.register Plan do
     render_feature_group = lambda do |feature_keys|
       view_helpers.content_tag(
         :ol,
-        view_helpers.safe_join(feature_keys.map { |key| render_feature_field.call(key) }),
+        view_helpers.capture do
+          feature_keys.each do |key|
+            view_helpers.concat(render_feature_field.call(key))
+          end
+        end,
         class: 'plan-feature-list'
       )
     end
