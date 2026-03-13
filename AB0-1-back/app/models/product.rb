@@ -1,6 +1,18 @@
 # app/models/product.rb
 class Product < ApplicationRecord
   include SeoStandardizable
+  
+  # Image upload limits based on plan
+  ALLOWED_IMAGE_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
+  IMAGE_MAX_SIZE = 5.megabytes
+  
+  # Image limits by plan tier
+  IMAGE_LIMITS = {
+    'free' => 1,
+    'pro' => 5,
+    'enterprise' => 10
+  }.freeze
+  
   # Associations
   belongs_to :company, optional: true
   has_and_belongs_to_many :categories
@@ -28,6 +40,7 @@ class Product < ApplicationRecord
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validates :sku, uniqueness: true
   validate :blocked_transition_guard
+  validate :validate_image_uploads
 
   # Method to get primary image URL from Active Storage
   def image_url
@@ -157,5 +170,102 @@ class Product < ApplicationRecord
 
   def spec_value_for(template_key)
     product_specifications.joins(:spec_template).find_by(spec_templates: { key: template_key })&.value
+  end
+
+  # Image upload validation based on plan limits
+  def validate_image_uploads
+    return unless images.attached?
+    
+    validate_upload_permission
+    validate_image_count
+    validate_image_types_and_sizes
+  end
+
+  def validate_upload_permission
+    unless can_upload_images?
+      errors.add(:images, upload_restriction_message)
+    end
+  end
+
+  def validate_image_count
+    max_images = max_images_allowed
+    if images.count > max_images
+      errors.add(:images, "você pode fazer upload de no máximo #{max_images} imagens no seu plano atual")
+    end
+  end
+
+  def validate_image_types_and_sizes
+    images.each do |image|
+      validate_image_type(image)
+      validate_image_size(image)
+    end
+  end
+
+  def validate_image_type(image)
+    return unless image.blob.present?
+    
+    unless ALLOWED_IMAGE_CONTENT_TYPES.include?(image.blob.content_type)
+      errors.add(:images, "arquivo #{image.filename} deve ser JPG, PNG ou WEBP")
+    end
+  end
+
+  def validate_image_size(image)
+    return unless image.blob.present?
+    
+    if image.blob.byte_size > IMAGE_MAX_SIZE
+      errors.add(:images, "arquivo #{image.filename} excede o limite de 5MB")
+    end
+  end
+
+  def max_images_allowed
+    return IMAGE_LIMITS['free'] unless company&.plan
+
+    # First check if plan has specific product_images_limit configuration
+    plan_features = company.plan.feature_flags
+    if plan_features['product_images_limit'].present?
+      return plan_features['product_images_limit'].to_i
+    end
+
+    # Fallback to tier-based limits
+    plan_tier = company.plan.inferred_plan_tier
+    IMAGE_LIMITS[plan_tier] || IMAGE_LIMITS['free']
+  end
+
+  def remaining_image_slots
+    [max_images_allowed - images.count, 0].max
+  end
+
+  def can_upload_images?
+    return true unless company&.plan
+    
+    # Check if company has media_upload feature enabled
+    plan_features = company.plan.feature_flags
+    plan_features['media_upload'] == true
+  end
+
+  def can_upload_more_images?
+    can_upload_images? && remaining_image_slots > 0
+  end
+    return nil if can_upload_images?
+    
+    current_plan = company&.plan&.inferred_plan_tier || 'free'
+    case current_plan
+    when 'free'
+      "O upload de imagens não está disponível no plano gratuito. Upgrade para o plano Pro para habilitar esta funcionalidade."
+    else
+      "O upload de imagens não está habilitado no seu plano atual."
+    end
+  end
+
+  def plan_upgrade_message_for_images
+    current_plan = company&.plan&.inferred_plan_tier || 'free'
+    case current_plan
+    when 'free'
+      "Upgrade para o plano Pro para fazer upload de até 5 imagens por produto"
+    when 'pro'
+      "Upgrade para o plano Enterprise para fazer upload de até 10 imagens por produto"
+    else
+      nil
+    end
   end
 end

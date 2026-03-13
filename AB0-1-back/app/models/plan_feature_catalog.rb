@@ -127,6 +127,15 @@ module PlanFeatureCatalog
       group: 'content',
       aliases: %w[allow_media_uploads gallery_uploads media_uploads]
     },
+    'product_images_limit' => {
+      label: 'Limite de Imagens por Produto',
+      description: 'Quantidade máxima de imagens que podem ser anexadas a cada produto.',
+      type: :integer,
+      default: nil,
+      access_behavior: :config,
+      group: 'content',
+      aliases: %w[product_image_limit images_per_product_limit]
+    },
     'company_links_block' => {
       label: 'Bloco de Redes Sociais',
       description: 'Exibe links para Instagram, LinkedIn e site oficial.',
@@ -295,6 +304,7 @@ module PlanFeatureCatalog
       'downloadable_materials' => true,
       'media_gallery' => true,
       'media_upload' => true,
+      'product_images_limit' => 5,
       'featured_review' => true,
       'social_proof' => true,
       'faq_block' => true,
@@ -318,6 +328,7 @@ module PlanFeatureCatalog
       'downloadable_materials' => true,
       'media_gallery' => true,
       'media_upload' => true,
+      'product_images_limit' => 10,
       'featured_review' => true,
       'social_proof' => true,
       'faq_block' => true,

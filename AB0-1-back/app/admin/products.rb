@@ -1,14 +1,18 @@
 ActiveAdmin.register Product do
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
-  # Your existing permit_params
-  permit_params :name, :description, :price, :company_id, :seo_title, :meta_description, 
+  permit_params :name, :description, :short_description, :price, :sku, :stock, :status, :featured,
+                :company_id, :seo_title, :seo_description, :meta_description, :image_url,
                 category_ids: [], images: []
 
   # Explicitly define filters to avoid the error
   filter :name
+  filter :sku
   filter :description
   filter :price
+  filter :stock
+  filter :status, as: :select, collection: Product.statuses
+  filter :featured, as: :boolean
   filter :company
   filter :seo_title
   filter :created_at
@@ -19,20 +23,34 @@ ActiveAdmin.register Product do
     selectable_column
     id_column
     column :name
+    column :sku
     column :price
+    column :stock
+    column :status
     column :company
     column "Imagens" do |product|
       if product.images.attached?
-        product.images.each do |img|
-          span do
-            image_tag url_for(img), size: "50x50"
+        count = product.images.count
+        max = product.max_images_allowed
+        color = count >= max ? "red" : "green"
+        
+        div do
+          span "#{count}/#{max}", style: "color: #{color}; font-weight: bold;"
+          br
+          product.images.first(3).each do |img|
+            span do
+              image_tag url_for(img), size: "30x30", style: "margin: 1px; border-radius: 2px;"
+            end
           end
+          span "..." if product.images.count > 3
         end
       else
-        "Sem imagens"
+        span "0/#{product.max_images_allowed}", style: "color: #999;"
       end
     end
-    column :status
+    column :featured do |product|
+      status_tag(product.featured? ? "Sim" : "Não", product.featured? ? :ok : :no)
+    end
     actions
   end
 
@@ -41,20 +59,60 @@ ActiveAdmin.register Product do
       row :id
       row :name
       row :description
+      row :short_description
+      row :sku
       row :price
-      row :company
+      row :stock
       row :status
+      row :featured
+      row :company
+      row "Plano da Empresa" do |product|
+        if product.company&.plan
+          plan_tier = product.company.plan.inferred_plan_tier
+          "#{plan_tier.capitalize} (limite: #{product.max_images_allowed} imagens por produto)"
+        else
+          "Sem plano definido (limite: #{product.max_images_allowed} imagens)"
+        end
+      end
+      row "Status do Upload de Imagens" do |product|
+        if product.can_upload_images?
+          status_tag "Upload Permitido", :ok
+        else
+          status_tag "Upload Restrito", :error
+        end
+      end
       row "Imagens" do |product|
-        if product.images.attached?
-          div class: "product-images" do
-            product.images.each do |img|
-              div style: "display: inline-block; margin-right: 10px;" do
-                image_tag url_for(img), size: "200x200"
+        if product.can_upload_images?
+          if product.images.attached?
+            div class: "product-images" do
+              para "#{product.images.count}/#{product.max_images_allowed} imagens utilizadas"
+              para "Slots restantes: #{product.remaining_image_slots}" if product.remaining_image_slots > 0
+              para product.plan_upgrade_message_for_images, style: "color: orange; font-weight: bold;" if product.plan_upgrade_message_for_images && !product.can_upload_more_images?
+              
+              product.images.each do |img|
+                div style: "display: inline-block; margin-right: 10px; margin-bottom: 10px;" do
+                  div do
+                    image_tag url_for(img), size: "200x200", style: "border: 1px solid #ddd; border-radius: 4px;"
+                  end
+                  div style: "font-size: 12px; color: #666; text-align: center; margin-top: 5px;" do
+                    "#{number_to_human_size(img.blob.byte_size)} - #{img.blob.content_type}"
+                  end
+                end
               end
             end
+          else
+            para "Nenhuma imagem anexada"
+            para "Pode adicionar até #{product.max_images_allowed} imagens neste plano"
+          end
+        else
+          div class: "alert alert-warning" do
+            product.upload_restriction_message
           end
         end
       end
+      row :image_url
+      row :seo_title
+      row :seo_description
       row :created_at
       row :updated_at
     end
@@ -65,19 +123,65 @@ ActiveAdmin.register Product do
     f.inputs "Detalhes do Produto" do
       f.input :name
       f.input :description
+      f.input :short_description
       f.input :price
+      f.input :sku, label: "SKU (Código do Produto)", hint: "Campo obrigatório - código único do produto"
+      f.input :stock, label: "Estoque"
+      f.input :status, as: :select, collection: Product.statuses.keys, include_blank: false
+      f.input :featured, as: :boolean, label: "Produto em Destaque"
       f.input :company, collection: Company.all
 
-      # Multiple image upload
-      f.input :images, as: :file, input_html: { multiple: true }, label: "Fotos do Produto (Upload Múltiplo)"
+      # Multiple image upload with plan-based limits
+      if f.object.persisted? && f.object.company
+        if f.object.can_upload_images?
+          max_images = f.object.max_images_allowed
+          current_count = f.object.images.count
+          remaining = f.object.remaining_image_slots
+          plan_tier = f.object.company&.plan&.inferred_plan_tier || 'free'
+          
+          hint_message = "Plano #{plan_tier.capitalize}: máximo #{max_images} imagens por produto. "
+          hint_message += "Você já tem #{current_count} imagens" if current_count > 0
+          hint_message += " e pode adicionar mais #{remaining}" if remaining > 0
+          hint_message += ". #{f.object.plan_upgrade_message_for_images}" if f.object.plan_upgrade_message_for_images && remaining == 0
+        else
+          hint_message = f.object.upload_restriction_message
+        end
+      else
+        hint_message = "Você pode fazer upload de múltiplas imagens (limite baseado no plano da empresa)"
+      end
+      
+      # Only show upload field if user can upload images
+      if !f.object.persisted? || !f.object.company || f.object.can_upload_images?
+        f.input :images, 
+                as: :file, 
+                input_html: { multiple: true }, 
+                label: "Fotos do Produto (Upload Múltiplo)",
+                hint: hint_message
+      else
+        div class: "form-group" do
+          label "Upload de Imagens", class: "label"
+          div class: "alert alert-warning" do
+            hint_message
+          end
+        end
+      end
+      
+      # Optional single image URL (for cases where we still need this field)
+      f.input :image_url, label: "URL da Imagem (Opcional)", hint: "URL externa da imagem, caso não use upload"
 
       # Add categories select2
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
                            collection: Category.all.order(:name)   
-    end    f.inputs 'SEO & Metadados' do
+    end
+    f.inputs 'SEO & Metadados' do
       f.input :seo_title, 
               label: 'Título SEO (Meta Title)',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Se vazio, usará o nome do produto."
+      f.input :seo_description, 
+              label: 'Descrição SEO',
+              as: :text,
+              input_html: { rows: 3 },
+              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.seo_description&.length || 0}."
       f.input :meta_description, 
               label: 'Meta Descrição',
               as: :text,
