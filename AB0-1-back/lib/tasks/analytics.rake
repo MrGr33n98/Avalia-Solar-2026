@@ -345,7 +345,7 @@ namespace :analytics do
       aggregated.each do |(company_id, event_type), count|
         stat = CompanyDailyStat.find_or_initialize_by(
           company_id: company_id,
-          date: date
+          day: date
         )
 
         case event_type
@@ -363,6 +363,8 @@ namespace :analytics do
           stat.website_clicks = (stat.website_clicks || 0) + count
         when 'lead_created', 'Lead Form Submitted', 'Quote Request CTA Clicked'
           stat.leads = (stat.leads || 0) + count
+        when 'review_created'
+          stat.reviews = (stat.reviews || 0) + count
         end
 
         stat.save!
