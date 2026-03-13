@@ -30,6 +30,7 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_rating_count,
              :awards,
              :badges,
+             :media_urls, :videos,
              :review_aggregates
 
   def review_aggregates
@@ -287,6 +288,16 @@ class CompanySerializer < ActiveModel::Serializer
                 min_down_payment_percent grace_months amortization_type
                 notes active position]
       )
+    end
+  end
+
+  def media_urls
+    object.media_urls || []
+  end
+
+  def videos
+    object.published_videos.map do |v|
+      { id: v.id, url: v.url, thumbnail_url: v.thumbnail_url, provider: v.provider, video_id: v.video_id }
     end
   end
 

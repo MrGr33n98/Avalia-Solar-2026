@@ -252,19 +252,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="analytics" className="mt-0 focus-visible:outline-none" data-tour="analytics">
-                {(company?.has_paid_plan || company?.plan_status === 'active') && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Analytics Avançado
-                      </h2>
-                      <p className="text-sm text-white/40">
-                        Métricas detalhadas de performance e engajamento
-                      </p>
-                    </div>
-                    <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Analytics Avançado
+                    </h2>
+                    <p className="text-sm text-white/40">
+                      Métricas detalhadas de performance e engajamento
+                    </p>
                   </div>
-                )}
+                  <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
+                </div>
               </TabsContent>
 
               <TabsContent value="benchmark" className="mt-0 focus-visible:outline-none">
