@@ -278,17 +278,41 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
       </div>
 
       {/* Analytics Visualization Layer */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
-        <CTABreakdownChart data={{
-          whatsapp_clicks: analyticsData?.whatsapp_clicks_30d || 0,
-          email_clicks: analyticsData?.email_clicks_30d || 0,
-          phone_clicks: analyticsData?.phone_clicks_30d || 0,
-          website_clicks: analyticsData?.website_clicks_30d || 0,
-        }} loading={loading} themeMode={themeMode || 'dark'} />
+      <div className="relative group">
+        {!analyticsData?.is_premium_analytics && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/20 backdrop-blur-[2px] rounded-2xl">
+            <div className="bg-card dark:bg-[#002B4D] p-6 rounded-2xl shadow-2xl border border-primary/20 text-center max-w-md mx-4 transform transition-all group-hover:scale-105">
+              <TrendingUp className="h-10 w-10 text-brand-cyan mx-auto mb-4" />
+              <h3 className="text-lg font-black uppercase tracking-tighter mb-2">Desbloqueie Analytics Avançado</h3>
+              <p className="text-xs text-muted-foreground dark:text-white/40 mb-6 font-medium">
+                Sua empresa está em um plano básico. Faça o upgrade para visualizar tendências diárias, origem do tráfego e métricas de engajamento detalhadas.
+              </p>
+              <Button onClick={() => window.location.href='/pricing'} className="w-full rounded-xl font-black uppercase tracking-widest text-[10px] bg-brand-blue hover:bg-brand-blue/80 text-white h-11">
+                Fazer Upgrade Agora
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <div className={cn(
+          "grid grid-cols-1 lg:grid-cols-2 gap-6",
+          !analyticsData?.is_premium_analytics && "blur-md pointer-events-none select-none"
+        )}>
+          <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
+          <CTABreakdownChart data={{
+            whatsapp_clicks: analyticsData?.whatsapp_clicks_30d || 0,
+            email_clicks: analyticsData?.email_clicks_30d || 0,
+            phone_clicks: analyticsData?.phone_clicks_30d || 0,
+            website_clicks: analyticsData?.website_clicks_30d || 0,
+          }} loading={loading} themeMode={themeMode || 'dark'} />
+        </div>
       </div>
 
-      <TopCampaignsCard companyId={companyId} themeMode={themeMode || 'dark'} limit={5} />
+      <div className={cn(
+        !analyticsData?.is_premium_analytics && "blur-md pointer-events-none select-none opacity-50"
+      )}>
+        <TopCampaignsCard companyId={companyId} themeMode={themeMode || 'dark'} limit={5} />
+      </div>
     </div>
   );
 }

@@ -22,8 +22,11 @@ module Api
           leads = stats[:leads].to_i
           conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
 
+          is_premium = @company.has_paid_plan? || @company.plan_status == 'active'
+
           render json: {
             views_30d: views,
+            # Dados que serão borrados se não for premium
             cta_clicks_30d: stats[:cta_clicks].to_i,
             whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
             email_clicks_30d: stats[:email_clicks].to_i,
@@ -33,7 +36,10 @@ module Api
             returning_views_30d: stats[:returning_views].to_i,
             leads_30d: leads,
             conversion_rate: conversion,
-            data_source: data_source
+            data_source: data_source,
+            # Controle de Paywall
+            is_premium_analytics: is_premium,
+            restricted_metrics: is_premium ? [] : %w[cta_breakdown timeseries unique_visitors conversion_details]
           }.merge(freshness)
         rescue StandardError => e
           log_analytics_error('overview', e)
