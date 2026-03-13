@@ -103,6 +103,10 @@ SPRINT_4_SUMMARY.md
 STORY_VALIDATION_CHECKLIST.md
 WCAG_ACCESSIBILITY_REPORT.md
 docs/qa/
+/AB0-1-back/docs/diagnostics/
+/AB0-1-back/docs/data/
+/AB0-1-front/docs/skills/
+*.csv
 
 # Planejamento de monetizacao/local task board (nao sobe para prod)
 tasks/

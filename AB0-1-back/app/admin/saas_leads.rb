@@ -62,40 +62,51 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
   filter :utm_medium
   filter :utm_campaign
 
-  index title: 'SaaS Leads' do
+  index do
     selectable_column
     id_column
 
     column('Score', sortable: false) do |lead|
       metrics = saas_metrics_for(lead)
-      css_class =
-        case metrics.score_band
-        when :hot
-          'ok'
-        when :warm
-          'warning'
-        else
-          'error'
-        end
-      status_tag(metrics.score, class: css_class)
+      if metrics.is_a?(SaasLeads::LeadInsights) # Check if it's not the fallback
+        status_tag(
+          metrics.score_band.to_s.upcase,
+          class: case metrics.score_band
+                 when :hot then 'ok'
+                 when :warm then 'warning'
+                 else 'error'
+                 end
+        )
+      else
+        status_tag 'N/A', class: 'error'
+      end
     end
 
     column('Usuario B2B', sortable: false) do |lead|
       metrics = saas_metrics_for(lead)
-      status_tag(metrics.b2b? ? 'sim' : 'nao', class: metrics.b2b? ? 'ok' : 'warning')
+      if metrics
+        status_tag(metrics.b2b? ? 'sim' : 'nao', class: metrics.b2b? ? 'ok' : 'warning')
+      else
+        '-'
+      end
     end
 
-    column('Produto', sortable: false) { |lead| saas_metrics_for(lead).product_label }
+    column('Produto', sortable: false) { |lead| saas_metrics_for(lead)&.product_label || '-' }
     column :name
     column :email
     column :phone
-    column('Cargo', sortable: false) { |lead| saas_metrics_for(lead).job_title }
-    column('Porte da empresa', sortable: false) { |lead| saas_metrics_for(lead).company_size_band }
-    column('Categoria desejada', sortable: false) { |lead| saas_metrics_for(lead).desired_category_label }
-    column('Funil', sortable: false) { |lead| saas_metrics_for(lead).funnel_stage }
+    column('Cargo', sortable: false) { |lead| saas_metrics_for(lead)&.job_title || '-' }
+    column('Porte da empresa', sortable: false) { |lead| saas_metrics_for(lead)&.company_size_band || '-' }
+    column('Categoria desejada', sortable: false) { |lead| saas_metrics_for(lead)&.desired_category_label || '-' }
+    column('Funil', sortable: false) { |lead| saas_metrics_for(lead)&.funnel_stage || '-' }
     column('Distribuido', sortable: false) do |lead|
-      count = saas_metrics_for(lead).distributed_count
-      count.positive? ? count : 'NAO'
+      metrics = saas_metrics_for(lead)
+      if metrics
+        count = metrics.distributed_count
+        count.positive? ? count : 'NAO'
+      else
+        '-'
+      end
     end
     column('Conversao em', :otp_verified_at)
     column('Enviado em', sortable: false) do |lead|
@@ -108,13 +119,13 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       link_to(
         'Ver',
         admin_saas_lead_path(lead),
-        title: 'Abrir timeline completa do lead',
         class: 'member_link'
       )
     end
 
     actions defaults: true do |lead|
-      item 'Distribuicoes', admin_lead_distributions_path(q: { lead_id_eq: lead.id }), class: 'member_link'
+      a 'Linha do Tempo', href: admin_saas_lead_path(lead, anchor: 'timeline'), class: 'member_link'
+      a 'Distribuicoes', href: admin_lead_distributions_path(q: { lead_id_eq: lead.id }), class: 'member_link'
     end
   end
 

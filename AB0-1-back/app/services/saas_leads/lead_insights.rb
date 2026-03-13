@@ -264,11 +264,11 @@ module SaasLeads
       values = matches.map { |item| normalize_decimal(item) }.compact
       return nil if values.empty?
 
-      value = values.max
-
+      value = values.max || 0.0
+      
       if normalized.include?('mil') && value < 1_000
-        value *= 1_000
-      elsif normalized.include?('mi') && value < 1_000_000
+        value *= 1000
+      elsif normalized.include?('mi') && value < 10_000
         value *= 1_000_000
       end
 
