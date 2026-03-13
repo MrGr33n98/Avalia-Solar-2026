@@ -170,6 +170,7 @@ Rails.application.routes.draw do
         get 'social_proof_reviews', to: 'company_dashboard#social_proof_reviews'
         patch 'social_proof_reviews/:id', to: 'company_dashboard#update_social_proof_review'
         get 'social_proof_stats', to: 'company_dashboard#social_proof_stats'
+        get 'market_insights', to: 'company_dashboard/market_insights#index'
 
         resources :sector_questions, controller: 'company_sector_questions', only: %i[index create update destroy]
 
