@@ -198,6 +198,8 @@ export interface Company {
   plan_features?: Record<string, any>;
   feature_access?: Record<string, FeatureAccessEntry>;
   media_upload_allowed?: boolean;
+  media_urls?: string[];
+  videos?: string[];
   project_types?: string[];
   services_offered?: string[];
   social_links?: {

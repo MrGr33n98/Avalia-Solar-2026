@@ -17,7 +17,7 @@ export interface GTMEvent {
 }
 
 export interface PageData {
-  type: 'homepage' | 'category' | 'company_detail' | 'comparison' | 'wizard_step' | 'lead_conversion' | 'general';
+  type: 'homepage' | 'category' | 'company_detail' | 'comparison' | 'wizard_step' | 'lead_conversion' | 'general' | 'other' | 'company';
   path: string;
   title: string;
   referrer?: string;

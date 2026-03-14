@@ -33,19 +33,19 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
   const dashboardStats = stats ? [
     {
       title: 'Total de Visualizações',
-      value: (stats.profile_views || 0).toLocaleString('pt-BR'),
+      value: (stats.profileViews || 0).toLocaleString('pt-BR'),
       icon: Eye,
       iconColor: 'blue' as const,
     },
     {
       title: 'Avaliações',
-      value: (stats.total_reviews || 0).toLocaleString('pt-BR'),
+      value: (stats.reviewsCount || 0).toLocaleString('pt-BR'),
       icon: Star,
       iconColor: 'yellow' as const,
     },
     {
       title: 'Taxa de Conversão',
-      value: `${(stats.conversion_rate || 0).toFixed(1)}%`,
+      value: `${(stats.conversionRate || 0).toFixed(1)}%`,
       icon: TrendingUp,
       iconColor: 'green' as const,
     },
