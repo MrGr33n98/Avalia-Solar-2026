@@ -13,9 +13,10 @@ import { cn } from '@/lib/utils';
 interface Props {
   company: Company;
   stats?: any;
+  themeMode?: 'light' | 'dark';
 }
 
-export default function RankingPerformanceTab({ company, stats }: Props) {
+export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
   const rankingQuery = useQuery({
     queryKey: ['company-analytics-ranking', company.id],
     queryFn: async () => {

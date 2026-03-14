@@ -339,7 +339,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
               {/* Sprint 5: Ranking Performance Tab */}
               <TabsContent value="ranking-performance" className="mt-0 focus-visible:outline-none" data-tour="ranking">
-                <RankingPerformanceTab company={company} stats={stats} />
+                <RankingPerformanceTab company={company} stats={stats} themeMode={themeMode} />
               </TabsContent>
 
               <TabsContent value="style-analysis" className="mt-0 focus-visible:outline-none">
