@@ -1,7 +1,14 @@
 ActiveAdmin.register Plan do
   menu label: 'Planos (Catalogo)', priority: 18
 
-  permit_params :name, :description, :price, :plan_tier_template, features_json: {}, plan_feature_fields: {}
+  permit_params do
+    permitted = [:name, :description, :price, :plan_tier_template]
+    # Allow features_json keys explicitly
+    permitted << { features_json: PlanFeatureCatalog.known_keys }
+    # Allow dynamic feature fields hash
+    permitted << { plan_feature_fields: {} }
+    permitted
+  end
 
   FEATURE_GROUP_LABELS = {
     'public_profile' => 'Perfil Publico',
@@ -172,9 +179,9 @@ ActiveAdmin.register Plan do
                 input_name,
                 current_value,
                 id: input_id,
-                min: 1,
+                min: 0,
                 step: 1,
-                placeholder: default_value || 'Nao definido'
+                placeholder: default_value || '0'
               )
             )
           else
@@ -282,20 +289,21 @@ ActiveAdmin.register Plan do
       raw_params = params[:plan]
       return unless raw_params.present?
 
-      tier = raw_params[:plan_tier_template]
+      tier = raw_params[:plan_tier_template].presence || 'free'
       feature_fields = raw_params.delete(:plan_feature_fields)
 
       raw_features =
         if feature_fields.present?
           feature_fields.respond_to?(:to_unsafe_h) ? feature_fields.to_unsafe_h : feature_fields.to_h
         else
-          raw_params[:features_json]
+          raw_params[:features_json] || {}
         end
 
-      normalized = PlanFeatureCatalog.normalize(raw_features || {}, plan_tier: tier)
+      normalized = PlanFeatureCatalog.normalize(raw_features, plan_tier: tier)
       raw_params[:features_json] = normalized
       raw_params[:features] = normalized.to_json if Plan.column_names.include?('features')
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.error "[PlansAdmin] Coercion failed: #{e.message}"
       raw_params[:features_json] = {}
     end
   end
