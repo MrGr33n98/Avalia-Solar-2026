@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "audit:posthog-intent": "node scripts/playwright/posthog-intent-audit.js"
+  },
   "dependencies": {
     "clsx": "^2.1.1",
     "framer-motion": "^12.26.2",
