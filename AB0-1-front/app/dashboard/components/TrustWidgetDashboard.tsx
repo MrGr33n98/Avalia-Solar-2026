@@ -1,13 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ShieldCheck, 
+  Copy, 
+  Check, 
+  ExternalLink, 
+  Trophy, 
+  Zap, 
+  Globe, 
+  Code2, 
+  Smartphone, 
+  Monitor, 
+  Layout, 
+  Maximize,
+  ArrowRight,
+  Info
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, ExternalLink, ShieldCheck, Trophy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import WidgetBadge from './WidgetBadge';
 import { cn } from '@/lib/utils';
+import MetricCard from './MetricCard';
 
 interface TrustWidgetDashboardProps {
   company: any;
@@ -37,7 +57,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
     if (typeof window !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(snippet);
       setCopied(true);
-      toast.success('Snippet copiado!');
+      toast.success('Script de autoridade copiado!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -54,151 +74,248 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2 tracking-tight">Marketing Externo (Widget)</h2>
-          <p className="text-sm text-white/40">
-            Exiba sua reputação e sua posição no Ranking do AvaliaSolar diretamente no seu site.
+    <div className="space-y-12">
+      {/* Strategic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-emerald-500 mb-1">
+            <Globe className="h-4 w-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Trust Network Distribution</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
+            Authority <span className="text-emerald-500">Node</span>
+          </h2>
+          <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
+            Distribua sua prova social e reputação certificada em tempo real para qualquer endpoint externo através de nosso protocolo de widget assíncrono.
           </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+           <div className="h-14 w-14 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
+              <Code2 className="h-6 w-6 text-white/20" />
+           </div>
+           <div>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">API Protocol</p>
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] px-3">ACTIVE v2.4</Badge>
+           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-[#002B4D] border-white/10 shadow-none">
-            <CardHeader className="p-4 border-b border-white/5">
-              <CardTitle className="text-white text-lg font-bold">Configuração do Widget Dinâmico</CardTitle>
-              <CardDescription className="text-white/40">
-                Personalize a aparência do selo para combinar com o design do seu site.
-              </CardDescription>
+      {/* Distribution Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <MetricCard
+          title="Taxa de Impressão"
+          value="14.2k"
+          change="+8%"
+          changeType="positive"
+          icon={Monitor}
+          color="blue"
+        />
+        <MetricCard
+          title="Trust Score"
+          value={`${mockCompanyData.trust_score}%`}
+          icon={ShieldCheck}
+          color="emerald"
+        />
+        <MetricCard
+          title="CTR Estimado"
+          value="4.8%"
+          change="+1.2%"
+          changeType="positive"
+          icon={Zap}
+          color="amber"
+        />
+        <MetricCard
+          title="Status de Rede"
+          value="Online"
+          icon={Globe}
+          color="blue"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border-none rounded-[3rem] overflow-hidden shadow-2xl">
+            <CardHeader className="p-8 border-b border-white/5">
+              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Configuração de Interface</CardTitle>
+              <CardDescription className="text-white/40 font-medium">Personalize os parâmetros de visualização do seu nó de autoridade.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 p-4">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Cor de Fundo (Tema)</Label>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={theme === 'light' ? 'default' : 'outline'} 
+            <CardContent className="p-8 space-y-8">
+              {/* Theme Selector */}
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 pl-1">Esquema Digital (Tema)</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
                     onClick={() => setTheme('light')}
                     className={cn(
-                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
-                      theme === 'light' ? "bg-white text-[#002B4D]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      "group h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
+                      theme === 'light' 
+                        ? "bg-white text-[#002B4D] border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
+                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                     )}
                   >
-                    Claro
-                  </Button>
-                  <Button 
-                    variant={theme === 'dark' ? 'default' : 'outline'} 
+                    <div className={cn("w-2 h-2 rounded-full", theme === 'light' ? "bg-primary" : "bg-white/20")} />
+                    Light Protocol
+                  </button>
+                  <button 
                     onClick={() => setTheme('dark')}
                     className={cn(
-                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
-                      theme === 'dark' ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      "group h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
+                      theme === 'dark' 
+                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
+                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                     )}
                   >
-                    Escuro
-                  </Button>
+                    <div className={cn("w-2 h-2 rounded-full bg-white", theme === 'dark' ? "animate-pulse" : "opacity-20")} />
+                    Silicon Dark
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Tamanho</Label>
-                <div className="flex gap-2">
+              {/* Size Selector */}
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 pl-1">Escala de Renderização</Label>
+                <div className="grid grid-cols-3 gap-4">
                   {(['small', 'medium', 'large'] as const).map((s) => (
-                    <Button 
+                    <button 
                       key={s}
-                      variant={size === s ? 'default' : 'outline'} 
-                      onClick={() => setSize(s)} 
+                      onClick={() => setSize(s)}
                       className={cn(
-                        "flex-1 h-9 text-[10px] font-bold uppercase tracking-wider transition-all border-white/10",
-                        size === s ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        "h-14 rounded-2xl border transition-all text-[10px] font-black uppercase tracking-widest",
+                        size === s 
+                          ? "bg-white/10 text-white border-white/20 shadow-inner" 
+                          : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                       )}
                     >
-                      {s === 'small' ? 'Pequeno' : s === 'medium' ? 'Médio' : 'Grande'}
-                    </Button>
+                      {s}
+                    </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Exibir Posição no Ranking?</Label>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={showRank ? 'default' : 'outline'} 
+              {/* Ranking View */}
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 pl-1">Visualização de Elite</Label>
+                <div className="flex gap-4">
+                  <button 
                     onClick={() => setShowRank(true)} 
                     className={cn(
-                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
-                      showRank ? "bg-brand-yellow text-[#002B4D]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      "flex-1 h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
+                      showRank 
+                        ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                     )}
                   >
-                    <Trophy className="w-3.5 h-3.5 mr-2"/> Sim, exibir troféu
-                  </Button>
-                  <Button 
-                    variant={!showRank ? 'default' : 'outline'} 
+                    <Trophy className={cn("w-4 h-4", showRank ? "fill-amber-500/20" : "")} />
+                    Exibir Ranking
+                  </button>
+                  <button 
                     onClick={() => setShowRank(false)} 
                     className={cn(
-                      "flex-1 h-9 text-xs font-bold transition-all border-white/10",
-                      !showRank ? "bg-brand-blue text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      "flex-1 h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
+                      !showRank 
+                        ? "bg-white/10 text-white border-white/20" 
+                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                     )}
                   >
-                    Apenas notas (Padrão)
-                  </Button>
+                    Apenas Reputação
+                  </button>
                 </div>
               </div>
 
-              <div className="pt-4 space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Código para Incorporação (HTML)</Label>
-                <div className="relative group">
-                  <pre className="p-4 bg-black/40 text-brand-cyan rounded-xl text-[11px] overflow-x-auto border-[0.5px] border-white/10 leading-relaxed font-mono">
+              {/* Code Snippet */}
+              <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 pl-1">Pipeline Snippet (HTML/JS)</Label>
+                   <Badge variant="outline" className="border-emerald-500/20 text-emerald-500 text-[8px] font-black">X64 ENCRYPTED</Badge>
+                </div>
+                <div className="relative group/snippet overflow-hidden">
+                  <pre className="p-6 bg-black/50 text-emerald-400 rounded-3xl text-[11px] overflow-x-auto border border-white/5 leading-relaxed font-mono shadow-inner scrollbar-hide">
                     {snippet}
                   </pre>
+                  <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black/60 to-transparent pointer-events-none group-hover/snippet:opacity-0 transition-opacity" />
                   <Button
                     size="icon"
-                    variant="ghost"
-                    className="absolute top-2 right-2 text-white/30 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute top-4 right-4 h-12 w-12 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-90"
                     onClick={handleCopy}
                   >
-                    {copied ? <Check className="h-4 w-4 text-brand-green" /> : <Copy className="h-4 w-4" />}
+                    {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-white/30 mt-2 font-medium">
-                  Copie e cole este código antes do fechamento da tag <code className="text-white/50">&lt;/body&gt;</code> do seu site.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#002B4D] border-white/10 shadow-none">
-            <CardHeader className="p-4 border-b border-white/5">
-              <CardTitle className="text-white text-base font-bold">Instruções de Instalação</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4">
-              <ol className="list-decimal list-inside space-y-2 text-white/50 text-xs font-medium">
-                <li>Escolha o tema que melhor combina com seu site.</li>
-                <li>Copie o código acima clicando no ícone de cópia.</li>
-                <li>No seu site, localize onde deseja exibir o selo.</li>
-                <li>Cole o código HTML e salve a página.</li>
-              </ol>
-              <div className="bg-brand-blue/10 border-[0.5px] border-brand-blue/20 p-4 rounded-xl flex gap-3">
-                <ShieldCheck className="h-5 w-5 text-brand-cyan mt-0.5" />
-                <p className="text-[11px] font-medium text-brand-cyan/80 leading-relaxed">
-                  O widget é carregado de forma assíncrona para garantir que não afete a velocidade de carregamento do seu site.
-                </p>
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 mt-4">
+                   <Info className="h-4 w-4 text-blue-400 mt-0.5" />
+                   <p className="text-[10px] text-white/40 font-medium leading-relaxed">
+                     O script deve ser injetado preferencialmente no rodapé da página para garantir <span className="text-white font-bold">zero latência</span> na renderização do conteúdo principal.
+                   </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="bg-[#002B4D] border-brand-blue/20 shadow-none sticky top-6 overflow-hidden">
-            <CardHeader className="bg-brand-blue/10 p-4 border-b border-brand-blue/20">
-              <CardTitle className="text-xs font-bold text-brand-cyan uppercase tracking-widest flex items-center gap-2">
-                <ExternalLink className="w-3.5 h-3.5" />
-                Live Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 bg-black/20 min-h-[300px] flex items-center justify-center border-t border-white/5">
-               <WidgetBadge companyData={mockCompanyData} theme={theme} />
-            </CardContent>
+        {/* Live Preview Column */}
+        <div className="lg:col-span-5 space-y-8">
+          <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border border-white/5 rounded-[3.5rem] overflow-hidden shadow-2xl sticky top-8">
+            <div className="p-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                 <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                    <Smartphone className="h-5 w-5 text-emerald-500" />
+                 </div>
+                 <span className="text-sm font-black text-white uppercase tracking-tighter">Live Monitor</span>
+              </div>
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Active Link</span>
+              </div>
+            </div>
+            
+            <div className="p-12 min-h-[450px] flex flex-col items-center justify-center relative bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+               <div className="absolute inset-0 bg-gradient-to-br from-[#002B4D]/80 to-[#0A0E17]/95" />
+               <motion.div 
+                key={`${theme}-${size}-${showRank}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative z-10 p-5 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-md shadow-3xl"
+               >
+                  <WidgetBadge companyData={mockCompanyData} theme={theme} />
+               </motion.div>
+               
+               <div className="mt-12 text-center relative z-10 space-y-2">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Ambiente de Preview v8.2</p>
+                  <div className="flex justify-center gap-2">
+                     <Monitor className="h-4 w-4 text-white/10" />
+                     <Smartphone className="h-4 w-4 text-white/10" />
+                     <Layout className="h-4 w-4 text-white/10" />
+                  </div>
+               </div>
+            </div>
+            
+            <div className="p-8 bg-black/40 border-t border-white/5">
+                <Button className="w-full h-14 bg-white text-blue-600 font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] hover:bg-white/90 active:scale-95 shadow-2xl">
+                   Simular Integração
+                   <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            </div>
+          </Card>
+
+          <Card className="clay-precision bg-gradient-to-br from-blue-600/20 to-emerald-500/20 border-none rounded-[2.5rem] p-8 relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-opacity">
+                <ShieldCheck className="h-32 w-32 text-white" />
+             </div>
+             <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-4 flex items-center gap-3">
+               <Trophy className="h-6 w-6 text-amber-500" />
+               Elite Distribution
+             </h4>
+             <p className="text-sm text-white/60 font-medium leading-relaxed mb-6">
+               Sua empresa está operando com o protocolo de confiança <span className="text-white font-bold">Nível 1</span>. Ativos verificados aumentam a retenção de usuários no funil.
+             </p>
+             <div className="space-y-4">
+                <div className="flex justify-between items-center text-[10px] font-black text-white/40 uppercase tracking-widest">
+                   <span>Resonance Depth</span>
+                   <span className="text-emerald-500">Peak Performance</span>
+                </div>
+                <Progress value={85} className="h-1.5 bg-white/5" />
+             </div>
           </Card>
         </div>
       </div>

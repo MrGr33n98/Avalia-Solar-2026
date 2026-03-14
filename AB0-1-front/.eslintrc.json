@@ -1,6 +1,10 @@
 {
-  "extends": "next/core-web-vitals",
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
   "rules": {
+    // Existing rules
     "no-restricted-imports": [
       "error",
       {
@@ -11,6 +15,46 @@
           }
         ]
       }
-    ]
-  }
+    ],
+    
+    // React Hooks - Enhanced rules
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    
+    // Next.js Optimizations
+    "@next/next/no-img-element": "error",
+    "@next/next/no-html-link-for-pages": "error",
+    "@next/next/no-sync-scripts": "error",
+    "@next/next/no-css-tags": "error",
+    
+    // Security Best Practices
+    "react/no-unescaped-entities": "error",
+    "react/no-danger": "warn",
+    "react/jsx-no-target-blank": ["error", { "enforceDynamicLinks": "always" }],
+    
+    // Code Quality
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-unused-vars": "off", // Handled by TypeScript
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    
+    // Performance
+    "react/jsx-no-bind": ["warn", {
+      "allowArrowFunctions": true,
+      "allowBind": false,
+      "ignoreRefs": true
+    }],
+    
+    // Accessibility
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/img-redundant-alt": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }

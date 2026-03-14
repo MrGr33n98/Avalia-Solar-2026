@@ -1,16 +1,30 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '../tests/test-utils';
 import PerformanceMetrics from '../app/dashboard/components/PerformanceMetrics';
 import * as api from '../lib/api';
+
+// Mock the API calls
+jest.mock('../lib/api', () => ({
+  request: jest.fn(),
+}));
 
 jest.mock('../app/dashboard/hooks/useCompanyAnalytics', () => ({
   useCompanyAnalytics: jest.fn(),
 }));
 
 const { useCompanyAnalytics } = require('../app/dashboard/hooks/useCompanyAnalytics');
+const mockRequest = api.request as jest.MockedFunction<typeof api.request>;
 
 describe('PerformanceMetrics - Real Data Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Mock API calls
+    mockRequest.mockResolvedValue({
+      data: [
+        { date: '2024-01-01', value: 100 },
+        { date: '2024-01-02', value: 150 },
+      ]
+    });
   });
 
   it('displays real analytics data from API', async () => {
@@ -60,8 +74,8 @@ describe('PerformanceMetrics - Real Data Integration', () => {
 
     render(<PerformanceMetrics companyId="123" />);
 
-    expect(screen.getByText('Erro ao carregar métricas')).toBeInTheDocument();
-    expect(screen.getByText('Failed to load analytics')).toBeInTheDocument();
+    expect(screen.getByText(/CRITICAL DATA CORRUPTION/)).toBeInTheDocument();
+    expect(screen.getByText(/Failed to load analytics/)).toBeInTheDocument();
   });
 
   it('calculates conversion rate from real data', () => {

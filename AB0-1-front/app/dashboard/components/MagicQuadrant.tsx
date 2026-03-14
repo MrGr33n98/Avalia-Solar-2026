@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ReferenceArea } from 'recharts';
 import { cn } from '@/lib/utils';
 
@@ -24,7 +25,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         <div className="flex items-center gap-2 mb-2 border-b border-white/10 pb-2">
           {data.logo_url && (
             <div className="h-6 w-6 rounded-md bg-white p-0.5 shrink-0">
-              <img src={data.logo_url} alt={data.name} className="h-full w-full object-contain" />
+              <Image src={data.logo_url} alt={data.name} width={24} height={24} className="h-full w-full object-contain" />
             </div>
           )}
           <p className="text-sm tracking-tight truncate">{data.name}</p>
@@ -88,9 +89,11 @@ const CompanyLogoShape = (props: any) => {
           height={size - 8}
         >
           <div className="w-full h-full flex items-center justify-center pointer-events-none">
-            <img 
+            <Image 
               src={payload.logo_url} 
               alt={payload.name}
+              width={size - 8}
+              height={size - 8}
               className="max-w-full max-h-full object-contain"
             />
           </div>
@@ -115,7 +118,7 @@ export default function MagicQuadrant({ data }: Props) {
     <div className="w-full h-[400px] relative select-none">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.05} vertical={false} />
           
           <XAxis 
             type="number" 
@@ -123,7 +126,7 @@ export default function MagicQuadrant({ data }: Props) {
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: "Visão de Mercado ➔", position: "bottom", fill: "#94a3b8", fontSize: 10, fontWeight: 800, letterSpacing: '0.1em' }}
+            label={{ value: "Market Vision ➔", position: "bottom", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
           />
           <YAxis 
             type="number" 
@@ -131,19 +134,19 @@ export default function MagicQuadrant({ data }: Props) {
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: "Poder de Execução ➔", angle: -90, position: "left", fill: "#94a3b8", fontSize: 10, fontWeight: 800, letterSpacing: '0.1em' }}
+            label={{ value: "Execution Power ➔", angle: -90, position: "left", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
           />
           
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1' }} />
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
           
-          {/* Quadrant Backgrounds with Smooth Colors */}
-          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="#f8fafc" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="#f0f9ff" strokeOpacity={0} />
-          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="#f1f5f9" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="#f8fafc" strokeOpacity={0} />
+          {/* Quadrant Backgrounds - Silicon Dark Palette */}
+          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="rgba(255,255,255,0.01)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="rgba(59,130,246,0.03)" strokeOpacity={0} />
+          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="rgba(255,255,255,0.005)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="rgba(255,255,255,0.01)" strokeOpacity={0} />
 
           <Scatter 
-            name="Empresas" 
+            name="Companies" 
             data={data} 
             shape={<CompanyLogoShape />}
             isAnimationActive={true}
@@ -151,18 +154,18 @@ export default function MagicQuadrant({ data }: Props) {
         </ScatterChart>
       </ResponsiveContainer>
 
-      {/* Enhanced Labels for Quadrants */}
-      <div className="absolute top-6 left-10 opacity-40">
-        <span className="text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase">Challengers</span>
+      {/* Strategic Labels */}
+      <div className="absolute top-6 left-12 opacity-30">
+        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Challengers</span>
       </div>
-      <div className="absolute top-6 right-10">
-        <span className="text-[9px] font-black tracking-[0.2em] text-blue-600 uppercase">Líderes</span>
+      <div className="absolute top-6 right-12">
+        <span className="text-[8px] font-black tracking-[0.3em] text-blue-500 uppercase shadow-blue-500/50">Leaders</span>
       </div>
-      <div className="absolute bottom-12 left-10 opacity-40">
-        <span className="text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase">Niche Players</span>
+      <div className="absolute bottom-12 left-12 opacity-30">
+        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Niche Players</span>
       </div>
-      <div className="absolute bottom-12 right-10 opacity-40">
-        <span className="text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase">Visionários</span>
+      <div className="absolute bottom-12 right-12 opacity-30">
+        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Visionaries</span>
       </div>
     </div>
   );

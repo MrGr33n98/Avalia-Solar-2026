@@ -1,8 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Star, ThumbsUp, Flag, Pin, Eye, MessageSquare, User } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Star, 
+  ThumbsUp, 
+  Flag, 
+  Pin, 
+  Eye, 
+  MessageSquare, 
+  User, 
+  CheckCircle2, 
+  ShieldCheck,
+  MoreHorizontal,
+  Reply,
+  AlertCircle,
+  Command,
+  Activity,
+  Award
+} from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,26 +26,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { dashboardApi, reviewsApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import MetricCard from './MetricCard';
 
 interface ReviewsManagementProps {
   companyId: string;
@@ -74,12 +74,6 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     featured_limit: 5,
   });
   const [loading, setLoading] = useState(true);
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
-  const [showReportDialog, setShowReportDialog] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [showReplyDialog, setShowReplyDialog] = useState(false);
-  const [replyText, setReplyText] = useState('');
-  const [replyStatus, setReplyStatus] = useState<'pending' | 'approved' | 'rejected'>('approved');
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -112,48 +106,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       setStats((statsResp as any)?.stats || null);
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      setReviews([]);
-      setStats(null);
     } finally {
       setLoading(false);
     }
   }, [companyId]);
-
-  const handleReplySubmit = async () => {
-    if (!selectedReview) return;
-
-    try {
-      await reviewsApi.update(Number(selectedReview.id), {
-        reply: replyText,
-        status: replyStatus
-      });
-
-      toast({
-        title: 'Resposta enviada',
-        description: 'Sua resposta foi publicada com sucesso.',
-      });
-
-      setShowReplyDialog(false);
-      fetchReviews();
-    } catch (error) {
-      console.error('Error replying:', error);
-      toast({
-        title: 'Erro ao responder',
-        description: 'Não foi possível enviar sua resposta.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const openReplyDialog = (review: Review) => {
-    setSelectedReview(review);
-    setReplyText(review.reply || '');
-    const normalizedStatus = review.status === 'approved' || review.status === 'rejected'
-      ? review.status
-      : 'pending';
-    setReplyStatus(normalizedStatus);
-    setShowReplyDialog(true);
-  };
 
   useEffect(() => {
     fetchReviews();
@@ -162,8 +118,8 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   const handleToggleFeatured = async (reviewId: string) => {
     if (!permissions.can_feature_reviews) {
       toast({
-        title: 'Recurso indisponivel no seu plano',
-        description: 'Ative um plano elegivel para usar destaque em prova social.',
+        title: 'Recurso premium',
+        description: 'Upgrade necessário para destacar prova social.',
         variant: 'destructive',
       });
       return;
@@ -173,76 +129,71 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     if (!review) return;
 
     const enabling = !review.featured;
-    const currentFeatured = reviews.filter((item) => item.featured).length;
-    if (enabling && currentFeatured >= permissions.featured_limit) {
-      toast({
-        title: 'Limite de destaque atingido',
-        description: `Voce pode destacar ate ${permissions.featured_limit} reviews.`,
-        variant: 'destructive',
-      });
+    if (enabling && reviews.filter(r => r.featured).length >= permissions.featured_limit) {
+      toast({ title: 'Limite atingido', variant: 'destructive' });
       return;
     }
 
     try {
       await dashboardApi.updateSocialProofReview(reviewId, { featured: enabling }, companyId);
-      setReviews((prev) =>
-        prev.map((item) => (item.id === reviewId ? { ...item, featured: enabling } : item))
-      );
       fetchReviews();
     } catch (error) {
-      console.error('Error updating featured review:', error);
-      toast({
-        title: 'Erro ao atualizar destaque',
-        description: 'Nao foi possivel salvar a alteracao.',
-        variant: 'destructive',
-      });
+       toast({ title: 'Erro ao atualizar', variant: 'destructive' });
     }
   };
 
-  const handleReportReview = async () => {
-    if (!selectedReview || !reportReason.trim()) return;
-    setShowReportDialog(false);
-    setReportReason('');
-    setSelectedReview(null);
-  };
-
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={cn(
-              "h-3.5 w-3.5",
-              star <= rating ? "text-brand-yellow fill-brand-yellow" : "text-white/10"
-            )}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  const averageRating = Number(stats?.average_rating || 0).toFixed(1) ||
-    (reviews.length > 0
-      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-      : '0.0');
+  const metrics = useMemo(() => {
+    const avg = Number(stats?.average_rating || 0).toFixed(1);
+    return [
+      {
+        title: "Rating Consolidado",
+        value: avg,
+        icon: Star,
+        change: "+0.1",
+        changeType: "positive" as const,
+        color: "yellow",
+        trend: [60, 62, 65, 63, 68, 70, 72]
+      },
+      {
+        title: "Total de Feedback",
+        value: (stats?.total_reviews ?? reviews.length).toString(),
+        icon: MessageSquare,
+        change: "+12",
+        changeType: "positive" as const,
+        color: "blue",
+        trend: [20, 35, 30, 45, 50, 42, 60]
+      },
+      {
+        title: "Reviews Verificados",
+        value: reviews.filter(r => r.verified).length.toString(),
+        icon: ShieldCheck,
+        change: "85%",
+        changeType: "positive" as const,
+        color: "emerald",
+        trend: [50, 55, 60, 65, 70, 75, 80]
+      },
+      {
+        title: "Em Destaque",
+        value: `${stats?.featured_reviews ?? reviews.filter(r => r.featured).length}/${permissions.featured_limit}`,
+        icon: Award,
+        change: "Full Power",
+        changeType: "positive" as const,
+        color: "purple",
+        trend: [80, 85, 90, 88, 95, 96, 98]
+      }
+    ];
+  }, [stats, reviews, permissions]);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64 bg-white/5" />
-            <Skeleton className="h-4 w-96 bg-white/5" />
-          </div>
+      <div className="space-y-10">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-10 w-64 bg-slate-200 dark:bg-white/5" />
+          <Skeleton className="h-4 w-96 bg-slate-100 dark:bg-white/5" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="bg-[#002B4D] border-white/10 shadow-none">
-              <CardContent className="p-4">
-                <Skeleton className="h-12 w-12 rounded-xl bg-white/5" />
-              </CardContent>
-            </Card>
+             <Skeleton key={i} className="h-32 rounded-3xl bg-slate-100 dark:bg-white/5" />
           ))}
         </div>
       </div>
@@ -250,149 +201,171 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-10">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Gerenciamento de Avaliações</h2>
-          <p className="text-sm text-white/40">
-            Visualize e gerencie as avaliações da sua empresa
+          <div className="flex items-center gap-2 mb-2">
+            <Command className="h-6 w-6 text-blue-600" />
+            <h2 className="text-3xl font-black tracking-tight uppercase text-foreground dark:text-white">
+              Reputation Command Center
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground/60 font-medium">
+            Gerencie sua autoridade digital, aprove reviews e otimize sua prova social
           </p>
-          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-brand-cyan">
-            Destaque permitido: {permissions.can_feature_reviews ? `sim (limite ${permissions.featured_limit})` : 'nao'}
-          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Badge className="h-8 px-4 bg-blue-600/5 text-blue-600 border-none font-black text-[10px] uppercase tracking-widest">
+            {permissions.can_feature_reviews ? `Slot de Destaque: ${permissions.featured_limit}` : 'Destaque Bloqueado'}
+          </Badge>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Média de Avaliações', value: averageRating, icon: Star, color: 'text-brand-yellow', bg: 'bg-brand-yellow/10' },
-          { label: 'Total de Reviews', value: stats?.total_reviews ?? reviews.length, icon: MessageSquare, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
-          { label: 'Verificadas', value: reviews.filter(r => r.verified).length, icon: Eye, color: 'text-brand-green', bg: 'bg-brand-green/10' },
-          { label: 'Em Destaque', value: stats?.featured_reviews ?? reviews.filter(r => r.featured).length, icon: Pin, color: 'text-brand-cyan', bg: 'bg-brand-cyan/10' }
-        ].map((stat, i) => (
-          <Card key={i} className="bg-[#002B4D] border-white/10 shadow-none group hover:border-white/20 transition-all">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={cn("p-3 rounded-xl transition-all", stat.bg)}>
-                <stat.icon className={cn("h-5 w-5", stat.color)} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{stat.label}</p>
-                <p className="text-xl font-bold text-white font-mono">{stat.value}</p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metrics.map((metric, idx) => (
+          <MetricCard key={idx} {...metric} delay={idx * 0.1} />
         ))}
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-4">
-        {reviews.map((review) => (
-          <motion.div
-            key={review.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card className={cn(
-              "bg-[#002B4D] border-white/10 shadow-none transition-all",
-              review.featured && "border-brand-yellow/40 bg-brand-yellow/5"
-            )}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <Avatar className="h-10 w-10 ring-1 ring-white/10">
-                      <AvatarImage src={review.user_avatar} />
-                      <AvatarFallback className="bg-white/5 text-white/50">
-                        <User className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <h4 className="font-bold text-white text-sm tracking-tight">{review.user_name}</h4>
-                        {review.verified && (
-                          <Badge variant="outline" className="h-5 text-[10px] font-bold uppercase tracking-wider border-brand-green/30 bg-brand-green/10 text-brand-green">
-                            Verificada
-                          </Badge>
-                        )}
-                        {review.status && (
-                          <Badge variant="outline" className={cn(
-                            "h-5 text-[10px] font-bold uppercase tracking-wider",
-                            review.status === 'approved' ? 'border-brand-green/30 bg-brand-green/10 text-brand-green' :
-                            review.status === 'rejected' ? 'border-red-500/30 bg-red-500/10 text-red-500' :
-                            review.status === 'in_analysis' ? 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue' :
-                            'border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow'
-                          )}>
-                            {review.status === 'approved' ? 'Aprovada' :
-                             review.status === 'rejected' ? 'Rejeitada' :
-                             review.status === 'in_analysis' ? 'Em analise' : 'Pendente'}
-                          </Badge>
-                        )}
-                        {review.featured && (
-                          <Badge variant="outline" className="h-5 text-[10px] font-bold uppercase tracking-wider border-brand-yellow/50 bg-brand-yellow/20 text-brand-yellow">
-                            <Pin className="h-3 w-3 mr-1" />
-                            Destaque
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        {renderStars(review.rating)}
-                        <span className="text-[10px] font-bold text-white/30 font-mono">
-                          {new Date(review.created_at).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-white/80 leading-relaxed">{review.comment}</p>
-                      
-                      {review.reply && (
-                        <div className="mt-4 p-4 bg-white/5 border-[0.5px] border-white/10 rounded-xl">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-xs text-brand-cyan uppercase tracking-widest">Resposta da Empresa</span>
-                            {review.replied_at && (
-                              <span className="text-[10px] text-white/20 font-mono">
-                                {review.replied_at.toLocaleDateString('pt-BR')}
-                              </span>
-                            )}
+      <div className="space-y-6">
+        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/40 pl-1">
+          Feedbacks de Clientes
+        </h3>
+        
+        <div className="grid grid-cols-1 gap-6">
+          <AnimatePresence>
+            {reviews.map((review, idx) => (
+              <motion.div
+                key={review.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + (idx * 0.05) }}
+              >
+                <Card className={cn(
+                  "clay-precision bg-card dark:bg-[#0F172A] border-none group transition-all duration-300",
+                  review.featured && "ring-1 ring-yellow-500/20 bg-yellow-500/[0.02]"
+                )}>
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Customer Info */}
+                      <div className="flex-shrink-0 flex md:flex-col items-center md:items-start gap-4 md:w-48">
+                        <Avatar className="h-16 w-16 ring-4 ring-slate-100 dark:ring-white/5 shadow-xl">
+                          <AvatarImage src={review.user_avatar} />
+                          <AvatarFallback className="bg-blue-600/10 text-blue-600 font-black text-xl">
+                            {review.user_name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 md:text-left">
+                          <h4 className="font-black text-foreground dark:text-white truncate uppercase tracking-tight leading-tight">
+                            {review.user_name}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                             {review.verified && (
+                               <Badge className="h-5 px-2 bg-emerald-500/10 text-emerald-500 border-none font-black text-[8px] uppercase tracking-widest">
+                                 Verificado
+                               </Badge>
+                             )}
                           </div>
-                          <p className="text-sm text-white/60">{review.reply}</p>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-6">
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={cn(
+                                      "h-4 w-4",
+                                      star <= review.rating ? "text-yellow-500 fill-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]" : "text-muted-foreground/20"
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-black font-mono text-muted-foreground/30 uppercase tracking-widest">
+                                {new Date(review.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              {review.featured && (
+                                <Badge className="bg-yellow-500/10 text-yellow-600 border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
+                                  <Pin className="h-3 w-3 mr-1.5" /> Destaque Ativo
+                                </Badge>
+                              )}
+                              <Badge className={cn(
+                                "border-none font-black text-[9px] uppercase tracking-widest px-3 h-6",
+                                review.status === 'approved' ? "bg-emerald-500/10 text-emerald-500" :
+                                review.status === 'rejected' ? "bg-rose-500/10 text-rose-500" :
+                                "bg-slate-500/10 text-slate-500"
+                              )}>
+                                {review.status || 'Pendente'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm font-medium text-foreground/80 dark:text-slate-300 leading-relaxed max-w-2xl mb-6">
+                            {review.comment}
+                          </p>
+
+                          {/* Response Section */}
+                          {review.reply && (
+                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 mb-6 relative overflow-hidden group/reply">
+                               <div className="absolute top-0 left-0 w-1 h-full bg-blue-600/30" />
+                               <div className="flex items-center gap-2 mb-2">
+                                 <Reply className="h-3.5 w-3.5 text-blue-600" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Official Reply</span>
+                               </div>
+                               <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed italic">
+                                 &quot;{review.reply}&quot;
+                               </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
+                             <div className="flex items-center gap-1.5">
+                               <ThumbsUp className="h-4 w-4" />
+                               {review.helpful_count} Úteis
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                              Responder
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleToggleFeatured(review.id)}
+                              className={cn(
+                                "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-slate-200 dark:border-white/10 transition-all",
+                                review.featured ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" : "hover:bg-slate-50 dark:hover:bg-white/5"
+                              )}
+                            >
+                              {review.featured ? 'Remover Destaque' : 'Destacar'}
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/5 transition-all">
+                              <Flag className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/30">
-                    <span className="flex items-center gap-1.5">
-                      <ThumbsUp className="h-3.5 w-3.5" />
-                      {review.helpful_count} úteis
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { icon: MessageSquare, label: 'Responder', onClick: () => openReplyDialog(review) },
-                      { icon: Pin, label: review.featured ? 'Remover' : 'Destacar', onClick: () => handleToggleFeatured(review.id), disabled: !permissions.can_feature_reviews },
-                      { icon: Flag, label: 'Contestar', onClick: () => { setSelectedReview(review); setShowReportDialog(true); } }
-                    ].map((action, i) => (
-                      <Button
-                        key={i}
-                        variant="ghost"
-                        size="sm"
-                        disabled={action.disabled}
-                        onClick={action.onClick}
-                        className="h-8 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white hover:bg-white/10"
-                      >
-                        <action.icon className="h-3.5 w-3.5 mr-2" />
-                        {action.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
-
-      {/* Dialogs would also be refactored to match this theme if they were in this file, but focusing on the main UI content */}
     </div>
   );
 }

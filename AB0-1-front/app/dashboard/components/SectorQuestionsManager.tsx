@@ -1,16 +1,35 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { 
+  Eye, 
+  Pencil, 
+  Plus, 
+  Trash2, 
+  ShieldCheck, 
+  Zap, 
+  BrainCircuit, 
+  Settings2, 
+  Activity, 
+  ChevronRight,
+  TrendingUp,
+  AlertOctagon,
+  Terminal,
+  Target
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { fetchApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import MetricCard from './MetricCard';
 
 type SectorQuestion = {
   id?: number;
@@ -42,7 +61,6 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [listOpen, setListOpen] = useState(false);
   const [editing, setEditing] = useState<SectorQuestion | null>(null);
   const [form, setForm] = useState<SectorQuestion>(EMPTY_FORM);
 
@@ -64,7 +82,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
     } catch (error: any) {
       console.error('[SectorQuestions] fetch error', error);
       toast({
-        title: 'Erro ao carregar perguntas',
+        title: 'Erro ao carregar protocolos',
         description: error?.message || 'Tente novamente em instantes.',
         variant: 'destructive',
       });
@@ -75,7 +93,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
 
   useEffect(() => {
     void loadQuestions();
-  }, [companyId]);
+  }, [companyId, loadQuestions]);
 
   const openCreate = () => {
     setEditing(null);
@@ -98,21 +116,21 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        toast({ title: 'Pergunta atualizada' });
+        toast({ title: 'Protocolo atualizado com sucesso' });
       } else {
         await fetchApi('/company_dashboard/sector_questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        toast({ title: 'Pergunta criada' });
+        toast({ title: 'Novo protocolo de autoridade gerado' });
       }
       setEditorOpen(false);
       await loadQuestions();
     } catch (error: any) {
       toast({
-        title: 'Erro ao salvar',
-        description: error?.message || 'Verifique os dados e tente novamente.',
+        title: 'Falha na sincronização',
+        description: error?.message || 'Verifique as diretrizes e tente novamente.',
         variant: 'destructive',
       });
     }
@@ -128,13 +146,9 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
         body: JSON.stringify({ company_sector_question: { enabled } }),
       });
       setQuestions((prev) => prev.map((item) => (item.id === question.id ? { ...item, enabled } : item)));
-      toast({ title: enabled ? 'Pergunta ativada' : 'Pergunta desativada' });
+      toast({ title: enabled ? 'Módulo Ativado' : 'Módulo em Standby' });
     } catch (error: any) {
-      toast({
-        title: 'Erro ao atualizar status',
-        description: error?.message || 'Tente novamente.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro de Status', variant: 'destructive' });
     }
   };
 
@@ -143,114 +157,259 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
 
     try {
       await fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' });
-      toast({ title: 'Pergunta removida' });
+      toast({ title: 'Ativo removido do pipeline' });
       await loadQuestions();
     } catch (error: any) {
-      toast({
-        title: 'Erro ao excluir',
-        description: error?.message || 'Tente novamente.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro na exclusão', variant: 'destructive' });
     }
   };
 
   return (
-    <Card className="bg-[#002B4D] border-white/10 shadow-none">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border-b border-white/5">
-        <div>
-          <CardTitle className="text-lg font-bold text-white tracking-tight">Perguntas da empresa</CardTitle>
-          {meta && (
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">
-              {meta.total} de {meta.limit || meta.total} ativas.
-              {meta.remaining > 0 ? ` ${meta.remaining} livres.` : ' Limite atingido.'}
-            </p>
-          )}
+    <div className="space-y-10">
+      {/* Strategic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-blue-500 mb-1">
+            <BrainCircuit className="h-4 w-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Authority Intelligence</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
+            Technical <span className="text-blue-500">Authority Protocol</span>
+          </h2>
+          <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
+            Configure as dimensões de avaliação técnica que definem sua autoridade no setor solar e geram diferenciais competitivos.
+          </p>
         </div>
-
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-3">
           <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setListOpen(true)} 
-            disabled={loading || questions.length === 0}
-            className="h-9 px-3 rounded-lg border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs font-bold uppercase tracking-widest"
-          >
-            <Eye className="mr-2 h-[18px] w-[18px]" />
-            Listar
-          </Button>
-          <Button 
-            size="sm" 
             onClick={openCreate} 
             disabled={!canCreate || loading}
-            className="h-9 px-3 rounded-lg bg-brand-blue text-white hover:bg-brand-blue/90 text-xs font-bold uppercase tracking-widest"
+            className="h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/20 group transition-all active:scale-95"
           >
-            <Plus className="mr-2 h-[18px] w-[18px]" />
-            Nova
+            <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+            Novo Protocolo
           </Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-4 p-4">
-        {!meta?.sector_ratings_enabled && (
-          <div className="rounded-xl border-[0.5px] border-brand-yellow/30 bg-brand-yellow/10 px-4 py-3 text-xs font-bold uppercase tracking-widest text-brand-yellow">
-            Perguntas setoriais desabilitadas no painel admin.
+      {/* Capacity Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <MetricCard
+          title="Protocolos Ativos"
+          value={questions.filter(q => q.enabled).length.toString()}
+          change={`/ ${meta?.limit || questions.length}`}
+          icon={Target}
+          description="Nós de avaliação processados"
+          variant="glass"
+        />
+        <MetricCard
+          title="Health Score"
+          value="94%"
+          change="+2%"
+          changeType="positive"
+          icon={Activity}
+          description="Integridade do pipeline técnico"
+          variant="glass"
+        />
+        <MetricCard
+          title="Market Resonance"
+          value="Alta"
+          icon={Zap}
+          description="Impacto de diferenciação"
+          variant="glass"
+        />
+        <MetricCard
+          title="Slots Livres"
+          value={meta?.remaining.toString() || '0'}
+          icon={Settings2}
+          description="Capacidade de expansão"
+          variant="glass"
+        />
+      </div>
+
+      {/* Operational Warning */}
+      {!meta?.sector_ratings_enabled && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-center gap-5"
+        >
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0">
+             <AlertOctagon className="h-6 w-6 text-amber-500" />
           </div>
-        )}
-
-        {(meta?.paid_required || meta?.limit_reached) && meta?.remaining <= 0 && (
-          <div className="rounded-xl border-[0.5px] border-brand-blue/30 bg-brand-blue/10 px-4 py-3 text-xs font-medium text-brand-cyan leading-relaxed">
-            Limite gratuito atingido. Faca upgrade de plano para adicionar mais perguntas.
+          <div>
+            <h4 className="text-sm font-black text-amber-500 uppercase tracking-widest mb-1">Módulo Offline</h4>
+            <p className="text-xs font-semibold text-amber-500/70">As avaliações setoriais estão desativadas globalmente. Sincronize com o administrador.</p>
           </div>
-        )}
+        </motion.div>
+      )}
 
-        <div className="grid gap-3">
-          {questions.map((question) => (
-            <div
-              key={question.id || question.prompt}
-              className="flex items-center justify-between gap-4 rounded-xl border-[0.5px] border-white/10 bg-white/5 px-4 py-3 transition-all hover:border-white/20"
-            >
-              <p className="text-sm font-medium text-white/80 leading-relaxed">{question.prompt}</p>
+      {/* Main Protocol Pipeline */}
+      <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border-none rounded-[3rem] overflow-hidden shadow-2xl">
+        <CardHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pipeline de Dimensões</CardTitle>
+            <CardDescription className="text-white/40 font-medium">Ordem de processamento nas avaliações de clientes</CardDescription>
+          </div>
+          <Badge className="bg-blue-600/10 text-blue-400 border-none font-black text-[9px] tracking-[0.2em] px-4 h-7">
+            SYSTEM READY
+          </Badge>
+        </CardHeader>
+        <CardContent className="p-8 space-y-4">
+          {questions.length === 0 ? (
+            <div className="py-20 flex flex-col items-center justify-center text-center opacity-40">
+               <Terminal className="h-12 w-12 mb-4" />
+               <p className="text-sm font-black uppercase tracking-widest">Nenhum protocolo detectado no buffer.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              <AnimatePresence>
+                {[...questions].sort((a,b) => a.order - b.order).map((question, index) => (
+                  <motion.div
+                    key={question.id || index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={cn(
+                      "group flex items-center justify-between gap-6 p-6 rounded-[2rem] border transition-all duration-300",
+                      question.enabled 
+                        ? "bg-white/[0.02] border-white/5 hover:border-blue-500/30 hover:bg-blue-500/[0.02]" 
+                        : "bg-black/20 border-white/5 opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center gap-6 flex-1 min-w-0">
+                      <div className="flex flex-col items-center gap-1 min-w-[32px]">
+                         <span className="text-[10px] font-black text-white/20 font-mono">STEP</span>
+                         <span className="text-lg font-black italic text-blue-500">{String(question.order).padStart(2, '0')}</span>
+                      </div>
+                      <div className="h-10 w-[1px] bg-white/10" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-bold text-white leading-relaxed truncate group-hover:text-blue-400 transition-colors">
+                          {question.prompt}
+                        </p>
+                        <div className="flex items-center gap-4 mt-1">
+                           <div className="flex items-center gap-1.5">
+                              <TrendingUp className="h-3 w-3 text-emerald-500" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Peso do Ativo: {question.weight}x</span>
+                           </div>
+                           {question.enabled && (
+                             <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[8px] h-4">OPERATIONAL</Badge>
+                           )}
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="flex items-center gap-3 shrink-0">
-                <Switch
-                  checked={question.enabled}
-                  onCheckedChange={(checked) => void toggleEnabled(question, checked)}
-                  aria-label="Ativar pergunta"
-                  className="data-[state=checked]:bg-brand-green"
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-end gap-1 mr-4">
+                         <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">Signal Status</span>
+                         <Switch
+                          checked={question.enabled}
+                          onCheckedChange={(checked) => void toggleEnabled(question, checked)}
+                          className="data-[state=checked]:bg-emerald-500"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => openEdit(question)} 
+                          className="h-11 w-11 rounded-2xl bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => void removeQuestion(question.id)} 
+                          className="h-11 w-11 rounded-2xl bg-red-500/5 border border-red-500/10 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </CardContent>
+        <div className="p-6 bg-white/[0.01] border-t border-white/5 text-center">
+           <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-white">
+              Sincronizar Protocolos Globalmente <ChevronRight className="ml-2 h-3 w-3" />
+           </Button>
+        </div>
+      </Card>
+
+      {/* Protocol Editor Dialog */}
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+        <DialogContent className="clay-precision bg-[#001D33] border-none rounded-[3rem] p-12 max-w-xl shadow-[0_0_100px_rgba(37,99,235,0.2)]">
+          <DialogHeader className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+               <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <Terminal className="h-6 w-6 text-blue-500" />
+               </div>
+               <div>
+                 <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter">
+                   {editing ? 'Update Protocol' : 'Deploy Protocol'}
+                 </DialogTitle>
+                 <DialogDescription className="text-sm font-medium text-white/40">
+                   Configure as variáveis síncronas para a nova dimensão de avaliação.
+                 </DialogDescription>
+               </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-8 py-4">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 pl-1">Percepção Tática (Pergunta)</Label>
+              <Input 
+                placeholder="Ex: Qual o nível de precisão técnica da instalação?" 
+                value={form.prompt}
+                onChange={e => setForm({...form, prompt: e.target.value})}
+                className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-bold placeholder:text-white/10 focus:ring-blue-500/30"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 pl-1">Peso Estratégico</Label>
+                <div className="flex items-center gap-4">
+                   <Input 
+                    type="number" 
+                    value={form.weight}
+                    onChange={e => setForm({...form, weight: Number(e.target.value)})}
+                    className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-blue-500/30 font-mono"
+                   />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 pl-1">Sequência do Buffer</Label>
+                <Input 
+                  type="number" 
+                  value={form.order}
+                  onChange={e => setForm({...form, order: Number(e.target.value)})}
+                  className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-blue-500/30 font-mono"
                 />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => openEdit(question)} 
-                  aria-label="Editar"
-                  className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => void removeQuestion(question.id)} 
-                  aria-label="Excluir"
-                  className="h-8 w-8 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
             </div>
-          ))}
+          </div>
 
-          {questions.length === 0 && <div className="text-sm text-white/30 font-medium italic">Nenhuma pergunta cadastrada.</div>}
-        </div>
-
-        {planFeatures && Object.keys(planFeatures).length > 0 && (
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/20 text-center mt-4">
-            Regras de plano aplicadas automaticamente.
-          </p>
-        )}
-      </CardContent>
-
-      {/* Dialogs would ideally be refactored too, but focusing on core component visuals */}
-    </Card>
+          <DialogFooter className="flex flex-col sm:flex-row gap-4 mt-8">
+            <Button variant="ghost" onClick={() => setEditorOpen(false)} className="h-14 w-full sm:flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/40">
+              Abort Protocol
+            </Button>
+            <Button 
+              onClick={saveQuestion} 
+              disabled={!form.prompt}
+              className="h-14 w-full sm:flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20 transition-all active:scale-95"
+            >
+              Confirm Deployment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

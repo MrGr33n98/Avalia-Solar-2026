@@ -59,9 +59,10 @@ describe('RankingPerformanceTab', () => {
       },
     });
 
-    return ({ children }: { children: React.ReactNode }) => (
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+    return Wrapper;
   };
 
   it('renders ranking analytics without crashing when themeMode is passed', async () => {

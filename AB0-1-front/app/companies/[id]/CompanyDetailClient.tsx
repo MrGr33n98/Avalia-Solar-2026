@@ -295,7 +295,7 @@ export default function CompanyDetailClient({
       productCount: products.length,
       yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
-  }, [reviews, reviewAnalytics, products, company.created_at, company.rating_avg, company.rating, company.rating_count]);
+  }, [reviews, reviewAnalytics, products, company.created_at, company.rating_avg, company.rating, company.rating_count, company]);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {

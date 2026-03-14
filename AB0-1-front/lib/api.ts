@@ -1080,11 +1080,29 @@ export const reviewDashboardApi = {
 
 export interface CompanyAnalyticsOverview {
   views_30d: number;
+  views_trend: number;
+  unique_views_30d: number;
+  returning_views_30d: number;
   cta_clicks_30d: number;
+  cta_clicks_trend: number;
   whatsapp_clicks_30d: number;
+  email_clicks_30d: number;
+  phone_clicks_30d: number;
+  website_clicks_30d: number;
   leads_30d: number;
   conversion_rate: number;
   data_source: string;
+  is_premium_analytics?: boolean;
+  engagement?: {
+    avgTimeOnPage: number;
+    bounceRate: number;
+    pagesPerSession: number;
+  };
+  traffic_sources?: {
+    source: string;
+    visits: number;
+    percentage: number;
+  }[];
   freshness?: {
     last_updated_at: string;
   };

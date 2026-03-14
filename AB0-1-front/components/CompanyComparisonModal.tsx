@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription 
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Tabs,
@@ -186,9 +187,11 @@ export default function CompanyComparisonModal({
                                     ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40" 
                                     : "bg-white border-slate-100 shadow-slate-200/30"
                                 )}>
-                                  <img
+                                  <Image
                                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
                                     alt={company.name}
+                                    width={56}
+                                    height={56}
                                     className="max-h-full max-w-full object-contain"
                                   />
                                 </div>

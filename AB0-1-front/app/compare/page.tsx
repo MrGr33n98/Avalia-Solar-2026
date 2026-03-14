@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useComparison } from '@/hooks/useComparison';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Star, 
   MapPin, 
-  Check, 
+  Check,
   X, 
   Scale, 
   Trophy,
@@ -249,9 +250,11 @@ export default function ComparePage() {
                             ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40"
                             : "bg-white border-slate-100 shadow-slate-200/40"
                         )}>
-                          <img 
+                          <Image 
                             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
                             alt={`Logo da ${company.name}`}
+                            width={64}
+                            height={64}
                             className="max-h-full max-w-full object-contain" 
                           />
                         </div>

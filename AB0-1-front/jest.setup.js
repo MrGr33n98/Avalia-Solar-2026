@@ -1,6 +1,38 @@
 // Learn more: https://github.com/testing-library/jest-dom
 require('@testing-library/jest-dom');
 
+// Mock QueryClient for React Query tests
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render } from '@testing-library/react';
+
+// Create a custom render method that includes providers
+const customRender = (ui, options = {}) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false, // Disable retries for tests
+        gcTime: 0, // Disable cache for tests
+      },
+    },
+  });
+
+  const AllTheProviders = ({ children }) => {
+    return (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+  };
+
+  return render(ui, { wrapper: AllTheProviders, ...options });
+};
+
+// Re-export everything
+export * from '@testing-library/react';
+
+// Override render method
+export { customRender as render };
+
 // Mock for IntersectionObserver
 class IntersectionObserver {
   constructor(callback, options) {

@@ -57,114 +57,82 @@
 @layer base {
   :root {
     --spacing-section-mobile: 2rem;
-    --spacing-section-desktop: 2.5rem; /* Reduced from 3rem for better density */
-    --banner-height-max: 18rem; /* Slightly more compact banner */
-    --background: 0 0% 100%; /* Pure White Background for Clay */
-    --foreground: 0 0% 10%; /* Deep Dark Gray - Professional */
+    --spacing-section-desktop: 2.5rem;
+    --banner-height-max: 18rem;
+    --background: 222 47% 95%; /* Light Slate */
+    --foreground: 222 47% 11%;
 
-    --card: 0 0% 94%; /* Off-white for clay cards #F0F3F9 */
-    --card-foreground: 0 0% 10%; /* Deep Dark Gray */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 0 0% 94%; /* Off-white for clay popovers */
-    --popover-foreground: 0 0% 10%; /* Deep Dark Gray */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 211 100% 41%; /* Avalia Solar Brand Blue #0056D2 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 83% 53%; /* Blue 600 #2563EB */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 262 83% 58%; /* Avalia Solar Brand Purple #6C5CE7 */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%; /* Amber 500 #F59E0B */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 0 0% 94%; /* Off-white #F0F3F9 */
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 131 73% 52%; /* Avalia Solar Brand Green #34C759 */
-    --accent-foreground: 0 0% 10%;
+    --accent: 142 71% 45%; /* Emerald 500 #10B981 */
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 86%; /* Softer border */
-    --input: 0 0% 94%; /* Off-white input background */
-    --ring: 211 100% 41%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 83% 53%;
 
-    /* Chart colors */
-    --chart-1: 211 100% 41%;
-    --chart-2: 196 100% 47%;
-    --chart-3: 131 73% 52%;
-    --chart-4: 56 97% 56%;  /* Official Yellow #FCEE21 */
-    --chart-5: 0 0% 43%;   /* Gray */
+    --radius: 0.75rem;
 
-    --radius: 1.5rem; /* Higher radius for clay */
-
-    /* Clay Design Tokens */
-    --clay-bg: 240 15% 96%; /* #F0F3F9 */
-    --clay-surface: 0 0% 100%; /* Pure white for main surface */
-    --clay-surface-raised: 240 15% 98%; /* Slightly raised surface */
-    --clay-surface-sunken: 240 15% 94%; /* Sunken surface */
-
-    /* Clay Shadow Tokens */
-    --clay-shadow-light: 240 15% 85%;
-    --clay-shadow-dark: 0 0% 100%;
-    --clay-shadow-primary-light: 211 100% 35%;
-    --clay-shadow-primary-dark: 211 100% 47%;
-    --clay-shadow-green-light: 131 73% 45%;
-    --clay-shadow-green-dark: 131 73% 59%;
-    --clay-shadow-purple-light: 262 83% 50%;
-    --clay-shadow-purple-dark: 262 83% 66%;
-
-    /* Clay Radiuses */
-    --clay-radius-sm: 0.875rem;
-    --clay-radius-md: 1.25rem;
-    --clay-radius-lg: 1.75rem;
-    --clay-radius-xl: 2.25rem;
-
-    /* Animation durations - respecting reduced motion */
-    --clay-duration: 250ms;
-    --clay-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    /* AS-EDS Specific Tokens */
+    --as-slate-950: 222 47% 7%;
+    --as-slate-900: 222 47% 11%;
+    --as-slate-800: 217 33% 17%;
+    --as-blue-600: 221 83% 53%;
+    --as-amber-400: 38 92% 50%;
+    --as-emerald-500: 142 71% 45%;
   }
 
   .dark {
-    --background: 0 0% 4%; /* Deep Black Background - Enterprise */
-    --foreground: 0 0% 95%; /* Almost White with slight warmth */
+    --background: 222 47% 6%; /* AS Slate 950 */
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 7%; /* Dark Gray Card - Subtle elevation */
-    --card-foreground: 0 0% 95%; /* Almost White */
+    --card: 222 47% 11%; /* AS Slate 900 */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 7%; /* Dark Gray Popover */
-    --popover-foreground: 0 0% 95%; /* Almost White */
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 211 100% 45%; /* Slightly lighter for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 262 83% 65%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 217 33% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 131 73% 58%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 211 100% 45%;
+    --border: 217 33% 17.5%;
+    --input: 217 33% 17.5%;
+    --ring: 224 76% 48%;
 
-    /* Chart colors */
-    --chart-1: 211 100% 45%;
-    --chart-2: 196 100% 47%;
-    --chart-3: 131 73% 58%;
-    --chart-4: 56 97% 56%;
-    --chart-5: 0 0% 60%;
-
-    /* Clay tokens for dark mode - disable clay effects in dark mode */
-    --clay-bg: 0 0% 7%;
-    --clay-surface: 0 0% 7%;
-    --clay-surface-raised: 0 0% 9%;
-    --clay-surface-sunken: 0 0% 5%;
+    /* AS-EDS Specific Tokens */
+    --as-slate-950: 222 47% 7%;
+    --as-slate-900: 222 47% 11%;
+    --as-slate-800: 217 33% 17%;
   }
+
 }
 
 @layer base {

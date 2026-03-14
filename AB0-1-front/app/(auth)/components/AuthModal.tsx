@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -21,6 +21,13 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
   const [registerType, setRegisterType] = useState<'user' | 'company'>('user');
   const [isVisible, setIsVisible] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => {
+      router.push('/');
+    }, 300);
+  }, [router]);
+
   useEffect(() => {
     setIsVisible(true);
     document.body.style.overflow = 'hidden';
@@ -34,19 +41,7 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleEsc);
     };
-  }, []);
-
-  // Sync state if prop changes (though usually component remounts on route change, but good to be safe)
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      router.push('/');
-    }, 300);
-  };
+  }, [handleClose]);
 
   const handleTabChange = (value: string) => {
     const newTab = value as 'login' | 'register';

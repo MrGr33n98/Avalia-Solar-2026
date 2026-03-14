@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, 
   Palette, 
   Type, 
   Layout, 
-  RefreshCw, 
+  RefreshCw,
   Save,
   AlertCircle,
   Sparkles,
@@ -114,7 +115,7 @@ export default function StyleAnalysis({ themeMode }: StyleAnalysisProps) {
             <div className="aspect-[4/3] rounded-xl bg-black/20 border-[0.5px] border-white/5 flex items-center justify-center overflow-hidden relative group">
               {previewImage ? (
                 <>
-                  <img src={previewImage} alt="Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image src={previewImage} alt="Preview" fill className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {isAnalyzing && (
                     <div className="absolute inset-0 bg-[#002B4D]/80 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center">
                       <motion.div

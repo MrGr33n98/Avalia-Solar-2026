@@ -1,20 +1,30 @@
 'use client';
 
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Trophy, 
+  TrendingUp, 
+  TrendingDown, 
+  Star, 
+  Users, 
+  Award, 
+  Target, 
+  Zap, 
+  AlertTriangle,
+  ArrowRight,
+  ShieldCheck,
+  ZapOff,
+  Flame,
+  Activity
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Trophy,
-  TrendingUp,
-  TrendingDown,
-  Star,
-  Users,
-  Award,
-  Target,
-  Zap,
-  AlertTriangle
-} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import MetricCard from './MetricCard';
 
 interface CompetitorBenchmarkProps {
   companyId: string;
@@ -30,31 +40,35 @@ interface Competitor {
   responseRate: number;
   featured: boolean;
   verified: boolean;
+  marketShare?: number;
 }
 
-export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: CompetitorBenchmarkProps) {
-  const isDark = themeMode === 'dark';
+export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: CompetitorBenchmarkProps) {
+  // Deep dark foundation for Strategic Intelligence
+  const isDark = true;
 
-  // Mock data - replace with actual API
+  // Mock data - In production this would come from an API endpoint
   const yourCompany: Competitor = {
     id: 1,
-    name: 'Sua Empresa',
-    rating: 4.7,
-    reviewsCount: 287,
-    responseRate: 94,
+    name: 'Avalia Solar',
+    rating: 4.8,
+    reviewsCount: 342,
+    responseRate: 98,
     featured: true,
     verified: true,
+    marketShare: 22
   };
 
   const topCompetitors: Competitor[] = [
     {
       id: 2,
       name: 'Solar Prime',
-      rating: 4.8,
+      rating: 4.9,
       reviewsCount: 432,
       responseRate: 87,
       featured: true,
       verified: true,
+      marketShare: 28
     },
     {
       id: 3,
@@ -64,6 +78,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       responseRate: 91,
       featured: true,
       verified: true,
+      marketShare: 18
     },
     {
       id: 4,
@@ -73,424 +88,281 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'light' }: 
       responseRate: 78,
       featured: false,
       verified: true,
-    },
-    {
-      id: 5,
-      name: 'GreenEnergy Solutions',
-      rating: 4.4,
-      reviewsCount: 245,
-      responseRate: 85,
-      featured: false,
-      verified: true,
-    },
-    {
-      id: 6,
-      name: 'Solar Tech Pro',
-      rating: 4.3,
-      reviewsCount: 201,
-      responseRate: 72,
-      featured: false,
-      verified: false,
-    },
+      marketShare: 15
+    }
   ];
 
-  const categoryAverage = {
-    rating: 4.3,
-    reviewsCount: 156,
-    responseRate: 68,
-  };
-
-  const allCompanies = [yourCompany, ...topCompetitors].sort((a, b) => {
-    if (b.rating !== a.rating) return b.rating - a.rating;
-    return b.reviewsCount - a.reviewsCount;
-  });
-
+  const allCompanies = [yourCompany, ...topCompetitors].sort((a, b) => (b.marketShare || 0) - (a.marketShare || 0));
   const yourRank = allCompanies.findIndex(c => c.id === yourCompany.id) + 1;
 
-  const getPositionChange = (competitor: Competitor) => {
-    // Mock position change
-    if (competitor.id === yourCompany.id) return 2;
-    return Math.floor(Math.random() * 5) - 2;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
   };
 
-  const getScoreColor = (value: number, metric: 'rating' | 'responseRate' | 'reviews') => {
-    if (metric === 'rating') {
-      if (value >= 4.5) return isDark ? 'text-emerald-400' : 'text-emerald-600';
-      if (value >= 4.0) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-cyan-400' : 'text-cyan-600';
-    }
-    if (metric === 'responseRate') {
-      if (value >= 85) return isDark ? 'text-emerald-400' : 'text-emerald-600';
-      if (value >= 70) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-cyan-400' : 'text-cyan-600';
-    }
-    if (metric === 'reviews') {
-      if (value >= 300) return isDark ? 'text-emerald-400' : 'text-emerald-600';
-      if (value >= 200) return isDark ? 'text-blue-400' : 'text-blue-600';
-      return isDark ? 'text-cyan-400' : 'text-cyan-600';
-    }
-    return isDark ? 'text-white/40' : 'text-white/40';
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-          Benchmark Competitivo
-        </h3>
-        <p className={`text-sm ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-          Compare sua performance com os líderes da categoria
-        </p>
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-8 pb-12"
+    >
+      {/* Strategic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-blue-500 mb-1">
+            <Activity className="h-4 w-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Competitor Intelligence</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter uppercase text-white">
+            Benchmark <span className="text-blue-500">Analítico</span>
+          </h2>
+          <p className="text-sm text-white/40 max-w-md font-medium leading-relaxed">
+            Monitoramento em tempo real do ecossistema competitivo e posicionamento estratégico de mercado.
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Button variant="outline" className="h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px]">
+            Exportar Relatório
+          </Button>
+          <Button className="h-11 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+            Ação Proativa
+          </Button>
+        </div>
       </div>
 
-      {/* Your Position Summary */}
-      <Card className={`${isDark ? 'bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-800/30' : 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className={`p-4 rounded-2xl ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-                <Trophy className={`h-8 w-8 ${yourRank <= 3 ? 'text-yellow-500' : isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+      {/* KPI Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Posição de Mercado"
+          value={`#${yourRank}`}
+          change="+1"
+          changeType="positive"
+          icon={Trophy}
+          description="Ranking na categoria"
+          variant="glass"
+        />
+        <MetricCard
+          title="Market Share"
+          value={`${yourCompany.marketShare}%`}
+          change="+2.4%"
+          changeType="positive"
+          icon={Target}
+          description="Quota de mercado local"
+          variant="glass"
+        />
+        <MetricCard
+          title="Sentiment Gap"
+          value="+0.2"
+          change="Acima da média"
+          changeType="positive"
+          icon={Star}
+          description="Diferencial de reputação"
+          variant="glass"
+        />
+        <MetricCard
+           title="Velocity Score"
+           value="88/100"
+           change="Fase de Expansão"
+           changeType="positive"
+           icon={Flame}
+           description="Velocidade de crescimento"
+           variant="glass"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main Ranking Table */}
+        <Card className="lg:col-span-8 clay-precision border-none rounded-[2rem] bg-[#002B4D]/50 backdrop-blur-xl overflow-hidden shadow-2xl">
+          <CardHeader className="p-8 border-b border-white/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Espectro de Liderança</CardTitle>
+                <CardDescription className="text-white/40 font-medium">Top 4 players monitorados no setor</CardDescription>
+              </div>
+              <Badge className="bg-blue-600/20 text-blue-400 border-none hover:bg-blue-600/30 font-black tracking-widest text-[10px] py-1 px-3">
+                LIVE UPDATES
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-white/40 uppercase tracking-widest">Identidade</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Share</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Sentimento</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Respostas</th>
+                    <th className="px-8 py-5 text-right text-[10px] font-black text-white/40 uppercase tracking-widest">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {allCompanies.map((company, index) => {
+                    const isYou = company.id === yourCompany.id;
+                    return (
+                      <motion.tr 
+                        key={company.id}
+                        variants={itemVariants}
+                        className={cn(
+                          "group transition-all hover:bg-white/[0.03]",
+                          isYou && "bg-blue-600/[0.03]"
+                        )}
+                      >
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <span className={cn(
+                              "text-lg font-black italic min-w-[24px]",
+                              index === 0 ? "text-amber-500" : "text-white/20"
+                            )}>
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <Avatar className="h-12 w-12 rounded-xl border border-white/10 shadow-lg ring-offset-background p-1 bg-white">
+                              <AvatarImage src={company.logo_url} className="object-contain" />
+                              <AvatarFallback className="bg-blue-900/50 text-white font-black">
+                                {company.name.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-white text-sm">{company.name}</span>
+                                {isYou && (
+                                  <Badge className="bg-blue-600 text-[10px] font-black py-0 px-2">VOCÊ</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {company.verified && <ShieldCheck className="h-3 w-3 text-blue-400" />}
+                                <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Entidade Verificada</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-center">
+                          <div className="space-y-1">
+                            <span className="text-sm font-black text-white font-mono">{company.marketShare}%</span>
+                            <div className="w-20 mx-auto">
+                               <Progress value={company.marketShare} className="h-1 bg-white/5" indicatorClassName="bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-center">
+                          <div className="flex flex-col items-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                              <span className="text-sm font-black text-white font-mono">{company.rating.toFixed(1)}</span>
+                            </div>
+                            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{company.reviewsCount} REVIEWS</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-center">
+                          <div className="space-y-1">
+                             <span className="text-sm font-black text-emerald-400 font-mono">{company.responseRate}%</span>
+                             <div className="flex gap-0.5 justify-center">
+                               {[...Array(5)].map((_, i) => (
+                                 <div key={i} className={cn(
+                                   "h-1 w-2 rounded-full",
+                                   i < Math.floor(company.responseRate / 20) ? "bg-emerald-500" : "bg-white/10"
+                                 )} />
+                               ))}
+                             </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex flex-col items-end gap-2">
+                            {index === 0 ? (
+                              <Badge className="bg-amber-500/10 text-amber-500 border-none font-black text-[9px] tracking-widest px-2">LÍDER DE MERCADO</Badge>
+                            ) : company.featured ? (
+                              <Badge className="bg-blue-500/10 text-blue-500 border-none font-black text-[9px] tracking-widest px-2">VISIONÁRIO</Badge>
+                            ) : (
+                              <Badge className="bg-white/5 text-white/30 border-none font-black text-[9px] tracking-widest px-2">DESAFIANTE</Badge>
+                            )}
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
+                               <TrendingUp className="h-3 w-3" />
+                               <span className="font-mono">+1.2%</span>
+                            </div>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+          <div className="p-6 bg-white/[0.01] border-t border-white/5 text-center">
+            <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-transparent">
+              Visualizar Ecossistema Completo <ArrowRight className="ml-2 h-3 w-3" />
+            </Button>
+          </div>
+        </Card>
+
+        {/* Tactical Recommendation Column */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="clay-precision border-none rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-purple-600/30 backdrop-blur-xl p-8 relative overflow-hidden group shadow-xl">
+            <div className="absolute -right-4 -top-4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
+            <div className="relative z-10 space-y-4">
+              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
+                <ShieldCheck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h4 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-foreground'} mb-2`}>
-                  Você está em #{yourRank} de {allCompanies.length}
-                </h4>
-                <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'} mb-4`}>
-                  {yourRank === 1 ? '🎉 Parabéns! Você é o líder da categoria!' :
-                   yourRank <= 3 ? '⭐ Excelente posição! Você está no top 3!' :
-                   yourRank <= 5 ? '👍 Boa posição! Continue melhorando.' :
-                   '📈 Há oportunidades de crescimento.'}
+                <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">Vantagem Tática</h4>
+                <p className="text-sm text-white/80 leading-relaxed font-medium">
+                  Seu diferencial competitivo reside na <span className="text-white font-black underline decoration-blue-400">Taxa de Resposta</span>. 
+                  Você responde 11% mais rápido que o líder de mercado.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
-                    <Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />
-                    {yourCompany.rating.toFixed(1)} Rating
-                  </Badge>
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
-                    <Users className="h-3 w-3 mr-1" />
-                    {yourCompany.reviewsCount} Reviews
-                  </Badge>
-                  <Badge variant="outline" className={`${isDark ? 'border-slate-600 text-white/70' : ''}`}>
-                    <Zap className="h-3 w-3 mr-1" />
-                    {yourCompany.responseRate}% Resposta
-                  </Badge>
-                </div>
               </div>
+              <Button className="w-full h-11 bg-white text-blue-600 font-black uppercase tracking-widest text-[10px] hover:bg-white/90">
+                Ver Insights IA
+              </Button>
             </div>
-            {getPositionChange(yourCompany) > 0 && (
-              <div className="flex items-center gap-1 text-emerald-600">
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-bold">+{getPositionChange(yourCompany)}</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </Card>
 
-      {/* Detailed Rankings */}
-      <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-        <CardHeader>
-          <CardTitle className={isDark ? 'text-white' : 'text-foreground'}>
-            Rankings Detalhados
-          </CardTitle>
-          <CardDescription className={isDark ? 'text-white/40' : ''}>
-            Comparação com top performers da categoria
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {allCompanies.map((company, index) => {
-              const isYou = company.id === yourCompany.id;
-              const positionChange = getPositionChange(company);
+          <Card className="clay-precision border-none rounded-[2rem] bg-[#002B4D]/50 backdrop-blur-xl p-8 shadow-xl">
+            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+              <AlertTriangle className="h-3 w-3 text-amber-500" />
+              Priority Gaps
+            </h4>
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs font-bold text-white">
+                  <span>Reviews Volume Gap</span>
+                  <span className="text-amber-500">-90 Units</span>
+                </div>
+                <Progress value={78} className="h-1.5 bg-white/5" indicatorClassName="bg-amber-500" />
+                <p className="text-[10px] text-white/40 font-medium">Faltam 90 avaliações para empatar com Solar Prime.</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs font-bold text-white">
+                  <span>Sentiment Velocity</span>
+                  <span className="text-emerald-500">Critical</span>
+                </div>
+                <Progress value={92} className="h-1.5 bg-white/5" indicatorClassName="bg-emerald-500" />
+                <p className="text-[10px] text-white/40 font-medium">Sua tendência de NPS está 12% superior ao setor.</p>
+              </div>
               
-              return (
-                <div
-                  key={company.id}
-                  className={`p-4 rounded-xl transition-all ${
-                    isYou
-                      ? isDark
-                        ? 'bg-blue-900/20 border-2 border-blue-700/50'
-                        : 'bg-blue-50 border-2 border-blue-300'
-                      : isDark
-                      ? 'bg-[#002B4D]/50 border border-white/10'
-                      : 'bg-[#002B4D] border border-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Rank */}
-                    <div className="flex flex-col items-center min-w-[50px]">
-                      <div className={`text-2xl font-bold ${
-                        index === 0 ? 'text-yellow-500' :
-                        index === 1 ? 'text-gray-400' :
-                        index === 2 ? 'text-cyan-600' :
-                        isDark ? 'text-white/40' : 'text-gray-600'
-                      }`}>
-                        #{index + 1}
-                      </div>
-                      {positionChange !== 0 && (
-                        <div className={`flex items-center text-xs font-medium ${
-                          positionChange > 0 ? 'text-emerald-600' : 'text-red-600'
-                        }`}>
-                          {positionChange > 0 ? (
-                            <TrendingUp className="h-3 w-3" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3" />
-                          )}
-                          <span>{Math.abs(positionChange)}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Company Info */}
-                    <div className="flex items-center gap-3 flex-1">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={company.logo_url} alt={company.name} />
-                        <AvatarFallback className={`${isDark ? 'bg-slate-700 text-white' : 'bg-gray-200'}`}>
-                          {company.name.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`font-semibold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                            {company.name}
-                          </span>
-                          {company.verified && (
-                            <Badge variant="outline" className="text-xs">
-                              <Award className="h-3 w-3 mr-1 text-blue-500" />
-                              Verificado
-                            </Badge>
-                          )}
-                          {company.featured && (
-                            <Badge variant="outline" className="text-xs">
-                              <Zap className="h-3 w-3 mr-1 text-yellow-500" />
-                              Destaque
-                            </Badge>
-                          )}
-                          {isYou && (
-                            <Badge className="text-xs bg-blue-600">Você</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Metrics */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      {/* Rating */}
-                      <div>
-                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                          Rating
-                        </p>
-                        <div className="flex items-center justify-center gap-1">
-                          <Star className="h-[18px] w-[18px] text-yellow-500 fill-yellow-500" />
-                          <span className={`text-lg font-bold ${getScoreColor(company.rating, 'rating')}`}>
-                            {company.rating.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="mt-1">
-                          <Progress
-                            value={(company.rating / 5) * 100}
-                            className={`h-1 ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Reviews */}
-                      <div>
-                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                          Reviews
-                        </p>
-                        <span className={`text-lg font-bold ${getScoreColor(company.reviewsCount, 'reviews')}`}>
-                          {company.reviewsCount}
-                        </span>
-                        <div className="mt-1">
-                          <Progress
-                            value={Math.min((company.reviewsCount / 500) * 100, 100)}
-                            className={`h-1 ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Response Rate */}
-                      <div>
-                        <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'} mb-1`}>
-                          Resposta
-                        </p>
-                        <span className={`text-lg font-bold ${getScoreColor(company.responseRate, 'responseRate')}`}>
-                          {company.responseRate}%
-                        </span>
-                        <div className="mt-1">
-                          <Progress
-                            value={company.responseRate}
-                            className={`h-1 ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div className="pt-4 mt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
+                   <ZapOff className="h-5 w-5 text-purple-400 shrink-0" />
+                   <div>
+                     <p className="text-[10px] font-black text-white uppercase tracking-widest">Growth Engine</p>
+                     <p className="text-[11px] text-white/40 font-bold">Otimize a coleta de reviews para escalada.</p>
+                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Gaps & Opportunities */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Rating Gap */}
-        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'}`}>
-                <Star className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                  Rating vs Líder
-                </h4>
-                <p className={`text-2xl font-bold mb-1 ${
-                  yourCompany.rating >= allCompanies[0].rating
-                    ? 'text-emerald-600'
-                    : isDark ? 'text-cyan-400' : 'text-cyan-600'
-                }`}>
-                  {yourCompany.rating >= allCompanies[0].rating ? '=' : '-'}
-                  {Math.abs(yourCompany.rating - allCompanies[0].rating).toFixed(1)}
-                </p>
-                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                  {yourCompany.rating >= allCompanies[0].rating
-                    ? 'Você é o líder!'
-                    : 'pontos para alcançar o líder'
-                  }
-                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Reviews Gap */}
-        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                  Reviews vs Líder
-                </h4>
-                <p className={`text-2xl font-bold mb-1 ${
-                  yourCompany.reviewsCount >= allCompanies[0].reviewsCount
-                    ? 'text-emerald-600'
-                    : isDark ? 'text-blue-400' : 'text-blue-600'
-                }`}>
-                  {yourCompany.reviewsCount >= allCompanies[0].reviewsCount ? '+' : ''}
-                  {yourCompany.reviewsCount - allCompanies[0].reviewsCount}
-                </p>
-                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                  {yourCompany.reviewsCount >= allCompanies[0].reviewsCount
-                    ? 'reviews a mais!'
-                    : 'reviews de diferença'
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Response Rate Gap */}
-        <Card className={isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
-                <Target className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                  Taxa de Resposta
-                </h4>
-                <p className={`text-2xl font-bold mb-1 ${
-                  yourCompany.responseRate >= categoryAverage.responseRate + 10
-                    ? 'text-emerald-600'
-                    : isDark ? 'text-yellow-400' : 'text-yellow-600'
-                }`}>
-                  {yourCompany.responseRate}%
-                </p>
-                <p className={`text-xs ${isDark ? 'text-white/40' : 'text-white/40'}`}>
-                  {yourCompany.responseRate >= categoryAverage.responseRate + 10
-                    ? 'Excelente performance!'
-                    : `Média: ${categoryAverage.responseRate}%`
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
-
-      {/* Strategic Recommendations */}
-      <Card className={`${isDark ? 'bg-[#002B4D] border-slate-800' : 'bg-[#002B4D]'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
-            <Target className="h-5 w-5 text-blue-500" />
-            Recomendações Estratégicas
-          </CardTitle>
-          <CardDescription className={isDark ? 'text-white/40' : ''}>
-            Ações para melhorar seu posicionamento
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {yourRank > 1 && (
-              <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/10 border border-blue-800/30' : 'bg-blue-50 border border-blue-200'}`}>
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                      Foco em Reviews
-                    </h5>
-                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-                      Você precisa de {allCompanies[0].reviewsCount - yourCompany.reviewsCount} reviews adicionais para alcançar o líder. 
-                      Incentive clientes satisfeitos a deixarem avaliações.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {yourCompany.responseRate < 90 && (
-              <div className={`p-4 rounded-lg ${isDark ? 'bg-emerald-900/10 border border-emerald-800/30' : 'bg-emerald-50 border border-emerald-200'}`}>
-                <div className="flex items-start gap-3">
-                  <Zap className="h-5 w-5 text-emerald-600 mt-0.5" />
-                  <div>
-                    <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                      Melhore a Taxa de Resposta
-                    </h5>
-                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-                      Responder a todas as reviews aumenta credibilidade. Você está em {yourCompany.responseRate}%, 
-                      tente alcançar 95%+.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {yourCompany.rating < 4.6 && (
-              <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/10 border border-yellow-800/30' : 'bg-yellow-50 border border-yellow-200'}`}>
-                <div className="flex items-start gap-3">
-                  <Star className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <h5 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-foreground'}`}>
-                      Foco na Qualidade
-                    </h5>
-                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-white/40'}`}>
-                      Trabalhe para melhorar a experiência do cliente. Um rating acima de 4.6 coloca você 
-                      no top 3 da categoria.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </motion.div>
   );
 }

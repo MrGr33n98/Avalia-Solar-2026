@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -153,9 +154,11 @@ export default function CompanyComparisonSection({
                     )}
 
                     <div className="h-20 w-20 mb-6 rounded-3xl bg-white p-3 shadow-xl shadow-slate-200/40 border border-slate-50 flex items-center justify-center overflow-hidden">
-                      <img 
+                      <Image 
                         src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
                         alt={company.name} 
+                        width={64}
+                        height={64}
                         className="max-h-full max-w-full object-contain" 
                       />
                     </div>
@@ -207,9 +210,11 @@ export default function CompanyComparisonSection({
                                 className="w-full p-4 text-left hover:bg-blue-50 flex items-center gap-4 transition-all border-b border-slate-50 last:border-0 group"
                               >
                                 <div className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all">
-                                  <img 
+                                  <Image 
                                     src={getFullImageUrl(result.logo_url || undefined) || '/images/logo-placeholder.svg'} 
                                     alt={result.name} 
+                                    width={32}
+                                    height={32}
                                     className="max-h-full max-w-full object-contain" 
                                   />
                                 </div>
