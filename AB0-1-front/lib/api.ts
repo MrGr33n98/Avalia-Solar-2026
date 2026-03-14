@@ -1108,6 +1108,95 @@ export interface CompanyAnalyticsOverview {
   };
 }
 
+// Trust Health Types
+export interface TrustHealth {
+  trust_score: number;
+  health_status: 'critical' | 'poor' | 'fair' | 'good' | 'excellent';
+  score_trend: 'up' | 'stable' | 'stale' | 'new';
+  components: {
+    base: number;
+    verification: number;
+    rating: number;
+    reviews: number;
+    engagement: number;
+    leads: number;
+    penalty: number;
+  };
+  computed_at?: string;
+  verified: boolean;
+  last_recalculated_at?: string;
+  recommendations: Array<{
+    type: string;
+    message: string;
+    impact: number;
+    action_url: string;
+  }>;
+}
+
+// Intent Summary Types
+export interface IntentSummary {
+  total_signals: number;
+  avg_confidence: number;
+  intent_distribution: {
+    cold: number;
+    warm: number;
+    hot: number;
+    boiling: number;
+    immediate: number;
+    declared: number;
+  };
+  top_leads: Array<{
+    id: string;
+    lead_id?: number;
+    anonymous_id?: string;
+    total_score: number;
+    intent_level: string;
+    recommended_action: string;
+    sla_window: string;
+    last_interaction_at?: string;
+    signals_count: number;
+  }>;
+  last_updated?: string;
+}
+
+// Certification Progress Types
+export interface CertificationProgress {
+  earned_badges: Array<{
+    id: number;
+    name: string;
+    description: string;
+    icon_url?: string;
+    earned_at?: string;
+    verified: boolean;
+  }>;
+  available_badges: Array<{
+    id: number;
+    name: string;
+    description: string;
+    requirements?: string;
+    category?: string;
+  }>;
+  total_badges: number;
+  earned_count: number;
+  pending_verifications: number;
+  verification_progress: number;
+}
+
+// Ranking Data Types
+export interface RankingData {
+  rank_position: number;
+  ranking_score: number;
+  magic_quadrant_points: Array<{
+    id: number;
+    name: string;
+    logo_url?: string;
+    rating: number;
+    completeness_of_vision: number;
+    ability_to_execute: number;
+    is_current_company: boolean;
+  }>;
+}
+
 export const companyDashboardApi = {
   getAnalyticsOverview: (companyId?: string | number) => 
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
@@ -1116,6 +1205,27 @@ export const companyDashboardApi = {
   getAnalyticsTimeseries: (companyId?: string | number, days: number = 90) =>
     fetchApi('/company_dashboard/analytics/timeseries', {
       params: { company_id: companyId, days },
+    }),
+  
+  // Trust & Certification endpoints (TaaS)
+  getTrustHealth: (companyId?: string | number) =>
+    fetchApi<TrustHealth>('/company_dashboard/trust_health', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  getIntentSummary: (companyId?: string | number) =>
+    fetchApi<IntentSummary>('/company_dashboard/intent_summary', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  getCertificationProgress: (companyId?: string | number) =>
+    fetchApi<CertificationProgress>('/company_dashboard/certification_progress', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  getRanking: (companyId?: string | number, categoryId?: string | number) =>
+    fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
+      params: { 
+        company_id: companyId,
+        category_id: categoryId 
+      },
     }),
 };
 

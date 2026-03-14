@@ -140,6 +140,202 @@ module Api
         end
       end
 
+      # GET /api/v1/company_dashboard/trust_health
+      # Returns detailed trust score breakdown with health indicators
+      def trust_health
+        begin
+          # Get stored trust score
+          trust_record = CompanyTrustScore.find_by(company_id: @company.id)
+          
+          # Calculate current score using unified service
+          result = TrustScore::CalculationService.new(@company).calculate!
+          
+          # Determine health status based on score
+          health_status = case result[:score]
+                         when 0..30 then 'critical'
+                         when 31..50 then 'poor'
+                         when 51..70 then 'fair'
+                         when 71..85 then 'good'
+                         else 'excellent'
+                         end
+          
+          # Calculate trend (would need historical data for real trend)
+          score_trend = if trust_record&.computed_at
+                          days_since = (Time.current - trust_record.computed_at).to_i / 1.day
+                          if days_since < 7 then 'up'
+                          elsif days_since < 30 then 'stable'
+                          else 'stale'
+                          end
+                        else 'new'
+                        end
+          
+          render json: {
+            trust_score: result[:score],
+            health_status: health_status,
+            score_trend: score_trend,
+            components: result[:components],
+            computed_at: trust_record&.computed_at&.iso8601,
+            verified: @company.verified?,
+            last_recalculated_at: trust_record&.computed_at&.iso8601,
+            recommendations: generate_trust_recommendations(result[:components], @company)
+          }
+        rescue StandardError => e
+          log_analytics_error('trust_health', e)
+          render json: { trust_score: 0, health_status: 'unknown', components: {}, recommendations: [] }
+        end
+      end
+
+      # GET /api/v1/company_dashboard/intent_summary
+      # Returns buyer intent score summary and top leads
+      def intent_summary
+        begin
+          # Check if intent scores table exists
+          unless defined?(IntentScore) && IntentScore.table_exists?
+            return render json: {
+              total_signals: 0,
+              intent_distribution: { cold: 0, warm: 0, hot: 0, boiling: 0 },
+              top_leads: [],
+              message: 'Intent tracking not yet enabled'
+            }
+          end
+
+          # Get all intent scores for this company
+          intent_scores = IntentScore.where(company_id: @company.id)
+          
+          # Distribution by level
+          intent_distribution = intent_scores.group(:intent_level).count
+          
+          # Top actionable leads (hot, boiling, immediate, declared)
+          top_leads = intent_scores.actionable
+                                     .order(total_score: :desc)
+                                     .limit(10)
+                                     .map do |score|
+            {
+              id: score.id,
+              lead_id: score.lead_id,
+              anonymous_id: score.anonymous_id,
+              total_score: score.total_score,
+              intent_level: score.intent_level,
+              recommended_action: score.recommended_action,
+              sla_window: score.sla_window,
+              last_interaction_at: score.last_interaction_at&.iso8601,
+              signals_count: score.total_signals_count
+            }
+          end
+          
+          # Aggregate stats
+          total_signals = intent_scores.sum(:total_signals_count)
+          avg_confidence = intent_scores.average(:confidence_score).to_f.round(2)
+          
+          render json: {
+            total_signals: total_signals,
+            avg_confidence: avg_confidence,
+            intent_distribution: {
+              cold: intent_distribution['cold'].to_i,
+              warm: intent_distribution['warm'].to_i,
+              hot: intent_distribution['hot'].to_i,
+              boiling: intent_distribution['boiling'].to_i,
+              immediate: intent_distribution['immediate'].to_i,
+              declared: intent_distribution['declared'].to_i
+            },
+            top_leads: top_leads,
+            last_updated: intent_scores.maximum(:updated_at)&.iso8601
+          }
+        rescue StandardError => e
+          log_analytics_error('intent_summary', e)
+          render json: { total_signals: 0, intent_distribution: {}, top_leads: [], error: e.message }
+        end
+      end
+
+      # GET /api/v1/company_dashboard/certification_progress
+      # Returns badge/certification progress and pending verifications
+      def certification_progress
+        begin
+          badges = @company.badges
+          all_badges = Badge.all
+          
+          # Current badges
+          earned_badges = badges.map do |badge|
+            {
+              id: badge.id,
+              name: badge.name,
+              description: badge.description,
+              icon_url: badge.icon_url,
+              earned_at: @company.company_badges.find_by(badge_id: badge.id)&.created_at&.iso8601,
+              verified: @company.company_badges.find_by(badge_id: badge.id)&.verified?
+            }
+          end
+          
+          # Available badges not yet earned
+          available_badges = all_badges.where.not(id: badges.ids).map do |badge|
+            {
+              id: badge.id,
+              name: badge.name,
+              description: badge.description,
+              requirements: badge.requirements,
+              category: badge.badge_type
+            }
+          end
+          
+          # Verification status
+          pending_verifications = @company.company_badges.where(verified: false).count
+          
+          render json: {
+            earned_badges: earned_badges,
+            available_badges: available_badges,
+            total_badges: all_badges.count,
+            earned_count: earned_badges.count,
+            pending_verifications: pending_verifications,
+            verification_progress: calculate_verification_progress(earned_badges, all_badges)
+          }
+        rescue StandardError => e
+          log_analytics_error('certification_progress', e)
+          render json: { earned_badges: [], available_badges: [], earned_count: 0 }
+        end
+      end
+
+      private
+
+      def generate_trust_recommendations(components, company)
+        recommendations = []
+        
+        # Verification recommendation
+        recommendations << {
+          type: 'verification',
+          message: 'Complete company verification to gain +20 trust points',
+          impact: 20,
+          action_url: '/dashboard/settings/verification'
+        } unless company.verified?
+        
+        # Reviews recommendation
+        if components['reviews'].to_i < 5
+          recommendations << {
+            type: 'reviews',
+            message: 'Encourage more customer reviews to improve trust',
+            impact: (10 - components['reviews'].to_i).round(1),
+            action_url: '/dashboard/reviews/invite'
+          }
+        end
+        
+        # Rating recommendation
+        if company.rating_avg.to_f < 4.0
+          recommendations << {
+            type: 'rating',
+            message: 'Improve average rating to boost trust score',
+            impact: ((company.rating_avg.to_f / 5.0) * 20).round(1),
+            action_url: '/dashboard/reviews'
+          }
+        end
+        
+        recommendations
+      end
+
+      def calculate_verification_progress(earned_badges, all_badges)
+        return 0 if all_badges.count.zero?
+        
+        (earned_badges.count.to_f / all_badges.count * 100).round(1)
+      end
+
       # GET /api/v1/company_dashboard/assets
       def assets
         render json: {

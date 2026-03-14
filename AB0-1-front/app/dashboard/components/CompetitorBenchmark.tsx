@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Trophy, 
@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   ZapOff,
   Flame,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import MetricCard from './MetricCard';
+import { companyDashboardApi, type RankingData } from '@/lib/api';
 
 interface CompetitorBenchmarkProps {
   companyId: string;
@@ -41,59 +43,87 @@ interface Competitor {
   featured: boolean;
   verified: boolean;
   marketShare?: number;
+  completenessOfVision?: number;
+  abilityToExecute?: number;
 }
 
 export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: CompetitorBenchmarkProps) {
   // Deep dark foundation for Strategic Intelligence
   const isDark = true;
 
-  // Mock data - In production this would come from an API endpoint
-  const yourCompany: Competitor = {
-    id: 1,
-    name: 'Avalia Solar',
-    rating: 4.8,
-    reviewsCount: 342,
-    responseRate: 98,
-    featured: true,
+  // State for real API data
+  const [rankingData, setRankingData] = useState<RankingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch real ranking data from API
+  useEffect(() => {
+    async function fetchRankingData() {
+      try {
+        setLoading(true);
+        const data = await companyDashboardApi.getRanking(companyId);
+        setRankingData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch ranking data:', err);
+        setError('Failed to load ranking data');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (companyId) {
+      fetchRankingData();
+    }
+  }, [companyId]);
+
+  // Transform API data to competitor format
+  const competitorsFromAPI: Competitor[] = rankingData?.magic_quadrant_points?.map((point) => ({
+    id: point.id,
+    name: point.name,
+    logo_url: point.logo_url,
+    rating: point.rating,
+    reviewsCount: 0, // Not available in ranking endpoint
+    responseRate: 0, // Not available in ranking endpoint
+    featured: false,
     verified: true,
-    marketShare: 22
+    marketShare: undefined,
+    completenessOfVision: point.completeness_of_vision,
+    abilityToExecute: point.ability_to_execute
+  })) || [];
+
+  // Find current company in the list
+  const yourCompanyData = competitorsFromAPI.find(c => c.id === parseInt(companyId)) || competitorsFromAPI[0];
+  
+  // Use API data or fallback to mock data
+  const yourCompany: Competitor = yourCompanyData || {
+    id: parseInt(companyId) || 1,
+    name: 'Sua Empresa',
+    rating: 0,
+    reviewsCount: 0,
+    responseRate: 0,
+    featured: false,
+    verified: false,
+    marketShare: 0
   };
 
-  const topCompetitors: Competitor[] = [
-    {
-      id: 2,
-      name: 'Solar Prime',
-      rating: 4.9,
-      reviewsCount: 432,
-      responseRate: 87,
-      featured: true,
-      verified: true,
-      marketShare: 28
-    },
-    {
-      id: 3,
-      name: 'EcoSolar Brasil',
-      rating: 4.6,
-      reviewsCount: 356,
-      responseRate: 91,
-      featured: true,
-      verified: true,
-      marketShare: 18
-    },
-    {
-      id: 4,
-      name: 'SunPower Instalações',
-      rating: 4.5,
-      reviewsCount: 298,
-      responseRate: 78,
-      featured: false,
-      verified: true,
-      marketShare: 15
-    }
-  ];
+  // Filter out current company from competitors list
+  const topCompetitors: Competitor[] = competitorsFromAPI
+    .filter(c => c.id !== parseInt(companyId))
+    .slice(0, 4);
 
-  const allCompanies = [yourCompany, ...topCompetitors].sort((a, b) => (b.marketShare || 0) - (a.marketShare || 0));
-  const yourRank = allCompanies.findIndex(c => c.id === yourCompany.id) + 1;
+  // Fallback to mock data if API fails
+  const allCompanies = (competitorsFromAPI.length > 0 
+    ? [yourCompany, ...topCompetitors]
+    : [
+        { id: parseInt(companyId) || 1, name: 'Sua Empresa', rating: 4.8, reviewsCount: 342, responseRate: 98, featured: true, verified: true, marketShare: 22 },
+        { id: 2, name: 'Solar Prime', rating: 4.9, reviewsCount: 432, responseRate: 87, featured: true, verified: true, marketShare: 28 },
+        { id: 3, name: 'EcoSolar Brasil', rating: 4.6, reviewsCount: 356, responseRate: 91, featured: true, verified: true, marketShare: 18 },
+        { id: 4, name: 'SunPower Instalações', rating: 4.5, reviewsCount: 298, responseRate: 78, featured: false, verified: true, marketShare: 15 }
+      ]
+  ).sort((a, b) => (b.marketShare || 0) - (a.marketShare || 0));
+
+  const yourRank = allCompanies.findIndex(c => c.id === parseInt(companyId)) + 1 || rankingData?.rank_position || 1;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -107,6 +137,15 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
+      </div>
+    );
+  }
 
   return (
     <motion.div 

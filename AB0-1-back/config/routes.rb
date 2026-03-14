@@ -152,6 +152,12 @@ Rails.application.routes.draw do
         get 'analytics/top_campaigns', to: 'company_dashboard#analytics_top_campaigns'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
+        
+        # Trust & Certification endpoints (TaaS)
+        get 'trust_health', to: 'company_dashboard#trust_health'
+        get 'intent_summary', to: 'company_dashboard#intent_summary'
+        get 'certification_progress', to: 'company_dashboard#certification_progress'
+        
         get 'assets', to: 'company_dashboard#assets'
 
         get 'stats', to: 'company_dashboard#stats'
