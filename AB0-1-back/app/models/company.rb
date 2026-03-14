@@ -240,6 +240,10 @@ class Company < ApplicationRecord
     slug.presence || super
   end
 
+  def self.find_by_slug_or_id(id_or_slug)
+    find_by(id: id_or_slug) || find_by(slug: id_or_slug)
+  end
+
   def self.find_by_slug_or_id!(id_or_slug)
     find_by(id: id_or_slug) || find_by!(slug: id_or_slug)
   end

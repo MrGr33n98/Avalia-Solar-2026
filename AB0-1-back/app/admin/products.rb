@@ -1,5 +1,5 @@
 ActiveAdmin.register Product do
-  belongs_to :company, optional: true, finder: :find_by_slug_or_id!
+  belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
   # Your existing permit_params
   permit_params :name, :description, :price, :image_url, :company_id, category_ids: []
@@ -20,11 +20,10 @@ ActiveAdmin.register Product do
       return scope if parent?
 
       if params[:company_id]
-        company = Company.find_by_slug_or_id!(params[:company_id])
-        scope.where(company_id: company.id)
-      else
-        scope
+        company = Company.find_by_slug_or_id(params[:company_id])
+        scope = scope.where(company_id: company.id) if company
       end
+      scope
     end
 
     def build_new_resource
@@ -34,8 +33,8 @@ ActiveAdmin.register Product do
         else
           company_param = params[:company_id] || params.dig(:product, :company_id)
           if company_param.present?
-            company = Company.find_by_slug_or_id!(company_param)
-            product.company_id ||= company.id
+            company = Company.find_by_slug_or_id(company_param)
+            product.company_id ||= company.id if company
           end
         end
       end
