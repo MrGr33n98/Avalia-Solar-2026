@@ -231,7 +231,7 @@ export default function ComparePage() {
                         className={cn(
                           "p-6 flex flex-col items-center text-center relative border-r border-slate-100 last:border-r-0",
                           idx === 0 && "bg-blue-50/10",
-                          isPremiumCompany(company) && "bg-gradient-to-br from-orange-50/20 to-yellow-50/20"
+                          isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
                         )}
                       >
                         <button 
@@ -246,7 +246,7 @@ export default function ComparePage() {
                         <div className={cn(
                           "h-20 w-20 mb-4 rounded-3xl p-3 shadow-lg border flex items-center justify-center overflow-hidden transition-transform hover:scale-105",
                           isPremiumCompany(company)
-                            ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-orange-200/40"
+                            ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40"
                             : "bg-white border-slate-100 shadow-slate-200/40"
                         )}>
                           <img 
@@ -261,7 +261,7 @@ export default function ComparePage() {
                         </h4>
                         
                         <div 
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-tighter"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-tighter"
                           role="img"
                           aria-label={`Avaliação ${formatRating(company.rating_avg || company.average_rating)} de 5, ${company.rating_count || 0} avaliações`}
                         >
@@ -270,8 +270,8 @@ export default function ComparePage() {
                         </div>
 
                         {isPremiumCompany(company) && (
-                          <div className="mt-2 px-2 py-1 rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-700 text-xs font-bold">
-                            Premium
+                          <div className="mt-2 px-2 py-1 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-bold">
+                            Parceiro Premium
                           </div>
                         )}
                       </motion.div>
@@ -347,10 +347,14 @@ export default function ComparePage() {
                     <div key={`cta-${company.id}`} className={cn(
                       "p-6 border-r border-slate-100 last:border-r-0",
                       idx === 0 && "bg-blue-50/20",
-                      isPremiumCompany(company) && "bg-gradient-to-br from-orange-50/30 to-yellow-50/30"
+                      isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/30 to-indigo-50/30"
                     )}>
                       <Button 
-                        className="w-full rounded-2xl font-black h-12 shadow-lg bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200/30 transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className={cn(
+                          "w-full rounded-[1.25rem] font-black h-12 transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                          "bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200/50 border-t border-blue-400/30",
+                          isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50 border-t border-indigo-400/30"
+                        )}
                         onClick={() => handleQuoteClick(company.id)}
                         aria-label={`Solicitar orçamento da ${company.name}`}
                       >
@@ -395,19 +399,44 @@ function CategoryHeader({
       onClick={onToggle}
       aria-expanded={isExpanded}
       aria-controls={`category-${id}`}
-      className="w-full grid grid-cols-4 bg-slate-50/80 border-y border-slate-100 hover:bg-slate-100 transition-colors group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+      className={cn(
+        "w-full grid grid-cols-4 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500",
+        isExpanded 
+          ? "bg-white border-y border-slate-100 shadow-sm z-10" 
+          : "bg-slate-50/50 border-y border-transparent hover:bg-white"
+      )}
     >
-      <div className="col-span-4 p-4 px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-white text-slate-400 shadow-sm group-hover:text-blue-600 transition-colors">
+      <div className="col-span-4 p-5 px-8 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            "p-2.5 rounded-2xl transition-all duration-300",
+            isExpanded 
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+              : "bg-white text-slate-400 shadow-sm group-hover:text-blue-600"
+          )}>
             {icon}
           </div>
-          <span className="text-sm font-black text-slate-900 uppercase tracking-widest">{label}</span>
+          <div className="flex flex-col items-start">
+            <span className={cn(
+              "text-base font-black uppercase tracking-widest transition-colors",
+              isExpanded ? "text-slate-900" : "text-slate-500 group-hover:text-slate-900"
+            )}>
+              {label}
+            </span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              Clique para {isExpanded ? 'recolher' : 'expandir'} detalhes
+            </span>
+          </div>
         </div>
-        <ChevronDown 
-          className={cn("h-5 w-5 text-slate-300 transition-transform duration-300", isExpanded && "rotate-180")} 
-          aria-hidden="true"
-        />
+        <div className={cn(
+          "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300",
+          isExpanded ? "bg-slate-100 text-slate-900" : "bg-white text-slate-300 group-hover:text-blue-500 shadow-sm"
+        )}>
+          <ChevronDown 
+            className={cn("h-5 w-5 transition-transform duration-500", isExpanded && "rotate-180")} 
+            aria-hidden="true" 
+          />
+        </div>
       </div>
     </button>
   );
@@ -425,12 +454,12 @@ function ComparisonRow({
   value: (c: Company) => React.ReactNode 
 }) {
   return (
-    <div className="grid grid-cols-4 group hover:bg-blue-50/10 transition-colors">
-      <div className="p-6 flex items-center gap-4 border-r border-slate-100 bg-slate-50/5">
-        <div className="p-2 rounded-lg bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-colors flex-shrink-0">
+    <div className="grid grid-cols-4 group hover:bg-blue-50/5 transition-colors border-b border-slate-50/50 last:border-b-0">
+      <div className="p-6 flex items-center gap-4 border-r border-slate-100 bg-slate-50/10">
+        <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md flex-shrink-0">
           {icon}
         </div>
-        <span className="text-xs font-black text-slate-500 uppercase tracking-tight group-hover:text-slate-900 transition-colors leading-tight">
+        <span className="text-[11px] font-black text-slate-500 uppercase tracking-wide group-hover:text-slate-900 transition-colors leading-tight">
           {label}
         </span>
       </div>
@@ -440,12 +469,14 @@ function ComparisonRow({
           "p-6 flex items-center justify-center text-center border-r border-slate-100 last:border-r-0 transition-colors",
           idx === 0 && "bg-blue-50/5"
         )}>
-          {value(company)}
+          <div className="animate-in fade-in slide-in-from-bottom-1 duration-500">
+            {value(company)}
+          </div>
         </div>
       ))}
 
       {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-        <div key={`empty-val-${i}`} className="p-6 border-r border-slate-100 last:border-r-0"></div>
+        <div key={`empty-val-${i}`} className="p-6 border-r border-slate-100 last:border-r-0 bg-slate-50/5"></div>
       ))}
     </div>
   );

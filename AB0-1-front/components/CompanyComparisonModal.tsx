@@ -82,53 +82,56 @@ export default function CompanyComparisonModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] p-0 gap-0 bg-gradient-to-br from-slate-50 to-white border-0 shadow-2xl">
-        <DialogHeader className="p-4 md:p-6 pb-0 space-y-0">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-100 text-blue-600 shrink-0">
-                <Scale className="h-5 w-5" />
+      <DialogContent className="max-w-5xl max-h-[85vh] p-0 gap-0 bg-white/95 backdrop-blur-xl border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden transition-all duration-500">
+        <DialogHeader className="p-6 md:p-8 pb-4 space-y-0 bg-slate-50/50 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200 shrink-0">
+                <Scale className="h-6 w-6" />
               </div>
               <div className="min-w-0">
-                <DialogTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">
-                  Comparação Detalhada
+                <DialogTitle className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight truncate">
+                  Análise Comparativa
                 </DialogTitle>
-                <DialogDescription className="text-slate-500 font-medium text-xs md:text-sm">
-                  {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'} em análise
+                <DialogDescription className="text-slate-500 font-bold text-xs md:text-sm uppercase tracking-widest mt-1">
+                  {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'} selecionadas
                 </DialogDescription>
               </div>
             </div>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
               onClick={onClearAll}
-              className="text-slate-500 hover:text-red-600 hover:border-red-200 font-bold transition-all w-full md:w-auto h-9 md:h-10"
+              className="text-slate-400 hover:text-red-600 hover:bg-red-50 font-black transition-all w-full md:w-auto h-10 px-6 rounded-xl"
             >
               <X className="h-4 w-4 mr-2" />
-              Limpar Tudo
+              Limpar Comparação
             </Button>
           </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="px-4 md:px-6">
-              <TabsList className="flex md:grid w-full md:grid-cols-5 h-12 bg-slate-100/50 rounded-2xl p-1 overflow-x-auto scrollbar-hide justify-start md:justify-center">
-                <TabsTrigger value="overview" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
-                  Visão Geral
-                </TabsTrigger>
-                <TabsTrigger value="credentials" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
-                  Credibilidade
-                </TabsTrigger>
-                <TabsTrigger value="commercial" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
-                  Comercial
-                </TabsTrigger>
-                <TabsTrigger value="technical" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
-                  Técnico
-                </TabsTrigger>
-                <TabsTrigger value="contact" className="flex-1 md:flex-none text-xs font-bold rounded-xl whitespace-nowrap px-4 md:px-2">
-                  Contato
-                </TabsTrigger>
+            <div className="px-6 md:px-8 py-4 bg-white/50 border-b border-slate-50">
+              <TabsList className="flex md:grid w-full md:grid-cols-5 h-14 bg-slate-100/80 rounded-[1.25rem] p-1.5 gap-1 shadow-inner">
+                {[
+                  { value: 'overview', label: 'Visão Geral' },
+                  { value: 'credentials', label: 'Credibilidade' },
+                  { value: 'commercial', label: 'Comercial' },
+                  { value: 'technical', label: 'Técnico' },
+                  { value: 'contact', label: 'Contato' }
+                ].map((tab) => (
+                  <TabsTrigger 
+                    key={tab.value}
+                    value={tab.value} 
+                    className={cn(
+                      "flex-1 text-[11px] font-black uppercase tracking-wider transition-all duration-300 rounded-[0.85rem] px-4",
+                      "data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:scale-[1.02]"
+                    )}
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
 
@@ -155,16 +158,16 @@ export default function CompanyComparisonModal({
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className={cn(
-                                  "p-6 flex flex-col items-center text-center relative",
-                                  isPremiumCompany(company) && "bg-gradient-to-br from-amber-50/30 to-orange-50/30"
+                                  "p-6 flex flex-col items-center text-center relative transition-colors duration-500",
+                                  isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
                                 )}
                               >
                                 {/* Premium Crown */}
                                 {isPremiumCompany(company) && (
                                   <div className="absolute -top-2 -right-2">
                                     <div className="relative">
-                                      <Crown className="h-6 w-6 text-amber-500 fill-current" />
-                                      <div className="absolute -top-1 -right-1 h-3 w-3 bg-amber-400 rounded-full animate-pulse" />
+                                      <Crown className="h-6 w-6 text-indigo-500 fill-current" />
+                                      <div className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-blue-400 rounded-full animate-pulse shadow-sm shadow-blue-200" />
                                     </div>
                                   </div>
                                 )}
@@ -172,7 +175,7 @@ export default function CompanyComparisonModal({
                                 <button
                                   onClick={() => onRemoveCompany(company.id)}
                                   aria-label={`Remover ${company.name} da comparação`}
-                                  className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                  className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                                 >
                                   <X className="h-4 w-4" />
                                 </button>
@@ -180,8 +183,8 @@ export default function CompanyComparisonModal({
                                 <div className={cn(
                                   "h-20 w-20 mb-4 rounded-3xl p-3 shadow-lg border flex items-center justify-center overflow-hidden transition-all hover:scale-105",
                                   isPremiumCompany(company) 
-                                    ? "bg-gradient-to-br from-amber-50 to-white border-amber-200 shadow-amber-200/50" 
-                                    : "bg-white border-slate-100"
+                                    ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40" 
+                                    : "bg-white border-slate-100 shadow-slate-200/30"
                                 )}>
                                   <img
                                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
@@ -190,11 +193,11 @@ export default function CompanyComparisonModal({
                                   />
                                 </div>
 
-                                <h4 className="font-black text-slate-900 text-lg line-clamp-1 mb-2 px-2">
+                                <h4 className="font-black text-slate-900 text-lg line-clamp-1 mb-2 px-2 tracking-tight">
                                   {company.name}
                                 </h4>
 
-                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-black mb-4">
+                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase mb-4 shadow-sm border border-blue-100/50">
                                   <Star className="h-3 w-3 fill-current" />
                                   {formatRating(company.rating_avg || company.average_rating)} 
                                   ({company.rating_count || 0})
@@ -203,10 +206,9 @@ export default function CompanyComparisonModal({
                                 {isPremiumCompany(company) && (
                                   <Badge 
                                     variant="secondary" 
-                                    className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border-amber-200 text-xs font-bold"
+                                    className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border-blue-200 text-[10px] font-black uppercase tracking-wider shadow-sm"
                                   >
-                                    <Crown className="h-3 w-3 mr-1" />
-                                    Premium
+                                    Parceiro Premium
                                   </Badge>
                                 )}
                               </motion.div>
@@ -427,21 +429,20 @@ export default function CompanyComparisonModal({
                             <div
                               key={`cta-${company.id}`}
                               className={cn(
-                                "p-6",
-                                isPremiumCompany(company) && "bg-gradient-to-br from-amber-50/30 to-orange-50/30"
+                                "p-6 transition-colors duration-500",
+                                isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
                               )}
                             >
                               <Button
                                 className={cn(
-                                  "w-full rounded-2xl font-black h-12 shadow-lg transition-all hover:scale-[1.02] active:scale-95",
-                                  isPremiumCompany(company)
-                                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-200"
-                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+                                  "w-full rounded-[1.25rem] font-black h-12 transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                                  "bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200/50 border-t border-blue-400/30",
+                                  isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50 border-t border-indigo-400/30"
                                 )}
                                 onClick={() => handleQuoteClick(company.id)}
                               >
                                 {isPremiumCompany(company) && <Crown className="h-4 w-4 mr-2" />}
-                                Pedir Orçamento
+                                Solicitar Orçamento
                                 <ExternalLink className="h-4 w-4 ml-2" />
                               </Button>
                             </div>

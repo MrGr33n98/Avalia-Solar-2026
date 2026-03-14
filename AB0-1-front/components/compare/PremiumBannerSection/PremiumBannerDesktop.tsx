@@ -116,7 +116,7 @@ export default function PremiumBannerDesktop({ company, onDismiss }: PremiumBann
             )}
             {getYearsInMarket() && (
               <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-orange-500" aria-hidden="true" />
+                <Clock className="h-3.5 w-3.5 text-blue-500" aria-hidden="true" />
                 {getYearsInMarket()} anos de experiência
               </span>
             )}
@@ -140,7 +140,7 @@ export default function PremiumBannerDesktop({ company, onDismiss }: PremiumBann
           <div className="flex items-center gap-3">
             <Button
               onClick={handleQuoteClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-xl shadow-blue-200/50 border-t border-blue-400/30 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Solicitar Orçamento
               <ExternalLink className="h-4 w-4 ml-2" aria-hidden="true" />
