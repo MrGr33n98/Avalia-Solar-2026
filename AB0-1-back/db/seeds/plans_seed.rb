@@ -60,9 +60,15 @@ plans_data.each do |data|
   
   plan.assign_attributes(
     description: data[:description],
-    price: data[:price],
-    features_json: final_features
+    price: data[:price]
   )
+
+  # Fallback defensivo para evitar UnknownAttributeError
+  if plan.respond_to?(:features_json=)
+    plan.features_json = final_features
+  elsif plan.respond_to?(:features=)
+    plan.features = final_features.to_json
+  end
 
   if plan.save
     puts "✅ Plano '#{plan.name}' (#{data[:tier]}) criado/atualizado com sucesso!"
