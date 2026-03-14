@@ -50,6 +50,7 @@ ActiveAdmin.register Plan do
     column('Tier') { |plan| status_tag(plan.inferred_plan_tier) }
     column :description
     column :price
+    column('Setup') { |plan| plan.setup_info }
     column('Features ativas') { |plan| plan.enabled_feature_keys.count }
     column :created_at
     actions
@@ -70,6 +71,7 @@ ActiveAdmin.register Plan do
       row :name
       row :description
       row :price
+      row('Setup/Implementacao') { resource.full_implementation_summary }
       row('Tier inferido') { status_tag(resource.inferred_plan_tier) }
       row('Features ativas') { resource.enabled_feature_keys.count }
       row :created_at
