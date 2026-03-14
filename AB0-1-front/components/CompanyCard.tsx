@@ -441,24 +441,24 @@ export default function CompanyCard({
               </div>
             )}
             <div
-              className={cn('relative rounded-full overflow-hidden bg-clay-surface clay-convex')}
+              className={cn('relative rounded-full overflow-hidden bg-white shadow-md border-2 border-white')}
               style={{ 
                 width: avatarSize, 
-                height: avatarSize, 
-                boxShadow: `inset 2px 2px 6px hsl(var(--clay-shadow-light)), inset -2px -2px 6px hsl(var(--clay-shadow-dark))`,
-                border: `2px solid ${avatarRingColor}`
+                height: avatarSize,
               }}
             >
               {logoUrl && !logoError ? (
-                <Image
-                  src={logoUrl}
-                  alt=""
-                  fill
-                  sizes="80px"
-                  onError={() => setLogoError(true)}
-                  className="object-cover object-center"
-                  data-testid="company-logo"
-                />
+                <div className="relative w-full h-full p-1.5">
+                  <Image
+                    src={logoUrl}
+                    alt=""
+                    fill
+                    sizes="80px"
+                    onError={() => setLogoError(true)}
+                    className="object-contain object-center"
+                    data-testid="company-logo"
+                  />
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
                   <Building2 className="text-gray-300 w-8 h-8" />
