@@ -57,12 +57,19 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const posData = payload.find((p: any) => p.dataKey === 'position');
+      const leadData = payload.find((p: any) => p.dataKey === 'leads');
+
       return (
         <div className="bg-white dark:bg-[#002B4D] border-[0.5px] border-black/10 dark:border-white/10 p-3 rounded-xl shadow-lg dark:shadow-none text-[10px] font-bold uppercase tracking-widest">
           <p className="text-muted-foreground dark:text-white/40 mb-2 border-b border-black/5 dark:border-white/5 pb-1">{label}</p>
           <div className="space-y-1.5">
-            <p className="text-brand-blue flex justify-between gap-4">Posição: <span className="text-foreground dark:text-white">{payload[0].value}º</span></p>
-            <p className="text-brand-blue flex justify-between gap-4">Oportunidades: <span className="text-foreground dark:text-white">{payload[1].value}</span></p>
+            {posData && (
+              <p className="text-brand-green flex justify-between gap-4">Posição: <span className="text-foreground dark:text-white">{posData.value}º</span></p>
+            )}
+            {leadData && (
+              <p className="text-brand-blue flex justify-between gap-4">Oportunidades: <span className="text-foreground dark:text-white">{leadData.value}</span></p>
+            )}
           </div>
         </div>
       );
