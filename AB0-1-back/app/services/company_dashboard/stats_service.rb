@@ -27,6 +27,8 @@ module CompanyDashboard
         cta_clicks: cta_clicks,
         whatsapp_clicks: whatsapp_clicks,
         leads_received: leads_received,
+        marketplace_potential: calculate_marketplace_potential,
+        active_categories: format_active_categories,
         reviews_count: reviews_count,
         average_rating: safe_count(:rating_avg),
         pending_approvals: pending_approvals_count,
@@ -37,6 +39,40 @@ module CompanyDashboard
     end
 
     private
+
+    def calculate_marketplace_potential
+      # Leads in same categories (last 30 days) that were NOT necessarily for this company
+      category_ids = @company.categories.pluck(:id)
+      leads_in_category = Lead.where(product_vertical: category_ids)
+                              .where('created_at > ?', 30.days.ago)
+                              .count
+
+      # Leads in same region (City/State)
+      leads_in_region = Lead.where(city: @company.city, state: @company.state)
+                            .where('created_at > ?', 30.days.ago)
+                            .count
+
+      {
+        leads_in_category: leads_in_category,
+        leads_in_region: leads_in_region,
+        market_share_percent: leads_in_category.positive? ? ((leads_received_last_30d.to_f / leads_in_category) * 100).round(1) : 0
+      }
+    end
+
+    def format_active_categories
+      @company.categories.map do |cat|
+        {
+          id: cat.id,
+          name: cat.name,
+          views_in_category: 0, # Mocked for now, will use analytics if available
+          leads_in_category: Lead.where(product_vertical: cat.id).where('created_at > ?', 30.days.ago).count
+        }
+      end
+    end
+
+    def leads_received_last_30d
+      @company.leads.where('leads.created_at > ?', 30.days.ago).count
+    end
 
     def metric_with_fallback(metric_key:, fallback_method:)
       aggregated = daily_stats_totals[metric_key]

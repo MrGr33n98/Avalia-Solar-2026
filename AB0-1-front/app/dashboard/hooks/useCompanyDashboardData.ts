@@ -28,6 +28,16 @@ interface DashboardStats {
   ctaClicks: number;
   whatsappClicks: number;
   leadsReceived: number;
+  marketplace_potential?: {
+    leads_in_category: number;
+    leads_in_region: number;
+    market_share_percent: number;
+  };
+  active_categories?: Array<{
+    id: number;
+    name: string;
+    leads_in_category: number;
+  }>;
   reviewsCount: number;
   averageRating: number;
   pendingApprovals: number;
@@ -98,6 +108,8 @@ export function useCompanyDashboardData(companyId: string) {
         ctaClicks: s.cta_clicks ?? 0,
         whatsappClicks: s.whatsapp_clicks ?? 0,
         leadsReceived: s.leads_received ?? 0,
+        marketplace_potential: s.marketplace_potential,
+        active_categories: s.active_categories,
         reviewsCount: s.reviews_count ?? 0,
         averageRating: s.average_rating ?? 0,
         pendingApprovals: s.pending_approvals ?? 0,

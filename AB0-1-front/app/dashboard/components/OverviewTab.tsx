@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchApi } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 import MetricCard from './MetricCard';
+import OpportunityBoard from './OpportunityBoard';
 import OpportunitiesCard from '@/components/ui/OpportunitiesCard';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
 import RankingTable, { type RankingRow } from '@/components/ui/RankingTable';
@@ -79,6 +80,8 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         whatsappClicks: data.whatsapp_clicks_30d ?? 0,
         leadsReceived: data.leads_30d ?? 0,
         conversionRate: data.conversion_rate ?? 0,
+        marketplacePotential: data.marketplace_potential,
+        activeCategories: data.active_categories,
         reviewsCount: company?.reviews_count ?? 0,
         averageRating: company?.rating_avg ?? 0,
         profileCompletion,
@@ -106,6 +109,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
   }, [companyId, queryClient]);
 
   const stats = statsQuery.data;
+  const isPremium = company?.plan_status === 'active' || company?.featured;
   const companyName = (company?.name as string) || 'sua empresa';
 
   const rankingRows: RankingRow[] = useMemo(() => {
@@ -142,23 +146,22 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
 
   return (
     <div className="space-y-8 pb-20">
-      {/* 🛠️ TOP KPI SECTION - Responsive */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="metrics">
-        {statsQuery.isLoading ? (
-          <>
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-[140px] w-full rounded-2xl bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
-            ))}
-          </>
-        ) : (
-          <>
-            <MetricCard title="Visualizações" value={stats?.profileViews || 0} icon={Eye} color="brand-blue" />
-            <MetricCard title="Interações (CTA)" value={stats?.ctaClicks || 0} icon={Zap} color="brand-cyan" />
-            <MetricCard title="WhatsApp" value={stats?.whatsappClicks || 0} icon={MessageSquare} color="brand-green" />
-            <MetricCard title="Oportunidades" value={stats?.leadsReceived || 0} icon={Target} color="brand-yellow" />
-          </>
-        )}
-      </div>
+      {/* 🛠️ OPPORTUNITY BOARD - High Impact Radar */}
+      {statsQuery.isLoading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+          <Skeleton className="lg:col-span-8 h-[400px] rounded-[2.5rem] bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
+          <Skeleton className="lg:col-span-4 h-[400px] rounded-[2.5rem] bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10" />
+        </div>
+      ) : (
+        <OpportunityBoard 
+          isPremium={isPremium} 
+          stats={{
+            leads_received: stats?.leadsReceived || 0,
+            marketplace_potential: stats?.marketplacePotential || { leads_in_category: 0, leads_in_region: 0, market_share_percent: 0 },
+            active_categories: stats?.activeCategories || []
+          }} 
+        />
+      )}
 
       {/* 🚀 ONBOARDING - Responsive Theme */}
       {hasNoData && (
