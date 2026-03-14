@@ -1,11 +1,11 @@
 "use client";
 
 import { 
-  AreaChart, 
+  AreaChart as ReAreaChart, 
   Area, 
-  BarChart, 
+  BarChart as ReBarChart, 
   Bar, 
-  LineChart, 
+  LineChart as ReLineChart, 
   Line, 
   XAxis, 
   YAxis, 
@@ -43,6 +43,116 @@ const performanceData = [
   { month: "Jun", conversao: 82, satisfacao: 93 },
 ];
 
+// Helper components for the DashboardCharts object
+function AreaChartComponent({ data }: { data: any[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ReAreaChart data={data}>
+        <defs>
+          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis 
+          dataKey="month" 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <YAxis 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "hsl(var(--clay-surface))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "var(--clay-radius-md)",
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke="hsl(var(--primary))"
+          strokeWidth={2}
+          fill="url(#colorValue)"
+        />
+      </ReAreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+function BarChartComponent({ data }: { data: any[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ReBarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis 
+          dataKey="month" 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <YAxis 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "hsl(var(--clay-surface))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "var(--clay-radius-md)",
+          }}
+        />
+        <Bar 
+          dataKey="value" 
+          fill="hsl(var(--accent))"
+          radius={[8, 8, 0, 0]}
+        />
+      </ReBarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function LineChartComponent({ data }: { data: any[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ReLineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis 
+          dataKey="month" 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <YAxis 
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "hsl(var(--clay-surface))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "var(--clay-radius-md)",
+          }}
+        />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="hsl(var(--primary))"
+          strokeWidth={2}
+        />
+      </ReLineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export const DashboardCharts = {
+  AreaChart: AreaChartComponent,
+  BarChart: BarChartComponent,
+  LineChart: LineChartComponent,
+};
+
 export function RevenueChart() {
   return (
     <ChartCard
@@ -55,7 +165,7 @@ export function RevenueChart() {
       }
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={salesData}>
+        <ReAreaChart data={salesData}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -87,7 +197,7 @@ export function RevenueChart() {
             strokeWidth={2}
             fill="url(#colorValue)"
           />
-        </AreaChart>
+        </ReAreaChart>
       </ResponsiveContainer>
     </ChartCard>
   );
@@ -100,7 +210,7 @@ export function ProposalsChart() {
       description="Distribuição de propostas por tipo de energia"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={categoryData}>
+        <ReBarChart data={categoryData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="name" 
@@ -123,7 +233,7 @@ export function ProposalsChart() {
             fill="hsl(var(--accent))"
             radius={[8, 8, 0, 0]}
           />
-        </BarChart>
+        </ReBarChart>
       </ResponsiveContainer>
     </ChartCard>
   );
@@ -136,7 +246,7 @@ export function PerformanceChart() {
       description="Taxa de conversão e satisfação do cliente"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={performanceData}>
+        <ReLineChart data={performanceData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="month" 
@@ -170,7 +280,7 @@ export function PerformanceChart() {
             strokeWidth={2}
             name="Satisfação"
           />
-        </LineChart>
+        </ReLineChart>
       </ResponsiveContainer>
     </ChartCard>
   );

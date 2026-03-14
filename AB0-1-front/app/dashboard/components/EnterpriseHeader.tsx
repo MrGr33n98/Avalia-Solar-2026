@@ -43,6 +43,9 @@ interface Notification {
   read: boolean;
 }
 
+import { useCompanyContext } from '@/context/CompanyContext';
+import { useRouter } from 'next/navigation';
+
 interface EnterpriseHeaderProps {
   company: any;
   notifications: Notification[];
@@ -61,9 +64,23 @@ export default function EnterpriseHeader({
   themeToggle
 }: EnterpriseHeaderProps) {
   const { user } = useAuth();
+  const { companies, selectCompany } = useCompanyContext();
+  const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleCompanySwitch = async (targetCompany: any) => {
+    if (targetCompany.id === company?.id) return;
+    
+    try {
+      await selectCompany(targetCompany);
+      // Refresh the page or the data context
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to switch company', error);
+    }
+  };
 
   const handleExportCSV = () => {
     // Track using unified analytics
@@ -129,26 +146,63 @@ export default function EnterpriseHeader({
 
           {/* Company Info */}
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
-              <AvatarImage src={company?.logo_url} alt={company?.name} />
-              <AvatarFallback className="bg-brand-blue text-white text-xs font-bold">
-                {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-white tracking-tight truncate">
-                  {company?.name || 'Minha Empresa'}
-                </h1>
-                {company?.verified && (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-cyan shrink-0" />
-                )}
-              </div>
-              <p className="text-[11px] sm:text-xs text-white/50 truncate">
-                {company?.city}, {company?.state}
-              </p>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity min-w-0">
+                  <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
+                    <AvatarImage src={company?.logo_url} alt={company?.name} />
+                    <AvatarFallback className="bg-brand-blue text-white text-xs font-bold">
+                      {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-sm font-bold text-white tracking-tight truncate max-w-[120px] sm:max-w-[200px]">
+                        {company?.name || 'Minha Empresa'}
+                      </h1>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-white/50 truncate">
+                      {company?.city}, {company?.state}
+                    </p>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-[#002B4D] border-white/10 text-white">
+                <DropdownMenuLabel className="text-xs text-white/50">Trocar Empresa</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/10" />
+                {companies.map((c) => (
+                  <DropdownMenuItem 
+                    key={c.id} 
+                    className={cn(
+                      "cursor-pointer hover:bg-white/10",
+                      c.id === company?.id && "bg-brand-blue/20 text-brand-cyan"
+                    )}
+                    onClick={() => handleCompanySwitch(c)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Avatar className="h-6 w-6 shrink-0">
+                        <AvatarImage src={c.logo_url} alt={c.name} />
+                        <AvatarFallback className="text-[10px] bg-white/10">
+                          {c.name?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{c.name}</span>
+                      {c.id === company?.id && <CheckCircle2 className="h-3.5 w-3.5 ml-auto" />}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem 
+                  className="cursor-pointer hover:bg-white/10 text-brand-cyan text-xs"
+                  onClick={() => router.push('/select-company')}
+                >
+                  <Building2 className="mr-2 h-3.5 w-3.5" />
+                  Ver todas as empresas
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

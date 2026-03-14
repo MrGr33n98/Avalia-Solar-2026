@@ -55,7 +55,7 @@ export default function ReviewDashboardPage() {
 
       if (user.role === 'company') {
         setIsRedirecting(true);
-        router.push('/dashboard/company');
+        router.push('/dashboard');
         return;
       }
 

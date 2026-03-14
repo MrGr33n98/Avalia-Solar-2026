@@ -45,6 +45,19 @@ type SidebarGroupItem = {
 
 const COLLAPSE_STORAGE_KEY = 'avalia:enterpriseSidebarCollapsed';
 
+import { useCompanyContext } from '@/context/CompanyContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Building2, CheckCircle2, MoreVertical } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 function SidebarContent({ 
   activeTab, 
   onTabChange, 
@@ -60,6 +73,19 @@ function SidebarContent({
   onToggleCollapse: () => void;
   visibleTabIds?: string[];
 }) {
+  const { companies, activeCompany, selectCompany } = useCompanyContext();
+  const router = useRouter();
+
+  const handleCompanySwitch = async (targetCompany: any) => {
+    if (targetCompany.id === activeCompany?.id) return;
+    try {
+      await selectCompany(targetCompany);
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to switch company', error);
+    }
+  };
+
   const groups: SidebarGroupItem[] = useMemo(() => {
     const navItems = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
     return navItems
@@ -182,17 +208,70 @@ function SidebarContent({
   return (
     <div className={cn('flex flex-col h-full bg-[#0F172A] border-r border-white/5 shadow-2xl', isCollapsed ? 'w-[80px]' : 'w-[280px]')}>
       <div className={cn('h-16 flex items-center border-b border-white/10 bg-white/5', isCollapsed ? 'px-3 justify-center' : 'px-5')}>
-        <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
-          <div className="h-10 w-10 rounded-xl bg-brand-blue flex items-center justify-center border-[0.5px] border-white/20 shadow-lg shadow-brand-blue/20">
-            <Home className="h-5 w-5 text-white" />
-          </div>
-          {!isCollapsed && (
-            <div className="leading-tight">
-              <div className="text-sm font-bold text-white tracking-tight">Avaliasolar</div>
-              <div className="text-[10px] text-brand-cyan font-bold uppercase tracking-wider">Precision Energy</div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className={cn('flex items-center cursor-pointer hover:opacity-80 transition-opacity w-full', isCollapsed ? 'justify-center' : 'gap-3')}>
+              <div className="h-10 w-10 rounded-xl bg-brand-blue flex items-center justify-center border-[0.5px] border-white/20 shadow-lg shadow-brand-blue/20 shrink-0">
+                {activeCompany?.logo_url ? (
+                  <Avatar className="h-10 w-10 rounded-xl">
+                    <AvatarImage src={activeCompany.logo_url} className="object-cover p-1" />
+                    <AvatarFallback className="bg-transparent text-white text-xs font-bold">
+                      {activeCompany.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Home className="h-5 w-5 text-white" />
+                )}
+              </div>
+              {!isCollapsed && (
+                <div className="leading-tight min-w-0 flex-1">
+                  <div className="text-sm font-bold text-white tracking-tight truncate">
+                    {activeCompany?.name || 'Avaliasolar'}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="text-[10px] text-brand-cyan font-bold uppercase tracking-wider truncate">
+                      {activeCompany?.category || 'Precision Energy'}
+                    </div>
+                    <MoreVertical className="h-2.5 w-2.5 text-white/20" />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64 bg-[#002B4D] border-white/10 text-white ml-2">
+            <DropdownMenuLabel className="text-xs text-white/50">Trocar Empresa</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/10" />
+            {companies.map((c) => (
+              <DropdownMenuItem 
+                key={c.id} 
+                className={cn(
+                  "cursor-pointer hover:bg-white/10",
+                  c.id === activeCompany?.id && "bg-brand-blue/20 text-brand-cyan"
+                )}
+                onClick={() => handleCompanySwitch(c)}
+              >
+                <div className="flex items-center gap-2 min-w-0 w-full">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarImage src={c.logo_url} alt={c.name} />
+                    <AvatarFallback className="text-[10px] bg-white/10">
+                      {c.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate flex-1">{c.name}</span>
+                  {c.id === activeCompany?.id && <CheckCircle2 className="h-3.5 w-3.5 ml-auto shrink-0" />}
+                </div>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem 
+              className="cursor-pointer hover:bg-white/10 text-brand-cyan text-xs"
+              onClick={() => router.push('/select-company')}
+            >
+              <Building2 className="mr-2 h-3.5 w-3.5" />
+              Ver todas as empresas
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <nav className={cn('flex-1 overflow-y-auto py-6 space-y-2', isCollapsed ? 'px-2' : 'px-4')}>

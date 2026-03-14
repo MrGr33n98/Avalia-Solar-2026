@@ -142,7 +142,7 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
         <div className="grid gap-6 md:grid-cols-3">
           <button 
             className="clay-card p-6 hover:scale-[1.02] transition-transform cursor-pointer"
-            onClick={() => window.location.href = `/dashboard/company?tab=info`}
+            onClick={() => window.location.href = `/dashboard?tab=info`}
           >
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-primary/10 text-primary">
@@ -159,7 +159,7 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
 
           <button 
             className="clay-card p-6 hover:scale-[1.02] transition-transform cursor-pointer"
-            onClick={() => window.location.href = `/dashboard/company?tab=reviews`}
+            onClick={() => window.location.href = `/dashboard?tab=reviews`}
           >
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-accent/10 text-accent">
@@ -176,7 +176,7 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
 
           <button 
             className="clay-card p-6 hover:scale-[1.02] transition-transform cursor-pointer"
-            onClick={() => window.location.href = `/dashboard/company?tab=analytics`}
+            onClick={() => window.location.href = `/dashboard?tab=analytics`}
           >
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-secondary/10 text-secondary">
