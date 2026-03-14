@@ -68,16 +68,21 @@ module CompanyDashboard
     end
 
     def calculate_vision_score(comp)
-      # Normalize rating (0-5) to 0-100 scale
-      ((comp.rating_avg.to_f / 5.0) * 100).round(1)
+      # Vision is market perception (Trust + Rating)
+      # (Rating Avg * 0.7 + Verified Bonus * 0.3)
+      rating_normalized = (comp.rating_avg.to_f / 5.0) * 80
+      verified_bonus = comp.verified ? 20 : 0
+      (rating_normalized + verified_bonus).round(1)
     end
 
     def calculate_execution_score(comp)
-      # Mocked execution score based on founded year and rating count
-      # In a real scenario, this would use lead response time or volume
-      base = comp.rating_count.to_i > 50 ? 80 : 40
-      age_bonus = comp.founded_year.to_i < 2015 ? 15 : 5
-      [base + age_bonus, 100].min
+      # Ability to execute is commercial performance
+      # Leads (weighted) + Clicks + Profile views
+      lead_score = [comp.leads_count.to_i * 5, 50].min
+      click_score = [comp.cta_clicks_count.to_i, 30].min
+      view_score = [comp.profile_views_count.to_i / 10, 20].min
+      
+      (lead_score + click_score + view_score).round(1)
     end
 
     def category_rankings

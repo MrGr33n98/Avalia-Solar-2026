@@ -201,9 +201,11 @@ module Analytics
 
       Analytics::PostHogService.capture(
         ph_event_name,
-        ph_properties.merge(company_id: @company_id),
-        distinct_id: distinct_id,
-        timestamp: @occurred_at
+        ph_properties.merge(
+          company_id: @company_id,
+          timestamp: @occurred_at
+        ),
+        distinct_id: distinct_id
       )
     rescue StandardError => e
       Rails.logger.warn("[G4-Analytics] PostHog Forwarding Failed: #{e.message}")
