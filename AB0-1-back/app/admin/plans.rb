@@ -9,10 +9,12 @@ ActiveAdmin.register Plan do
     'trust' => 'Prova Social e Destaque',
     'content' => 'Conteudo',
     'insights' => 'Inteligencia e Dados',
-    'marketplace_behavior' => 'Experiencia Competitiva'
+    'marketplace_behavior' => 'Experiencia Competitiva',
+    'operations' => 'Servicos e Operacoes (Setup)'
   }.freeze
 
   FEATURE_GROUP_ORDER = %w[
+    operations
     public_profile
     conversion
     trust
@@ -27,7 +29,8 @@ ActiveAdmin.register Plan do
     'trust' => 'Gerencie sinais de confianca, destaque e prova social.',
     'content' => 'Libere ou bloqueie biblioteca de materiais e midia.',
     'marketplace_behavior' => 'Ajuste comportamento competitivo no marketplace.',
-    'insights' => 'Configure analytics, leads e recursos avancados.'
+    'insights' => 'Configure analytics, leads e recursos avancados.',
+    'operations' => 'Configure taxas de setup, onboarding e servicos de implementacao inicial.'
   }.freeze
 
   filter :name

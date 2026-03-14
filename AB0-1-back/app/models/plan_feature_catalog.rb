@@ -197,12 +197,35 @@ module PlanFeatureCatalog
       access_behavior: :config,
       group: 'insights',
       aliases: %w[sector_questions_limit]
+    },
+    'setup_fee' => {
+      type: :integer,
+      default: 0,
+      access_behavior: :config,
+      group: 'operations',
+      aliases: %w[taxa_setup custo_implementacao]
+    },
+    'setup_included' => {
+      type: :boolean,
+      default: false,
+      access_behavior: :toggle,
+      group: 'operations'
+    },
+    'onboarding_session' => {
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      group: 'operations'
     }
   }.freeze
 
   TIER_DEFAULT_OVERRIDES = {
-    'free' => {},
+    'free' => {
+      'setup_included' => true # Free plans usually don't have setup
+    },
     'pro' => {
+      'setup_fee' => 499,
+      'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,
       'verified_product' => true,
@@ -224,6 +247,8 @@ module PlanFeatureCatalog
       'show_competitor_banners' => false
     },
     'enterprise' => {
+      'setup_fee' => 1499,
+      'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,
       'verified_product' => true,
