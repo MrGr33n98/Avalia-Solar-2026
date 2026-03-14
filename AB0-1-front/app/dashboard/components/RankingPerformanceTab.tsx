@@ -9,6 +9,14 @@ import MagicQuadrant from './MagicQuadrant';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Area, AreaChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from 'react';
 
 interface Props {
   company: Company;
@@ -17,10 +25,16 @@ interface Props {
 }
 
 export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId],
     queryFn: async () => {
-      return fetchApi<any>('/company_dashboard/analytics/ranking', { params: { company_id: company.id } });
+      const params: any = { company_id: company.id };
+      if (selectedCategoryId !== 'all') {
+        params.category_id = selectedCategoryId;
+      }
+      return fetchApi<any>('/company_dashboard/analytics/ranking', { params });
     },
     enabled: Boolean(company.id),
   });
@@ -227,11 +241,29 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         {/* 🎯 MAGIC QUADRANT - Responsive */}
         <Card className="lg:col-span-5 clay-precision bg-card dark:bg-[#002B4D] border-none overflow-hidden flex flex-col">
           <CardHeader className="p-6 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/5">
-            <CardTitle className="text-lg font-black text-foreground dark:text-white tracking-tight flex items-center gap-2">
-              <Target className="w-5 h-5 text-brand-cyan" />
-              Quadrante Estratégico
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground dark:text-white/40 font-medium">Market share relativo e autoridade de marca.</CardDescription>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg font-black text-foreground dark:text-white tracking-tight flex items-center gap-2">
+                  <Target className="w-5 h-5 text-brand-cyan" />
+                  Quadrante Estratégico
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground dark:text-white/40 font-medium">Posicionamento vs. Players</CardDescription>
+              </div>
+
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <SelectTrigger className="w-[130px] h-8 text-[9px] font-black uppercase tracking-wider bg-white/50 dark:bg-white/5 border-none shadow-sm rounded-lg focus:ring-1 focus:ring-brand-cyan/30">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-[10px] font-bold uppercase">Geral</SelectItem>
+                  {company.categories?.map((cat: any) => (
+                    <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-bold uppercase">
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent className="p-6 flex-1 flex flex-col justify-between">
             <div className="bg-black/[0.03] dark:bg-black/40 rounded-2xl border border-black/5 dark:border-white/5 p-2 shadow-inner">

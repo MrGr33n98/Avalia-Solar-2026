@@ -125,13 +125,14 @@ module Api
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
         begin
-          service = ::CompanyDashboard::RankingService.new(company: @company)
+          category_id = params[:category_id].presence
+          service = ::CompanyDashboard::RankingService.new(company: @company, category_id: category_id)
           data = service.ranking_data
 
           render json: {
             rank_position: data[:current_position],
             ranking_score: data[:percentile],
-            magic_quadrant_points: format_magic_quadrant(data[:category_rankings])
+            magic_quadrant_points: data[:magic_quadrant_competitors]
           }
         rescue StandardError => e
           log_analytics_error('ranking', e)
