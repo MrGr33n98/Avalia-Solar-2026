@@ -31,7 +31,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
   const ratingLabel = avgRating > 0 ? avgRating.toFixed(1) : null;
 
   return (
-    <Card className={cn('overflow-hidden clay-card border-clay-shadow-light hover:shadow-md smooth-transition h-full max-h-[320px]', className)}>
+    <Card className={cn('overflow-hidden clay-card border border-slate-200/90 dark:border-slate-700/70 shadow-sm hover:shadow-md smooth-transition h-full max-h-[320px]', className)}>
       <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-clay-lg">
         <div className="relative aspect-[3/1] bg-clay-bg overflow-hidden">
           <Image

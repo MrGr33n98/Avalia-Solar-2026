@@ -49,7 +49,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
         }}
       >
         <Card
-          className="h-full overflow-hidden border-slate-200 bg-white transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:border-blue-200 flex flex-col rounded-2xl"
+          className="h-full overflow-hidden border border-slate-200/90 dark:border-slate-700/70 bg-white dark:bg-slate-900 transition-all duration-300 shadow-sm hover:shadow-2xl hover:scale-[1.03] hover:border-blue-200 dark:hover:border-blue-500/40 flex flex-col rounded-2xl"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >

@@ -309,7 +309,7 @@ export default function CompanyCard({
     <Card
       ref={cardRef}
       className={cn(
-        'relative flex flex-col bg-clay-surface border border-clay-shadow-light smooth-transition clay-card hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+        'relative flex flex-col bg-clay-surface border border-slate-200/90 dark:border-slate-700/70 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
         'overflow-hidden h-full flex-1',
         compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
         className

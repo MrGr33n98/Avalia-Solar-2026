@@ -61,7 +61,7 @@ const CompanyLogoShape = (props: any) => {
 
   return (
     <g>
-      {/* Glow Effect for Current Company */}
+      {/* Efeito de destaque para a empresa atual */}
       {payload.is_current_company && (
         <circle 
           cx={cx} 
