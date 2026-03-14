@@ -89,6 +89,32 @@
 
     --radius: 0.75rem;
 
+    /* === AS-EDS CLAYMORPHISM TOKENS === */
+    --clay-duration: 300ms;
+    --clay-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    --clay-radius-sm: 0.5rem;
+    --clay-radius-md: 0.75rem;
+    --clay-radius-lg: 1rem;
+    --clay-radius-xl: 1.5rem;
+    
+    --clay-bg: 222 47% 98%;
+    --clay-surface: 0 0% 100%;
+    --clay-surface-raised: 0 0% 100%;
+    --clay-surface-sunken: 214 32% 91%;
+    
+    --clay-shadow-light: 0 0% 100%;
+    --clay-shadow-dark: 222 47% 90%;
+    
+    --clay-shadow-primary-light: 221 83% 70%;
+    --clay-shadow-primary-dark: 221 83% 40%;
+    
+    --clay-shadow-purple-light: 262 83% 70%;
+    --clay-shadow-purple-dark: 262 83% 40%;
+    
+    --clay-shadow-green-light: 142 71% 70%;
+    --clay-shadow-green-dark: 142 71% 30%;
+
     /* AS-EDS Specific Tokens */
     --as-slate-950: 222 47% 7%;
     --as-slate-900: 222 47% 11%;
@@ -126,6 +152,24 @@
     --border: 217 33% 17.5%;
     --input: 217 33% 17.5%;
     --ring: 224 76% 48%;
+
+    /* === AS-EDS CLAYMORPHISM DARK TOKENS === */
+    --clay-bg: 222 47% 4%;
+    --clay-surface: 222 47% 11%;
+    --clay-surface-raised: 222 47% 15%;
+    --clay-surface-sunken: 222 47% 5%;
+    
+    --clay-shadow-light: 222 47% 20%;
+    --clay-shadow-dark: 222 47% 2%;
+    
+    --clay-shadow-primary-light: 221 83% 40%;
+    --clay-shadow-primary-dark: 221 83% 10%;
+    
+    --clay-shadow-purple-light: 262 83% 40%;
+    --clay-shadow-purple-dark: 262 83% 10%;
+    
+    --clay-shadow-green-light: 142 71% 40%;
+    --clay-shadow-green-dark: 142 71% 10%;
 
     /* AS-EDS Specific Tokens */
     --as-slate-950: 222 47% 7%;
@@ -476,18 +520,18 @@
     }
   }
 
-  /* Dark mode clay disable */
-  .dark .clay-surface,
-  .dark .clay-card,
-  .dark .clay-btn-primary,
-  .dark .clay-btn-secondary,
-  .dark .clay-btn-accent,
-  .dark .clay-input,
-  .dark .clay-chip,
-  .dark .clay-panel,
-  .dark .clay-header {
-    box-shadow: none;
-    border: 1px solid hsl(var(--border));
+  /* Dark mode clay reinforcement */
+  .dark .clay-card {
+    box-shadow: 
+      4px 4px 12px hsl(var(--clay-shadow-dark)),
+      -2px -2px 8px hsl(var(--clay-shadow-light));
+    border: 1px solid hsla(var(--foreground), 0.05);
+  }
+
+  .dark .clay-convex {
+    box-shadow: 
+      8px 8px 24px hsl(var(--clay-shadow-dark)),
+      -4px -4px 16px hsl(var(--clay-shadow-light));
   }
 }
 /* TASK-027: Toast animations */

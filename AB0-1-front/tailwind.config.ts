@@ -123,11 +123,15 @@ const config: Config = {
             transform: 'scale(0.98)',
           },
         },
+        'shimmer': {
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'clay-press': 'clay-press var(--clay-duration) var(--clay-easing)',
+        'shimmer': 'shimmer 2s infinite',
       },
     },
   },

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, MapPin, Building2, Share2, Check, BadgeCheck, Info, Trophy, ShieldCheck } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
@@ -50,6 +51,7 @@ interface Props {
   rank?: number; // US07: Posição no ranking atual
   category?: string; // Optional category slug for tracking
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
+  index?: number;
 }
 
 const DICTIONARY = {
@@ -73,6 +75,7 @@ export default function CompanyCard({
   rank,
   category,
   onAnalyticsEvent,
+  index = 0,
 }: Props) {
   const router = useRouter();
   const company = rawCompany as ExtendedCompany;
@@ -306,25 +309,31 @@ export default function CompanyCard({
   };
 
   return (
-    <Card
-      ref={cardRef}
-      className={cn(
-        'relative flex flex-col bg-clay-surface border border-slate-200/90 dark:border-slate-700/70 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
-        'overflow-hidden h-full flex-1',
-        compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
-        className
-      )}
-      onClick={handleCardClick}
-      onKeyDown={handleKeyDown}
-      onFocus={() => setSelected(true)}
-      onBlur={() => setSelected(false)}
-      role="link"
-      tabIndex={0}
-      aria-label={`Visitar perfil ${name}`}
-      data-selected={selected}
-      data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
-      data-testid={`company-card-${id}`}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
+      whileHover={{ y: -5 }}
+      className={cn("h-full", className)}
     >
+      <Card
+        ref={cardRef}
+        className={cn(
+          'relative flex flex-col bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/80 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+          'overflow-hidden h-full flex-1',
+          compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
+        )}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setSelected(true)}
+        onBlur={() => setSelected(false)}
+        role="link"
+        tabIndex={0}
+        aria-label={`Visitar perfil ${name}`}
+        data-selected={selected}
+        data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
+        data-testid={`company-card-${id}`}
+      >
       {jsonLdStr && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
       )}
@@ -398,18 +407,13 @@ export default function CompanyCard({
                 className="object-contain object-center px-1"
                 data-testid="company-banner"
               />
-            ) : compact ? (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900" />
             ) : (
-              <Image
-                src="/images/banner-avalia-solar.png"
-                alt=""
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-contain object-center px-1"
-                data-testid="company-banner"
-              />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900" />
             )}
+
+            {/* Premium Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
           </div>
         </AspectRatio>
 
@@ -614,5 +618,6 @@ export default function CompanyCard({
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
