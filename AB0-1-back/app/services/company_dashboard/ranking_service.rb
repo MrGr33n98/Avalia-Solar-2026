@@ -252,11 +252,16 @@ module CompanyDashboard
 
     def criterion_title
       @criterion_title ||= begin
-        next nil if criterion_slug.blank?
+        if criterion_slug.blank?
+          nil
+        else
         category = Category.find_by(id: category_id)
-        next nil unless category
-
-        category.effective_rating_criteria.find { |c| c.slug == criterion_slug }&.title
+          if category.nil?
+            nil
+          else
+            category.effective_rating_criteria.find { |c| c.slug == criterion_slug }&.title
+          end
+        end
       end
     end
 
