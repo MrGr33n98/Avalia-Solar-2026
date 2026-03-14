@@ -14,7 +14,7 @@ import {
   Award,
   Target,
   BarChart3,
-  Building2,
+  Shield,
   Search,
   Zap,
   PieChart,
@@ -246,7 +246,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                    <Building2 className="h-5 w-5" />
+                    <Shield className="h-5 w-5" />
                   </div>
                   <div>
                     <h4 className="text-xs font-black uppercase tracking-wider text-foreground dark:text-white">Sua Operação</h4>

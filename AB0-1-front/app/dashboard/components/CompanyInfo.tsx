@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { 
-  Building2, 
   MapPin, 
   Phone, 
   Mail, 
@@ -227,7 +226,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Building2 className="h-6 w-6 text-blue-600" />
+            <Shield className="h-6 w-6 text-blue-600" />
             <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
               Institutional Vault
             </h2>

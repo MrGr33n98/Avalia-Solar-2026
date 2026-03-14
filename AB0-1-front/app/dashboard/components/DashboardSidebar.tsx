@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
-  Building2, 
+  Shield, 
   FileText, 
   BarChart3, 
   Settings,
@@ -23,7 +23,7 @@ const menuItems = [
     href: "/dashboard" 
   },
   { 
-    icon: Building2, 
+    icon: Shield, 
     label: "Empresas", 
     href: "/dashboard/companies" 
   },

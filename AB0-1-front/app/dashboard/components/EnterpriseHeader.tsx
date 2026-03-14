@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Download,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Shield
 } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
@@ -198,7 +199,7 @@ export default function EnterpriseHeader({
                   className="cursor-pointer hover:bg-white/10 text-brand-cyan text-xs"
                   onClick={() => router.push('/select-company')}
                 >
-                  <Building2 className="mr-2 h-3.5 w-3.5" />
+                  <Shield className="mr-2 h-3.5 w-3.5" />
                   Ver todas as empresas
                 </DropdownMenuItem>
               </DropdownMenuContent>
