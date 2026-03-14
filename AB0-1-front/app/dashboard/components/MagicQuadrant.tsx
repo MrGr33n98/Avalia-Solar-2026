@@ -121,7 +121,7 @@ const CompanyLogoShape = (props: any) => {
   );
 };
 
-export default function MagicQuadrant({ data, xAxisLabel = 'Market Vision', yAxisLabel = 'Execution Power', criterionTitle }: Props) {
+export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confiança', yAxisLabel = 'Poder de Execução', criterionTitle }: Props) {
   return (
     <div className="w-full h-[400px] relative select-none">
       <ResponsiveContainer width="100%" height="100%">
@@ -164,16 +164,16 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Market Vision', yAxi
 
       {/* Strategic Labels */}
       <div className="absolute top-6 left-12 opacity-30">
-        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Challengers</span>
+            <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Desafiantes</span>
       </div>
       <div className="absolute top-6 right-12">
-        <span className="text-[8px] font-black tracking-[0.3em] text-brand-blue uppercase shadow-brand-blue/50">Leaders</span>
+        <span className="text-[8px] font-black tracking-[0.3em] text-brand-blue uppercase shadow-brand-blue/50">Líderes</span>
       </div>
       <div className="absolute bottom-12 left-12 opacity-30">
-        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Niche Players</span>
+        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Nicho</span>
       </div>
       <div className="absolute bottom-12 right-12 opacity-30">
-        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Visionaries</span>
+        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Visionárias</span>
       </div>
     </div>
   );

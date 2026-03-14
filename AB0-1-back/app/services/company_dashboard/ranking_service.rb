@@ -270,8 +270,8 @@ module CompanyDashboard
         category_id: category_id,
         criterion_slug: criterion_slug,
         criterion_title: criterion_title,
-        x_axis_label: criterion_slug.present? ? "Trust Authority · #{criterion_title || criterion_slug.to_s.humanize}" : 'Trust Authority',
-        y_axis_label: 'Execution Power'
+        x_axis_label: criterion_slug.present? ? "Autoridade de Confiança · #{criterion_title || criterion_slug.to_s.humanize}" : 'Autoridade de Confiança',
+        y_axis_label: 'Poder de Execução'
       }
     end
   end

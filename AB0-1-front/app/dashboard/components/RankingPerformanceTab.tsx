@@ -135,13 +135,13 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
 
   return (
     <div className="space-y-12 max-w-[1400px] mx-auto pb-24">
-      {/* Strategic Header */}
+      {/* Cabeçalho estratégico */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="h-6 w-6 text-amber-500" />
             <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
-              Strategic Intelligence
+              Inteligência Estratégica
             </h2>
           </div>
           <p className="text-sm text-muted-foreground font-medium max-w-lg leading-relaxed">
@@ -151,15 +151,15 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         <div className="flex p-1 bg-slate-100 dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/5 items-center px-4 py-2 gap-3">
           <Award className="h-4 w-4 text-amber-500" />
           <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest whitespace-nowrap">
-            Current Tier: Top {data?.rank_position || 'N/A'} Leader
+            Nível Atual: Posição {data?.rank_position || 'N/D'} entre Líderes
           </span>
         </div>
       </div>
 
-      {/* KPI Matrix */}
+      {/* Matriz de KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
-          title="Ranking Velocity"
+          title="Velocidade no Ranking"
           value={data?.ranking_score ? Number(data.ranking_score).toFixed(1) : '92.4'}
           icon={Activity}
           change="+4.2%"
@@ -168,7 +168,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           delay={0.1}
         />
         <MetricCard 
-          title="Conversion Yield"
+          title="Eficiência de Conversão"
           value={stats?.leadsReceived || '0'}
           icon={Target}
           change="+12.5%"
@@ -177,16 +177,16 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           delay={0.2}
         />
         <MetricCard 
-          title={data?.quadrant_meta?.criterion_title || 'Vision Completeness'}
+          title={data?.quadrant_meta?.criterion_title || 'Completude de Visão'}
           value={Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 88).toFixed(1)}
           icon={ZapIcon}
-          change="Optimum"
+          change="Ótimo"
           changeType="neutral"
           color="brand-green"
           delay={0.3}
         />
         <MetricCard 
-          title="Market Visibility"
+          title="Visibilidade de Mercado"
           value={stats?.profileViews || '1.2k'}
           icon={Globe}
           change="+22.1%"
@@ -197,15 +197,15 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Growth Vector Visualization */}
+        {/* Visualização de Vetor de Crescimento */}
         <Card className="lg:col-span-8 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden shadow-2xl">
           <CardHeader className="p-8 border-b border-black/5 dark:border-white/5 flex flex-row items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
                 <BarChart3 className="w-6 h-6 text-brand-blue" />
-                Growth Velocity Vector
+                Vetor de Velocidade de Crescimento
               </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-widest mt-1">Multi-dimensional Performance Tracking</CardDescription>
+              <CardDescription className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-widest mt-1">Acompanhamento de Performance Multidimensional</CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
                 <div className="flex items-center gap-2">
@@ -264,7 +264,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     strokeWidth={4} 
                     fillOpacity={1} 
                     fill="url(#colorLeads)"
-                    name="Leads" 
+                    name="Oportunidades" 
                   />
                   <Area 
                     yAxisId="left" 
@@ -282,14 +282,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           </CardContent>
         </Card>
 
-        {/* Tactical Market Quadrant */}
+        {/* Quadrante Tático de Mercado */}
         <Card className="lg:col-span-4 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden shadow-2xl flex flex-col">
           <CardHeader className="p-8 border-b border-black/5 dark:border-white/5">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
                   <Target className="w-6 h-6 text-brand-green" />
-                  Market Quadrant
+                  Quadrante de Mercado
                 </CardTitle>
                 <div className="h-10 w-10 rounded-2xl bg-brand-green/10 flex items-center justify-center">
                    <Activity className="h-5 w-5 text-brand-green" />
@@ -300,10 +300,10 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
                   <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="SCOPE SELECTOR" />
+                    <SelectValue placeholder="SELETOR DE ESCOPO" />
                   </SelectTrigger>
                   <SelectContent className="clay-precision bg-card border-none rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-black uppercase">GLOBAL SCOPE</SelectItem>
+                    <SelectItem value="all" className="text-[10px] font-black uppercase">ESCOPO GLOBAL</SelectItem>
                     {company.categories?.map((cat: any) => (
                       <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-black uppercase">
                         {cat.name}
@@ -317,10 +317,10 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCriterionSlug} onValueChange={setSelectedCriterionSlug}>
                   <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="CRITERION" />
+                    <SelectValue placeholder="CRITÉRIO" />
                   </SelectTrigger>
                   <SelectContent className="clay-precision bg-card border-none rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-black uppercase">ALL CRITERIA</SelectItem>
+                    <SelectItem value="all" className="text-[10px] font-black uppercase">TODOS OS CRITÉRIOS</SelectItem>
                     {(criteriaQuery.data?.criteria || []).map((criterion: any) => (
                       <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-black uppercase">
                         {criterion.title}
@@ -346,7 +346,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     <Target className="h-10 w-10 text-white/10" />
                   </div>
                   <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] max-w-[180px]">
-                    No enough telemetry for quadrant mapping.
+                    Dados insuficientes para mapear o quadrante.
                   </p>
                 </div>
               )}
@@ -358,11 +358,11 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                   <ShieldCheck className="h-5 w-5 text-indigo-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Optimization Intelligence</p>
+                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Inteligência de Otimização</p>
                   <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                     {selectedCriterionSlug !== 'all'
-                      ? `Your quadrant is now weighted by ${data?.quadrant_meta?.criterion_title || 'the selected criterion'} for this category, balanced with trust authority and execution signals.`
-                      : 'Your quadrant is weighted by trust authority signals (verification, trust score, reviews, badges, social proof) and execution signals (engagement, CTA efficiency, leads and operational maturity).'}
+                      ? `Seu quadrante agora é ponderado por ${data?.quadrant_meta?.criterion_title || 'o critério selecionado'} para esta categoria, equilibrado com sinais de autoridade de confiança e execução.`
+                      : 'Seu quadrante é ponderado por sinais de autoridade de confiança (verificação, trust score, avaliações, selos, prova social) e sinais de execução (engajamento, eficiência de CTA, oportunidades e maturidade operacional).'}
                   </p>
                 </div>
               </div>
