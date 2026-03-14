@@ -167,10 +167,6 @@ export default function MetricCard({
               ))}
             </div>
           )}
-                />
-              ))}
-            </div>
-          )}
           
           {/* Enhanced Glow Effect */}
           <div className={cn(
