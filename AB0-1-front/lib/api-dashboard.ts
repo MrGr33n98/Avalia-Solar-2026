@@ -110,26 +110,26 @@ export function transformToDashboardStats(
       value: stats.companies_count,
       change: previousStats 
         ? calculateChange(stats.companies_count, previousStats.companies_count)
-        : 12.5, // Mock
+        : 0,
       label: 'vs mês anterior',
     },
     active_proposals: {
       value: stats.leads_count,
       change: previousStats
         ? calculateChange(stats.leads_count, previousStats.leads_count)
-        : 8.2, // Mock
+        : 0,
       label: 'vs mês anterior',
     },
     conversion_rate: {
       value: stats.leads_count > 0 
         ? (stats.reviews_count / stats.leads_count) * 100 
         : 0,
-      change: 4.3, // Mock - needs backend calculation
+      change: 0,
       label: 'vs mês anterior',
     },
     total_revenue: {
       value: stats.monthly_revenue,
-      change: 15.7, // Mock - needs backend calculation
+      change: 0,
       label: 'vs mês anterior',
     },
   };

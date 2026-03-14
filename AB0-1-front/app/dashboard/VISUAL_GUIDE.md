@@ -7,7 +7,7 @@ cd AB0-1-front
 npm run dev
 ```
 
-Acesse: **http://localhost:3000/dashboard** → redireciona para → **/dashboard/overview**
+Acesse: **http://localhost:3000/dashboard** → redireciona para → **/dashboard**
 
 ---
 

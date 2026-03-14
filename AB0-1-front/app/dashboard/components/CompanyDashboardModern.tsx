@@ -34,28 +34,24 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
     {
       title: 'Total de Visualizações',
       value: (stats.profile_views || 0).toLocaleString('pt-BR'),
-      change: { value: 12.5, label: 'vs mês anterior' },
       icon: Eye,
       iconColor: 'blue' as const,
     },
     {
       title: 'Avaliações',
       value: (stats.total_reviews || 0).toLocaleString('pt-BR'),
-      change: { value: 8.2, label: 'vs mês anterior' },
       icon: Star,
       iconColor: 'yellow' as const,
     },
     {
       title: 'Taxa de Conversão',
       value: `${(stats.conversion_rate || 0).toFixed(1)}%`,
-      change: { value: 4.3, label: 'vs mês anterior' },
       icon: TrendingUp,
       iconColor: 'green' as const,
     },
     {
       title: 'Leads Recebidos',
       value: (stats.leads_count || 0).toLocaleString('pt-BR'),
-      change: { value: 15.7, label: 'vs mês anterior' },
       icon: Users,
       iconColor: 'purple' as const,
     },

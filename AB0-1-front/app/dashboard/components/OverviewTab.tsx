@@ -150,32 +150,24 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       title: 'Total de Visualizações',
       value: stats?.profileViews || 0,
       icon: Eye,
-      change: '+12.5%',
-      changeType: 'positive' as const,
       color: 'blue'
     },
     {
       title: 'Avaliações',
       value: stats?.reviewsCount || 0,
       icon: Star,
-      change: '+8.2%',
-      changeType: 'positive' as const,
       color: 'yellow'
     },
     {
       title: 'Taxa de Conversão',
       value: `${(stats?.conversionRate || 0).toFixed(1)}%`,
       icon: TrendingUp,
-      change: '+4.3%',
-      changeType: 'positive' as const,
       color: 'green'
     },
     {
       title: 'Leads Recebidos',
       value: stats?.leadsReceived || 0,
       icon: Users,
-      change: '+15.7%',
-      changeType: 'positive' as const,
       color: 'purple'
     }
   ];

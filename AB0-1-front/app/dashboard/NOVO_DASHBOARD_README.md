@@ -45,17 +45,17 @@ app/dashboard/
 
 ### 1. Acessar o Novo Dashboard
 
-O dashboard principal agora redireciona automaticamente para `/dashboard/overview`:
+O dashboard principal agora redireciona automaticamente para `/dashboard`:
 
 ```tsx
 // app/dashboard/page.tsx
 // Após autenticação, redireciona para:
-router.replace('/dashboard/overview');
+router.replace('/dashboard');
 ```
 
 ### 2. Personalizar Métricas
 
-Edite o arquivo `app/dashboard/overview/page.tsx` para conectar com suas APIs:
+Edite o arquivo `app/dashboard/page.tsx` para conectar com suas APIs:
 
 ```tsx
 const stats = [

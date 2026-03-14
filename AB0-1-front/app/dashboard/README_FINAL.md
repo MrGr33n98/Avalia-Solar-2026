@@ -21,7 +21,7 @@ Redesenhar o dashboard principal (`/dashboard`) seguindo as referências moderna
 
 ### ✅ Páginas
 1. **`/dashboard/page.tsx`** - Atualizado para redirecionar para `/overview`
-2. **`/dashboard/overview/page.tsx`** - Nova página principal do dashboard
+2. **`/dashboard/page.tsx`** - Nova página principal do dashboard
 
 ### ✅ Documentação (4 arquivos)
 1. **NOVO_DASHBOARD_README.md** - Guia completo de uso
@@ -58,13 +58,13 @@ npm run dev
 ```
 http://localhost:3000/dashboard
 ```
-→ Redireciona automaticamente para → `/dashboard/overview`
+→ Redireciona automaticamente para → `/dashboard`
 
 ### 3. Fluxo de autenticação:
 ```
 /dashboard → verifica login
            → verifica empresa ativa
-           → /dashboard/overview (novo dashboard)
+           → /dashboard (novo dashboard)
 ```
 
 ---
@@ -72,7 +72,7 @@ http://localhost:3000/dashboard
 ## 📊 Estrutura do Dashboard
 
 ```
-Dashboard Overview (/dashboard/overview)
+Dashboard Overview (/dashboard)
 ├── Header (busca, notificações, perfil)
 ├── Stats Grid (4 cards de métricas)
 │   ├── Total de Empresas (blue)
@@ -168,7 +168,7 @@ const { data: chartData } = useQuery('chart-data', fetchChartData);
 
 ### Páginas:
 ```
-✅ app/dashboard/overview/page.tsx (novo)
+✅ app/dashboard/page.tsx (novo)
 📝 app/dashboard/page.tsx (modificado)
 ```
 

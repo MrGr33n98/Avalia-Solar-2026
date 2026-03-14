@@ -164,7 +164,7 @@ rails db:seed  # Popular com dados de exemplo
 
 ### Alterar cores dos cards:
 ```tsx
-// app/dashboard/overview/page.tsx
+// app/dashboard/page.tsx
 <StatsCard
   iconColor="blue"  // blue|purple|green|cyan|yellow
 />

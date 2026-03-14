@@ -27,7 +27,7 @@ Integrar o novo dashboard com APIs reais do backend, substituindo dados mock por
 - ✅ Transformação de dados do backend para formato do dashboard
 - ✅ Suporte a múltiplas métricas e períodos
 
-#### 2. **Página do dashboard integrada** (`app/dashboard/overview/page.tsx`)
+#### 2. **Página do dashboard integrada** (`app/dashboard/page.tsx`)
 ```typescript
 // Hooks React Query implementados:
 - useQuery('dashboard-stats')      // Refetch a cada 1 minuto
@@ -156,7 +156,7 @@ npm run dev
 
 ### 3. **Acessar o dashboard:**
 ```
-http://localhost:3000/dashboard/overview
+http://localhost:3000/dashboard
 ```
 
 ### 4. **Verificar API diretamente:**
@@ -302,7 +302,7 @@ end
 ### Frontend (3 arquivos):
 ```
 ✅ lib/api-dashboard.ts                    (criado)
-📝 app/dashboard/overview/page.tsx          (modificado)
+📝 app/dashboard/page.tsx          (modificado)
 📝 app/dashboard/page.tsx                   (modificado anteriormente)
 ```
 
