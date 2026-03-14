@@ -78,12 +78,12 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
       {/* Strategic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-emerald-500 mb-1">
+          <div className="flex items-center gap-2 text-brand-green mb-1">
             <Globe className="h-4 w-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Trust Network Distribution</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Authority <span className="text-emerald-500">Node</span>
+            Authority <span className="text-brand-green">Node</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Distribua sua prova social e reputação certificada em tempo real para qualquer endpoint externo através de nosso protocolo de widget assíncrono.
@@ -96,7 +96,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
            </div>
            <div>
               <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">API Protocol</p>
-              <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] px-3">ACTIVE v2.4</Badge>
+              <Badge className="bg-brand-green/10 text-brand-green border-none font-black text-[9px] px-3">ACTIVE v2.4</Badge>
            </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                     className={cn(
                       "group h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
                       theme === 'dark' 
-                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
+                        ? "bg-brand-blue text-white border-brand-blue shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
                         : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
                     )}
                   >
@@ -227,7 +227,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
               <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
                 <div className="flex items-center justify-between">
                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 pl-1">Pipeline Snippet (HTML/JS)</Label>
-                   <Badge variant="outline" className="border-emerald-500/20 text-emerald-500 text-[8px] font-black">X64 ENCRYPTED</Badge>
+                   <Badge variant="outline" className="border-emerald-500/20 text-brand-green text-[8px] font-black">X64 ENCRYPTED</Badge>
                 </div>
                 <div className="relative group/snippet overflow-hidden">
                   <pre className="p-6 bg-black/50 text-emerald-400 rounded-3xl text-[11px] overflow-x-auto border border-white/5 leading-relaxed font-mono shadow-inner scrollbar-hide">
@@ -236,7 +236,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                   <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black/60 to-transparent pointer-events-none group-hover/snippet:opacity-0 transition-opacity" />
                   <Button
                     size="icon"
-                    className="absolute top-4 right-4 h-12 w-12 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-90"
+                    className="absolute top-4 right-4 h-12 w-12 bg-brand-green hover:bg-emerald-400 text-white rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-90"
                     onClick={handleCopy}
                   >
                     {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
@@ -258,14 +258,14 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
           <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border border-white/5 rounded-[3.5rem] overflow-hidden shadow-2xl sticky top-8">
             <div className="p-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                 <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                    <Smartphone className="h-5 w-5 text-emerald-500" />
+                 <div className="h-10 w-10 rounded-2xl bg-brand-green/10 flex items-center justify-center border border-emerald-500/20">
+                    <Smartphone className="h-5 w-5 text-brand-green" />
                  </div>
                  <span className="text-sm font-black text-white uppercase tracking-tighter">Live Monitor</span>
               </div>
               <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                 <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Active Link</span>
+                 <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
+                 <span className="text-[10px] font-black text-brand-green uppercase tracking-widest">Active Link</span>
               </div>
             </div>
             
@@ -291,7 +291,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
             </div>
             
             <div className="p-8 bg-black/40 border-t border-white/5">
-                <Button className="w-full h-14 bg-white text-blue-600 font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] hover:bg-white/90 active:scale-95 shadow-2xl">
+                <Button className="w-full h-14 bg-white text-brand-blue font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] hover:bg-white/90 active:scale-95 shadow-2xl">
                    Simular Integração
                    <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -312,7 +312,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
              <div className="space-y-4">
                 <div className="flex justify-between items-center text-[10px] font-black text-white/40 uppercase tracking-widest">
                    <span>Resonance Depth</span>
-                   <span className="text-emerald-500">Peak Performance</span>
+                   <span className="text-brand-green">Peak Performance</span>
                 </div>
                 <Progress value={85} className="h-1.5 bg-white/5" />
              </div>

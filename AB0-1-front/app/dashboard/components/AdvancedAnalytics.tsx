@@ -251,9 +251,9 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             <div className="flex items-center gap-3">
               <div className={cn(
                 'p-2 rounded-lg',
-                isDark ? 'bg-blue-500/10' : 'bg-blue-50'
+                isDark ? 'bg-brand-blue/10' : 'bg-blue-50'
               )}>
-                <currentConfig.icon className="h-[18px] w-[18px] text-blue-500" />
+                <currentConfig.icon className="h-[18px] w-[18px] text-brand-blue" />
               </div>
               <div>
                 <CardTitle className={cn(
@@ -394,10 +394,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             {/* Conversion Rate Insight */}
             <div className={cn(
               'mt-4 p-3 rounded-lg',
-              isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'
+              isDark ? 'bg-brand-green/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'
             )}>
               <div className="flex items-start gap-2">
-                <TrendingUp className="h-[18px] w-[18px] text-emerald-500 mt-0.5" />
+                <TrendingUp className="h-[18px] w-[18px] text-brand-green mt-0.5" />
                 <div>
                   <p className={cn(
                     'text-xs font-medium',
@@ -407,7 +407,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                   </p>
                   <p className={cn(
                     'text-xs mt-1',
-                    isDark ? 'text-emerald-500/70' : 'text-emerald-600'
+                    isDark ? 'text-brand-green/70' : 'text-emerald-600'
                   )}>
                     Acompanhe a eficácia do seu perfil
                   </p>
@@ -486,10 +486,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             {/* Traffic Insight */}
             <div className={cn(
               'mt-4 p-3 rounded-lg',
-              isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'
+              isDark ? 'bg-brand-blue/10 border border-brand-blue/20' : 'bg-blue-50 border border-blue-200'
             )}>
               <div className="flex items-start gap-2">
-                <Users className="h-[18px] w-[18px] text-blue-500 mt-0.5" />
+                <Users className="h-[18px] w-[18px] text-brand-blue mt-0.5" />
                 <div>
                   <p className={cn(
                     'text-xs font-medium',
@@ -499,7 +499,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                   </p>
                   <p className={cn(
                     'text-xs mt-1',
-                    isDark ? 'text-blue-500/70' : 'text-blue-600'
+                    isDark ? 'text-brand-blue/70' : 'text-brand-blue'
                   )}>
                     Dados analíticos em processo de captura (Beta)
                   </p>

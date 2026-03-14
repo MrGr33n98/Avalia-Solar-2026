@@ -127,13 +127,13 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
           <TabsList className="bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl h-12 border border-slate-200 dark:border-white/5 backdrop-blur-sm self-start">
             <TabsTrigger 
               value="my-leads" 
-              className="rounded-lg px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 data-[state=active]:text-blue-600 dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="rounded-lg px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-brand-blue data-[state=active]:text-brand-blue dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               Meus Leads ({leads.length})
             </TabsTrigger>
             <TabsTrigger 
               value="market" 
-              className="rounded-lg px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 data-[state=active]:text-blue-600 dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="rounded-lg px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-brand-blue data-[state=active]:text-brand-blue dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               Inteligência de Mercado
             </TabsTrigger>
@@ -165,40 +165,40 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white dark:bg-slate-900/95 p-8 md:p-12 rounded-[2rem] shadow-2xl border border-blue-500/20 text-center max-w-xl backdrop-blur-xl relative overflow-hidden"
+                    className="bg-white dark:bg-slate-900/95 p-8 md:p-12 rounded-[2rem] shadow-2xl border border-brand-blue/20 text-center max-w-xl backdrop-blur-xl relative overflow-hidden"
                   >
                     {/* Background Decorative Element */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 blur-[60px] rounded-full" />
-                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-600/10 blur-[60px] rounded-full" />
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-blue/10 blur-[60px] rounded-full" />
+                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-brand-blue/10 blur-[60px] rounded-full" />
                     
                     <div className="relative">
-                      <div className="w-20 h-20 rounded-3xl bg-blue-600/10 flex items-center justify-center mx-auto mb-6 border border-blue-600/20 shadow-inner">
-                        <Lock className="h-10 w-10 text-blue-600" />
+                      <div className="w-20 h-20 rounded-3xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-6 border border-brand-blue/20 shadow-inner">
+                        <Lock className="h-10 w-10 text-brand-blue" />
                       </div>
                       <h3 className="text-2xl font-black uppercase tracking-tighter mb-4 text-foreground dark:text-white">
                         Acesso Elite ao Mercado
                       </h3>
                       <p className="text-base text-muted-foreground dark:text-slate-400 mb-10 font-medium leading-relaxed">
-                        Desbloqueie agora a visibilidade total da categoria <span className="text-blue-600 font-black">{marketData?.category_name}</span>. 
+                        Desbloqueie agora a visibilidade total da categoria <span className="text-brand-blue font-black">{marketData?.category_name}</span>. 
                         Capture leads qualificados antes que eles cheguem aos seus concorrentes com nossa inteligência em tempo real.
                       </p>
                       
                       <div className="grid grid-cols-2 gap-4 mb-10">
-                        <div className="p-4 rounded-2xl bg-blue-600/5 border border-blue-600/10 text-left">
-                          <Zap className="h-5 w-5 text-blue-600 mb-2" />
-                          <p className="text-[10px] font-black uppercase text-blue-600/80">Velocidade Máxima</p>
+                        <div className="p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/10 text-left">
+                          <Zap className="h-5 w-5 text-brand-blue mb-2" />
+                          <p className="text-[10px] font-black uppercase text-brand-blue/80">Velocidade Máxima</p>
                           <p className="text-[11px] font-bold text-slate-500">Notificações Instantâneas</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-blue-600/5 border border-blue-600/10 text-left">
-                          <Target className="h-5 w-5 text-blue-600 mb-2" />
-                          <p className="text-[10px] font-black uppercase text-blue-600/80">Alta Conversão</p>
+                        <div className="p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/10 text-left">
+                          <Target className="h-5 w-5 text-brand-blue mb-2" />
+                          <p className="text-[10px] font-black uppercase text-brand-blue/80">Alta Conversão</p>
                           <p className="text-[11px] font-bold text-slate-500">Leads Enriquecidos</p>
                         </div>
                       </div>
 
                       <Button 
                         onClick={() => window.location.href='/pricing'} 
-                        className="w-full rounded-2xl font-black uppercase tracking-widest text-xs bg-blue-600 hover:bg-blue-700 text-white h-16 shadow-xl shadow-blue-600/20 group transition-all"
+                        className="w-full rounded-2xl font-black uppercase tracking-widest text-xs bg-brand-blue hover:bg-blue-700 text-white h-16 shadow-xl shadow-brand-blue/20 group transition-all"
                       >
                         Upgrade para Plano Enterprise
                         <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -231,7 +231,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.4 }}
     >
-      <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none group overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1">
+      <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none group overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-brand-blue/5 hover:-translate-y-1">
         <CardContent className="p-6 relative">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="flex-1 space-y-6">
@@ -240,7 +240,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                   "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border",
                   isOpportunity 
                     ? "bg-amber-500/10 text-amber-500 border-amber-500/20" 
-                    : "bg-blue-600/10 text-blue-600 border-blue-600/20"
+                    : "bg-brand-blue/10 text-brand-blue border-brand-blue/20"
                 )}>
                   {isOpportunity ? 'Oportunidade Blind' : 'Lead Direto'}
                 </div>
@@ -258,7 +258,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Localização</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <MapPin className="h-4 w-4 text-blue-600/50" />
+                    <MapPin className="h-4 w-4 text-brand-blue/50" />
                     <span>{lead.city} - {lead.state}</span>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">E-mail</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <Mail className="h-4 w-4 text-blue-600/50" />
+                    <Mail className="h-4 w-4 text-brand-blue/50" />
                     <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : lead.email}</span>
                   </div>
                 </div>
@@ -274,21 +274,21 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Telefone</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <Phone className="h-4 w-4 text-blue-600/50" />
+                    <Phone className="h-4 w-4 text-brand-blue/50" />
                     <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : lead.phone}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Segmento</p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70 text-blue-500">
+                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70 text-brand-blue">
                     <Globe className="h-4 w-4 opacity-50" />
                     <span className="truncate">{lead.product_vertical || 'Energia Solar'}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 relative group-hover:border-blue-500/10 transition-colors">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 relative group-hover:border-brand-blue/10 transition-colors">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic pr-10">
                   &quot;{lead.message || 'Interesse em cotação de energia solar para residência/empresa.'}&quot;
                 </p>
@@ -302,7 +302,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                   <Button variant="outline" className="flex-1 lg:flex-none h-12 rounded-xl border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                     <Calendar className="h-3.5 w-3.5 mr-2" /> Agendar
                   </Button>
-                  <Button className="flex-1 lg:flex-none h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/10">
+                  <Button className="flex-1 lg:flex-none h-12 rounded-xl bg-brand-blue hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-blue/10">
                     <MessageSquare className="h-3.5 w-3.5 mr-2" /> Contato Direto
                   </Button>
                 </>
@@ -320,7 +320,7 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
           </div>
 
           <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-             <ExternalLink className="h-4 w-4 text-blue-500/20" />
+             <ExternalLink className="h-4 w-4 text-brand-blue/20" />
           </div>
         </CardContent>
       </Card>

@@ -118,12 +118,12 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
       {/* Strategic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-blue-500 mb-1">
+          <div className="flex items-center gap-2 text-brand-blue mb-1">
             <Activity className="h-4 w-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Competitor Intelligence</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white">
-            Benchmark <span className="text-blue-500">Analítico</span>
+            Benchmark <span className="text-brand-blue">Analítico</span>
           </h2>
           <p className="text-sm text-white/40 max-w-md font-medium leading-relaxed">
             Monitoramento em tempo real do ecossistema competitivo e posicionamento estratégico de mercado.
@@ -134,7 +134,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
           <Button variant="outline" className="h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px]">
             Exportar Relatório
           </Button>
-          <Button className="h-11 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+          <Button className="h-11 bg-brand-blue hover:bg-brand-blue text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(37,99,235,0.3)]">
             Ação Proativa
           </Button>
         </div>
@@ -189,7 +189,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                 <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Espectro de Liderança</CardTitle>
                 <CardDescription className="text-white/40 font-medium">Top 4 players monitorados no setor</CardDescription>
               </div>
-              <Badge className="bg-blue-600/20 text-blue-400 border-none hover:bg-blue-600/30 font-black tracking-widest text-[10px] py-1 px-3">
+              <Badge className="bg-brand-blue/20 text-blue-400 border-none hover:bg-brand-blue/30 font-black tracking-widest text-[10px] py-1 px-3">
                 LIVE UPDATES
               </Badge>
             </div>
@@ -215,7 +215,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                         variants={itemVariants}
                         className={cn(
                           "group transition-all hover:bg-white/[0.03]",
-                          isYou && "bg-blue-600/[0.03]"
+                          isYou && "bg-brand-blue/[0.03]"
                         )}
                       >
                         <td className="px-8 py-6">
@@ -236,7 +236,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-white text-sm">{company.name}</span>
                                 {isYou && (
-                                  <Badge className="bg-blue-600 text-[10px] font-black py-0 px-2">VOCÊ</Badge>
+                                  <Badge className="bg-brand-blue text-[10px] font-black py-0 px-2">VOCÊ</Badge>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-1">
@@ -250,7 +250,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                           <div className="space-y-1">
                             <span className="text-sm font-black text-white font-mono">{company.marketShare}%</span>
                             <div className="w-20 mx-auto">
-                               <Progress value={company.marketShare} className="h-1 bg-white/5" indicatorClassName="bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                               <Progress value={company.marketShare} className="h-1 bg-white/5" indicatorClassName="bg-brand-blue shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                             </div>
                           </div>
                         </td>
@@ -270,7 +270,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                                {[...Array(5)].map((_, i) => (
                                  <div key={i} className={cn(
                                    "h-1 w-2 rounded-full",
-                                   i < Math.floor(company.responseRate / 20) ? "bg-emerald-500" : "bg-white/10"
+                                   i < Math.floor(company.responseRate / 20) ? "bg-brand-green" : "bg-white/10"
                                  )} />
                                ))}
                              </div>
@@ -281,11 +281,11 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                             {index === 0 ? (
                               <Badge className="bg-amber-500/10 text-amber-500 border-none font-black text-[9px] tracking-widest px-2">LÍDER DE MERCADO</Badge>
                             ) : company.featured ? (
-                              <Badge className="bg-blue-500/10 text-blue-500 border-none font-black text-[9px] tracking-widest px-2">VISIONÁRIO</Badge>
+                              <Badge className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] tracking-widest px-2">VISIONÁRIO</Badge>
                             ) : (
                               <Badge className="bg-white/5 text-white/30 border-none font-black text-[9px] tracking-widest px-2">DESAFIANTE</Badge>
                             )}
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-brand-green">
                                <TrendingUp className="h-3 w-3" />
                                <span className="font-mono">+1.2%</span>
                             </div>
@@ -308,7 +308,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
         {/* Tactical Recommendation Column */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="clay-precision border-none rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-purple-600/30 backdrop-blur-xl p-8 relative overflow-hidden group shadow-xl">
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
+            <div className="absolute -right-4 -top-4 w-32 h-32 bg-brand-blue/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
             <div className="relative z-10 space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
                 <ShieldCheck className="h-6 w-6 text-white" />
@@ -320,7 +320,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                   Você responde 11% mais rápido que o líder de mercado.
                 </p>
               </div>
-              <Button className="w-full h-11 bg-white text-blue-600 font-black uppercase tracking-widest text-[10px] hover:bg-white/90">
+              <Button className="w-full h-11 bg-white text-brand-blue font-black uppercase tracking-widest text-[10px] hover:bg-white/90">
                 Ver Insights IA
               </Button>
             </div>
@@ -344,9 +344,9 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs font-bold text-white">
                   <span>Sentiment Velocity</span>
-                  <span className="text-emerald-500">Critical</span>
+                  <span className="text-brand-green">Critical</span>
                 </div>
-                <Progress value={92} className="h-1.5 bg-white/5" indicatorClassName="bg-emerald-500" />
+                <Progress value={92} className="h-1.5 bg-white/5" indicatorClassName="bg-brand-green" />
                 <p className="text-[10px] text-white/40 font-medium">Sua tendência de NPS está 12% superior ao setor.</p>
               </div>
               

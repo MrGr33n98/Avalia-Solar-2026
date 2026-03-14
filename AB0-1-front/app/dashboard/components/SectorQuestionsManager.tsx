@@ -169,12 +169,12 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
       {/* Strategic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-blue-500 mb-1">
+          <div className="flex items-center gap-2 text-brand-blue mb-1">
             <BrainCircuit className="h-4 w-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Authority Intelligence</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Technical <span className="text-blue-500">Authority Protocol</span>
+            Technical <span className="text-brand-blue">Authority Protocol</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Configure as dimensões de avaliação técnica que definem sua autoridade no setor solar e geram diferenciais competitivos.
@@ -185,7 +185,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
           <Button 
             onClick={openCreate} 
             disabled={!canCreate || loading}
-            className="h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/20 group transition-all active:scale-95"
+            className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-brand-blue text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 group transition-all active:scale-95"
           >
             <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
             Novo Protocolo
@@ -252,7 +252,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
             <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pipeline de Dimensões</CardTitle>
             <CardDescription className="text-white/40 font-medium">Ordem de processamento nas avaliações de clientes</CardDescription>
           </div>
-          <Badge className="bg-blue-600/10 text-blue-400 border-none font-black text-[9px] tracking-[0.2em] px-4 h-7">
+          <Badge className="bg-brand-blue/10 text-blue-400 border-none font-black text-[9px] tracking-[0.2em] px-4 h-7">
             SYSTEM READY
           </Badge>
         </CardHeader>
@@ -274,14 +274,14 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                     className={cn(
                       "group flex items-center justify-between gap-6 p-6 rounded-[2rem] border transition-all duration-300",
                       question.enabled 
-                        ? "bg-white/[0.02] border-white/5 hover:border-blue-500/30 hover:bg-blue-500/[0.02]" 
+                        ? "bg-white/[0.02] border-white/5 hover:border-brand-blue/30 hover:bg-brand-blue/[0.02]" 
                         : "bg-black/20 border-white/5 opacity-60"
                     )}
                   >
                     <div className="flex items-center gap-6 flex-1 min-w-0">
                       <div className="flex flex-col items-center gap-1 min-w-[32px]">
                          <span className="text-[10px] font-black text-white/20 font-mono">STEP</span>
-                         <span className="text-lg font-black italic text-blue-500">{String(question.order).padStart(2, '0')}</span>
+                         <span className="text-lg font-black italic text-brand-blue">{String(question.order).padStart(2, '0')}</span>
                       </div>
                       <div className="h-10 w-[1px] bg-white/10" />
                       <div className="flex-1 min-w-0">
@@ -290,11 +290,11 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                         </p>
                         <div className="flex items-center gap-4 mt-1">
                            <div className="flex items-center gap-1.5">
-                              <TrendingUp className="h-3 w-3 text-emerald-500" />
+                              <TrendingUp className="h-3 w-3 text-brand-green" />
                               <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Peso do Ativo: {question.weight}x</span>
                            </div>
                            {question.enabled && (
-                             <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[8px] h-4">OPERATIONAL</Badge>
+                             <Badge className="bg-brand-green/10 text-brand-green border-none font-black text-[8px] h-4">OPERATIONAL</Badge>
                            )}
                         </div>
                       </div>
@@ -306,7 +306,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                          <Switch
                           checked={question.enabled}
                           onCheckedChange={(checked) => void toggleEnabled(question, checked)}
-                          className="data-[state=checked]:bg-emerald-500"
+                          className="data-[state=checked]:bg-brand-green"
                         />
                       </div>
                       
@@ -347,8 +347,8 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
         <DialogContent className="clay-precision bg-[#001D33] border-none rounded-[3rem] p-12 max-w-xl shadow-[0_0_100px_rgba(37,99,235,0.2)]">
           <DialogHeader className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-               <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                  <Terminal className="h-6 w-6 text-blue-500" />
+               <div className="h-14 w-14 rounded-2xl bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20">
+                  <Terminal className="h-6 w-6 text-brand-blue" />
                </div>
                <div>
                  <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter">
@@ -368,7 +368,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                 placeholder="Ex: Qual o nível de precisão técnica da instalação?" 
                 value={form.prompt}
                 onChange={e => setForm({...form, prompt: e.target.value})}
-                className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-bold placeholder:text-white/10 focus:ring-blue-500/30"
+                className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-bold placeholder:text-white/10 focus:ring-brand-blue/30"
               />
             </div>
 
@@ -380,7 +380,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                     type="number" 
                     value={form.weight}
                     onChange={e => setForm({...form, weight: Number(e.target.value)})}
-                    className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-blue-500/30 font-mono"
+                    className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-brand-blue/30 font-mono"
                    />
                 </div>
               </div>
@@ -390,7 +390,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                   type="number" 
                   value={form.order}
                   onChange={e => setForm({...form, order: Number(e.target.value)})}
-                  className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-blue-500/30 font-mono"
+                  className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-sm font-black focus:ring-brand-blue/30 font-mono"
                 />
               </div>
             </div>
@@ -403,7 +403,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
             <Button 
               onClick={saveQuestion} 
               disabled={!form.prompt}
-              className="h-14 w-full sm:flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20 transition-all active:scale-95"
+              className="h-14 w-full sm:flex-1 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-brand-blue/20 transition-all active:scale-95"
             >
               Confirm Deployment
             </Button>

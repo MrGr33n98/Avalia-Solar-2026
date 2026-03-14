@@ -28,7 +28,7 @@ interface DataItem {
 }
 
 const statusConfig = {
-  pending: { label: "Pendente", class: "bg-yellow-500/10 text-yellow-600" },
+  pending: { label: "Pendente", class: "bg-brand-yellow/10 text-yellow-600" },
   approved: { label: "Aprovado", class: "bg-accent/10 text-accent" },
   rejected: { label: "Rejeitado", class: "bg-destructive/10 text-destructive" },
 };

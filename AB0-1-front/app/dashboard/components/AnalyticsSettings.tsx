@@ -125,12 +125,12 @@ export default function AnalyticsSettings({ companyId }: Props) {
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-blue-500 mb-1">
+          <div className="flex items-center gap-2 text-brand-blue mb-1">
             <Database className="h-4 w-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Market Authority Data</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Public <span className="text-blue-500">Claims Protocol</span>
+            Public <span className="text-brand-blue">Claims Protocol</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Gerencie o pipeline de evidências técnicas e metadados públicos que sustentam sua autoridade de mercado.
@@ -140,7 +140,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/20 group transition-all"
+          className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-brand-blue text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 group transition-all"
         >
           {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {saving ? 'PROCESSANDO...' : 'SYNC ALL CLAIMS'}
@@ -159,7 +159,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={cn(
                   "flex items-center justify-between p-6 rounded-3xl border transition-all duration-300",
-                  settings.collection_modes.automatic_tracking ? "bg-blue-600/10 border-blue-500/30" : "bg-white/[0.02] border-white/5 opacity-60"
+                  settings.collection_modes.automatic_tracking ? "bg-brand-blue/10 border-brand-blue/30" : "bg-white/[0.02] border-white/5 opacity-60"
                 )}>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                         collection_modes: { ...settings.collection_modes, automatic_tracking: v },
                       })
                     }
-                    className="data-[state=checked]:bg-blue-500"
+                    className="data-[state=checked]:bg-brand-blue"
                   />
                 </div>
 
@@ -199,7 +199,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                         collection_modes: { ...settings.collection_modes, declared_input: v },
                       })
                     }
-                    className="data-[state=checked]:bg-emerald-500"
+                    className="data-[state=checked]:bg-brand-green"
                   />
                 </div>
               </div>
@@ -272,9 +272,9 @@ export default function AnalyticsSettings({ companyId }: Props) {
                 <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5">
                   <div className="space-y-1">
                     <Label className="text-xs font-black uppercase text-white">Reputation Index</Label>
-                    <p className="text-[10px] text-emerald-500 font-bold">ALWAYS PUBLIC</p>
+                    <p className="text-[10px] text-brand-green font-bold">ALWAYS PUBLIC</p>
                   </div>
-                  <ShieldCheck className="h-5 w-5 text-emerald-500/50" />
+                  <ShieldCheck className="h-5 w-5 text-brand-green/50" />
                 </div>
                 
                 <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.01] border border-white/5">
@@ -320,7 +320,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                 {Object.entries(settings.public_visibility.claims_public).map(([k, v]) => (
                   <div key={k} className={cn(
                     "p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 text-center",
-                    v ? "bg-blue-600/5 border-blue-500/20" : "bg-white/[0.01] border-white/5 opacity-40"
+                    v ? "bg-brand-blue/5 border-brand-blue/20" : "bg-white/[0.01] border-white/5 opacity-40"
                   )}>
                     <Label className="text-[9px] font-black uppercase tracking-widest text-white/60 min-h-[24px]">
                       {k.replace(/_/g, ' ')}
@@ -336,7 +336,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                           },
                         })
                       }
-                      className="data-[state=checked]:bg-blue-500 scale-75"
+                      className="data-[state=checked]:bg-brand-blue scale-75"
                     />
                   </div>
                 ))}
@@ -347,7 +347,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
           {/* Technical Proof & Claims Database */}
           <div className="space-y-6">
              <div className="flex items-center gap-2 px-2">
-                <FileCheck2 className="h-5 w-5 text-emerald-500" />
+                <FileCheck2 className="h-5 w-5 text-brand-green" />
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">Authority Database</h3>
              </div>
              
@@ -361,12 +361,12 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05 }}
-                      className="group p-8 rounded-[2.5rem] bg-[#002B4D]/30 border border-white/5 hover:border-blue-500/20 transition-all"
+                      className="group p-8 rounded-[2.5rem] bg-[#002B4D]/30 border border-white/5 hover:border-brand-blue/20 transition-all"
                     >
                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                           <div className="md:col-span-4 space-y-4">
                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white transition-all">
                                    <Icon className="h-5 w-5" />
                                 </div>
                                 <Label className="text-sm font-black text-white uppercase tracking-tight">{def.label}</Label>
@@ -433,12 +433,12 @@ export default function AnalyticsSettings({ companyId }: Props) {
         <div className="lg:col-span-4 space-y-8">
            <Card className="clay-precision bg-gradient-to-br from-[#002B4D] to-[#0A0E17] border border-white/5 rounded-[3.5rem] p-10 space-y-8 sticky top-8">
               <div className="space-y-4">
-                 <div className="h-14 w-14 rounded-2xl bg-blue-600/10 flex items-center justify-center border border-blue-600/20">
-                    <ShieldCheck className="h-7 w-7 text-blue-500" />
+                 <div className="h-14 w-14 rounded-2xl bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20">
+                    <ShieldCheck className="h-7 w-7 text-brand-blue" />
                  </div>
                  <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight">Integridade de Dados Públicos</h4>
                  <p className="text-sm text-white/40 font-medium leading-relaxed">
-                   Mantenha suas evidências atualizadas para elevar seu score de <span className="text-white font-black underline decoration-blue-500">CONFIANÇA TÉCNICA</span>. Dados verificados possuem peso 3x maior no ranking.
+                   Mantenha suas evidências atualizadas para elevar seu score de <span className="text-white font-black underline decoration-brand-blue">CONFIANÇA TÉCNICA</span>. Dados verificados possuem peso 3x maior no ranking.
                  </p>
               </div>
 
@@ -448,19 +448,19 @@ export default function AnalyticsSettings({ companyId }: Props) {
                        <Lock className="h-3.5 w-3.5 text-blue-400" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Audit Level</span>
                     </div>
-                    <Badge className="bg-blue-600 text-white border-none text-[8px] font-black">PREMIUM</Badge>
+                    <Badge className="bg-brand-blue text-white border-none text-[8px] font-black">PREMIUM</Badge>
                  </div>
                  
                  <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-1">
                        <span className="text-white/20">Data Coverage</span>
-                       <span className="text-blue-500">88.5%</span>
+                       <span className="text-brand-blue">88.5%</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                        <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: '88.5%' }}
-                        className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                        className="h-full bg-brand-blue shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
                        />
                     </div>
                  </div>
@@ -468,15 +468,15 @@ export default function AnalyticsSettings({ companyId }: Props) {
 
               <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Sincronização OK</span>
+                    <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
+                    <span className="text-[10px] font-black text-brand-green uppercase tracking-widest">Sincronização OK</span>
                  </div>
                  <p className="text-[10px] text-white/20 font-medium italic">
                     Última auditoria heurística realizada há 42 minutos.
                  </p>
               </div>
 
-              <Button className="w-full h-14 bg-white text-blue-600 font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-white/90 active:scale-95 shadow-2xl transition-all">
+              <Button className="w-full h-14 bg-white text-brand-blue font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-white/90 active:scale-95 shadow-2xl transition-all">
                  Solicitar Auditoria Manual
               </Button>
            </Card>

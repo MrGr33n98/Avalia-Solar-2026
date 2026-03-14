@@ -189,6 +189,10 @@ CLAYMORPHISM_QA_VALIDATION_REPORT.md
 # Local secrets
 local-secrets/
 
+# MCP config files with tokens
+MCP_CONFIG.json
+opencode.json
+
 
 # P1 docs (local only)
 P1_*.md

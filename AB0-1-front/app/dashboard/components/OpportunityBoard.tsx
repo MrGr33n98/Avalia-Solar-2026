@@ -45,12 +45,12 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                <Target className="w-6 h-6 text-blue-600" />
+                <Target className="w-6 h-6 text-brand-blue" />
                 Radar de Oportunidades
               </h3>
               <p className="text-sm text-slate-500 dark:text-white/40 font-medium">Análise de penetração de mercado e leads disponíveis.</p>
             </div>
-            <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-none px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest">
+            <Badge className="bg-blue-50 text-blue-700 dark:bg-brand-blue/10 dark:text-blue-400 border-none px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest">
               Últimos 30 dias
             </Badge>
           </div>
@@ -62,7 +62,7 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
                 <Users className="w-3 h-3" /> Seus Leads
               </span>
               <div className="flex items-baseline gap-2">
-                <h4 className="text-5xl font-black text-blue-600 tracking-tighter">{leads_received}</h4>
+                <h4 className="text-5xl font-black text-brand-blue tracking-tighter">{leads_received}</h4>
                 <span className="text-xs font-bold text-slate-400">diretos</span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-2">
@@ -105,7 +105,7 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
                 <MapPin className="w-3 h-3" /> Potencial Região
               </span>
               <div className="flex items-baseline gap-2">
-                <h4 className="text-5xl font-black text-emerald-500 tracking-tighter">
+                <h4 className="text-5xl font-black text-brand-green tracking-tighter">
                   {marketplace_potential.leads_in_region}
                 </h4>
                 <span className="text-xs font-bold text-slate-400">leads</span>
@@ -127,7 +127,7 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
               </div>
             </div>
             {!isPremium && (
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl px-8 shadow-xl shadow-blue-200 transition-all active:scale-95 shrink-0">
+              <Button className="bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl px-8 shadow-xl shadow-blue-200 transition-all active:scale-95 shrink-0">
                 Dominar Categoria <ArrowUpRight className="ml-2 w-4 h-4" />
               </Button>
             )}
@@ -135,7 +135,7 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
         </div>
 
         {/* Abstract Background Shapes */}
-        <div className="absolute top-[-10%] right-[-5%] w-64 h-64 bg-blue-50/50 dark:bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[-10%] right-[-5%] w-64 h-64 bg-blue-50/50 dark:bg-brand-blue/5 rounded-full blur-3xl pointer-events-none" />
       </motion.div>
 
       {/* 🏷️ CATEGORY LISTING PANEL */}
@@ -164,12 +164,12 @@ export default function OpportunityBoard({ stats, isPremium }: OpportunityBoardP
             <div key={cat.id} className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{cat.name}</span>
-                <Badge variant="outline" className="text-[9px] font-black border-slate-200 text-slate-400 rounded-lg group-hover:border-blue-200 group-hover:text-blue-500">Ativa</Badge>
+                <Badge variant="outline" className="text-[9px] font-black border-slate-200 text-slate-400 rounded-lg group-hover:border-blue-200 group-hover:text-brand-blue">Ativa</Badge>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-500 rounded-full" 
+                    className="h-full bg-brand-blue rounded-full" 
                     style={{ width: `${Math.min(100, (cat.leads_in_category / (marketplace_potential.leads_in_category || 1)) * 100)}%` }}
                   />
                 </div>

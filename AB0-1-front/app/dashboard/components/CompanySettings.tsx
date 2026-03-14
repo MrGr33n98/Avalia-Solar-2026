@@ -123,7 +123,7 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
               <div className="pt-8 border-t border-white/5 space-y-4">
                 <div className="flex items-center justify-between pl-1">
                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Mensageiria Direta (WhatsApp)</Label>
-                   <MessageSquare className="h-4 w-4 text-emerald-500/30" />
+                   <MessageSquare className="h-4 w-4 text-brand-green/30" />
                 </div>
                 <Textarea 
                   placeholder="Olá! Estive analisando sua empresa no Avalia Solar e gostaria de uma proposta de projeto..."

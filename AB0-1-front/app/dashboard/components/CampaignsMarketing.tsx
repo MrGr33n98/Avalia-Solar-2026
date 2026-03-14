@@ -104,7 +104,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Rocket className="h-6 w-6 text-blue-600" />
+            <Rocket className="h-6 w-6 text-brand-blue" />
             <h2 className="text-3xl font-black tracking-tight uppercase text-foreground dark:text-white">
               Growth Engineering Engine
             </h2>
@@ -113,7 +113,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
             Gerencie investimentos em anúncios, otimize ROAS e escale sua presença digital
           </p>
         </div>
-        <Button className="h-12 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-600/20 group">
+        <Button className="h-12 px-6 rounded-xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-brand-blue/20 group">
           <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
           Nova Campanha de Alta Performance
         </Button>
@@ -141,19 +141,19 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + (idx * 0.1) }}
               >
-                <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none group transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 overflow-hidden">
+                <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none group transition-all duration-300 hover:shadow-xl hover:shadow-brand-blue/5 hover:-translate-y-1 overflow-hidden">
                   <CardContent className="p-0">
                     <div className="flex flex-col lg:flex-row">
                       {/* Left: Campaign Identification */}
                       <div className="p-6 lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.01]">
                         <div className="flex items-start justify-between mb-6">
-                          <div className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-600/20">
-                            <Megaphone className="h-5 w-5 text-blue-600" />
+                          <div className="p-2.5 rounded-xl bg-brand-blue/10 border border-brand-blue/20">
+                            <Megaphone className="h-5 w-5 text-brand-blue" />
                           </div>
                           <Badge className={cn(
                             "text-[9px] font-black uppercase px-2 h-5 tracking-widest",
                             campaign.status === 'active' 
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                              ? "bg-brand-green/10 text-brand-green border-emerald-500/20" 
                               : "bg-slate-500/10 text-slate-500 border-slate-500/20"
                           )}>
                             {campaign.status === 'active' ? '● Ativa' : 'Finalizada'}
@@ -173,7 +173,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                           <Button variant="outline" size="sm" className="h-9 rounded-lg border-slate-200 dark:border-white/10 text-[9px] font-black uppercase tracking-wider">
                             Configurações
                           </Button>
-                          <Button size="sm" className="h-9 rounded-lg bg-blue-600/10 text-blue-600 hover:bg-blue-600/20 text-[9px] font-black uppercase tracking-wider transition-all">
+                          <Button size="sm" className="h-9 rounded-lg bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20 text-[9px] font-black uppercase tracking-wider transition-all">
                             Dashboard Full <ArrowUpRight className="ml-1 h-3 w-3" />
                           </Button>
                         </div>
@@ -191,7 +191,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                               </p>
                             </div>
                             <div className="h-10 w-10 rounded-full border-2 border-emerald-500/20 flex items-center justify-center relative">
-                               <span className="text-[10px] font-black text-emerald-500">
+                               <span className="text-[10px] font-black text-brand-green">
                                  {Math.round((campaign.achieved / campaign.goal) * 100)}%
                                </span>
                             </div>
@@ -200,7 +200,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${(campaign.achieved / campaign.goal) * 100}%` }}
-                              className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                              className="h-full bg-brand-green shadow-[0_0_12px_rgba(16,185,129,0.3)]"
                             />
                           </div>
                         </div>
@@ -224,7 +224,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${(campaign.spent / campaign.budget) * 100}%` }}
-                              className="h-full bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.3)]"
+                              className="h-full bg-brand-blue shadow-[0_0_12px_rgba(37,99,235,0.3)]"
                             />
                           </div>
                         </div>
@@ -233,7 +233,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                         <div className="md:col-span-2 grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
                           <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">ROAS Atual</p>
-                            <p className="text-sm font-black text-blue-600 font-mono">{campaign.roas}x</p>
+                            <p className="text-sm font-black text-brand-blue font-mono">{campaign.roas}x</p>
                           </div>
                           <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Reach Acumulado</p>
@@ -241,7 +241,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
                           </div>
                           <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Status Projeção</p>
-                            <Badge className="bg-emerald-500/10 text-emerald-500 text-[8px] font-black border-none h-4 uppercase">No Alvo</Badge>
+                            <Badge className="bg-brand-green/10 text-brand-green text-[8px] font-black border-none h-4 uppercase">No Alvo</Badge>
                           </div>
                         </div>
                       </div>
@@ -264,7 +264,7 @@ export default function CampaignsMarketing({ companyId }: CampaignsMarketingProp
             <p className="text-sm text-muted-foreground/50 font-medium max-w-xs mb-8">
               Inicie campanhas para capturar mais leads e aumentar seu market share no setor solar.
             </p>
-            <Button className="rounded-xl h-12 bg-blue-600 text-white font-black uppercase px-8 text-[10px]">
+            <Button className="rounded-xl h-12 bg-brand-blue text-white font-black uppercase px-8 text-[10px]">
               Criar Primeira Campanha
             </Button>
           </CardContent>

@@ -184,7 +184,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
-        <div className="h-16 w-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(37,99,235,0.2)]" />
+        <div className="h-16 w-16 border-4 border-brand-blue border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(37,99,235,0.2)]" />
         <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Iniciando Protocolo de Dados Tech</p>
       </div>
     );
@@ -212,7 +212,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
           >
-            <Alert className="clay-precision bg-emerald-500/5 border-emerald-500/10 text-emerald-500 rounded-2xl p-5 flex items-center gap-4">
+            <Alert className="clay-precision bg-brand-green/5 border-emerald-500/10 text-brand-green rounded-2xl p-5 flex items-center gap-4">
               <Shield className="h-5 w-5 fill-emerald-500/20" />
               <AlertDescription className="font-black uppercase tracking-widest text-[10px]">
                 Protocolo de aprovação iniciado. Os dados serão validados pelo comitê técnico.
@@ -226,7 +226,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-6 w-6 text-blue-600" />
+            <Shield className="h-6 w-6 text-brand-blue" />
             <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
               Institutional Vault
             </h2>
@@ -239,7 +239,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           {!isEditing ? (
             <Button 
               onClick={() => setIsEditing(true)} 
-              className="clay-precision bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-2xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+              className="clay-precision bg-brand-blue hover:bg-blue-700 text-white h-12 rounded-2xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
             >
               <Pencil className="h-4 w-4 mr-2" />
               Upgrade Info
@@ -272,7 +272,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         {/* Banner Control */}
         <Card className="lg:col-span-2 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden group">
           <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               Corporate Hero Asset
             </CardTitle>
@@ -301,7 +301,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
             <div className="mt-4 flex justify-between items-center px-1 text-[9px] font-black font-mono text-muted-foreground/30 uppercase tracking-widest">
               <span>Resolution: 1920x820px (Max Optimal)</span>
-              <span className="text-blue-600/50">Status: Online</span>
+              <span className="text-brand-blue/50">Status: Online</span>
             </div>
           </CardContent>
         </Card>
@@ -309,7 +309,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         {/* Logo Control */}
         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden flex flex-col">
           <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
               <Target className="h-4 w-4" />
               Core Identity
             </CardTitle>
@@ -319,14 +319,14 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               <div className="h-32 w-32 rounded-[2.5rem] bg-white dark:bg-[#002B4D] clay-precision p-1 shadow-2xl ring-1 ring-slate-100 dark:ring-white/5">
                 <Avatar className="h-full w-full rounded-[2.4rem] overflow-hidden bg-slate-50 dark:bg-transparent">
                   <AvatarImage src={formData?.logo_url} className="object-contain p-6" />
-                  <AvatarFallback className="text-3xl font-black text-blue-600 bg-blue-600/5 uppercase">
+                  <AvatarFallback className="text-3xl font-black text-brand-blue bg-brand-blue/5 uppercase">
                     {formData?.name?.substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
               </div>
               {isEditing && (
                 <label htmlFor="logo-upload" className="absolute -bottom-2 -right-2 cursor-pointer">
-                  <div className="h-10 w-10 rounded-2xl bg-blue-600 text-white shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-2xl bg-brand-blue text-white shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
                     <Upload className="h-4 w-4" />
                   </div>
                   <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
@@ -337,7 +337,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               <h4 className="text-lg font-black tracking-tight uppercase text-foreground dark:text-white">
                 {formData?.name || 'Unidentified'}
               </h4>
-              <Badge className="bg-blue-600/5 text-blue-600 border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
+              <Badge className="bg-brand-blue/5 text-brand-blue border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
                 Official Identifier
               </Badge>
             </div>
@@ -368,7 +368,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   <Input value={formData?.cnpj || ''} onChange={(e) => handleInputChange('cnpj', e.target.value)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-mono" />
                 ) : (
                   <div className="h-12 flex items-center gap-3 px-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
-                    <Hash className="h-4 w-4 text-blue-600/40" />
+                    <Hash className="h-4 w-4 text-brand-blue/40" />
                     <span className="text-sm font-bold font-mono tracking-wider">{company?.cnpj ||'NOT_DEFINED'}</span>
                   </div>
                 )}
@@ -398,8 +398,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                  { icon: Users, label: "Capacity", value: company?.employees_count ? `${company.employees_count}` : '-' },
                  { icon: Shield, label: "Compliance", value: "Verified" }
                ].map((item, i) => (
-                 <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 text-center group hover:border-blue-600/20 transition-all">
-                    <item.icon className="h-4 w-4 text-blue-600/40 mx-auto mb-2 group-hover:text-blue-600 transition-colors" />
+                 <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 text-center group hover:border-brand-blue/20 transition-all">
+                    <item.icon className="h-4 w-4 text-brand-blue/40 mx-auto mb-2 group-hover:text-brand-blue transition-colors" />
                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">{item.label}</p>
                     <p className="text-xs font-black text-foreground dark:text-white uppercase">{item.value}</p>
                  </div>
@@ -425,7 +425,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   <TechInputLabel>{conn.label}</TechInputLabel>
                   <div className="h-12 flex items-center justify-between px-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <conn.icon className="h-4 w-4 text-blue-600/40" />
+                      <conn.icon className="h-4 w-4 text-brand-blue/40" />
                       <span className="text-sm font-bold text-foreground/70 dark:text-white/70 truncate">{conn.value || 'N/A'}</span>
                     </div>
                     {conn.value && <ExternalLink className="h-3 w-3 text-muted-foreground/20" />}
@@ -446,7 +446,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 ].map((social, i) => (
                   <div key={i} className={cn(
                     "p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col items-center gap-2 group transition-all",
-                    social.value ? "opacity-100 border-blue-600/10" : "opacity-30 grayscale"
+                    social.value ? "opacity-100 border-brand-blue/10" : "opacity-30 grayscale"
                   )}>
                     <social.icon className="h-5 w-5 text-muted-foreground/40 group-hover:scale-110 transition-transform" />
                     <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">{social.label}</span>
@@ -455,18 +455,18 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-blue-600/[0.03] border border-blue-600/10 flex items-center justify-between">
+            <div className="p-6 rounded-3xl bg-brand-blue/[0.03] border border-brand-blue/10 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-blue-600/10 flex items-center justify-center">
-                  <Globe className="h-6 w-6 text-blue-600" />
+                <div className="h-12 w-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center">
+                  <Globe className="h-6 w-6 text-brand-blue" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Public Profile SLA</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Public Profile SLA</p>
                   <p className="text-xs font-bold text-muted-foreground">Otimizado para indexação global</p>
                 </div>
               </div>
               <div className="flex gap-1">
-                 {[1,2,3].map(i => <div key={i} className="h-1 w-4 rounded-full bg-blue-600/20" />)}
+                 {[1,2,3].map(i => <div key={i} className="h-1 w-4 rounded-full bg-brand-blue/20" />)}
               </div>
             </div>
           </CardContent>
@@ -476,7 +476,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       {/* Operational Logistics */}
       <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
         <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Operational & Logistics Intelligence
           </CardTitle>
@@ -486,10 +486,10 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             <div className="md:col-span-2 space-y-6">
               <div className="space-y-4">
                 <TechInputLabel>Regional Headquarters</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 group hover:border-blue-600/20 transition-all">
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 group hover:border-brand-blue/20 transition-all">
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-blue-600/10 flex items-center justify-center shrink-0">
-                       <MapPin className="h-6 w-6 text-blue-600" />
+                    <div className="h-12 w-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center shrink-0">
+                       <MapPin className="h-6 w-6 text-brand-blue" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-black text-foreground dark:text-white uppercase leading-tight mb-2">
@@ -497,7 +497,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                       </p>
                       <div className="flex items-center gap-4">
                          <Badge className="bg-slate-200/50 dark:bg-white/5 text-muted-foreground border-none font-black text-[9px] uppercase">{company?.city}</Badge>
-                         <Badge className="bg-blue-600/10 text-blue-600 border-none font-black text-[9px] uppercase">{company?.state}</Badge>
+                         <Badge className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] uppercase">{company?.state}</Badge>
                       </div>
                     </div>
                   </div>
@@ -508,7 +508,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             <div className="space-y-4 text-center md:text-left">
               <TechInputLabel>Working Frequency</TechInputLabel>
               <div className="flex items-center gap-4 mb-4">
-                <Clock className="h-5 w-5 text-blue-600/40" />
+                <Clock className="h-5 w-5 text-brand-blue/40" />
                 <span className="text-sm font-black text-foreground/80 dark:text-white/80 uppercase tracking-tight">{company?.working_hours || 'TBD'}</span>
               </div>
               <TechInputLabel>Economic Bracket</TechInputLabel>
@@ -523,11 +523,11 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             <div className="p-6 rounded-3xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col justify-between">
                <div>
                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">Response SLA</p>
-                 <p className="text-2xl font-black text-blue-600 font-mono tracking-tighter">{company?.response_time_sla || 'N/A'}</p>
+                 <p className="text-2xl font-black text-brand-blue font-mono tracking-tighter">{company?.response_time_sla || 'N/A'}</p>
                </div>
                <div className="h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                  <motion.div 
-                   className="h-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]"
+                   className="h-full bg-brand-blue shadow-[0_0_8px_rgba(37,99,235,0.4)]"
                    initial={{ width: 0 }}
                    animate={{ width: '85%' }}
                  />
@@ -548,7 +548,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <TechInputLabel>Market Segments</TechInputLabel>
                 <div className="flex flex-wrap gap-2">
                   {(company?.project_types || []).map((t, i) => (
-                    <Badge key={i} className="bg-blue-600/10 text-blue-600 border-none font-black text-[9px] uppercase tracking-widest px-4 h-8 rounded-xl shadow-sm">
+                    <Badge key={i} className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] uppercase tracking-widest px-4 h-8 rounded-xl shadow-sm">
                       {t}
                     </Badge>
                   ))}
@@ -574,18 +574,18 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
            <CardContent className="p-8 space-y-8">
               <div className="space-y-2">
                 <TechInputLabel>Technical Certifications</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/10 flex items-start gap-4">
-                   <Shield className="h-6 w-6 text-emerald-500 shrink-0" />
-                   <p className="text-xs font-bold text-emerald-900/60 dark:text-emerald-500/80 leading-relaxed">
+                <div className="p-6 rounded-2xl bg-brand-green/[0.03] border border-emerald-500/10 flex items-start gap-4">
+                   <Shield className="h-6 w-6 text-brand-green shrink-0" />
+                   <p className="text-xs font-bold text-emerald-900/60 dark:text-brand-green/80 leading-relaxed">
                      {company?.certifications || 'No active certifications logged.'}
                    </p>
                 </div>
               </div>
               <div className="space-y-2">
                 <TechInputLabel>Awards & Validations</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-yellow-500/[0.03] border border-yellow-500/10 flex items-start gap-4">
-                   <Award className="h-6 w-6 text-yellow-500 shrink-0" />
-                   <p className="text-xs font-bold text-yellow-900/60 dark:text-yellow-500/80 leading-relaxed">
+                <div className="p-6 rounded-2xl bg-brand-yellow/[0.03] border border-brand-yellow/10 flex items-start gap-4">
+                   <Award className="h-6 w-6 text-brand-yellow shrink-0" />
+                   <p className="text-xs font-bold text-yellow-900/60 dark:text-brand-yellow/80 leading-relaxed">
                      {company?.awards || 'Awaiting formal market validation.'}
                    </p>
                 </div>

@@ -97,8 +97,8 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
         <div className="flex gap-4 p-2 bg-white/[0.02] border border-white/5 rounded-2xl backdrop-blur-sm">
            <div className="px-4 py-2 border-r border-white/5">
               <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Status de Rede</p>
-              <div className="flex items-center gap-2 text-emerald-500 font-bold text-xs">
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-2 text-brand-green font-bold text-xs">
+                 <div className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
                  Sincronizado
               </div>
            </div>
@@ -191,7 +191,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Protocolo de Incorporação</label>
-                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-500/50" />
+                         <ShieldCheck className="h-3.5 w-3.5 text-brand-green/50" />
                       </div>
                       <div className="relative group/snippet">
                         <pre className="p-4 bg-black/40 text-blue-400 rounded-2xl text-[10px] overflow-hidden border border-white/5 leading-relaxed font-mono select-all">
@@ -234,7 +234,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                   {/* Status Bar */}
                   <div className="px-8 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <div className="w-2 h-2 rounded-full bg-brand-green" />
                         <span className="text-[9px] font-black uppercase tracking-widest text-white/30">ATIVO VERIFICADO</span>
                      </div>
                      <Trophy className="h-3 w-3 text-amber-500/30" />

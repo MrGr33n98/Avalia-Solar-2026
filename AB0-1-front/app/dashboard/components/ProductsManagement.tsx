@@ -351,7 +351,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
                       <Badge className={cn(
                         "h-8 rounded-xl font-black text-[9px] uppercase tracking-widest border-none px-4",
-                        product.status === 'active' ? "bg-emerald-500/10 text-emerald-500" : 
+                        product.status === 'active' ? "bg-brand-green/10 text-brand-green" : 
                         product.status === 'pending' ? "bg-amber-500/10 text-amber-500" : "bg-slate-500/10 text-slate-500"
                       )}>
                         {product.status}
@@ -395,7 +395,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                        <div className="text-right space-y-0.5">
                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Frequency</p>
                          <div className="flex items-center gap-2 justify-end">
-                            <TrendingUp className="h-3 w-3 text-emerald-500" />
+                            <TrendingUp className="h-3 w-3 text-brand-green" />
                             <p className="text-sm font-black text-foreground/70 dark:text-white/70 uppercase">{product.stock || 0}</p>
                          </div>
                        </div>

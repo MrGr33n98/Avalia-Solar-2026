@@ -188,18 +188,18 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           <CardHeader className="p-8 border-b border-black/5 dark:border-white/5 flex flex-row items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                <BarChart3 className="w-6 h-6 text-blue-500" />
+                <BarChart3 className="w-6 h-6 text-brand-blue" />
                 Growth Velocity Vector
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-widest mt-1">Multi-dimensional Performance Tracking</CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <div className="h-2 w-2 rounded-full bg-brand-blue" />
                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Oportunidades</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <div className="h-2 w-2 rounded-full bg-brand-green" />
                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Posição Ranking</span>
                 </div>
             </div>
@@ -274,18 +274,18 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                  <Target className="w-6 h-6 text-emerald-500" />
+                  <Target className="w-6 h-6 text-brand-green" />
                   Market Quadrant
                 </CardTitle>
-                <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                   <Activity className="h-5 w-5 text-emerald-500" />
+                <div className="h-10 w-10 rounded-2xl bg-brand-green/10 flex items-center justify-center">
+                   <Activity className="h-5 w-5 text-brand-green" />
                 </div>
               </div>
 
               <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-blue-500 transition-colors" />
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-blue-500/30">
+                  <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
                     <SelectValue placeholder="SCOPE SELECTOR" />
                   </SelectTrigger>
                   <SelectContent className="clay-precision bg-card border-none rounded-xl">

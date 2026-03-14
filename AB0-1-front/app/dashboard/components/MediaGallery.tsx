@@ -221,7 +221,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Camera className="h-6 w-6 text-blue-500" />
+              <Camera className="h-6 w-6 text-brand-blue" />
               <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
                 Visual Assets Vault
               </h2>
@@ -236,7 +236,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
               <Button 
                 onClick={handleUpload} 
                 disabled={!canUpload}
-                className="clay-precision bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                className="clay-precision bg-brand-blue hover:bg-blue-700 text-white h-12 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-blue/20"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Photos
@@ -267,7 +267,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 High-Res Photos
               </div>
               <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full"
+                className="absolute bottom-0 left-0 right-0 h-1 bg-brand-blue rounded-full"
                 initial={false}
                 animate={{ scaleX: activeTab === 'photos' ? 1 : 0 }}
               />
@@ -281,7 +281,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 Video Streams
               </div>
               <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full"
+                className="absolute bottom-0 left-0 right-0 h-1 bg-brand-blue rounded-full"
                 initial={false}
                 animate={{ scaleX: activeTab === 'videos' ? 1 : 0 }}
               />
@@ -325,7 +325,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
                       />
-                      <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/20 transition-all duration-500 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-brand-blue/0 group-hover:bg-brand-blue/20 transition-all duration-500 flex items-center justify-center">
                          <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-500 border border-white/20">
                             <Maximize2 className="h-5 w-5 text-white" />
                          </div>
@@ -340,13 +340,13 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-32 rounded-[3.5rem] bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
               >
-                <div className="h-24 w-24 rounded-[2rem] bg-blue-500/10 flex items-center justify-center mb-8">
-                  <ImageIcon className="h-10 w-10 text-blue-500" />
+                <div className="h-24 w-24 rounded-[2rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+                  <ImageIcon className="h-10 w-10 text-brand-blue" />
                 </div>
                 <h3 className="text-xl font-black uppercase tracking-widest mb-2">Vault Empty</h3>
                 <p className="text-sm text-muted-foreground font-medium mb-8">Nenhuma prova visual detectada no diretório atual.</p>
                 {controlsVisible && (
-                  <Button onClick={handleUpload} className="h-12 rounded-2xl bg-blue-600 px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/10">
+                  <Button onClick={handleUpload} className="h-12 rounded-2xl bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10">
                     Deploy First Asset
                   </Button>
                 )}
@@ -395,8 +395,8 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60 group-hover:opacity-100" 
                       />
-                      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-8 group-hover:bg-blue-600/20 transition-all duration-500">
-                         <div className="h-20 w-20 rounded-[1.5rem] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-500 shadow-2xl">
+                      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-8 group-hover:bg-brand-blue/20 transition-all duration-500">
+                         <div className="h-20 w-20 rounded-[1.5rem] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-blue transition-all duration-500 shadow-2xl">
                             <Play className="h-8 w-8 text-white fill-white" />
                          </div>
                       </div>
@@ -413,13 +413,13 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-32 rounded-[3.5rem] bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
               >
-                <div className="h-24 w-24 rounded-[2rem] bg-blue-500/10 flex items-center justify-center mb-8">
-                  <Video className="h-10 w-10 text-blue-500" />
+                <div className="h-24 w-24 rounded-[2rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+                  <Video className="h-10 w-10 text-brand-blue" />
                 </div>
                 <h3 className="text-xl font-black uppercase tracking-widest mb-2">Streams Offline</h3>
                 <p className="text-sm text-muted-foreground font-medium mb-8">Nenhum pipeline de vídeo configurado para este perfil.</p>
                 {controlsVisible && (
-                  <Button onClick={() => setShowVideoDialog(true)} className="h-12 rounded-2xl bg-blue-600 px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/10">
+                  <Button onClick={() => setShowVideoDialog(true)} className="h-12 rounded-2xl bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10">
                     Sync Video Stream
                   </Button>
                 )}
@@ -433,8 +433,8 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
       <Dialog open={showVideoDialog && controlsVisible} onOpenChange={setShowVideoDialog}>
         <DialogContent className="clay-precision bg-card dark:bg-[#0F172A] border-none rounded-[2.5rem] p-12 max-w-md animate-in zoom-in-95 duration-300">
           <DialogHeader className="items-center text-center">
-            <div className="h-20 w-20 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center mb-8">
-               <Video className="h-10 w-10 text-blue-500" />
+            <div className="h-20 w-20 rounded-[1.5rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+               <Video className="h-10 w-10 text-brand-blue" />
             </div>
             <DialogTitle className="text-3xl font-black uppercase tracking-tighter mb-2">Video Indexing</DialogTitle>
             <DialogDescription className="text-sm font-medium leading-relaxed max-w-xs mx-auto">
@@ -443,12 +443,12 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
           </DialogHeader>
           <div className="space-y-6 pt-6">
             <div className="relative group">
-               <ExternalLink className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-blue-500 transition-colors" />
+               <ExternalLink className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                <Input 
                 placeholder="https://youtube.com/watch?v=..." 
                 value={videoUrl} 
                 onChange={(e) => setVideoUrl(e.target.value)} 
-                className="h-14 pl-12 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs font-bold focus-visible:ring-blue-500/30"
+                className="h-14 pl-12 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs font-bold focus-visible:ring-brand-blue/30"
                />
             </div>
           </div>
@@ -456,7 +456,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
             <Button 
               onClick={onAddVideo} 
               disabled={!videoUrl}
-              className="h-14 w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+              className="h-14 w-full rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
             >
               Initialize Sync
             </Button>
@@ -478,8 +478,8 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
         <DialogContent className="max-w-5xl bg-black/95 border-none p-0 overflow-hidden rounded-[3rem] shadow-[0_0_100px_rgba(37,99,235,0.2)]">
           <DialogHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between gap-4 space-y-0">
             <div className="flex items-center gap-3">
-               <div className="h-10 w-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-                  <Eye className="h-5 w-5 text-blue-500" />
+               <div className="h-10 w-10 rounded-2xl bg-brand-blue/10 flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-brand-blue" />
                </div>
                <DialogTitle className="text-xl font-black uppercase tracking-tighter text-white">Visual Inspection Mode</DialogTitle>
             </div>
@@ -513,7 +513,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
           
           <div className="p-8 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
              <div className="flex items-center gap-4">
-                <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                <ShieldCheck className="h-5 w-5 text-brand-green" />
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Verified Integrity Asset</p>
              </div>
              <Button variant="ghost" onClick={() => setLightboxOpen(false)} className="rounded-xl text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest">

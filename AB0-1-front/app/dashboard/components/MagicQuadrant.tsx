@@ -159,7 +159,7 @@ export default function MagicQuadrant({ data }: Props) {
         <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Challengers</span>
       </div>
       <div className="absolute top-6 right-12">
-        <span className="text-[8px] font-black tracking-[0.3em] text-blue-500 uppercase shadow-blue-500/50">Leaders</span>
+        <span className="text-[8px] font-black tracking-[0.3em] text-brand-blue uppercase shadow-brand-blue/50">Leaders</span>
       </div>
       <div className="absolute bottom-12 left-12 opacity-30">
         <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Niche Players</span>

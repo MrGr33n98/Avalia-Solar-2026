@@ -143,7 +143,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Activity className="h-6 w-6 text-blue-600" />
+            <Activity className="h-6 w-6 text-brand-blue" />
             <h2 className="text-3xl font-black tracking-tight uppercase text-foreground dark:text-white">
               Sentiment & Reputation Intelligence
             </h2>
@@ -153,10 +153,10 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
           </p>
         </div>
         <div className="flex gap-3">
-          <Badge className="bg-blue-600/10 text-blue-600 border-none px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest">
+          <Badge className="bg-brand-blue/10 text-brand-blue border-none px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest">
             NPS Score: 84
           </Badge>
-          <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest">
+          <Badge className="bg-brand-green/10 text-brand-green border-none px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest">
             Autoridade: Platinum
           </Badge>
         </div>
@@ -172,10 +172,10 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Rating Distribution */}
         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 blur-3xl -mr-16 -mt-16 rounded-full" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-yellow/5 blur-3xl -mr-16 -mt-16 rounded-full" />
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2 mb-1">
-              <PieChart className="h-4 w-4 text-yellow-500" />
+              <PieChart className="h-4 w-4 text-brand-yellow" />
               <CardTitle className="text-sm font-black uppercase tracking-widest opacity-60">Matriz de Avaliações</CardTitle>
             </div>
             <CardDescription className="text-xs font-bold font-mono">DISTRIBUIÇÃO POR ESTRELAS</CardDescription>
@@ -198,7 +198,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
                           key={i}
                           className={cn(
                             "h-3 w-3",
-                            i < item.rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/20"
+                            i < item.rating ? "text-brand-yellow fill-brand-yellow" : "text-muted-foreground/20"
                           )}
                         />
                       ))}
@@ -219,8 +219,8 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
                     animate={{ width: `${item.percentage}%` }}
                     className={cn(
                       "h-full rounded-full",
-                      item.rating >= 4 ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" : 
-                      item.rating === 3 ? "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]" : 
+                      item.rating >= 4 ? "bg-brand-green shadow-[0_0_8px_rgba(16,185,129,0.3)]" : 
+                      item.rating === 3 ? "bg-brand-yellow shadow-[0_0_8px_rgba(234,179,8,0.3)]" : 
                       "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]"
                     )}
                   />
@@ -232,20 +232,20 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
 
         {/* Competitor Benchmarking */}
         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl -mr-16 -mt-16 rounded-full" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/5 blur-3xl -mr-16 -mt-16 rounded-full" />
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              <ShieldCheck className="h-4 w-4 text-brand-blue" />
               <CardTitle className="text-sm font-black uppercase tracking-widest opacity-60">Benchmarking Competitivo</CardTitle>
             </div>
             <CardDescription className="text-xs font-bold font-mono">VS MÉDIA DA CATEGORIA</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 pt-6">
             {/* Your Company */}
-            <div className="relative p-5 rounded-2xl bg-blue-600/[0.03] border border-blue-600/10">
+            <div className="relative p-5 rounded-2xl bg-brand-blue/[0.03] border border-brand-blue/10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                  <div className="h-10 w-10 rounded-xl bg-brand-blue flex items-center justify-center text-white shadow-lg shadow-brand-blue/20">
                     <Shield className="h-5 w-5" />
                   </div>
                   <div>
@@ -254,8 +254,8 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-blue-600 font-mono leading-none">{s.averageRating.toFixed(1)}</p>
-                  <p className="text-[9px] font-black text-blue-600/40 uppercase tracking-widest">Score Elite</p>
+                  <p className="text-2xl font-black text-brand-blue font-mono leading-none">{s.averageRating.toFixed(1)}</p>
+                  <p className="text-[9px] font-black text-brand-blue/40 uppercase tracking-widest">Score Elite</p>
                 </div>
               </div>
               <Progress value={(s.averageRating / 5) * 100} className="h-2 bg-slate-200 dark:bg-white/5" />
@@ -282,8 +282,8 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
             </div>
 
             <div className="pt-2">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                <TrendingUp className="h-5 w-5 text-emerald-500" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-brand-green/5 border border-emerald-500/10">
+                <TrendingUp className="h-5 w-5 text-brand-green" />
                 <p className="text-xs font-bold text-emerald-600/80 leading-snug">
                   Sua performance está <span className="font-black underline">+12.4%</span> acima da média do setor solar brasileiro.
                 </p>
@@ -330,14 +330,14 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 + (idx * 0.1) }}
-              className="p-5 rounded-[1.5rem] bg-card dark:bg-[#0F172A] border border-slate-100 dark:border-white/5 hover:border-blue-500/20 transition-all group"
+              className="p-5 rounded-[1.5rem] bg-card dark:bg-[#0F172A] border border-slate-100 dark:border-white/5 hover:border-brand-blue/20 transition-all group"
             >
               <div className={cn(
                 "w-10 h-10 rounded-xl mb-4 flex items-center justify-center transition-transform group-hover:scale-110",
-                insight.color === 'blue' ? "bg-blue-600/10 text-blue-600" :
-                insight.color === 'emerald' ? "bg-emerald-500/10 text-emerald-500" :
-                insight.color === 'purple' ? "bg-purple-500/10 text-purple-500" :
-                "bg-cyan-500/10 text-cyan-500"
+                insight.color === 'blue' ? "bg-brand-blue/10 text-brand-blue" :
+                insight.color === 'emerald' ? "bg-brand-green/10 text-brand-green" :
+                insight.color === 'purple' ? "bg-brand-purple/10 text-brand-purple" :
+                "bg-brand-cyan/10 text-brand-cyan"
               )}>
                 <insight.icon className="h-5 w-5" />
               </div>

@@ -245,7 +245,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
                       <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm",
                         item.done 
-                          ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/20" 
+                          ? "bg-brand-green/20 text-brand-green border border-emerald-500/20" 
                           : "bg-white/5 text-muted-foreground dark:text-white/20 border border-white/5"
                       )}>
                         {item.done ? <CheckCircle2 className="w-6 h-6" /> : <div className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />}
@@ -257,12 +257,12 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
                             ? "text-muted-foreground/30 dark:text-white/30 line-through decoration-emerald-500/30" 
                             : "text-foreground dark:text-white"
                         )}>{item.label}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/80">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-green/80">
                           Result: {item.impact}
                         </span>
                       </div>
                     </div>
-                    {item.done && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-none text-[9px] font-black">COMPLETADO</Badge>}
+                    {item.done && <Badge variant="secondary" className="bg-brand-green/10 text-brand-green border-none text-[9px] font-black">COMPLETADO</Badge>}
                   </div>
                 ))}
               </div>
@@ -290,8 +290,8 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
 
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Security / Trust Badge</label>
-                    <Badge variant="outline" className="text-[9px] border-emerald-500/20 text-emerald-500">HTML5</Badge>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-green">Security / Trust Badge</label>
+                    <Badge variant="outline" className="text-[9px] border-emerald-500/20 text-brand-green">HTML5</Badge>
                   </div>
                   <div className="flex items-center gap-3 group/input">
                     <input type="text" readOnly value={assetsQuery.data?.badge_embed_code || ''} className="flex-1 h-12 px-5 text-xs font-mono font-bold border-none rounded-xl bg-white/5 dark:bg-[#0F172A] text-emerald-400 focus:ring-1 focus:ring-emerald-500/50 shadow-inner" />
@@ -299,7 +299,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
                       variant="ghost" 
                       size="icon" 
                       onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}
-                      className="h-12 w-12 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+                      className="h-12 w-12 bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-white rounded-xl transition-all shadow-lg shadow-emerald-500/10"
                     >
                       <Copy className="w-5 h-5" />
                     </Button>
@@ -334,8 +334,8 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         {/* Profile Health */}
         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none group hover:scale-[1.02] transition-all p-1 shadow-lg">
           <CardContent className="p-6 flex items-center gap-6">
-            <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-inner">
-              <ShieldCheck className="h-7 w-7 text-emerald-500" />
+            <div className="p-4 bg-brand-green/10 rounded-2xl border border-emerald-500/20 shadow-inner">
+              <ShieldCheck className="h-7 w-7 text-brand-green" />
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 dark:text-white/30">System Integrity</p>
@@ -345,7 +345,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
                   initial={{ width: 0 }}
                   animate={{ width: `${stats?.profileCompletion || 0}%` }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
-                  className="bg-emerald-500 h-full rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
+                  className="bg-brand-green h-full rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
                 />
               </div>
             </div>
@@ -383,9 +383,9 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
                 <h4 className="text-2xl font-black text-foreground dark:text-white tracking-tight uppercase">Active Status</h4>
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex gap-1">
-                    {[1, 2, 3].map(i => <div key={i} className="w-1 h-3 rounded-full bg-emerald-500/40" />)}
+                    {[1, 2, 3].map(i => <div key={i} className="w-1 h-3 rounded-full bg-brand-green/40" />)}
                   </div>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Global Discovery Synced</p>
+                  <p className="text-[10px] font-black text-brand-green uppercase tracking-widest">Global Discovery Synced</p>
                 </div>
               </div>
             </CardContent>
@@ -444,24 +444,24 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
             {/* Asset 2 */}
             <div className="p-8 bg-white/[0.01] dark:bg-black/30 rounded-3xl border border-white/5 flex flex-col justify-between group/asset hover:border-emerald-500/30 transition-all duration-500 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/asset:opacity-20 transition-opacity">
-                <ShieldCheck className="w-32 h-32 text-emerald-500" />
+                <ShieldCheck className="w-32 h-32 text-brand-green" />
               </div>
               <div className="space-y-3 mb-8 relative z-10">
                 <h4 className="text-base font-black text-foreground dark:text-white uppercase tracking-tight flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" />
                   Validation Component
                 </h4>
                 <p className="text-sm text-muted-foreground dark:text-white/40 leading-relaxed font-medium">Embed our authority node directly into your site to synchronize social proof in real-time.</p>
               </div>
               <div className="flex items-center gap-3 relative z-10">
                 <div className="flex-1 bg-white/5 dark:bg-[#0A0E17] rounded-xl p-4 border border-white/10 shadow-inner">
-                  <span className="text-[10px] font-mono font-bold text-emerald-500 truncate block">{assetsQuery.data?.badge_embed_code || 'Loading protocol...'}</span>
+                  <span className="text-[10px] font-mono font-bold text-brand-green truncate block">{assetsQuery.data?.badge_embed_code || 'Loading protocol...'}</span>
                 </div>
                 <Button 
                    variant="outline" 
                    size="icon" 
                    onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}
-                   className="h-14 w-14 rounded-xl border-white/10 bg-white/5 hover:bg-emerald-500 hover:text-white transition-all shadow-xl group/btn"
+                   className="h-14 w-14 rounded-xl border-white/10 bg-white/5 hover:bg-brand-green hover:text-white transition-all shadow-xl group/btn"
                 >
                   <Copy className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
                 </Button>

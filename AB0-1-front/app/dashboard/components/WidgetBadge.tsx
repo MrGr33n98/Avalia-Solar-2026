@@ -57,7 +57,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
           <h3 className={`${textColor} font-semibold`}>{companyData.name}</h3>
           {companyData.verified && (
             <div className="flex items-center gap-1 mt-1">
-              <Check className="w-4 h-4 text-green-500" />
+              <Check className="w-4 h-4 text-brand-green" />
               <span className={`text-xs ${mutedColor}`}>Verificado</span>
             </div>
           )}
@@ -92,11 +92,11 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className={`text-sm font-medium ${textColor}`}>Score de Confiança</span>
-          <span className="text-sm font-bold text-blue-600">{companyData.trust_score}%</span>
+          <span className="text-sm font-bold text-brand-blue">{companyData.trust_score}%</span>
         </div>
         <div className={`w-full h-2 rounded-full ${theme === 'light' ? 'bg-gray-200' : 'bg-slate-700'} overflow-hidden`}>
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-brand-blue to-blue-600 rounded-full transition-all duration-500"
             style={{ width: `${companyData.trust_score}%` }}
           />
         </div>
@@ -107,7 +107,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
         href={companyData.public_profile_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-brand-blue hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
       >
         Ver Perfil
         <ExternalLink className="w-3.5 h-3.5" />

@@ -168,7 +168,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       {category.name}
                       {category.featured && (
-                        <Star className="h-[18px] w-[18px] text-yellow-500 fill-yellow-500" />
+                        <Star className="h-[18px] w-[18px] text-brand-yellow fill-brand-yellow" />
                       )}
                     </h3>
                     <p className="text-xs text-white/40 mt-1">{category.seo_url}</p>
@@ -185,7 +185,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
 
                 <div className="flex items-center gap-2">
                   {category.status === 'active' && (
-                    <Badge variant="default" className="bg-green-500">
+                    <Badge variant="default" className="bg-brand-green">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Ativa
                     </Badge>
@@ -203,7 +203,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
                     </Badge>
                   )}
                   {category.featured && (
-                    <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+                    <Badge variant="outline" className="border-brand-yellow text-yellow-700">
                       Destaque
                     </Badge>
                   )}

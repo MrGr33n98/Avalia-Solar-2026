@@ -34,13 +34,13 @@ export default function MetricCard({
       border: 'border-primary/20'
     },
     blue: {
-      bg: 'bg-blue-500/10',
-      icon: 'text-blue-500',
-      border: 'border-blue-500/20'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      border: 'border-brand-blue/20'
     },
     green: {
-      bg: 'bg-emerald-500/10',
-      icon: 'text-emerald-500',
+      bg: 'bg-brand-green/10',
+      icon: 'text-brand-green',
       border: 'border-emerald-500/20'
     },
     purple: {
@@ -49,24 +49,24 @@ export default function MetricCard({
       border: 'border-violet-500/20'
     },
     'brand-cyan': {
-      bg: 'bg-cyan-500/10',
-      icon: 'text-cyan-500',
-      border: 'border-cyan-500/20'
+      bg: 'bg-brand-cyan/10',
+      icon: 'text-brand-cyan',
+      border: 'border-brand-cyan/20'
     },
     'brand-yellow': {
-      bg: 'bg-amber-500/10',
-      icon: 'text-amber-500',
-      border: 'border-amber-500/20'
+      bg: 'bg-brand-yellow/10',
+      icon: 'text-brand-yellow',
+      border: 'border-brand-yellow/20'
     },
     'brand-blue': {
-      bg: 'bg-blue-600/10',
-      icon: 'text-blue-600',
-      border: 'border-blue-600/20'
+      bg: 'bg-brand-blue/10',
+      icon: 'text-brand-blue',
+      border: 'border-brand-blue/20'
     },
     'brand-green': {
-      bg: 'bg-emerald-600/10',
-      icon: 'text-emerald-600',
-      border: 'border-emerald-600/20'
+      bg: 'bg-brand-green/10',
+      icon: 'text-brand-green',
+      border: 'border-brand-green/20'
     },
     yellow: {
       bg: 'bg-amber-400/10',
@@ -79,8 +79,8 @@ export default function MetricCard({
       border: 'border-pink-500/20'
     },
     emerald: {
-      bg: 'bg-emerald-500/10',
-      icon: 'text-emerald-500',
+      bg: 'bg-brand-green/10',
+      icon: 'text-brand-green',
       border: 'border-emerald-500/20'
     }
   };
@@ -96,21 +96,27 @@ export default function MetricCard({
       className="h-full"
     >
       <Card className={cn(
-        'relative h-full overflow-hidden transition-all duration-500 group border-none clay-precision bg-card dark:bg-[#0F172A] shadow-lg hover:shadow-primary/5',
-        'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/[0.03] before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
+        'relative h-full overflow-hidden transition-all duration-500 group cursor-pointer clay-card',
+        'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/[0.03] before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity',
+        'after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 group-hover:after:opacity-100 after:transition-opacity after:pointer-events-none'
       )}>
-        <CardContent className="p-6 relative">
-          <div className="flex items-start justify-between mb-6">
-            {/* Icon Container with Glass Effect */}
+        <CardContent className="p-8 relative z-10">
+          <div className="flex items-start justify-between mb-8">
+            {/* Enhanced Icon Container */}
             <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileHover={{ scale: 1.15, rotate: 8 }}
               className={cn(
-                'p-3 rounded-xl transition-all duration-300 shadow-sm border backdrop-blur-sm',
+                'p-4 rounded-2xl transition-all duration-300 shadow-lg border-2 backdrop-blur-sm relative overflow-hidden',
                 colors.bg,
-                colors.border
+                colors.border,
+                'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
               )}
             >
-              <Icon className={cn('h-5 w-5', colors.icon)} strokeWidth={2.5} />
+              <Icon className={cn('h-6 w-6 relative z-10', colors.icon)} strokeWidth={2.2} />
+              <div className={cn(
+                "absolute -inset-1 blur-md opacity-20 group-hover:opacity-40 transition-opacity",
+                colors.bg
+              )} />
             </motion.div>
 
             {/* Change Badge */}
@@ -119,7 +125,7 @@ export default function MetricCard({
                 variant="outline"
                 className={cn(
                   "text-[10px] font-bold uppercase tracking-wider px-2 h-6 border-[0.5px]",
-                  changeType === 'positive' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                  changeType === 'positive' ? "bg-brand-green/10 text-brand-green border-emerald-500/20" :
                   changeType === 'negative' ? "bg-red-500/10 text-red-500 border-red-500/20" :
                   "bg-white/5 text-muted-foreground border-white/10"
                 )}
@@ -131,40 +137,51 @@ export default function MetricCard({
             )}
           </div>
 
-          {/* Content */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 dark:text-white/30">
+          {/* Enhanced Content */}
+          <div className="space-y-2">
+            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 dark:text-white/40 leading-tight">
               {title}
             </p>
-            <p className="text-3xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
+            <p className="text-4xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
           </div>
 
-          {/* Mini Trend Line - Refined Bars */}
+          {/* Enhanced Mini Trend Line */}
           {trend && trend.length > 0 && (
-            <div className="mt-6 flex items-end gap-1 h-10 w-full overflow-hidden opacity-40 group-hover:opacity-80 transition-opacity">
+            <div className="mt-8 flex items-end gap-2 h-12 w-full overflow-hidden opacity-30 group-hover:opacity-90 transition-opacity">
               {trend.map((height, index) => (
                 <motion.div
                   key={index}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${height}%` }}
-                  transition={{ delay: delay + (index * 0.03), duration: 0.5, ease: "easeOut" }}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: `${Math.max(height, 8)}%`, opacity: 1 }}
+                  transition={{ delay: delay + (index * 0.08), duration: 0.6, ease: "easeOut" }}
                   className={cn(
-                    'flex-1 min-w-[3px] rounded-t-sm transition-all',
-                    changeType === 'positive' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' :
-                    changeType === 'negative' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
-                    'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.3)]'
+                    'flex-1 min-w-[4px] rounded-t-lg transition-all relative overflow-hidden',
+                    changeType === 'positive' ? 'bg-gradient-to-t from-emerald-400 to-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.4)]' :
+                    changeType === 'negative' ? 'bg-gradient-to-t from-red-400 to-red-600 shadow-[0_0_12px_rgba(239,68,68,0.4)]' :
+                    'bg-gradient-to-t from-brand-blue to-brand-cyan shadow-[0_0_12px_rgba(37,99,235,0.4)]',
+                    'before:absolute before:inset-0 before:bg-gradient-to-t before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
                   )}
                 />
               ))}
             </div>
           )}
+                />
+              ))}
+            </div>
+          )}
           
-          {/* Subtle Glow Effect */}
+          {/* Enhanced Glow Effect */}
           <div className={cn(
-            "absolute -bottom-20 -right-20 w-40 h-40 blur-[80px] rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700",
+            "absolute -bottom-24 -right-24 w-48 h-48 blur-[100px] rounded-full opacity-0 group-hover:opacity-15 transition-all duration-1000 delay-200",
             colors.bg
+          )} />
+          
+          {/* Subtle Border Animation */}
+          <div className={cn(
+            "absolute inset-0 rounded-[inherit] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
+            "bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"
           )} />
         </CardContent>
       </Card>
