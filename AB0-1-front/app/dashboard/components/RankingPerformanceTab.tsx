@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -20,7 +20,7 @@ import {
   ZapIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Company, fetchApi } from '@/lib/api';
+import { Company, fetchApi, companyDashboardApi } from '@/lib/api';
 import MagicQuadrant from './MagicQuadrant';
 import MetricCard from './MetricCard';
 import { 
@@ -54,15 +54,29 @@ interface Props {
 
 export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>('all');
+
+  const criteriaQuery = useQuery({
+    queryKey: ['category-evaluation-context', selectedCategoryId],
+    queryFn: async () => {
+      if (selectedCategoryId === 'all') return { criteria: [] };
+      return fetchApi<any>(`/categories/${selectedCategoryId}/evaluation_context`);
+    },
+    enabled: selectedCategoryId !== 'all',
+  });
+
+  useEffect(() => {
+    setSelectedCriterionSlug('all');
+  }, [selectedCategoryId]);
 
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug],
     queryFn: async () => {
-      const params: any = { company_id: company.id };
-      if (selectedCategoryId !== 'all') {
-        params.category_id = selectedCategoryId;
-      }
-      return fetchApi<any>('/company_dashboard/analytics/ranking', { params });
+      return companyDashboardApi.getRanking(
+        company.id,
+        selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
+        selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined
+      );
     },
     enabled: Boolean(company.id),
   });
@@ -163,8 +177,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           delay={0.2}
         />
         <MetricCard 
-          title="Vision Completeness"
-          value={Number(quadrantData.find((q: any) => q.isCurrentCompany)?.completenessOfVision || 88).toFixed(1)}
+          title={data?.quadrant_meta?.criterion_title || 'Vision Completeness'}
+          value={Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 88).toFixed(1)}
           icon={ZapIcon}
           change="Optimum"
           changeType="neutral"
@@ -298,12 +312,34 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="relative group">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
+                <Select value={selectedCriterionSlug} onValueChange={setSelectedCriterionSlug}>
+                  <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
+                    <SelectValue placeholder="CRITERION" />
+                  </SelectTrigger>
+                  <SelectContent className="clay-precision bg-card border-none rounded-xl">
+                    <SelectItem value="all" className="text-[10px] font-black uppercase">ALL CRITERIA</SelectItem>
+                    {(criteriaQuery.data?.criteria || []).map((criterion: any) => (
+                      <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-black uppercase">
+                        {criterion.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-8 flex-1 flex flex-col">
             <div className="flex-1 bg-black/20 rounded-[2rem] border border-white/5 p-4 shadow-inner relative overflow-hidden group/quad">
               {quadrantData.length > 0 ? (
-                <MagicQuadrant data={quadrantData} />
+                <MagicQuadrant
+                  data={quadrantData}
+                  xAxisLabel={data?.quadrant_meta?.x_axis_label}
+                  yAxisLabel={data?.quadrant_meta?.y_axis_label}
+                  criterionTitle={data?.quadrant_meta?.criterion_title}
+                />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center py-12">
                   <div className="h-24 w-24 rounded-[2rem] bg-white/5 flex items-center justify-center mb-6 animate-pulse">
@@ -324,7 +360,9 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 <div>
                   <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Optimization Intelligence</p>
                   <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-                    Sua pontuação de <span className="text-white font-bold">Autoridade</span> está acima da média setorial. Recomendamos focar na <span className="text-white font-bold">Taxa de Resposta</span> para alcançar o quadrante de Líder Absoluto.
+                    {selectedCriterionSlug !== 'all'
+                      ? `Your quadrant is now weighted by ${data?.quadrant_meta?.criterion_title || 'the selected criterion'} for this category, balanced with trust authority and execution signals.`
+                      : 'Your quadrant is weighted by trust authority signals (verification, trust score, reviews, badges, social proof) and execution signals (engagement, CTA efficiency, leads and operational maturity).'}
                   </p>
                 </div>
               </div>

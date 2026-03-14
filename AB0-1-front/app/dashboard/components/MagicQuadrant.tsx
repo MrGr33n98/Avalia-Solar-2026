@@ -7,17 +7,22 @@ import { cn } from '@/lib/utils';
 interface QuadrantData {
   id: number;
   name: string;
-  logo_url: string | null;
+  logo_url?: string | null;
   completeness_of_vision: number; // X axis (0-100)
   ability_to_execute: number;     // Y axis (0-100)
   is_current_company: boolean;
+  criterion_score?: number | null;
+  criteria_breakdown?: Record<string, number>;
 }
 
 interface Props {
   data: QuadrantData[];
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  criterionTitle?: string;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -33,6 +38,9 @@ const CustomTooltip = ({ active, payload }: any) => {
         <div className="space-y-1">
           <p className="text-white/50 flex justify-between">Visão: <span className="text-white font-mono">{data.completeness_of_vision}%</span></p>
           <p className="text-white/50 flex justify-between">Execução: <span className="text-white font-mono">{data.ability_to_execute}%</span></p>
+          {criterionTitle && data.criterion_score != null && (
+            <p className="text-white/50 flex justify-between">{criterionTitle}: <span className="text-white font-mono">{Number(data.criterion_score).toFixed(2)}</span></p>
+          )}
         </div>
         {data.is_current_company && (
           <div className="mt-2 pt-2 border-t border-white/5 text-amber-400 flex items-center gap-1.5">
@@ -113,7 +121,7 @@ const CompanyLogoShape = (props: any) => {
   );
 };
 
-export default function MagicQuadrant({ data }: Props) {
+export default function MagicQuadrant({ data, xAxisLabel = 'Market Vision', yAxisLabel = 'Execution Power', criterionTitle }: Props) {
   return (
     <div className="w-full h-[400px] relative select-none">
       <ResponsiveContainer width="100%" height="100%">
@@ -126,7 +134,7 @@ export default function MagicQuadrant({ data }: Props) {
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: "Market Vision ➔", position: "bottom", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
+            label={{ value: `${xAxisLabel} ➔`, position: "bottom", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
           />
           <YAxis 
             type="number" 
@@ -134,10 +142,10 @@ export default function MagicQuadrant({ data }: Props) {
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: "Execution Power ➔", angle: -90, position: "left", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
+            label={{ value: `${yAxisLabel} ➔`, angle: -90, position: "left", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
           />
           
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+          <RechartsTooltip content={<CustomTooltip criterionTitle={criterionTitle} />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
           
           {/* Quadrant Backgrounds - Silicon Dark Palette */}
           <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="rgba(255,255,255,0.01)" strokeOpacity={0} />

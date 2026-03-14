@@ -60,14 +60,14 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
   },
   {
     id: 'reviews-group',
-    label: 'Avaliações',
+    label: 'Reviews',
     icon: Star,
     context: ['operational', 'quick_access'],
     group: 'engagement',
     children: [
       { 
         id: 'reviews', 
-        label: 'Avaliações', 
+        label: 'Reviews', 
         icon: Star, 
         context: ['operational', 'quick_access'],
         badge: true,
@@ -77,14 +77,14 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
   },
   {
     id: 'interaction-group',
-    label: 'Dados de interação',
+    label: 'Interaction Data',
     icon: Database,
     context: ['operational'],
     group: 'engagement',
     children: [
       { 
         id: 'leads', 
-        label: 'Oportunidades', 
+        label: 'Opportunities', 
         icon: Target, 
         context: ['operational', 'quick_access'],
         badge: true,
@@ -94,21 +94,21 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
   },
   {
     id: 'product-edit-group',
-    label: 'Edição de produto',
+    label: 'Company Profile',
     icon: Edit3,
     context: ['operational', 'admin'],
     group: 'management',
     children: [
-      { id: 'product-general', label: 'Informações gerais', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-categories', label: 'Categorias', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-pricing', label: 'Planos e preços', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-support', label: 'Suporte e treinamento', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-general', label: 'General Information', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-categories', label: 'Categories', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-pricing', label: 'Plans & Pricing', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-support', label: 'Support & Training', icon: FileText, context: ['operational', 'admin'] },
       { id: 'product-banner', label: 'Banner', icon: Sparkles, context: ['operational', 'admin'] },
-      { id: 'product-sponsored-description', label: 'Descrição patrocinada', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-downloads', label: 'Conteúdo Baixável', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-features', label: 'Funcionalidades', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-videos', label: 'Vídeos', icon: ImageIcon, context: ['operational', 'admin'] },
-      { id: 'product-images', label: 'Imagens', icon: ImageIcon, context: ['operational', 'admin'] },
+      { id: 'product-sponsored-description', label: 'Sponsored Description', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-downloads', label: 'Downloadable Content', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-features', label: 'Features', icon: FileText, context: ['operational', 'admin'] },
+      { id: 'product-videos', label: 'Videos', icon: ImageIcon, context: ['operational', 'admin'] },
+      { id: 'product-images', label: 'Images', icon: ImageIcon, context: ['operational', 'admin'] },
     ],
   },
   {
@@ -117,39 +117,39 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     icon: Trophy,
     context: ['operational', 'quick_access'],
     group: 'metrics',
-    description: 'Performance no ranking',
+    description: 'Ranking performance',
   },
   {
     id: 'sector-questions',
-    label: 'Perguntas',
+    label: 'Questions',
     icon: Edit3,
     context: ['operational', 'admin'],
     group: 'management',
-    description: 'Gerenciar perguntas do setor',
+    description: 'Manage sector questions',
   },
   {
     id: 'integrations',
-    label: 'Integrações',
+    label: 'Integrations',
     icon: Link2,
     context: ['operational', 'admin'],
     group: 'system',
-    description: 'Integrações externas',
+    description: 'External integrations',
   },
   {
     id: 'trust-widget',
-    label: 'Selo de Confiança',
+    label: 'Trust Widget',
     icon: ShieldCheck,
     context: ['operational', 'quick_access'],
     group: 'engagement',
-    description: 'Widget de confiança',
+    description: 'Trust widget',
   },
   {
     id: 'avalia-badges',
-    label: 'Selos Avalia Solar',
+    label: 'Avalia Solar Badges',
     icon: BadgeCheck,
     context: ['operational'],
     group: 'engagement',
-    description: 'Gerenciar selos e badges',
+    description: 'Manage badges',
   },
 ];
 
@@ -188,7 +188,7 @@ export function getNavigationItemById(id: string): NavigationItem | undefined {
 }
 
 export function getNavigationGroups(): string[] {
-  return Array.from(new Set(DASHBOARD_NAVIGATION.map((item) => item.group).filter(Boolean)));
+  return Array.from(new Set(DASHBOARD_NAVIGATION.map((item) => item.group).filter((group): group is string => Boolean(group))));
 }
 
 export function flattenNavigationItems(items: NavigationItem[]): FlatNavigationItem[] {
