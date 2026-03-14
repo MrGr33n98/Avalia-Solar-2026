@@ -1,9 +1,18 @@
 ActiveAdmin.register Product do
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
-  permit_params :name, :description, :short_description, :price, :sku, :stock, :status, :featured,
-                :company_id, :seo_title, :seo_description, :meta_description, :image_url,
-                category_ids: [], images: []
+  permit_params do
+    base = [
+      :name, :description, :short_description, :price, :sku, :stock, :status, :featured,
+      :company_id, :seo_title, :seo_description, :meta_description,
+      { category_ids: [] },
+      { images: [] }
+    ]
+
+    # Backward-compatible: only permit persisted image_url column if it exists.
+    base << :image_url if Product.column_names.include?('image_url')
+    base
+  end
 
   # Explicitly define filters to avoid the error
   filter :name
@@ -166,8 +175,10 @@ ActiveAdmin.register Product do
         end
       end
       
-      # Optional single image URL (for cases where we still need this field)
-      f.input :image_url, label: "URL da Imagem (Opcional)", hint: "URL externa da imagem, caso não use upload"
+      # Optional single image URL (only if persisted column exists)
+      if Product.column_names.include?('image_url')
+        f.input :image_url, label: "URL da Imagem (Opcional)", hint: "URL externa da imagem, caso não use upload"
+      end
 
       # Add categories select2
       f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
