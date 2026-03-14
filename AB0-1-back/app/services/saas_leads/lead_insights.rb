@@ -102,7 +102,7 @@ module SaasLeads
 
     def score
       @score ||= begin
-        raw = status_points + otp_points + budget_points + timeline_points + b2b_fit_points
+        raw = status_points + otp_points + budget_points + decision_timeline_points + b2b_fit_points + behavior_points
         raw.clamp(0, 100)
       end
     end
@@ -205,7 +205,7 @@ module SaasLeads
       end
     end
 
-    def timeline_points
+    def decision_timeline_points
       timeline = I18n.transliterate(lead.decision_timeline.to_s).downcase
       return 3 if timeline.blank?
       return 15 if timeline.match?(/immed|agora|urgente|hoje|30 dias|30d/)
@@ -213,6 +213,16 @@ module SaasLeads
       return 5 if timeline.match?(/6 mes|6m|180 dias|180d/)
 
       3
+    end
+
+    def behavior_points
+      # Bonus based on real buyer intent signals
+      # 2 points per signal, max 30
+      timeline = SaasLeads::LeadTimeline.new(lead)
+      intent_count = timeline.summary[:buyer_intent_count] || 0
+      [intent_count * 2, 30].min
+    rescue StandardError
+      0
     end
 
     def b2b_fit_points

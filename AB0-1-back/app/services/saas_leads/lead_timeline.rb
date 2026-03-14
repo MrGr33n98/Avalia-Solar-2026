@@ -12,6 +12,7 @@ module SaasLeads
       :event_type,
       :action,
       :phase,
+      :intent_category, # :buyer_intent, :vendor_activity, :generic_navigation
       :details,
       keyword_init: true
     )
@@ -29,6 +30,34 @@ module SaasLeads
       as_sid
       sid
       sessionid
+    ]).freeze
+
+    # Events that clearly indicate buyer interest
+    BUYER_INTENT_ACTIONS = Set.new(%w[
+      profile_view
+      cta_click
+      lead_initiated
+      lead_created
+      lead_verified
+      intent_scroll_pause
+      company_tab_change
+      whatsapp_click
+      phone_click
+      website_click
+      form_start
+      product_view
+    ]).freeze
+
+    # Events that clearly indicate administrative or vendor activity
+    VENDOR_ACTIVITY_ACTIONS = Set.new([
+      'Dashboard Tab Viewed',
+      'Theme Changed',
+      'login_completed',
+      'logout_performed',
+      'Report Exported',
+      'admin_access_requested',
+      'dashboard_update_requested',
+      'api_key_generated'
     ]).freeze
 
     DEFAULT_WINDOW_DAYS = 30
@@ -63,10 +92,15 @@ module SaasLeads
         unique_sessions = data.filter_map { |item| item.details['session_id'] || item.details[:session_id] }.uniq
         top_actions = data.group_by(&:action).transform_values(&:size).sort_by { |(_action, count)| -count }
 
+        buyer_intent_count = data.count { |e| e.intent_category == :buyer_intent }
+        vendor_activity_count = data.count { |e| e.intent_category == :vendor_activity }
+
         {
           total_events: data.size,
           pre_lead_events: pre_lead_events,
           post_lead_events: post_lead_events,
+          buyer_intent_count: buyer_intent_count,
+          vendor_activity_count: vendor_activity_count,
           unique_sessions_count: unique_sessions.size,
           first_event_at: data.first&.occurred_at,
           last_event_at: data.last&.occurred_at,
@@ -82,14 +116,14 @@ module SaasLeads
       [
         "Historico real (#{@window_days}d)",
         "Eventos: #{stats[:total_events]}",
+        "Intencao de Compra: #{stats[:buyer_intent_count]}",
+        "Atividade Vendor/Admin: #{stats[:vendor_activity_count]}",
         "Antes de virar lead: #{stats[:pre_lead_events]}",
         "Depois de virar lead: #{stats[:post_lead_events]}",
         "Sessoes unicas: #{stats[:unique_sessions_count]}",
         "Primeiro evento: #{format_time(stats[:first_event_at])}",
         "Ultimo evento: #{format_time(stats[:last_event_at])}",
-        "Top acoes: #{stats[:top_actions].presence&.join(', ') || '-'}",
-        "anonymous_id: #{stats[:anonymous_ids].presence&.join(', ') || '-'}",
-        "session_id: #{stats[:session_ids].presence&.join(', ') || '-'}"
+        "Top acoes: #{stats[:top_actions].presence&.join(', ') || '-'}"
       ].join("\n")
     end
 
@@ -263,8 +297,24 @@ module SaasLeads
         event_type: event_type.to_s,
         action: action.to_s,
         phase: pre_lead?(occurred_at) ? 'pre_lead' : 'post_lead',
+        intent_category: determine_intent_category(action, details),
         details: details || {}
       )
+    end
+
+    def determine_intent_category(action, details)
+      path = details['page_path'].to_s
+      
+      # Administrative patterns
+      if action.match?(/Dashboard/i) || path.include?('/dashboard') || path.include?('/api/v1/company_dashboard')
+        return :vendor_activity
+      end
+
+      return :buyer_intent if BUYER_INTENT_ACTIONS.include?(action)
+      return :vendor_activity if VENDOR_ACTIVITY_ACTIONS.include?(action)
+      
+      # Default to navigation for common events not explicitly buyer intent
+      :generic_navigation
     end
 
     def pre_lead?(occurred_at)

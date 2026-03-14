@@ -176,6 +176,8 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
 
       attributes_table do
         row('Eventos totais') { stats[:total_events] }
+        row('Sinais de Intencao (Buyer)') { status_tag stats[:buyer_intent_count], class: 'ok' }
+        row('Atividade Vendor/Admin') { status_tag stats[:vendor_activity_count], class: 'warning' }
         row('Antes de virar lead') { stats[:pre_lead_events] }
         row('Depois de virar lead') { stats[:post_lead_events] }
         row('Sessoes unicas') { stats[:unique_sessions_count] }
@@ -188,6 +190,16 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
         table_for timeline.events.reverse do
           column('Quando') { |event| l(event.occurred_at, format: :short) }
           column('Fase') { |event| status_tag(event.phase == 'pre_lead' ? 'antes' : 'depois', class: event.phase == 'pre_lead' ? 'warning' : 'ok') }
+          column('Categoria') do |event|
+            case event.intent_category
+            when :buyer_intent
+              status_tag 'BUYER INTENT', class: 'ok'
+            when :vendor_activity
+              status_tag 'VENDOR/ADMIN', class: 'warning'
+            else
+              status_tag 'NAVIGATION', class: 'light'
+            end
+          end
           column('Fonte') { |event| event.source }
           column('Evento') { |event| event.event_type }
           column('Acao') { |event| event.action }
@@ -195,6 +207,35 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
         end
       else
         para 'Sem eventos rastreados para este lead no periodo analisado.'
+      end
+    end
+
+    panel 'Dicionario de Sinais de Intencao' do
+      table do
+        thead do
+          tr do
+            th 'Sinal'
+            th 'Tipo'
+            th 'Descricao'
+          end
+        end
+        tbody do
+          tr do
+            td { status_tag 'BUYER INTENT', class: 'ok' }
+            td 'Intencao de Compra'
+            td 'Acoes de usuarios reais buscando solucao: visualizacao de perfil, cliques em CTA (WhatsApp/Site), inicio de wizard, etc.'
+          end
+          tr do
+            td { status_tag 'VENDOR/ADMIN', class: 'warning' }
+            td 'Atividade Interna'
+            td 'Acoes de membros de empresas ou administradores: acesso ao dashboard, troca de tema, exportacao de relatorios.'
+          end
+          tr do
+            td { status_tag 'NAVIGATION', class: 'light' }
+            td 'Navegacao Geral'
+            td 'Eventos comuns de navegacao que nao indicam necessariamente uma intencao comercial clara.'
+          end
+        end
       end
     end
   end
@@ -279,6 +320,8 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
         events: [],
         summary: {
           total_events: 0,
+          buyer_intent_count: 0,
+          vendor_activity_count: 0,
           pre_lead_events: 0,
           post_lead_events: 0,
           unique_sessions_count: 0,
