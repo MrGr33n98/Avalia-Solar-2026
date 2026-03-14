@@ -3,18 +3,24 @@ module PlanFeatureCatalog
 
   FEATURE_DEFINITIONS = {
     'product_description' => {
+      label: 'Descrição do Produto/Serviço',
+      description: 'Exibe o bloco de texto detalhado sobre a oferta da empresa no perfil público.',
       type: :boolean,
       default: true,
       access_behavior: :toggle,
       group: 'public_profile'
     },
     'product_features_block' => {
+      label: 'Bloco de Características',
+      description: 'Lista de diferenciais técnicos e especificações do produto/serviço.',
       type: :boolean,
       default: true,
       access_behavior: :toggle,
       group: 'public_profile'
     },
     'ideal_customer_block' => {
+      label: 'Perfil de Cliente Ideal',
+      description: 'Exibe para quem o serviço é mais indicado (ex: Residencial, Industrial).',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -22,6 +28,8 @@ module PlanFeatureCatalog
       group: 'public_profile'
     },
     'promo_banner' => {
+      label: 'Banner Promocional',
+      description: 'Permite que a empresa exiba um banner de oferta personalizada no topo do perfil.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -30,6 +38,8 @@ module PlanFeatureCatalog
       aliases: %w[banner banner_promocional]
     },
     'verified_product' => {
+      label: 'Selo de Empresa Verificada',
+      description: 'Exibe o selo de confiança que aumenta a taxa de conversão.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -38,6 +48,8 @@ module PlanFeatureCatalog
       aliases: %w[verified verified_badge]
     },
     'highlight_badges' => {
+      label: 'Badges de Destaque',
+      description: 'Exibe medalhas de conquistas (ex: Top 10, Empresa do Mês).',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -46,6 +58,8 @@ module PlanFeatureCatalog
       aliases: %w[badges badges_highlight]
     },
     'custom_ctas' => {
+      label: 'Botões de Orçamento (CTAs) Customizados',
+      description: 'Habilita botões personalizados para WhatsApp, Telefone ou Formulário Externo.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -54,6 +68,8 @@ module PlanFeatureCatalog
       aliases: %w[active_admin quote_feature quote_feature_enabled quote_requests quote_requests_enabled cta_whatsapp]
     },
     'pricing_table' => {
+      label: 'Tabela de Preços/Planos',
+      description: 'Exibe uma tabela comparativa de valores no perfil da empresa.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -62,6 +78,8 @@ module PlanFeatureCatalog
       aliases: %w[pricing pricing_block plans_and_prices]
     },
     'special_offer' => {
+      label: 'Oferta Especial Ativa',
+      description: 'Bloco de destaque para promoções temporárias com cronômetro ou cupom.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -70,6 +88,8 @@ module PlanFeatureCatalog
       aliases: %w[promo_offer offer]
     },
     'sponsored_description' => {
+      label: 'Conteúdo Patrocinado',
+      description: 'Permite que a empresa apareça em resultados patrocinados no blog e busca.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -78,6 +98,8 @@ module PlanFeatureCatalog
       aliases: %w[sponsored_content sponsored_copy]
     },
     'downloadable_materials' => {
+      label: 'Materiais para Download',
+      description: 'Habilita o envio de PDFs, manuais e catálogos para o cliente baixar.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -86,6 +108,8 @@ module PlanFeatureCatalog
       aliases: %w[downloads materials gated_downloads]
     },
     'media_gallery' => {
+      label: 'Galeria de Mídia (Fotos/Vídeos)',
+      description: 'Exibe fotos de instalações e vídeos de cases no perfil.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -94,6 +118,8 @@ module PlanFeatureCatalog
       aliases: %w[gallery media]
     },
     'media_upload' => {
+      label: 'Upload Autônomo de Mídia',
+      description: 'Permite que a própria empresa suba fotos/vídeos via painel administrativo.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -102,6 +128,8 @@ module PlanFeatureCatalog
       aliases: %w[allow_media_uploads gallery_uploads media_uploads]
     },
     'company_links_block' => {
+      label: 'Bloco de Redes Sociais',
+      description: 'Exibe links para Instagram, LinkedIn e site oficial.',
       type: :boolean,
       default: true,
       access_behavior: :toggle,
@@ -109,6 +137,8 @@ module PlanFeatureCatalog
       aliases: %w[company_links social_links]
     },
     'forum_highlight' => {
+      label: 'Destaque no Fórum de Comunidade',
+      description: 'Prioriza as respostas da empresa no fórum oficial.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -116,6 +146,8 @@ module PlanFeatureCatalog
       group: 'trust'
     },
     'featured_review' => {
+      label: 'Avaliação em Destaque',
+      description: 'Permite fixar o melhor depoimento de cliente no topo.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -124,6 +156,8 @@ module PlanFeatureCatalog
       aliases: %w[featured_reviews review_highlight]
     },
     'social_proof' => {
+      label: 'Módulo de Prova Social',
+      description: 'Exibe contador de estrelas e fotos de clientes satisfeitos.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -132,6 +166,8 @@ module PlanFeatureCatalog
       aliases: %w[social_proof_enabled]
     },
     'faq_block' => {
+      label: 'Bloco de Perguntas Frequentes',
+      description: 'Exibe sanfona de dúvidas frequentes (FAQs) no perfil.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -140,18 +176,24 @@ module PlanFeatureCatalog
       aliases: %w[faq faqs]
     },
     'show_alternatives' => {
+      label: 'Exibir Empresas Alternativas',
+      description: 'Se ativado, mostra competidores no final da página do perfil.',
       type: :boolean,
       default: true,
       access_behavior: :toggle,
       group: 'marketplace_behavior'
     },
     'show_competitor_banners' => {
+      label: 'Banners de Concorrentes',
+      description: 'Permite exibir anúncios de terceiros no perfil desta empresa.',
       type: :boolean,
       default: true,
       access_behavior: :toggle,
       group: 'marketplace_behavior'
     },
     'advanced_analytics' => {
+      label: 'Dashboard de Analytics Avançado',
+      description: 'Acesso a métricas detalhadas de visualizações, cliques e conversões.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -160,6 +202,8 @@ module PlanFeatureCatalog
       aliases: %w[analytics dashboard_access analytics_access]
     },
     'leads_marketplace' => {
+      label: 'Acesso ao Marketplace de Leads',
+      description: 'Permite que a empresa receba e visualize leads direto no painel.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -168,6 +212,8 @@ module PlanFeatureCatalog
       aliases: %w[lead_access leads_access]
     },
     'financing_simulation' => {
+      label: 'Simulador de Financiamento',
+      description: 'Habilita a ferramenta de simulação de parcelas no perfil.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -176,6 +222,8 @@ module PlanFeatureCatalog
       aliases: %w[financing financing_tab_visible]
     },
     'webhooks' => {
+      label: 'Integração via Webhooks (API)',
+      description: 'Permite enviar leads automaticamente para o CRM da empresa.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -184,6 +232,8 @@ module PlanFeatureCatalog
       aliases: %w[webhook webhook_access]
     },
     'intent_scores' => {
+      label: 'Score de Intenção de Compra',
+      description: 'Usa IA para classificar quais leads têm maior probabilidade de fechar.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,
@@ -192,6 +242,8 @@ module PlanFeatureCatalog
       aliases: %w[intent_engine intent_score_access]
     },
     'sector_question_limit' => {
+      label: 'Limite de Perguntas Setoriais',
+      description: 'Quantas perguntas a empresa pode responder no benchmark da categoria.',
       type: :integer,
       default: nil,
       access_behavior: :config,
@@ -199,6 +251,8 @@ module PlanFeatureCatalog
       aliases: %w[sector_questions_limit]
     },
     'setup_fee' => {
+      label: 'Taxa de Setup (Implementação)',
+      description: 'Valor cobrado uma única vez para ativação da conta.',
       type: :integer,
       default: 0,
       access_behavior: :config,
@@ -206,12 +260,16 @@ module PlanFeatureCatalog
       aliases: %w[taxa_setup custo_implementacao]
     },
     'setup_included' => {
+      label: 'Setup Incluso no Plano',
+      description: 'Se marcado, o valor de setup será exibido como GRÁTIS/INCLUSO.',
       type: :boolean,
       default: false,
       access_behavior: :toggle,
       group: 'operations'
     },
     'onboarding_session' => {
+      label: 'Sessão de Onboarding Assistida',
+      description: 'Treinamento inicial com o time de CS para configuração da conta.',
       type: :boolean,
       default: false,
       access_behavior: :entitlement,

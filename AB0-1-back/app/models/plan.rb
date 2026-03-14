@@ -41,18 +41,18 @@ class Plan < ApplicationRecord
 
   def setup_info
     flags = feature_flags
-    return "Setup Incluso" if flags['setup_included']
+    return "Setup Grátis (Incluso)" if flags['setup_included']
     
     fee = flags['setup_fee'].to_i
     if fee.positive?
-      "Taxa de Setup: R$ #{fee} (Pagamento único)"
+      "Taxa única: R$ #{fee}"
     else
       "Setup sob consulta"
     end
   end
 
   def onboarding_info
-    feature_flags['onboarding_session'] ? "Sessão de onboarding inclusa" : nil
+    feature_flags['onboarding_session'] ? "Inclui sessão de onboarding assistida" : nil
   end
 
   def full_implementation_summary

@@ -1,5 +1,5 @@
 ActiveAdmin.register Plan do
-  menu label: 'Planos (Catalogo)', priority: 18
+  menu label: 'Planos (Catálogo)', priority: 18
 
   permit_params do
     permitted = [:name, :description, :price, :plan_tier_template]
@@ -11,13 +11,13 @@ ActiveAdmin.register Plan do
   end
 
   FEATURE_GROUP_LABELS = {
-    'public_profile' => 'Perfil Publico',
-    'conversion' => 'Conversao',
+    'public_profile' => 'Perfil Público',
+    'conversion' => 'Conversão',
     'trust' => 'Prova Social e Destaque',
-    'content' => 'Conteudo',
-    'insights' => 'Inteligencia e Dados',
-    'marketplace_behavior' => 'Experiencia Competitiva',
-    'operations' => 'Servicos e Operacoes (Setup)'
+    'content' => 'Conteúdo',
+    'insights' => 'Inteligência e Dados',
+    'marketplace_behavior' => 'Experiência Competitiva',
+    'operations' => 'Serviços e Operações (Setup)'
   }.freeze
 
   FEATURE_GROUP_ORDER = %w[
@@ -31,39 +31,40 @@ ActiveAdmin.register Plan do
   ].freeze
 
   FEATURE_GROUP_DESCRIPTIONS = {
-    'public_profile' => 'Controle os blocos publicos exibidos no perfil da empresa.',
-    'conversion' => 'Defina recursos comerciais e pontos de conversao do perfil.',
-    'trust' => 'Gerencie sinais de confianca, destaque e prova social.',
-    'content' => 'Libere ou bloqueie biblioteca de materiais e midia.',
-    'marketplace_behavior' => 'Ajuste comportamento competitivo no marketplace.',
-    'insights' => 'Configure analytics, leads e recursos avancados.',
-    'operations' => 'Configure taxas de setup, onboarding e servicos de implementacao inicial.'
+    'public_profile' => 'Configurações de exibição do perfil da empresa para visitantes.',
+    'conversion' => 'Recursos voltados para transformar visitantes em leads qualificados.',
+    'trust' => 'Sinais de credibilidade, badges e avaliações que geram confiança.',
+    'content' => 'Gestão de ativos de mídia, downloads e materiais ricos.',
+    'marketplace_behavior' => 'Controla como a empresa interage com concorrentes no ecossistema.',
+    'insights' => 'Recursos de analytics, integração e inteligência de mercado.',
+    'operations' => 'Configuração de custos iniciais e suporte de onboarding.'
   }.freeze
 
-  filter :name
-  filter :description
-  filter :price
-  filter :created_at
-  filter :updated_at
+  filter :name, label: 'Nome'
+  filter :description, label: 'Descrição'
+  filter :price, label: 'Preço Mensal'
+  filter :created_at, label: 'Criado em'
+  filter :updated_at, label: 'Atualizado em'
 
   action_item :manage_subscriptions, only: :index do
-    link_to 'Ir para SAAS - Gestao de planos', admin_subscription_plans_path
+    link_to 'Gestão de Assinaturas (SaaS)', admin_subscription_plans_path
   end
 
-  index do
+  index title: 'Catálogo de Planos' do
     selectable_column
     id_column
-    column :name
-    column('Tier') { |plan| status_tag(plan.inferred_plan_tier) }
-    column :description
-    column :price
-    column('Setup') { |plan| plan.setup_info }
-    column('Features ativas') { |plan| plan.enabled_feature_keys.count }
-    column :created_at
+    column 'Nome', :name
+    column('Categoria/Tier') { |plan| status_tag(plan.inferred_plan_tier) }
+    column 'Preço', :price do |plan|
+      number_to_currency(plan.price, unit: 'R$', separator: ',', delimiter: '.')
+    end
+    column 'Setup', :setup_info
+    column('Recursos Ativos') { |plan| plan.enabled_feature_keys.count }
+    column 'Criado em', :created_at
     actions
   end
 
-  show do
+  show title: proc { |p| "Plano: #{p.name}" } do
     grouped_features = PlanFeatureCatalog.known_keys.group_by do |key|
       PlanFeatureCatalog.feature_definition(key)[:group]
     end
@@ -75,23 +76,25 @@ ActiveAdmin.register Plan do
 
     attributes_table do
       row :id
-      row :name
-      row :description
-      row :price
-      row('Setup/Implementacao') { resource.full_implementation_summary }
-      row('Tier inferido') { status_tag(resource.inferred_plan_tier) }
-      row('Features ativas') { resource.enabled_feature_keys.count }
-      row :created_at
-      row :updated_at
+      row('Nome do Plano') { resource.name }
+      row('Descrição Interna') { resource.description }
+      row('Preço Mensal') { number_to_currency(resource.price, unit: 'R$', separator: ',', delimiter: '.') }
+      row('Configuração de Setup') { resource.full_implementation_summary }
+      row('Tier Inferido') { status_tag(resource.inferred_plan_tier) }
+      row('Total de Recursos') { resource.enabled_feature_keys.count }
+      row('Data de Criação') { resource.created_at }
+      row('Última Atualização') { resource.updated_at }
     end
 
-    panel 'Resumo do plano' do
+    panel 'Visualização dos Recursos (Features)' do
       attributes_table_for resource do
-        row('Features habilitadas') do
-          enabled = resource.enabled_feature_keys.map { |key| key.to_s.humanize }
-          enabled.any? ? enabled.join(', ') : 'Nenhuma'
+        row('Lista de Ativos') do
+          enabled = resource.enabled_feature_keys.map do |key| 
+            PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize 
+          end
+          enabled.any? ? enabled.join(', ') : 'Nenhum recurso habilitado'
         end
-        row('Payload canonico') do
+        row('Dados Técnicos (JSON)') do
           pre JSON.pretty_generate(resource.feature_flags)
         end
       end
@@ -101,15 +104,19 @@ ActiveAdmin.register Plan do
       panel(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
         para(FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints') if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
         table_for feature_keys do
-          column('Feature') { |key| key.to_s.humanize }
-          column('Tipo') { |key| PlanFeatureCatalog.feature_definition(key)[:type] }
-          column('Valor') do |key|
+          column('Funcionalidade') { |key| PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize }
+          column('Explicação') { |key| PlanFeatureCatalog.feature_definition(key)[:description] }
+          column('Valor Atual') do |key|
             value = resource.feature_flags[key]
-            value.nil? ? status_tag('unset', class: 'warning') : value.inspect
-          end
-          column('Acesso') do |key|
-            definition = PlanFeatureCatalog.feature_definition(key)
-            definition[:access_behavior].to_s
+            if value.nil?
+              status_tag('Não definido', class: 'warning')
+            elsif value == true
+              status_tag('Habilitado', class: 'ok')
+            elsif value == false
+              status_tag('Bloqueado', class: 'error')
+            else
+              value.inspect
+            end
           end
         end
       end
@@ -118,7 +125,7 @@ ActiveAdmin.register Plan do
     active_admin_comments
   end
 
-  form do |f|
+  form title: 'Editar Configuração de Plano' do |f|
     view_helpers = f.template.helpers
     selected_tier = f.object.plan_tier_template.presence || f.object.inferred_plan_tier
     tier_defaults = PlanFeatureCatalog.defaults_for_tier(selected_tier)
@@ -138,16 +145,14 @@ ActiveAdmin.register Plan do
       end.merge(grouped_features.except(*FEATURE_GROUP_ORDER))
 
     render_feature_label = lambda do |key|
-      key.to_s.humanize
+      PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize
     end
 
     render_feature_hint = lambda do |key, definition, default_value|
       hints = []
-      hints << "Default do tier: #{default_value.inspect}" unless default_value.nil?
+      hints << "Padrão do Tier: #{default_value == true ? 'Habilitado' : (default_value == false ? 'Bloqueado' : default_value.inspect)}" unless default_value.nil?
       hints << "Tipo: #{definition[:type]}"
-      hints << "Acesso: #{definition[:access_behavior]}"
-      aliases = Array(definition[:aliases]).map(&:to_s)
-      hints << "Aliases legados: #{aliases.join(', ')}" if aliases.any?
+      hints << "Comportamento: #{definition[:access_behavior]}"
       hints.join(' | ')
     end
 
@@ -169,11 +174,14 @@ ActiveAdmin.register Plan do
             view_helpers.content_tag(:h4, render_feature_label.call(key), class: 'plan-feature-title')
           )
           view_helpers.concat(
-            view_helpers.content_tag(:p, "Estado atual: #{state}", class: 'inline-hints')
+            view_helpers.content_tag(:p, definition[:description], class: 'feature-description-text')
+          )
+          view_helpers.concat(
+            view_helpers.content_tag(:p, "Status: #{state == 'enabled' ? 'ATIVO' : 'BLOQUEADO'}", class: 'inline-hints')
           )
 
           if definition[:type] == :integer
-            view_helpers.concat(view_helpers.label_tag(input_id, 'Valor', class: 'label'))
+            view_helpers.concat(view_helpers.label_tag(input_id, 'Valor numérico', class: 'label'))
             view_helpers.concat(
               view_helpers.number_field_tag(
                 input_name,
@@ -191,7 +199,7 @@ ActiveAdmin.register Plan do
               view_helpers.label_tag(input_id, class: 'label') do
                 view_helpers.capture do
                   view_helpers.concat(view_helpers.check_box_tag(input_name, '1', checked, id: input_id))
-                  view_helpers.concat(' Habilitar')
+                  view_helpers.concat(' Ativar recurso para este plano')
                 end
               end
             )
@@ -214,17 +222,17 @@ ActiveAdmin.register Plan do
       )
     end
 
-    f.inputs 'Plano' do
-      f.input :name
-      f.input :description
-      f.input :price
+    f.inputs 'Informações Básicas do Plano' do
+      f.input :name, label: 'Nome do Plano'
+      f.input :description, label: 'Descrição Interna', hint: 'Apenas para uso administrativo.'
+      f.input :price, label: 'Preço Mensal (R$)', hint: 'Use 0 para planos gratuitos.'
       f.input :plan_tier_template,
               as: :select,
-              label: 'Template inicial',
+              label: 'Template de Referência',
               collection: PlanFeatureCatalog::PLAN_TIERS.map { |tier| [tier.humanize, tier] },
               include_blank: false,
               selected: selected_tier,
-              hint: 'Define o bundle inicial. Depois ajuste feature por feature.'
+              hint: 'A troca do template redefine os valores padrão abaixo.'
       nil
     end
 
@@ -241,7 +249,7 @@ ActiveAdmin.register Plan do
       end
     end
 
-    f.inputs 'Preview do plano resultante' do
+    f.inputs 'Resumo da Configuração Resultante' do
       enabled = preview_flags.each_with_object([]) do |(key, value), memo|
         next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
 
@@ -251,20 +259,12 @@ ActiveAdmin.register Plan do
 
       view_helpers.safe_join(
         [
-          view_helpers.content_tag(:p, "Tier considerado: #{selected_tier}", class: 'inline-hints'),
+          view_helpers.content_tag(:p, "Tier de Referência: #{selected_tier.upcase}", class: 'inline-hints'),
           view_helpers.content_tag(
             :p,
-            "Features habilitadas: #{enabled.any? ? enabled.join(', ') : 'Nenhuma'}",
+            "Total de itens liberados: #{enabled.any? ? enabled.join(', ') : 'Nenhum'}",
             class: 'inline-hints'
-          ),
-          view_helpers.content_tag(:details) do
-            view_helpers.safe_join(
-              [
-                view_helpers.content_tag(:summary, 'Ver JSON do payload canonico'),
-                view_helpers.content_tag(:pre, JSON.pretty_generate(preview_flags))
-              ]
-            )
-          end
+          )
         ]
       )
     end
