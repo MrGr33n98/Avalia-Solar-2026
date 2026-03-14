@@ -22,7 +22,9 @@ module Api
           leads = stats[:leads].to_i
           conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
 
-          is_premium = @company.has_paid_plan? || @company.plan_status == 'active'
+          # NOTE: Company model does not expose `plan_status` in all environments.
+          # Use the canonical paid-plan helper to avoid NoMethodError in production.
+          is_premium = @company.has_paid_plan?
 
           render json: {
             views_30d: views,

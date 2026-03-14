@@ -111,7 +111,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
   }, [companyId, queryClient]);
 
   const stats = statsQuery.data;
-  const isPremium = company?.plan_status === 'active' || company?.featured;
+  const isPremium = Boolean(company?.has_paid_plan || company?.featured || company?.plan_id);
   const companyName = (company?.name as string) || 'sua empresa';
 
   const rankingRows: RankingRow[] = useMemo(() => {
