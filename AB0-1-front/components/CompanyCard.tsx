@@ -267,7 +267,7 @@ export default function CompanyCard({
 
   if (isLoading) {
     return (
-      <Card className={cn('overflow-hidden rounded-clay-lg border border-clay-shadow-light clay-surface', className)}>
+      <Card className={cn('overflow-hidden rounded-clay-lg clay-card', className)}>
         <Skeleton className={cn('w-full', compact ? 'h-[80px]' : 'h-[100px]')} />
         <CardContent className="pt-4">
           <div className="relative -mt-8 mb-3">
@@ -290,7 +290,7 @@ export default function CompanyCard({
   }
 
   // Banner ratio: consistent across all cards for grid alignment
-  const bannerRatio = 10 / 3; // Reduced vertical height by ~30% (was 21/9)
+  const bannerRatio = 21 / 9; // Cinematic ratio (previously 10/3 which was too short/strip-like)
   const avatarSize = compact ? 40 : 52;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -319,7 +319,7 @@ export default function CompanyCard({
       <Card
         ref={cardRef}
         className={cn(
-          'relative flex flex-col bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/80 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
+          'relative flex flex-col bg-white dark:bg-slate-900 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
           'overflow-hidden h-full flex-1',
           compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
         )}
@@ -404,7 +404,7 @@ export default function CompanyCard({
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 onError={() => setBannerError(true)}
-                className="object-contain object-center px-1"
+                className="object-cover"
                 data-testid="company-banner"
               />
             ) : (

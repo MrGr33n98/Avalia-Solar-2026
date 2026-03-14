@@ -53,14 +53,14 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
       >
         <Card
           className={cn(
-            "h-full overflow-hidden transition-all duration-300 flex flex-col clay-card border border-slate-200/90 dark:border-slate-800/50 hover:shadow-2xl hover:border-primary/30 rounded-2xl bg-white dark:bg-slate-900",
+            "h-full overflow-hidden transition-all duration-300 flex flex-col clay-card hover:shadow-2xl hover:border-primary/30 rounded-2xl bg-white dark:bg-slate-900",
             isHovered && "ring-2 ring-primary/10"
           )}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Visual Header / Banner Section */}
-          <div className="relative aspect-[16/10] overflow-hidden group">
+          <div className="relative aspect-[16/7] overflow-hidden group">
              <Image
                 src={displayData.bannerUrl}
                 alt={displayData.title}

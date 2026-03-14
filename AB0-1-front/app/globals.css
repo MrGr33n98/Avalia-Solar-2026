@@ -299,7 +299,7 @@
   .clay-card {
     @apply clay-surface clay-convex;
     background: hsl(var(--clay-surface));
-    border: 1px solid hsl(var(--clay-shadow-light));
+    border: 1.5px solid hsla(var(--foreground), 0.12);
     border-radius: var(--clay-radius-xl);
   }
 
@@ -525,7 +525,7 @@
     box-shadow: 
       4px 4px 12px hsl(var(--clay-shadow-dark)),
       -2px -2px 8px hsl(var(--clay-shadow-light));
-    border: 1px solid hsla(var(--foreground), 0.05);
+    border: 1.5px solid hsla(var(--foreground), 0.15);
   }
 
   .dark .clay-convex {
