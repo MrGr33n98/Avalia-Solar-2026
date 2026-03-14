@@ -114,22 +114,16 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           title="Ativos no Vault"
           value={badges.length.toString()}
           icon={Layers}
-          description="Total de selos acumulados"
-          variant="glass"
         />
         <MetricCard
           title="Verificação Ativa"
           value={verifiableCount.toString()}
           icon={ShieldCheck}
-          description="Selos com link de autoridade"
-          variant="glass"
         />
         <MetricCard
           title="Poder de Conversão"
           value="+18%"
           icon={Zap}
-          description="Impacto estimado no CTR"
-          variant="glass"
         />
       </div>
 
@@ -171,9 +165,9 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                       className="object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:drop-shadow-[0_0_40px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-all duration-700 relative z-10"
                     />
                     <div className="absolute top-6 right-6">
-                       <Badge className="bg-primary/10 text-primary border-none font-black text-[8px] uppercase tracking-widest py-1 px-3">
+                       <UIBadge className="bg-primary/10 text-primary border-none font-black text-[8px] uppercase tracking-widest py-1 px-3">
                          {badge.category || 'EXCELLENCE'}
-                       </Badge>
+                       </UIBadge>
                     </div>
                   </div>
 
