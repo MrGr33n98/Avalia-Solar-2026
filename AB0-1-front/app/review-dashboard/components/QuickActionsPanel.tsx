@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { PlusCircle, Building2, PackageSearch, UserRound, HelpCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Building, PackageSearch, UserRound, HelpCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +25,7 @@ const actions = [
   {
     id: 'browse_companies',
     label: 'Encontrar integradores',
-    icon: Building2,
+    icon: Building,
     href: '/empresas',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',

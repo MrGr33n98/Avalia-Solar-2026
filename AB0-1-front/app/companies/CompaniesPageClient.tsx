@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
-import { Search, Grid, List, Building2, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Grid, List, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
@@ -233,7 +233,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     : 'Empresas de Energia Solar';
 
   const quickActions = [
-    { label: 'Instalar', href: '/companies', icon: Building2, styles: 'bg-brand-blue/10 text-brand-blue' },
+    { label: 'Instalar', href: '/companies', icon: Building, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
     { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
     { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },

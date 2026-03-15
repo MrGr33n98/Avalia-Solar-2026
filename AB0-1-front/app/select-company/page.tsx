@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Building2,
+  Building,
   Check,
   Search,
   Plus,
@@ -389,7 +389,7 @@ export default function SelectCompanyPage() {
                               className="object-cover p-1"
                             />
                           ) : (
-                            <Building2 className="h-5 w-5 text-gray-300" />
+                            <Building className="h-5 w-5 text-gray-300" />
                           )}
                         </div>
 

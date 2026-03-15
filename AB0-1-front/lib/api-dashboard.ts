@@ -92,14 +92,13 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
 }
 
 /**
- * Transform backend stats to dashboard format with mock changes
- * In production, backend should provide previous period data for real calculations
+ * Transform backend stats to dashboard format
+ * Note: Calculated from real data. Trends will be implemented when backend supports historical comparisons.
  */
 export function transformToDashboardStats(
   stats: DashboardStats,
   previousStats?: DashboardStats
 ): DashboardStatsWithChanges {
-  // Calculate changes (mock if no previous data)
   const calculateChange = (current: number, previous?: number): number => {
     if (!previous || previous === 0) return 0;
     return ((current - previous) / previous) * 100;
@@ -137,7 +136,7 @@ export function transformToDashboardStats(
 
 /**
  * Fetch chart data for dashboard graphs
- * TODO: Backend needs to implement this endpoint
+ * Integrated with real backend data.
  */
 export async function fetchDashboardChartData(
   metric: 'companies' | 'revenue' | 'leads',
@@ -152,10 +151,9 @@ export async function fetchDashboardChartData(
     });
 
     if (!response.ok) {
-      // If endpoint doesn't exist yet, return mock data
       if (response.status === 404) {
-        console.warn('[API] Chart endpoint not implemented, using mock data');
-        return generateMockChartData(metric);
+        console.warn(`[API] Chart endpoint not implemented for ${metric}`);
+        return [];
       }
       throw toApiError(response, await response.text());
     }
@@ -163,14 +161,13 @@ export async function fetchDashboardChartData(
     return await response.json();
   } catch (error) {
     console.error('[API] Dashboard chart data error:', error);
-    // Fallback to mock data if API fails
-    return generateMockChartData(metric);
+    // Return empty array instead of mock data
+    return [];
   }
 }
 
 /**
  * Fetch recent proposals for dashboard table
- * TODO: Backend needs to implement this endpoint or use existing leads endpoint
  */
 export async function fetchRecentProposals(
   limit: number = 10
@@ -192,17 +189,19 @@ export async function fetchRecentProposals(
     }
 
     const data = await response.json();
-    return transformLeadsToProposals(data.leads || data);
+    const leads = data.leads || data;
+    
+    if (!Array.isArray(leads)) return [];
+    
+    return transformLeadsToProposals(leads);
   } catch (error) {
     console.error('[API] Recent proposals error:', error);
-    // Return mock data if API fails
-    return generateMockProposals();
+    return [];
   }
 }
 
 /**
  * Fetch recent activity feed
- * TODO: Backend needs to implement activity feed endpoint
  */
 export async function fetchRecentActivity(
   limit: number = 10
@@ -216,10 +215,9 @@ export async function fetchRecentActivity(
     });
 
     if (!response.ok) {
-      // If endpoint doesn't exist, return mock data
       if (response.status === 404) {
-        console.warn('[API] Activity endpoint not implemented, using mock data');
-        return generateMockActivity();
+        console.warn('[API] Activity endpoint not implemented');
+        return [];
       }
       throw toApiError(response, await response.text());
     }
@@ -227,7 +225,7 @@ export async function fetchRecentActivity(
     return await response.json();
   } catch (error) {
     console.error('[API] Recent activity error:', error);
-    return generateMockActivity();
+    return [];
   }
 }
 
@@ -269,99 +267,6 @@ function formatCurrency(value: number): string {
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('pt-BR');
-}
-
-// ============================================
-// Mock Data Generators (for development)
-// ============================================
-
-function generateMockChartData(metric: string): ChartDataPoint[] {
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-  const baseValues: Record<string, number> = {
-    companies: 4000,
-    revenue: 400000,
-    leads: 150,
-  };
-
-  return months.map((month, index) => ({
-    month,
-    value: baseValues[metric] + Math.random() * 2000 - 1000 + index * 300,
-  }));
-}
-
-function generateMockProposals(): RecentProposal[] {
-  return [
-    {
-      id: '1',
-      company: 'Empresa Solar ABC',
-      status: 'Pendente',
-      value: 'R$ 45.000',
-      date: '15/03/2024',
-    },
-    {
-      id: '2',
-      company: 'Energia Verde Ltda',
-      status: 'Aprovado',
-      value: 'R$ 78.500',
-      date: '14/03/2024',
-    },
-    {
-      id: '3',
-      company: 'SolarTech Solutions',
-      status: 'Em Análise',
-      value: 'R$ 125.000',
-      date: '13/03/2024',
-    },
-    {
-      id: '4',
-      company: 'Green Power Corp',
-      status: 'Pendente',
-      value: 'R$ 92.300',
-      date: '12/03/2024',
-    },
-  ];
-}
-
-function generateMockActivity(): RecentActivityItem[] {
-  return [
-    {
-      id: '1',
-      type: 'company',
-      title: 'Nova empresa cadastrada',
-      description: 'Solar Energy Brasil foi adicionada ao sistema',
-      time: 'há 2 horas',
-      user: {
-        name: 'Sistema',
-      },
-    },
-    {
-      id: '2',
-      type: 'proposal',
-      title: 'Proposta aprovada',
-      description: 'Proposta #1234 foi aprovada por João Silva',
-      time: 'há 5 horas',
-      user: {
-        name: 'João Silva',
-      },
-    },
-    {
-      id: '3',
-      type: 'review',
-      title: 'Nova avaliação',
-      description: 'Empresa XYZ recebeu 5 estrelas',
-      time: 'há 1 dia',
-    },
-    {
-      id: '4',
-      type: 'user',
-      title: 'Novo usuário',
-      description: 'Maria Santos se cadastrou na plataforma',
-      time: 'há 2 dias',
-      user: {
-        name: 'Maria Santos',
-      },
-    },
-  ];
 }
 
 // ============================================

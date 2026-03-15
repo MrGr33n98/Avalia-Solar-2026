@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Trophy, Star, TrendingUp, Award, Building2, MapPin, ArrowRight } from 'lucide-react';
+import { Trophy, Star, TrendingUp, Award, Building, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { RatingStars } from '@/components/RatingStars';
@@ -117,7 +117,7 @@ export default function RatingStarsPage() {
                               {company.logo_url ? (
                                 <img src={company.logo_url} alt={company.name} className="w-full h-full object-contain p-2" />
                               ) : (
-                                <Building2 className="w-7 h-7" />
+                                <Building className="w-7 h-7" />
                               )}
                             </div>
 

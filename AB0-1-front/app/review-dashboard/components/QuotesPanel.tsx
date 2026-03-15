@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Eye, XCircle, ChevronRight, Building2, Star } from 'lucide-react';
+import { MessageCircle, Eye, XCircle, ChevronRight, Building, Star } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -101,7 +101,7 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
           ) : filteredData.length === 0 ? (
             <div className="py-16 text-center space-y-4">
               <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto">
-                <Building2 className="h-8 w-8 text-slate-300" />
+                <Building className="h-8 w-8 text-slate-300" />
               </div>
               <div className="space-y-1">
                 <p className="text-slate-900 font-black uppercase text-sm">Nenhum orçamento ainda</p>

@@ -303,57 +303,20 @@ module Api
         end
       end
 
-      private
-
-      def generate_trust_recommendations(components, company)
-        recommendations = []
-        
-        # Verification recommendation
-        recommendations << {
-          type: 'verification',
-          message: 'Complete company verification to gain +20 trust points',
-          impact: 20,
-          action_url: '/dashboard/settings/verification'
-        } unless company.verified?
-        
-        # Reviews recommendation
-        if components['reviews'].to_i < 5
-          recommendations << {
-            type: 'reviews',
-            message: 'Encourage more customer reviews to improve trust',
-            impact: (10 - components['reviews'].to_i).round(1),
-            action_url: '/dashboard/reviews/invite'
-          }
-        end
-        
-        # Rating recommendation
-        if company.rating_avg.to_f < 4.0
-          recommendations << {
-            type: 'rating',
-            message: 'Improve average rating to boost trust score',
-            impact: ((company.rating_avg.to_f / 5.0) * 20).round(1),
-            action_url: '/dashboard/reviews'
-          }
-        end
-        
-        recommendations
-      end
-
-      def calculate_verification_progress(earned_badges, all_badges)
-        return 0 if all_badges.count.zero?
-        
-        (earned_badges.count.to_f / all_badges.count * 100).round(1)
-      end
-
       # GET /api/v1/company_dashboard/assets
       def assets
+        base_url = ENV['APP_HOST'] || 'https://avaliasolar.com.br'
+        profile_url = "#{base_url}/empresas/#{@company.slug}"
+        badge_svg_url = "#{base_url}/api/v1/badges/#{@company.slug}.svg"
+        utm_params = "utm_source=badge&utm_medium=referral&utm_campaign=trust_badge"
+        
         render json: {
-          public_profile_url: "https://avaliasolar.com.br/empresas/#{@company.slug}",
+          public_profile_url: profile_url,
           logo_url: @company.logo&.url,
           banner_url: @company.banner&.url,
-          badge_url: "https://avaliasolar.com.br/api/v1/badges/#{@company.slug}.svg",
-          badge_embed_code: "<a href=\"https://avaliasolar.com.br/empresas/#{@company.slug}?utm_source=badge&utm_medium=referral&utm_campaign=trust_badge\"><img src=\"https://avaliasolar.com.br/api/v1/badges/#{@company.slug}.svg\" alt=\"Selo AvaliaSolar\" /></a>",
-          utm_ready_link: "https://avaliasolar.com.br/empresas/#{@company.slug}?utm_source=badge&utm_medium=referral&utm_campaign=trust_badge"
+          badge_url: badge_svg_url,
+          badge_embed_code: "<a href=\"#{profile_url}?#{utm_params}\"><img src=\"#{badge_svg_url}\" alt=\"Selo AvaliaSolar\" /></a>",
+          utm_ready_link: "#{profile_url}?#{utm_params}"
         }
       end
 
@@ -392,21 +355,19 @@ module Api
       def banner_checkout
         offer = BannerOffer.find(params[:offer_id])
 
-        checkout_session_id = SecureRandom.uuid
+        # Generate a unique reference for the payment provider
+        checkout_session_id = "PAY-#{SecureRandom.hex(8).upcase}"
+        
         sub = @company.banner_subscriptions.create!(
           banner_offer: offer,
           status: 'pending_payment',
-          provider: 'mock',
+          provider: params[:provider] || 'internal',
           checkout_session_id: checkout_session_id
         )
 
         render json: {
           subscription: sub.as_json(only: %i[id status provider checkout_session_id created_at]),
-          message: 'Checkout criado. Confirme o pagamento via webhook (ambiente mock).',
-          webhook_example: {
-            url: '/api/v1/payments/webhooks/mock',
-            payload: { checkout_session_id: checkout_session_id, status: 'paid' }
-          }
+          redirect_url: nil # In a real implementation, this would be the Stripe/MP URL
         }, status: :created
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'offer_not_found' }, status: :not_found
@@ -416,7 +377,7 @@ module Api
       def update_info
         if current_user&.role == 'admin'
           if @company.update(company_params)
-            return render json: { message: 'AlteraÃ§Ãµes aplicadas com sucesso' }, status: :ok
+            return render json: { message: 'Alterações aplicadas com sucesso' }, status: :ok
           end
 
 
@@ -449,7 +410,7 @@ module Api
         )
 
         render json: {
-          message: direct_update_attrs.present? ? 'AlteraÃ§Ãµes aplicadas e enviadas para aprovaÃ§Ã£o' : 'AlteraÃ§Ãµes enviadas para aprovaÃ§Ã£o',
+          message: direct_update_attrs.present? ? 'Alterações aplicadas e enviadas para aprovação' : 'Alterações enviadas para aprovação',
           pending_change: pending_change
         }, status: :created
       end
@@ -479,7 +440,7 @@ module Api
         )
 
         render json: {
-          message: 'SolicitaÃ§Ã£o de categorias enviada para aprovaÃ§Ã£o',
+          message: 'Solicitação de categorias enviada para aprovação',
           pending_change: pending_change
         }, status: :created
       end
@@ -509,7 +470,7 @@ module Api
         )
 
         render json: {
-          message: 'SolicitaÃ§Ã£o de remoÃ§Ã£o enviada para aprovaÃ§Ã£o',
+          message: 'Solicitação de remoção enviada para aprovação',
           pending_change: pending_change
         }, status: :created
       end
@@ -534,7 +495,7 @@ module Api
         )
 
         render json: {
-          message: 'ConfiguraÃ§Ãµes de CTAs enviadas para aprovaÃ§Ã£o',
+          message: 'Configurações de CTAs enviadas para aprovação',
           pending_change: pending_change
         }, status: :created
       end
@@ -545,7 +506,7 @@ module Api
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
         unless %w[image/png image/jpeg].include?(file.content_type)
-          return render json: { error: 'Formato invÃ¡lido. Use PNG ou JPG' }, status: :unprocessable_entity
+          return render json: { error: 'Formato inválido. Use PNG ou JPG' }, status: :unprocessable_entity
         end
         if file.size.to_i > 2.megabytes
           return render json: { error: 'Logo acima de 2MB' }, status: :unprocessable_entity
@@ -571,7 +532,7 @@ module Api
           )
         )
 
-        render json: { message: 'Logo enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+        render json: { message: 'Logo enviada para aprovação', pending_change: pending_change }, status: :created
       end
 
       # POST /api/v1/company_dashboard/update_banner
@@ -580,7 +541,7 @@ module Api
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
         unless %w[image/png image/jpeg].include?(file.content_type)
-          return render json: { error: 'Formato invÃ¡lido. Use PNG ou JPG' }, status: :unprocessable_entity
+          return render json: { error: 'Formato inválido. Use PNG ou JPG' }, status: :unprocessable_entity
         end
         if file.size.to_i > 5.megabytes
           return render json: { error: 'Banner acima de 5MB' }, status: :unprocessable_entity
@@ -594,10 +555,10 @@ module Api
           w = meta['width']
           h = meta['height']
           if w && h && (w < 1920 || h < 600)
-            return render json: { error: 'DimensÃµes mÃ­nimas recomendadas: 1920x600px' }, status: :unprocessable_entity
+            return render json: { error: 'Dimensões mínimas recomendadas: 1920x600px' }, status: :unprocessable_entity
           end
         rescue StandardError => e
-          Rails.logger.warn "Falha ao analisar dimensÃµes do banner: #{e.message}"
+          Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
         end
 
         pending_change = @company.pending_changes.create!(
@@ -617,7 +578,7 @@ module Api
           )
         )
 
-        render json: { message: 'Banner enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+        render json: { message: 'Banner enviado para aprovação', pending_change: pending_change }, status: :created
       end
 
       # GET /api/v1/company_dashboard/pending_changes
@@ -640,8 +601,8 @@ module Api
           @company.pending_changes.approved.where('approved_at > ?', 7.days.ago).each do |change|
             notifications << {
               type: 'approval',
-              title: 'AlteraÃ§Ã£o Aprovada',
-              message: "Sua alteraÃ§Ã£o de #{change.change_type.humanize} foi aprovada",
+              title: 'Alteração Aprovada',
+              message: "Sua alteração de #{change.change_type.humanize} foi aprovada",
               timestamp: change.approved_at,
               read: false
             }
@@ -652,8 +613,8 @@ module Api
         @company&.reviews&.where('created_at > ?', 7.days.ago)&.each do |review|
           notifications << {
             type: 'review',
-            title: 'Nova AvaliaÃ§Ã£o',
-            message: "Nova avaliaÃ§Ã£o de #{review.rating} estrelas recebida",
+            title: 'Nova Avaliação',
+            message: "Nova avaliação de #{review.rating} estrelas recebida",
             timestamp: review.created_at,
             read: false
           }
@@ -726,7 +687,7 @@ module Api
           status: 'pending'
         )
 
-        render json: { message: 'MÃ­dia enviada para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+        render json: { message: 'Mídia enviada para aprovação', pending_change: pending_change }, status: :created
       end
 
       # POST /api/v1/company_dashboard/add_video
@@ -735,7 +696,7 @@ module Api
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
         unless media_upload_permitted?
-          return render json: { error: 'Plano necessÃ¡rio para adicionar vÃ­deo' }, status: :forbidden
+          return render json: { error: 'Plano necessário para adicionar vídeo' }, status: :forbidden
         end
 
         url = params[:url].to_s
@@ -754,7 +715,7 @@ module Api
           user_id: current_user.id,
           status: 'pending'
         )
-        render json: { message: 'VÃ­deo enviado para aprovaÃ§Ã£o', pending_change: pending_change }, status: :created
+        render json: { message: 'Vídeo enviado para aprovação', pending_change: pending_change }, status: :created
       end
 
       # DELETE /api/v1/company_dashboard/remove_video
@@ -763,11 +724,11 @@ module Api
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
         unless media_upload_permitted?
-          return render json: { error: 'Plano necessÃ¡rio para gerenciar vÃ­deos' }, status: :forbidden
+          return render json: { error: 'Plano necessário para gerenciar vídeos' }, status: :forbidden
         end
 
         vid = params[:video_id].to_s.presence || params[:id].to_s
-        return render json: { error: 'ParÃ¢metro video_id ausente' }, status: :unprocessable_entity if vid.blank?
+        return render json: { error: 'Parâmetro video_id ausente' }, status: :unprocessable_entity if vid.blank?
 
         pending_change = @company.pending_changes.create!(
           change_type: 'video',
@@ -775,7 +736,7 @@ module Api
           user_id: current_user.id,
           status: 'pending'
         )
-        render json: { message: 'RemoÃ§Ã£o de vÃ­deo enviada para aprovaÃ§Ã£o', pending_change: pending_change },
+        render json: { message: 'Remoção de vídeo enviada para aprovação', pending_change: pending_change },
                status: :created
       end
 
@@ -905,6 +866,46 @@ module Api
           member.status = 'active'
           member.role = 'owner'
         end
+      end
+
+      def generate_trust_recommendations(components, company)
+        recommendations = []
+        
+        # Verification recommendation
+        recommendations << {
+          type: 'verification',
+          message: 'Complete company verification to gain +20 trust points',
+          impact: 20,
+          action_url: '/dashboard/settings/verification'
+        } unless company.verified?
+        
+        # Reviews recommendation
+        if components['reviews'].to_i < 5
+          recommendations << {
+            type: 'reviews',
+            message: 'Encourage more customer reviews to improve trust',
+            impact: (10 - components['reviews'].to_i).round(1),
+            action_url: '/dashboard/reviews/invite'
+          }
+        end
+        
+        # Rating recommendation
+        if company.rating_avg.to_f < 4.0
+          recommendations << {
+            type: 'rating',
+            message: 'Improve average rating to boost trust score',
+            impact: ((company.rating_avg.to_f / 5.0) * 20).round(1),
+            action_url: '/dashboard/reviews'
+          }
+        end
+        
+        recommendations
+      end
+
+      def calculate_verification_progress(earned_badges, all_badges)
+        return 0 if all_badges.count.zero?
+        
+        (earned_badges.count.to_f / all_badges.count * 100).round(1)
       end
 
       def media_upload_permitted?

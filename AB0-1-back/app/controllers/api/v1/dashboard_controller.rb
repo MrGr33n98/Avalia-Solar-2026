@@ -115,11 +115,19 @@ module Api
       private
 
       def calculate_monthly_revenue
-        # TODO: Implementar lógica real de cálculo de receita
-        # Por enquanto, retorna um valor mock baseado em leads/reviews
-        lead_value = Lead.where('created_at >= ?', 1.month.ago).count * 5000
-        review_value = Review.where('created_at >= ?', 1.month.ago).count * 1000
-        lead_value + review_value
+        # 1. SaaS Revenue from Active Subscription Plans
+        saas_revenue = SubscriptionPlan.where(status: 'active')
+                                      .where('start_at <= ? AND (end_at IS NULL OR end_at >= ?)', Time.current, Time.current)
+                                      .sum(:value)
+
+        # 2. AdSales Revenue from Active Banner Subscriptions
+        # Convert cents to main currency unit
+        ads_revenue_cents = BannerSubscription.joins(:banner_offer)
+                                               .where(status: 'active')
+                                               .where('start_at <= ? AND (end_at IS NULL OR end_at >= ?)', Time.current, Time.current)
+                                               .sum('banner_offers.price_cents')
+
+        saas_revenue + (ads_revenue_cents / 100.0)
       end
 
       def get_companies_chart_data(period)
@@ -151,12 +159,49 @@ module Api
       end
 
       def get_revenue_chart_data(period)
-        # Mock revenue data - replace with real revenue calculation
-        get_companies_chart_data(period).map do |data|
+        # Period fixed at last 6 months for dashboard consistency
+        months_to_fetch = 6
+        end_date = Time.current.end_of_month
+        start_date = (end_date - (months_to_fetch - 1).months).beginning_of_month
+
+        # Fetch and group SaaS revenue
+        saas_data = if ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
+                      SubscriptionPlan.where(created_at: start_date..end_date)
+                                     .group("DATE_TRUNC('month', created_at)")
+                                     .sum(:value)
+                    else
+                      # SQLite fallback
+                      SubscriptionPlan.where(created_at: start_date..end_date)
+                                     .group("strftime('%Y-%m-01', created_at)")
+                                     .sum(:value)
+                    end
+
+        # Fetch and group Ads revenue
+        ads_data = if ActiveRecord::Base.connection.adapter_name =~ /PostgreSQL/i
+                     BannerSubscription.joins(:banner_offer)
+                                      .where(created_at: start_date..end_date)
+                                      .group("DATE_TRUNC('month', banner_subscriptions.created_at)")
+                                      .sum('banner_offers.price_cents')
+                   else
+                     # SQLite fallback
+                     BannerSubscription.joins(:banner_offer)
+                                      .where(created_at: start_date..end_date)
+                                      .group("strftime('%Y-%m-01', banner_subscriptions.created_at)")
+                                      .sum('banner_offers.price_cents')
+                   end
+
+        # Generate the last 6 months sequence
+        (0..(months_to_fetch - 1)).map do |i|
+          date = (start_date + i.months).beginning_of_month
+          # Convert PG timestamp key to Time object for lookup if needed, 
+          # but group by DATE_TRUNC usually returns Time objects in Rails
+          saas_val = saas_data.find { |k, v| k.to_date.beginning_of_month == date.to_date }&.last || 0
+          ads_val = (ads_data.find { |k, v| k.to_date.beginning_of_month == date.to_date }&.last || 0) / 100.0
+          
           {
-            month: data[:month],
-            value: data[:value] * 50000 + rand(100000), # Mock calculation
-            label: data[:label]
+            month: I18n.l(date, format: '%b'),
+            value: (saas_val + ads_val).to_f.round(2),
+            label: I18n.l(date, format: '%B %Y')
           }
         end
       end
