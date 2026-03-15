@@ -263,6 +263,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/dashboard/company',
+        destination: '/dashboard',
+        permanent: true,
+      },
+      {
         source: '/produtos',
         destination: '/products',
         permanent: true,

@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // noop
           }
           setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
-          router.push(`/dashboard/company?company_id=${companyId}`);
+          router.push(`/dashboard?company_id=${companyId}`);
         } else {
           router.push('/select-company');
         }

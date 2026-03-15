@@ -185,7 +185,7 @@ export default function Navbar() {
 
                     {user?.role === 'company' && (
                       <Button asChild variant="ghost" size="sm" className="h-8 rounded-full border border-brand-blue/10 bg-brand-blue/8 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-blue hover:bg-brand-blue/12 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/14">
-                        <Link href="/dashboard/company">
+                        <Link href="/dashboard">
                           <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
                           Painel
                         </Link>
