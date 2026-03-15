@@ -12,7 +12,7 @@ import {
   Layers,
   ShieldAlert,
   Terminal,
-  Control,
+  Settings,
   Zap
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -40,7 +40,7 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Operational Intelligence</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Control <span className="text-primary">Center</span>
+            Settings <span className="text-primary">Center</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Configure as diretivas de conversão, rastreamento analítico e protocolos de experiência do usuário.

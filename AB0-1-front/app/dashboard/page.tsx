@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Users, 
@@ -10,7 +10,8 @@ import {
   Loader2,
   Eye,
   Star,
-  LayoutDashboard
+  LayoutDashboard,
+  Building2
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -27,6 +28,7 @@ import DataTable from './components/DataTable';
 import { DashboardCharts } from './components/DashboardCharts';
 import { dashboardApi } from '@/lib/api-dashboard';
 import EnterpriseDashboard from './components/EnterpriseDashboard';
+import DashboardEnhanced from '@/components/dashboard/DashboardEnhanced';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -128,136 +130,69 @@ export default function DashboardPage() {
     );
   }
 
-  // COMPANY ADMIN VIEW - Canonical Enterprise Dashboard
+  // COMPANY ADMIN VIEW - Enhanced Dashboard or Enterprise Dashboard
   if (viewMode === 'company_admin' && activeCompany) {
-    return <EnterpriseDashboard companyId={String(activeCompany.id)} />;
+    // Use enhanced dashboard as default with fallback to enterprise
+    return (
+      <Suspense fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-amber-500 mx-auto" />
+            <p className="text-slate-600 font-medium animate-pulse">
+              Carregando dashboard...
+            </p>
+          </div>
+        </div>
+      }>
+        <DashboardEnhanced />
+      </Suspense>
+    );
   }
 
-  // SYSTEM ADMIN VIEW
+  // SYSTEM ADMIN VIEW - Enhanced Dashboard
   if (viewMode === 'system_admin') {
     if (statsError) {
       return (
-        <DashboardLayout>
-          <div className="flex h-[60vh] items-center justify-center">
-            <div className="text-center space-y-4">
-              <p className="text-destructive font-semibold">Erro ao carregar dados do dashboard</p>
-              <p className="text-muted-foreground text-sm">
-                {statsError instanceof Error ? statsError.message : 'Erro desconhecido'}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="clay-btn-primary px-4 py-2"
-              >
-                Recarregar
-              </button>
-            </div>
-          </div>
-        </DashboardLayout>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <Card className="max-w-xl w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-red-500" />
+                Erro no Dashboard
+              </CardTitle>
+              <CardDescription>
+                Não foi possível carregar os dados do sistema.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600">
+                  {statsError instanceof Error ? statsError.message : 'Erro desconhecido'}
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Recarregar Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       );
     }
 
-    const dashboardStats = rawStats ? dashboardApi.transformToDashboardStats(rawStats) : null;
-
-    const stats = dashboardStats ? [
-      {
-        title: 'Total de Empresas',
-        value: dashboardStats.total_companies.value.toLocaleString('pt-BR'),
-        icon: Users,
-        iconColor: 'blue' as const,
-      },
-      {
-        title: 'Propostas Ativas',
-        value: dashboardStats.active_proposals.value.toLocaleString('pt-BR'),
-        icon: FileText,
-        iconColor: 'purple' as const,
-      },
-      {
-        title: 'Taxa de Conversão',
-        value: `${dashboardStats.conversion_rate.value.toFixed(1)}%`,
-        icon: TrendingUp,
-        iconColor: 'green' as const,
-      },
-      {
-        title: 'Receita Total',
-        value: `R$ ${(dashboardStats.total_revenue.value / 1000).toFixed(0)}K`,
-        icon: DollarSign,
-        iconColor: 'cyan' as const,
-      },
-    ] : [];
-
+    // For system admin, show enhanced dashboard with admin capabilities
     return (
-      <DashboardLayout>
-        <div className="space-y-8">
-          {/* Page Header */}
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-              <LayoutDashboard className="h-8 w-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Painel do Sistema</h1>
-              <p className="text-muted-foreground mt-1">
-                Visão geral consolidada do ecossistema Avalia Solar
-              </p>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index) => (
-              <StatsCard key={index} {...stat} />
-            ))}
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <ChartCard
-              title="Crescimento Mensal"
-              description="Novas empresas no ecossistema"
-            >
-              {chartLoading ? (
-                <div className="h-[300px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <DashboardCharts.AreaChart data={chartData || []} />
-              )}
-            </ChartCard>
-
-            <ChartCard
-              title="Performance de Mercado"
-              description="Volume de interações comerciais"
-            >
-              {chartLoading ? (
-                <div className="h-[300px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <DashboardCharts.BarChart data={chartData || []} />
-              )}
-            </ChartCard>
-          </div>
-
-          {/* Activity & Table Row */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <RecentActivity />
-            </div>
-
-            <div className="lg:col-span-2">
-              {tableLoading ? (
-                <div className="clay-card p-8 min-h-[400px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <DataTable 
-                  title="Últimas Propostas Geradas"
-                  data={tableData || []}
-                />
-              )}
-            </div>
+      <Suspense fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
+            <p className="text-slate-600 font-medium animate-pulse">
+              Carregando painel administrativo...
+            </p>
           </div>
         </div>
-      </DashboardLayout>
+      }>
+        <DashboardEnhanced className="admin-view" />
+      </Suspense>
     );
   }
 

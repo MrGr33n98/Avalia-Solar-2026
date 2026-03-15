@@ -197,6 +197,8 @@ export interface DashboardStats {
   pendingApprovals: number;
   activeCampaigns: number;
   conversionRate: number;
+  leads_count?: number;
+  monthly_views?: number[];
 }
 
 // ============================================================================

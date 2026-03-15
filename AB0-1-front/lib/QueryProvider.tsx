@@ -29,14 +29,18 @@ export function QueryProvider({ children }: QueryProviderProps) {
     if (!devtoolsEnabled) return;
 
     let alive = true;
-    import('@tanstack/react-query-devtools')
-      .then((mod) => {
-        if (!alive) return;
-        setDevtools(() => mod.ReactQueryDevtools);
-      })
-      .catch((err) => {
-        console.warn('[QueryProvider] Failed to load React Query Devtools (disabled):', err);
-      });
+    
+    // Only load devtools in development
+    if (process.env.NODE_ENV === 'development') {
+      import('@tanstack/react-query-devtools')
+        .then((mod) => {
+          if (!alive) return;
+          setDevtools(() => mod.ReactQueryDevtools);
+        })
+        .catch((err) => {
+          console.warn('[QueryProvider] Failed to load React Query Devtools (disabled):', err);
+        });
+    }
 
     return () => {
       alive = false;

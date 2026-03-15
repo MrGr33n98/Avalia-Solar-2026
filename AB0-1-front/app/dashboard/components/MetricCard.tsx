@@ -15,6 +15,8 @@ interface MetricCardProps {
   trend?: number[];
   color?: string;
   delay?: number;
+  description?: string;
+  variant?: string;
 }
 
 export default function MetricCard({
@@ -25,7 +27,9 @@ export default function MetricCard({
   changeType = 'neutral',
   trend,
   color = 'primary',
-  delay = 0
+  delay = 0,
+  description,
+  variant
 }: MetricCardProps) {
   const colorClasses = {
     primary: {
@@ -145,6 +149,11 @@ export default function MetricCard({
             <p className="text-4xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
+            {description && (
+              <p className="text-xs text-muted-foreground/70 dark:text-white/50 leading-tight mt-1">
+                {description}
+              </p>
+            )}
           </div>
 
           {/* Enhanced Mini Trend Line */}

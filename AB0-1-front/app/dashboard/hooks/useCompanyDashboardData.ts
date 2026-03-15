@@ -43,6 +43,8 @@ interface DashboardStats {
   pendingApprovals: number;
   activeCampaigns: number;
   conversionRate: number;
+  leads_count?: number;
+  monthly_views?: number[];
 }
 
 interface Notification {
@@ -115,6 +117,8 @@ export function useCompanyDashboardData(companyId: string) {
         pendingApprovals: s.pending_approvals ?? 0,
         activeCampaigns: s.active_campaigns ?? 0,
         conversionRate: s.conversion_rate ?? 0,
+        leads_count: s.leads_count ?? 0,
+        monthly_views: s.monthly_views ?? [],
       });
       setPlanFeatures(data?.plan_features || {});
       setFeatureAccess(data?.feature_access || {});

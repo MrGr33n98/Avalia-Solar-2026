@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
+// Temporarily disable bundle analyzer to fix build
+const withBundleAnalyzer = (config) => config;
+/* 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
+*/
 
 const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
 const isProduction = process.env.NODE_ENV === 'production';

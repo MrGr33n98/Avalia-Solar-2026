@@ -27,7 +27,7 @@ jest.mock('lucide-react', () => ({
   Star: () => <svg data-testid="star-icon" />,
   StarHalf: () => <svg data-testid="star-half-icon" />,
   MapPin: () => <svg data-testid="map-pin-icon" />,
-  Building2: () => <svg data-testid="building-icon" />,
+  Building: () => <svg data-testid="building-icon" />,
   Share2: () => <svg data-testid="share-icon" />,
   Check: () => <svg data-testid="check-icon" />,
   BadgeCheck: () => <svg data-testid="badge-check-icon" />,

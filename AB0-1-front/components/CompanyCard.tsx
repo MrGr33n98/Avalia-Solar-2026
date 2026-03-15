@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Building2, Share2, Check, BadgeCheck, Info, Trophy, ShieldCheck } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy, ShieldCheck } from 'lucide-react';
 
 import { RatingStars } from '@/components/RatingStars';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
@@ -461,7 +461,7 @@ export default function CompanyCard({
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
-                  <Building2 className="text-gray-300 w-8 h-8" />
+                  <Building className="text-gray-300 w-8 h-8" />
                 </div>
               )}
               {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
