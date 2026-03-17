@@ -151,7 +151,9 @@ export function getAnalyticsContext(): AnalyticsContext {
       platform: 'web',
       pathname: '',
       referrer: '',
-      source: 'server'
+      source: 'server',
+      session_id: '',
+      is_logged_in: false,
     };
   }
   
@@ -213,7 +215,7 @@ export function track(
   }
   
   const context = getAnalyticsContext();
-  const eventId = options.eventId || context.event_id;
+  const eventId = options.eventId || context.event_id || generateEventId();
   
   // Dedupe check
   if (!shouldTrackEvent(eventName, eventId, options.critical)) return;

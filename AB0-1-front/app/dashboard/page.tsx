@@ -75,7 +75,7 @@ export default function DashboardPage() {
     }
 
     // Role-based view determination
-    if (user.role === 'admin' || user.role === 'super_admin') {
+    if (user.role === 'admin' || (user.role as string) === 'super_admin') {
       setViewMode('system_admin');
     } else {
       // It's a company user (member/owner)

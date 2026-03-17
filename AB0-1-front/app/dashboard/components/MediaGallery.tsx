@@ -320,7 +320,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                     >
                       <Image 
                         src={photo.url} 
-                        alt={photo.title} 
+                        alt={photo.title || ''}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
@@ -390,7 +390,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
                     >
                       <Image 
                         src={v.thumbnail_url || ''} 
-                        alt={v.video_id} 
+                        alt={v.video_id || ''}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60 group-hover:opacity-100" 

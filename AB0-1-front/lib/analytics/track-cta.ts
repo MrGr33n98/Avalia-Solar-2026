@@ -9,7 +9,7 @@ import { track } from '@/lib/analytics/lazy';
 
 interface CTAClickProperties {
   ctaType: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote';
-  ctaLocation: 'hero' | 'sidebar' | 'footer' | 'floating' | 'overview' | 'reviews';
+  ctaLocation: 'hero' | 'sidebar' | 'footer' | 'floating' | 'overview' | 'reviews' | 'other';
   companyId: string;
   companyName: string;
   destinationUrl?: string;

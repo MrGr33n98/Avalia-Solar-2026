@@ -184,7 +184,7 @@ export default function EnterpriseHeader({
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <Avatar className="h-6 w-6 shrink-0">
-                        <AvatarImage src={c.logo_url} alt={c.name} />
+                        <AvatarImage src={c.logo_url ?? undefined} alt={c.name} />
                         <AvatarFallback className="text-[10px] bg-white/10">
                           {c.name?.substring(0, 2).toUpperCase()}
                         </AvatarFallback>

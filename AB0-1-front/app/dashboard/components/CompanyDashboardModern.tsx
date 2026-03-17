@@ -89,7 +89,7 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
           <div className="text-center space-y-4">
             <p className="text-destructive font-semibold">Erro ao carregar dados da empresa</p>
             <p className="text-muted-foreground text-sm">
-              {companyError?.message || 'Empresa não encontrada'}
+              {companyError || 'Empresa não encontrada'}
             </p>
             <button
               onClick={() => window.location.reload()}

@@ -24,15 +24,17 @@ export interface AnalyticsContext {
   environment: string;
   app_version: string;
   platform: 'web' | 'mobile';
-  
+
   // Page
+  page_url?: string;
   pathname: string;
   referrer: string;
   referrer_host?: string;
-  
-  // Session
+
+  // Session & Event
   session_id: string;
-  
+  event_id?: string;
+
   // UTM Parameters
   source?: string;
   utm_source?: string;
@@ -45,16 +47,18 @@ export interface AnalyticsContext {
   msclkid?: string;
   landing_path?: string;
   attribution?: Attribution;
-  
+
   // Geo (when available)
   city?: string;
   state?: string;
   country?: string;
-  
+
   // User state
   is_logged_in: boolean;
   user_id?: string;
   company_id?: string;
+  company_name?: string;
+  category_id?: string;
   tier?: string;
 }
 

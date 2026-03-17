@@ -90,7 +90,6 @@ export const tourConfig: Config = {
   doneBtnText: 'Concluir',
   progressText: '{{current}} de {{total}}',
   allowClose: true,
-  overlayClickNext: false,
   smoothScroll: true,
   animate: true,
   onDestroyed: () => {

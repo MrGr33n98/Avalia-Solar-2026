@@ -153,7 +153,7 @@ export default function TimeSeriesChart({
   };
 
   const Chart = chartType === 'area' ? AreaChart : LineChart;
-  const DataComponent = chartType === 'area' ? Area : Line;
+  const DataComponent: any = chartType === 'area' ? Area : Line;
 
   return (
     <Card className="bg-[#002B4D] border-white/10 shadow-none">

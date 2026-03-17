@@ -23,17 +23,22 @@ interface DataItem {
   id: string;
   company: string;
   value: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "Pendente" | "Aprovado" | "Em Análise" | "Rejeitado";
   date: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; class: string }> = {
   pending: { label: "Pendente", class: "bg-brand-yellow/10 text-yellow-600" },
   approved: { label: "Aprovado", class: "bg-accent/10 text-accent" },
   rejected: { label: "Rejeitado", class: "bg-destructive/10 text-destructive" },
+  Pendente: { label: "Pendente", class: "bg-brand-yellow/10 text-yellow-600" },
+  Aprovado: { label: "Aprovado", class: "bg-accent/10 text-accent" },
+  "Em Análise": { label: "Em Análise", class: "bg-blue-500/10 text-blue-600" },
+  Rejeitado: { label: "Rejeitado", class: "bg-destructive/10 text-destructive" },
 };
 
 interface DataTableProps {
+  title?: string;
   data?: DataItem[];
   className?: string;
 }
@@ -69,14 +74,15 @@ const defaultData: DataItem[] = [
   },
 ];
 
-export default function DataTable({ 
+export default function DataTable({
+  title = 'Propostas Recentes',
   data = defaultData,
-  className 
+  className
 }: DataTableProps) {
   return (
     <div className={cn("clay-card", className)}>
       <div className="p-6 border-b border-[hsl(var(--clay-shadow-light))]">
-        <h3 className="text-lg font-semibold">Propostas Recentes</h3>
+        <h3 className="text-lg font-semibold">{title}</h3>
       </div>
 
       <Table>

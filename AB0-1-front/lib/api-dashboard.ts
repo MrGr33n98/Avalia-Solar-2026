@@ -81,13 +81,14 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     });
 
     if (!response.ok) {
-      throw toApiError(response, await response.text());
+      const text = await response.text();
+      throw new ApiError(text || `HTTP ${response.status}`, { status: response.status, url: response.url });
     }
 
     return await response.json();
   } catch (error) {
     console.error('[API] Dashboard stats error:', error);
-    throw error instanceof ApiError ? error : toApiError(null, String(error));
+    throw error instanceof ApiError ? error : toApiError(error);
   }
 }
 
@@ -143,7 +144,7 @@ export async function fetchDashboardChartData(
   period: 'weekly' | 'monthly' | 'quarterly' = 'monthly'
 ): Promise<ChartDataPoint[]> {
   try {
-    const url = buildApiUrl(`/api/v1/dashboard/charts/${metric}`, { period });
+    const url = buildApiUrl(`/api/v1/dashboard/charts/${metric}?period=${period}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: getApiRequestHeaders(),
@@ -155,7 +156,8 @@ export async function fetchDashboardChartData(
         console.warn(`[API] Chart endpoint not implemented for ${metric}`);
         return [];
       }
-      throw toApiError(response, await response.text());
+      const text = await response.text();
+      throw new ApiError(text || `HTTP ${response.status}`, { status: response.status, url: response.url });
     }
 
     return await response.json();
@@ -173,11 +175,7 @@ export async function fetchRecentProposals(
   limit: number = 10
 ): Promise<RecentProposal[]> {
   try {
-    const url = buildApiUrl('/api/v1/leads', { 
-      limit,
-      sort: 'created_at',
-      order: 'desc'
-    });
+    const url = buildApiUrl(`/api/v1/leads?limit=${limit}&sort=created_at&order=desc`);
     const response = await fetch(url, {
       method: 'GET',
       headers: getApiRequestHeaders(),
@@ -185,14 +183,15 @@ export async function fetchRecentProposals(
     });
 
     if (!response.ok) {
-      throw toApiError(response, await response.text());
+      const text = await response.text();
+      throw new ApiError(text || `HTTP ${response.status}`, { status: response.status, url: response.url });
     }
 
     const data = await response.json();
     const leads = data.leads || data;
-    
+
     if (!Array.isArray(leads)) return [];
-    
+
     return transformLeadsToProposals(leads);
   } catch (error) {
     console.error('[API] Recent proposals error:', error);
@@ -207,7 +206,7 @@ export async function fetchRecentActivity(
   limit: number = 10
 ): Promise<RecentActivityItem[]> {
   try {
-    const url = buildApiUrl('/api/v1/dashboard/activity', { limit });
+    const url = buildApiUrl(`/api/v1/dashboard/activity?limit=${limit}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: getApiRequestHeaders(),
@@ -219,7 +218,8 @@ export async function fetchRecentActivity(
         console.warn('[API] Activity endpoint not implemented');
         return [];
       }
-      throw toApiError(response, await response.text());
+      const text = await response.text();
+      throw new ApiError(text || `HTTP ${response.status}`, { status: response.status, url: response.url });
     }
 
     return await response.json();

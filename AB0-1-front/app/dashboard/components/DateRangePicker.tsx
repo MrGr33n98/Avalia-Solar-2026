@@ -134,7 +134,7 @@ export default function DateRangePicker({
                 }
                 locale={ptBR}
                 disabled={(date) =>
-                  date > new Date() || (tempDateRange?.from && date < tempDateRange.from)
+                  date > new Date() || (tempDateRange?.from ? date < tempDateRange.from : false)
                 }
               />
             </div>

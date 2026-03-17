@@ -138,7 +138,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         { type: 'website', count: analyticsData?.website_clicks_30d || 0, label: 'Website' },
       ],
     },
-    engagement: analyticsData?.engagement || null,
+    engagement: analyticsData?.engagement || { avgTimeOnPage: 0, bounceRate: 0, pagesPerSession: 0 },
     sources: analyticsData?.traffic_sources || [],
   };
 
@@ -209,7 +209,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         >
           <DateRangePicker value={timeRange} customRange={customDateRange} onChange={handleDateRangeChange} />
           <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/5">
-             <ExportButton timeseriesData={timeseriesData} aggregatedData={analyticsData} companyName="Avalia Solar" />
+             <ExportButton timeseriesData={timeseriesData} aggregatedData={analyticsData ?? undefined} companyName="Avalia Solar" />
              <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/[0.05]">
                <Printer className="h-4 w-4 mr-2" />
                Report Generation

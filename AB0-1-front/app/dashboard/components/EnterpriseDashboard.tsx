@@ -190,7 +190,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     // Checkout/Upgrade Intent Tracking
     if (tab === 'analytics' || tab === 'leads') {
       const entry = tabAccessEntries[tab];
-      if (entry && entry.status === 'locked') {
+      if (entry && entry.state === 'locked') {
         trackCheckoutStarted(tab, (company as any)?.plan_id);
       }
     }

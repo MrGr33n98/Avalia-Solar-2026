@@ -7,13 +7,23 @@ export type { GTMEvent, PageData, UserData } from '@/lib/analytics/consolidated'
 export {
   getGtmSessionId,
   pushToDataLayer,
-  trackCompanyListImpression,
   trackContactClick,
   trackFaqEngagement,
   trackLeadSuccess,
-  trackMenuIntent,
   trackPageView,
   trackSearchPerformance,
-  trackValueDataInteraction,
   trackWizardStart,
 } from '@/lib/analytics/consolidated';
+
+// Stubs for deprecated functions that were removed from consolidated
+export function trackCompanyListImpression(..._args: any[]): void {
+  // Deprecated: use consolidated analytics instead
+}
+
+export function trackMenuIntent(..._args: any[]): void {
+  // Deprecated: use consolidated analytics instead
+}
+
+export function trackValueDataInteraction(..._args: any[]): void {
+  // Deprecated: use consolidated analytics instead
+}
