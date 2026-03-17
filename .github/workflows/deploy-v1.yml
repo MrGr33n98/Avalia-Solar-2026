@@ -109,6 +109,8 @@ jobs:
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://avaliasolar.com.br' }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' }}
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || 'phc_oo5u9eWrjVdqdLRg1UbuiHnh5AZCp8SUxdgi68fGARd' }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
           secrets: |
