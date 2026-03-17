@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 import PricingPage from '@/components/pricing/PricingPage';
+import { PricingIntentTracker } from '@/components/pricing/PricingIntentTracker';
 
 export const metadata: Metadata = {
   title: 'Planos e Precos | Avalia Solar',
@@ -9,5 +11,13 @@ export const metadata: Metadata = {
 };
 
 export default function PricingRoutePage() {
-  return <PricingPage />;
+  return (
+    <>
+      <PricingPage />
+      {/* Intent tracking: exit intent, scroll depth, time on page, plan CTAs */}
+      <Suspense fallback={null}>
+        <PricingIntentTracker />
+      </Suspense>
+    </>
+  );
 }

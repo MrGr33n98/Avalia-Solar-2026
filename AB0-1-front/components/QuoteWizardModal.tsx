@@ -12,6 +12,10 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
+import {
+  useBillValueIntent,
+  useQuoteWizardTracking,
+} from '@/lib/analytics/hooks/useIntentTracking';
 import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -67,6 +71,12 @@ export default function QuoteWizardModal() {
     return Number.isFinite(parsed) ? parsed.toFixed(1) : '0.0';
   };
 
+  // Intent tracking hooks
+  const companyIdForTracking = preferredCompanyId ?? 0;
+  const { trackStep, trackAbandonment, trackSubmission, resetTracking } =
+    useQuoteWizardTracking(companyIdForTracking);
+  const { trackBillValue } = useBillValueIntent(companyIdForTracking);
+
   const progressValue = useMemo(() => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)), [step]);
 
   useEffect(() => {
@@ -91,6 +101,7 @@ export default function QuoteWizardModal() {
     setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
     setError(null); setSubmitting(false); setResendCooldown(0);
     setCompanies([]); setVerificationHint('');
+    resetTracking();
   };
 
   const handleResend = async () => {
@@ -157,6 +168,7 @@ export default function QuoteWizardModal() {
         setLeadId(response.lead_id);
         setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
+        trackStep(8, TOTAL_STEPS, { action: 'lead_created', product_vertical: form.productVertical });
         setStep(8);
       } catch (err: any) {
         setError(getWizardErrorMessage(err, 'Erro ao iniciar orçamento.'));
@@ -166,7 +178,13 @@ export default function QuoteWizardModal() {
       return;
     }
 
-    setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+    // Rastreia progressão de etapa
+    const nextStep = Math.min(step + 1, TOTAL_STEPS);
+    trackStep(nextStep, TOTAL_STEPS, {
+      product_vertical: form.productVertical || undefined,
+      decision_timeline: form.decisionTimeline || undefined,
+    });
+    setStep(nextStep);
   };
 
   const handleBack = () => { setError(null); setStep((prev) => Math.max(prev - 1, 1)); };
@@ -179,9 +197,11 @@ export default function QuoteWizardModal() {
       const response = await leadsWizardApi.verifyEmailCode(leadId, otpCode);
       if (response && response.companies) {
         setCompanies(response.companies);
+        trackSubmission(true, leadId);
         setStep(9);
       }
     } catch (err: any) {
+      trackSubmission(false, leadId);
       setError(getWizardErrorMessage(err, 'Erro na validação.'));
     } finally {
       setSubmitting(false);
@@ -189,7 +209,17 @@ export default function QuoteWizardModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetWizard(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && step < 9 && step > 1) {
+          // Wizard fechado antes de completar — abandono
+          trackAbandonment(step, TOTAL_STEPS);
+        }
+        setOpen(v);
+        if (!v) resetWizard();
+      }}
+    >
       <DialogContent className="max-w-xl p-0 overflow-hidden max-h-[90vh] flex flex-col z-[10000] rounded-2xl border-none">
         {/* Progress Header */}
         <div className="bg-slate-900 text-white px-6 py-4">
@@ -259,7 +289,15 @@ export default function QuoteWizardModal() {
                 <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Média da conta de luz (R$)</Label>
-                    <Input value={form.billValue} onChange={(e) => updateForm({ billValue: e.target.value })} placeholder="Ex: 420" className="h-11 rounded-xl" />
+                    <Input
+                      value={form.billValue}
+                      onChange={(e) => {
+                        updateForm({ billValue: e.target.value });
+                        trackBillValue(e.target.value);
+                      }}
+                      placeholder="Ex: 420"
+                      className="h-11 rounded-xl"
+                    />
                   </div>
                 </div>
               )}

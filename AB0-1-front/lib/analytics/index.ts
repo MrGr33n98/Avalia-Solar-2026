@@ -1,15 +1,20 @@
 /**
  * Analytics Core - Avalia Solar
  * Canonical frontend analytics layer: PostHog + backend
- * 
+ *
  * Features:
  * - LGPD compliant (consent-based)
  * - Event deduplication
  * - UTM persistence
  * - Multi-tenant safe
  * - No PII tracking
+ *
+ * Nota: A inicialização do PostHog é feita pelo PostHogProvider em
+ * components/PostHogProvider.tsx. Este módulo usa o singleton posthog-js
+ * diretamente, sem chamar posthog.init() novamente.
  */
 
+import posthog from 'posthog-js';
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
@@ -24,7 +29,6 @@ import {
 let initialized = false;
 let currentUserId: string | null = null;
 let currentContext: Partial<AnalyticsContext> = {};
-let posthogInstance: any = null;
 let initPromise: Promise<void> | null = null;
 const EVENT_QUEUE_LIMIT = 100;
 const BACKEND_MIN_INTERVAL_MS = 400;
@@ -40,84 +44,32 @@ let backendLastSentAt = 0;
 let backendBlockedUntil = 0;
 
 /**
- * Initialize analytics SDKs
+ * Initialize analytics — configura attribution e marca como pronto.
+ * A inicialização do PostHog SDK é feita pelo PostHogProvider (components/PostHogProvider.tsx).
  */
 export function initializeAnalytics(): void {
   if (initialized) return;
   if (typeof window === 'undefined') return;
-  
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  
-  if (!posthogKey && process.env.NODE_ENV === 'development') {
-    console.warn('[Analytics] PostHog token not configured; backend-only tracking active');
+
+  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NODE_ENV === 'development') {
+    console.warn('[Analytics] NEXT_PUBLIC_POSTHOG_KEY não configurado; tracking somente via backend.');
   }
-  
-  // Só persistimos attribution após consentimento explícito.
+
+  // Persiste attribution apenas após consentimento explícito (LGPD)
   if (hasAnalyticsConsent()) {
     updateAttribution();
   }
-  
-  // Inicializamos SDKs básicos sem bloquear a thread principal
-  // Usamos requestIdleCallback para não bloquear a thread principal
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(() => void initializeSDKs());
-  } else {
-    setTimeout(() => void initializeSDKs(), 1000);
-  }
 
-  // Listen for consent change to re-initialize or update SDKs
+  // Marca como inicializado e processa fila de eventos
+  initialized = true;
+  flushEventQueue();
+
+  // Escuta mudança de consentimento para atualizar attribution
   onConsentChange((consent) => {
     if (consent.analytics) {
       updateAttribution();
-      // Se ganhou consentimento, garantimos que o PostHog seja iniciado
-      initializeSDKs();
-      // Track the current page immediately after consent
-      setTimeout(() => page(), 500);
     }
   });
-}
-
-/**
- * Initialize SDKs (internal)
- */
-async function initializeSDKs(): Promise<void> {
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
-    const hasConsent = hasAnalyticsConsent();
-    
-    // PostHog - APENAS com consentimento
-    if (posthogKey && hasConsent && !posthogInstance) {
-      try {
-        // Dynamic import to reduce initial bundle size
-        const posthog = (await import('posthog-js')).default;
-        posthog.init(posthogKey, {
-          api_host: posthogHost,
-          person_profiles: 'identified_only',
-          capture_pageview: false,
-          capture_pageleave: true,
-          autocapture: false,
-          session_recording: {
-            maskAllInputs: true,
-          },
-          loaded: (ph) => {
-            console.log('[Analytics] PostHog initialized. Distinct ID:', ph.get_distinct_id());
-          }
-        });
-        posthogInstance = posthog;
-      } catch (e) {
-        console.error('[Analytics] PostHog init failed:', e);
-      }
-    }
-
-    initialized = true;
-    flushEventQueue();
-    initPromise = null;
-  })();
-
-  return initPromise;
 }
 
 function enqueueEvent(
@@ -210,7 +162,6 @@ export function track(
   
   if (!initialized) {
     enqueueEvent(eventName, properties, options);
-    void initializeSDKs();
     return;
   }
   
@@ -239,12 +190,12 @@ export function track(
     item_category: properties.category_name, // VAR-016
   };
   
-  // 1. Centralize in POSTHOG (Canonical Data)
-  if (options.sendTo?.posthog !== false && posthogInstance) {
+  // 1. Centraliza no PostHog (Canonical Data) — usa o singleton inicializado pelo PostHogProvider
+  if (options.sendTo?.posthog !== false && posthog.__loaded) {
     try {
       const sanitized = sanitizeProperties(matrixProps);
-      posthogInstance.capture(eventName, sanitized);
-      
+      posthog.capture(eventName, sanitized);
+
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Unified Event:', eventName, sanitized);
       }
@@ -444,12 +395,12 @@ export function page(
     timestamp: pageProps.timestamp
   });
   
-  // PostHog
-  if (posthogInstance) {
+  // PostHog — usa o singleton inicializado pelo PostHogProvider
+  if (posthog.__loaded) {
     try {
-      posthogInstance.capture('page_view', {
+      posthog.capture('page_view', {
         page_url: window.location.href,
-        ...sanitized
+        ...sanitized,
       });
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Page View:', sanitized);
@@ -476,10 +427,10 @@ export function identify(
   const sanitizedTraits = sanitizeProperties(traits);
   
   // PostHog
-  if (posthogInstance) {
+  if (posthog.__loaded) {
     try {
-      posthogInstance.identify(userId, sanitizedTraits);
-      
+      posthog.identify(userId, sanitizedTraits);
+
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Identify:', userId, sanitizedTraits);
       }
@@ -504,9 +455,9 @@ export function setUserProperties(traits: UserTraits): void {
   const sanitized = sanitizeProperties(traits);
   
   // PostHog
-  if (posthogInstance) {
+  if (posthog.__loaded) {
     try {
-      posthogInstance.capture('$set', { $set: sanitized });
+      posthog.capture('$set', { $set: sanitized });
     } catch (e) {
       console.error('[Analytics] PostHog set user properties failed:', e);
     }
@@ -520,10 +471,10 @@ export function alias(newId: string): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  if (posthogInstance) {
+  if (posthog.__loaded) {
     try {
-      posthogInstance.alias(newId);
-      
+      posthog.alias(newId);
+
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Alias:', newId);
       }
@@ -542,9 +493,9 @@ export function reset(): void {
   currentUserId = null;
   currentContext = {};
   
-  if (posthogInstance) {
+  if (posthog.__loaded) {
     try {
-      posthogInstance.reset();
+      posthog.reset();
     } catch (e) {
       console.error('[Analytics] PostHog reset failed:', e);
     }

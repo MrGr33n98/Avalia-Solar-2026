@@ -7,6 +7,7 @@ import { Article } from '@/types/article';
 import { ReadingProgress } from '@/components/blog/ReadingProgress';
 import { BlogTimeTracker } from '@/components/blog/BlogTimeTracker';
 import { ArticleEngagementTracker } from '@/components/blog/ArticleEngagementTracker';
+import { BlogIntentTracker } from '@/components/blog/BlogIntentTracker';
 import { PostHeader } from '@/components/blog/PostHeader';
 import { PostSidebar } from '@/components/blog/PostSidebar';
 import { AuthorCardWithStats } from '@/components/blog/AuthorCardWithStats';
@@ -209,6 +210,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         categoryId={article.category?.id}
         categoryName={categoryName}
       />
+      {/* Intent tracking: exit_intent, share_intent, idle_return por artigo */}
+      <BlogIntentTracker articleId={article.id} articleSlug={articleSlug} />
       <StickyShareBar title={article.title} slug={articleSlug} />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">

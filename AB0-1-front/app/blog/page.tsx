@@ -9,6 +9,7 @@ import { PostCard } from '@/components/blog/PostCard';
 import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
 import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
+import { BlogIntentTracker } from '@/components/blog/BlogIntentTracker';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -154,6 +155,11 @@ export default async function BlogIndexPage({
       
       <StickyMobileCTA />
       <NewsletterPopup />
+
+      {/* Intent Tracking — exit intent, share intent, idle return para listagem */}
+      <Suspense fallback={null}>
+        <BlogIntentTracker />
+      </Suspense>
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { initializeAnalytics, page } from '@/lib/analytics/lazy';
 import { trackUserReturned } from '@/lib/analytics/consolidated';
 import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 export default function ClientBody({
   children,
@@ -138,22 +139,24 @@ export default function ClientBody({
   }, [pathname]);
 
   return (
-    <QueryProvider>
-      <Context7Provider>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            <CompanyProvider>
-              {children}
-              <QuoteWizardModal />
-              <QuickLeadModal />
-              <DynamicLeadWizardModal />
-              <ComparisonFloatingBar />
-              <Toaster />
-              <CookieConsent />
-            </CompanyProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </Context7Provider>
-    </QueryProvider>
+    <PostHogProvider>
+      <QueryProvider>
+        <Context7Provider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AuthProvider>
+              <CompanyProvider>
+                {children}
+                <QuoteWizardModal />
+                <QuickLeadModal />
+                <DynamicLeadWizardModal />
+                <ComparisonFloatingBar />
+                <Toaster />
+                <CookieConsent />
+              </CompanyProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </Context7Provider>
+      </QueryProvider>
+    </PostHogProvider>
   );
 }

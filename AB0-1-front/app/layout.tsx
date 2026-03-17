@@ -100,6 +100,11 @@ export default function RootLayout({
           <>
             <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+            {/* PostHog */}
+            <link rel="preconnect" href="https://us.i.posthog.com" crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href="https://us.i.posthog.com" />
+            <link rel="preconnect" href="https://eu.i.posthog.com" crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href="https://eu.i.posthog.com" />
           </>
         )}
         {/* Analytics preconnects */}

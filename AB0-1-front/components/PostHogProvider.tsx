@@ -1,0 +1,146 @@
+'use client';
+
+import posthog from 'posthog-js';
+import { PostHogProvider as PHProvider } from 'posthog-js/react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, Suspense } from 'react';
+
+import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
+
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+/**
+ * Rastreia pageviews automaticamente em todas as rotas do Next.js App Router.
+ * Separado em componente filho para poder usar useSearchParams dentro de Suspense.
+ */
+function PostHogPageView() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    if (!POSTHOG_KEY) return;
+    if (!posthog.__loaded) return;
+
+    // Não dispara na montagem inicial — o Provider já captura o primeiro $pageview
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+
+    const url =
+      window.location.origin +
+      pathname +
+      (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+
+    posthog.capture('$pageview', { $current_url: url });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[PostHog] $pageview:', url);
+    }
+  }, [pathname, searchParams]);
+
+  return null;
+}
+
+/**
+ * PostHogProvider — integra PostHog com o Next.js 14 App Router.
+ *
+ * Funcionalidades:
+ * - Inicializa PostHog respeitando consentimento LGPD
+ * - Rastreia page views automaticamente em todas as rotas
+ * - Ativa/desativa captura conforme mudança de consentimento
+ * - Session recording com mascaramento de inputs
+ * - Autocapture desativado (eventos manuais via lib/analytics)
+ */
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (!POSTHOG_KEY) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[PostHog] NEXT_PUBLIC_POSTHOG_KEY não configurado.');
+      }
+      return;
+    }
+
+    // Evita dupla inicialização (hot-reload em dev, StrictMode, etc.)
+    if (posthog.__loaded) return;
+
+    const hasConsent = hasAnalyticsConsent();
+
+    posthog.init(POSTHOG_KEY, {
+      api_host: POSTHOG_HOST,
+
+      // Perfis apenas para usuários identificados (não anônimos por padrão)
+      person_profiles: 'identified_only',
+
+      // Page views manuais via PostHogPageView (necessário para Next.js App Router)
+      capture_pageview: false,
+
+      // Captura saída de página (bounce rate, session duration)
+      capture_pageleave: true,
+
+      // Autocapture desativado — todos os eventos são explícitos
+      autocapture: false,
+
+      // LGPD: não captura nada até consentimento explícito
+      opt_out_capturing_by_default: !hasConsent,
+
+      // Session recording com mascaramento total de inputs
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: '[data-ph-no-capture]',
+      },
+
+      // Bootstrap: usa $pageview no load inicial
+      loaded: (ph) => {
+        if (hasConsent) {
+          ph.capture('$pageview', {
+            $current_url: window.location.href,
+          });
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());
+        }
+      },
+    });
+
+    // Escuta mudanças de consentimento e ativa/desativa captura dinamicamente
+    const cleanup = onConsentChange((consent) => {
+      if (!posthog.__loaded) return;
+
+      if (consent.analytics) {
+        posthog.opt_in_capturing();
+        // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
+        posthog.capture('$pageview', { $current_url: window.location.href });
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[PostHog] Captura ativada (consentimento dado).');
+        }
+      } else {
+        posthog.opt_out_capturing();
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[PostHog] Captura desativada (consentimento revogado).');
+        }
+      }
+    });
+
+    return cleanup;
+  }, []);
+
+  if (!POSTHOG_KEY) {
+    return <>{children}</>;
+  }
+
+  return (
+    <PHProvider client={posthog}>
+      {/* Suspense necessário para useSearchParams no Next.js 14 App Router */}
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
+      {children}
+    </PHProvider>
+  );
+}
