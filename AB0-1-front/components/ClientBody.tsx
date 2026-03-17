@@ -142,19 +142,17 @@ export default function ClientBody({
     <PostHogProvider>
       <QueryProvider>
         <Context7Provider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AuthProvider>
-              <CompanyProvider>
-                {children}
-                <QuoteWizardModal />
-                <QuickLeadModal />
-                <DynamicLeadWizardModal />
-                <ComparisonFloatingBar />
-                <Toaster />
-                <CookieConsent />
-              </CompanyProvider>
-            </AuthProvider>
-          </ThemeProvider>
+          <AuthProvider>
+            <CompanyProvider>
+              {children}
+              <QuoteWizardModal />
+              <QuickLeadModal />
+              <DynamicLeadWizardModal />
+              <ComparisonFloatingBar />
+              <Toaster />
+              <CookieConsent />
+            </CompanyProvider>
+          </AuthProvider>
         </Context7Provider>
       </QueryProvider>
     </PostHogProvider>
