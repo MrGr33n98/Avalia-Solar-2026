@@ -173,3 +173,7 @@ gem 'caxlsx'
 
 gem 'activeadmin_addons'
 gem 'cpf_cnpj', '~> 1.0'
+
+# Payment Gateways (Trust as a Service)
+gem 'stripe', '~> 13.0'
+gem 'mercadopago-sdk', '~> 2.3'

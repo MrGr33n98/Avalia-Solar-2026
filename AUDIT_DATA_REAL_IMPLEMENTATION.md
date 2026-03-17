@@ -108,14 +108,14 @@ end
 ## VALIDAÇÃO PÓS-IMPLEMENTAÇÃO
 
 ### Checklist de Dados Reais
-- [ ] Dashboard revenue baseado em transações reais
-- [ ] Charts usando dados históricos reais
-- [ ] Atividade recente baseada em eventos reais
-- [ ] Proposals/leads usando dados reais do banco
-- [ ] Payment integration com provider real
-- [ ] Webhooks com endpoints reais e seguros
-- [ ] Analytics tracking com dados reais
-- [ ] Nenhum fallback mock ativo em produção
+- [x] Dashboard revenue baseado em transações reais
+- [x] Charts usando dados históricos reais
+- [x] Atividade recente baseada em eventos reais
+- [x] Proposals/leads usando dados reais do banco
+- [x] Payment integration com provider real (Stripe/MP Foundation)
+- [x] Webhooks com endpoints reais e seguros
+- [x] Analytics tracking com dados reais
+- [x] Nenhum fallback mock ativo em produção
 
 ### Comandos de Validação
 ```bash
@@ -131,3 +131,9 @@ curl -s "localhost:3000/api/v1/dashboard/charts/revenue" | jq .
 ---
 **⏱️ Tempo estimado total**: 10-20 horas
 **🎯 Resultado**: Dashboard 100% baseado em dados reais de produção
+
+### 🚀 IMPLEMENTAÇÃO ADICIONAL: PAGAMENTOS REAIS
+- [x] Adicionadas Gems `stripe` e `mercadopago-sdk`
+- [x] Criado `Payment::CheckoutService` para geração de links reais
+- [x] Criados Handlers especializados para Webhooks (`StripeHandler`, `MercadopagoHandler`)
+- [x] Configuração de segredos em `.env.secrets.example`

@@ -172,6 +172,7 @@ GEM
       rotp (~> 6.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
+    domain_name (0.6.20240107)
     dotenv (3.1.8)
     dotenv-rails (3.1.8)
       dotenv (= 3.1.8)
@@ -211,6 +212,9 @@ GEM
       activesupport (>= 5.2)
     hashie (5.0.0)
     htmlentities (4.4.2)
+    http-accept (1.7.0)
+    http-cookie (1.1.0)
+      domain_name (~> 0.5)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     image_processing (1.12.2)
@@ -272,7 +276,14 @@ GEM
       net-smtp
     marcel (1.1.0)
     matrix (0.4.3)
+    mercadopago-sdk (2.3.0)
+      json (~> 2.5)
+      rest-client (~> 2.1)
     method_source (1.1.0)
+    mime-types (3.7.0)
+      logger
+      mime-types-data (~> 3.2025, >= 3.2025.0507)
+    mime-types-data (3.2026.0303)
     mini_magick (4.12.0)
     mini_mime (1.1.5)
     minitest (5.27.0)
@@ -291,6 +302,7 @@ GEM
       timeout
     net-smtp (0.3.4)
       net-protocol
+    netrc (0.11.0)
     nio4r (2.7.5)
     nokogiri (1.15.3-x64-mingw-ucrt)
       racc (~> 1.4)
@@ -417,6 +429,11 @@ GEM
     responders (3.1.0)
       actionpack (>= 5.2)
       railties (>= 5.2)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 4.0)
+      netrc (~> 0.8)
     rexml (3.3.9)
     rotp (6.3.0)
     rqrcode (2.2.0)
@@ -530,6 +547,7 @@ GEM
     sqlite3 (1.6.3-x86_64-linux)
     stimulus-rails (1.2.1)
       railties (>= 6.0.0)
+    stripe (13.5.1)
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
     thor (1.4.0)
@@ -627,6 +645,7 @@ DEPENDENCIES
   kaminari
   logger
   lograge
+  mercadopago-sdk (~> 2.3)
   mixpanel-ruby (~> 2.3)
   noticed (= 2.2)
   omniauth-google-oauth2
@@ -665,6 +684,7 @@ DEPENDENCIES
   sprockets-rails
   sqlite3 (~> 1.4)
   stimulus-rails
+  stripe (~> 13.0)
   turbo-rails
   tzinfo-data
   web-console
@@ -726,6 +746,7 @@ CHECKSUMS
   devise-two-factor (5.1.0) sha256=eae7a78d562e7ff623932d6c0b7f1bdbd4809c63e916875da3db7abaadf41ae1
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
+  domain_name (0.6.20240107) sha256=5f693b2215708476517479bf2b3802e49068ad82167bcd2286f899536a17d933
   dotenv (3.1.8) sha256=9e1176060ced581f8e6ce4384e91361817763a76e3c625c8bddc18b35bd392c3
   dotenv-rails (3.1.8) sha256=46c9d1226a8b58a83b5f61325aa8cffd25cea1c0fafdfbbbee1e5dfea77980c4
   dry-initializer (3.2.0) sha256=37d59798f912dc0a1efe14a4db4a9306989007b302dcd5f25d0a2a20c166c4e3
@@ -747,6 +768,8 @@ CHECKSUMS
   has_scope (0.8.2) sha256=48cd53d684aecd55d3ede060b3c1da37bbbcab58e273d99936e271fe6d125a54
   hashie (5.0.0) sha256=9d6c4e51f2a36d4616cbc8a322d619a162d8f42815a792596039fc95595603da
   htmlentities (4.4.2) sha256=bbafbdf69f2eca9262be4efef7e43e6a1de54c95eb600f26984f71d2fe96c5c3
+  http-accept (1.7.0) sha256=c626860682bfbb3b46462f8c39cd470fd7b0584f61b3cc9df5b2e9eb9972a126
+  http-cookie (1.1.0) sha256=38a5e60d1527eebc396831b8c4b9455440509881219273a6c99943d29eadbb19
   i18n (1.14.1) sha256=9d03698903547c060928e70a9bc8b6b87fda674453cda918fc7ab80235ae4a61
   image_processing (1.12.2) sha256=d3b9e9c5a1cc2607a5214cc28b90d317a03bdd06239584c97535dd73e46f62b8
   importmap-rails (1.2.1) sha256=197251346584835422e48ba479aa02b47be955d9204548ac0d3b3531cd90b3ea
@@ -772,7 +795,10 @@ CHECKSUMS
   mail (2.8.1) sha256=ec3b9fadcf2b3755c78785cb17bc9a0ca9ee9857108a64b6f5cfc9c0b5bfc9ad
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   matrix (0.4.3) sha256=a0d5ab7ddcc1973ff690ab361b67f359acbb16958d1dc072b8b956a286564c5b
+  mercadopago-sdk (2.3.0) sha256=bfeb2290f421a8d214b7fc4dab8e96b85ac8c515f4d9f0bb0544b1b2b960d483
   method_source (1.1.0) sha256=181301c9c45b731b4769bc81e8860e72f9161ad7d66dd99103c9ab84f560f5c5
+  mime-types (3.7.0) sha256=dcebf61c246f08e15a4de34e386ebe8233791e868564a470c3fe77c00eed5e56
+  mime-types-data (3.2026.0303) sha256=164af1de5824c5195d4b503b0a62062383b65c08671c792412450cd22d3bc224
   mini_magick (4.12.0) sha256=67302fa84e63f1002b71416a8466968ed0f33d22f5d42962a0c09a9f1c3a906a
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
@@ -784,6 +810,7 @@ CHECKSUMS
   net-pop (0.1.2) sha256=848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3
   net-protocol (0.2.1) sha256=21adb19c197768899c389bd257545de9d5af64adb1928787653460c2699eac37
   net-smtp (0.3.4) sha256=3dd445186f3d6dd8c2559850eb5dafdc6c1c0a85195489a874338908e9c59143
+  netrc (0.11.0) sha256=de1ce33da8c99ab1d97871726cba75151113f117146becbe45aa85cb3dabee3f
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
   nokogiri (1.15.3-x64-mingw-ucrt) sha256=599a46b6e4f5a34dd21da06bdbd69611728304af5ef42bb183e4b4ca073fd7a3
   nokogiri (1.15.3-x86_64-darwin) sha256=1f0bc0343f9dd1db8dd42e4c9110dd24fc11a7f923b9fa0f866e7f90739e4e7a
@@ -833,6 +860,7 @@ CHECKSUMS
   request_store (1.7.0) sha256=e1b75d5346a315f452242a68c937ef8e48b215b9453a77a6c0acdca2934c88cb
   require_all (3.0.0) sha256=937853faa2833388eab551107bf7bf87c6bba6b4800bac5ce469eda7b6a9fed0
   responders (3.1.0) sha256=3d7b3a40b74f7968a5d6c8c9ec8b0cdd022f39951160d89f003fe73b67053a55
+  rest-client (2.1.0) sha256=35a6400bdb14fae28596618e312776c158f7ebbb0ccad752ff4fa142bf2747e3
   rexml (3.3.9) sha256=d71875b85299f341edf47d44df0212e7658cbdf35aeb69cefdb63f57af3137c9
   rotp (6.3.0) sha256=75d40087e65ed0d8022c33055a6306c1c400d1c12261932533b5d6cbcd868854
   rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
@@ -873,6 +901,7 @@ CHECKSUMS
   sqlite3 (1.6.3-x86_64-darwin) sha256=b74b8694e3e090c2e08ccb85b23fb889690d068ca0cace49f9e1d118058bdc46
   sqlite3 (1.6.3-x86_64-linux) sha256=aebdc5821f4ddeeb9cc36983f0a9c3815e1024e3bd4ddb0dcbc212bb20569de8
   stimulus-rails (1.2.1) sha256=831bbcc0c12ea9c751e0a96b85d9908a0e4b42031964724d5b507166e06f0e8a
+  stripe (13.5.1) sha256=748e22cc6d84c944135298b865763524ff1192cee8bc7fd7baa987889a018eb3
   terminal-table (4.0.0) sha256=f504793203f8251b2ea7c7068333053f0beeea26093ec9962e62ea79f94301d2
   thor (1.4.0) sha256=8763e822ccb0f1d7bee88cde131b19a65606657b847cc7b7b4b82e772bcd8a3d
   tilt (2.7.0) sha256=0d5b9ba69f6a36490c64b0eee9f6e9aad517e20dcc848800a06eb116f08c6ab3

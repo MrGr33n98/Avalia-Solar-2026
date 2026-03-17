@@ -18,13 +18,28 @@ module Api
                            end
         monthly_revenue = calculate_monthly_revenue
 
+        # Calculate Growth Rate (Companies)
+        this_month_new = Company.where(created_at: Time.now.beginning_of_month..Time.now).count
+        last_month_new = Company.where(created_at: 1.month.ago.beginning_of_month..1.month.ago.end_of_month).count
+        growth_rate = if last_month_new > 0
+                        ((this_month_new - last_month_new).to_f / last_month_new * 100).round(1)
+                      else
+                        this_month_new > 0 ? 100.0 : 0.0
+                      end
+
+        # Calculate Satisfaction Score (Based on Reviews)
+        avg_rating = Review.average(:rating) || 0
+        satisfaction_score = (avg_rating * 20).round(1) # scale 1-5 to 1-100
+
         render json: {
           companies_count: companies_count,
           products_count: products_count,
           leads_count: leads_count,
           reviews_count: reviews_count,
           active_campaigns: active_campaigns,
-          monthly_revenue: monthly_revenue
+          monthly_revenue: monthly_revenue,
+          growth_rate: growth_rate,
+          satisfaction_score: satisfaction_score
         }
       rescue StandardError => e
         Rails.logger.error("Dashboard stats error: #{e.message}")

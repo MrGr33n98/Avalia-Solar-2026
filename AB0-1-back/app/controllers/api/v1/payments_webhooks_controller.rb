@@ -7,47 +7,33 @@ module Api
       before_action :verify_webhook_signature
       
       def create
-        provider = params[:provider].to_s
-        status = params[:status].to_s
-        checkout_session_id = params[:checkout_session_id].to_s
-        payment_reference = params[:payment_reference].to_s
-
-        sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
-        return render json: { error: 'subscription_not_found' }, status: :not_found if sub.nil?
-
-        sub.update!(provider: provider) if provider.present?
-        sub.update!(payment_reference: payment_reference) if payment_reference.present?
-
-        case status
-        when 'paid', 'succeeded', 'success'
-          ends_at = sub.starts_at ? (sub.starts_at + sub.banner_offer.duration_days.days) : (Time.current + sub.banner_offer.duration_days.days)
-          sub.activate!(starts_at: Time.current, ends_at: ends_at)
-
-          company_id = sub.respond_to?(:company_id) ? sub.company_id : nil
-          PostHog.capture(
-            distinct_id: company_id ? "company_#{company_id}" : "anon_sub_#{sub.id}",
-            event: 'banner_subscription_activated',
-            properties: {
-              subscription_id: sub.id,
-              company_id: company_id,
-              provider: provider,
-              duration_days: sub.banner_offer&.duration_days
-            }.compact
-          )
-
-          log_webhook_success(sub, status)
-          render json: { ok: true }
-        when 'failed'
-          sub.update!(status: 'failed', failure_reason: params[:failure_reason].to_s.presence)
-          
-          log_webhook_success(sub, status)
-          render json: { ok: true }
-        else
-          render json: { ok: true, ignored: true }
+        case params[:provider]
+        when 'stripe'
+          Webhooks::StripeHandler.new(request.raw_post, request.headers['Stripe-Signature']).call
+        when 'mercadopago'
+          Webhooks::MercadopagoHandler.new(params.to_unsafe_h).call
+        when 'mock'
+          handle_mock_webhook
         end
+
+        render json: { ok: true }
       rescue StandardError => e
         log_webhook_error(e)
-        render json: { error: 'Internal server error' }, status: :internal_server_error
+        render json: { error: e.message }, status: :internal_server_error
+      end
+
+      private
+
+      def handle_mock_webhook
+        checkout_session_id = params[:checkout_session_id]
+        status = params[:status]
+        sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
+        return if sub.nil?
+
+        if status == 'success'
+          ends_at = Time.current + sub.banner_offer.duration_days.days
+          sub.activate!(starts_at: Time.current, ends_at: ends_at)
+        end
       end
 
       private

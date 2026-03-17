@@ -361,13 +361,17 @@ module Api
         sub = @company.banner_subscriptions.create!(
           banner_offer: offer,
           status: 'pending_payment',
-          provider: params[:provider] || 'internal',
+          provider: params[:provider] || 'stripe',
           checkout_session_id: checkout_session_id
         )
 
+        # Generate Real Redirect URL
+        checkout_service = Payment::CheckoutService.new(sub)
+        redirect_url = checkout_service.create_checkout_session(sub.provider)
+
         render json: {
           subscription: sub.as_json(only: %i[id status provider checkout_session_id created_at]),
-          redirect_url: nil # In a real implementation, this would be the Stripe/MP URL
+          redirect_url: redirect_url
         }, status: :created
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'offer_not_found' }, status: :not_found
