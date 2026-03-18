@@ -43,13 +43,13 @@ import analyticsApi, {
 
 import { cn } from "@/lib/utils";
 
-// Components
 import CompanyHero from "./components/CompanyHero";
 import CompanySidebar from "./components/CompanySidebar";
 import CompanyOverview from "./components/CompanyOverview";
 import CompanyComparisonSection from "./components/CompanyComparisonSection";
 import WinnerBadge from "@/components/company/WinnerBadge";
 import Top1StickyCTA from "@/components/company/Top1StickyCTA";
+import ReviewIdentityModalTrigger from "@/components/company/ReviewIdentityModalTrigger";
 
 // Dynamic Components for Performance
 const CompanyProducts = dynamic(() => import("./components/CompanyProducts"), {
@@ -537,6 +537,8 @@ export default function CompanyDetailClient({
         ctaEnabled={ctaEnabled} 
         ctaUrl={ctaUrl} 
       />
+
+      <ReviewIdentityModalTrigger activeTab={activeTab} />
     </div>
   );
 }

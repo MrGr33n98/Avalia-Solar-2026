@@ -63,6 +63,10 @@ const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), 
   ssr: false,
   loading: () => null,
 });
+const HomeIdentityModalTrigger = dynamic(() => import('@/components/home/HomeIdentityModalTrigger'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export const revalidate = 3600;
 const FALLBACK_CATEGORY_MIN_ID = 9000;
@@ -278,6 +282,7 @@ export default async function Home() {
         </div>
       </section>
 
+      <HomeIdentityModalTrigger />
       <FloatingWhatsApp />
     </main>
   );
