@@ -4,10 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy, ShieldCheck } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
 
-import { RatingStars } from '@/components/RatingStars';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 
 import { Badge } from '@/components/ui/badge';
@@ -48,21 +46,26 @@ interface Props {
   isLoading?: boolean;
   avatarRingColor?: string;
   schemaEnabled?: boolean;
-  rank?: number; // US07: Posição no ranking atual
-  category?: string; // Optional category slug for tracking
+  rank?: number;
+  category?: string;
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
   index?: number;
 }
 
 const DICTIONARY = {
-  'pt-BR': { whatsapp: 'WhatsApp', budget: 'Orçamento', review: 'Avaliar', verified: 'Verificada', reviews: 'avaliações' },
-  'en-US': { whatsapp: 'WhatsApp', budget: 'Get Quote', review: 'Review', verified: 'Verified', reviews: 'reviews' },
-  'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones' },
+  'pt-BR': { whatsapp: 'WhatsApp', budget: 'Orçamento', review: 'Avaliar', verified: 'Verificada', reviews: 'avaliações', noReviews: 'Seja o primeiro a avaliar', viewServices: 'Ver serviços e soluções oferecidas' },
+  'en-US': { whatsapp: 'WhatsApp', budget: 'Get Quote', review: 'Review', verified: 'Verified', reviews: 'reviews', noReviews: 'Be the first to review', viewServices: 'View offered services and solutions' },
+  'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones', noReviews: 'Sé el primero en evaluar', viewServices: 'Ver servicios y soluciones ofrecidas' },
 } as const;
 
-const VERIFIED_BADGE_SIZE_PX = 26;
+const VERIFIED_BADGE_SIZE_PX = 24;
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
 const ACTIVE_STORAGE_RE = /\/rails\/active_storage\//i;
+
+// ── Banner ratio: 3:1 wide strip — presence without dominating ──
+const BANNER_RATIO = 3 / 1;
+const AVATAR_SIZE_DEFAULT = 44;
+const AVATAR_SIZE_COMPACT = 36;
 
 export default function CompanyCard({
   company: rawCompany,
@@ -70,7 +73,6 @@ export default function CompanyCard({
   compact = false,
   lang = 'pt-BR',
   isLoading = false,
-  avatarRingColor = '#ffffff',
   schemaEnabled = true,
   rank,
   category,
@@ -90,7 +92,7 @@ export default function CompanyCard({
   const [selected, setSelected] = useState(false);
   const [shared, setShared] = useState(false);
 
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite } = useFavorites();
   const isFav = isFavorite(id);
 
   const [ctaVisible, setCtaVisible] = useState(false);
@@ -114,12 +116,8 @@ export default function CompanyCard({
     }
   }, [id, name, company.slug, category, ctaVisible]);
 
-  // Track impression
-  // Impression tracking via IntersectionObserver
   const cardRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
-    
-    // Only track if impression tracking is enabled (default true)
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         track('company_card_impression', {
@@ -133,7 +131,6 @@ export default function CompanyCard({
         observer.disconnect();
       }
     }, { threshold: 0.1 });
-    
     observer.observe(node);
   }, [id, name, company.verified, compact, company.slug, category]);
 
@@ -151,16 +148,12 @@ export default function CompanyCard({
       url,
     };
 
-    track('company_share_click', {
-      company_id: id,
-      company_name: name
-    });
+    track('company_share_click', { company_id: id, company_name: name });
 
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        // Share might be cancelled by user, don't show error
         if ((err as Error).name !== 'AbortError') {
           console.error('Error sharing', err);
         }
@@ -175,6 +168,7 @@ export default function CompanyCard({
       }
     }
   };
+
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
   const verifiedBadgeUrl = useMemo(() => {
@@ -207,16 +201,12 @@ export default function CompanyCard({
   const whatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
     signalCategory: 'contact_intent',
     elementSelector: 'company-card-whatsapp-cta',
-    metadata: {
-      source: 'company_card',
-    },
+    metadata: { source: 'company_card' },
   });
   const quoteHoverIntent = useHoverIntent(intentCompanyId, 'quote_button', 800, {
     signalCategory: 'contact_intent',
     elementSelector: 'company-card-quote-cta',
-    metadata: {
-      source: 'company_card',
-    },
+    metadata: { source: 'company_card' },
   });
   const canRequestQuote =
     company.feature_access
@@ -265,33 +255,37 @@ export default function CompanyCard({
     return digits.length < 10 ? phone : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   };
 
+  const avatarSize = compact ? AVATAR_SIZE_COMPACT : AVATAR_SIZE_DEFAULT;
+
+  // ── Loading skeleton ──────────────────────────────────────────
   if (isLoading) {
     return (
-      <Card className={cn('overflow-hidden rounded-clay-lg clay-card', className)}>
-        <Skeleton className={cn('w-full', compact ? 'h-[80px]' : 'h-[100px]')} />
+      <Card className={cn(
+        'overflow-hidden border border-slate-200/80 dark:border-slate-700/60',
+        'shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)]',
+        compact ? 'rounded-xl' : 'rounded-2xl',
+        className,
+      )}>
+        <Skeleton className={cn('w-full', compact ? 'h-[60px]' : 'h-[80px]')} />
         <CardContent className="pt-4">
-          <div className="relative -mt-8 mb-3">
-            <Skeleton className={cn('rounded-full border-4 border-clay-surface shadow-sm', compact ? 'w-12 h-12' : 'w-14 h-14')} />
+          <div className="relative -mt-6 mb-3">
+            <Skeleton className={cn('rounded-xl border-2 border-white', compact ? 'w-9 h-9' : 'w-11 h-11')} />
           </div>
-          <Skeleton className="h-6 w-3/4 mb-2" />
+          <Skeleton className="h-5 w-3/4 mb-2 rounded" />
           <div className="flex gap-2 mb-3">
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-16 rounded" />
+            <Skeleton className="h-4 w-20 rounded" />
           </div>
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3 mb-5" />
-          <div className="mt-auto grid grid-cols-1 gap-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-3.5 w-full mb-1.5 rounded" />
+          <Skeleton className="h-3.5 w-2/3 mb-4 rounded" />
+          <div className="mt-auto grid grid-cols-1 gap-2">
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-9 w-full rounded-lg" />
           </div>
         </CardContent>
       </Card>
     );
   }
-
-  // Banner ratio: consistent across all cards for grid alignment
-  const bannerRatio = 21 / 9; // Cinematic ratio (previously 10/3 which was too short/strip-like)
-  const avatarSize = compact ? 40 : 52;
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -309,19 +303,20 @@ export default function CompanyCard({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
-      whileHover={{ y: -5 }}
-      className={cn("h-full", className)}
-    >
+    <div className={cn("h-full", className)}>
       <Card
         ref={cardRef}
         className={cn(
-          'relative flex flex-col bg-white dark:bg-slate-900 smooth-transition clay-card shadow-sm hover:shadow-2xl hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/40 data-[selected=true]:ring-2 data-[selected=true]:ring-primary/50 data-[selected=true]:border-primary/50 cursor-pointer group',
-          'overflow-hidden h-full flex-1',
-          compact ? 'rounded-clay-lg min-h-[280px]' : 'rounded-clay-xl',
+          'relative flex flex-col bg-white dark:bg-slate-900/95 cursor-pointer group h-full',
+          'overflow-hidden',
+          'border border-slate-200/80 dark:border-slate-700/60',
+          'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.04)]',
+          'hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)]',
+          'hover:border-slate-300 dark:hover:border-slate-600',
+          'transition-[box-shadow,border-color] duration-200 ease-out',
+          'focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-1',
+          'data-[selected=true]:ring-2 data-[selected=true]:ring-blue-500/30',
+          compact ? 'rounded-xl min-h-[260px]' : 'rounded-2xl',
         )}
         onClick={handleCardClick}
         onKeyDown={handleKeyDown}
@@ -338,14 +333,14 @@ export default function CompanyCard({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
       )}
 
-      {/* Sponsored Badge with Tooltip (US05) */}
+      {/* ── Sponsored Badge ────────────────────────────────────── */}
       {company.sponsored && (
         <div className="absolute top-2 right-2 z-30">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[9px] font-bold py-0 h-5 border-gray-100 text-gray-500 cursor-help shadow-sm">
-                  PATROCINADO <Info className="ml-1 w-3 h-3" />
+                <Badge variant="secondary" className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[10px] font-semibold py-0 h-5 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-help shadow-sm">
+                  PATROCINADO <Info className="ml-0.5 w-3 h-3" />
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
@@ -356,27 +351,28 @@ export default function CompanyCard({
         </div>
       )}
 
-      {/* Rank Badge (US07) */}
+      {/* ── Rank Badge ─────────────────────────────────────────── */}
       {rank && rank <= 3 && (
         <div className={cn(
-          "absolute top-2 left-2 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm border",
-          rank === 1 ? "bg-amber-100 text-amber-700 border-amber-200" : 
-          rank === 2 ? "bg-slate-100 text-slate-700 border-slate-200" : 
-          "bg-orange-100 text-orange-700 border-orange-200"
+          "absolute top-2 left-2 z-30 flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight shadow-sm border",
+          rank === 1 ? "bg-amber-50 text-amber-700 border-amber-200/80" :
+          rank === 2 ? "bg-slate-50 text-slate-600 border-slate-200/80" :
+          "bg-orange-50 text-orange-600 border-orange-200/80"
         )}>
           <Trophy className="w-3 h-3 fill-current" />
           Top {rank}
         </div>
       )}
 
+      {/* ── Banner + Overlay ───────────────────────────────────── */}
       <div className="relative">
+        {/* Action buttons — always visible at low opacity, full on hover */}
         <div className={cn(
-          "absolute right-2 flex flex-col gap-2 z-10 smooth-transition",
-          compact ? "top-2" : "top-2",
-          "sm:opacity-0 sm:group-hover:opacity-100"
+          "absolute right-2 top-2 flex flex-col gap-1.5 z-10",
+          "opacity-50 group-hover:opacity-100 transition-opacity duration-200"
         )}>
           <div onClick={(e) => e.stopPropagation()}>
-            <ComparisonToggleButton 
+            <ComparisonToggleButton
               company={company}
               variant="floating"
               size="default"
@@ -386,17 +382,17 @@ export default function CompanyCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-11 w-11 md:h-10 md:w-10 clay-chip bg-clay-surface/95 hover:bg-clay-surface backdrop-blur-sm smooth-transition text-gray-600 border border-clay-shadow-light shadow-sm"
+            className="h-8 w-8 rounded-lg bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
             onClick={handleShare}
             title="Compartilhar"
             aria-label={`Compartilhar perfil de ${name}`}
           >
-            {shared ? <Check className="h-5 w-5 text-emerald-500" /> : <Share2 className="h-5 w-5 md:h-5 md:w-5" />}
+            {shared ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
           </Button>
         </div>
 
-        <AspectRatio ratio={bannerRatio} className={cn('w-full')}>
-        <div className={cn('relative w-full h-full bg-slate-50/80 dark:bg-slate-900/50')}>
+        <AspectRatio ratio={BANNER_RATIO} className="w-full">
+          <div className="relative w-full h-full bg-slate-100 dark:bg-slate-800">
             {bannerUrl && !bannerError ? (
               <Image
                 src={bannerUrl}
@@ -408,23 +404,20 @@ export default function CompanyCard({
                 data-testid="company-banner"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900" />
             )}
 
-            {/* Premium Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+            {/* Subtle vignette on hover — no shimmer, no gimmicks */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           </div>
         </AspectRatio>
 
-        <div
-          className={cn('absolute left-3 z-20', compact ? '-bottom-4' : '-bottom-5')}
-          style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
-        >
+        {/* ── Logo Avatar ────────────────────────────────────── */}
+        <div className={cn('absolute left-3 z-20', compact ? '-bottom-3.5' : '-bottom-4')}>
           <div className="relative">
             {verifiedBadgeUrl && !verifiedBadgeError && (
               <div
-                className="absolute -top-2 -left-2 z-30 rounded-md bg-white/95 shadow-sm"
+                className="absolute -top-1.5 -left-1.5 z-30 rounded bg-white dark:bg-slate-900 shadow-sm p-0.5"
                 style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
                 title="Selo de conquista"
               >
@@ -433,40 +426,36 @@ export default function CompanyCard({
                   alt="Selo de conquista"
                   fill
                   sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                  className="object-contain rounded-md"
-                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                  className="object-contain rounded-sm"
                   onError={() => setVerifiedBadgeError(true)}
                   priority
                 />
               </div>
             )}
             <div
-              className={cn('relative rounded-full overflow-hidden bg-white shadow-md border-2 border-white')}
-              style={{ 
-                width: avatarSize, 
-                height: avatarSize,
-              }}
+              className="relative rounded-xl overflow-hidden bg-white dark:bg-slate-800 border-2 border-white dark:border-slate-900 shadow-[0_1px_4px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)]"
+              style={{ width: avatarSize, height: avatarSize }}
             >
               {logoUrl && !logoError ? (
-                <div className="relative w-full h-full p-1.5">
+                <div className="relative w-full h-full p-[3px]">
                   <Image
                     src={logoUrl}
                     alt=""
                     fill
                     sizes="80px"
                     onError={() => setLogoError(true)}
-                    className="object-contain object-center"
+                    className="object-contain object-center rounded-lg"
                     data-testid="company-logo"
                   />
                 </div>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-50" data-testid="logo-placeholder">
-                  <Building className="text-gray-300 w-8 h-8" />
+                <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800" data-testid="logo-placeholder">
+                  <Building className="text-slate-300 dark:text-slate-600 w-5 h-5" />
                 </div>
               )}
               {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
-                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
+                <div className="absolute -bottom-0.5 -right-0.5 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
+                  <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
                 </div>
               )}
             </div>
@@ -474,77 +463,81 @@ export default function CompanyCard({
         </div>
       </div>
 
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-2.5' : 'px-3.5 pb-2.5 pt-5')}>
-        <div className={cn("flex flex-col mb-2", compact ? "gap-1" : "gap-2")}>
-          <div className="flex flex-col gap-1">
-            <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
-              <h3 className={cn('font-black tracking-tight text-slate-950 line-clamp-2', compact ? 'text-sm' : 'text-lg md:text-xl')}>
-                {name}
-              </h3>
-            </Link>
-            
-            <div className="flex flex-wrap items-center gap-2 mt-0.5">
-              {company.verified && (
-                <Badge 
-                  variant="secondary" 
-                  className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm px-1.5 py-0 rounded-full font-bold uppercase tracking-wider"
-                >
-                  {text.verified}
-                </Badge>
-              )}
-            </div>
-          </div>
+      {/* ── Card Content ─────────────────────────────────────── */}
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-3' : 'px-3.5 pb-3 pt-5')}>
+        <div className={cn("flex flex-col", compact ? "gap-0.5 mb-1.5" : "gap-1 mb-1.5")}>
 
-          <div className="flex items-center justify-between gap-2 mt-0.5">
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {average_rating > 0 ? (
-                <>
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                  <span className="text-xs font-bold text-slate-900">
-                    {Number(average_rating).toFixed(1)}/5.0
-                  </span>
-                  {!compact && rating_count > 0 && (
-                    <span className="text-[11px] text-gray-400 font-bold">
-                      ({rating_count.toLocaleString(lang)})
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-[11px] text-gray-400 font-bold">Sem avaliações</span>
-              )}
-            </div>
-            {!compact && (city || state) && (
-              <div className="flex items-center gap-1 text-[10px] text-gray-500 truncate">
-                <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          {/* Company name */}
+          <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
+            <h3 className={cn(
+              'font-bold tracking-tight text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight',
+              compact ? 'text-[13px]' : 'text-base'
+            )}>
+              {name}
+            </h3>
+          </Link>
+
+          {/* Verified + Location row */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {company.verified && (
+              <Badge
+                variant="secondary"
+                className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800/40 px-1.5 py-0 h-[18px] rounded font-semibold uppercase tracking-wide"
+              >
+                {text.verified}
+              </Badge>
+            )}
+            {(city || state) && (
+              <div className="flex items-center gap-0.5 text-[11px] text-slate-500 dark:text-slate-500 truncate">
+                <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-600 flex-shrink-0" />
                 <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
               </div>
             )}
           </div>
+
+          {/* Rating row */}
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {average_rating > 0 ? (
+              <>
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 flex-shrink-0" strokeWidth={0} />
+                <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 tabular-nums">
+                  {Number(average_rating).toFixed(1)}
+                </span>
+                {rating_count > 0 && (
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                    ({rating_count.toLocaleString(lang)})
+                  </span>
+                )}
+              </>
+            ) : (
+              <Link
+                href={companyReviewPath}
+                className="text-[11px] text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium transition-colors"
+                onClick={(e) => { e.stopPropagation(); emit('cta_first_review'); }}
+              >
+                {text.noReviews} →
+              </Link>
+            )}
+          </div>
         </div>
 
-        {compact && (city || state) && (
-          <div className="flex items-center gap-1 text-[10px] text-gray-500 truncate pb-1.5">
-            <MapPin className="w-3 h-3 text-gray-400" />
-            <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
-          </div>
-        )}
-
+        {/* Description */}
         {!compact && (
-          <p className="mt-1 text-xs text-slate-600 leading-normal line-clamp-2 min-h-[2.5rem]">
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
             {description || (
-              <span className="text-gray-400 italic font-light">
-                Visite o perfil para saber mais sobre nossos serviços.
+              <span className="text-slate-400 dark:text-slate-500">
+                {text.viewServices}
               </span>
             )}
           </p>
         )}
 
-        {/* Footer Actions - Anchored to bottom with mt-auto */}
-        <div 
+        {/* ── Footer CTAs ──────────────────────────────────── */}
+        <div
           ref={ctaRef}
           className={cn(
-            "mt-auto pt-2 print:hidden",
-            compact ? "flex items-center gap-2" : "grid grid-cols-1 gap-2"
+            "mt-auto pt-2.5 print:hidden",
+            compact ? "flex items-center gap-1.5" : "grid grid-cols-1 gap-1.5"
           )}
         >
           {canRequestQuote && (
@@ -561,8 +554,8 @@ export default function CompanyCard({
                     companySlug={company.slug}
                     label={text.whatsapp}
                     className={cn(
-                      'w-full clay-btn-primary smooth-transition font-bold',
-                      compact ? 'h-9 text-[12px]' : 'h-11 lg:h-10'
+                      'w-full font-semibold rounded-xl transition-all duration-150',
+                      compact ? 'h-8 text-[11px]' : 'h-9'
                     )}
                   />
                 )
@@ -583,8 +576,8 @@ export default function CompanyCard({
                       })
                     }
                     className={cn(
-                      'w-full clay-btn-primary smooth-transition font-bold',
-                      compact ? 'h-9 text-[12px]' : 'h-11 lg:h-10'
+                      'w-full font-semibold rounded-xl transition-all duration-150',
+                      compact ? 'h-8 text-[11px]' : 'h-9'
                     )}
                   />
                 )
@@ -595,22 +588,24 @@ export default function CompanyCard({
           <Button
             variant="outline"
             className={cn(
-              'clay-chip border-clay-shadow-light text-gray-700 hover:bg-clay-surface-raised hover:text-gray-900 font-bold smooth-transition',
+              'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400',
+              'hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600',
+              'font-medium transition-all duration-150 rounded-xl',
               compact
-                ? (canRequestQuote ? 'h-11 w-11 p-0 flex-shrink-0' : 'h-11 w-full')
-                : 'w-full h-11'
+                ? (canRequestQuote ? 'h-8 w-8 p-0 flex-shrink-0' : 'h-8 w-full')
+                : 'w-full h-9'
             )}
             asChild
           >
           <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
-            <Star className={cn('text-gray-400 group-hover:text-amber-500 smooth-transition', compact && canRequestQuote ? 'w-4 h-4' : 'w-4 h-4 mr-1')} />
-            {(!compact || !canRequestQuote) && text.review}
+            <Star className={cn('text-slate-400 dark:text-slate-500 group-hover:text-amber-500 transition-colors duration-150', compact && canRequestQuote ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5 mr-1')} />
+            {(!compact || !canRequestQuote) && <span className="text-[12px]">{text.review}</span>}
           </Link>
           </Button>
         </div>
 
         <div className="hidden print:block">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
             {company.whatsapp && <div>Tel: {formatPhone(company.whatsapp)}</div>}
             {company.email && <div>Email: {company.email}</div>}
             {website && <div className="col-span-2">{website.replace(/^https?:\/\//, '')}</div>}
@@ -618,6 +613,6 @@ export default function CompanyCard({
         </div>
       </CardContent>
     </Card>
-    </motion.div>
+    </div>
   );
 }

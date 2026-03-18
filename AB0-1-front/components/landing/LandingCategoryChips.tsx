@@ -103,21 +103,21 @@ export default function LandingCategoryChips({
   return (
     <section className={cn('px-4 md:px-6', className)}>
       <div className="container mx-auto">
-        <div className="relative clay-panel rounded-clay-lg border border-clay-shadow-light">
+        <div className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
           <div
             ref={scrollerRef}
-            className="flex items-center gap-3 overflow-x-auto px-3 py-3 no-scrollbar min-h-[56px]"
+            className="flex items-center gap-2 overflow-x-auto px-3 py-2.5 no-scrollbar min-h-[52px]"
             role="list"
             aria-label="Categorias em destaque"
           >
             {includeAllChip ? (
               <Link
                 href="/categories"
-                className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-200 smooth-transition whitespace-nowrap"
                 role="listitem"
               >
-                <LayoutGrid className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-slate-900">Categorias</span>
+                <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-[13px] font-semibold text-blue-700 dark:text-blue-300">Categorias</span>
               </Link>
             ) : null}
 
@@ -129,43 +129,45 @@ export default function LandingCategoryChips({
                 <Link
                   key={category.id}
                   href={href}
-                  className="clay-chip flex items-center gap-2 px-4 py-2 border border-clay-shadow-light hover:shadow-md hover:border-blue-200 smooth-transition whitespace-nowrap min-h-[44px]"
+                  className="group/chip flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] smooth-transition whitespace-nowrap min-h-[40px]"
                   role="listitem"
                   aria-label={`Ver empresas na categoria ${category.name}`}
                 >
                   {customIconSrc ? (
-                    <Image
-                      src={customIconSrc}
-                      alt={`Icon - ${category.name}`}
-                      width={20}
-                      height={20}
-                      className="h-5 w-5 rounded-sm object-cover"
-                    />
+                    <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0 ring-1 ring-slate-200/60 dark:ring-slate-600/40">
+                      <Image
+                        src={customIconSrc}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
-                    <Icon className="h-5 w-5 text-blue-600" />
+                    <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 smooth-transition flex-shrink-0" />
                   )}
-                  <span className="text-sm font-medium text-slate-900">{category.name}</span>
+                  <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover/chip:text-slate-900 dark:group-hover/chip:text-white smooth-transition">{category.name}</span>
                 </Link>
               );
             })}
           </div>
 
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 bg-gradient-to-l from-clay-surface via-clay-surface/70 to-transparent rounded-r-clay-lg">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 pl-8 bg-gradient-to-l from-white via-white/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 rounded-r-2xl pointer-events-none">
             <Button
               type="button"
               size="icon"
               variant="ghost"
               onClick={() => scrollBy(320)}
-              className="h-11 w-11 md:h-12 md:w-12 clay-chip border border-clay-shadow-light bg-clay-surface/90 hover:bg-clay-surface shadow-md"
+              className="pointer-events-auto h-9 w-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 smooth-transition"
               aria-label="Ver mais categorias"
             >
-              <ChevronRight className="h-5 w-5 text-slate-700" />
+              <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </Button>
           </div>
         </div>
 
         {usingFallbackCategories ? (
-          <p className="mt-2 text-xs text-amber-700 px-1">
+          <p className="mt-2 text-xs text-amber-700 dark:text-amber-400 px-1">
             Categorias exibidas em modo de contingencia.
           </p>
         ) : null}
