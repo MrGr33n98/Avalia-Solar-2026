@@ -217,6 +217,8 @@ class Product < ApplicationRecord
     end
   end
 
+  public
+
   def max_images_allowed
     return IMAGE_LIMITS['free'] unless company&.plan
 
@@ -237,7 +239,7 @@ class Product < ApplicationRecord
 
   def can_upload_images?
     return true unless company&.plan
-    
+
     # Check if company has media_upload feature enabled
     plan_features = company.plan.feature_flags
     plan_features['media_upload'] == true
