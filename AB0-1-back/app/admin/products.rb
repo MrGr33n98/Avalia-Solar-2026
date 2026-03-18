@@ -4,7 +4,7 @@ ActiveAdmin.register Product do
   permit_params do
     base = [
       :name, :description, :short_description, :price, :sku, :stock, :status, :featured,
-      :company_id, :seo_title, :seo_description, :meta_description,
+      :company_id, :seo_title, :seo_description,
       { category_ids: [] },
       { images: [] }
     ]
@@ -193,11 +193,7 @@ ActiveAdmin.register Product do
               as: :text,
               input_html: { rows: 3 },
               hint: "Ideal: 70-160 caracteres. Atual: #{f.object.seo_description&.length || 0}."
-      f.input :meta_description, 
-              label: 'Meta Descrição',
-              as: :text,
-              input_html: { rows: 3 },
-              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.meta_description&.length || 0}. Se vazio, usará a descrição."
+      # meta_description não existe como coluna em products (usar seo_description acima)
     end
     f.actions
   end
