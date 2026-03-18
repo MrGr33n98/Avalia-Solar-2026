@@ -1,11 +1,7 @@
 /** @type {import('next').NextConfig} */
-// Temporarily disable bundle analyzer to fix build
-const withBundleAnalyzer = (config) => config;
-/* 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
-*/
 
 const enableSwcMinify = process.env.NEXT_DISABLE_SWC_MINIFY !== 'true';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -35,15 +31,6 @@ const nextConfig = {
   output: 'standalone',
   ...(stableBuildId ? { generateBuildId: async () => stableBuildId } : {}),
 
-  // 🔧 FIX: Desabilitar minificação SWC para corrigir erro de digest
-  swcMinify: enableSwcMinify,
-  compress: true,
-  compiler: {
-    ...(isProduction ? { removeConsole: { exclude: ['error', 'warn'] } } : {}),
-  },
-  
-  
-  // � FIX: Desabilitar minificação SWC para corrigir erro de digest
   swcMinify: enableSwcMinify,
   compress: true,
   compiler: {

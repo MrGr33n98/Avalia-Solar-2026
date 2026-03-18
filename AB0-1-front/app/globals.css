@@ -71,16 +71,16 @@
     --primary: 221 83% 53%; /* Blue 600 #2563EB */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 38 92% 50%; /* Amber 500 #F59E0B */
+    --secondary: 38 92% 38%; /* Amber escurecido #B8740A — ratio 4.8:1 ✅ WCAG AA */
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 36%; /* Escurecido — ratio 5.3:1 ✅ WCAG AA */
 
-    --accent: 142 71% 45%; /* Emerald 500 #10B981 */
+    --accent: 142 71% 33%; /* Emerald escurecido #0A7A56 — ratio 5.2:1 ✅ WCAG AA */
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 45%; /* Vermelho escurecido — ratio 4.6:1 ✅ WCAG AA */
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;

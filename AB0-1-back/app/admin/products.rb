@@ -58,7 +58,7 @@ ActiveAdmin.register Product do
       end
     end
     column :featured do |product|
-      status_tag(product.featured? ? "Sim" : "Não", product.featured? ? :ok : :no)
+      status_tag(product.featured? ? "Sim" : "Não", class: product.featured? ? "yes" : "no")
     end
     actions
   end
@@ -85,9 +85,9 @@ ActiveAdmin.register Product do
       end
       row "Status do Upload de Imagens" do |product|
         if product.can_upload_images?
-          status_tag "Upload Permitido", :ok
+          status_tag "Upload Permitido", class: "yes"
         else
-          status_tag "Upload Restrito", :error
+          status_tag "Upload Restrito", class: "no"
         end
       end
       row "Imagens" do |product|

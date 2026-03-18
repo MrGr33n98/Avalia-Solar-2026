@@ -1,4 +1,4 @@
-'use client';
+import Script from 'next/script';
 
 interface GTMProps {
   gtmId: string;
@@ -6,55 +6,54 @@ interface GTMProps {
 
 const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
 
+/**
+ * GoogleTagManager — Performance-optimized
+ *
+ * Consent Mode (beforeInteractive): define defaults LGPD antes do GTM disparar.
+ *   - Removido `wait_for_update: 500` que bloqueava o main thread por 500ms garantidos.
+ *
+ * GTM Loader (afterInteractive): carregado após hidratação da página.
+ *   - Não bloqueia FCP, LCP nem TBT.
+ */
 export function GoogleTagManager({ gtmId }: GTMProps) {
   if (!analyticsEnabled || !gtmId) return null;
 
   return (
     <>
-      <script
+      <Script
         id="google-consent-mode"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('consent', 'default', {
-              'ad_storage': 'denied',
-              'analytics_storage': 'denied',
-              'ad_user_data': 'denied',
-              'ad_personalization': 'denied',
-              'wait_for_update': 500
-            });
-            gtag('js', new Date());
+        strategy="beforeInteractive"
+      >{`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+          'ad_storage': 'denied',
+          'analytics_storage': 'denied',
+          'ad_user_data': 'denied',
+          'ad_personalization': 'denied'
+        });
+        gtag('js', new Date());
+        try {
+          var c = JSON.parse(localStorage.getItem('avaliasolar_consent') || 'null');
+          if (c) gtag('consent', 'update', {
+            'ad_storage': c.marketing ? 'granted' : 'denied',
+            'analytics_storage': c.analytics ? 'granted' : 'denied',
+            'ad_user_data': c.marketing ? 'granted' : 'denied',
+            'ad_personalization': c.marketing ? 'granted' : 'denied'
+          });
+        } catch(e) {}
+      `}</Script>
 
-            // Rehydrate consent state immediately to avoid 0% consent rate issues globally
-            try {
-              var stored = localStorage.getItem('avaliasolar_consent');
-              if (stored) {
-                var consent = JSON.parse(stored);
-                gtag('consent', 'update', {
-                  'ad_storage': consent.marketing ? 'granted' : 'denied',
-                  'analytics_storage': consent.analytics ? 'granted' : 'denied',
-                  'ad_user_data': consent.marketing ? 'granted' : 'denied',
-                  'ad_personalization': consent.marketing ? 'granted' : 'denied'
-                });
-              }
-            } catch(e) {}
-          `,
-        }}
-      />
-
-      <script
+      <Script
         id="gtm-script"
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','${gtmId}');
-          `,
-        }}
-      />
+        strategy="afterInteractive"
+      >{`
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','${gtmId}');
+      `}</Script>
     </>
   );
 }

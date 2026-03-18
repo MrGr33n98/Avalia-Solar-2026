@@ -111,12 +111,22 @@ export default function RootLayout({
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
 
-        {/* Google Tag Manager - Movido para o head para evitar a mensagem 'A tag não está no lugar certo' */}
-        <GoogleTagManager gtmId={GTM_ID} />
+          {/*
+          Theme detection: script síncrono mínimo que aplica a classe dark/light
+          antes do primeiro paint, eliminando o CLS causado pelo ThemeProvider.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t==='system'&&m)||(!t&&m)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+          }}
+        />
       </head>
       <body suppressHydrationWarning className="font-sans">
-        {/* Google Tag Manager (noscript) */}
+          {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
+
+        {/* GTM + Consent Mode: afterInteractive — não bloqueia TBT */}
+        <GoogleTagManager gtmId={GTM_ID} />
 
         <ThemeProvider
           attribute="class"
