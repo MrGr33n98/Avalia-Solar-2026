@@ -106,6 +106,7 @@ docs/qa/
 /AB0-1-back/docs/diagnostics/
 /AB0-1-back/docs/data/
 /AB0-1-front/docs/skills/
+Avalia Solar/
 *.csv
 
 # Planejamento de monetizacao/local task board (nao sobe para prod)
