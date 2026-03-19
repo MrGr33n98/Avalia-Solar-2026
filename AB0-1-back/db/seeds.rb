@@ -63,6 +63,29 @@ rescue StandardError => e
 end
 
 # ================================
+# Brands (Brand Catalog)
+# ================================
+puts "\n==> Brands"
+brand_counts = { created: 0, updated: 0 }
+
+[
+  { name: 'WEG', slug: 'weg', aliases: %w[w.e.g weg motors weg-industria] },
+  { name: 'Placeholder Brand A', slug: 'brand-a', aliases: [] },
+  { name: 'Placeholder Brand B', slug: 'brand-b', aliases: [] }
+].each do |payload|
+  brand = Brand.find_or_initialize_by(slug: payload[:slug])
+  brand.assign_attributes(
+    name: payload[:name],
+    aliases: payload[:aliases],
+    status: 'active'
+  )
+  if brand.save
+    brand_counts[brand.previous_changes.key?('id') ? :created : :updated] += 1
+  end
+end
+puts "  ✓ Brands created: #{brand_counts[:created]}, updated: #{brand_counts[:updated]}"
+
+# ================================
 # Admin
 # ================================
 puts "\n==> Admin"

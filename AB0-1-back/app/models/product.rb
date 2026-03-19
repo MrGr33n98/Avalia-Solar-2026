@@ -15,6 +15,7 @@ class Product < ApplicationRecord
   
   # Associations
   belongs_to :company, optional: true
+  belongs_to :brand, optional: true
   has_and_belongs_to_many :categories
   has_many_attached :images
   has_many :product_specifications, dependent: :destroy
@@ -68,13 +69,13 @@ class Product < ApplicationRecord
   def self.ransackable_attributes(_auth_object = nil)
     %w[
       id name description short_description price stock sku
-      status featured seo_title seo_description
+      status featured seo_title seo_description brand_id
       company_id created_at updated_at
     ]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company categories images_attachments images_blobs]
+    %w[company brand categories images_attachments images_blobs]
   end
 
   # Custom JSON
@@ -82,6 +83,14 @@ class Product < ApplicationRecord
 
   def as_json(options = {})
     specs_payload = options[:include_specs] ? serialized_specs : nil
+    brand_payload =
+      if brand
+        {
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug
+        }
+      end
 
     super(options.merge(
       include: {
@@ -90,7 +99,12 @@ class Product < ApplicationRecord
       },
       methods: %i[image_url image_urls],
       except: %i[created_at updated_at]
-    )).merge(specs: specs_payload).compact
+    )).merge(
+      specs: specs_payload,
+      brand: brand_payload,
+      brand_id: brand&.id,
+      brand_slug: brand&.slug
+    ).compact
   end
 
   after_create :track_creation_event

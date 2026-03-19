@@ -92,6 +92,9 @@ export interface Product {
   name: string;
   description: string;
   price: string | number;
+  brand_id?: number | string;
+  brand_slug?: string;
+  brand?: { id: number | string; name: string; slug: string };
   company_id: string;
   short_description?: string;
   sku?: string;

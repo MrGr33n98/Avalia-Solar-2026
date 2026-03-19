@@ -173,13 +173,20 @@ module Analytics
     def persist_analytics_event!
       return unless ActiveRecord::Base.connection.table_exists?('analytics_events')
 
+      brand_id = normalize_brand_id(@metadata['brand_id'])
+      brand_slug = @metadata['brand_slug'].presence
+      app_key = @metadata['app_key'].presence
+
       AnalyticsEvent.create!(
         company_id: @company_id,
         user_id: @user&.id,
         event_type: @event_type,
         metadata: @metadata,
         tracked_at: @occurred_at,
-        event_id: @event_id
+        event_id: @event_id,
+        brand_id: brand_id,
+        brand_slug: brand_slug,
+        app_key: app_key
       )
     rescue ActiveRecord::RecordNotUnique
       nil
@@ -213,6 +220,12 @@ module Analytics
 
     def normalized_event_type
       @normalized_event_type ||= @event_type.to_s.downcase.gsub(/\s+/, '_')
+    end
+
+    def normalize_brand_id(raw)
+      return nil if raw.blank?
+      return raw if raw.is_a?(Integer)
+      raw.to_s.match?(/\A\d+\z/) ? raw.to_i : nil
     end
   end
 end

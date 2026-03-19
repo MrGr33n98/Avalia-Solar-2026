@@ -27,6 +27,8 @@ module Api
             sku: product.sku,
             stock: product.stock,
             category_ids: product.category_ids,
+            brand_id: product.brand_id,
+            brand_slug: product.brand&.slug,
             created_at: product.created_at
           }
         end

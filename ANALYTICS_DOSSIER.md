@@ -5,6 +5,11 @@
 **Stack:** PostHog · Google Tag Manager (GTM-5RV76ZKR) · GA4 · Backend Rails
 **Fonte:** Análise estática de `lib/analytics/` (21 arquivos, ~4.300 linhas)
 
+> Referências:
+> - `docs/analytics/MEASUREMENT_READINESS_INDEX.md`
+> - `docs/analytics/BRAND_ANALYTICS_TEMPLATE.md`
+> - `docs/analytics/brands/WEG.md`
+
 ---
 
 ## ÍNDICE

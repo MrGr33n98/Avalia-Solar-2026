@@ -275,6 +275,9 @@ export interface Product {
   description: string;
   short_description?: string;  // Short version of description
   price: number;
+  brand_id?: number;
+  brand_slug?: string;
+  brand?: { id: number; name: string; slug: string };
   company_id?: number;
   category_id?: number;
   status?: string;

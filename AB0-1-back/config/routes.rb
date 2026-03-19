@@ -92,6 +92,8 @@ Rails.application.routes.draw do
       post 'analytics/track', to: 'analytics#track'
       post 'events/track', to: 'analytics#events_track'
       get 'analytics/conversions', to: 'analytics#conversions'
+      get 'analytics/overview', to: 'analytics#overview'
+      get 'analytics/funnel', to: 'analytics#funnel'
 
       # Intent Scores API
       resources :intent_scores, only: [:index, :show] do

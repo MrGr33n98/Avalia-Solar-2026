@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
+import { resolveBrandContext } from '@/lib/analytics/brand';
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +19,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const brandContext = resolveBrandContext(product);
 
   const [visible, setVisible] = useState(false);
   const cardRef = React.useCallback((node: HTMLElement | null) => {
@@ -31,7 +33,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               product_name: product.name,
               category: (product as any).categories?.[0]?.name || product.category?.name,
               company_id: product.company?.id,
-              company_name: product.company?.name
+              company_name: product.company?.name,
+              ...brandContext
             });
           }
         },
@@ -208,7 +211,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                 onClick={() => track('product_click', {
                   product_id: product.id,
                   product_name: product.name,
-                  click_type: 'details'
+                  click_type: 'details',
+                  ...brandContext
                 })}
               >
                 Detalhes
@@ -220,7 +224,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               onClick={() => track('product_click', {
                 product_id: product.id,
                 product_name: product.name,
-                click_type: 'budget'
+                click_type: 'budget',
+                ...brandContext
               })}
             >
                <MessageSquare className="w-3.5 h-3.5 lg:w-4 lg:h-4" />

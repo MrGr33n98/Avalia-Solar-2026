@@ -33,6 +33,7 @@ let initPromise: Promise<void> | null = null;
 const EVENT_QUEUE_LIMIT = 100;
 const BACKEND_MIN_INTERVAL_MS = 400;
 const BACKEND_DEFAULT_RETRY_AFTER_MS = 15_000;
+const DEFAULT_APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || 'avalia-solar-web';
 const eventQueue: Array<{
   name: string;
   properties: Record<string, any>;
@@ -101,6 +102,7 @@ export function getAnalyticsContext(): AnalyticsContext {
       environment: process.env.NODE_ENV || 'production',
       app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       platform: 'web',
+      app_key: DEFAULT_APP_KEY,
       pathname: '',
       referrer: '',
       source: 'server',
@@ -140,6 +142,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     environment: process.env.NODE_ENV || 'production',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     platform: 'web',
+    app_key: DEFAULT_APP_KEY,
     is_logged_in: !!currentUserId,
     user_id: currentUserId || undefined,
     source,
@@ -188,6 +191,9 @@ export function track(
     item_id: properties.company_id, // VAR-014 (GA4 Style)
     item_name: properties.company_name, // VAR-015
     item_category: properties.category_name, // VAR-016
+    app_key: properties.app_key || context.app_key,
+    brand_id: properties.brand_id || context.brand_id,
+    brand_slug: properties.brand_slug || context.brand_slug,
   };
   
   // 1. Centraliza no PostHog (Canonical Data) — usa o singleton inicializado pelo PostHogProvider

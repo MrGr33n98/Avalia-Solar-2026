@@ -3,23 +3,25 @@
 class AnalyticsEvent < ApplicationRecord
   belongs_to :company, optional: true
   belongs_to :user, optional: true
+  belongs_to :brand, optional: true
 
   validates :event_id, presence: true, uniqueness: true
   validates :event_type, presence: true
   validates :tracked_at, presence: true
 
   scope :for_company, ->(company_id) { where(company_id: company_id) if company_id.present? }
+  scope :for_brand, ->(brand_id) { where(brand_id: brand_id) if brand_id.present? }
   scope :in_range, ->(from_time, to_time) { where(tracked_at: from_time..to_time) }
   scope :by_type, ->(type) { where(event_type: type) }
   scope :recent, -> { order(tracked_at: :desc) }
 
   # Ransack configuration
   def self.ransackable_attributes(_auth_object = nil)
-    %w[event_type event_id company_id user_id tracked_at created_at]
+    %w[event_type event_id company_id user_id tracked_at created_at brand_id app_key]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company user]
+    %w[company user brand]
   end
 
   # Aggregate by event type

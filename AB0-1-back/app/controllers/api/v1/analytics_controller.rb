@@ -188,6 +188,83 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     render json: { status: 'error', message: 'Erro ao coletar conversoes' }, status: :internal_server_error
   end
 
+  # GET /api/v1/analytics/overview
+  # Params: dimension=brand, value=weg, days=30
+  def overview
+    dimension = params[:dimension].to_s
+    value = params[:value].to_s
+    days = [(params[:days] || 30).to_i, 365].min
+
+    query = Analytics::DimensionQuery.new(dimension: dimension, value: value)
+    cache_key = "analytics:overview:#{query.cache_key}:#{days}"
+
+    payload = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      from_time = days.days.ago
+      scope = query.scope.where('tracked_at >= ?', from_time)
+
+      views = scope.where(event_type: 'product_view').count
+      clicks = scope.where(event_type: 'product_click').count
+      cta_clicks = scope.where(event_type: 'product_cta_click').count
+      conversion = views.positive? ? ((cta_clicks.to_f / views) * 100).round(2) : 0
+
+      {
+        dimension: dimension,
+        value: query.label,
+        days: days,
+        views: views,
+        clicks: clicks,
+        cta_clicks: cta_clicks,
+        conversion_rate: conversion,
+        data_source: 'analytics_events'
+      }
+    end
+
+    render json: payload
+  rescue ArgumentError => e
+    render json: { status: 'error', message: e.message }, status: :bad_request
+  rescue ActiveRecord::RecordNotFound
+    render json: { status: 'error', message: 'Dimension value not found' }, status: :not_found
+  rescue StandardError => e
+    Rails.logger.error("[Analytics] overview error: #{e.class}: #{e.message}")
+    render json: { status: 'error', message: 'Erro ao coletar overview' }, status: :internal_server_error
+  end
+
+  # GET /api/v1/analytics/funnel
+  # Params: dimension=brand, value=weg, steps=product_view,product_click,product_cta_click, days=30
+  def funnel
+    dimension = params[:dimension].to_s
+    value = params[:value].to_s
+    days = [(params[:days] || 30).to_i, 365].min
+    steps = params[:steps].to_s.split(',').map(&:strip).reject(&:blank?)
+    steps = %w[product_view product_click product_cta_click] if steps.empty?
+
+    query = Analytics::DimensionQuery.new(dimension: dimension, value: value)
+    cache_key = "analytics:funnel:#{query.cache_key}:#{steps.join('-')}:#{days}"
+
+    payload = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      from_time = days.days.ago
+      scope = query.scope.where('tracked_at >= ?', from_time)
+      funnel = build_funnel(scope, steps)
+
+      {
+        dimension: dimension,
+        value: query.label,
+        days: days,
+        steps: funnel,
+        data_source: 'analytics_events'
+      }
+    end
+
+    render json: payload
+  rescue ArgumentError => e
+    render json: { status: 'error', message: e.message }, status: :bad_request
+  rescue ActiveRecord::RecordNotFound
+    render json: { status: 'error', message: 'Dimension value not found' }, status: :not_found
+  rescue StandardError => e
+    Rails.logger.error("[Analytics] funnel error: #{e.class}: #{e.message}")
+    render json: { status: 'error', message: 'Erro ao coletar funnel' }, status: :internal_server_error
+  end
+
   private
 
   def map_event_type(raw)
@@ -244,6 +321,43 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
         timestamp: Time.current.iso8601
       }.to_json
     )
+  end
+
+  def build_funnel(scope, steps)
+    previous_sessions = nil
+    steps.map.with_index do |step, index|
+      step_scope = scope.where(event_type: step)
+      sessions = session_ids_for(step_scope)
+      sessions &= previous_sessions if previous_sessions
+
+      conversion_rate =
+        if index.positive? && previous_sessions&.any?
+          ((sessions.count.to_f / previous_sessions.count) * 100).round(2)
+        else
+          100.0
+        end
+
+      previous_sessions = sessions
+
+      {
+        event: step,
+        session_count: sessions.count,
+        conversion_rate_from_previous: conversion_rate,
+        drop_off_rate: (100 - conversion_rate).round(2)
+      }
+    end
+  end
+
+  def session_ids_for(scope)
+    adapter = ActiveRecord::Base.connection.adapter_name.downcase
+    if adapter.include?('postgres')
+      scope
+        .where("metadata ? 'session_id'")
+        .distinct
+        .pluck(Arel.sql("metadata->>'session_id'"))
+    else
+      scope.map { |event| event.metadata['session_id'] }.compact.uniq
+    end
   end
 
   def canonical_company_conversions(company_id:, scope:, days:, from_day:, to_day:)

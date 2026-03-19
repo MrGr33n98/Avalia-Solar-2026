@@ -24,6 +24,7 @@ export interface AnalyticsContext {
   environment: string;
   app_version: string;
   platform: 'web' | 'mobile';
+  app_key?: string;
 
   // Page
   page_url?: string;
@@ -60,6 +61,8 @@ export interface AnalyticsContext {
   company_name?: string;
   category_id?: string;
   tier?: string;
+  brand_id?: number | string;
+  brand_slug?: string;
 }
 
 export interface UserTraits {

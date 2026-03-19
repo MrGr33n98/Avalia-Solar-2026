@@ -135,7 +135,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
   def product_params
     params.require(:product).permit(
       :name, :description, :short_description, :price,
-      :company_id, :sku, :stock, :status, :featured,
+      :company_id, :sku, :stock, :status, :featured, :brand_id,
       :seo_title, :seo_description, :image, :image_url,
       category_ids: []
     )

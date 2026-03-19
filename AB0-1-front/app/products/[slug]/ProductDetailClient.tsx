@@ -24,6 +24,7 @@ import {
 import { buildCompanyPath } from '@/lib/slug';
 import { Product } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
+import { resolveBrandContext } from '@/lib/analytics/brand';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -32,6 +33,7 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [imageError, setImageError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const brandContext = resolveBrandContext(product);
 
   const companyPath = product.company?.id
     ? buildCompanyPath(product.company.slug, product.company?.name, product.company.id)
@@ -65,6 +67,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       company_id: product.company?.id,
       company_name: product.company?.name,
       price: priceValue,
+      ...brandContext
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
@@ -74,6 +77,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     track('product_share', {
       product_id: product.id,
       product_name: product.name,
+      ...brandContext
     });
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
@@ -94,6 +98,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       product_name: product.name,
       cta: 'budget',
       company_id: product.company?.id,
+      ...brandContext
     });
   };
 
@@ -102,6 +107,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       product_id: product.id,
       company_id: product.company?.id,
       company_name: product.company?.name,
+      ...brandContext
     });
   };
 
