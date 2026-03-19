@@ -209,6 +209,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :campaign_reviews, only: %i[index show]
+
       resources :reviews, only: %i[index show create update destroy] do
         collection do
           get :mine

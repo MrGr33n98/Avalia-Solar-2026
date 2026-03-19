@@ -1,8 +1,19 @@
-// app/products/[slug]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import type {
+  CampaignReviewProject,
+  Category,
+  Company,
+  Product,
+  ProductReviewsResponse,
+} from '@/lib/api';
+import {
+  campaignReviewsApiSafe,
+  categoriesApiSafe,
+  companiesApiSafe,
+  productsApiSafe,
+} from '@/lib/api-client';
 import ProductDetailClient from './ProductDetailClient';
-import { productsApiSafe } from '@/lib/api-client';
 
 interface Props {
   params: { slug: string };
@@ -11,12 +22,51 @@ interface Props {
 function getProductIdFromSlug(slug: string): number | null {
   const idPart = slug.split('-')[0];
   const parsed = parseInt(idPart, 10);
-  return isNaN(parsed) ? null : parsed;
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+async function getProductPageData(productId: number): Promise<{
+  product: Product;
+  company: Company | null;
+  category: Category | null;
+  reviewsData: ProductReviewsResponse | null;
+  projects: CampaignReviewProject[];
+  relatedProducts: Product[];
+} | null> {
+  const product = await productsApiSafe.getById(productId);
+  if (!product) return null;
+
+  const companyId = product.company_id ?? product.company?.id;
+  const categoryId = product.categories?.[0]?.id ?? product.category?.id ?? product.category_id;
+
+  const [company, category, reviewsData, projects, companyProducts] = await Promise.all([
+    companyId ? companiesApiSafe.getById(companyId) : Promise.resolve(null),
+    categoryId ? categoriesApiSafe.getById(categoryId) : Promise.resolve(null),
+    productsApiSafe.getReviews(productId, {
+      limit: 6,
+      ...(categoryId ? { category_id: categoryId } : {}),
+    }),
+    campaignReviewsApiSafe.getAll({ product_id: productId, limit: 6 }),
+    companyId ? productsApiSafe.getByCompany(companyId) : Promise.resolve([]),
+  ]);
+
+  const relatedProducts = companyProducts
+    .filter((item) => item.id !== product.id)
+    .slice(0, 3);
+
+  return {
+    product,
+    company,
+    category,
+    reviewsData,
+    projects,
+    relatedProducts,
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const productId = getProductIdFromSlug(params.slug);
-  
+
   if (!productId) {
     return {
       title: 'Produto não encontrado | Avalia Solar',
@@ -37,14 +87,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
       title: `${product.name} | Avalia Solar`,
-      description: `${product.description || ''} - Categoria: ${product.category?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
+      description: `${product.description || ''} - Categoria: ${product.category?.name || product.categories?.[0]?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
       openGraph: {
         title: `${product.name} - Produto de Energia Solar`,
-        description: `${product.description || ''} - Categoria: ${product.category?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
+        description: `${product.description || ''} - Categoria: ${product.category?.name || product.categories?.[0]?.name || 'N/A'}. Oferecido por: ${product.company?.name || 'Avalia Solar'}`,
         url: canonicalUrl,
         type: 'website',
-        // Add images if product has them, for now using a default or company logo if available
-        images: product.company?.logo_url ? [{ url: product.company.logo_url }] : [],
+        images: product.image_url ? [{ url: product.image_url }] : [],
       },
       twitter: {
         card: 'summary_large_image',
@@ -63,8 +112,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Force dynamic if needed, or revalidate
-export const revalidate = 3600; // 1 hour
+export const revalidate = 3600;
 
 export default async function ProductDetailPage({ params }: Props) {
   const productId = getProductIdFromSlug(params.slug);
@@ -73,11 +121,11 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const product = await productsApiSafe.getById(productId);
+  const pageData = await getProductPageData(productId);
 
-  if (!product) {
+  if (!pageData) {
     notFound();
   }
 
-  return <ProductDetailClient product={product} />;
+  return <ProductDetailClient {...pageData} />;
 }

@@ -34,6 +34,14 @@ export const buildCompanySubPath = (
   return `${buildCompanyPath(slug, name, fallbackId)}/${suffix}`;
 };
 
+export const buildProductPath = (
+  id?: number | string | null,
+  name?: string | null
+): string => {
+  const base = slugify(name || String(id || 'produto'));
+  return `/products/${id}-${base}`;
+};
+
 export const buildCategoryPath = (seo?: string | null, id?: number | string): string => {
   const slug = seo ? String(seo).replace(/^\/+/, '') : String(id ?? '');
   return `/categories/${slug}`;

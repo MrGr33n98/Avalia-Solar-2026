@@ -2,13 +2,31 @@
 // api-client.ts
 // =======================
 
-import { Category, Company, Review, Product, FinancingOption, SocialProofReview } from './api';
+import {
+  CampaignReviewProject,
+  Category,
+  Company,
+  FinancingOption,
+  Product,
+  ProductReviewsResponse,
+  Review,
+  SocialProofReview,
+} from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
 import { ApiError, toApiError } from './api-error';
 
 // Re-export types so they can be imported from api-client
-export type { Category, Company, Review, Product, FinancingOption, SocialProofReview };
+export type {
+  CampaignReviewProject,
+  Category,
+  Company,
+  FinancingOption,
+  Product,
+  ProductReviewsResponse,
+  Review,
+  SocialProofReview,
+};
 
 const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
 const SAFE_API_IN_FLIGHT = new Map<string, Promise<unknown>>();
@@ -670,6 +688,17 @@ export const productsApiSafe = {
       return null;
     }
   },
+  getReviews: async (
+    id: number,
+    params?: { limit?: number; category_id?: number }
+  ): Promise<ProductReviewsResponse | null> => {
+    try {
+      return await fetchApiSafe<ProductReviewsResponse>(`products/${id}/reviews${buildQueryParams(params || {})}`);
+    } catch (error) {
+      console.error(`Error fetching reviews for product ${id}:`, error);
+      return null;
+    }
+  },
   getByCompany: async (companyId: number): Promise<Product[]> => {
     try {
       const url = `products${buildQueryParams({ company_id: companyId })}`;
@@ -704,6 +733,38 @@ export const productsApiSafe = {
     } catch (error) {
       console.error('Error comparing products:', error);
       return { products: [], comparisons: [] };
+    }
+  },
+};
+
+export const campaignReviewsApiSafe = {
+  getAll: async (params?: {
+    company_id?: number;
+    product_id?: number;
+    sponsored?: boolean;
+    limit?: number;
+  }): Promise<CampaignReviewProject[]> => {
+    try {
+      const url = `campaign_reviews${buildQueryParams(params || {})}`;
+      const response = await fetchApiSafe<any>(url);
+      const items = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      const limit = params?.limit;
+      return typeof limit === 'number' && limit > 0 ? items.slice(0, limit) : items;
+    } catch (error) {
+      console.error('Error fetching campaign reviews:', error);
+      return [];
+    }
+  },
+  getById: async (id: number): Promise<CampaignReviewProject | null> => {
+    try {
+      return await fetchApiSafe<CampaignReviewProject>(`campaign_reviews/${id}`);
+    } catch (error) {
+      console.error(`Error fetching campaign review with ID ${id}:`, error);
+      return null;
     }
   },
 };
