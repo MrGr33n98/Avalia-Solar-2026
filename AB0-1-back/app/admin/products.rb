@@ -31,34 +31,52 @@ ActiveAdmin.register Product do
   index do
     selectable_column
     id_column
-    column :name
-    column :sku
-    column :price
-    column :stock
-    column :status
-    column :company
+    column('Produto') do |product|
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title') { product.name } +
+          div(class: 'aa-entity-subtitle') { product.short_description.presence || truncate(product.description.to_s, length: 80) }
+      end
+    end
+    column('SKU') do |product|
+      span product.sku.presence || '-', class: 'aa-code-pill'
+    end
+    column('Preço') do |product|
+      div class: 'aa-metric-stack' do
+        div(class: 'aa-metric-value') { number_to_currency(product.price || 0, unit: 'R$ ', separator: ',', delimiter: '.') } +
+          div(class: 'aa-metric-caption') { "estoque #{product.stock || 0}" }
+      end
+    end
+    column('Status') do |product|
+      status_tag(product.status.to_s.upcase, class: 'aa-status-pill')
+    end
+    column('Empresa') do |product|
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title aa-entity-title--sm') { product.company&.name || '-' } +
+          div(class: 'aa-entity-subtitle') { product.categories.first(2).map(&:name).join(', ').presence || 'Sem categoria' }
+      end
+    end
     column "Imagens" do |product|
       if product.images.attached?
-        count = product.images.count
+        count = product.images.size
         max = product.max_images_allowed
-        color = count >= max ? "red" : "green"
-        
-        div do
-          span "#{count}/#{max}", style: "color: #{color}; font-weight: bold;"
+        state_class = count >= max ? 'is-critical' : 'is-healthy'
+
+        div class: 'aa-image-stack' do
+          span "#{count}/#{max}", class: "aa-image-stack__count #{state_class}"
           br
           product.images.first(3).each do |img|
-            span do
-              image_tag url_for(img), size: "30x30", style: "margin: 1px; border-radius: 2px;"
+            span class: 'aa-image-stack__thumb' do
+              image_tag url_for(img), size: "32x32"
             end
           end
-          span "..." if product.images.count > 3
+          span "...", class: 'aa-image-stack__overflow' if count > 3
         end
       else
-        span "0/#{product.max_images_allowed}", style: "color: #999;"
+        span "0/#{product.max_images_allowed}", class: 'aa-image-stack__count is-empty'
       end
     end
     column :featured do |product|
-      status_tag(product.featured? ? "Sim" : "Não", class: product.featured? ? "yes" : "no")
+      status_tag(product.featured? ? "Sim" : "Não", class: "aa-status-pill #{product.featured? ? 'yes' : 'no'}")
     end
     actions
   end
@@ -119,7 +137,7 @@ ActiveAdmin.register Product do
           end
         end
       end
-      row :image_url
+      row(:image_url) if Product.column_names.include?('image_url')
       row :seo_title
       row :seo_description
       row :created_at
@@ -199,4 +217,9 @@ ActiveAdmin.register Product do
   end
 
   # Rest of your ActiveAdmin configuration...
+  controller do
+    def scoped_collection
+      super.includes(:company, :categories, images_attachments: :blob)
+    end
+  end
 end

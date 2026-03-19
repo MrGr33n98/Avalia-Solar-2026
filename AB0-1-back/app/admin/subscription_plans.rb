@@ -29,20 +29,37 @@ ActiveAdmin.register SubscriptionPlan do
     selectable_column
     id_column
     column('Membro adquirinte') do |subscription|
-      if subscription.member.present?
-        link_to(subscription.member_display_name, admin_user_path(subscription.member))
-      else
-        subscription.member_display_name
+      member_label =
+        if subscription.member.present?
+          link_to(subscription.member_display_name, admin_user_path(subscription.member), class: 'aa-link-strong')
+        else
+          subscription.member_display_name
+        end
+
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title') { member_label } +
+          div(class: 'aa-entity-subtitle') { "ID ##{subscription.member_id || 'N/A'}" }
       end
     end
     column('Empresa') do |subscription|
-      subscription.company&.name || '-'
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title aa-entity-title--sm') { subscription.company&.name || '-' } +
+          div(class: 'aa-entity-subtitle') { subscription.category&.name || 'Sem categoria' }
+      end
     end
-    column('Produto') { |subscription| link_to(subscription.product.name, admin_product_path(subscription.product)) }
-    column('Categoria') { |subscription| link_to(subscription.category.name, admin_category_path(subscription.category)) }
-    column('Plano') { |subscription| link_to(subscription.plan.name, admin_plan_path(subscription.plan)) }
+    column('Produto') do |subscription|
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title aa-entity-title--sm') { link_to(subscription.product.name, admin_product_path(subscription.product), class: 'aa-link-strong') } +
+          div(class: 'aa-entity-subtitle') { subscription.product.sku.presence || 'SKU não informado' }
+      end
+    end
+    column('Categoria') { |subscription| link_to(subscription.category.name, admin_category_path(subscription.category), class: 'aa-link-strong') }
+    column('Plano') { |subscription| link_to(subscription.plan.name, admin_plan_path(subscription.plan), class: 'aa-link-strong') }
     column('Valor do plano') do |subscription|
-      number_to_currency(subscription.effective_value || 0, unit: 'R$ ', separator: ',', delimiter: '.')
+      div class: 'aa-metric-stack' do
+        div(class: 'aa-metric-value') { number_to_currency(subscription.effective_value || 0, unit: 'R$ ', separator: ',', delimiter: '.') } +
+          div(class: 'aa-metric-caption') { subscription.status_label }
+      end
     end
     column('Situacao') do |subscription|
       css_class = if subscription.active_on?
@@ -52,7 +69,7 @@ ActiveAdmin.register SubscriptionPlan do
                   else
                     'warning'
                   end
-      status_tag(subscription.status_label, class: css_class)
+      status_tag(subscription.status_label, class: "aa-status-pill #{css_class}")
     end
     column('Adquirido em') { |subscription| subscription.purchased_at&.strftime('%d/%m/%Y') }
     column('Inicia em') { |subscription| subscription.start_at&.strftime('%d/%m/%Y') }

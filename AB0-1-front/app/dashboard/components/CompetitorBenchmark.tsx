@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Trophy, 
   TrendingUp, 
-  TrendingDown, 
   Star, 
-  Users, 
-  Award, 
   Target, 
   Zap, 
   AlertTriangle,
@@ -38,19 +35,13 @@ interface Competitor {
   name: string;
   logo_url?: string;
   rating: number;
-  reviewsCount: number;
-  responseRate: number;
-  featured: boolean;
-  verified: boolean;
-  marketShare?: number;
-  completenessOfVision?: number;
-  abilityToExecute?: number;
+  isCurrentCompany: boolean;
+  completenessOfVision: number;
+  abilityToExecute: number;
+  quadrantStrength: number;
 }
 
-export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: CompetitorBenchmarkProps) {
-  // Deep dark foundation for Strategic Intelligence
-  const isDark = true;
-
+export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkProps) {
   // State for real API data
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,28 +74,24 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
     name: point.name,
     logo_url: point.logo_url,
     rating: point.rating,
-    reviewsCount: 0, // Not available in ranking endpoint
-    responseRate: 0, // Not available in ranking endpoint
-    featured: false,
-    verified: true,
-    marketShare: undefined,
+    isCurrentCompany: point.is_current_company,
     completenessOfVision: point.completeness_of_vision,
-    abilityToExecute: point.ability_to_execute
+    abilityToExecute: point.ability_to_execute,
+    quadrantStrength: Number((((point.completeness_of_vision + point.ability_to_execute) / 2)).toFixed(1)),
   })) || [];
 
   // Find current company in the list
-  const yourCompanyData = competitorsFromAPI.find(c => c.id === parseInt(companyId)) || competitorsFromAPI[0];
+  const yourCompanyData = competitorsFromAPI.find(c => c.id === parseInt(companyId)) || competitorsFromAPI.find(c => c.isCurrentCompany) || competitorsFromAPI[0];
   
   // Use API data or fallback to mock data
   const yourCompany: Competitor = yourCompanyData || {
     id: parseInt(companyId) || 1,
     name: 'Sua Empresa',
     rating: 0,
-    reviewsCount: 0,
-    responseRate: 0,
-    featured: false,
-    verified: false,
-    marketShare: 0
+    isCurrentCompany: true,
+    completenessOfVision: 0,
+    abilityToExecute: 0,
+    quadrantStrength: 0,
   };
 
   // Filter out current company from competitors list
@@ -116,14 +103,17 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
   const allCompanies = (competitorsFromAPI.length > 0 
     ? [yourCompany, ...topCompetitors]
     : [
-        { id: parseInt(companyId) || 1, name: 'Sua Empresa', rating: 4.8, reviewsCount: 342, responseRate: 98, featured: true, verified: true, marketShare: 22 },
-        { id: 2, name: 'Solar Prime', rating: 4.9, reviewsCount: 432, responseRate: 87, featured: true, verified: true, marketShare: 28 },
-        { id: 3, name: 'EcoSolar Brasil', rating: 4.6, reviewsCount: 356, responseRate: 91, featured: true, verified: true, marketShare: 18 },
-        { id: 4, name: 'SunPower Instalações', rating: 4.5, reviewsCount: 298, responseRate: 78, featured: false, verified: true, marketShare: 15 }
+        { id: parseInt(companyId) || 1, name: 'Sua Empresa', rating: 4.8, isCurrentCompany: true, completenessOfVision: 86, abilityToExecute: 91, quadrantStrength: 88.5 },
+        { id: 2, name: 'Solar Prime', rating: 4.9, isCurrentCompany: false, completenessOfVision: 94, abilityToExecute: 92, quadrantStrength: 93 },
+        { id: 3, name: 'EcoSolar Brasil', rating: 4.6, isCurrentCompany: false, completenessOfVision: 82, abilityToExecute: 79, quadrantStrength: 80.5 },
+        { id: 4, name: 'SunPower Instalações', rating: 4.5, isCurrentCompany: false, completenessOfVision: 76, abilityToExecute: 73, quadrantStrength: 74.5 }
       ]
-  ).sort((a, b) => (b.marketShare || 0) - (a.marketShare || 0));
+  ).sort((a, b) => b.quadrantStrength - a.quadrantStrength);
 
   const yourRank = allCompanies.findIndex(c => c.id === parseInt(companyId)) + 1 || rankingData?.rank_position || 1;
+  const topLeader = allCompanies[0];
+  const visionGap = Math.max(0, Number(((topLeader?.completenessOfVision || 0) - yourCompany.completenessOfVision).toFixed(1)));
+  const executionGap = Math.max(0, Number(((topLeader?.abilityToExecute || 0) - yourCompany.abilityToExecute).toFixed(1)));
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -143,6 +133,20 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
+      </div>
+    );
+  }
+
+  if (error && competitorsFromAPI.length === 0) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center rounded-[2rem] border border-amber-500/20 bg-[#002B4D]/40 p-8 text-center shadow-xl">
+        <div className="space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10">
+            <AlertTriangle className="h-6 w-6 text-amber-400" />
+          </div>
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-white">Falha ao carregar benchmark</p>
+          <p className="text-xs font-medium text-white/50">{error}</p>
+        </div>
       </div>
     );
   }
@@ -191,30 +195,30 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
           variant="glass"
         />
         <MetricCard
-          title="Market Share"
-          value={`${yourCompany.marketShare}%`}
-          change="+2.4%"
+          title="Força no Quadrante"
+          value={`${yourCompany.quadrantStrength.toFixed(1)} pts`}
+          change={`${yourCompany.completenessOfVision.toFixed(0)} visão / ${yourCompany.abilityToExecute.toFixed(0)} execução`}
           changeType="positive"
           icon={Target}
-          description="Quota de mercado local"
+          description="Média dos eixos estratégicos"
           variant="glass"
         />
         <MetricCard
-          title="Sentiment Gap"
-          value="+0.2"
-          change="Acima da média"
-          changeType="positive"
+          title="Reputação Média"
+          value={yourCompany.rating.toFixed(1)}
+          change={rankingData?.quadrant_meta?.criterion_title || 'Score validado no ranking'}
+          changeType="neutral"
           icon={Star}
-          description="Diferencial de reputação"
+          description="Nota usada no comparativo"
           variant="glass"
         />
         <MetricCard
            title="Velocity Score"
-           value="88/100"
-           change="Fase de Expansão"
-           changeType="positive"
+           value={`${yourCompany.abilityToExecute.toFixed(0)}/100`}
+           change={`${executionGap > 0 ? `Gap de ${executionGap} pts` : 'No topo do eixo'}`}
+           changeType={executionGap > 0 ? 'neutral' : 'positive'}
            icon={Flame}
-           description="Velocidade de crescimento"
+           description="Capacidade de execução atual"
            variant="glass"
         />
       </div>
@@ -239,9 +243,9 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
                     <th className="px-8 py-5 text-left text-[10px] font-black text-white/40 uppercase tracking-widest">Identidade</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Share</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Sentimento</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Respostas</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Visão</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Execução</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Reputação</th>
                     <th className="px-8 py-5 text-right text-[10px] font-black text-white/40 uppercase tracking-widest">Status</th>
                   </tr>
                 </thead>
@@ -265,9 +269,9 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                             )}>
                               {String(index + 1).padStart(2, '0')}
                             </span>
-                            <Avatar className="h-12 w-12 rounded-xl border border-white/10 shadow-lg ring-offset-background p-1 bg-white">
-                              <AvatarImage src={company.logo_url} className="object-contain" />
-                              <AvatarFallback className="bg-blue-900/50 text-white font-black">
+                            <Avatar className="h-12 w-12 rounded-full border border-cyan-400/15 bg-white p-1 shadow-[0_0_20px_rgba(56,189,248,0.12)]">
+                              <AvatarImage src={company.logo_url} className="rounded-full object-contain" />
+                              <AvatarFallback className="rounded-full bg-blue-900/50 text-white font-black">
                                 {company.name.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
@@ -279,54 +283,49 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-1">
-                                {company.verified && <ShieldCheck className="h-3 w-3 text-blue-400" />}
-                                <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Entidade Verificada</span>
+                                <ShieldCheck className="h-3 w-3 text-blue-400" />
+                                <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">
+                                  {isYou ? 'Empresa monitorada' : 'Concorrente monitorado'}
+                                </span>
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-6 text-center">
                           <div className="space-y-1">
-                            <span className="text-sm font-black text-white font-mono">{company.marketShare}%</span>
+                            <span className="text-sm font-black text-white font-mono">{company.completenessOfVision.toFixed(0)}</span>
                             <div className="w-20 mx-auto">
-                               <Progress value={company.marketShare} className="h-1 bg-white/5" indicatorClassName="bg-brand-blue shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                               <Progress value={company.completenessOfVision} className="h-1 bg-white/5" indicatorClassName="bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-6 text-center">
                           <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 mb-1">
-                              <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                              <span className="text-sm font-black text-white font-mono">{company.rating.toFixed(1)}</span>
+                              <Zap className="h-3 w-3 text-emerald-400" />
+                              <span className="text-sm font-black text-white font-mono">{company.abilityToExecute.toFixed(0)}</span>
                             </div>
-                            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{company.reviewsCount} REVIEWS</span>
+                            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">PODER DE ENTREGA</span>
                           </div>
                         </td>
                         <td className="px-6 py-6 text-center">
                           <div className="space-y-1">
-                             <span className="text-sm font-black text-emerald-400 font-mono">{company.responseRate}%</span>
-                             <div className="flex gap-0.5 justify-center">
-                               {[...Array(5)].map((_, i) => (
-                                 <div key={i} className={cn(
-                                   "h-1 w-2 rounded-full",
-                                   i < Math.floor(company.responseRate / 20) ? "bg-brand-green" : "bg-white/10"
-                                 )} />
-                               ))}
-                             </div>
+                             <span className="text-sm font-black text-amber-400 font-mono">{company.rating.toFixed(1)}</span>
+                             <span className="block text-[10px] text-white/30 font-bold uppercase tracking-widest">RATING CONSOLIDADO</span>
                           </div>
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex flex-col items-end gap-2">
                             {index === 0 ? (
                               <Badge className="bg-amber-500/10 text-amber-500 border-none font-black text-[9px] tracking-widest px-2">LÍDER DE MERCADO</Badge>
-                            ) : company.featured ? (
+                            ) : company.quadrantStrength >= 80 ? (
                               <Badge className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] tracking-widest px-2">VISIONÁRIO</Badge>
                             ) : (
                               <Badge className="bg-white/5 text-white/30 border-none font-black text-[9px] tracking-widest px-2">DESAFIANTE</Badge>
                             )}
                             <div className="flex items-center gap-1 text-[10px] font-bold text-brand-green">
                                <TrendingUp className="h-3 w-3" />
-                               <span className="font-mono">+1.2%</span>
+                               <span className="font-mono">{company.quadrantStrength.toFixed(1)} pts</span>
                             </div>
                           </div>
                         </td>
@@ -354,9 +353,11 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
               </div>
               <div>
                 <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">Vantagem Tática</h4>
-                <p className="text-sm text-white/80 leading-relaxed font-medium">
-                  Seu diferencial competitivo reside na <span className="text-white font-black underline decoration-blue-400">Taxa de Resposta</span>. 
-                  Você responde 11% mais rápido que o líder de mercado.
+                  <p className="text-sm text-white/80 leading-relaxed font-medium">
+                  Seu diferencial competitivo precisa concentrar energia em <span className="text-white font-black underline decoration-blue-400">execução e visão</span>. 
+                  {executionGap > 0 || visionGap > 0
+                    ? `Hoje o gap para o líder é de ${visionGap} pts em visão e ${executionGap} pts em execução.`
+                    : 'Você já ocupa a faixa mais alta do quadrante competitivo.'}
                 </p>
               </div>
               <Button className="w-full h-11 bg-white text-brand-blue font-black uppercase tracking-widest text-[10px] hover:bg-white/90">
@@ -373,20 +374,20 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs font-bold text-white">
-                  <span>Reviews Volume Gap</span>
-                  <span className="text-amber-500">-90 Units</span>
+                  <span>Vision Gap</span>
+                  <span className="text-amber-500">-{visionGap} pts</span>
                 </div>
-                <Progress value={78} className="h-1.5 bg-white/5" indicatorClassName="bg-amber-500" />
-                <p className="text-[10px] text-white/40 font-medium">Faltam 90 avaliações para empatar com Solar Prime.</p>
+                <Progress value={Math.max(0, 100 - visionGap)} className="h-1.5 bg-white/5" indicatorClassName="bg-amber-500" />
+                <p className="text-[10px] text-white/40 font-medium">Diferença de autoridade estratégica para o líder do quadrante.</p>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs font-bold text-white">
-                  <span>Sentiment Velocity</span>
-                  <span className="text-brand-green">Critical</span>
+                  <span>Execution Gap</span>
+                  <span className="text-brand-green">{executionGap > 0 ? `${executionGap} pts` : 'Top Tier'}</span>
                 </div>
-                <Progress value={92} className="h-1.5 bg-white/5" indicatorClassName="bg-brand-green" />
-                <p className="text-[10px] text-white/40 font-medium">Sua tendência de NPS está 12% superior ao setor.</p>
+                <Progress value={Math.max(0, 100 - executionGap)} className="h-1.5 bg-white/5" indicatorClassName="bg-brand-green" />
+                <p className="text-[10px] text-white/40 font-medium">Capacidade operacional relativa ao player que lidera a categoria.</p>
               </div>
               
               <div className="pt-4 mt-4 border-t border-white/5">
@@ -394,7 +395,7 @@ export default function CompetitorBenchmark({ companyId, themeMode = 'dark' }: C
                    <ZapOff className="h-5 w-5 text-purple-400 shrink-0" />
                    <div>
                      <p className="text-[10px] font-black text-white uppercase tracking-widest">Growth Engine</p>
-                     <p className="text-[11px] text-white/40 font-bold">Otimize a coleta de reviews para escalada.</p>
+                     <p className="text-[11px] text-white/40 font-bold">Priorize sinais que elevem visão e execução no ranking.</p>
                    </div>
                 </div>
               </div>

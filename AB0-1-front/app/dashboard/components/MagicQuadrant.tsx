@@ -22,18 +22,38 @@ interface Props {
   criterionTitle?: string;
 }
 
+function getCompanyInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+}
+
 const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-[#002B4D] text-white p-3 rounded-xl shadow-2xl text-[10px] font-bold uppercase tracking-widest border border-white/10 min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
+      <div className="min-w-[210px] rounded-2xl border border-white/10 bg-[#031a2e]/95 p-3 text-[10px] font-bold uppercase tracking-widest text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center gap-2 mb-2 border-b border-white/10 pb-2">
           {data.logo_url && (
-            <div className="h-6 w-6 rounded-md bg-white p-0.5 shrink-0">
-              <Image src={data.logo_url} alt={data.name} width={24} height={24} className="h-full w-full object-contain" />
+            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white p-1 shadow-[0_0_16px_rgba(56,189,248,0.18)]">
+              <Image src={data.logo_url} alt={data.name} width={36} height={36} className="h-full w-full object-contain" />
             </div>
           )}
-          <p className="text-sm tracking-tight truncate">{data.name}</p>
+          {!data.logo_url && (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 text-[11px] text-cyan-100">
+              {getCompanyInitials(data.name)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm tracking-tight">{data.name}</p>
+            <p className="mt-0.5 text-[9px] tracking-[0.24em] text-cyan-200/70">
+              {data.is_current_company ? 'EMPRESA ATUAL' : 'PLAYER DO MERCADO'}
+            </p>
+          </div>
         </div>
         <div className="space-y-1">
           <p className="text-white/50 flex justify-between">Visão: <span className="text-white font-mono">{data.completeness_of_vision}%</span></p>
@@ -56,39 +76,44 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
 
 const CompanyLogoShape = (props: any) => {
   const { cx, cy, payload } = props;
-  const size = payload.is_current_company ? 44 : 32;
+  const size = payload.is_current_company ? 46 : 34;
   const halfSize = size / 2;
+  const haloRadius = payload.is_current_company ? halfSize + 10 : halfSize + 4;
+  const ringStroke = payload.is_current_company ? '#fbbf24' : '#7dd3fc';
 
   return (
     <g>
-      {/* Efeito de destaque para a empresa atual */}
-      {payload.is_current_company && (
-        <circle 
-          cx={cx} 
-          cy={cy} 
-          r={halfSize + 4} 
-          fill="rgba(251, 191, 36, 0.2)" 
-          className="animate-pulse"
-        />
-      )}
-      
-      {/* Outer Border / Container */}
-      <rect
-        x={cx - halfSize}
-        y={cy - halfSize}
-        width={size}
-        height={size}
-        rx={payload.is_current_company ? 12 : 8}
-        fill="white"
-        stroke={payload.is_current_company ? "#fbbf24" : "#e2e8f0"}
-        strokeWidth={payload.is_current_company ? 2.5 : 1}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={haloRadius}
+        fill={payload.is_current_company ? 'rgba(251, 191, 36, 0.16)' : 'rgba(34, 211, 238, 0.08)'}
         className={cn(
-          "shadow-sm transition-all duration-300 hover:scale-110 cursor-pointer",
-          payload.is_current_company ? "drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]" : ""
+          'transition-all duration-300',
+          payload.is_current_company ? 'animate-pulse' : ''
         )}
       />
-      
-      {/* Logo Image */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={halfSize + 2}
+        fill="rgba(2, 132, 199, 0.12)"
+        stroke={ringStroke}
+        strokeWidth={payload.is_current_company ? 2.5 : 1.5}
+        className={cn(
+          'transition-all duration-300',
+          payload.is_current_company ? 'drop-shadow-[0_0_14px_rgba(251,191,36,0.42)]' : 'drop-shadow-[0_0_12px_rgba(34,211,238,0.18)]'
+        )}
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={halfSize - 2}
+        fill="white"
+        stroke="rgba(148, 163, 184, 0.16)"
+        strokeWidth={1}
+      />
+
       {payload.logo_url ? (
         <foreignObject
           x={cx - halfSize + 4}
@@ -96,13 +121,13 @@ const CompanyLogoShape = (props: any) => {
           width={size - 8}
           height={size - 8}
         >
-          <div className="w-full h-full flex items-center justify-center pointer-events-none">
-            <Image 
-              src={payload.logo_url} 
+          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white">
+            <Image
+              src={payload.logo_url}
               alt={payload.name}
               width={size - 8}
               height={size - 8}
-              className="max-w-full max-h-full object-contain"
+              className="h-full w-full object-contain p-1.5"
             />
           </div>
         </foreignObject>
@@ -112,10 +137,25 @@ const CompanyLogoShape = (props: any) => {
           y={cy}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-[8px] font-black text-slate-300 pointer-events-none uppercase"
+          className={cn(
+            'pointer-events-none text-[9px] font-black uppercase',
+            payload.is_current_company ? 'fill-amber-500' : 'fill-slate-500'
+          )}
         >
-          {payload.name.substring(0, 2)}
+          {getCompanyInitials(payload.name)}
         </text>
+      )}
+
+      {payload.is_current_company && (
+        <circle
+          cx={cx + halfSize - 5}
+          cy={cy - halfSize + 5}
+          r={4}
+          fill="#fbbf24"
+          stroke="white"
+          strokeWidth={1.5}
+          className="animate-pulse"
+        />
       )}
     </g>
   );
@@ -123,7 +163,7 @@ const CompanyLogoShape = (props: any) => {
 
 export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confiança', yAxisLabel = 'Poder de Execução', criterionTitle }: Props) {
   return (
-    <div className="w-full h-[400px] relative select-none">
+    <div className="relative h-[400px] w-full select-none overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.14),_transparent_34%),linear-gradient(180deg,rgba(3,24,43,0.92),rgba(2,17,30,0.86))] px-2">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.05} vertical={false} />
@@ -163,17 +203,25 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
       </ResponsiveContainer>
 
       {/* Strategic Labels */}
-      <div className="absolute top-6 left-12 opacity-30">
-            <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Desafiantes</span>
+      <div className="absolute left-7 top-6 opacity-50">
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+          Desafiantes
+        </span>
       </div>
-      <div className="absolute top-6 right-12">
-        <span className="text-[8px] font-black tracking-[0.3em] text-brand-blue uppercase shadow-brand-blue/50">Líderes</span>
+      <div className="absolute right-7 top-6">
+        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.12)]">
+          Líderes
+        </span>
       </div>
-      <div className="absolute bottom-12 left-12 opacity-30">
-        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Nicho</span>
+      <div className="absolute bottom-10 left-7 opacity-50">
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+          Nicho
+        </span>
       </div>
-      <div className="absolute bottom-12 right-12 opacity-30">
-        <span className="text-[8px] font-black tracking-[0.3em] text-white uppercase">Visionárias</span>
+      <div className="absolute bottom-10 right-7 opacity-60">
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+          Visionárias
+        </span>
       </div>
     </div>
   );

@@ -53,13 +53,37 @@ ActiveAdmin.register Plan do
   index title: 'Catálogo de Planos' do
     selectable_column
     id_column
-    column 'Nome', :name
-    column('Categoria/Tier') { |plan| status_tag(plan.inferred_plan_tier) }
-    column 'Preço', :price do |plan|
-      number_to_currency(plan.price, unit: 'R$', separator: ',', delimiter: '.')
+    column('Nome') do |plan|
+      div class: 'aa-entity-stack' do
+        div class: 'aa-entity-title' do
+          plan.name
+        end
+        div class: 'aa-entity-subtitle' do
+          truncate(plan.description.presence || 'Plano sem observações internas.', length: 90)
+        end
+      end
     end
-    column 'Setup', :setup_info
-    column('Recursos Ativos') { |plan| plan.enabled_feature_keys.count }
+    column('Categoria/Tier') do |plan|
+      status_tag(plan.inferred_plan_tier.upcase, class: "aa-status-pill aa-tier-#{plan.inferred_plan_tier}")
+    end
+    column 'Preço', :price do |plan|
+      div class: 'aa-metric-stack' do
+        div(class: 'aa-metric-value') { number_to_currency(plan.price, unit: 'R$', separator: ',', delimiter: '.') } +
+          div(class: 'aa-metric-caption') { 'mensalidade base' }
+      end
+    end
+    column('Setup') do |plan|
+      div class: 'aa-entity-stack' do
+        div(class: 'aa-entity-title aa-entity-title--sm') { plan.setup_info.presence || 'Configuração padrão' } +
+          div(class: 'aa-entity-subtitle') { plan.full_implementation_summary.presence || 'Sem taxa adicional.' }
+      end
+    end
+    column('Recursos Ativos') do |plan|
+      div class: 'aa-inline-stat' do
+        span(class: 'aa-inline-stat__value') { plan.enabled_feature_keys.count } +
+          span(class: 'aa-inline-stat__label') { 'recursos' }
+      end
+    end
     column 'Criado em', :created_at
     actions
   end

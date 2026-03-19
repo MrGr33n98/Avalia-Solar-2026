@@ -29,9 +29,9 @@ module CompanyDashboard
     private
 
     def base_scope
-      scope = Company.active
+      scope = Company.active.with_attached_logo
       if category_id.present?
-        scope = scope.joins(:categories).where(categories: { id: category_id })
+        scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
       end
       scope
     end
@@ -61,7 +61,7 @@ module CompanyDashboard
           {
             id: comp.id,
             name: comp.name,
-            logo_url: comp.logo&.url,
+            logo_url: comp.logo_url,
             rating: comparison_rating(comp).to_f,
             completeness_of_vision: calculate_vision_score(comp),
             ability_to_execute: calculate_execution_score(comp),
