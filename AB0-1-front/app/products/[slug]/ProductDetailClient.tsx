@@ -1,376 +1,1004 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft,
-  Building2,
-  MessageSquare,
-  Share2,
-  ShieldCheck,
-  Tag,
-  Hash,
+  ArrowRight,
+  Check,
   ChevronRight,
-  FileText,
-  Wrench,
   ExternalLink,
-  CheckCircle2,
+  MessageSquare,
+  ShieldCheck,
+  Star,
 } from 'lucide-react';
-import { buildCompanyPath } from '@/lib/slug';
-import { Product } from '@/lib/api';
-import { track } from '@/lib/analytics/lazy';
-import { resolveBrandContext } from '@/lib/analytics/brand';
+import type {
+  CampaignReviewProject,
+  Category,
+  Company,
+  Product,
+  ProductReviewSummary,
+  ProductReviewsResponse,
+  Review,
+} from '@/lib/api';
+import { buildCategoryPath, buildCompanyPath, buildProductPath } from '@/lib/slug';
+import { openQuoteWizard } from '@/lib/quote-wizard';
+import { cn } from '@/lib/utils';
+import { useProductTracking } from './useProductTracking';
 
 interface ProductDetailClientProps {
   product: Product;
+  company: Company | null;
+  category: Category | null;
+  reviewsData: ProductReviewsResponse | null;
+  projects: CampaignReviewProject[];
+  relatedProducts: Product[];
 }
 
-export default function ProductDetailClient({ product }: ProductDetailClientProps) {
-  const [imageError, setImageError] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const brandContext = resolveBrandContext(product);
+type ProductTab = 'description' | 'specifications' | 'reviews' | 'projects';
 
-  const companyPath = product.company?.id
-    ? buildCompanyPath(product.company.slug, product.company?.name, product.company.id)
-    : '/companies';
+const AMBER = '#f5a623';
+const PLACEHOLDER_IMAGE = '/images/product-placeholder.svg';
 
-  const priceValue =
-    typeof product.price === 'number'
-      ? product.price
-      : parseFloat(String(product.price) || '0');
+const surfaceClass =
+  'rounded-[var(--border-radius-lg)] border-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)]';
 
-  const categoryName =
-    (product as any).categories?.[0]?.name || product.category?.name || 'Geral';
+const labelClass = 'text-[13px] leading-[1.6] text-[var(--color-text-secondary)]';
+const hintClass = 'text-[11px] leading-[1.6] text-[var(--color-text-tertiary)]';
 
-  const displayImage =
-    !imageError && product.image_url
-      ? product.image_url
-      : '/images/product-placeholder.svg';
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  }).format(value || 0);
+}
 
-  const isAvailable = product.status === 'active';
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('pt-BR').format(value || 0);
+}
 
-  const sortedSpecs = [...(product.specs || [])].sort(
-    (a: any, b: any) => (b.seo_weight || 0) - (a.seo_weight || 0)
+function formatDate(value?: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsed);
+}
+
+function getInitials(value?: string | null) {
+  return (value || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'AS';
+}
+
+function normalizePrice(price: Product['price']) {
+  if (typeof price === 'number') return price;
+  const parsed = Number(price || 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeSpecValue(value: unknown) {
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+  return String(value ?? '-');
+}
+
+function getCompanyAggregate(
+  company: Company | null,
+  categoryId?: number | null
+): ProductReviewSummary | null {
+  if (!company?.review_aggregates) return null;
+
+  const fromCategory =
+    company.review_aggregates.by_category?.find((entry) => entry.category_id === categoryId) || null;
+  const fallback = fromCategory || company.review_aggregates.global;
+
+  if (!fallback) return null;
+
+  return {
+    average_rating: fallback.average_rating,
+    total_reviews: fallback.total_reviews,
+    scores_distribution: fallback.scores_distribution || {},
+    criteria_breakdown: fallback.criteria_breakdown || {},
+  };
+}
+
+function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, index) => {
+        const filled = rating >= index + 1;
+        const partial = !filled && rating > index && rating < index + 1;
+
+        return (
+          <span key={index} className="relative inline-flex" style={{ width: size, height: size }}>
+            <Star
+              className="absolute inset-0"
+              style={{
+                width: size,
+                height: size,
+                stroke: AMBER,
+                fill: 'transparent',
+                strokeWidth: 1.5,
+              }}
+            />
+            <span
+              className="absolute inset-0 overflow-hidden"
+              style={{ width: filled ? size : partial ? `${(rating - index) * 100}%` : 0 }}
+            >
+              <Star
+                style={{
+                  width: size,
+                  height: size,
+                  stroke: AMBER,
+                  fill: AMBER,
+                  strokeWidth: 1.5,
+                }}
+              />
+            </span>
+          </span>
+        );
+      })}
+    </div>
   );
+}
 
-  // Track product view on mount
-  useEffect(() => {
-    track('product_view', {
-      product_id: product.id,
-      product_name: product.name,
-      category: categoryName,
-      company_id: product.company?.id,
-      company_name: product.company?.name,
-      price: priceValue,
-      ...brandContext
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product.id]);
-
-  const handleShare = useCallback(async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    track('product_share', {
-      product_id: product.id,
-      product_name: product.name,
-      ...brandContext
-    });
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: product.name, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch {
-      // user cancelled share or clipboard not available
-    }
-  }, [product.id, product.name]);
-
-  const handleBudgetClick = () => {
-    track('product_cta_click', {
-      product_id: product.id,
-      product_name: product.name,
-      cta: 'budget',
-      company_id: product.company?.id,
-      ...brandContext
-    });
-  };
-
-  const handleCompanyClick = () => {
-    track('product_company_click', {
-      product_id: product.id,
-      company_id: product.company?.id,
-      company_name: product.company?.name,
-      ...brandContext
-    });
-  };
+function SemanticBadge({
+  children,
+  tone = 'neutral',
+}: {
+  children: ReactNode;
+  tone?: 'neutral' | 'success' | 'danger';
+}) {
+  const toneClass =
+    tone === 'success'
+      ? 'bg-[var(--color-background-success)] text-[var(--color-text-success)]'
+      : tone === 'danger'
+        ? 'bg-[var(--color-background-danger)] text-[var(--color-text-danger)]'
+        : 'bg-[var(--color-background-secondary)] text-[var(--color-text-secondary)]';
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 py-3">
-          <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
-            <Link href="/" className="hover:text-foreground transition-colors">
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-[10px] py-[3px] text-[11px] font-medium leading-none',
+        toneClass
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function AvatarBadge({
+  name,
+  logoUrl,
+}: {
+  name?: string | null;
+  logoUrl?: string | null;
+}) {
+  return (
+    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--color-background-info)] text-[13px] font-medium text-[var(--color-text-info)]">
+      {logoUrl ? (
+        <Image src={logoUrl} alt={name || 'Empresa'} width={40} height={40} className="h-10 w-10 object-cover" />
+      ) : (
+        <span>{getInitials(name)}</span>
+      )}
+    </div>
+  );
+}
+
+function SidebarCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn(surfaceClass, 'p-4')}>
+      <div className="mb-4">
+        <p className="text-[15px] font-medium leading-[1.4] text-[var(--color-text-primary)]">{title}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ReviewDistribution({
+  summary,
+}: {
+  summary: ProductReviewSummary | null;
+}) {
+  const total = summary?.total_reviews || 0;
+
+  return (
+    <div className="space-y-2">
+      {[5, 4, 3, 2, 1].map((score) => {
+        const count = Number(summary?.scores_distribution?.[String(score)] || 0);
+        const width = total > 0 ? (count / total) * 100 : 0;
+
+        return (
+          <div key={score} className="grid grid-cols-[20px_1fr_28px] items-center gap-2">
+            <span className="text-[11px] text-[var(--color-text-secondary)]">{score}</span>
+            <div className="h-[5px] overflow-hidden rounded-full bg-[var(--color-background-tertiary)]">
+              <div className="h-full rounded-full" style={{ width: `${width}%`, backgroundColor: AMBER }} />
+            </div>
+            <span className="text-right text-[11px] text-[var(--color-text-tertiary)]">{count}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  const reviewDate = formatDate(review.created_at);
+  const reviewScores = (review.granular_scores || review.review_criterion_scores || []).slice(0, 4);
+
+  return (
+    <article className={cn(surfaceClass, 'p-4')}>
+      <div className="flex items-start gap-3">
+        <AvatarBadge name={review.user?.name} logoUrl={review.user?.avatar_url} />
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+              {review.user?.name || 'Consumidor verificado'}
+            </p>
+            {review.verified ? <SemanticBadge tone="success">Avaliação verificada</SemanticBadge> : null}
+            {review.featured ? <SemanticBadge>Destaque</SemanticBadge> : null}
+          </div>
+          <div className="flex items-center gap-2">
+            <Stars rating={review.rating || 0} size={12} />
+            {reviewDate ? <span className={hintClass}>{reviewDate}</span> : null}
+          </div>
+        </div>
+      </div>
+
+      {review.headline ? (
+        <p className="mt-4 text-[15px] font-medium leading-[1.5] text-[var(--color-text-primary)]">{review.headline}</p>
+      ) : null}
+
+      {review.comment ? (
+        <p className="mt-3 whitespace-pre-wrap text-[13px] leading-[1.7] text-[var(--color-text-secondary)]">
+          {review.comment}
+        </p>
+      ) : null}
+
+      {review.project_context ? (
+        <p className="mt-3 text-[13px] leading-[1.7] text-[var(--color-text-secondary)]">{review.project_context}</p>
+      ) : null}
+
+      {(review.pros?.length || review.cons?.length || review.buyer_tip) ? (
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {review.pros?.length ? (
+            <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+              <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Pontos fortes</p>
+              <ul className="mt-2 space-y-1 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
+                {review.pros.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {review.cons?.length ? (
+            <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+              <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Pontos de atenção</p>
+              <ul className="mt-2 space-y-1 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
+                {review.cons.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {review.buyer_tip ? (
+            <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+              <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Dica do comprador</p>
+              <p className="mt-2 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">{review.buyer_tip}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {reviewScores.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {reviewScores.map((score, index) => (
+            <span
+              key={`${score.title}-${index}`}
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-1.5 text-[11px] text-[var(--color-text-secondary)]"
+            >
+              <span>{score.title}</span>
+              <span className="font-medium text-[var(--color-text-primary)]">
+                {Number(score.score || 0).toFixed(1)}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function ProjectCard({ project }: { project: CampaignReviewProject }) {
+  const companyName = project.company?.name || 'Integrador parceiro';
+  const period = [formatDate(project.start_at), formatDate(project.end_at)].filter(Boolean).join(' - ');
+
+  return (
+    <article className={cn(surfaceClass, 'p-4')}>
+      <div className="flex items-start gap-3">
+        <AvatarBadge name={companyName} logoUrl={project.company?.logo_url} />
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[15px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
+              {project.title || 'Projeto registrado'}
+            </p>
+            {project.sponsored ? <SemanticBadge>Patrocinado</SemanticBadge> : null}
+          </div>
+          <p className={labelClass}>{companyName}</p>
+          {period ? <p className={hintClass}>{period}</p> : null}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+          <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Código</p>
+          <p className="mt-2 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">{project.code || '-'}</p>
+        </div>
+        <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+          <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Meta</p>
+          <p className="mt-2 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
+            {project.goal ? formatNumber(project.goal) : '-'}
+          </p>
+        </div>
+        <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+          <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Resultado</p>
+          <p className="mt-2 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
+            {project.achieved ? formatNumber(project.achieved) : '-'}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export default function ProductDetailClient({
+  product,
+  company,
+  category,
+  reviewsData,
+  projects,
+  relatedProducts,
+}: ProductDetailClientProps) {
+  const [activeTab, setActiveTab] = useState<ProductTab>('description');
+  const galleryImages = useMemo(() => {
+    const allImages = [...(product.image_urls || []), product.image_url].filter(Boolean) as string[];
+    return allImages.length ? Array.from(new Set(allImages)) : [PLACEHOLDER_IMAGE];
+  }, [product.image_url, product.image_urls]);
+  const [selectedImage, setSelectedImage] = useState(galleryImages[0] || PLACEHOLDER_IMAGE);
+  const reviewsSectionRef = useRef<HTMLDivElement | null>(null);
+
+  const priceValue = normalizePrice(product.price);
+  const companyPath = buildCompanyPath(
+    company?.slug || product.company?.slug,
+    company?.name || product.company?.name,
+    company?.id || product.company?.id
+  );
+  const categoryPath = category ? buildCategoryPath(category.seo_url, category.id) : '/products';
+  const categoryName = category?.name || product.categories?.[0]?.name || product.category?.name || 'Produtos';
+  const categoryId = category?.id || product.categories?.[0]?.id || product.category?.id || product.category_id;
+  const summary = reviewsData?.summary || getCompanyAggregate(company, categoryId);
+  const criteriaEntries = Object.entries(summary?.criteria_breakdown || {}).slice(0, 6);
+
+  const compatibilityCompanies = useMemo(() => {
+    const items = new Map<string, { label: string; path?: string; verified: boolean }>();
+
+    if (company?.name) {
+      items.set(company.name.toLowerCase(), {
+        label: company.name,
+        path: companyPath,
+        verified: !!company.verified,
+      });
+    }
+
+    projects.forEach((project) => {
+      const label = project.company?.name;
+      if (!label) return;
+
+      items.set(label.toLowerCase(), {
+        label,
+        path: project.company?.slug
+          ? buildCompanyPath(project.company.slug, label, project.company.id)
+          : undefined,
+        verified: !!project.company?.verified,
+      });
+    });
+
+    return Array.from(items.values()).slice(0, 6);
+  }, [company?.name, company?.verified, companyPath, projects]);
+
+  const distinctIntegrators = useMemo(() => {
+    const names = new Set(
+      projects
+        .map((project) => project.company?.name)
+        .filter((value): value is string => Boolean(value))
+    );
+    return names.size;
+  }, [projects]);
+
+  const {
+    trackCTA,
+    trackCompanyProfile,
+    trackCompatibilityChip,
+    trackRelatedProduct,
+    trackReviewsVisible,
+    trackTabChange,
+  } = useProductTracking({
+    product,
+    company,
+    categoryId,
+    categoryName,
+    reviewsData,
+  });
+
+  useEffect(() => {
+    setSelectedImage(galleryImages[0] || PLACEHOLDER_IMAGE);
+  }, [galleryImages]);
+
+  useEffect(() => {
+    if (activeTab !== 'reviews' || !reviewsSectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            trackReviewsVisible();
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(reviewsSectionRef.current);
+    return () => observer.disconnect();
+  }, [activeTab, trackReviewsVisible]);
+
+  const handleTabChange = (tab: ProductTab) => {
+    setActiveTab(tab);
+    trackTabChange(tab);
+  };
+
+  const handleQuoteRequest = () => {
+    trackCTA('request_quote');
+    openQuoteWizard({
+      preferredCompanyId: company?.id || product.company?.id,
+      source: 'product_page_sidebar',
+    });
+  };
+
+  const isActive = product.status === 'active';
+
+  return (
+    <div className="min-h-screen bg-[var(--color-background-tertiary)]">
+      <div className="border-b-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)]">
+        <div className="mx-auto flex h-9 max-w-[1280px] items-center px-5">
+          <nav className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
+            <Link href="/" className="transition-colors hover:text-[var(--color-text-primary)]">
               Início
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-            <Link href="/products" className="hover:text-foreground transition-colors">
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href="/products" className="transition-colors hover:text-[var(--color-text-primary)]">
               Produtos
             </Link>
-            {categoryName !== 'Geral' && (
-              <>
-                <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{categoryName}</span>
-              </>
-            )}
-            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="text-foreground font-medium line-clamp-1 max-w-[200px] sm:max-w-none">
-              {product.name}
-            </span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href={categoryPath} className="truncate transition-colors hover:text-[var(--color-text-primary)]">
+              {categoryName}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="truncate text-[var(--color-text-primary)]">{product.name}</span>
           </nav>
         </div>
       </div>
 
-      {/* Main content — extra bottom padding on mobile for sticky CTA */}
-      <div className="container mx-auto px-4 py-6 lg:py-10 pb-28 lg:pb-10">
-        {/* Back button — mobile only */}
-        <Link
-          href="/products"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 lg:hidden"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para Produtos
-        </Link>
-
-        {/* Hero Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 lg:gap-10">
-          {/* Image panel */}
-          <div className="order-1">
-            <div className="relative bg-white rounded-2xl border border-slate-200 overflow-hidden aspect-[4/3] lg:aspect-[16/10]">
-              <Image
-                src={displayImage}
-                alt={product.name}
-                fill
-                className="object-contain p-6 lg:p-10"
-                onError={() => setImageError(true)}
-                sizes="(max-width: 1024px) 100vw, 60vw"
-                priority
-              />
-
-              {/* Status badge */}
-              <div className="absolute top-3 left-3">
-                <Badge
-                  variant={isAvailable ? 'default' : 'secondary'}
-                  className="shadow-sm text-xs"
-                >
-                  {isAvailable ? 'Disponível' : 'Indisponível'}
-                </Badge>
-              </div>
-
-              {/* Share button */}
-              <button
-                onClick={handleShare}
-                className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-white hover:border-slate-300 transition-all"
-                aria-label="Compartilhar produto"
-              >
-                {copied ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Share2 className="w-4 h-4 text-slate-600" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Info + Actions panel */}
-          <div className="order-2 flex flex-col gap-5">
-            {/* Category + Title */}
-            <div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                <Tag className="w-3 h-3" />
-                <span className="uppercase tracking-wider font-medium">{categoryName}</span>
-              </div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 leading-snug">
-                {product.name}
-              </h1>
-              {product.sku && (
-                <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                  <Hash className="w-3 h-3" />
-                  <span>SKU: {product.sku}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Price block */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50/60 rounded-xl p-4 border border-blue-100">
-              <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider mb-1">
-                Preço
-              </p>
-              <div className="text-3xl font-bold text-blue-700">
-                R${' '}
-                {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-blue-400 mt-1.5">
-                * Sujeito a alteração. Solicite um orçamento personalizado.
-              </p>
-            </div>
-
-            {/* CTA — desktop only (mobile has sticky bar) */}
-            <div className="hidden lg:flex flex-col gap-3">
-              <Button
-                size="lg"
-                className="w-full h-12 gap-2 text-base bg-blue-600 hover:bg-blue-700 shadow-md"
-                onClick={handleBudgetClick}
-              >
-                <MessageSquare className="w-5 h-5" />
-                Solicitar Orçamento
-              </Button>
-            </div>
-
-            <Separator className="hidden lg:block" />
-
-            {/* Company card */}
-            <div className="border border-slate-200 rounded-xl bg-white p-4 hover:border-blue-200 transition-colors">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-3">
-                Vendedor
-              </p>
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-                  {product.company?.logo_url ? (
-                    <Image
-                      src={product.company.logo_url}
-                      alt={product.company.name || ''}
-                      width={48}
-                      height={48}
-                      className="object-contain rounded-full"
-                    />
-                  ) : (
-                    <Building2 className="w-5 h-5 text-slate-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                    <p className="font-semibold text-slate-900 truncate">
-                      {product.company?.name || 'Fornecedor'}
-                    </p>
-                    <ShieldCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  </div>
-                  <p className="text-xs text-muted-foreground">Fornecedor Verificado</p>
-                  {product.company?.description && (
-                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">
-                      {product.company.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Link href={companyPath} onClick={handleCompanyClick}>
-                <Button variant="outline" size="sm" className="w-full mt-3 gap-2">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Ver Perfil da Empresa
-                </Button>
-              </Link>
-            </div>
-
-            {/* Back link — desktop */}
-            <Link
-              href="/products"
-              className="hidden lg:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar para Produtos
-            </Link>
-          </div>
+      <div className="mx-auto max-w-[1280px] px-5 py-4 pb-24 lg:pb-4">
+        <div className="mb-4">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para produtos
+          </Link>
         </div>
 
-        {/* Tabs: Descrição + Especificações */}
-        <div className="mt-8 lg:mt-12">
-          <Tabs defaultValue="description">
-            <TabsList className="w-full justify-start bg-white border border-slate-200 rounded-xl p-1 h-auto gap-1">
-              <TabsTrigger
-                value="description"
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2.5 text-sm font-medium transition-all"
-              >
-                <FileText className="w-4 h-4" />
-                Descrição
-              </TabsTrigger>
-              {sortedSpecs.length > 0 && (
-                <TabsTrigger
-                  value="specs"
-                  className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2.5 text-sm font-medium transition-all"
-                >
-                  <Wrench className="w-4 h-4" />
-                  Especificações Técnicas
-                  <span className="ml-1 text-xs bg-slate-100 rounded-full px-1.5 py-0.5 tabular-nums">
-                    {sortedSpecs.length}
-                  </span>
-                </TabsTrigger>
-              )}
-            </TabsList>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
+            <section className={cn(surfaceClass, 'p-4')}>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+                <div className="space-y-4">
+                  <div className="overflow-hidden rounded-[var(--border-radius-lg)] bg-[var(--color-background-secondary)]">
+                    <div className="relative aspect-[4/3] w-full">
+                      <Image
+                        src={selectedImage}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-6"
+                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        onError={() => setSelectedImage(PLACEHOLDER_IMAGE)}
+                        priority
+                      />
+                    </div>
+                  </div>
 
-            <TabsContent value="description" className="mt-4">
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8">
-                {product.short_description && (
-                  <p className="text-base font-medium text-slate-700 mb-4 leading-relaxed border-b pb-4">
-                    {product.short_description}
-                  </p>
-                )}
-                <p className="text-slate-600 whitespace-pre-wrap leading-relaxed text-sm lg:text-base">
-                  {product.description || 'Sem descrição disponível.'}
-                </p>
+                  {galleryImages.length > 1 ? (
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                      {galleryImages.map((image, index) => (
+                        <button
+                          key={`${image}-${index}`}
+                          type="button"
+                          onClick={() => setSelectedImage(image)}
+                          className={cn(
+                            'relative aspect-square overflow-hidden rounded-[var(--border-radius-md)] border-[0.5px] bg-[var(--color-background-secondary)]',
+                            selectedImage === image
+                              ? 'border-[1.5px] border-[#f5a623]'
+                              : 'border-[var(--color-border-tertiary)]'
+                          )}
+                        >
+                          <Image
+                            src={image}
+                            alt={`${product.name} ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="120px"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <SemanticBadge tone={isActive ? 'success' : 'danger'}>
+                      {isActive ? 'Disponível' : 'Inativo'}
+                    </SemanticBadge>
+                    {product.sku ? <SemanticBadge>SKU {product.sku}</SemanticBadge> : null}
+                    {category ? <SemanticBadge>{category.name}</SemanticBadge> : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h1 className="text-[20px] font-medium leading-[1.35] text-[var(--color-text-primary)]">
+                      {product.name}
+                    </h1>
+                    {product.short_description ? <p className={labelClass}>{product.short_description}</p> : null}
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+                      <p className={hintClass}>Preço base</p>
+                      <p className="mt-2 text-[20px] font-medium leading-none text-[#f5a623]">
+                        {formatCurrency(priceValue)}
+                      </p>
+                    </div>
+                    <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+                      <p className={hintClass}>Fabricante</p>
+                      <p className="mt-2 text-[15px] font-medium leading-[1.4] text-[var(--color-text-primary)]">
+                        {company?.name || product.company?.name || 'Não informado'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {summary ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-2">
+                        <span className="text-[15px] font-medium text-[#f5a623]">
+                          {summary.average_rating.toFixed(1)}
+                        </span>
+                        <Stars rating={summary.average_rating} />
+                      </div>
+                      <span className={labelClass}>
+                        {formatNumber(summary.total_reviews)} avaliações verificadas
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </TabsContent>
+            </section>
 
-            {sortedSpecs.length > 0 && (
-              <TabsContent value="specs" className="mt-4">
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {sortedSpecs.map((spec: any) => (
-                      <div
-                        key={spec.key}
-                        className="p-4 bg-slate-50 border border-slate-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
-                      >
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-1">
-                          {spec.label}
+            <section className={cn(surfaceClass, 'p-4')}>
+              <div className="flex flex-wrap gap-2 border-b-[0.5px] border-[var(--color-border-tertiary)] pb-3">
+                {[
+                  { id: 'description', label: 'Descrição' },
+                  { id: 'specifications', label: 'Especificações' },
+                  { id: 'reviews', label: 'Avaliações' },
+                  { id: 'projects', label: 'Projetos' },
+                ].map((tab) => {
+                  const isSelected = activeTab === tab.id;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id as ProductTab)}
+                      className={cn(
+                        'border-b-2 px-1 py-2 text-[13px] font-medium transition-colors',
+                        isSelected
+                          ? 'border-[#f5a623] text-[var(--color-text-primary)]'
+                          : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4">
+                {activeTab === 'description' ? (
+                  <div className="space-y-4">
+                    <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-[var(--color-text-secondary)]">
+                      {product.description || 'Sem descrição disponível no momento.'}
+                    </p>
+
+                    <div className="space-y-3">
+                      <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Compatibilidade</p>
+                      {compatibilityCompanies.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {compatibilityCompanies.map((chip) => {
+                            const chipClass = chip.verified
+                              ? 'bg-[var(--color-background-success)] text-[var(--color-text-success)]'
+                              : 'bg-[var(--color-background-secondary)] text-[var(--color-text-secondary)]';
+
+                            if (chip.path) {
+                              return (
+                                <Link
+                                  key={chip.label}
+                                  href={chip.path}
+                                  onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
+                                  className={cn(
+                                    'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] transition-opacity hover:opacity-85',
+                                    chipClass
+                                  )}
+                                >
+                                  {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
+                                  {chip.label}
+                                </Link>
+                              );
+                            }
+
+                            return (
+                              <button
+                                key={chip.label}
+                                type="button"
+                                onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
+                                className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px]', chipClass)}
+                              >
+                                {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
+                                {chip.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className={labelClass}>Ainda não há compatibilidades confirmadas para este produto.</p>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeTab === 'specifications' ? (
+                  <div className="overflow-hidden rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-tertiary)]">
+                    {product.specs?.length ? (
+                      product.specs.map((spec) => (
+                        <div
+                          key={spec.key}
+                          className="grid gap-2 border-b-[0.5px] border-[var(--color-border-tertiary)] px-4 py-3 last:border-b-0 md:grid-cols-[220px_minmax(0,1fr)]"
+                        >
+                          <div className="text-[13px] text-[var(--color-text-secondary)]">{spec.label}</div>
+                          <div className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                            {normalizeSpecValue(spec.value)}
+                            {spec.unit ? ` ${spec.unit}` : ''}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6">
+                        <p className={labelClass}>Nenhuma especificação cadastrada ainda.</p>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {activeTab === 'reviews' ? (
+                  <div ref={reviewsSectionRef} className="space-y-4">
+                    <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+                      <div className={cn(surfaceClass, 'p-4')}>
+                        <div className="space-y-3">
+                          <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
+                          <div className="flex items-end gap-3">
+                            <span className="text-[28px] font-medium leading-none text-[#f5a623]">
+                              {(summary?.average_rating || 0).toFixed(1)}
+                            </span>
+                            <div className="space-y-1">
+                              <Stars rating={summary?.average_rating || 0} size={14} />
+                              <p className={hintClass}>{formatNumber(summary?.total_reviews || 0)} avaliações</p>
+                            </div>
+                          </div>
+                          <ReviewDistribution summary={summary} />
+                        </div>
+                      </div>
+
+                      <div className={cn(surfaceClass, 'p-4')}>
+                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Critérios avaliados</p>
+                        {criteriaEntries.length ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {criteriaEntries.map(([criterion, value]) => (
+                              <span
+                                key={criterion}
+                                className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-1.5 text-[11px] text-[var(--color-text-secondary)]"
+                              >
+                                <span>{criterion}</span>
+                                <span className="font-medium text-[var(--color-text-primary)]">
+                                  {Number(value).toFixed(1)}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={cn(labelClass, 'mt-3')}>Os critérios detalhados ainda não foram consolidados.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {reviewsData?.reviews?.length ? (
+                      <div className="space-y-4">
+                        {reviewsData.reviews.map((review) => (
+                          <ReviewCard key={review.id} review={review} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={cn(surfaceClass, 'p-6')}>
+                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                          Seja o primeiro a avaliar este produto
                         </p>
-                        <p className="text-sm font-bold text-slate-800">
-                          {spec.value}
-                          {spec.unit ? ` ${spec.unit}` : ''}
+                        <p className={cn(labelClass, 'mt-2')}>
+                          Ainda não existem avaliações públicas vinculadas a este item.
+                        </p>
+                        <div className="mt-4">
+                          <Link
+                            href={companyPath}
+                            onClick={trackCompanyProfile}
+                            className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-secondary)] px-4 py-[11px] text-[13px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-background-secondary)]"
+                          >
+                            Ver perfil da empresa
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {activeTab === 'projects' ? (
+                  <div className="space-y-4">
+                    {projects.length ? (
+                      projects.map((project) => <ProjectCard key={project.id} project={project} />)
+                    ) : (
+                      <div className={cn(surfaceClass, 'p-6')}>
+                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                          Nenhum projeto registrado ainda
+                        </p>
+                        <p className={cn(labelClass, 'mt-2')}>
+                          Assim que integradores registrarem campanhas ou projetos com este produto, eles aparecerão aqui.
                         </p>
                       </div>
-                    ))}
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            {relatedProducts.length ? (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Produtos relacionados</p>
+                  <Link
+                    href="/products"
+                    className="inline-flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+                  >
+                    Ver todos
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  {relatedProducts.map((item, index) => {
+                    const itemPath = buildProductPath(item.id, item.name);
+                    const itemPrice = normalizePrice(item.price);
+
+                    return (
+                      <Link
+                        key={item.id}
+                        href={itemPath}
+                        onClick={() => trackRelatedProduct(item.id, index)}
+                        className={cn(surfaceClass, 'overflow-hidden transition-colors hover:border-[var(--color-border-secondary)]')}
+                      >
+                        <div className="relative aspect-[4/3] bg-[var(--color-background-secondary)]">
+                          <Image
+                            src={item.image_url || item.image_urls?.[0] || PLACEHOLDER_IMAGE}
+                            alt={item.name}
+                            fill
+                            className="object-contain p-5"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                          />
+                        </div>
+                        <div className="space-y-3 p-4">
+                          <div className="space-y-2">
+                            <p className="text-[15px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
+                              {item.name}
+                            </p>
+                            <p className={labelClass}>
+                              {item.categories?.[0]?.name || item.category?.name || categoryName}
+                            </p>
+                          </div>
+                          <p className="text-[15px] font-medium text-[#f5a623]">{formatCurrency(itemPrice)}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <SidebarCard title="Preço e disponibilidade">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-[28px] font-medium leading-none text-[#f5a623]">
+                    {formatCurrency(priceValue)}
+                  </p>
+                  <p className={labelClass}>
+                    {isActive ? 'Produto ativo para orçamento e comparação.' : 'Produto indisponível no momento.'}
+                  </p>
+                </div>
+
+                {distinctIntegrators > 0 ? (
+                  <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+                    <p className="text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
+                      {formatNumber(distinctIntegrators)} integradores já usaram este produto em projetos registrados.
+                    </p>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleQuoteRequest}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--border-radius-md)] px-4 py-[11px] text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: AMBER }}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Solicitar orçamento
+                </button>
+
+                <p className={hintClass}>O contato é iniciado no fluxo de lead do marketplace.</p>
+              </div>
+            </SidebarCard>
+
+            <SidebarCard title="Fabricante">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <AvatarBadge name={company?.name || product.company?.name} logoUrl={company?.logo_url} />
+                  <div className="min-w-0 space-y-2">
+                    <p className="text-[14px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
+                      {company?.name || product.company?.name || 'Fabricante não informado'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {company?.verified ? (
+                        <SemanticBadge tone="success">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          Fabricante verificado
+                        </SemanticBadge>
+                      ) : null}
+                      {company?.plan_status === 'active' ? <SemanticBadge>Parceiro premium</SemanticBadge> : null}
+                    </div>
                   </div>
                 </div>
-              </TabsContent>
-            )}
-          </Tabs>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+                    <p className={hintClass}>Avaliação</p>
+                    <p className="mt-2 text-[15px] font-medium text-[var(--color-text-primary)]">
+                      {company?.rating_avg ? Number(company.rating_avg).toFixed(1) : '-'}
+                    </p>
+                  </div>
+                  <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
+                    <p className={hintClass}>Projetos</p>
+                    <p className="mt-2 text-[15px] font-medium text-[var(--color-text-primary)]">
+                      {projects.length ? formatNumber(projects.length) : formatNumber(company?.reviews_count || 0)}
+                    </p>
+                  </div>
+                </div>
+
+                {company?.description ? (
+                  <p className={labelClass}>
+                    {company.description.length > 180
+                      ? `${company.description.slice(0, 177)}...`
+                      : company.description}
+                  </p>
+                ) : null}
+
+                <Link
+                  href={companyPath}
+                  onClick={trackCompanyProfile}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-secondary)] px-4 py-[11px] text-[13px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-background-secondary)]"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Ver perfil da empresa
+                </Link>
+              </div>
+            </SidebarCard>
+
+            <SidebarCard title="Avaliações">
+              <div className="space-y-4">
+                <div className="flex items-end gap-3">
+                  <span className="text-[28px] font-medium leading-none text-[#f5a623]">
+                    {(summary?.average_rating || 0).toFixed(1)}
+                  </span>
+                  <div className="space-y-1">
+                    <Stars rating={summary?.average_rating || 0} />
+                    <p className={hintClass}>{formatNumber(summary?.total_reviews || 0)} avaliações</p>
+                  </div>
+                </div>
+
+                <ReviewDistribution summary={summary} />
+
+                {criteriaEntries.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {criteriaEntries.slice(0, 4).map(([criterion, value]) => (
+                      <span
+                        key={criterion}
+                        className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-1.5 text-[11px] text-[var(--color-text-secondary)]"
+                      >
+                        <span>{criterion}</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">
+                          {Number(value).toFixed(1)}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </SidebarCard>
+          </aside>
         </div>
       </div>
 
-      {/* Sticky Mobile CTA bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-3 flex gap-3 safe-area-inset-bottom">
-        <Link href={companyPath} onClick={handleCompanyClick} className="flex-1">
-          <Button variant="outline" className="w-full h-12 gap-2 border-slate-300">
-            <Building2 className="w-4 h-4" />
-            Ver Empresa
-          </Button>
-        </Link>
-        <Button
-          className="flex-1 h-12 gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg"
-          onClick={handleBudgetClick}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Orçamento
-        </Button>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)] p-4 lg:hidden">
+        <div className="mx-auto flex max-w-[1280px] items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] text-[var(--color-text-secondary)]">{product.name}</p>
+            <p className="text-[15px] font-medium text-[#f5a623]">{formatCurrency(priceValue)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleQuoteRequest}
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--border-radius-md)] px-4 py-[11px] text-[13px] font-medium text-white"
+            style={{ backgroundColor: AMBER }}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Solicitar orçamento
+          </button>
+        </div>
       </div>
 
-      {/* JSON-LD structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -379,28 +1007,35 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             '@type': 'Product',
             name: product.name,
             description: product.description,
-            image: displayImage,
+            image: galleryImages,
             sku: product.sku,
             brand: {
               '@type': 'Brand',
-              name: product.company?.name,
+              name: company?.name || product.company?.name,
             },
             offers: {
               '@type': 'Offer',
               priceCurrency: 'BRL',
               price: priceValue,
-              availability: isAvailable
+              availability: isActive
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',
               seller: {
                 '@type': 'Organization',
-                name: product.company?.name,
+                name: company?.name || product.company?.name,
               },
             },
-            additionalProperty: sortedSpecs.map((spec: any) => ({
+            aggregateRating: summary
+              ? {
+                  '@type': 'AggregateRating',
+                  ratingValue: summary.average_rating,
+                  reviewCount: summary.total_reviews,
+                }
+              : undefined,
+            additionalProperty: (product.specs || []).map((spec) => ({
               '@type': 'PropertyValue',
               name: spec.label,
-              value: spec.value,
+              value: normalizeSpecValue(spec.value),
               unitCode: spec.unit,
             })),
           }),

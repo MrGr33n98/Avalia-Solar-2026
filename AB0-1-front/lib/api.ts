@@ -269,6 +269,69 @@ export interface FinancingOption {
   grace_period_days?: number;
 }
 
+export interface ProductSpecification {
+  key: string;
+  label: string;
+  type: string;
+  unit?: string;
+  value: any;
+  filterable?: boolean;
+  sortable?: boolean;
+  comparable?: boolean;
+  seo_weight?: number;
+}
+
+export interface ProductReviewScore {
+  id?: number;
+  title: string;
+  score: number;
+  weight?: number;
+  not_applicable?: boolean;
+  rating_criterion_id?: number;
+}
+
+export interface ProductReviewSummary {
+  average_rating: number;
+  total_reviews: number;
+  scores_distribution: Record<string, number>;
+  criteria_breakdown: Record<string, number>;
+}
+
+export interface CampaignReviewProject {
+  id: number;
+  title?: string | null;
+  code?: string | null;
+  member_id?: number | null;
+  share_code?: string | null;
+  goal?: number | null;
+  achieved?: number | null;
+  debutants?: number | null;
+  shares?: number | null;
+  prize?: string | null;
+  start_at?: string | null;
+  end_at?: string | null;
+  company_id?: number | null;
+  product_id?: number | null;
+  sponsored?: boolean;
+  status?: 'draft' | 'active' | 'finished' | 'canceled' | string | null;
+  rating?: number | null;
+  comment?: string | null;
+  created_at: string;
+  updated_at?: string;
+  company?: {
+    id?: number;
+    name: string;
+    slug?: string;
+    logo_url?: string | null;
+    verified?: boolean;
+  } | null;
+  product?: {
+    id?: number;
+    name?: string;
+    image_url?: string | null;
+  } | null;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -285,20 +348,26 @@ export interface Product {
   created_at: string;
   updated_at: string;
   image_url?: string;
+  image_urls?: string[];
   sku?: string;
-  company?: any;  // Associated company data
-  category?: any; // Associated category data
-  specs?: Array<{
-    key: string;
-    label: string;
-    type: string;
-    unit?: string;
-    value: any;
-    filterable?: boolean;
-    sortable?: boolean;
-    comparable?: boolean;
-    seo_weight?: number;
-  }>;
+  company?: Partial<
+    Pick<
+      Company,
+      | 'id'
+      | 'name'
+      | 'slug'
+      | 'logo_url'
+      | 'verified'
+      | 'plan_status'
+      | 'description'
+      | 'rating_avg'
+      | 'reviews_count'
+      | 'review_aggregates'
+    >
+  > | null;
+  category?: Partial<Pick<Category, 'id' | 'name' | 'seo_url'>> | null;
+  categories?: Array<Partial<Pick<Category, 'id' | 'name' | 'seo_url'>>>;
+  specs?: ProductSpecification[];
 }
 
 export interface Lead {
@@ -350,6 +419,7 @@ export interface Review {
   pros?: string[];
   cons?: string[];
   buyer_tip?: string;
+  project_context?: string;
   category_id?: number;
   category_name?: string;
   editorial_complete?: boolean;
@@ -369,14 +439,16 @@ export interface Review {
     title: string;
     score: number;
     weight: number;
-  }>;
-  review_criterion_scores?: Array<{
-    id: number;
-    score: number;
-    not_applicable: boolean;
-    rating_criterion_id: number;
-    title: string;
-  }>;
+  }> | ProductReviewScore[];
+  review_criterion_scores?: ProductReviewScore[];
+}
+
+export interface ProductReviewsResponse {
+  product_id: number;
+  company_id: number;
+  category_id?: number | null;
+  summary?: ProductReviewSummary | null;
+  reviews: Review[];
 }
 
 export interface SocialProofReview {
@@ -1517,6 +1589,11 @@ export const reviewsApi = {
       body: JSON.stringify({ review }),
     }),
   delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
+};
+
+export const campaignReviewsApi = {
+  getAll: (params: any = {}) => fetchApi<CampaignReviewProject[]>('/campaign_reviews', { params }),
+  getById: (id: number) => fetchApi<CampaignReviewProject>(`/campaign_reviews/${id}`),
 };
 
 const COMPANY_ACCESS_CONTEXT_CACHE_KEY = 'avalia.company_access.context.cache.v1';
