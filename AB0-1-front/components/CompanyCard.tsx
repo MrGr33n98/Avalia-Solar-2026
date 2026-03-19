@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
 
-import ComparisonToggleButton from '@/components/ComparisonToggleButton';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +21,7 @@ import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
 import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useComparison } from '@/hooks/useComparison';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
@@ -94,6 +93,8 @@ export default function CompanyCard({
 
   const { isFavorite } = useFavorites();
   const isFav = isFavorite(id);
+  const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
+  const isCompared = isInComparison(company.id);
 
   const [ctaVisible, setCtaVisible] = useState(false);
   const ctaRef = useCallback((node: HTMLDivElement | null) => {
@@ -371,14 +372,6 @@ export default function CompanyCard({
           "absolute right-2 top-2 flex flex-col gap-1.5 z-10",
           "opacity-50 group-hover:opacity-100 transition-opacity duration-200"
         )}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ComparisonToggleButton
-              company={company}
-              variant="floating"
-              size="default"
-              animated={true}
-            />
-          </div>
           <Button
             size="icon"
             variant="secondary"
@@ -602,6 +595,43 @@ export default function CompanyCard({
             {(!compact || !canRequestQuote) && <span className="text-[12px]">{text.review}</span>}
           </Link>
           </Button>
+        </div>
+
+        {/* ── Capterra-style Compare Checkbox ──────────────── */}
+        <div
+          className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 print:hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <label className="flex items-center gap-2 cursor-pointer group/check select-none w-fit">
+            <div
+              onClick={() => {
+                if (isCompared) {
+                  removeFromComparison(company.id);
+                } else if (canAddMore) {
+                  addToComparison(company);
+                  track('comparison_add', { company_id: company.id, company_name: name, source: 'card_checkbox' });
+                }
+              }}
+              className={cn(
+                'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150',
+                isCompared
+                  ? 'bg-blue-600 border-blue-600'
+                  : canAddMore
+                    ? 'border-slate-300 dark:border-slate-600 group-hover/check:border-blue-400'
+                    : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
+              )}
+            >
+              {isCompared && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+            </div>
+            <span className={cn(
+              'text-[12px] font-light tracking-wide transition-colors',
+              isCompared
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-slate-500 dark:text-slate-400 group-hover/check:text-slate-700 dark:group-hover/check:text-slate-300'
+            )}>
+              {isCompared ? 'Selecionada' : 'Comparar'}
+            </span>
+          </label>
         </div>
 
         <div className="hidden print:block">

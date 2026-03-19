@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scale, X, ArrowRight, Trash2, Eye, Crown } from 'lucide-react';
+import { X, ArrowRight, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useComparison } from '@/hooks/useComparison';
 import { getFullImageUrl } from '@/utils/image';
@@ -16,7 +16,7 @@ const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'),
   ssr: false,
 });
 
-function ComparisonAvatar({
+function CompanyChip({
   company,
   onRemove,
 }: {
@@ -24,38 +24,48 @@ function ComparisonAvatar({
   onRemove: (id: number) => void;
 }) {
   const premium = isPremiumCompany(company);
+  const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
   return (
-    <div className="group relative shrink-0" title={company.name}>
-      <div
-        className={cn(
-          "relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[1rem] border p-1 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.55)] transition-transform duration-300 hover:-translate-y-0.5",
-          premium
-            ? "border-amber-300/60 bg-[linear-gradient(180deg,rgba(255,248,232,1),rgba(255,255,255,1))]"
-            : "border-slate-600 bg-white/95"
-        )}
-      >
-        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[0.82rem] bg-white">
+    <div className="group relative flex items-center gap-2 bg-white border border-slate-200 rounded-full px-2 py-1 shadow-sm hover:border-slate-300 transition-colors">
+      {/* Logo */}
+      <div className={cn(
+        "relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border",
+        premium ? "border-amber-300/60" : "border-slate-200"
+      )}>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
+            src={logoUrl}
             alt={company.name}
-            className="h-full w-full scale-[1.16] object-contain"
+            className="w-full h-full object-contain p-[2px]"
           />
-        </div>
+        ) : (
+          <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+            <span className="text-[9px] font-bold text-slate-500 uppercase">
+              {company.name.charAt(0)}
+            </span>
+          </div>
+        )}
+        {premium && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 flex items-center justify-center">
+            <Crown className="w-1.5 h-1.5 text-white fill-current" />
+          </div>
+        )}
       </div>
 
-      {premium && (
-        <div className="absolute -bottom-1 -right-1 rounded-full bg-slate-900 p-1 text-amber-300 shadow-lg">
-          <Crown className="h-3 w-3 fill-current" />
-        </div>
-      )}
+      {/* Name */}
+      <span className="text-[12px] font-light text-slate-700 max-w-[80px] truncate leading-none">
+        {company.name}
+      </span>
 
+      {/* Remove button */}
       <button
         onClick={() => onRemove(company.id)}
-        aria-label={`Remover ${company.name} da comparação`}
-        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-red-200 bg-red-500 text-white shadow-lg transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100"
+        aria-label={`Remover ${company.name}`}
+        className="w-4 h-4 rounded-full bg-slate-200 hover:bg-red-100 hover:text-red-500 flex items-center justify-center text-slate-400 transition-colors flex-shrink-0"
       >
-        <X className="h-3 w-3" />
+        <X className="w-2.5 h-2.5" />
       </button>
     </div>
   );
@@ -67,16 +77,11 @@ export default function ComparisonFloatingBar() {
     removeFromComparison,
     clearComparison,
     premiumCount,
-    remainingSlots,
     count,
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (count === 0) return null;
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
 
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
 
@@ -87,88 +92,70 @@ export default function ComparisonFloatingBar() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed inset-x-0 bottom-4 z-50 px-3 sm:px-4"
+          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          className="fixed inset-x-0 bottom-0 z-50"
         >
-          <div className="mx-auto w-full max-w-[1080px]">
-            <div className="overflow-hidden rounded-[1.75rem] border border-slate-700/80 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.96))] p-2.5 text-white shadow-[0_22px_60px_-24px_rgba(15,23,42,0.7)] backdrop-blur-2xl">
-              <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
-                <div className="flex min-w-0 items-start gap-3 md:items-center">
-                  <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-primary/15 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:flex">
-                    <Scale className="h-5 w-5" />
-                  </div>
+          <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4 py-3">
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar md:pb-0">
-                      {comparisonList.map((company) => (
-                        <ComparisonAvatar
-                          key={company.id}
-                          company={company}
-                          onRemove={removeFromComparison}
-                        />
-                      ))}
+                {/* Left — companies chips */}
+                <div className="flex items-center gap-2 min-w-0 overflow-x-auto no-scrollbar">
+                  <span className="text-[11px] font-light text-slate-400 whitespace-nowrap hidden sm:block">
+                    {count} {companyLabel} em análise
+                    {premiumCount > 0 && (
+                      <span className="ml-1.5 text-amber-500 font-medium">{premiumCount} premium</span>
+                    )}
+                  </span>
 
-                      {remainingSlots > 0 && (
-                        <div className="flex h-11 min-w-[3rem] items-center justify-center rounded-[1rem] border border-dashed border-slate-600 bg-slate-800/80 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                          +{remainingSlots}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-400">
-                      <span className="whitespace-nowrap">
-                        <span className="text-white">{count}</span> {companyLabel} em analise
-                      </span>
-                      {premiumCount > 0 && (
-                        <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">
-                          {premiumCount} premium
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {comparisonList.map((company) => (
+                      <CompanyChip
+                        key={company.id}
+                        company={company}
+                        onRemove={removeFromComparison}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid w-full grid-cols-[auto,1fr,1fr] gap-2 md:flex md:w-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                {/* Right — actions */}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <button
                     onClick={clearComparison}
-                    aria-label="Limpar comparacao"
-                    className="h-11 rounded-[1rem] px-3 text-slate-300 hover:bg-white/5 hover:text-white"
+                    className="text-[12px] font-light text-slate-400 hover:text-slate-600 transition-colors underline-offset-2 hover:underline whitespace-nowrap"
                   >
-                    <Trash2 className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">Limpar</span>
-                  </Button>
+                    Limpar
+                  </button>
 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleOpenModal}
-                    className="h-11 rounded-[1rem] border-slate-600 bg-slate-800/80 font-bold text-white hover:bg-slate-700 hover:text-white"
+                    onClick={() => setIsModalOpen(true)}
+                    className="h-9 rounded-full border-slate-300 text-slate-600 font-light text-[12px] px-4 hidden sm:flex hover:border-blue-400 hover:text-blue-600 transition-colors"
                   >
-                    <Eye className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Ver Detalhes</span>
-                    <span className="sm:hidden">Detalhes</span>
+                    Ver Detalhes
                   </Button>
 
                   <Button
                     asChild
                     size="sm"
-                    className="h-11 rounded-[1rem] bg-blue-600 px-4 font-black text-white shadow-lg shadow-blue-950/30 hover:bg-blue-500"
+                    className="h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-light text-[12px] px-5 shadow-sm shadow-blue-200 transition-colors"
                   >
                     <Link href="/compare">
-                      <span className="sm:hidden">Comparar</span>
                       <span className="hidden sm:inline">Comparar {count} {companyLabel}</span>
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <span className="sm:hidden">Comparar</span>
+                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                     </Link>
                   </Button>
                 </div>
+
               </div>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* Comparison Modal */}
       <CompanyComparisonModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
