@@ -40,6 +40,7 @@ import CompanyComparisonCard from '@/components/compare/CompanyComparisonCard';
 import ComparisonFooterCTA from '@/components/compare/ComparisonFooterCTA';
 import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
 import TrustScoreDial from '@/components/compare/TrustScoreDial';
+import { useScrollDepthMilestone, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
@@ -68,7 +69,7 @@ export default function ComparePage() {
     comparisonList.slice(0, 3).forEach((company, index) => {
       sendIntentSignal({
         company_id: company.id,
-        signal_type: 'comparison_usage',
+        signal_type: 'comparison_view',
         signal_category: 'research_intent',
         element_type: 'comparison_page',
         element_selector: 'compare-page',
@@ -80,6 +81,11 @@ export default function ComparePage() {
       });
     });
   }, [comparisonList]);
+
+  // Track scroll depth for the first company in comparison
+  useScrollDepthMilestone(comparisonList[0]?.id, {
+    metadata: { context: 'comparison_bottom' }
+  });
 
   // Check if any company is premium
   const hasPremiumCompanies = comparisonList.some(company => 
@@ -96,13 +102,37 @@ export default function ComparePage() {
   };
 
   const toggleGroup = (groupId: string) => {
+    const isExpanding = !expandedGroups.includes(groupId);
+    
+    // Analytics
+    track('comparison_category_toggle', { 
+      category_id: groupId, 
+      action: isExpanding ? 'expand' : 'collapse' 
+    });
+
+    if (isExpanding && comparisonList[0]) {
+      sendIntentSignal({
+        company_id: comparisonList[0].id,
+        signal_type: 'comparison_usage',
+        signal_category: 'research_intent',
+        element_type: 'category_header',
+        metadata: {
+          category: groupId,
+          action: 'expand_details'
+        }
+      });
+    }
+
     setExpandedGroups(prev => 
       prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
     );
   };
 
   const handleQuoteClick = (companyId: number) => {
-    track('comparison_quote_click', { company_id: companyId });
+    track('comparison_quote_click', { 
+      company_id: companyId,
+      cta_location: 'comparison_table'
+    });
     sendIntentSignal({
       company_id: companyId,
       signal_type: 'comparison_usage',
@@ -566,8 +596,25 @@ function ComparisonRow({
   companies: Company[]; 
   value: (c: Company) => React.ReactNode 
 }) {
+  const mainCompanyId = companies[0]?.id;
+  
+  // Track dwell/hover on the entire row as generalized intent for the primary company
+  const { onMouseEnter, onMouseLeave } = useHoverIntent(
+    mainCompanyId,
+    'comparison_row',
+    1000, // 1s dwell
+    { 
+      elementSelector: `row-${label.toLowerCase().replace(/\s+/g, '-')}`,
+      metadata: { criterion: label }
+    }
+  );
+
   return (
-    <div className="grid grid-cols-4 group hover:bg-blue-50/5 transition-colors border-b border-slate-50/50 last:border-b-0">
+    <div 
+      className="grid grid-cols-4 group hover:bg-blue-50/5 transition-colors border-b border-slate-50/50 last:border-b-0"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <div className="p-6 flex items-center gap-4 border-r border-slate-100 bg-slate-50/10">
         <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md flex-shrink-0">
           {icon}

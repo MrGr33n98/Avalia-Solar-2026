@@ -9,6 +9,7 @@ import { track } from '@/lib/analytics/lazy';
 import { openLeadModal } from '@/lib/lead-engine';
 import { cn } from '@/lib/utils';
 import TrustScoreDial from '../TrustScoreDial';
+import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
 interface PremiumBannerDesktopProps {
   company: Company;
@@ -33,8 +34,21 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
     openLeadModal({ preferredCompanyId: company.id, source: 'premium-banner', type: 'quick' });
   };
 
+  const { onMouseEnter, onMouseLeave } = useHoverIntent(
+    company.id,
+    'premium_banner_detail',
+    1500, // 1.5s reading time
+    { 
+      elementSelector: `premium-banner-${company.slug}`,
+      metadata: { context: 'comparison_premium_banner' }
+    }
+  );
+
   return (
-    <div className={cn(
+    <div 
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className={cn(
       "relative overflow-hidden bg-white border border-slate-100 rounded-[2.5rem] p-4 pr-10 shadow-2xl shadow-slate-200/50 flex items-center gap-8 transition-all hover:shadow-blue-100/50",
       "clay-surface clay-convex",
       className
