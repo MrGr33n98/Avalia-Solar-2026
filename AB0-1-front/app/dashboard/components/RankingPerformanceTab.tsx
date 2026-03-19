@@ -124,17 +124,20 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-[2rem] bg-slate-100 dark:bg-white/5" />)}
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[112px] rounded-2xl bg-slate-100 dark:bg-white/5" />)}
         </div>
-        <Skeleton className="h-[500px] w-full rounded-[3rem] bg-slate-100 dark:bg-white/5" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <Skeleton className="lg:col-span-8 h-[400px] rounded-2xl bg-slate-100 dark:bg-white/5" />
+          <Skeleton className="lg:col-span-4 h-[400px] rounded-2xl bg-slate-100 dark:bg-white/5" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-12 max-w-[1400px] mx-auto pb-24">
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-20">
       {/* Cabeçalho estratégico */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
@@ -196,10 +199,10 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Visualização de Vetor de Crescimento */}
-        <Card className="lg:col-span-8 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden shadow-2xl">
-          <CardHeader className="p-8 border-b border-black/5 dark:border-white/5 flex flex-row items-center justify-between gap-4">
+        <Card className="lg:col-span-8 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
+          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06] flex flex-row items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
                 <BarChart3 className="w-6 h-6 text-brand-blue" />
@@ -283,8 +286,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         </Card>
 
         {/* Quadrante Tático de Mercado */}
-        <Card className="lg:col-span-4 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden shadow-2xl flex flex-col">
-          <CardHeader className="p-8 border-b border-black/5 dark:border-white/5">
+        <Card className="lg:col-span-4 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)] flex flex-col">
+          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">

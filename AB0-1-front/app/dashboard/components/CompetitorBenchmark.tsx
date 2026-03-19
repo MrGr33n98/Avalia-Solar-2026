@@ -139,7 +139,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
 
   if (error && competitorsFromAPI.length === 0) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-[2rem] border border-amber-500/20 bg-[#002B4D]/40 p-8 text-center shadow-xl">
+      <div className="flex min-h-[320px] items-center justify-center rounded-2xl border-[0.5px] border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/[0.04] p-8 text-center shadow-[2px_2px_8px_rgba(0,0,0,0.04)]">
         <div className="space-y-3">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10">
             <AlertTriangle className="h-6 w-6 text-amber-400" />
@@ -223,10 +223,10 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Main Ranking Table */}
-        <Card className="lg:col-span-8 clay-precision border-none rounded-[2rem] bg-[#002B4D]/50 backdrop-blur-xl overflow-hidden shadow-2xl">
-          <CardHeader className="p-8 border-b border-white/5">
+        <Card className="lg:col-span-8 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] rounded-2xl overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
+          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Espectro de Liderança</CardTitle>
@@ -241,7 +241,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                  <tr className="border-b border-slate-200/50 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
                     <th className="px-8 py-5 text-left text-[10px] font-black text-white/40 uppercase tracking-widest">Identidade</th>
                     <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Visão</th>
                     <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Execução</th>
@@ -249,7 +249,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
                     <th className="px-8 py-5 text-right text-[10px] font-black text-white/40 uppercase tracking-widest">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-200/50 dark:divide-white/[0.06]">
                   {allCompanies.map((company, index) => {
                     const isYou = company.id === yourCompany.id;
                     return (
@@ -336,7 +336,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
               </table>
             </div>
           </CardContent>
-          <div className="p-6 bg-white/[0.01] border-t border-white/5 text-center">
+          <div className="p-6 bg-white/[0.01] border-t border-slate-200/50 dark:border-white/[0.06] text-center">
             <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-transparent">
               Visualizar Ecossistema Completo <ArrowRight className="ml-2 h-3 w-3" />
             </Button>
@@ -345,7 +345,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
 
         {/* Tactical Recommendation Column */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="clay-precision border-none rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-purple-600/30 backdrop-blur-xl p-8 relative overflow-hidden group shadow-xl">
+          <Card className="clay-precision border-[0.5px] border-blue-200/50 dark:border-blue-500/20 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-600/20 dark:to-purple-600/20 backdrop-blur-xl p-6 relative overflow-hidden group shadow-[2px_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3)]">
             <div className="absolute -right-4 -top-4 w-32 h-32 bg-brand-blue/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
             <div className="relative z-10 space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
@@ -366,7 +366,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
             </div>
           </Card>
 
-          <Card className="clay-precision border-none rounded-[2rem] bg-[#002B4D]/50 backdrop-blur-xl p-8 shadow-xl">
+          <Card className="clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] rounded-2xl p-6 shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
             <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
               Priority Gaps
@@ -390,7 +390,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
                 <p className="text-[10px] text-white/40 font-medium">Capacidade operacional relativa ao player que lidera a categoria.</p>
               </div>
               
-              <div className="pt-4 mt-4 border-t border-white/5">
+              <div className="pt-4 mt-4 border-t border-slate-200/50 dark:border-white/[0.06]">
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
                    <ZapOff className="h-5 w-5 text-purple-400 shrink-0" />
                    <div>
