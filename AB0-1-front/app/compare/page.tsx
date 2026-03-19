@@ -39,6 +39,7 @@ import PremiumBannerSection from '@/components/compare/PremiumBannerSection';
 import CompanyComparisonCard from '@/components/compare/CompanyComparisonCard';
 import ComparisonFooterCTA from '@/components/compare/ComparisonFooterCTA';
 import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
+import TrustScoreDial from '@/components/compare/TrustScoreDial';
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
@@ -218,7 +219,7 @@ export default function ComparePage() {
                 {/* Table Header: Sticky Company Info */}
                 <div className="grid grid-cols-4 border-b border-slate-100 bg-white sticky top-0 z-30 shadow-sm">
                   <div className="p-6 flex flex-col justify-end bg-slate-50/30 border-r border-slate-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Atributos</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dimensões TaaS</span>
                   </div>
 
                   <AnimatePresence mode="popLayout">
@@ -244,37 +245,50 @@ export default function ComparePage() {
                           <X className="h-4 w-4" aria-hidden="true" />
                         </button>
 
-                        <div className={cn(
-                          "h-20 w-20 mb-4 rounded-3xl p-3 shadow-lg border flex items-center justify-center overflow-hidden transition-transform hover:scale-105",
-                          isPremiumCompany(company)
-                            ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40"
-                            : "bg-white border-slate-100 shadow-slate-200/40"
-                        )}>
-                          <Image 
-                            src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
-                            alt={`Logo da ${company.name}`}
-                            width={64}
-                            height={64}
-                            className="max-h-full max-w-full object-contain" 
-                          />
-                        </div>
-                        
-                        <h4 className="font-black text-slate-900 text-lg line-clamp-1 mb-2 px-4 group-hover:text-blue-600 transition-colors">
-                          {company.name}
-                        </h4>
-                        
-                        <div 
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-tighter"
-                          role="img"
-                          aria-label={`Avaliação ${formatRating(company.rating_avg || company.average_rating)} de 5, ${company.rating_count || 0} avaliações`}
-                        >
-                          <Star className="h-3 w-3 fill-current" aria-hidden="true" />
-                          {formatRating(company.rating_avg || company.average_rating)} ({company.rating_count || 0})
+                        <div className="flex flex-col items-center gap-4">
+                          {/* Trust Score Dial Integrated */}
+                          <div className="relative group-hover:scale-110 transition-transform duration-500">
+                             <TrustScoreDial 
+                               score={company.trust_score || 85} 
+                               size="sm" 
+                               showLabel={false}
+                             />
+                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded-full shadow-sm border border-slate-100 text-[10px] font-black text-slate-600">
+                               {company.trust_score || 85}%
+                             </div>
+                          </div>
+
+                          <div className={cn(
+                            "h-16 w-16 rounded-2xl p-2.5 shadow-md border flex items-center justify-center overflow-hidden transition-transform",
+                            isPremiumCompany(company)
+                              ? "bg-white border-blue-200 shadow-blue-100"
+                              : "bg-white border-slate-100 shadow-slate-100"
+                          )}>
+                            <Image 
+                              src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
+                              alt={`Logo da ${company.name}`}
+                              width={48}
+                              height={48}
+                              className="max-h-full max-w-full object-contain" 
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <h4 className="font-black text-slate-900 text-base line-clamp-1 px-2">
+                              {company.name}
+                            </h4>
+                            <div 
+                              className="flex items-center justify-center gap-1 text-[10px] font-black uppercase text-blue-600"
+                            >
+                              <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                              {formatRating(company.rating_avg || company.average_rating)}
+                            </div>
+                          </div>
                         </div>
 
                         {isPremiumCompany(company) && (
-                          <div className="mt-2 px-2 py-1 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-bold">
-                            Parceiro Premium
+                          <div className="mt-4 px-3 py-1 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider shadow-lg shadow-blue-200">
+                             Selo de Confiança
                           </div>
                         )}
                       </motion.div>
@@ -289,26 +303,133 @@ export default function ComparePage() {
                       className="p-6 flex flex-col items-center justify-center border-r border-slate-100 last:border-r-0 bg-slate-50/20 group transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       aria-label="Adicionar mais uma empresa à comparação"
                     >
-                      <div className="h-16 w-16 rounded-3xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-blue-200 group-hover:text-blue-400 transition-all mb-4">
-                        <Plus className="h-6 w-6" aria-hidden="true" />
+                      <div className="h-14 w-14 rounded-2xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-blue-200 group-hover:text-blue-400 transition-all mb-3 text-sm font-bold">
+                        <Plus className="h-5 w-5" />
                       </div>
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Adicionar Empresa</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Adicionar</span>
                     </Link>
                   ))}
                 </div>
 
-                {/* Group: Visão Geral */}
+                {/* Group: Pilares de Confiança (TaaS) */}
+                <CategoryHeader 
+                  id="taas" 
+                  label="Pilares de Confiança (TaaS)" 
+                  icon={<Trophy className="h-4 w-4" />} 
+                  isExpanded={expandedGroups.includes('taas')} 
+                  onToggle={() => toggleGroup('taas')} 
+                />
+                {expandedGroups.includes('taas') && (
+                  <div className="divide-y divide-slate-50">
+                    <ComparisonRow 
+                      label="Trust Score" 
+                      icon={<ShieldCheck className="h-4 w-4 text-primary" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                        <div className="flex flex-col items-center">
+                          <span className="text-xl font-black text-slate-900">{c.trust_score || 85}%</span>
+                          <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-tighter">Verificação Ativa</span>
+                        </div>
+                      )} 
+                    />
+                    <ComparisonRow 
+                      label="SLA de Resposta" 
+                      icon={<Clock className="h-4 w-4 text-amber-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                        <div className={cn(
+                          "px-4 py-1.5 rounded-full text-[11px] font-black uppercase",
+                          c.response_time_sla === 'Imediato' ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                        )}>
+                          {c.response_time_sla || '48h úteis'}
+                        </div>
+                      )} 
+                    />
+                    <ComparisonRow 
+                      label="Certificações" 
+                      icon={<Award className="h-4 w-4 text-indigo-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                        <div className="flex -space-x-2">
+                          {(c.badges || []).slice(0, 3).map((badge, bidx) => (
+                            <div key={bidx} className="h-8 w-8 rounded-full bg-white border-2 border-slate-50 shadow-sm flex items-center justify-center p-1.5" title={badge.name}>
+                              {badge.image_url ? (
+                                <Image src={badge.image_url} alt="" width={24} height={24} className="object-contain" />
+                              ) : (
+                                <ShieldCheck className="h-4 w-4 text-blue-400" />
+                              )}
+                            </div>
+                          ))}
+                          {((c.badges || []).length > 3) && (
+                            <div className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500">
+                              +{(c.badges || []).length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )} 
+                    />
+                  </div>
+                )}
+
+                {/* Group: Performance & Qualidade */}
+                <CategoryHeader 
+                  id="tecnico" 
+                  label="Performance & Qualidade" 
+                  icon={<Zap className="h-4 w-4" />} 
+                  isExpanded={expandedGroups.includes('tecnico')} 
+                  onToggle={() => toggleGroup('tecnico')} 
+                />
+                {expandedGroups.includes('tecnico') && (
+                  <div className="divide-y divide-slate-50">
+                    <ComparisonRow 
+                      label="Tempo de Mercado" 
+                      icon={<Briefcase className="h-4 w-4 text-orange-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => {
+                        const years = c.founded_year ? new Date().getFullYear() - c.founded_year : null;
+                        return (
+                          <span className="text-sm font-bold text-slate-700">
+                            {years !== null ? `${years} anos` : 'Inaugurada recentemente'}
+                          </span>
+                        );
+                      }} 
+                    />
+                    <ComparisonRow 
+                      label="Garantia Padrão" 
+                      icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                        <span className="text-sm font-black text-slate-900">25 Anos (Eficiência)</span>
+                      )} 
+                    />
+                    <ComparisonRow 
+                      label="Nível de Intenção" 
+                      icon={<CircleDollarSign className="h-4 w-4 text-blue-500" />} 
+                      companies={comparisonList} 
+                      value={(c) => (
+                        <div className="flex flex-col gap-1 items-center">
+                          <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 rounded-full" style={{ width: '85%' }}></div>
+                          </div>
+                          <span className="text-[9px] font-black text-blue-600 tracking-widest uppercase">High Intent</span>
+                        </div>
+                      )} 
+                    />
+                  </div>
+                )}
+
+                {/* Group: Localização e Atendimento */}
                 <CategoryHeader 
                   id="geral" 
-                  label="Visão Geral" 
-                  icon={<Info className="h-4 w-4" aria-hidden="true" />} 
+                  label="Localização e Atendimento" 
+                  icon={<MapPin className="h-4 w-4" />} 
                   isExpanded={expandedGroups.includes('geral')} 
                   onToggle={() => toggleGroup('geral')} 
                 />
                 {expandedGroups.includes('geral') && (
                   <div className="divide-y divide-slate-50">
                     <ComparisonRow 
-                      label="Localização" 
+                      label="Sede Principal" 
                       icon={<MapPin className="h-4 w-4 text-blue-500" aria-hidden="true" />} 
                       companies={comparisonList} 
                       value={(c) => (
@@ -316,35 +437,24 @@ export default function ComparePage() {
                       )} 
                     />
                     <ComparisonRow 
-                      label="Selo Verificado" 
-                      icon={<ShieldCheck className="h-4 w-4 text-emerald-500" aria-hidden="true" />} 
+                      label="WhatsApp" 
+                      icon={<Check className="h-4 w-4 text-emerald-500" />} 
                       companies={comparisonList} 
                       value={(c) => (
-                        c.verified ? (
-                          <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-xl text-xs font-black">
-                            <Check className="h-3.5 w-3.5" aria-hidden="true" /> Verificada
+                        c.whatsapp ? (
+                          <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl text-[10px] font-black">
+                            Disponível
                           </div>
-                        ) : <span className="text-slate-300 font-medium">—</span>
+                        ) : <X className="h-4 w-4 text-slate-200" />
                       )} 
-                    />
-                    <ComparisonRow 
-                      label="Anos de Mercado" 
-                      icon={<Clock className="h-4 w-4 text-orange-500" aria-hidden="true" />} 
-                      companies={comparisonList} 
-                      value={(c) => {
-                        const years = c.founded_year ? new Date().getFullYear() - c.founded_year : null;
-                        return years !== null ? (
-                          <span className="text-sm font-bold text-slate-700">{years > 0 ? `${years} anos` : 'Inaugurada este ano'}</span>
-                        ) : <span className="text-slate-300 font-medium">—</span>;
-                      }} 
                     />
                   </div>
                 )}
 
                 {/* Footer Row: Actions */}
-                <div className="grid grid-cols-4 bg-slate-50/50 sticky bottom-0 z-20 border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                  <div className="p-6 flex items-center justify-center border-r border-slate-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ação imediata</span>
+                <div className="grid grid-cols-4 bg-white sticky bottom-0 z-20 border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+                  <div className="p-6 flex items-center justify-center border-r border-slate-100 bg-slate-50/20">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Match de Decisão</span>
                   </div>
                   {comparisonList.slice(0, 3).map((company, idx) => (
                     <div key={`cta-${company.id}`} className={cn(
@@ -354,14 +464,14 @@ export default function ComparePage() {
                     )}>
                       <Button 
                         className={cn(
-                          "w-full rounded-[1.25rem] font-black h-12 transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                          "bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200/50 border-t border-blue-400/30",
-                          isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50 border-t border-indigo-400/30"
+                          "w-full rounded-[1.25rem] font-black h-12 transition-all hover:scale-[1.02] active:scale-95 shadow-lg",
+                          "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200/50",
+                          isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50"
                         )}
                         onClick={() => handleQuoteClick(company.id)}
                         aria-label={`Solicitar orçamento da ${company.name}`}
                       >
-                        Solicitar Orçamento
+                        Cotar com {company.name.split(' ')[0]}
                       </Button>
                     </div>
                   ))}

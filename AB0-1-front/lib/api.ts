@@ -225,6 +225,39 @@ export interface Company {
   financing_profile?: CompanyFinancingProfile | null;
   financing_partners?: CompanyFinancingPartner[];
   financing_offers?: CompanyFinancingOffer[];
+  trust_score?: number;
+  trust_health?: {
+    trust_score: number;
+    health_status: 'critical' | 'poor' | 'fair' | 'good' | 'excellent';
+    score_trend: 'up' | 'stable' | 'stale' | 'new';
+    components: {
+      base: number;
+      verification: number;
+      rating: number;
+      reviews: number;
+      engagement: number;
+      leads: number;
+      penalty: number;
+    };
+    recommendations: Array<{
+      type: string;
+      message: string;
+      impact: number;
+      action_url: string;
+    }>;
+  };
+  intent_summary?: {
+    total_signals: number;
+    avg_confidence: number;
+    intent_distribution: {
+      cold: number;
+      warm: number;
+      hot: number;
+      boiling: number;
+      immediate: number;
+      declared: number;
+    };
+  };
   review_aggregates?: {
     global: {
       category_id: null;
