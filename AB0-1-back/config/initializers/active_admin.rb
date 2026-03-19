@@ -4,7 +4,7 @@ ActiveAdmin.setup do |config|
   # Set the title that is displayed on the main layout
   # for each of the active admin pages.
   #
-  config.site_title = "Compare Solar Dashboard"
+  config.site_title = "Avalia Solar"
 
   # Set the link url for the title. For example, to take
   # users to your main site. Defaults to no link.
@@ -79,7 +79,7 @@ ActiveAdmin.setup do |config|
   config.comments = false
   
   # Make sure this line exists
-  config.site_title = "AB0-1 Admin"
+  config.site_title = "Avalia Solar"
 
   # == User Authorization
   #

@@ -189,7 +189,7 @@ export default function EnterpriseSidebar({
     try {
       document.documentElement.style.setProperty(
         '--enterprise-sidebar-width',
-        isCollapsed ? '88px' : '300px'
+        isCollapsed ? '72px' : '240px'
       );
       window.localStorage.setItem(COLLAPSE_STORAGE_KEY, isCollapsed ? '1' : '0');
     } catch {
@@ -260,7 +260,7 @@ export default function EnterpriseSidebar({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-[300px] p-0 border-r border-white/10 bg-[#002B4D] sm:max-w-[300px]">
+        <SheetContent side="left" className="w-[280px] p-0 border-r border-white/10 bg-[#002B4D] sm:max-w-[280px]">
           {sidebarContent}
         </SheetContent>
       </Sheet>
@@ -270,7 +270,7 @@ export default function EnterpriseSidebar({
         animate={{ x: 0, opacity: 1 }}
         className={cn(
           'fixed inset-y-0 left-0 z-40 hidden border-r border-white/10 bg-[#002B4D] lg:block',
-          isCollapsed ? 'w-[88px]' : 'w-[300px]'
+          isCollapsed ? 'w-[72px]' : 'w-[240px]'
         )}
       >
         {sidebarContent}

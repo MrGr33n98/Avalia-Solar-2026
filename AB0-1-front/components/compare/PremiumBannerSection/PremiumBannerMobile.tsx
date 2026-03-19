@@ -9,6 +9,7 @@ import { getFullImageUrl } from '@/utils/image';
 import Link from 'next/link';
 import { track } from '@/lib/analytics/lazy';
 import { openLeadModal } from '@/lib/lead-engine';
+import { formatCompanyYears, getCompanySignals } from '../compare-company-utils';
 
 interface PremiumBannerMobileProps {
   company: Company;
@@ -23,9 +24,9 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
     return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
   };
 
-  const getYearsInMarket = () => {
-    return company.founded_year ? new Date().getFullYear() - company.founded_year : null;
-  };
+  const yearsLabel = formatCompanyYears(company);
+  const signals = getCompanySignals(company).slice(0, 3);
+  const highlightText = company.highlights || company.about || company.description;
 
   const handleQuoteClick = () => {
     track('premium_banner_clicked', {
@@ -52,7 +53,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-orange-50/30 via-amber-50/20 to-yellow-50/30 border border-orange-100/50 rounded-2xl p-4 shadow-lg">
+    <div className="relative overflow-hidden rounded-[1.6rem] border border-blue-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.95))] p-4 shadow-[0_24px_40px_-28px_rgba(15,23,42,0.38)] clay-surface clay-convex">
       {/* Sponsored Badge */}
       <div className="flex items-center justify-between mb-3">
         <div 
@@ -76,7 +77,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
       {/* Collapsed View */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="h-12 w-12 rounded-xl bg-white p-2 shadow-md border border-orange-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border border-blue-100 bg-white p-1.5 shadow-md clay-surface clay-convex">
             <img
               src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
               alt={`Logo da ${company.name}`}
@@ -139,32 +140,32 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
                   </div>
                 )}
                 
-                {getYearsInMarket() && (
+                {yearsLabel && (
                   <div className="flex items-center gap-2">
                     <Clock className="h-3.5 w-3.5 text-orange-500" aria-hidden="true" />
-                    <span>{getYearsInMarket()} anos de experiência</span>
+                    <span>{yearsLabel}</span>
                   </div>
                 )}
               </div>
 
-              <p className="text-slate-700 text-xs italic leading-relaxed">
-                &ldquo;Empresa parceira Avalia Solar com benefícios exclusivos para clientes da plataforma.&rdquo;
-              </p>
+              {highlightText ? (
+                <p className="line-clamp-3 text-xs leading-relaxed text-slate-600">
+                  {highlightText}
+                </p>
+              ) : null}
 
-              {/* Benefits */}
-              <div className="flex flex-wrap gap-2 text-[10px] text-slate-600">
-                <span className="flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full">
-                  ✓ Suporte Prioritário
-                </span>
-                <span className="flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full">
-                  ✓ Resposta 2h
-                </span>
-                {company.financing_enabled && (
-                  <span className="flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full">
-                    ✓ Financiamento
-                  </span>
-                )}
-              </div>
+              {signals.length > 0 && (
+                <div className="flex flex-wrap gap-2 text-[10px] text-slate-600">
+                  {signals.map((signal) => (
+                    <span
+                      key={signal.key}
+                      className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 font-bold uppercase tracking-[0.14em] text-slate-600"
+                    >
+                      {signal.label}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* CTAs */}
               <div className="space-y-2 pt-2">

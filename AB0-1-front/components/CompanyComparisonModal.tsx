@@ -19,7 +19,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { 
   Star, 
   MapPin, 
@@ -43,6 +42,11 @@ import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
+import {
+  formatCompanyYears,
+  formatCurrencyBRL,
+  isPremiumCompany,
+} from '@/components/compare/compare-company-utils';
 
 interface CompanyComparisonModalProps {
   isOpen: boolean;
@@ -77,14 +81,10 @@ export default function CompanyComparisonModal({
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-modal', type: 'quick' });
   };
 
-  const isPremiumCompany = (company: Company) => {
-    return company.featured || company.plan_status === 'active' || company.has_paid_plan;
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[85vh] p-0 gap-0 bg-white/95 backdrop-blur-xl border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden transition-all duration-500">
-        <DialogHeader className="p-6 md:p-8 pb-4 space-y-0 bg-slate-50/50 border-b border-slate-100">
+      <DialogContent className="max-w-[1080px] max-h-[82vh] gap-0 overflow-hidden rounded-[2rem] border-0 bg-white/95 p-0 shadow-[0_34px_76px_-26px_rgba(15,23,42,0.38)] backdrop-blur-xl transition-all duration-500">
+        <DialogHeader className="space-y-0 border-b border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.92))] p-5 pb-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200 shrink-0">
@@ -103,7 +103,7 @@ export default function CompanyComparisonModal({
               variant="ghost" 
               size="sm" 
               onClick={onClearAll}
-              className="text-slate-400 hover:text-red-600 hover:bg-red-50 font-black transition-all w-full md:w-auto h-10 px-6 rounded-xl"
+              className="h-10 w-full rounded-xl px-6 text-slate-400 font-black transition-all hover:bg-red-50 hover:text-red-600 md:w-auto"
             >
               <X className="h-4 w-4 mr-2" />
               Limpar Comparação
@@ -114,7 +114,7 @@ export default function CompanyComparisonModal({
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <div className="px-6 md:px-8 py-4 bg-white/50 border-b border-slate-50">
-              <TabsList className="flex md:grid w-full md:grid-cols-5 h-14 bg-slate-100/80 rounded-[1.25rem] p-1.5 gap-1 shadow-inner">
+              <TabsList className="flex h-12 w-full gap-1 rounded-[1.15rem] border border-slate-200/70 bg-slate-100/85 p-1.5 shadow-inner md:grid md:grid-cols-5">
                 {[
                   { value: 'overview', label: 'Visão Geral' },
                   { value: 'credentials', label: 'Credibilidade' },
@@ -138,14 +138,14 @@ export default function CompanyComparisonModal({
 
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="p-4 md:p-6 pt-4 pb-20">
+                <div className="p-4 pb-16 md:p-5">
                   {/* Companies Header */}
-                  <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden mb-6">
+                  <div className="mb-5 overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.94))] shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)] clay-surface clay-convex">
                     <div className="overflow-x-auto scrollbar-hide">
-                      <div className="min-w-[800px]">
-                        <div className="grid grid-cols-4 divide-x divide-slate-100">
-                          <div className="p-6 bg-slate-50/30 flex items-center justify-center">
-                            <span className="text-sm font-black text-slate-500 uppercase tracking-wide">
+                      <div className="min-w-[720px]">
+                        <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100">
+                          <div className="flex items-center justify-center bg-slate-50/30 p-4">
+                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                               Empresas
                             </span>
                           </div>
@@ -159,7 +159,7 @@ export default function CompanyComparisonModal({
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className={cn(
-                                  "p-6 flex flex-col items-center text-center relative transition-colors duration-500",
+                                  "group relative flex flex-col items-center p-4 text-center transition-colors duration-500",
                                   isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
                                 )}
                               >
@@ -182,7 +182,7 @@ export default function CompanyComparisonModal({
                                 </button>
 
                                 <div className={cn(
-                                  "h-20 w-20 mb-4 rounded-3xl p-3 shadow-lg border flex items-center justify-center overflow-hidden transition-all hover:scale-105",
+                                  "mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.25rem] border p-1.5 shadow-lg transition-all hover:scale-[1.04]",
                                   isPremiumCompany(company) 
                                     ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40" 
                                     : "bg-white border-slate-100 shadow-slate-200/30"
@@ -190,17 +190,17 @@ export default function CompanyComparisonModal({
                                   <Image
                                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
                                     alt={company.name}
-                                    width={56}
-                                    height={56}
+                                    width={46}
+                                    height={46}
                                     className="max-h-full max-w-full object-contain"
                                   />
                                 </div>
 
-                                <h4 className="font-black text-slate-900 text-lg line-clamp-1 mb-2 px-2 tracking-tight">
+                                <h4 className="mb-2 line-clamp-2 px-2 text-base font-black tracking-tight text-slate-900">
                                   {company.name}
                                 </h4>
 
-                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase mb-4 shadow-sm border border-blue-100/50">
+                                <div className="mb-3 flex items-center gap-1.5 rounded-full border border-blue-100/50 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase text-blue-600 shadow-sm">
                                   <Star className="h-3 w-3 fill-current" />
                                   {formatRating(company.rating_avg || company.average_rating)} 
                                   ({company.rating_count || 0})
@@ -220,8 +220,8 @@ export default function CompanyComparisonModal({
 
                           {/* Empty slots */}
                           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-                            <div key={`empty-${i}`} className="p-6 flex items-center justify-center bg-slate-50/20 border-dashed border-2 border-slate-200">
-                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                            <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/20 p-4">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                                 Slot vazio
                               </span>
                             </div>
@@ -264,10 +264,10 @@ export default function CompanyComparisonModal({
                         icon={<Clock className="h-4 w-4 text-orange-500" />}
                         companies={companies}
                         render={(company) => {
-                          const years = company.founded_year ? new Date().getFullYear() - company.founded_year : null;
-                          return years !== null ? (
+                          const yearsLabel = formatCompanyYears(company);
+                          return yearsLabel ? (
                             <span className="text-sm font-bold text-slate-700">
-                              {years > 0 ? `${years} anos` : 'Novo no mercado'}
+                              {yearsLabel}
                             </span>
                           ) : (
                             <span className="text-slate-300 font-medium">—</span>
@@ -373,9 +373,9 @@ export default function CompanyComparisonModal({
                         icon={<CircleDollarSign className="h-4 w-4 text-green-500" />}
                         companies={companies}
                         render={(company) =>
-                          company.minimum_ticket ? (
+                          formatCurrencyBRL(company.minimum_ticket) ? (
                             <span className="text-sm font-bold text-slate-700">
-                              R$ {company.minimum_ticket.toLocaleString()}
+                              {formatCurrencyBRL(company.minimum_ticket)}
                             </span>
                           ) : (
                             <span className="text-slate-300 font-medium">—</span>
@@ -418,12 +418,12 @@ export default function CompanyComparisonModal({
                   </TabsContent>
 
                   {/* CTA Section */}
-                  <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden mt-6">
+                  <div className="mt-5 overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.94))] shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)] clay-surface clay-convex">
                     <div className="overflow-x-auto scrollbar-hide">
-                      <div className="min-w-[800px]">
-                        <div className="grid grid-cols-4 divide-x divide-slate-100">
-                          <div className="p-6 bg-slate-50/30 flex items-center justify-center">
-                            <span className="text-sm font-black text-slate-500 uppercase tracking-wide">
+                      <div className="min-w-[720px]">
+                        <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100">
+                          <div className="flex items-center justify-center bg-slate-50/30 p-4">
+                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                               Ação
                             </span>
                           </div>
@@ -432,7 +432,7 @@ export default function CompanyComparisonModal({
                             <div
                               key={`cta-${company.id}`}
                               className={cn(
-                                "p-6 transition-colors duration-500",
+                                "p-4 transition-colors duration-500",
                                 isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
                               )}
                             >
@@ -452,7 +452,7 @@ export default function CompanyComparisonModal({
                           ))}
 
                           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-                            <div key={`empty-cta-${i}`} className="p-6"></div>
+                            <div key={`empty-cta-${i}`} className="p-4"></div>
                           ))}
                         </div>
                       </div>
@@ -470,8 +470,8 @@ export default function CompanyComparisonModal({
 
 function ComparisonSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden mb-6">
-      <div className="p-6 pb-0">
+    <div className="mb-5 overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.94))] shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)] clay-surface clay-convex">
+      <div className="p-5 pb-0">
         <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-3">
           <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
           {title}
@@ -497,9 +497,9 @@ function ComparisonRow({
 }) {
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      <div className="min-w-[800px]">
-        <div className="grid grid-cols-4 divide-x divide-slate-50 group hover:bg-blue-50/10 transition-colors">
-          <div className="p-6 flex items-center gap-3 bg-slate-50/10">
+      <div className="min-w-[720px]">
+        <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-50 group hover:bg-blue-50/10 transition-colors">
+          <div className="flex items-center gap-3 bg-slate-50/10 p-4">
             <div className="p-2 rounded-lg bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-colors">
               {icon}
             </div>
@@ -511,14 +511,14 @@ function ComparisonRow({
           {companies.slice(0, 3).map((company, idx) => (
             <div
               key={`${company.id}-${label}`}
-              className="p-6 flex items-center justify-center text-center"
+              className="flex items-center justify-center p-4 text-center"
             >
               {render(company)}
             </div>
           ))}
 
           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-            <div key={`empty-${i}`} className="p-6"></div>
+            <div key={`empty-${i}`} className="p-4"></div>
           ))}
         </div>
       </div>

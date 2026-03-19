@@ -1,6 +1,6 @@
 'use client';
 
-import { Tag, Info, X, Star, MapPin, Shield, Clock, ArrowRight, ExternalLink, Zap, Briefcase } from 'lucide-react';
+import { ArrowRight, Briefcase, Clock, ExternalLink, Shield, Star, X, Zap } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { getFullImageUrl } from '@/utils/image';
@@ -10,6 +10,11 @@ import { openLeadModal } from '@/lib/lead-engine';
 import { cn } from '@/lib/utils';
 import TrustScoreDial from '../TrustScoreDial';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import {
+  formatCompanyYears,
+  getCompanySignals,
+  getCompanyTrustScore,
+} from '../compare-company-utils';
 
 interface PremiumBannerDesktopProps {
   company: Company;
@@ -23,7 +28,16 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
     return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
   };
 
-  const score = company.trust_score || 98; // Fallback to 98 as per requested mockup
+  const score = getCompanyTrustScore(company);
+  const signals = getCompanySignals(company).slice(0, 3);
+  const scoreLabel = score !== null ? `${score}%` : 'Sem score';
+  const yearsLabel = formatCompanyYears(company);
+  const toneClasses = {
+    blue: 'border-blue-100 bg-blue-50/90 text-blue-700',
+    emerald: 'border-emerald-100 bg-emerald-50/90 text-emerald-700',
+    amber: 'border-amber-100 bg-amber-50/90 text-amber-700',
+    violet: 'border-violet-100 bg-violet-50/90 text-violet-700',
+  } as const;
 
   const handleQuoteClick = () => {
     track('premium_banner_clicked', {
@@ -49,7 +63,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={cn(
-      "relative overflow-hidden bg-white border border-slate-100 rounded-[2.5rem] p-4 pr-10 shadow-2xl shadow-slate-200/50 flex items-center gap-8 transition-all hover:shadow-blue-100/50",
+      "group relative flex items-center gap-6 overflow-hidden rounded-[2rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.94))] p-4 pr-10 shadow-[0_28px_60px_-36px_rgba(15,23,42,0.45)] transition-all hover:shadow-[0_34px_72px_-36px_rgba(37,99,235,0.22)]",
       "clay-surface clay-convex",
       className
     )}>
@@ -74,35 +88,44 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       </div>
 
       {/* Trust Dial & Logo Combined Unit */}
-      <div className="flex items-center gap-6 ml-2">
-        <div className="relative group/dial">
-          <TrustScoreDial 
-            score={score} 
-            size="md" 
-            showLabel={false}
-            className="hover:scale-105 transition-transform cursor-help"
-          />
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded-full shadow-md border border-slate-100 text-[10px] font-black text-slate-700">
-            {score}%
-          </div>
+      <div className="ml-1 flex items-center gap-4">
+        <div className="relative">
+          {score !== null ? (
+            <>
+              <TrustScoreDial 
+                score={score} 
+                size="md" 
+                showLabel={false}
+                className="cursor-help transition-transform hover:scale-105"
+              />
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-slate-100 bg-white px-2 py-0.5 text-[10px] font-black text-slate-700 shadow-md">
+                {scoreLabel}
+              </div>
+            </>
+          ) : (
+            <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 shadow-inner clay-surface clay-convex">
+              <span className="text-xl font-black text-slate-700">—</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Trust</span>
+            </div>
+          )}
         </div>
 
         <div className={cn(
-          "h-24 w-24 rounded-[2rem] bg-white p-4 flex items-center justify-center overflow-hidden border border-slate-100",
+          "flex h-[4.75rem] w-[4.75rem] items-center justify-center overflow-hidden rounded-[1.6rem] border border-slate-100 bg-white p-2",
           "clay-surface clay-convex shadow-xl transition-all duration-500 hover:scale-110 hover:-rotate-2 group"
         )}>
           <img
             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
             alt={`Logo da ${company.name}`}
-            className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+            className="max-h-full max-w-full object-contain transition-all duration-500"
           />
         </div>
       </div>
 
       {/* Main Info Section - Center Balanced */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-4 mb-3">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+        <div className="mb-2 flex items-center gap-3">
+          <h3 className="text-2xl font-black leading-none tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
             {company.name}
           </h3>
           
@@ -113,31 +136,47 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
             </div>
           )}
           
-          <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
+          <div className="flex items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-amber-500">
             <Star className="h-3.5 w-3.5 fill-current" />
             <span className="text-xs font-black">{formatRating(company.rating_avg || company.average_rating)}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
-          <div className="flex items-center gap-2 group/stat">
-            <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 group-hover/stat:bg-blue-600 group-hover/stat:text-white transition-colors duration-300">
-              <Zap className="h-3 w-3 fill-current" />
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {signals.map((signal) => (
+            <span
+              key={signal.key}
+              className={cn(
+                "rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] shadow-sm",
+                toneClasses[signal.tone]
+              )}
+            >
+              {signal.label}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-slate-500">
+          {yearsLabel && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5 text-amber-500" />
+              <span>{yearsLabel}</span>
             </div>
-            <span>Power Intent</span>
-          </div>
-          <div className="flex items-center gap-2 group/stat">
-            <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 group-hover/stat:bg-indigo-600 group-hover/stat:text-white transition-colors duration-300">
-              <Briefcase className="h-3 w-3 fill-current" />
+          )}
+
+          {company.financing_enabled && (
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-3.5 w-3.5 text-blue-500" />
+              <span>Financiamento disponível</span>
             </div>
-            <span>Elite Partner</span>
-          </div>
-          <div className="flex items-center gap-2 group/stat">
-            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 group-hover/stat:bg-emerald-600 group-hover/stat:text-white transition-colors duration-300">
-              <Shield className="h-3 w-3 fill-current" />
+          )}
+
+          {company.response_time_sla && (
+            <div className="flex items-center gap-2">
+              <Zap className="h-3.5 w-3.5 text-indigo-500" />
+              <span>{company.response_time_sla}</span>
             </div>
-            <span>Verified Pro</span>
-          </div>
+          )}
         </div>
       </div>
 

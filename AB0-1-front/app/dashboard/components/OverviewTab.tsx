@@ -73,51 +73,66 @@ function RollingNumber({ value, className }: { value: number | string; className
   );
 }
 
-/* ─── Figma-style Stat Card (SnowUI adapted) ─── */
+/* ─── Figma-style Stat Card (AS-EDS Clay Precision) ─── */
 function StatCard({
   title,
   value,
   change,
   changeType = 'positive',
+  icon: Icon,
   delay = 0,
 }: {
   title: string;
   value: string | number;
   change: string;
   changeType?: 'positive' | 'negative' | 'neutral';
+  icon?: any;
   delay?: number;
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.23, 1, 0.32, 1] }}
+      transition={{ duration: 0.35, delay, ease: [0.23, 1, 0.32, 1] }}
     >
       <div className={cn(
-        'relative flex flex-col gap-2 p-6 rounded-[20px] overflow-hidden transition-all duration-300',
-        'bg-slate-50/80 dark:bg-white/[0.04]',
-        'border border-slate-200/60 dark:border-white/[0.06]',
-        'hover:shadow-lg hover:shadow-black/[0.04] dark:hover:shadow-black/20',
-        'hover:border-slate-300/80 dark:hover:border-white/10',
-        'group cursor-default'
+        'relative flex flex-col justify-between gap-3 p-5 rounded-2xl overflow-hidden transition-all duration-300',
+        'bg-white dark:bg-[hsl(var(--clay-surface))]',
+        'border-[0.5px] border-slate-200/80 dark:border-white/[0.08]',
+        'shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)]',
+        'dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]',
+        'hover:shadow-[3px_3px_12px_hsl(var(--clay-shadow-dark)/0.06),-3px_-3px_12px_hsl(var(--clay-shadow-light)/0.7)]',
+        'dark:hover:shadow-[3px_3px_14px_rgba(0,0,0,0.4),-3px_-3px_10px_rgba(255,255,255,0.04)]',
+        'hover:border-slate-300/80 dark:hover:border-white/[0.12]',
+        'group cursor-default min-h-[112px]'
       )}>
-        <p className="text-sm font-medium text-slate-500 dark:text-white/50 leading-tight">
-          {title}
-        </p>
+        {/* Inset highlight */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/[0.06] to-transparent" />
+
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] font-medium text-slate-500 dark:text-white/50 leading-tight">
+            {title}
+          </p>
+          {Icon && (
+            <div className="p-1.5 rounded-lg bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06]">
+              <Icon className="h-3.5 w-3.5 text-slate-400 dark:text-white/30" />
+            </div>
+          )}
+        </div>
         <div className="flex items-end justify-between gap-2 flex-wrap">
           <RollingNumber
             value={value}
-            className="text-[28px] font-semibold text-slate-900 dark:text-white leading-none tracking-tight"
+            className="text-[26px] font-semibold text-slate-900 dark:text-white leading-none tracking-tight"
           />
           <div className={cn(
-            'flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md',
-            changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
-            changeType === 'negative' && 'text-red-500 dark:text-red-400',
+            'flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md',
+            changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10',
+            changeType === 'negative' && 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10',
             changeType === 'neutral' && 'text-slate-500 dark:text-white/40',
           )}>
             <span>{change}</span>
             {changeType === 'positive' && (
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              <ArrowUpRight className="h-3 w-3" />
             )}
           </div>
         </div>
@@ -130,7 +145,7 @@ function StatCard({
 function ChartTooltipContent({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="min-w-[160px] rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-3 text-xs shadow-xl backdrop-blur-xl">
+    <div className="min-w-[160px] rounded-xl border-[0.5px] border-slate-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-[hsl(var(--clay-surface))]/95 p-3 text-xs shadow-xl backdrop-blur-xl">
       <p className="font-medium text-slate-500 dark:text-white/50 mb-2">{label}</p>
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center justify-between gap-4">
@@ -183,6 +198,14 @@ function DonutLegendRow({ color, label, value }: { color: string; label: string;
     </div>
   );
 }
+
+/* ─── Clay Panel Styles (AS-EDS Precision) ─── */
+const CLAY_PANEL = [
+  'bg-white dark:bg-[hsl(var(--clay-surface))]',
+  'border-[0.5px] border-slate-200/80 dark:border-white/[0.08]',
+  'shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)]',
+  'dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]',
+].join(' ');
 
 /* ─── Main Component ─── */
 export default function OverviewTab({ companyId, company, themeMode, onNavigateToReviews }: OverviewTabProps) {
@@ -355,7 +378,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
           <Skeleton className="lg:col-span-8 h-[330px] rounded-[20px]" />
           <Skeleton className="lg:col-span-4 h-[330px] rounded-[20px]" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <Skeleton className="h-[280px] rounded-[20px]" />
           <Skeleton className="h-[280px] rounded-[20px]" />
         </div>
@@ -364,13 +387,14 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
   }
 
   return (
-    <div className="space-y-6 pb-20 max-w-[1600px] mx-auto animate-in fade-in duration-700">
+    <div className="space-y-5 pb-20 max-w-[1400px] mx-auto animate-in fade-in duration-700">
 
       {/* ═══ ROW 1: 4 Stat Cards (Figma: 202x112 each) ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Visualizações"
           value={stats?.profileViews || 0}
+          icon={Eye}
           change={`+${((stats?.profileViews || 0) > 0 ? '11.01' : '0')}%`}
           changeType={stats?.profileViews ? 'positive' : 'neutral'}
           delay={0}
@@ -378,6 +402,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         <StatCard
           title="Avaliações"
           value={stats?.reviewsCount || 0}
+          icon={Star}
           change={`+${stats?.reviewsCount || 0}`}
           changeType={stats?.reviewsCount ? 'positive' : 'neutral'}
           delay={0.05}
@@ -385,6 +410,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         <StatCard
           title="Conversão"
           value={`${(stats?.conversionRate || 0).toFixed(1)}%`}
+          icon={MousePointerClick}
           change="+2.4%"
           changeType="positive"
           delay={0.1}
@@ -392,6 +418,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         <StatCard
           title="Oportunidades"
           value={stats?.leadsReceived || 0}
+          icon={Users}
           change={stats?.leadsReceived ? `+${stats.leadsReceived}` : '0'}
           changeType={stats?.leadsReceived ? 'positive' : 'neutral'}
           delay={0.15}
@@ -399,7 +426,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       </div>
 
       {/* ═══ ROW 2: Main Chart (8-col) + Traffic Sidebar (4-col) ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Main Performance Chart (Figma: 662x330 Block) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -409,8 +436,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         >
           <div className={cn(
             'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
-            'bg-slate-50/60 dark:bg-white/[0.03]',
-            'border border-slate-200/50 dark:border-white/[0.06]',
+            CLAY_PANEL,
           )}>
             {/* Chart Header — Tab group + Legend */}
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -502,8 +528,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         >
           <div className={cn(
             'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
-            'bg-slate-50/60 dark:bg-white/[0.03]',
-            'border border-slate-200/50 dark:border-white/[0.06]',
+            CLAY_PANEL,
           )}>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               Fontes de Tráfego
@@ -543,7 +568,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       </motion.div>
 
       {/* ═══ ROW 4: Donut Chart (6-col) + NPS/Ranking (6-col) ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Donut — Engagement Distribution (Figma: 432x280) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -552,8 +577,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         >
           <div className={cn(
             'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
-            'bg-slate-50/60 dark:bg-white/[0.03]',
-            'border border-slate-200/50 dark:border-white/[0.06]',
+            CLAY_PANEL,
           )}>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               Distribuição de Engajamento
@@ -604,8 +628,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         >
           <div className={cn(
             'rounded-[20px] overflow-hidden h-full',
-            'bg-slate-50/60 dark:bg-white/[0.03]',
-            'border border-slate-200/50 dark:border-white/[0.06]',
+            CLAY_PANEL,
           )}>
             <NPSDetailedCard
               averageRating={Number(stats?.averageRating || 0)}
@@ -623,8 +646,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       >
         <div className={cn(
           'rounded-[20px] overflow-hidden',
-          'bg-slate-50/60 dark:bg-white/[0.03]',
-          'border border-slate-200/50 dark:border-white/[0.06]',
+          CLAY_PANEL,
         )}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -642,12 +664,11 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       </motion.div>
 
       {/* ═══ ROW 6: Operational Cards (Profile + Conversion + Status) ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Profile Completion */}
         <div className={cn(
           'flex items-center gap-5 p-5 rounded-[20px]',
-          'bg-slate-50/60 dark:bg-white/[0.03]',
-          'border border-slate-200/50 dark:border-white/[0.06]',
+          CLAY_PANEL,
         )}>
           <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20">
             <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -669,8 +690,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         {/* Conversion Rate */}
         <div className={cn(
           'flex items-center gap-5 p-5 rounded-[20px]',
-          'bg-slate-50/60 dark:bg-white/[0.03]',
-          'border border-slate-200/50 dark:border-white/[0.06]',
+          CLAY_PANEL,
         )}>
           <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20">
             <Zap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -688,8 +708,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         {/* Active Status */}
         <div className={cn(
           'flex items-center gap-5 p-5 rounded-[20px]',
-          'bg-slate-50/60 dark:bg-white/[0.03]',
-          'border border-slate-200/50 dark:border-white/[0.06]',
+          CLAY_PANEL,
         )}>
           <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 rounded-2xl border border-cyan-200 dark:border-cyan-500/20">
             <Eye className="h-6 w-6 text-cyan-600 dark:text-cyan-400" strokeWidth={2} />
@@ -715,8 +734,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       >
         <div className={cn(
           'rounded-[20px] overflow-hidden',
-          'bg-slate-50/60 dark:bg-white/[0.03]',
-          'border border-slate-200/50 dark:border-white/[0.06]',
+          CLAY_PANEL,
         )}>
           <div className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
             <div className="flex items-center justify-between">

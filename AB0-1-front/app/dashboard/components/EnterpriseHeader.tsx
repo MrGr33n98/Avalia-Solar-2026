@@ -131,7 +131,7 @@ export default function EnterpriseHeader({
   };
 
   return (
-    <header className="sticky top-0 h-16 bg-[#002B4D]/80 backdrop-blur-md border-b border-white/10 z-50">
+    <header className="sticky top-0 h-[68px] bg-[#002B4D]/80 backdrop-blur-md border-b border-white/[0.08] z-50">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Left: Menu Button + Company Info */}
         <div className="flex items-center gap-3 min-w-0 flex-1">

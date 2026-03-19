@@ -316,7 +316,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1600px] mx-auto p-4 lg:p-8">
+          <div className="max-w-[1400px] mx-auto p-4 lg:p-6">
             <MobileDashboardQuickAccess
               activeTab={activeTab}
               company={company}

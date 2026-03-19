@@ -1,11 +1,12 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Scale, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
+import { isPremiumCompany } from './compare-company-utils';
 
 interface ComparisonSummaryProps {
   companies: Company[];
@@ -20,18 +21,16 @@ export default function ComparisonSummary({
   onRemove,
   className,
 }: ComparisonSummaryProps) {
-  const premiumCount = companies.filter(c => 
-    c.featured || c.plan_status === 'active' || c.has_paid_plan
-  ).length;
+  const premiumCount = companies.filter(isPremiumCompany).length;
 
   const emptySlots = Math.max(0, maxCompanies - companies.length);
 
   return (
     <section 
-      className={cn("container mx-auto px-4 py-6", className)}
+      className={cn("py-2", className)}
       aria-label="Resumo das empresas selecionadas"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <AnimatePresence mode="popLayout">
             {companies.slice(0, maxCompanies).map((company, idx) => (
@@ -44,7 +43,13 @@ export default function ComparisonSummary({
                 transition={{ duration: 0.2 }}
                 className="relative group"
               >
-                <div className="h-16 w-16 rounded-2xl p-2 bg-white shadow-md border border-slate-100 flex items-center justify-center overflow-hidden hover:shadow-lg transition-shadow">
+                <div
+                  className={cn(
+                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1.5 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
+                    "clay-surface clay-convex",
+                    isPremiumCompany(company) ? "border-blue-200/80" : "border-slate-100"
+                  )}
+                >
                   <img
                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
                     alt={`Logo da ${company.name}`}
@@ -68,7 +73,7 @@ export default function ComparisonSummary({
             <Link 
               key={`empty-${i}`}
               href="/companies"
-              className="h-16 w-16 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-400 transition-colors group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="group flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-2 border-dashed border-slate-200 bg-slate-50 text-slate-300 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               aria-label="Adicionar mais uma empresa à comparação"
             >
               <Plus className="h-6 w-6" aria-hidden="true" />

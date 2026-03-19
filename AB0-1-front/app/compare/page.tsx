@@ -19,9 +19,7 @@ import {
   Award,
   CircleDollarSign,
   ChevronDown,
-  Info,
   Plus,
-  ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
@@ -38,9 +36,14 @@ import ComparisonSummary from '@/components/compare/ComparisonSummary';
 import PremiumBannerSection from '@/components/compare/PremiumBannerSection';
 import CompanyComparisonCard from '@/components/compare/CompanyComparisonCard';
 import ComparisonFooterCTA from '@/components/compare/ComparisonFooterCTA';
-import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
 import TrustScoreDial from '@/components/compare/TrustScoreDial';
 import { useScrollDepthMilestone, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import {
+  formatCompanyYears,
+  formatCurrencyBRL,
+  getCompanyTrustScore,
+  isPremiumCompany,
+} from '@/components/compare/compare-company-utils';
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
@@ -147,10 +150,6 @@ export default function ComparePage() {
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-page', type: 'quick' });
   };
 
-  const isPremiumCompany = (company: Company) => {
-    return company.featured || company.plan_status === 'active' || company.has_paid_plan;
-  };
-
   // Empty State
   if (comparisonList.length === 0) {
     return (
@@ -211,7 +210,7 @@ export default function ComparePage() {
         onClearAll={clearComparison}
       />
 
-      <main className="container mx-auto px-4 -mt-8 relative z-10" id="main-content">
+      <main className="relative z-10 mx-auto -mt-4 max-w-[1180px] px-4" id="main-content">
         {/* Summary Section */}
         <ComparisonSummary
           companies={comparisonList}
@@ -242,87 +241,95 @@ export default function ComparePage() {
 
         {/* Desktop & Tablet: Table Layout */}
         <div className="hidden md:block">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,249,255,0.94))] shadow-[0_30px_64px_-36px_rgba(15,23,42,0.45)] clay-surface clay-convex">
             <ScrollArea className="w-full">
-              <div className="min-w-[900px]">
+              <div className="min-w-[760px]">
                 
                 {/* Table Header: Sticky Company Info */}
-                <div className="grid grid-cols-4 border-b border-slate-100 bg-white sticky top-0 z-30 shadow-sm">
-                  <div className="p-6 flex flex-col justify-end bg-slate-50/30 border-r border-slate-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dimensões TaaS</span>
+                <div className="sticky top-0 z-30 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 bg-white shadow-sm">
+                  <div className="flex flex-col justify-end border-r border-slate-100 bg-slate-50/35 p-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Dimensões TaaS</span>
                   </div>
 
                   <AnimatePresence mode="popLayout">
-                    {comparisonList.slice(0, 3).map((company, idx) => (
-                      <motion.div 
-                        key={company.id}
-                        layout
-                        initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.95 }}
-                        className={cn(
-                          "p-6 flex flex-col items-center text-center relative border-r border-slate-100 last:border-r-0",
-                          idx === 0 && "bg-blue-50/10",
-                          isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
-                        )}
-                      >
-                        <button 
-                          onClick={() => removeFromComparison(company.id)} 
-                          aria-label={`Remover ${company.name} da comparação`}
-                          className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          title="Remover da comparação"
+                    {comparisonList.slice(0, 3).map((company, idx) => {
+                      const trustScore = getCompanyTrustScore(company);
+
+                      return (
+                        <motion.div 
+                          key={company.id}
+                          layout
+                          initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.95 }}
+                          className={cn(
+                            "group relative flex flex-col items-center border-r border-slate-100 p-4 text-center last:border-r-0",
+                            idx === 0 && "bg-blue-50/10",
+                            isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
+                          )}
                         >
-                          <X className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                          <button 
+                            onClick={() => removeFromComparison(company.id)} 
+                            aria-label={`Remover ${company.name} da comparação`}
+                            className="absolute right-3 top-3 rounded-full bg-slate-50 p-1.5 text-slate-300 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            title="Remover da comparação"
+                          >
+                            <X className="h-4 w-4" aria-hidden="true" />
+                          </button>
 
-                        <div className="flex flex-col items-center gap-4">
-                          {/* Trust Score Dial Integrated */}
-                          <div className="relative group-hover:scale-110 transition-transform duration-500">
-                             <TrustScoreDial 
-                               score={company.trust_score || 85} 
-                               size="sm" 
-                               showLabel={false}
-                             />
-                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded-full shadow-sm border border-slate-100 text-[10px] font-black text-slate-600">
-                               {company.trust_score || 85}%
-                             </div>
-                          </div>
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="relative transition-transform duration-500 group-hover:scale-105">
+                              {trustScore !== null ? (
+                                <>
+                                  <TrustScoreDial 
+                                    score={trustScore} 
+                                    size="sm" 
+                                    showLabel={false}
+                                  />
+                                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-slate-100 bg-white px-2 py-0.5 text-[10px] font-black text-slate-600 shadow-sm">
+                                    {trustScore}%
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 shadow-inner clay-surface clay-convex">
+                                  <span className="text-lg font-black text-slate-700">—</span>
+                                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Trust</span>
+                                </div>
+                              )}
+                            </div>
 
-                          <div className={cn(
-                            "h-16 w-16 rounded-2xl p-2.5 shadow-md border flex items-center justify-center overflow-hidden transition-transform",
-                            isPremiumCompany(company)
-                              ? "bg-white border-blue-200 shadow-blue-100"
-                              : "bg-white border-slate-100 shadow-slate-100"
-                          )}>
-                            <Image 
-                              src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
-                              alt={`Logo da ${company.name}`}
-                              width={48}
-                              height={48}
-                              className="max-h-full max-w-full object-contain" 
-                            />
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <h4 className="font-black text-slate-900 text-base line-clamp-1 px-2">
-                              {company.name}
-                            </h4>
-                            <div 
-                              className="flex items-center justify-center gap-1 text-[10px] font-black uppercase text-blue-600"
-                            >
-                              <Star className="h-3 w-3 fill-current" aria-hidden="true" />
-                              {formatRating(company.rating_avg || company.average_rating)}
+                            <div className={cn(
+                              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1.5 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-transform clay-surface clay-convex",
+                              isPremiumCompany(company) ? "border-blue-200" : "border-slate-100"
+                            )}>
+                              <Image 
+                                src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
+                                alt={`Logo da ${company.name}`}
+                                width={42}
+                                height={42}
+                                className="max-h-full max-w-full object-contain" 
+                              />
+                            </div>
+                            
+                            <div className="space-y-1">
+                              <h4 className="line-clamp-2 px-2 text-sm font-black text-slate-900">
+                                {company.name}
+                              </h4>
+                              <div className="flex items-center justify-center gap-1 text-[10px] font-black uppercase text-blue-600">
+                                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                                {formatRating(company.rating_avg || company.average_rating)}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {isPremiumCompany(company) && (
-                          <div className="mt-4 px-3 py-1 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider shadow-lg shadow-blue-200">
-                             Selo de Confiança
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
+                          {isPremiumCompany(company) && (
+                            <div className="mt-3 rounded-full bg-blue-600 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-blue-200">
+                              Parceiro Premium
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
                   </AnimatePresence>
 
                   {/* Empty Slots */}
@@ -330,13 +337,13 @@ export default function ComparePage() {
                     <Link 
                       key={`empty-${i}`}
                       href="/companies"
-                      className="p-6 flex flex-col items-center justify-center border-r border-slate-100 last:border-r-0 bg-slate-50/20 group transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="group flex flex-col items-center justify-center border-r border-slate-100 bg-slate-50/20 p-4 transition-all hover:bg-white last:border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       aria-label="Adicionar mais uma empresa à comparação"
                     >
-                      <div className="h-14 w-14 rounded-2xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-blue-200 group-hover:text-blue-400 transition-all mb-3 text-sm font-bold">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[1rem] border-2 border-dashed border-slate-200 bg-white text-sm font-bold text-slate-300 transition-all group-hover:border-blue-200 group-hover:text-blue-400">
                         <Plus className="h-5 w-5" />
                       </div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Adicionar</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors group-hover:text-blue-600">Adicionar</span>
                     </Link>
                   ))}
                 </div>
@@ -355,12 +362,18 @@ export default function ComparePage() {
                       label="Trust Score" 
                       icon={<ShieldCheck className="h-4 w-4 text-primary" />} 
                       companies={comparisonList} 
-                      value={(c) => (
-                        <div className="flex flex-col items-center">
-                          <span className="text-xl font-black text-slate-900">{c.trust_score || 85}%</span>
-                          <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-tighter">Verificação Ativa</span>
-                        </div>
-                      )} 
+                      value={(c) => {
+                        const trustScore = getCompanyTrustScore(c);
+
+                        return trustScore !== null ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-xl font-black text-slate-900">{trustScore}%</span>
+                            <span className="text-[9px] font-bold uppercase tracking-tighter text-emerald-500">Score atual</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-slate-300">—</span>
+                        );
+                      }} 
                     />
                     <ComparisonRow 
                       label="SLA de Resposta" 
@@ -371,7 +384,7 @@ export default function ComparePage() {
                           "px-4 py-1.5 rounded-full text-[11px] font-black uppercase",
                           c.response_time_sla === 'Imediato' ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
                         )}>
-                          {c.response_time_sla || '48h úteis'}
+                          {c.response_time_sla || '—'}
                         </div>
                       )} 
                     />
@@ -416,33 +429,36 @@ export default function ComparePage() {
                       icon={<Briefcase className="h-4 w-4 text-orange-500" />} 
                       companies={comparisonList} 
                       value={(c) => {
-                        const years = c.founded_year ? new Date().getFullYear() - c.founded_year : null;
+                        const yearsLabel = formatCompanyYears(c);
                         return (
                           <span className="text-sm font-bold text-slate-700">
-                            {years !== null ? `${years} anos` : 'Inaugurada recentemente'}
+                            {yearsLabel || '—'}
                           </span>
                         );
                       }} 
                     />
                     <ComparisonRow 
-                      label="Garantia Padrão" 
-                      icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />} 
+                      label="Ticket Mínimo" 
+                      icon={<CircleDollarSign className="h-4 w-4 text-emerald-500" />} 
                       companies={comparisonList} 
                       value={(c) => (
-                        <span className="text-sm font-black text-slate-900">25 Anos (Eficiência)</span>
+                        <span className="text-sm font-black text-slate-900">
+                          {formatCurrencyBRL(c.minimum_ticket) || '—'}
+                        </span>
                       )} 
                     />
                     <ComparisonRow 
-                      label="Nível de Intenção" 
-                      icon={<CircleDollarSign className="h-4 w-4 text-blue-500" />} 
+                      label="Financiamento" 
+                      icon={<Zap className="h-4 w-4 text-blue-500" />} 
                       companies={comparisonList} 
                       value={(c) => (
-                        <div className="flex flex-col gap-1 items-center">
-                          <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-600 rounded-full" style={{ width: '85%' }}></div>
-                          </div>
-                          <span className="text-[9px] font-black text-blue-600 tracking-widest uppercase">High Intent</span>
-                        </div>
+                        c.financing_enabled ? (
+                          <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700">
+                            Disponível
+                          </span>
+                        ) : (
+                          <span className="text-sm font-bold text-slate-300">—</span>
+                        )
                       )} 
                     />
                   </div>
@@ -482,13 +498,13 @@ export default function ComparePage() {
                 )}
 
                 {/* Footer Row: Actions */}
-                <div className="grid grid-cols-4 bg-white sticky bottom-0 z-20 border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                  <div className="p-6 flex items-center justify-center border-r border-slate-100 bg-slate-50/20">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Match de Decisão</span>
+                <div className="sticky bottom-0 z-20 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-t border-slate-100 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+                  <div className="flex items-center justify-center border-r border-slate-100 bg-slate-50/20 p-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Match de Decisão</span>
                   </div>
                   {comparisonList.slice(0, 3).map((company, idx) => (
                     <div key={`cta-${company.id}`} className={cn(
-                      "p-6 border-r border-slate-100 last:border-r-0",
+                      "border-r border-slate-100 p-4 last:border-r-0",
                       idx === 0 && "bg-blue-50/20",
                       isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/30 to-indigo-50/30"
                     )}>
@@ -506,7 +522,7 @@ export default function ComparePage() {
                     </div>
                   ))}
                   {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-cta-${i}`} className="p-6 border-r border-slate-100 last:border-r-0"></div>
+                    <div key={`empty-cta-${i}`} className="border-r border-slate-100 p-4 last:border-r-0"></div>
                   ))}
                 </div>
               </div>
@@ -517,7 +533,7 @@ export default function ComparePage() {
         {/* Footer CTA */}
         <ComparisonFooterCTA 
           hasPremiumCompanies={hasPremiumCompanies}
-          className="mt-16"
+          className="mt-12"
         />
       </main>
     </div>
@@ -543,13 +559,13 @@ function CategoryHeader({
       aria-expanded={isExpanded}
       aria-controls={`category-${id}`}
       className={cn(
-        "w-full grid grid-cols-4 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500",
+        "group grid w-full grid-cols-[170px_repeat(3,minmax(0,1fr))] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500",
         isExpanded 
           ? "bg-white border-y border-slate-100 shadow-sm z-10" 
           : "bg-slate-50/50 border-y border-transparent hover:bg-white"
       )}
     >
-      <div className="col-span-4 p-5 px-8 flex items-center justify-between">
+      <div className="col-span-4 flex items-center justify-between p-4 px-6">
         <div className="flex items-center gap-4">
           <div className={cn(
             "p-2.5 rounded-2xl transition-all duration-300",
@@ -611,11 +627,11 @@ function ComparisonRow({
 
   return (
     <div 
-      className="grid grid-cols-4 group hover:bg-blue-50/5 transition-colors border-b border-slate-50/50 last:border-b-0"
+      className="group grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-50/50 transition-colors hover:bg-blue-50/5 last:border-b-0"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="p-6 flex items-center gap-4 border-r border-slate-100 bg-slate-50/10">
+      <div className="flex items-center gap-3 border-r border-slate-100 bg-slate-50/10 p-4">
         <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md flex-shrink-0">
           {icon}
         </div>
@@ -626,7 +642,7 @@ function ComparisonRow({
 
       {companies.slice(0, 3).map((company, idx) => (
         <div key={`val-${company.id}`} className={cn(
-          "p-6 flex items-center justify-center text-center border-r border-slate-100 last:border-r-0 transition-colors",
+          "flex items-center justify-center border-r border-slate-100 p-4 text-center transition-colors last:border-r-0",
           idx === 0 && "bg-blue-50/5"
         )}>
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-500">
@@ -636,7 +652,7 @@ function ComparisonRow({
       ))}
 
       {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-        <div key={`empty-val-${i}`} className="p-6 border-r border-slate-100 last:border-r-0 bg-slate-50/5"></div>
+        <div key={`empty-val-${i}`} className="border-r border-slate-100 bg-slate-50/5 p-4 last:border-r-0"></div>
       ))}
     </div>
   );
