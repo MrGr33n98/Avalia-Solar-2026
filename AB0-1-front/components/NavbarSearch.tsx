@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Search } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 type NavbarSearchProps = {
@@ -47,14 +46,6 @@ export default function NavbarSearch({
             inputClassName
           )}
         />
-        <Button
-          type="submit"
-          size="sm"
-          className="h-10 rounded-xl bg-brand-blue px-4 text-[12px] font-semibold tracking-[0.08em] text-white shadow-[0_12px_24px_-18px_rgba(45,106,224,0.6)] transition-colors hover:bg-brand-blue-light"
-        >
-          <Search className="mr-2 h-4 w-4" />
-          Buscar
-        </Button>
       </div>
     </form>
   );
