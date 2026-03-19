@@ -87,7 +87,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-2 px-3 sm:px-5 lg:px-6">
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-3 rounded-[1.1rem] px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group flex shrink-0 items-center gap-2 rounded-[1.1rem] px-0 py-1.5 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
           <Image
