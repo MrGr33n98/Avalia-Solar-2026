@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Star, Check, ExternalLink } from 'lucide-react';
 
 interface CompanyData {
@@ -38,8 +37,9 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
       <div className="flex items-center gap-4 mb-4">
         <div className={`w-12 h-12 rounded-full ${theme === 'light' ? 'bg-gray-100' : 'bg-[#002B4D]'} flex items-center justify-center`}>
           {companyData.verified_badge_image_url ? (
-            <Image 
-              src={companyData.verified_badge_image_url} 
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={companyData.verified_badge_image_url}
               alt={companyData.name}
               width={40}
               height={40}
