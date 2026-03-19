@@ -84,10 +84,10 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-slate-200/70 bg-background/90 pt-[var(--safe-area-inset-top)] shadow-[0_14px_36px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_20px_46px_-36px_rgba(0,0,0,0.78)]">
-      <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-2 px-3 sm:px-5 lg:px-6">
+      <div className="mx-auto flex h-[4.5rem] max-w-[86rem] items-center gap-1.5 px-2 sm:px-4 lg:px-4 xl:px-5">
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2 rounded-[1.1rem] px-0 py-1.5 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group -ml-1 flex shrink-0 items-center gap-1.5 rounded-[1.1rem] px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
           <Image
@@ -95,23 +95,23 @@ export default function Navbar() {
             alt="Avalia Solar"
             width={64}
             height={64}
-            className="h-12 w-12 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-14 sm:w-14"
+            className="h-10 w-10 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-11 sm:w-11"
             priority={logoPriority}
           />
-          <span className="hidden text-[12px] font-semibold uppercase tracking-[0.18em] text-foreground/80 sm:inline dark:text-white/80">
+          <span className="hidden text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/78 sm:inline dark:text-white/78">
             Avalia Solar
           </span>
         </Link>
 
-        <div className="hidden xl:flex flex-1 items-center gap-5">
-          <div className="flex min-w-0 max-w-[780px] flex-[1.15] items-center gap-2">
+        <div className="hidden xl:flex flex-1 items-center gap-4">
+          <div className="flex min-w-0 max-w-[900px] flex-[1.4] items-center gap-2.5">
             <NavbarSearch
-              className="min-w-[7.5rem] flex-[1.15]"
+              className="min-w-[10rem] flex-[1.45]"
               inputClassName="bg-white/92 dark:bg-[#081a2e]/82"
               placeholder="Buscar empresas, produtos e serviços"
               onSearch={handleSearch}
             />
-            <div className="w-[170px] shrink-0">
+            <div className="w-[156px] shrink-0">
               <LocationSearch
                 className="w-full bg-white/92 dark:bg-[#081a2e]/82"
                 onLocationSelect={handleLocationSelect}
