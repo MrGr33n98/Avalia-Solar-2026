@@ -278,26 +278,6 @@ export default function ComparePage() {
                           </button>
 
                           <div className="flex flex-col items-center gap-3">
-                            <div className="relative transition-transform duration-500 group-hover:scale-105">
-                              {trustScore !== null ? (
-                                <>
-                                  <TrustScoreDial 
-                                    score={trustScore} 
-                                    size="sm" 
-                                    showLabel={false}
-                                  />
-                                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-slate-100 bg-white px-2 py-0.5 text-[10px] font-black text-slate-600 shadow-sm">
-                                    {trustScore}%
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 shadow-inner clay-surface clay-convex">
-                                  <span className="text-lg font-black text-slate-700">—</span>
-                                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Trust</span>
-                                </div>
-                              )}
-                            </div>
-
                             <div className={cn(
                               "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-transform clay-surface clay-convex",
                               isPremiumCompany(company) ? "border-blue-200" : "border-slate-100"
