@@ -83,21 +83,24 @@ export default function Navbar() {
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="group flex shrink-0 items-center rounded-[1.1rem] px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group flex shrink-0 items-center gap-3 rounded-[1.1rem] px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
           <Image
-            src="/favicon.ico"
+            src="/images/logo.png"
             alt="Avalia Solar Logo"
-            width={64}
-            height={64}
-            className="h-14 w-14 object-contain transition-transform duration-200 group-hover:scale-[1.04]"
+            width={96}
+            height={96}
+            className="h-11 w-11 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-12 sm:w-12"
             priority={logoPriority}
           />
+          <span className="hidden text-[13px] font-semibold uppercase tracking-[0.22em] text-foreground/80 sm:inline dark:text-white/80">
+            Avalia Solar
+          </span>
         </Link>
 
         <div className="hidden xl:flex flex-1 items-center gap-5">
-          <div className="flex min-w-0 max-w-[760px] flex-1 items-center gap-3">
+          <div className="flex min-w-0 max-w-[780px] flex-1 items-center gap-3">
             <NavbarSearch
               className="flex-1"
               inputClassName="bg-white/92 dark:bg-[#081a2e]/82"

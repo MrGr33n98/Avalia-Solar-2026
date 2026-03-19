@@ -221,7 +221,7 @@ export default function CompanyHero({
                         alt={company.name}
                         width={96}
                         height={96}
-                        className="h-full w-full rounded-full object-cover"
+                        className="h-full w-full rounded-full object-contain p-2"
                         fallbackSrc="/images/logo-placeholder.svg"
                         onError={() => setLogoError(true)}
                       />
