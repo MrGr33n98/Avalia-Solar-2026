@@ -59,13 +59,13 @@ export default function CompanyComparisonCard({
       {/* Header */}
       <div className="flex items-center gap-4 mb-4 pr-8">
         <div className={cn(
-          "h-16 w-16 rounded-2xl p-2 shadow-md border flex items-center justify-center overflow-hidden",
+          "flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border p-1 shadow-md",
           isPremium ? "bg-gradient-to-br from-orange-50 to-white border-orange-200" : "bg-white border-slate-100"
         )}>
           <img
             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
             alt={`Logo da ${company.name}`}
-            className="max-h-full max-w-full object-contain"
+            className="h-full w-full scale-[1.14] object-contain"
           />
         </div>
         

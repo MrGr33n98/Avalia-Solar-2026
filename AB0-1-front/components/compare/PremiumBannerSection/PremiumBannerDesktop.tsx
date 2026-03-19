@@ -29,7 +29,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
   };
 
   const score = getCompanyTrustScore(company);
-  const signals = getCompanySignals(company).slice(0, 3);
+  const signals = getCompanySignals(company).slice(0, 2);
   const scoreLabel = score !== null ? `${score}%` : 'Sem score';
   const yearsLabel = formatCompanyYears(company);
   const toneClasses = {
@@ -63,21 +63,20 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={cn(
-      "group relative flex items-center gap-6 overflow-hidden rounded-[2rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.94))] p-4 pr-10 shadow-[0_28px_60px_-36px_rgba(15,23,42,0.45)] transition-all hover:shadow-[0_34px_72px_-36px_rgba(37,99,235,0.22)]",
-      "clay-surface clay-convex",
-      className
-    )}>
-      {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/10 to-transparent pointer-events-none" />
-      
-      {/* Patrocinado Badge - Floating Style */}
-      <div className="absolute top-0 right-12 z-20">
-        <div className="bg-slate-900 px-3 py-1 rounded-b-xl shadow-lg border-x border-b border-slate-800">
-          <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Patrocinado</span>
+        "group relative flex items-center gap-4 overflow-hidden rounded-[1.85rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.95))] p-3.5 pr-16 shadow-[0_26px_56px_-34px_rgba(15,23,42,0.45)] transition-all hover:shadow-[0_34px_72px_-40px_rgba(37,99,235,0.24)]",
+        "clay-surface clay-convex",
+        className
+      )}
+    >
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-blue-50/45 to-transparent" />
+
+      <div className="absolute right-3 top-1/2 z-20 -translate-y-1/2">
+        <div className="rounded-full border border-slate-200 bg-slate-900 px-2 py-2 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-lg [text-orientation:mixed] [writing-mode:vertical-rl]">
+          Patroc.
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute right-11 top-3 z-20">
         <button
           onClick={onDismiss}
           aria-label="Fechar banner de empresa premium"
@@ -88,7 +87,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       </div>
 
       {/* Trust Dial & Logo Combined Unit */}
-      <div className="ml-1 flex items-center gap-4">
+      <div className="ml-1 flex items-center gap-3.5">
         <div className="relative">
           {score !== null ? (
             <>
@@ -111,26 +110,26 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
         </div>
 
         <div className={cn(
-          "flex h-[4.75rem] w-[4.75rem] items-center justify-center overflow-hidden rounded-[1.6rem] border border-slate-100 bg-white p-2",
-          "clay-surface clay-convex shadow-xl transition-all duration-500 hover:scale-110 hover:-rotate-2 group"
+          "flex h-[4.3rem] w-[4.3rem] items-center justify-center overflow-hidden rounded-[1.45rem] border border-slate-100 bg-white p-1",
+          "clay-surface clay-convex shadow-xl transition-all duration-500 hover:scale-[1.05] hover:-rotate-1"
         )}>
           <img
             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
             alt={`Logo da ${company.name}`}
-            className="max-h-full max-w-full object-contain transition-all duration-500"
+            className="h-full w-full scale-[1.14] object-contain transition-all duration-500"
           />
         </div>
       </div>
 
       {/* Main Info Section - Center Balanced */}
-      <div className="flex-1 min-w-0">
-        <div className="mb-2 flex items-center gap-3">
-          <h3 className="text-2xl font-black leading-none tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 flex flex-wrap items-center gap-2.5">
+          <h3 className="text-xl font-black leading-none tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 xl:text-[1.7rem]">
             {company.name}
           </h3>
           
           {company.verified && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm shadow-emerald-100">
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600 shadow-sm shadow-emerald-100">
               <Shield className="h-2.5 w-2.5 fill-current" />
               Verificada
             </div>
@@ -156,7 +155,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold text-slate-500">
           {yearsLabel && (
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-amber-500" />
@@ -181,18 +180,18 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       </div>
 
       {/* CTA Section - Right Aligned */}
-      <div className="flex flex-col items-end gap-3">
+      <div className="flex shrink-0 flex-col items-end gap-2 pr-1">
         <Button
           onClick={handleQuoteClick}
-          className="h-14 px-10 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-t border-white/20"
+          className="h-11 rounded-[1.15rem] border-t border-white/20 bg-blue-600 px-7 text-white shadow-xl shadow-blue-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-700"
         >
           Cotar Agora
-          <ArrowRight className="h-5 w-5 ml-2" />
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
 
         <Link 
           href={`/companies/${company.slug}`}
-          className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2 pr-2"
+          className="flex items-center gap-2 pr-2 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 transition-colors hover:text-blue-600"
         >
           Explorar Detalhes
           <ExternalLink className="h-3.5 w-3.5" />

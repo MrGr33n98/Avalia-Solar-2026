@@ -299,7 +299,7 @@ export default function ComparePage() {
                             </div>
 
                             <div className={cn(
-                              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1.5 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-transform clay-surface clay-convex",
+                              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-transform clay-surface clay-convex",
                               isPremiumCompany(company) ? "border-blue-200" : "border-slate-100"
                             )}>
                               <Image 
@@ -307,7 +307,7 @@ export default function ComparePage() {
                                 alt={`Logo da ${company.name}`}
                                 width={42}
                                 height={42}
-                                className="max-h-full max-w-full object-contain" 
+                                className="h-full w-full scale-[1.14] object-contain" 
                               />
                             </div>
                             

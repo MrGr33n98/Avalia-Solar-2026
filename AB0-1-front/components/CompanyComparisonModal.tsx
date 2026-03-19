@@ -176,13 +176,13 @@ export default function CompanyComparisonModal({
                                 <button
                                   onClick={() => onRemoveCompany(company.id)}
                                   aria-label={`Remover ${company.name} da comparação`}
-                                  className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                  className="absolute top-4 right-4 rounded-full bg-slate-100 p-1.5 text-slate-400 transition-all hover:bg-red-100 hover:text-red-500 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
                                 >
                                   <X className="h-4 w-4" />
                                 </button>
 
                                 <div className={cn(
-                                  "mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.25rem] border p-1.5 shadow-lg transition-all hover:scale-[1.04]",
+                                  "mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.25rem] border p-1 shadow-lg transition-all hover:scale-[1.04]",
                                   isPremiumCompany(company) 
                                     ? "bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-blue-200/40" 
                                     : "bg-white border-slate-100 shadow-slate-200/30"
@@ -192,7 +192,7 @@ export default function CompanyComparisonModal({
                                     alt={company.name}
                                     width={46}
                                     height={46}
-                                    className="max-h-full max-w-full object-contain"
+                                    className="h-full w-full scale-[1.14] object-contain"
                                   />
                                 </div>
 

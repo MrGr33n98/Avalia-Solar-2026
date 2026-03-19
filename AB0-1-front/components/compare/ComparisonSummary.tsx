@@ -45,7 +45,7 @@ export default function ComparisonSummary({
               >
                 <div
                   className={cn(
-                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1.5 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
+                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
                     "clay-surface clay-convex",
                     isPremiumCompany(company) ? "border-blue-200/80" : "border-slate-100"
                   )}
@@ -53,14 +53,14 @@ export default function ComparisonSummary({
                   <img
                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
                     alt={`Logo da ${company.name}`}
-                    className="max-h-full max-w-full object-contain"
+                    className="h-full w-full scale-[1.14] object-contain"
                   />
                 </div>
                 
                 <button
                   onClick={() => onRemove(company.id)}
                   aria-label={`Remover ${company.name} da comparação`}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 md:opacity-0 md:group-hover:opacity-100"
                 >
                   <X className="h-3 w-3" aria-hidden="true" />
                 </button>
