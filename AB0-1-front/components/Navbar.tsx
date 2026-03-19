@@ -91,7 +91,7 @@ export default function Navbar() {
             alt="Avalia Solar"
             width={64}
             height={64}
-            className="h-11 w-11 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-12 sm:w-12"
+            className="h-14 w-14 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-16 sm:w-16"
             priority={logoPriority}
           />
           <span className="hidden text-[13px] font-semibold uppercase tracking-[0.22em] text-foreground/80 sm:inline dark:text-white/80">
