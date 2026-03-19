@@ -79,6 +79,8 @@ module RailsBlogDemo
     # TASK-022: Autoload/eager_load lib for Zeitwerk (needed for custom middleware)
     config.autoload_paths << Rails.root.join('lib')
     config.eager_load_paths << Rails.root.join('lib')
+    config.autoload_paths << Rails.root.join('app/services')
+    config.eager_load_paths << Rails.root.join('app/services')
 
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
