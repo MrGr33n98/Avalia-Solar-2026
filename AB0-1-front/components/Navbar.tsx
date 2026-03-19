@@ -58,6 +58,10 @@ export default function Navbar() {
     router.push(`/companies?${params.toString()}`);
   };
 
+  const handleSearch = (query: string) => {
+    router.push(`/search?q=${encodeURIComponent(query)}&sort=rating&page=1`);
+  };
+
   const openMegaMenu = () => {
     if (!megaMenuMounted) setMegaMenuMounted(true);
     setIsMegaMenuOpen(true);
@@ -105,6 +109,7 @@ export default function Navbar() {
               className="flex-1"
               inputClassName="bg-white/92 dark:bg-[#081a2e]/82"
               placeholder="Buscar empresas, produtos e serviços"
+              onSearch={handleSearch}
             />
             <div className="w-[232px] shrink-0">
               <LocationSearch
