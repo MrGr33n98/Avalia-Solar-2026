@@ -366,47 +366,50 @@ export default function CompanyCard({
       )}
 
       {/* ── Banner + Overlay ───────────────────────────────────── */}
-      <div className="relative">
-        {/* Action buttons — always visible at low opacity, full on hover */}
-        <div className={cn(
-          "absolute right-2 top-2 flex flex-col gap-1.5 z-10",
-          "opacity-50 group-hover:opacity-100 transition-opacity duration-200"
-        )}>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 rounded-lg bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
-            onClick={handleShare}
-            title="Compartilhar"
-            aria-label={`Compartilhar perfil de ${name}`}
-          >
-            {shared ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
-          </Button>
+      <div className={cn("relative", compact ? "px-3 pt-2.5" : "px-3.5 pt-3")}>
+        {/* Inner banner container — contained & rounded */}
+        <div className="relative rounded-xl overflow-hidden">
+          {/* Action buttons — always visible at low opacity, full on hover */}
+          <div className={cn(
+            "absolute right-2 top-2 flex flex-col gap-1.5 z-10",
+            "opacity-50 group-hover:opacity-100 transition-opacity duration-200"
+          )}>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-8 w-8 rounded-lg bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
+              onClick={handleShare}
+              title="Compartilhar"
+              aria-label={`Compartilhar perfil de ${name}`}
+            >
+              {shared ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+
+          <AspectRatio ratio={BANNER_RATIO} className="w-full">
+            <div className="relative w-full h-full bg-slate-100 dark:bg-slate-800">
+              {bannerUrl && !bannerError ? (
+                <Image
+                  src={bannerUrl}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  onError={() => setBannerError(true)}
+                  className="object-cover"
+                  data-testid="company-banner"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900" />
+              )}
+
+              {/* Subtle vignette on hover */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            </div>
+          </AspectRatio>
         </div>
 
-        <AspectRatio ratio={BANNER_RATIO} className="w-full">
-          <div className="relative w-full h-full bg-slate-100 dark:bg-slate-800">
-            {bannerUrl && !bannerError ? (
-              <Image
-                src={bannerUrl}
-                alt=""
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                onError={() => setBannerError(true)}
-                className="object-cover"
-                data-testid="company-banner"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900" />
-            )}
-
-            {/* Subtle vignette on hover — no shimmer, no gimmicks */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-          </div>
-        </AspectRatio>
-
         {/* ── Logo Avatar ────────────────────────────────────── */}
-        <div className={cn('absolute left-3 z-20', compact ? '-bottom-3.5' : '-bottom-4')}>
+        <div className={cn('absolute z-20', compact ? 'left-3 -bottom-3.5' : 'left-3.5 -bottom-4')}>
           <div className="relative">
             {verifiedBadgeUrl && !verifiedBadgeError && (
               <div
