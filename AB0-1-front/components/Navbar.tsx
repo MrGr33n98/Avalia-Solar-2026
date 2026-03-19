@@ -87,10 +87,10 @@ export default function Navbar() {
           aria-label="Home Avalia Solar"
         >
           <Image
-            src="/images/logo.png"
-            alt="Avalia Solar Logo"
-            width={96}
-            height={96}
+            src="/avalia_symbol.png"
+            alt="Avalia Solar"
+            width={64}
+            height={64}
             className="h-11 w-11 object-contain transition-transform duration-200 group-hover:scale-[1.04] sm:h-12 sm:w-12"
             priority={logoPriority}
           />
