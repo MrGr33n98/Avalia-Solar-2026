@@ -97,7 +97,7 @@ export default function TrustScoreDial({
             {normalizedScore}
           </motion.span>
           {size === 'lg' && (
-            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest -mt-1">Trust</span>
+            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest -mt-1">Confiança</span>
           )}
         </div>
       </div>

@@ -2,14 +2,21 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Tag, ChevronDown, X, Star, MapPin, Shield, Clock, ExternalLink } from 'lucide-react';
+import { Tag, ChevronDown, X, Star, MapPin, Shield, Clock, ExternalLink, Zap, Briefcase, ArrowRight } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { getFullImageUrl } from '@/utils/image';
 import Link from 'next/link';
+import Image from 'next/image';
 import { track } from '@/lib/analytics/lazy';
 import { openLeadModal } from '@/lib/lead-engine';
-import { formatCompanyYears, getCompanySignals } from '../compare-company-utils';
+import { cn } from '@/lib/utils';
+import TrustScoreDial from '../TrustScoreDial';
+import { 
+  formatCompanyYears, 
+  getCompanySignals, 
+  getCompanyTrustScore 
+} from '../compare-company-utils';
 
 interface PremiumBannerMobileProps {
   company: Company;
@@ -24,9 +31,11 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
     return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
   };
 
+  const score = getCompanyTrustScore(company);
   const yearsLabel = formatCompanyYears(company);
   const signals = getCompanySignals(company).slice(0, 3);
   const highlightText = company.highlights || company.about || company.description;
+  const bannerUrl = getFullImageUrl(company.banner_url || undefined);
 
   const handleQuoteClick = () => {
     track('premium_banner_clicked', {
@@ -37,14 +46,6 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
     openLeadModal({ preferredCompanyId: company.id, source: 'premium-banner', type: 'quick' });
   };
 
-  const handleProfileClick = () => {
-    track('premium_banner_clicked', {
-      company_id: company.id,
-      cta_type: 'profile',
-      source: 'comparison_page',
-    });
-  };
-
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
     if (!isExpanded) {
@@ -53,76 +54,108 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[1.6rem] border border-blue-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.95))] p-4 shadow-[0_24px_40px_-28px_rgba(15,23,42,0.38)] clay-surface clay-convex">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="relative overflow-hidden rounded-[2rem] border border-white/20 p-4 shadow-[0_24px_48px_-20px_rgba(0,0,0,0.3)] clay-surface clay-convex">
+      {/* Background Layer */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {bannerUrl ? (
+          <>
+            <Image 
+              src={bannerUrl} 
+              alt="" 
+              fill 
+              className="object-cover opacity-30 brightness-110" 
+            />
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/95" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-blue-100/50" />
+        )}
+      </div>
+
+      {/* Header */}
+      <div className="relative z-10 mb-4 flex items-center justify-between gap-3">
         <div 
-          className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700"
+          className="inline-flex items-center gap-2 rounded-full border border-amber-200/50 bg-amber-500/10 backdrop-blur-md px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 shadow-sm"
           role="status"
-          aria-label="Conteúdo patrocinado"
         >
           <Tag className="h-3 w-3" aria-hidden="true" />
-          Patroc.
+          Patrocinado
         </div>
 
         <button
           onClick={onDismiss}
-          aria-label="Fechar banner de empresa premium"
-          className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-white/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Fechar banner"
+          className="p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-white/50 backdrop-blur-sm transition-all"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
 
-      <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border border-blue-100 bg-white p-1 shadow-md clay-surface clay-convex">
-          <img
-            src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
-            alt={`Logo da ${company.name}`}
-            className="h-full w-full scale-[1.14] object-contain"
-          />
+      {/* Main Content Row */}
+      <div className="relative z-10 flex items-start gap-3">
+        {/* Score & Logo Hybrid for Mobile */}
+        <div className="flex flex-col items-center gap-2">
+          {score !== null && (
+            <div className="relative p-0.5 rounded-full bg-white/50 backdrop-blur-md shadow-sm border border-white/40">
+              <TrustScoreDial score={score} size="sm" showLabel={false} />
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/95 px-1.5 py-0.5 rounded-full border border-white text-[8px] font-black shadow-lg">
+                {score}%
+              </div>
+            </div>
+          )}
+          
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.2rem] border border-white/40 bg-white/95 p-1 shadow-xl clay-surface clay-convex">
+            <img
+              src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
+              alt={`Logo da ${company.name}`}
+              className="h-full w-full scale-[1.10] object-contain"
+            />
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="line-clamp-1 text-sm font-black text-slate-900">{company.name}</h3>
-              <div 
-                className="mt-1 flex items-center gap-1 text-xs"
-                role="img"
-                aria-label={`Avaliação ${formatRating(company.rating_avg || company.average_rating)} de 5 estrelas, baseado em ${company.rating_count || 0} avaliações`}
-              >
-                <Star className="h-3 w-3 fill-current text-amber-500" aria-hidden="true" />
-                <span className="font-bold text-slate-700">
-                  {formatRating(company.rating_avg || company.average_rating)}
-                </span>
-                <span className="text-slate-500">
-                  ({company.rating_count || 0})
-                </span>
+            <div className="min-w-0 space-y-1">
+              <h3 className="line-clamp-2 text-base font-black text-slate-900 tracking-tight leading-tight uppercase">
+                {company.name}
+              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div 
+                  className="flex items-center gap-1 text-[11px]"
+                  role="img"
+                >
+                  <Star className="h-3 w-3 fill-current text-amber-500" aria-hidden="true" />
+                  <span className="font-black text-slate-700">
+                    {formatRating(company.rating_avg || company.average_rating)}
+                  </span>
+                  <span className="text-slate-400 font-bold">
+                    ({company.rating_count || 0})
+                  </span>
+                </div>
+
+                {company.verified && (
+                  <span className="rounded-full border border-emerald-100/50 bg-emerald-500/10 backdrop-blur-md px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                    Verificada
+                  </span>
+                )}
               </div>
             </div>
 
             <button
               onClick={toggleExpanded}
               aria-expanded={isExpanded}
-              aria-label={isExpanded ? 'Ocultar detalhes' : 'Mostrar detalhes'}
-              className="rounded-full p-2 text-slate-600 transition-colors hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="rounded-full bg-white/50 p-2 text-slate-500 backdrop-blur-sm border border-white/30 shadow-sm"
             >
               <ChevronDown 
-                className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                aria-hidden="true"
+                className={`h-5 w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
               />
             </button>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2">
-            {company.verified && (
-              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
-                Verificada
-              </span>
-            )}
-
             {yearsLabel && (
-              <span className="rounded-full border border-blue-100 bg-white/90 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">
+              <span className="rounded-full border border-blue-100/40 bg-white/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                 {yearsLabel}
               </span>
             )}
@@ -130,71 +163,42 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-[1fr,auto] gap-2">
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          onClick={handleProfileClick}
-          className="h-10 rounded-[0.95rem] border-blue-200 bg-white/90 font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          <Link href={`/companies/${company.slug}`}>
-            Ver Perfil
-          </Link>
-        </Button>
-
-        <Button
-          onClick={handleQuoteClick}
-          className="h-10 rounded-[0.95rem] bg-blue-600 px-4 font-black text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-700"
-        >
-          Cotar
-          <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
-        </Button>
-      </div>
-
+      {/* Expanded Details */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
+            className="relative z-10 overflow-hidden"
           >
-            <div className="mt-4 space-y-3 border-t border-blue-100 pt-3">
-              <div className="space-y-2 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 text-blue-500" aria-hidden="true" />
-                  <span>{company.city}, {company.state}</span>
+            <div className="mt-4 space-y-4 border-t border-slate-200/50 pt-4">
+              <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-600">
+                <div className="flex items-center gap-2 bg-white/40 p-2 rounded-xl border border-white/30">
+                  <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="truncate">{company.city}, {company.state}</span>
                 </div>
                 
-                {company.verified && (
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <Shield className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Verificada</span>
-                  </div>
-                )}
-                
-                {yearsLabel && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5 text-orange-500" aria-hidden="true" />
-                    <span>{yearsLabel}</span>
+                {company.response_time_sla && (
+                  <div className="flex items-center gap-2 bg-white/40 p-2 rounded-xl border border-white/30">
+                    <Zap className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>SLA: {company.response_time_sla}</span>
                   </div>
                 )}
               </div>
 
               {highlightText ? (
-                <p className="line-clamp-3 text-xs leading-relaxed text-slate-600">
-                  {highlightText}
-                </p>
+                <div className="bg-white/40 p-3 rounded-2xl border border-white/30 italic text-[11px] leading-relaxed text-slate-500">
+                  "{highlightText}"
+                </div>
               ) : null}
 
               {signals.length > 0 && (
-                <div className="flex flex-wrap gap-2 text-[10px] text-slate-600">
+                <div className="flex flex-wrap gap-2">
                   {signals.map((signal) => (
                     <span
                       key={signal.key}
-                      className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 font-bold uppercase tracking-[0.14em] text-slate-600"
+                      className="rounded-full border border-slate-200 bg-white/60 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500"
                     >
                       {signal.label}
                     </span>
@@ -205,6 +209,27 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Footer Actions */}
+      <div className="relative z-10 mt-5 grid grid-cols-2 gap-3">
+        <Button
+          asChild
+          variant="outline"
+          className="h-11 rounded-2xl border-white/60 bg-white/40 backdrop-blur-md px-4 text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-white/60"
+        >
+          <Link href={`/companies/${company.slug}`}>
+            Ver Perfil
+          </Link>
+        </Button>
+
+        <Button
+          onClick={handleQuoteClick}
+          className="h-11 rounded-2xl bg-blue-600 px-4 text-[11px] font-black uppercase tracking-widest text-white shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)] hover:bg-blue-700 clay-btn-primary"
+        >
+          Cotar Agora
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
