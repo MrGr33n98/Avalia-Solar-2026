@@ -77,73 +77,73 @@ export default function IdentityBridgeModal({
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className={cn(
-                "clay-card w-full max-w-md overflow-hidden pointer-events-auto",
-                "p-8 md:p-10 relative flex flex-col items-center text-center"
+                "clay-card w-full max-w-[21rem] overflow-hidden pointer-events-auto",
+                "p-5 md:p-6 relative flex flex-col items-center text-center"
               )}
             >
               {/* Close Button */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted smooth-transition group"
+                className="absolute right-3 top-3 rounded-full p-1.5 hover:bg-muted smooth-transition group"
                 aria-label="Fechar"
               >
-                <X className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+                <X className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
               </button>
 
               {/* Icon Stack/Visual Element */}
-              <div className="relative mb-8">
-                <div className="h-20 w-20 flex items-center justify-center bg-primary/10 rounded-2xl clay-convex">
-                  <ShieldCheck className="h-10 w-10 text-primary" />
+              <div className="relative mb-5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 clay-convex">
+                  <ShieldCheck className="h-7 w-7 text-primary" />
                 </div>
                 <motion.div 
                   animate={{ y: [0, -5, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                  className="absolute -top-2 -right-2 h-8 w-8 bg-accent/20 rounded-lg flex items-center justify-center backdrop-blur-md border border-accent/30 shadow-lg"
+                  className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-lg border border-accent/30 bg-accent/20 shadow-lg backdrop-blur-md"
                 >
-                  <Zap className="h-4 w-4 text-accent" />
+                  <Zap className="h-3 w-3 text-accent" />
                 </motion.div>
               </div>
 
               {/* Content */}
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 tracking-tight">
+              <h2 className="mb-3 text-xl font-bold tracking-tight text-foreground md:text-2xl">
                 {title}
               </h2>
               
-              <p className="text-muted-foreground text-base md:text-lg mb-8 leading-relaxed">
+              <p className="mb-5 max-w-[24ch] text-sm leading-relaxed text-muted-foreground md:text-[0.95rem]">
                 {description}
               </p>
 
               {/* Benefits Grid (Subtle) */}
-              <div className="grid grid-cols-2 gap-4 w-full mb-8">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg">
+              <div className="mb-5 grid w-full grid-cols-2 gap-2.5">
+                <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">
                   <BarChart3 className="h-4 w-4 text-primary" />
                   <span>Scores Reais</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg">
+                <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">
                   <Heart className="h-4 w-4 text-destructive" />
                   <span>Favoritos</span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col gap-4 w-full">
+              <div className="flex w-full flex-col gap-3">
                 <button
                   onClick={handleLogin}
-                  className="clay-btn-primary py-4 px-6 text-lg tracking-wide smooth-transition active:scale-95"
+                  className="clay-btn-primary px-4 py-3 text-base tracking-wide smooth-transition active:scale-95"
                 >
                   Entrar ou Criar Conta Grátis
                 </button>
                 
                 <button
                   onClick={handleStayLoggedOut}
-                  className="text-muted-foreground hover:text-foreground text-sm font-medium smooth-transition underline-offset-4 hover:underline"
+                  className="text-xs font-medium text-muted-foreground smooth-transition underline-offset-4 hover:text-foreground hover:underline"
                 >
                   Continuar sem login
                 </button>
               </div>
 
               {/* Trust Footer */}
-              <p className="mt-8 text-[10px] uppercase tracking-widest text-muted-foreground/50 font-bold">
+              <p className="mt-5 text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/50">
                 PLATAFORMA TRUST AS A SERVICE • 2026
               </p>
             </motion.div>

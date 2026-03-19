@@ -104,14 +104,14 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden xl:flex flex-1 items-center gap-5">
-          <div className="flex min-w-0 max-w-[720px] flex-1 items-center gap-2">
+          <div className="flex min-w-0 max-w-[780px] flex-[1.15] items-center gap-2">
             <NavbarSearch
-              className="flex-1"
+              className="min-w-[7.5rem] flex-[1.15]"
               inputClassName="bg-white/92 dark:bg-[#081a2e]/82"
               placeholder="Buscar empresas, produtos e serviços"
               onSearch={handleSearch}
             />
-            <div className="w-[180px] shrink-0">
+            <div className="w-[170px] shrink-0">
               <LocationSearch
                 className="w-full bg-white/92 dark:bg-[#081a2e]/82"
                 onLocationSelect={handleLocationSelect}
