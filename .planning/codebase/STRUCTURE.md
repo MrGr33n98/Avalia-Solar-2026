@@ -1,30 +1,39 @@
 # Directory Structure
 
+## Repository Root
 ```
-AB0-1-front/
-├── app/
-│   ├── companies/
-│   │   └── [id]/        # Company detail views
-│   ├── dashboard/       # Dashboard & control panel
-│   └── (routes)         # Next.js App router elements
-├── components/          # Reusable UI elements
-│   ├── ui/              # shadcn/ui generic components
-│   ├── home/            # Home page specific sections
-│   ├── landing/         # Landing components
-│   └── company/         # Reusable company blocks
-├── lib/
-│   ├── api.ts           # Central API calls & Types
-│   ├── api-client.ts    # Fetch utilities
-│   ├── analytics/       # Consolidated GTM/PostHog tools
-│   └── quote-wizard.ts
-├── contexts/            # React context providers
-├── hooks/
-│   └── useComparison.ts 
-├── public/              # Images, Icons
-└── squads/              # Project rules and squad context guides
+AB0-1-main/
+├── AB0-1-front/   # Next.js Application
+├── AB0-1-back/    # Ruby on Rails Backend
+└── squads/        # AI Agents definitions and Rules
 ```
 
-## Naming Conventions
-- React Components use `PascalCase` (`CompanyOverview.tsx`).
-- Utility scripts typically use `kebab-case` (`api-client.ts`).
-- Hooks use `camelCase` (`useComparison.ts`).
+## Backend (AB0-1-back)
+```
+AB0-1-back/
+├── app/
+│   ├── admin/           # Active Admin dashboards and resources
+│   ├── controllers/
+│   │   ├── api/v1/      # Main API endpoints used by Frontend
+│   │   └── ...
+│   ├── models/          # ActiveRecord schemas and relations
+│   ├── services/        # TrustScore processing, analytics handlers
+│   └── workers/         # Background Sidekiq workers
+├── config/              # Rails routes, environments, initializers
+├── db/                  # Migrations and database schema
+├── docs/                # API and Architecture docs
+├── lib/                 # Custom logic classes
+├── public/              # Static assets
+└── spec/                # RSpec tests
+```
+
+## Frontend (AB0-1-front)
+```
+AB0-1-front/
+├── app/                 # App Router files
+├── components/          # Reusable Next components (home, landing, ui)
+├── lib/                 # Shared utilities, fetch apis
+├── contexts/            # React context providers
+├── hooks/               # Custom hooks
+└── public/              # Static frontend images
+```
