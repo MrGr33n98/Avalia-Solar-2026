@@ -56,6 +56,7 @@ export interface AnalyticsContext {
 
   // User state
   is_logged_in: boolean;
+  is_internal?: boolean;
   user_id?: string;
   company_id?: string;
   company_name?: string;

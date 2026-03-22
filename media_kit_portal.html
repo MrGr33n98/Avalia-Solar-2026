@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AvaliaSolar | Portal Mídia Kit & Press</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ========================================================
+       Variáveis de Design System (AS-EDS & Claymorphism)
+       ======================================================== */
+    :root {
+      /* Base Dark Mode */
+      --bg-slate: #0f172a; /* as-slate-900 */
+      --bg-deep: #020617;  /* as-slate-950 */
+      
+      /* Cores da Marca */
+      --brand-blue: #0056D2;
+      --brand-cyan: #00AFEF;
+      --brand-emerald: #10B981;
+      --brand-amber: #F59E0B;
+      --brand-crimson: #DC2626;
+
+      /* Textos */
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      /* Superfícies */
+      --clay-surface: #1e293b;
+      --clay-surface-light: #334155;
+      
+      /* Efeitos (Sombras Clay) */
+      --clay-shadow-light: rgba(255, 255, 255, 0.06);
+      --clay-shadow-dark: rgba(0, 0, 0, 0.5);
+      
+      /* Tipografia */
+      --font-sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambient Glow */
+    .glow-background {
+      position: fixed;
+      top: -20vh;
+      right: -20vw;
+      width: 70vw;
+      height: 70vh;
+      background: radial-gradient(circle, rgba(0, 175, 239, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Layout Wrapper */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ========================================================
+       Componentes Claymorphism
+       ======================================================== */
+    .clay-panel {
+      background: var(--clay-surface);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.5rem;
+      padding: 3rem;
+      box-shadow: 
+        10px 10px 25px var(--clay-shadow-dark),
+        -5px -5px 15px var(--clay-shadow-light),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      margin-bottom: 3rem;
+    }
+
+    /* Botão Primário (Precision Clay) */
+    .clay-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-blue);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 1rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 
+        0 8px 20px rgba(0, 86, 210, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .clay-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(0, 86, 210, 0.6);
+    }
+    
+    .clay-btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    }
+    .clay-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Textos Reutilizáveis */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    h1 { font-size: 3.5rem; letter-spacing: -0.04em; margin-bottom: 1rem; line-height: 1.1; }
+    h2 { font-size: 2rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; }
+    p { color: var(--text-muted); font-size: 1.1rem; }
+
+    /* ========================================================
+       Seções do Mídia Kit
+       ======================================================== */
+    /* Header */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4rem;
+    }
+    .logo-badge {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--brand-cyan);
+      border-radius: 8px;
+      display: inline-block;
+      box-shadow: 0 0 15px rgba(0, 175, 239, 0.5);
+    }
+
+    /* Grid de Cores */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .color-card {
+      background: var(--clay-surface);
+      border-radius: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform 0.2s;
+    }
+    .color-card:hover { transform: translateY(-5px); }
+
+    .color-swatch {
+      height: 120px;
+      width: 100%;
+      position: relative;
+    }
+    .color-info {
+      padding: 1.5rem;
+    }
+    .color-name { font-weight: 700; margin-bottom: 0.5rem; display: block; }
+    .color-hex { 
+      font-family: monospace; 
+      color: var(--text-muted); 
+      background: rgba(0,0,0,0.3);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Assets Grid */
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    .asset-item {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 2rem;
+      text-align: center;
+      border: 1px dashed rgba(255,255,255,0.15);
+    }
+    .asset-preview {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-background"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <nav>
+      <div class="logo-badge">
+        <span class="logo-icon"></span>
+        AvaliaSolar <span style="font-weight: 400; color: var(--text-muted)">Press Portal</span>
+      </div>
+      <div>
+        <a href="#brand" class="clay-btn clay-btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Ver Brand Book</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="clay-panel" style="text-align: center; padding: 5rem 2rem;">
+      <h1 class="gradient-text">Mídia Kit Oficial</h1>
+      <p style="max-width: 600px; margin: 0 auto 3rem auto;">Todos os ativos visuais (Assets), guias de redes sociais e a biblioteca de cores construídos pelo Design Squad. Puxe os recursos oficiais e espalhe a matriz TaaS.</p>
+      
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="#" class="clay-btn">↓ Baixar Kit Completo (.ZIP)</a>
+        <a href="#" class="clay-btn clay-btn-secondary">Figma Tokens</a>
+      </div>
+    </header>
+
+    <!-- Brand Colors -->
+    <section class="clay-panel" id="colors">
+      <h2>1. Cores da Marca e TaaS</h2>
+      <p style="margin-bottom: 2rem;">As referências HEX para uso no Mídia Kit — aplicáveis a posts Educacionais e de Vendas (Trophy Cases).</p>
+
+      <div class="color-grid">
+        <!-- Blue -->
+        <div class="color-card">
+          <div class="color-swatch" style="background: var(--brand-blue)"></div>
+          <div class="color-info">
+            <span class="color-name">Brand Blue (Confiança)</span>
+            <span class="color-hex" onclick="copyHex('#0056D2')">#0056D2</span>
+          </div>
+        </div>
+        <!-- Cyan -->
+        <div class="color-card">
+          <div class="color-swatch" style="background: var(--brand-cyan)"></div>
+          <div class="color-info">
+            <span class="color-name">Cyan (Inteligência)</span>
+            <span class="color-hex" onclick="copyHex('#00AFEF')">#00AFEF</span>
+          </div>
+        </div>
+        <!-- Emerald -->
+        <div class="color-card">
+          <div class="color-swatch" style="background: var(--brand-emerald)"></div>
+          <div class="color-info">
+            <span class="color-name">Emerald (Validação TaaS)</span>
+            <span class="color-hex" onclick="copyHex('#10B981')">#10B981</span>
+          </div>
+        </div>
+        <!-- AS-Slate -->
+        <div class="color-card">
+          <div class="color-swatch" style="background: var(--clay-surface)"></div>
+          <div class="color-info">
+            <span class="color-name">AS-Slate (UI Escura)</span>
+            <span class="color-hex" onclick="copyHex('#1E293B')">#1E293B</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Assets e Logos -->
+    <section class="clay-panel" id="assets">
+      <h2>2. Logos e Componentes Sociais</h2>
+      <p style="margin-bottom: 2rem;">Assinaturas gráficas oficiais da AvaliaSolar prontas para estampar seus posts do LinkedIn e Twitter.</p>
+
+      <div class="assets-grid">
+        <div class="asset-item">
+          <div class="asset-preview">
+            <h3 style="font-size: 2rem; margin:0; letter-spacing: -1px;">Avalia<span style="color:var(--brand-cyan)">Solar</span></h3>
+          </div>
+          <h4>Logotipo Básico (Texto)</h4>
+          <a href="#" class="clay-btn clay-btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">⬇ Download SVG</a>
+        </div>
+
+        <div class="asset-item">
+          <div class="asset-preview">
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--brand-emerald); color: var(--brand-emerald); padding: 0.5rem 1rem; border-radius: 2rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="display:inline-block; width:8px; height:8px; background:var(--brand-emerald); border-radius:50%;"></span>
+              Score: 98 (Top 1%)
+            </div>
+          </div>
+          <h4>Selo Trust Score (Social)</h4>
+          <a href="#" class="clay-btn clay-btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">⬇ Download PNG</a>
+        </div>
+
+        <div class="asset-item">
+          <div class="asset-preview">
+            <div style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.5rem; text-align: left;">
+              Inter Bold<br>
+              <span style="font-weight: 400; color: var(--text-muted); font-size: 1rem;">A tipografia dos dados.</span>
+            </div>
+          </div>
+          <h4>Tipografia Oficial</h4>
+          <a href="https://fonts.google.com/specimen/Inter" target="_blank" class="clay-btn clay-btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">Obter no Google Fonts</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align: center; color: var(--text-muted); padding: 2rem 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4rem;">
+      <p>Gerado pelo Mídia Squad Design Operations.<br>&copy; 2026 AvaliaSolar Trust as a Service.</p>
+    </footer>
+
+  </div>
+
+  <script>
+    function copyHex(hex) {
+      navigator.clipboard.writeText(hex).then(() => {
+        alert("Cor " + hex + " copiada para a área de transferência!");
+      });
+    }
+  </script>
+</body>
+</html>

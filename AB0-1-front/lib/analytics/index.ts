@@ -144,6 +144,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     platform: 'web',
     app_key: DEFAULT_APP_KEY,
     is_logged_in: !!currentUserId,
+    is_internal: typeof window !== 'undefined' ? localStorage.getItem('is_internal_team') === 'true' || window.location.search.includes('internal=true') || window.location.search.includes('is_internal=true') : false,
     user_id: currentUserId || undefined,
     source,
     
@@ -178,6 +179,7 @@ export function track(
   const matrixProps = {
     ...context,
     ...properties,
+    is_internal: context.is_internal || properties.is_internal,
     original_event: eventName, // VAR-004: Required for GTM triggers
     event_id: eventId,
     gtm_timestamp: Date.now(), // VAR-019
