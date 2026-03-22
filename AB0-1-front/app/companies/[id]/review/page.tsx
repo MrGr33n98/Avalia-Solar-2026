@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics/lazy';
 
 import {
   Dialog,
@@ -116,6 +117,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
         review_criterion_scores_attributes
       } as any);
+
+      track('review_created', { 
+        company_id: String(company.id), 
+        category_id: categoryId ? String(categoryId) : undefined, 
+        rating 
+      });
 
       setShowConfirmModal(true);
     } catch (error: any) {

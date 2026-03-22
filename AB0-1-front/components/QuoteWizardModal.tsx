@@ -12,6 +12,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
+import { trackWizardStart, trackWizardContactSubmitted, trackLeadSuccess } from '@/lib/analytics/consolidated';
 import {
   useBillValueIntent,
   useQuoteWizardTracking,
@@ -85,7 +86,7 @@ export default function QuoteWizardModal() {
       setPreferredCompanyId(detail.preferredCompanyId);
       resetWizard();
       setOpen(true);
-      track('Wizard Opened', { source: 'external_trigger' });
+      trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
     };
     window.addEventListener('open-quote-wizard', handler as EventListener);
     return () => window.removeEventListener('open-quote-wizard', handler as EventListener);
@@ -168,6 +169,7 @@ export default function QuoteWizardModal() {
         setLeadId(response.lead_id);
         setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
+        trackWizardContactSubmitted(String(response.lead_id), preferredCompanyId || '');
         trackStep(8, TOTAL_STEPS, { action: 'lead_created', product_vertical: form.productVertical });
         setStep(8);
       } catch (err: any) {
@@ -198,6 +200,12 @@ export default function QuoteWizardModal() {
       if (response && response.companies) {
         setCompanies(response.companies);
         trackSubmission(true, leadId);
+        trackLeadSuccess({
+          lead_id: String(leadId),
+          company_id: preferredCompanyId,
+          category: form.productVertical,
+          city: form.addressFull,
+        });
         setStep(9);
       }
     } catch (err: any) {

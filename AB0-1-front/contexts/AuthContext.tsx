@@ -13,7 +13,7 @@ import {
   setAuthSessionHint,
 } from '@/lib/api';
 import { authClient } from '@/lib/authClient';
-import { identify, track } from '@/lib/analytics/lazy';
+import { identify, track, reset } from '@/lib/analytics/lazy';
 import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -257,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     nextAuthRequest();
     track('Logout Performed');
+    reset();
     await authApi.logout();
     clearAuthSessionHint();
     setUser(null);

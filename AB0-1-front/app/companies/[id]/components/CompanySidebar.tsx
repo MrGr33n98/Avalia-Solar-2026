@@ -7,6 +7,7 @@ import { Company } from '@/lib/api';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
+import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { useCopyIntent, useFaqExpand, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 
@@ -231,6 +232,7 @@ export default function CompanySidebar({
                 const faq = visibleFaqs.find((item, index) => `faq-${item.id ?? index}` === value);
                 if (faq) {
                   trackQuestion(faq.id ?? value);
+                  trackFaqEngagement('expand', faq.question);
                 }
               }}
             >
