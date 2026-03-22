@@ -2,13 +2,47 @@
 
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useReportWebVitals } from 'next/navigation';
 import { useEffect, useRef, Suspense } from 'react';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+function WebVitals() {
+  useReportWebVitals((metric) => {
+    if (!posthog.__loaded) return;
+
+    posthog.capture('web_vitals', {
+      category: metric.label === 'web-vital' ? 'Web Vitals' : 'Next.js custom metric',
+      event_label: metric.name,
+      event_value: metric.value,
+      initial_value: metric.value,
+      metric_id: metric.id,
+      metric_name: metric.name,
+      metric_value: metric.value,
+      page_path: window.location.pathname,
+    });
+  });
+
+  return null;
+}
+
+/**
+ * Mapeia o pathname do Next.js para um tipo de pagina amigavel para analytics.
+ */
+function getPageType(pathname: string): string {
+  if (pathname === '/') return 'landing';
+  if (pathname.startsWith('/companies/')) return 'company_profile';
+  if (pathname === '/companies') return 'search_results';
+  if (pathname.startsWith('/categories/')) return 'category_browse';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/blog')) return 'blog';
+  if (pathname === '/login' || pathname === '/signup') return 'auth';
+  if (pathname.startsWith('/checkout') || pathname.startsWith('/quote')) return 'conversion';
+  return 'other';
+}
 
 /**
  * Rastreia pageviews automaticamente em todas as rotas do Next.js App Router.
@@ -34,7 +68,10 @@ function PostHogPageView() {
       pathname +
       (searchParams?.toString() ? `?${searchParams.toString()}` : '');
 
-    posthog.capture('$pageview', { $current_url: url });
+    posthog.capture('$pageview', { 
+      $current_url: url,
+      page_type: getPageType(pathname)
+    });
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[PostHog] $pageview:', url);
@@ -97,6 +134,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         if (hasConsent) {
           ph.capture('$pageview', {
             $current_url: window.location.href,
+            page_type: getPageType(window.location.pathname)
           });
         }
 
@@ -113,7 +151,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       if (consent.analytics) {
         posthog.opt_in_capturing();
         // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
-        posthog.capture('$pageview', { $current_url: window.location.href });
+        posthog.capture('$pageview', { 
+          $current_url: window.location.href,
+          page_type: getPageType(window.location.pathname)
+        });
 
         if (process.env.NODE_ENV === 'development') {
           console.log('[PostHog] Captura ativada (consentimento dado).');
@@ -139,6 +180,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       {/* Suspense necessário para useSearchParams no Next.js 14 App Router */}
       <Suspense fallback={null}>
         <PostHogPageView />
+        <WebVitals />
       </Suspense>
       {children}
     </PHProvider>

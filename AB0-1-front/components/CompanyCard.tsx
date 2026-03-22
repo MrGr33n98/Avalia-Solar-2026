@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -90,6 +90,8 @@ export default function CompanyCard({
   const [verifiedBadgeError, setVerifiedBadgeError] = useState(false);
   const [selected, setSelected] = useState(false);
   const [shared, setShared] = useState(false);
+  const impressionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const firedImpression = useRef(false);
 
   const { isFavorite } = useFavorites();
   const isFav = isFavorite(id);
@@ -121,17 +123,30 @@ export default function CompanyCard({
     if (!node) return;
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        track('company_card_impression', {
-          company_id: id,
-          company_name: name,
-          verified: company.verified,
-          view_mode: compact ? 'list' : 'grid',
-          company_slug: company.slug,
-          category: category
-        });
-        observer.disconnect();
+        if (firedImpression.current) return;
+        
+        // Inicia timer de 1s para confirmar impressao (evita falsos positivos de scroll rapido)
+        impressionTimerRef.current = setTimeout(() => {
+          if (firedImpression.current) return;
+          firedImpression.current = true;
+          track('company_card_impression', {
+            company_id: id,
+            company_name: name,
+            verified: company.verified,
+            view_mode: compact ? 'list' : 'grid',
+            company_slug: company.slug,
+            category: category
+          });
+          observer.disconnect();
+        }, 1000);
+      } else {
+        // Se saiu de vista antes de 1s, cancela o timer
+        if (impressionTimerRef.current) {
+          clearTimeout(impressionTimerRef.current);
+        }
       }
-    }, { threshold: 0.1 });
+    }, { threshold: 0.5 });
+    
     observer.observe(node);
   }, [id, name, company.verified, compact, company.slug, category]);
 
