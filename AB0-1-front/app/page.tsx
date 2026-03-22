@@ -258,7 +258,7 @@ export default async function Home() {
       </Suspense>
 
       {/* Conversion Banner */}
-      <section className="py-20 bg-slate-900 text-white overflow-hidden relative">
+      <section className="dark py-20 bg-slate-900 text-white overflow-hidden relative">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-brand-blue/10 skew-x-12 translate-x-1/2" />
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl">
@@ -270,13 +270,13 @@ export default async function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <HomeConversionCTA />
-              <CTAPrimaryButton 
-                label="Ler nosso blog" 
+              <Button 
+                asChild
                 variant="outline"
-                href="/blog"
-                ctaType="blog_view"
-                className="h-14 px-10 text-lg clay-chip border-white text-white hover:bg-white hover:text-slate-900 smooth-transition" 
-              />
+                className="h-14 px-10 text-lg rounded-full border-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white smooth-transition"
+              >
+                <Link href="/blog">Ler nosso blog</Link>
+              </Button>
             </div>
           </div>
         </div>

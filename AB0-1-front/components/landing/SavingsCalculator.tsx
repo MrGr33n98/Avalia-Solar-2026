@@ -30,7 +30,7 @@ export default function SavingsCalculator() {
   };
 
   return (
-    <section className="py-8 md:py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden relative">
+    <section className="dark py-8 md:py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden relative">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
         <Zap className="absolute -top-10 -right-10 w-48 h-48 text-primary rotate-12" />
         <TrendingDown className="absolute -bottom-10 -left-10 w-56 h-56 text-primary -rotate-12" />
@@ -72,7 +72,7 @@ export default function SavingsCalculator() {
                 </div>
               </div>
 
-              <div className="p-3 clay-chip bg-slate-800/50 border border-slate-700 flex gap-2 items-start">
+              <div className="p-3 rounded-xl backdrop-blur-sm bg-slate-800/50 border border-slate-700 flex gap-2 items-start">
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-[11px] text-slate-400 leading-tight">
                   Cálculo baseado na tarifa média nacional e durabilidade média de 25 anos dos equipamentos.
@@ -119,11 +119,11 @@ export default function SavingsCalculator() {
               </Card>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 clay-chip bg-emerald-950/70 border border-emerald-800/50 text-center">
+                <div className="p-3 rounded-xl backdrop-blur-sm bg-emerald-950/70 border border-emerald-800/50 text-center">
                   <p className="text-emerald-400 text-[10px] font-bold uppercase mb-0.5">Redução</p>
                   <p className="text-lg font-black text-emerald-400">Até 95%</p>
                 </div>
-                <div className="p-3 clay-chip bg-blue-950/70 border border-blue-800/50 text-center">
+                <div className="p-3 rounded-xl backdrop-blur-sm bg-blue-950/70 border border-blue-800/50 text-center">
                   <p className="text-blue-400 text-[10px] font-bold uppercase mb-0.5">Payback Médio</p>
                   <p className="text-lg font-black text-blue-400">3-4 Anos</p>
                 </div>
