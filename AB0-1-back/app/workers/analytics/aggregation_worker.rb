@@ -15,8 +15,8 @@ module Analytics
       is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
       
       if is_pg
-        raw_lock = ActiveRecord::Base.connection.select_value("SELECT pg_try_advisory_lock($1)", 'Lock', [[nil, LOCK_ID]])
-        got_lock = ActiveModel::Type::Boolean.new.cast(raw_lock)
+        result = ActiveRecord::Base.connection.execute("SELECT pg_try_advisory_lock(#{LOCK_ID})")
+        got_lock = result.first['pg_try_advisory_lock']
         return unless got_lock
       end
 
@@ -24,7 +24,7 @@ module Analytics
         execute_aggregation_pipeline(is_pg)
       ensure
         if is_pg
-          ActiveRecord::Base.connection.exec_query("SELECT pg_advisory_unlock($1)", 'Unlock', [[nil, LOCK_ID]])
+          ActiveRecord::Base.connection.execute("SELECT pg_advisory_unlock(#{LOCK_ID})")
         end
       end
     end

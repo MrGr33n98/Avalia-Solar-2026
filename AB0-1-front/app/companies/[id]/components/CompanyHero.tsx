@@ -188,7 +188,7 @@ export default function CompanyHero({
               aria-label="Card de perfil da empresa"
               className="relative max-w-[760px] rounded-[26px] border border-slate-200 bg-white px-5 py-5 pl-[92px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:px-6 sm:py-5 sm:pl-[116px]"
             >
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-5 sm:-translate-x-[10%]">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-5">
                 <div className="relative shrink-0">
                   {heroBadgeUrl && !badgeImageError && (
                     <div

@@ -106,7 +106,7 @@ export default function LandingCategoryChips({
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
           <div
             ref={scrollerRef}
-            className="flex items-center gap-2 overflow-x-auto px-3 py-2.5 no-scrollbar min-h-[52px]"
+            className="flex items-center gap-2.5 overflow-x-auto px-3 py-3 no-scrollbar min-h-[72px]"
             role="list"
             aria-label="Categorias em destaque"
           >
@@ -129,24 +129,61 @@ export default function LandingCategoryChips({
                 <Link
                   key={category.id}
                   href={href}
-                  className="group/chip flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] smooth-transition whitespace-nowrap min-h-[40px]"
+                  className={cn(
+                    'group/chip relative flex items-center gap-3 rounded-[18px] whitespace-nowrap flex-shrink-0',
+                    'px-3 py-2.5 pr-4',
+                    'bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900/40',
+                    'border border-slate-200/80 dark:border-slate-700/50',
+                    'shadow-[0_4px_14px_-6px_rgba(0,0,0,0.10),inset_0_1px_1px_rgba(255,255,255,0.8)]',
+                    'dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.04)]',
+                    'hover:-translate-y-0.5 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-slate-600',
+                    'hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.14),0_0_0_1px_rgba(59,130,246,0.12)]',
+                    'dark:hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(59,130,246,0.2)]',
+                    'transition-all duration-300 ease-out cursor-pointer',
+                  )}
                   role="listitem"
                   aria-label={`Ver empresas na categoria ${category.name}`}
                 >
-                  {customIconSrc ? (
-                    <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0 ring-1 ring-slate-200/60 dark:ring-slate-600/40">
-                      <Image
-                        src={customIconSrc}
-                        alt=""
-                        width={20}
-                        height={20}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 smooth-transition flex-shrink-0" />
-                  )}
-                  <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover/chip:text-slate-900 dark:group-hover/chip:text-white smooth-transition">{category.name}</span>
+                  {/* Thumbnail */}
+                  <div className="relative w-11 h-11 rounded-xl flex-shrink-0 overflow-hidden border border-slate-200/70 dark:border-slate-600/40 shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                    {customIconSrc ? (
+                      <>
+                        <Image
+                          src={customIconSrc}
+                          alt=""
+                          width={44}
+                          height={44}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover/chip:scale-110"
+                        />
+                        {/* Glossy overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-white/5 pointer-events-none" />
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800">
+                        <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 transition-colors duration-200" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Labels */}
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500 mb-0.5">
+                      Categoria
+                    </span>
+                    <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 group-hover/chip:text-slate-950 dark:group-hover/chip:text-white transition-colors duration-200 tracking-[-0.01em]">
+                      {category.name}
+                    </span>
+                  </div>
+
+                  {/* Chevron */}
+                  <svg
+                    className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover/chip:text-slate-500 dark:group-hover/chip:text-slate-400 transition-colors duration-200 ml-1 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
               );
             })}
