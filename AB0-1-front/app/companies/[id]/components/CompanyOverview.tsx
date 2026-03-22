@@ -91,17 +91,34 @@ export default function CompanyOverview({
             Tipos de Projetos
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {company.project_types.map((type) => (
-              <div 
-                key={type} 
-                className="flex items-center p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
-              >
-                <div className="bg-blue-50 p-2 rounded-lg mr-3 text-blue-600 group-hover:scale-110 transition-transform">
-                   <Zap className="h-3.5 w-3.5 fill-current" />
+                        {company.project_types.map((type) => {
+              const typeLower = type.toLowerCase();
+              let iconSrc = null;
+              if (typeLower.includes('residenc')) iconSrc = '/images/icone-avalia-solar-residencial.png';
+              else if (typeLower.includes('comerci')) iconSrc = '/images/comercial-icone-avalia-solar.png';
+              else if (typeLower.includes('rura')) iconSrc = '/images/rural-icone-avalia-solar.png';
+
+              return (
+                <div 
+                  key={type} 
+                  className="flex items-center p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
+                >
+                  <div className="bg-blue-50/50 p-2 rounded-lg mr-3 shadow-sm group-hover:scale-110 transition-transform flex items-center justify-center relative w-10 h-10">
+                    {iconSrc ? (
+                      <Image 
+                        src={iconSrc} 
+                        alt={type} 
+                        fill 
+                        className="object-contain p-1.5"
+                      />
+                    ) : (
+                      <Zap className="h-4 w-4 text-blue-600 fill-current" />
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{type}</span>
                 </div>
-                <span className="text-sm font-bold text-slate-700">{type}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
