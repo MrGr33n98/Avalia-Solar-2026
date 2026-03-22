@@ -49,41 +49,45 @@ export default function CompanyAwardsCard({ company }: CompanyAwardsCardProps) {
   const featuredBadgeImage = featuredBadge?.image_url ? getFullImageUrl(featuredBadge.image_url) : null;
 
   return (
-    <Card className="border border-blue-100 bg-white shadow-sm">
-      <CardContent className="p-5 space-y-4">
+    <Card className="clay-precision overflow-hidden relative border-blue-100/50 bg-gradient-to-br from-white to-blue-50/30">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+      <CardContent className="p-6 space-y-5 relative z-10">
         <div>
-          <h3 className="inline-block bg-blue-700 px-2 py-1 text-xl font-extrabold leading-none text-white">
-            Prêmio Avalia Solar
-          </h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          <div className="flex items-center gap-2 mb-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            <h3 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500 tracking-tight">
+              Prêmio Avalia Solar
+            </h3>
+          </div>
+          <p className="text-sm leading-relaxed text-slate-500 font-medium">
             Reconhecimento anual do Avalia Solar para empresas destaque em qualidade e confiança.
           </p>
         </div>
 
         {(featuredBadge || awardsText.length > 0) && (
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-            <div className="flex items-start gap-3">
+          <div className="rounded-xl border border-blue-100/50 bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] hover:shadow-md transition-all duration-300 p-4">
+            <div className="flex items-start gap-4">
               {featuredBadgeImage ? (
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-white">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-1">
                   <Image
                     src={featuredBadgeImage}
                     alt={featuredBadge?.name || 'Selo de prêmio'}
                     fill
-                    sizes="56px"
+                    sizes="64px"
                     className="object-contain"
                   />
                 </div>
               ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-blue-600">
-                  <Trophy className="h-6 w-6" />
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50/50 text-blue-600">
+                  <Trophy className="h-8 w-8" />
                 </div>
               )}
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-900">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-900 leading-snug">
                   {featuredBadge ? formatBadgeHeadline(featuredBadge) : awardsText[0]}
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
                   {featuredBadge?.description?.trim() || 'Selo concedido pelo Avalia Solar para empresas com alta performance.'}
                 </p>
               </div>
@@ -93,9 +97,9 @@ export default function CompanyAwardsCard({ company }: CompanyAwardsCardProps) {
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="link" className="h-auto p-0 text-base font-bold text-blue-700">
+            <Button variant="link" className="h-auto p-0 text-sm font-bold text-blue-600 hover:text-blue-700 group mt-2 inline-flex items-center">
               Ver todos os prêmios
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight className="ml-1.5 h-4 w-4 smooth-transition group-hover:translate-x-1" />
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[85vh] max-w-2xl overflow-hidden">
