@@ -60,7 +60,7 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/80 px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] shadow-lg backdrop-blur-lg md:py-3"
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/60 bg-white/95 px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] shadow-[0_-8px_24px_-6px_rgba(15,23,42,0.12)] backdrop-blur-md md:py-3"
         >
           <div className="container mx-auto flex items-center justify-between gap-4">
             <div className="hidden md:flex items-center gap-3">
@@ -92,9 +92,8 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
                     size="default"
                     enabled
                     href={ctaUrl}
-                    styles={{ variant: 'solid' }}
-                    preset="brandSolid"
-                    className="w-full h-11 md:h-10 text-foreground font-bold px-6 shadow-sm"
+                    styles={{ variant: 'solid', bg_color: '#25D366', hover_bg_color: '#1ebe5d', text_color: '#ffffff', border_color: '#25D366', icon_color: '#ffffff' }}
+                    className="w-full h-11 md:h-10 font-bold px-6"
                     label="WhatsApp"
                     companyId={company.id}
                     pagePath={typeof window !== 'undefined' ? window.location.pathname : undefined}

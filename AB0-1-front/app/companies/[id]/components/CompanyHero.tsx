@@ -215,13 +215,13 @@ export default function CompanyHero({
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
-                    <div className="h-full w-full overflow-hidden rounded-full bg-white">
+                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white p-1.5">
                       <OptimizedImage
                         src={logoUrl || '/images/logo-placeholder.svg'}
                         alt={company.name}
                         width={96}
                         height={96}
-                        className="h-full w-full rounded-full object-contain p-2"
+                        className="h-full w-full rounded-full object-contain object-center"
                         fallbackSrc="/images/logo-placeholder.svg"
                         onError={() => setLogoError(true)}
                       />

@@ -187,9 +187,9 @@ export default function LandingHeroClient({
             {validBanners.length > 0 ? (
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative bg-white/40 backdrop-blur-xl border border-white/40 p-3 rounded-[32px] shadow-2xl overflow-hidden">
+                <div className="relative bg-slate-800/95 border border-slate-700 p-3 rounded-[32px] shadow-2xl overflow-hidden">
                   <div className="mb-3 flex items-center justify-between px-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-200">
                       Parceiro em Destaque
                     </span>
                     <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -222,7 +222,7 @@ export default function LandingHeroClient({
                               <h3 className="text-white font-black text-xl leading-tight mb-2 drop-shadow-lg">
                                 {banner.title || 'Visitar Especialista'}
                               </h3>
-                              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-bold text-white transition-colors group-hover/card:bg-blue-600">
+                              <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/70 backdrop-blur-sm px-4 py-2 text-xs font-bold text-white transition-colors group-hover/card:bg-blue-600">
                                 Conhecer parceiro
                                 <ArrowRight className="h-3.5 w-3.5" />
                               </div>
@@ -235,7 +235,7 @@ export default function LandingHeroClient({
                 </div>
               </div>
             ) : (
-              <div className="relative bg-white/30 backdrop-blur-lg border border-white/40 p-8 rounded-[40px] shadow-2xl flex flex-col items-center text-center">
+              <div className="relative bg-slate-800/95 border border-slate-700 p-8 rounded-[40px] shadow-2xl flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-blue-500/30">
                   <Zap className="w-10 h-10 text-white fill-white" />
                 </div>

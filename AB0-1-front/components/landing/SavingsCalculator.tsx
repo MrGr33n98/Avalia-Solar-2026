@@ -86,7 +86,7 @@ export default function SavingsCalculator() {
               key={bill}
               className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
-              <Card className="clay-panel bg-white/10 border-white/10 backdrop-blur-md overflow-hidden">
+              <Card className="clay-panel bg-slate-800/90 border-slate-700 overflow-hidden">
                 <CardContent className="p-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -119,11 +119,11 @@ export default function SavingsCalculator() {
               </Card>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 clay-chip bg-emerald-500/10 border border-emerald-500/20 text-center">
+                <div className="p-3 clay-chip bg-emerald-950/70 border border-emerald-800/50 text-center">
                   <p className="text-emerald-400 text-[10px] font-bold uppercase mb-0.5">Redução</p>
                   <p className="text-lg font-black text-emerald-400">Até 95%</p>
                 </div>
-                <div className="p-3 clay-chip bg-blue-500/10 border border-blue-500/20 text-center">
+                <div className="p-3 clay-chip bg-blue-950/70 border border-blue-800/50 text-center">
                   <p className="text-blue-400 text-[10px] font-bold uppercase mb-0.5">Payback Médio</p>
                   <p className="text-lg font-black text-blue-400">3-4 Anos</p>
                 </div>
