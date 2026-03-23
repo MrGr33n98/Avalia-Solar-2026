@@ -25,7 +25,7 @@ export function StickyShareBar({ title, slug }: StickyShareBarProps) {
       absolute: true
     });
 
-    track('blog_share_click', {
+    track('blog_social_share', {
       post_id: slug,
       post_title: title,
       platform: platform,

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
 import { motion, useAnimation } from 'framer-motion';
+import { track } from '@/lib/analytics/lazy';
 
 interface PremiumBannerCarouselProps {
   items: React.ReactNode[];
@@ -89,10 +90,40 @@ export function PremiumBannerCarousel({
     };
   }, [api, controls, autoplayDelay, items.length, isPaused]);
 
+  const firedImpression = React.useRef(false);
+  const impressionTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const containerRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (firedImpression.current) return;
+        
+        impressionTimerRef.current = setTimeout(() => {
+          if (firedImpression.current) return;
+          firedImpression.current = true;
+          track('premium_banner_carousel_viewed', {
+            item_count: items.length,
+            autoplay_delay: autoplayDelay,
+            page_url: typeof window !== 'undefined' ? window.location.href : ''
+          });
+          observer.disconnect();
+        }, 1000);
+      } else {
+        if (impressionTimerRef.current) {
+          clearTimeout(impressionTimerRef.current);
+        }
+      }
+    }, { threshold: 0.5 });
+    
+    observer.observe(node);
+  }, [items.length, autoplayDelay]);
+
   if (!items || items.length === 0) return null;
 
   return (
     <div 
+      ref={containerRef}
       className={cn("group relative w-full overflow-hidden rounded-2xl shadow-md transition-shadow hover:shadow-lg", className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}

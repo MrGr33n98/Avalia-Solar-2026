@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { leadsApiSafe } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics/lazy';
 
 interface Props {
   companyName: string;
@@ -28,6 +29,16 @@ export default function QuoteForm({ companyName, companyId }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    
+    // Analytics: Contact Request (Funil de Conversão)
+    track('contact_request', {
+      company_id: companyId,
+      company_name: companyName,
+      form_type: 'quote',
+      project_type: projectType,
+      source_page: typeof window !== 'undefined' ? window.location.pathname : ''
+    });
+
     // Exibir modal de confirmação imediatamente após o clique
     showLeadConfirmationModal();
     try {

@@ -26,6 +26,7 @@ interface TrackingMetadata {
   device_type: 'desktop' | 'mobile' | 'tablet';
   timestamp: string;
   page_url: string;
+  full_url: string;
   referrer: string;
 }
 
@@ -82,7 +83,8 @@ function getTrackingMetadata(): TrackingMetadata {
     ...getUTMParams(),
     device_type: getDeviceType(),
     timestamp: new Date().toISOString(),
-    page_url: typeof window !== 'undefined' ? window.location.href : '',
+    page_url: typeof window !== 'undefined' ? window.location.pathname : '',
+    full_url: typeof window !== 'undefined' ? window.location.href : '',
     referrer: typeof window !== 'undefined' ? document.referrer : '',
   };
 }
@@ -107,16 +109,16 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
       ...metadata,
     };
 
-    // 1. Track generic CTA click event (Mixpanel + GA4)
-    await track('CTA Clicked', baseProperties);
+    // 1. Track generic CTA click event (Unified snake_case)
+    await track('company_cta_clicked', baseProperties);
 
     // 2. Track specific CTA type event
     const specificEvents: Record<string, string> = {
-      whatsapp: 'WhatsApp CTA Clicked',
-      email: 'Email CTA Clicked',
-      phone: 'Phone CTA Clicked',
-      website: 'Website CTA Clicked',
-      quote: 'Quote Request CTA Clicked',
+      whatsapp: 'company_cta_whatsapp',
+      email: 'company_cta_email',
+      phone: 'company_cta_phone',
+      website: 'company_cta_website',
+      quote: 'company_cta_quote',
     };
 
     const specificEventName = specificEvents[props.ctaType];

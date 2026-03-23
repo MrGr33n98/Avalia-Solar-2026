@@ -1,7 +1,9 @@
 'use client';
 
+import { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics/lazy';
 
 interface TrustScoreDialProps {
   score: number;
@@ -45,8 +47,37 @@ export default function TrustScoreDial({
     return 'bg-red-50';
   };
 
+  const firedImpression = useRef(false);
+  const impressionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (firedImpression.current) return;
+        
+        impressionTimerRef.current = setTimeout(() => {
+          if (firedImpression.current) return;
+          firedImpression.current = true;
+          track('trust_score_viewed', {
+            score: normalizedScore,
+            size,
+            page_url: typeof window !== 'undefined' ? window.location.href : ''
+          });
+          observer.disconnect();
+        }, 1000);
+      } else {
+        if (impressionTimerRef.current) {
+          clearTimeout(impressionTimerRef.current);
+        }
+      }
+    }, { threshold: 0.5 });
+    
+    observer.observe(node);
+  }, [normalizedScore, size]);
+
   return (
-    <div className={cn("relative flex flex-col items-center justify-center", className)}>
+    <div ref={containerRef} className={cn("relative flex flex-col items-center justify-center", className)}>
       <div 
         className={cn(
           "relative rounded-full flex items-center justify-center p-3 shadow-inner bg-white border border-slate-100",

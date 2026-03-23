@@ -61,6 +61,16 @@ export function initializeAnalytics(): void {
     updateAttribution();
   }
 
+  // Detecta e persiste flag de tráfego interno
+  const searchParams = new URLSearchParams(window.location.search);
+  const isInternalVal = searchParams.get('internal') || searchParams.get('is_internal');
+  if (isInternalVal === 'true' || isInternalVal === '1') {
+    localStorage.setItem('is_internal_team', 'true');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Analytics] Equipe interna identificada e persistida.');
+    }
+  }
+
   // Marca como inicializado e processa fila de eventos
   initialized = true;
   flushEventQueue();
@@ -144,7 +154,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     platform: 'web',
     app_key: DEFAULT_APP_KEY,
     is_logged_in: !!currentUserId,
-    is_internal: typeof window !== 'undefined' ? localStorage.getItem('is_internal_team') === 'true' || window.location.search.includes('internal=true') || window.location.search.includes('is_internal=true') : false,
+    is_internal: typeof window !== 'undefined' ? localStorage.getItem('is_internal_team') === 'true' || window.location.search.includes('is_internal=true') || window.location.search.includes('internal=true') : false,
     user_id: currentUserId || undefined,
     source,
     
@@ -243,28 +253,38 @@ function mapToGtmEvent(name: string): string {
 }
 
 /**
- * Sanitize properties to remove PII and normalize data
+ * Sanitize properties to remove PII and normalize data (Matrix VAR-017)
  */
 function sanitizeProperties(properties: Record<string, any>): Record<string, any> {
+  if (!properties || typeof properties !== 'object') return properties;
   const sanitized = { ...properties };
   
-  // List of keys that might contain PII
+  // List of keys that might contain PII - Updated per Auditoria TaaS v2.0
   const piiKeys = [
     'email', 'phone', 'name', 'first_name', 'last_name', 
     'address', 'zipcode', 'cnpj', 'cpf', 'password',
-    'address_full', 'full_address'
+    'address_full', 'full_address', 'phone_number', 'phoneNumber',
+    'email_address', 'emailAddress', 'whatsapp', 'client_name'
   ];
   
   piiKeys.forEach(key => {
     if (key in sanitized) {
+      // Regra de segurança: manter apenas os primeiros 3 dígitos do telefone se necessário, 
+      // ou remover completamente para PostHog (padrão).
       delete sanitized[key];
     }
   });
   
-  // Also check nested metadata if present
-  if (sanitized.metadata && typeof sanitized.metadata === 'object') {
-    sanitized.metadata = sanitizeProperties(sanitized.metadata);
-  }
+  // Deep clean for metadata or nested objects
+  Object.keys(sanitized).forEach(key => {
+    if (sanitized[key] && typeof sanitized[key] === 'object' && !Array.isArray(sanitized[key])) {
+      sanitized[key] = sanitizeProperties(sanitized[key]);
+    } else if (Array.isArray(sanitized[key])) {
+      sanitized[key] = sanitized[key].map((item: any) => 
+        (typeof item === 'object' && item !== null) ? sanitizeProperties(item) : item
+      );
+    }
+  });
   
   return sanitized;
 }

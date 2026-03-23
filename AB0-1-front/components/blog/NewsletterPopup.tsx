@@ -68,7 +68,7 @@ export function NewsletterPopup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    track('blog_newsletter_popup_submit', { placement: 'blog' });
+    track('newsletter_submit', { placement: 'blog_popup', email: undefined }); // Email is PII, do not track here
     setOpen(false);
     localStorage.setItem(STORAGE_KEY, 'true');
     setIsDismissed(true);

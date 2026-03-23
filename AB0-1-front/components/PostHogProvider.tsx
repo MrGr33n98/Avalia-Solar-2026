@@ -14,13 +14,16 @@ function WebVitals() {
   useReportWebVitals((metric) => {
     if (!posthog.__loaded) return;
 
+    // PostHog standard names: LCP, FID (first_input_delay), CLS, FCP, TTFB, INP
+    const cleanName = metric.name === 'FID' ? 'first_input_delay' : metric.name;
+
     posthog.capture('web_vitals', {
       category: metric.label === 'web-vital' ? 'Web Vitals' : 'Next.js custom metric',
-      event_label: metric.name,
+      event_label: cleanName,
       event_value: metric.value,
       initial_value: metric.value,
       metric_id: metric.id,
-      metric_name: metric.name,
+      metric_name: cleanName,
       metric_value: metric.value,
       page_path: window.location.pathname,
     });
