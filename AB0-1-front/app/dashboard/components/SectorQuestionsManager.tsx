@@ -304,6 +304,7 @@ export default function SectorQuestionsManager({ companyId, planFeatures }: Prop
                       <div className="flex flex-col items-end gap-1 mr-4">
                          <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">Signal Status</span>
                          <Switch
+                          aria-label={`Ativar protocolo: ${question.prompt}`}
                           checked={question.enabled}
                           onCheckedChange={(checked) => void toggleEnabled(question, checked)}
                           className="data-[state=checked]:bg-brand-green"

@@ -165,11 +165,12 @@ export default function AnalyticsSettings({ companyId }: Props) {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                        <Search className="h-3.5 w-3.5 text-blue-400" />
-                       <Label className="text-xs font-black uppercase tracking-widest text-white">Full Tracking</Label>
+                       <Label htmlFor="automatic-tracking" className="text-xs font-black uppercase tracking-widest text-white">Full Tracking</Label>
                     </div>
                     <p className="text-[10px] font-medium text-white/30">Views, leads e sinais de intenção via SDK.</p>
                   </div>
                   <Switch
+                    id="automatic-tracking"
                     checked={settings.collection_modes.automatic_tracking}
                     onCheckedChange={(v) =>
                       setSettings({
@@ -188,11 +189,12 @@ export default function AnalyticsSettings({ companyId }: Props) {
                   <div className="space-y-1">
                      <div className="flex items-center gap-2">
                        <Terminal className="h-3.5 w-3.5 text-emerald-400" />
-                       <Label className="text-xs font-black uppercase tracking-widest text-white">Manual Input</Label>
+                       <Label htmlFor="manual-input" className="text-xs font-black uppercase tracking-widest text-white">Manual Input</Label>
                     </div>
                     <p className="text-[10px] font-medium text-white/30">Projetos, capacidade e histórico de mercado.</p>
                   </div>
                   <Switch
+                    id="manual-input"
                     checked={settings.collection_modes.declared_input}
                     onCheckedChange={(v) =>
                       setSettings({
@@ -213,8 +215,9 @@ export default function AnalyticsSettings({ companyId }: Props) {
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-white/60">UTM Analytics</span>
+                      <Label htmlFor="utm-switch" className="text-[11px] font-bold text-white/60">UTM Analytics</Label>
                       <Switch
+                        id="utm-switch"
                         checked={settings.collection_modes.integrated_sources.utm}
                         onCheckedChange={(v) =>
                           setSettings({
@@ -228,8 +231,9 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-white/60">CRM Buffer</span>
+                      <Label htmlFor="crm-switch" className="text-[11px] font-bold text-white/60">CRM Buffer</Label>
                       <Switch
+                        id="crm-switch"
                         checked={settings.collection_modes.integrated_sources.crm_import}
                         onCheckedChange={(v) =>
                           setSettings({
@@ -243,8 +247,9 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-white/60">GA4 / Meta Bridge</span>
+                      <Label htmlFor="ga4-switch" className="text-[11px] font-bold text-white/60">GA4 / Meta Bridge</Label>
                       <Switch
+                        id="ga4-switch"
                         checked={settings.collection_modes.integrated_sources.ga4_meta_ads}
                         onCheckedChange={(v) =>
                           setSettings({
@@ -323,10 +328,11 @@ export default function AnalyticsSettings({ companyId }: Props) {
                     "p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 text-center",
                     v ? "bg-brand-blue/5 border-brand-blue/20" : "bg-white/[0.01] border-white/5 opacity-40"
                   )}>
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-white/60 min-h-[24px]">
+                    <Label htmlFor={`claim-switch-${k}`} className="text-[9px] font-black uppercase tracking-widest text-white/60 min-h-[24px]">
                       {k.replace(/_/g, ' ')}
                     </Label>
                     <Switch
+                      id={`claim-switch-${k}`}
                       checked={v}
                       onCheckedChange={(checked) =>
                         setSettings({

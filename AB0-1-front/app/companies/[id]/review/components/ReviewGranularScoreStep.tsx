@@ -99,6 +99,7 @@ export function ReviewGranularScoreStep({ categoryId, onChange, values }: Review
                   key={star}
                   type="button"
                   onClick={() => handleScoreChange(criterion.id, star)}
+                  aria-label={`${star} estrela${star > 1 ? 's' : ''} para ${criterion.title}`}
                   className="focus:outline-none transition-transform hover:scale-110 p-1"
                 >
                   <Star

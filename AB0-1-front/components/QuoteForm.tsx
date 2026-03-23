@@ -78,9 +78,9 @@ export default function QuoteForm({ companyName, companyId }: Props) {
             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
           </div>
           <div>
-            <Label>Tipo de Projeto</Label>
+            <Label htmlFor="project-type">Tipo de Projeto</Label>
             <Select value={projectType} onValueChange={setProjectType}>
-              <SelectTrigger>
+              <SelectTrigger id="project-type">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>

@@ -530,7 +530,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                         name="featured"
                         render={({ field }) => (
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-indigo-600" />
+                            <Switch id="featured-switch" aria-label="Destacar produto" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-indigo-600" />
                           </FormControl>
                         )}
                       />

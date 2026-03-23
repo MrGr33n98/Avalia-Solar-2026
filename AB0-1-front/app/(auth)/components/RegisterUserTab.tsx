@@ -247,7 +247,7 @@ export default function RegisterUserTab() {
           <div className="space-y-2">
             <Label htmlFor="state">Estado (UF)</Label>
             <Select onValueChange={(val) => setValue('state', val)}>
-              <SelectTrigger>
+              <SelectTrigger id="state">
                 <SelectValue placeholder="UF" />
               </SelectTrigger>
               <SelectContent>

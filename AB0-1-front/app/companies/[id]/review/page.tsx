@@ -249,6 +249,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
+                      aria-label={`${star} estrela${star > 1 ? 's' : ''} de 5`}
                       className="focus:outline-none transition-transform hover:scale-110"
                     >
                       <Star

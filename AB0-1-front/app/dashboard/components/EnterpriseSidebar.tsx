@@ -85,6 +85,7 @@ function SidebarTree({
                   isCollapsed && 'justify-center px-0'
                 )}
                 title={item.label}
+                aria-label={item.label}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!isCollapsed && (
@@ -108,6 +109,7 @@ function SidebarTree({
                         type="button"
                         variant="ghost"
                         onClick={() => onTabChange(child.id)}
+                        aria-label={child.label}
                         className={cn(
                           'w-full h-10 rounded-lg justify-start px-3 text-left',
                           isChildActive
@@ -148,6 +150,7 @@ function SidebarTree({
               isCollapsed && 'justify-center px-0'
             )}
             title={item.label}
+            aria-label={item.label}
           >
             <Icon className="h-4 w-4 shrink-0" />
             {!isCollapsed && (
@@ -245,6 +248,7 @@ export default function EnterpriseSidebar({
           type="button"
           variant="ghost"
           onClick={() => setIsCollapsed((prev) => !prev)}
+          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           className={cn(
             'w-full h-10 rounded-xl justify-start px-3 text-white/70 hover:text-white hover:bg-white/5',
             isCollapsed && 'justify-center px-0'

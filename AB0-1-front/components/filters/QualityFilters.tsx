@@ -85,6 +85,8 @@ export const QualityFilters: React.FC<QualityFiltersProps> = ({
               </div>
             </div>
             <Switch
+              id={`filter-${filter.id}`}
+              aria-label={filter.label}
               checked={filter.value}
               onCheckedChange={(val) => onChange(filter.id, val)}
               className="data-[state=checked]:bg-blue-600"

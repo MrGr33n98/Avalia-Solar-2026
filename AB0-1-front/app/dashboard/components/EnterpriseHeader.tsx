@@ -140,6 +140,7 @@ export default function EnterpriseHeader({
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
+            aria-label="Abrir menu de navegação"
             className="lg:hidden shrink-0 hover:bg-white/10 text-white/70"
           >
             <Menu className="h-5 w-5" />
@@ -288,6 +289,7 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Ajuda e Suporte"
                 className="relative hidden md:inline-flex hover:bg-white/10 text-white/70"
               >
                 <HelpCircle className="h-5 w-5" />
@@ -311,6 +313,7 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Ver notificações"
                 className="relative hover:bg-white/10 text-white/70"
               >
                 <Bell className="h-5 w-5" />
