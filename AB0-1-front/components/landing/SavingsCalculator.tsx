@@ -58,16 +58,13 @@ export default function SavingsCalculator() {
                 </div>
                 <div className="clay-input bg-slate-700/50 border border-slate-600 p-2 rounded-clay-md">
                   <Slider
+                    id="energy-bill-slider"
                     value={[bill]}
                     min={100}
                     max={5000}
                     step={50}
                     onValueChange={(val) => setBill(val[0])}
                     aria-label="Valor da conta de luz mensal"
-                    aria-valuetext={`R$ ${bill}`}
-                    aria-valuemin={100}
-                    aria-valuemax={5000}
-                    aria-valuenow={bill}
                     className="mb-1 [&_[role=slider]]:clay-convex [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
                   />
                 </div>
@@ -100,7 +97,7 @@ export default function SavingsCalculator() {
                     </div>
                     <div>
                       <p className="text-slate-400 text-[10px] mb-0.5 uppercase tracking-wider font-bold">Economia Anual</p>
-                      <h3 className="text-xl font-bold text-primary">R$ {stats.yearly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                      <h3 className="text-xl font-bold text-brand-cyan-light">R$ {stats.yearly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                     </div>
                   </div>
 

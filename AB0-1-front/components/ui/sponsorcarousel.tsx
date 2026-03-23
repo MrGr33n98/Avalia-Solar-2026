@@ -307,25 +307,31 @@ export default function SponsorCarousel({
         </div>
       )}
 
-      <Carousel setApi={setApi} plugins={[autoplay]} opts={{ loop: true }} className="w-full group relative">
+      <Carousel 
+        setApi={setApi} 
+        plugins={[autoplay]} 
+        opts={{ loop: true }} 
+        className="w-full group relative"
+        aria-roledescription="carrossel"
+      >
         <CarouselContent className="-ml-4">
           {validSlides.map((s, index) => (
-            <CarouselItem key={s.id} className="pl-4">
+            <CarouselItem 
+              key={s.id} 
+              className="pl-4"
+              aria-roledescription="slide"
+              aria-label={`${index + 1} de ${validSlides.length}`}
+            >
               <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm mx-auto w-full">
                 <CardContent
-                  className={cn('relative p-0 w-full bg-white', height)}
-                  style={
-                    typeof s.width === 'number' && s.width > 0 && typeof s.height === 'number' && s.height > 0
-                      ? { aspectRatio: `${s.width} / ${s.height}` }
-                      : undefined
-                  }
+                  className={cn('relative p-0 w-full bg-slate-50 dark:bg-slate-900', height)}
                 >
                   {s.link ? (
-                    <Link href={s.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                    <Link href={s.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full" title={s.title}>
                       {s._failed ? (
                         <Image
                           src={'/images/banner-avalia-solar.png'}
-                          alt={'Banner fallback'}
+                          alt={'Banner de fallback AvaliaSolar'}
                           fill
                           priority={index === 0}
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1180px"
@@ -346,7 +352,7 @@ export default function SponsorCarousel({
                   ) : s._failed ? (
                     <Image
                       src={'/images/banner-avalia-solar.png'}
-                      alt={'Banner fallback'}
+                      alt={'Banner de fallback AvaliaSolar'}
                       fill
                       priority={index === 0}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1180px"
@@ -365,7 +371,7 @@ export default function SponsorCarousel({
                   )}
 
                   {s.sponsored && (
-                    <span className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                    <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded backdrop-blur-sm border border-white/10">
                       Patrocinado
                     </span>
                   )}
@@ -376,13 +382,13 @@ export default function SponsorCarousel({
         </CarouselContent>
 
         <CarouselPrevious
-        className="left-3 md:left-4 h-7 w-7 md:h-8 md:w-8 bg-white/90 hover:bg-white border border-gray-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-label="Banner anterior"
-      />
+          className="left-3 md:left-4 h-8 w-8 bg-white/95 hover:bg-white border border-gray-200 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+          aria-label="Banner anterior"
+        />
         <CarouselNext
-        className="right-3 md:right-4 h-7 w-7 md:h-8 md:w-8 bg-white/90 hover:bg-white border border-gray-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-label="Próximo banner"
-      />
+          className="right-3 md:right-4 h-8 w-8 bg-white/95 hover:bg-white border border-gray-200 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+          aria-label="Próximo banner"
+        />
 
         {safeSnapCount > 1 ? (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
@@ -392,8 +398,8 @@ export default function SponsorCarousel({
                 type="button"
                 onClick={() => api?.scrollTo(idx)}
                 className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
-                  idx === selectedIndex ? 'w-8 bg-blue-600' : 'w-2 bg-blue-200/70 hover:bg-blue-300'
+                  'h-2 rounded-full transition-all duration-300',
+                  idx === selectedIndex ? 'w-8 bg-blue-700 shadow-sm' : 'w-2 bg-blue-300 hover:bg-blue-400'
                 )}
                 aria-label={`Ir para o banner ${idx + 1}`}
                 aria-current={idx === selectedIndex}

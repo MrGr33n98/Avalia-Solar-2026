@@ -72,11 +72,11 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-gray-100 text-gray-500 cursor-help">
+                <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-slate-200 text-slate-700 cursor-help shadow-sm">
                   PATROCINADO <Info className="ml-1 w-3 h-3" />
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[200px] text-[11px] bg-slate-900 text-white border-none">
+              <TooltipContent className="max-w-[200px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
                 <p>Destaque Patrocinado – empresa que investe na qualidade e visibilidade no AvaliaSolar.</p>
               </TooltipContent>
             </Tooltip>
@@ -138,8 +138,8 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
             companySlug={company.slug}
             className="flex-1 h-11 rounded-xl bg-[#004791] hover:bg-[#00356b] font-bold text-xs"
           />
-          <Button variant="outline" className="h-11 rounded-xl border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-50" asChild>
-            <Link href={companyPath}>Ver Perfil</Link>
+          <Button variant="outline" className="h-11 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50" asChild>
+            <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
           </Button>
         </div>
       </CardContent>

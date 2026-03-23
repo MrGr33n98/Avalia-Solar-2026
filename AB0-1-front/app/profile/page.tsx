@@ -316,11 +316,13 @@ export default function ProfilePage() {
                       </AvatarFallback>
                     </Avatar>
                     <input
+                      id="avatar-upload-input"
                       ref={avatarInputRef}
                       type="file"
                       accept="image/jpeg,image/png"
                       className="hidden"
                       onChange={handleAvatarFileSelect}
+                      aria-label="Selecionar imagem de perfil"
                     />
                     <div className="flex flex-wrap items-center justify-center gap-2">
                       <Button

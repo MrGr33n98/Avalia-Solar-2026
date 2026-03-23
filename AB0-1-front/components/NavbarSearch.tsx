@@ -35,6 +35,8 @@ export default function NavbarSearch({
       <div className="flex h-12 w-full items-center rounded-2xl border border-[#ededed] bg-white px-2 transition-colors hover:border-[#999] focus-within:ring-2 focus-within:ring-brand-blue/30 dark:border-white/10 dark:bg-[#081a2e]/82 dark:hover:border-white/30">
         <Search className="ml-2 h-5 w-5 text-slate-500" aria-hidden="true" />
         <Input
+          id="navbar-search"
+          name="q"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}

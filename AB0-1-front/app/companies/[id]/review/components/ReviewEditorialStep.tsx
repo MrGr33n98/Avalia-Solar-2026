@@ -85,7 +85,9 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
               </div>
             ))}
             <div className="flex gap-2">
+              <label htmlFor="pro-input" className="sr-only">Adicionar ponto positivo</label>
               <input
+                id="pro-input"
                 placeholder="Adicionar ponto positivo..."
                 className="flex-1 p-2 text-sm rounded-md border border-green-200 bg-green-50/30 focus:outline-none focus:ring-1 focus:ring-green-500"
                 value={newPro}
@@ -116,7 +118,9 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
               </div>
             ))}
             <div className="flex gap-2">
+              <label htmlFor="con-input" className="sr-only">Adicionar ponto negativo</label>
               <input
+                id="con-input"
                 placeholder="Adicionar ponto negativo..."
                 className="flex-1 p-2 text-sm rounded-md border border-red-200 bg-red-50/30 focus:outline-none focus:ring-1 focus:ring-red-500"
                 value={newCon}

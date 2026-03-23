@@ -796,7 +796,10 @@ function SearchContent() {
           <form onSubmit={handleSubmit} className="flex gap-2.5 mb-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" size={16} />
+              <label htmlFor="search-input" className="sr-only">Buscar empresas, produtos ou serviços</label>
               <Input
+                id="search-input"
+                name="q"
                 type="text"
                 placeholder="Buscar empresas, produtos, serviços..."
                 value={searchTerm}

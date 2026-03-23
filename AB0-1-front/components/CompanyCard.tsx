@@ -599,8 +599,8 @@ export default function CompanyCard({
           <Button
             variant="outline"
             className={cn(
-              'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400',
-              'hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600',
+              'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300',
+              'hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500',
               'font-medium transition-all duration-150 rounded-xl',
               compact
                 ? (canRequestQuote ? 'h-8 w-8 p-0 flex-shrink-0' : 'h-8 w-full')
@@ -620,8 +620,22 @@ export default function CompanyCard({
           className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 print:hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <label className="flex items-center gap-2 cursor-pointer group/check select-none w-fit">
+          <label 
+            htmlFor={`compare-${id}`}
+            className="flex items-center gap-2 cursor-pointer group/check select-none w-fit"
+          >
             <div
+              id={`compare-${id}`}
+              role="checkbox"
+              aria-checked={isCompared}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  if (isCompared) removeFromComparison(company.id);
+                  else if (canAddMore) addToComparison(company);
+                }
+              }}
               onClick={() => {
                 if (isCompared) {
                   removeFromComparison(company.id);
@@ -635,17 +649,17 @@ export default function CompanyCard({
                 isCompared
                   ? 'bg-blue-600 border-blue-600'
                   : canAddMore
-                    ? 'border-slate-300 dark:border-slate-600 group-hover/check:border-blue-400'
+                    ? 'border-slate-400 dark:border-slate-500 group-hover/check:border-blue-500'
                     : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
               )}
             >
               {isCompared && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
             </div>
             <span className={cn(
-              'text-[12px] font-light tracking-wide transition-colors',
+              'text-[12px] font-medium tracking-wide transition-colors',
               isCompared
-                ? 'text-blue-600 dark:text-blue-400'
-                : 'text-slate-500 dark:text-slate-400 group-hover/check:text-slate-700 dark:group-hover/check:text-slate-300'
+                ? 'text-blue-700 dark:text-blue-400'
+                : 'text-slate-600 dark:text-slate-300 group-hover/check:text-slate-900 dark:group-hover/check:text-white'
             )}>
               {isCompared ? 'Selecionada' : 'Comparar'}
             </span>

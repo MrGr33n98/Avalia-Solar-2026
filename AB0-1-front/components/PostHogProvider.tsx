@@ -3,7 +3,7 @@
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useReportWebVitals } from 'next/dist/client/web-vitals';
+import { useReportWebVitals } from 'next/navigation';
 import { useEffect, useRef, Suspense } from 'react';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
