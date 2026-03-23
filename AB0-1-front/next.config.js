@@ -43,6 +43,11 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    serverComponentsExternalPackages: [
+      '@opentelemetry/instrumentation-http',
+      'require-in-the-middle',
+      'import-in-the-middle'
+    ],
     optimizePackageImports: [
       'lucide-react',
       'date-fns',
