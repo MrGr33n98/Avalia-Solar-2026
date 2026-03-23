@@ -499,8 +499,8 @@ export default function CompanyCard({
               </Badge>
             )}
             {(city || state) && (
-              <div className="flex items-center gap-0.5 text-[11px] text-slate-500 dark:text-slate-500 truncate">
-                <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-600 flex-shrink-0" />
+              <div className="flex items-center gap-0.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-600 flex-shrink-0" />
                 <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
               </div>
             )}
@@ -515,7 +515,7 @@ export default function CompanyCard({
                   {Number(average_rating).toFixed(1)}
                 </span>
                 {rating_count > 0 && (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-500">
                     ({rating_count.toLocaleString(lang)})
                   </span>
                 )}
@@ -534,9 +534,9 @@ export default function CompanyCard({
 
         {/* Description */}
         {!compact && (
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+          <p className="text-[12px] text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
             {description || (
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-slate-500 dark:text-slate-500">
                 {text.viewServices}
               </span>
             )}

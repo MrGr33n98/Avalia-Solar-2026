@@ -103,8 +103,6 @@ export default function RootLayout({
             {/* PostHog */}
             <link rel="preconnect" href="https://us.i.posthog.com" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://us.i.posthog.com" />
-            <link rel="preconnect" href="https://eu.i.posthog.com" crossOrigin="anonymous" />
-            <link rel="dns-prefetch" href="https://eu.i.posthog.com" />
           </>
         )}
         {/* Analytics preconnects */}

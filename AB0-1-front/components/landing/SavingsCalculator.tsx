@@ -63,6 +63,11 @@ export default function SavingsCalculator() {
                     max={5000}
                     step={50}
                     onValueChange={(val) => setBill(val[0])}
+                    aria-label="Valor da conta de luz mensal"
+                    aria-valuetext={`R$ ${bill}`}
+                    aria-valuemin={100}
+                    aria-valuemax={5000}
+                    aria-valuenow={bill}
                     className="mb-1 [&_[role=slider]]:clay-convex [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
                   />
                 </div>

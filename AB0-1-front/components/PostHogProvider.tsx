@@ -108,6 +108,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     const hasConsent = hasAnalyticsConsent();
 
+    // Detecta mobile e conexão lenta para poupar CPU (reduz TBT em ~1.5s no Lighthouse)
+    const isMobile = window.innerWidth < 768;
+    const navConn = (navigator as any).connection;
+    const isSaveData = navConn?.saveData === true;
+    const isSlowConn = ['slow-2g', '2g'].includes(navConn?.effectiveType ?? '');
+    const isLightDevice = isMobile || isSaveData || isSlowConn;
+
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
 
@@ -126,8 +133,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // LGPD: não captura nada até consentimento explícito
       opt_out_capturing_by_default: !hasConsent,
 
-      // Session recording com mascaramento total de inputs
-      session_recording: {
+      // Session recording: desativado em mobile/conexão lenta (evita carregar posthog-recorder.js e dead-clicks-autocapture.js)
+      // No mobile, esses scripts pesam ~1.5s de CPU bloqueando a thread principal
+      disable_session_recording: isLightDevice,
+      session_recording: isLightDevice ? undefined : {
         maskAllInputs: true,
         maskTextSelector: '[data-ph-no-capture]',
       },
