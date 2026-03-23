@@ -67,8 +67,12 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 bg-slate-950 text-white px-3 py-1.5 rounded-xl shadow-lg">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+          <div 
+            className="flex items-center gap-1 bg-slate-950 text-white px-3 py-1.5 rounded-xl shadow-lg"
+            role="img"
+            aria-label={`Avaliação: ${Number(review.rating).toFixed(1)} de 5 estrelas`}
+          >
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
             <span className="font-black text-sm">{Number(review.rating).toFixed(1)}</span>
           </div>
         </div>

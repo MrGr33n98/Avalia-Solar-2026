@@ -136,7 +136,29 @@ export default async function CompanyDetailPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando detalhes da empresa...</div>}>
+      <Suspense fallback={
+        <div className="min-h-screen bg-slate-50">
+          <div className="relative h-[250px] sm:h-[300px] w-full bg-slate-900 overflow-hidden">
+            <div className="container mx-auto px-4 pt-24 pb-12 flex flex-col md:flex-row md:items-end gap-6">
+              <div className="h-32 w-32 rounded-3xl bg-slate-800 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-4">
+                <div className="h-10 w-2/3 bg-slate-800 animate-pulse rounded-lg" />
+                <div className="h-5 w-1/3 bg-slate-800 animate-pulse rounded-lg" />
+              </div>
+            </div>
+          </div>
+          <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="h-64 w-full bg-white rounded-3xl animate-pulse shadow-sm" />
+              <div className="h-96 w-full bg-white rounded-3xl animate-pulse shadow-sm" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-48 w-full bg-white rounded-3xl animate-pulse shadow-sm" />
+              <div className="h-64 w-full bg-white rounded-3xl animate-pulse shadow-sm" />
+            </div>
+          </div>
+        </div>
+      }>
         <CompanyDetailClient
           company={company}
           initialReviews={initialReviews || []}

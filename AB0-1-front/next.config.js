@@ -38,7 +38,7 @@ const nextConfig = {
   },
 
   experimental: {
-    // webpackBuildWorker: true,
+    webpackBuildWorker: true,
     optimizeCss: enableOptimizeCss,
     serverActions: {
       bodySizeLimit: '2mb',

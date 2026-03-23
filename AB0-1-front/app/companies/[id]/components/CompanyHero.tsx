@@ -164,6 +164,7 @@ export default function CompanyHero({
               alt={`${company.name} banner`}
               fill
               priority
+              fetchPriority="high"
               quality={90}
               className="object-cover"
               containerClassName="h-full w-full"

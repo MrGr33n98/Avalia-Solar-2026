@@ -41,7 +41,11 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
               <span className="text-[10px] font-black uppercase text-slate-300 tracking-tighter bg-slate-100 px-1.5 py-0.5 rounded">Avaliação Geral</span>
             </div>
           </div>
-          <div className="flex gap-0.5">
+          <div 
+            className="flex gap-0.5" 
+            role="img" 
+            aria-label={`${review.rating} de 5 estrelas`}
+          >
             {[1, 2, 3, 4, 5].map((s) => (
               <Star 
                 key={s} 
@@ -49,6 +53,7 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
                   "h-3 w-3",
                   s <= review.rating ? "fill-slate-400 text-slate-400" : "text-slate-200"
                 )} 
+                aria-hidden="true"
               />
             ))}
           </div>
