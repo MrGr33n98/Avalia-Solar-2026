@@ -95,7 +95,7 @@ function BannerImageContent({ banner, isFirst }: { banner: Banner; isFirst: bool
     <>
       <OptimizedImage
         src={error ? '/images/default-banner.svg' : (imageUrl || '/images/default-banner.svg')}
-        alt={banner.title}
+        alt=""
         fill
         className="object-cover transition-transform duration-700 group-hover:scale-105"
         priority={isFirst}

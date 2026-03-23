@@ -152,10 +152,10 @@ export function PremiumBannerCarousel({
           <>
             {/* Arrows: Always visible on mobile, hover on desktop */}
             <div className="absolute inset-y-0 left-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselPrevious className="relative left-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
+              <CarouselPrevious className="relative left-0 h-10 w-10 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
             <div className="absolute inset-y-0 right-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselNext className="relative right-0 h-8 w-8 md:h-10 md:w-10 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
+              <CarouselNext className="relative right-0 h-10 w-10 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
 
             {/* Progress Indicators */}
@@ -164,16 +164,21 @@ export function PremiumBannerCarousel({
                 <button
                   key={index}
                   onClick={() => api?.scrollTo(index)}
-                  className="relative h-1 w-8 md:w-12 overflow-hidden rounded-full bg-white/30 transition-all"
-                  aria-label={`Go to slide ${index + 1}`}
+                  className="relative group/indicator h-4 w-8 md:w-12 transition-all p-0 flex items-center justify-center bg-transparent"
+                  aria-label={`Ir para slide ${index + 1}`}
                 >
-                  {index === selectedIndex && (
-                    <motion.div
-                      animate={controls}
-                      className="absolute inset-y-0 left-0 bg-white"
-                      style={{ width: "0%" }}
-                    />
-                  )}
+                  <div className={cn(
+                    "h-1 w-full rounded-full bg-white/30 transition-all",
+                    index === selectedIndex ? "h-1.5 bg-white/50" : "group-hover/indicator:bg-white/50"
+                  )}>
+                    {index === selectedIndex && (
+                      <motion.div
+                        animate={controls}
+                        className="absolute inset-y-0 left-0 bg-white rounded-full"
+                        style={{ width: "0%" }}
+                      />
+                    )}
+                  </div>
                 </button>
               ))}
             </div>

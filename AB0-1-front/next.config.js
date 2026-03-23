@@ -153,6 +153,14 @@ const nextConfig = {
             // Helps debug deployment mismatches (e.g. Server Actions manifest)
             key: 'X-Release',
             value: process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'unknown'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google-analytics.com https://ssl.google-analytics.com https://us.i.posthog.com https://static.hotjar.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://us.i.posthog.com https://www.google-analytics.com https://api.avaliasolar.com.br http://localhost:3001; manifest-src 'self'; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com; object-src 'none';"
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups'
           }
         ],
       },

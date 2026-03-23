@@ -161,7 +161,7 @@ export default function CompanyHero({
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
               src={bannerUrl || '/images/banner-avalia-solar.png'}
-              alt={`${company.name} banner`}
+              alt=""
               fill
               priority
               fetchPriority="high"

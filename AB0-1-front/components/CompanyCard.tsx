@@ -523,7 +523,7 @@ export default function CompanyCard({
             ) : (
               <Link
                 href={companyReviewPath}
-                className="text-[11px] text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium transition-colors"
+                className="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold transition-colors underline-offset-2 hover:underline"
                 onClick={(e) => { e.stopPropagation(); emit('cta_first_review'); }}
               >
                 {text.noReviews} →
@@ -628,6 +628,7 @@ export default function CompanyCard({
               id={`compare-${id}`}
               role="checkbox"
               aria-checked={isCompared}
+              aria-label={isCompared ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === ' ' || e.key === 'Enter') {
@@ -636,7 +637,8 @@ export default function CompanyCard({
                   else if (canAddMore) addToComparison(company);
                 }
               }}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (isCompared) {
                   removeFromComparison(company.id);
                 } else if (canAddMore) {
@@ -645,7 +647,7 @@ export default function CompanyCard({
                 }
               }}
               className={cn(
-                'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150',
+                'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150',
                 isCompared
                   ? 'bg-blue-600 border-blue-600'
                   : canAddMore
@@ -653,7 +655,7 @@ export default function CompanyCard({
                     : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
               )}
             >
-              {isCompared && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+              {isCompared && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
             </div>
             <span className={cn(
               'text-[12px] font-medium tracking-wide transition-colors',
