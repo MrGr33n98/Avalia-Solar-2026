@@ -56,7 +56,7 @@ export default function CompanyReviews({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h3 className="text-2xl font-black tracking-tighter text-slate-900">Prova Social</h3>
-          <p className="text-sm text-slate-500 font-medium">Veja o que clientes reais estão dizendo sobre a performance desta empresa.</p>
+          <p className="text-sm text-slate-600 font-medium">Veja o que clientes reais estão dizendo sobre a performance desta empresa.</p>
         </div>
         <Button asChild className="rounded-full px-8 h-12 font-black bg-slate-950 hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-200">
           <Link href={reviewPath}>
@@ -96,7 +96,7 @@ export default function CompanyReviews({
           <h3 className="text-xl font-bold text-slate-900 mb-2">
             {activeCategoryId === null ? 'Nenhuma avaliação encontrada' : 'Nenhuma avaliação nesta categoria'}
           </h3>
-          <p className="text-slate-500 max-w-sm mb-8 text-sm">
+          <p className="text-slate-600 max-w-sm mb-8 text-sm">
             {activeCategoryId === null 
               ? 'Esta empresa ainda não recebeu avaliações de clientes.' 
               : 'Esta empresa ainda não recebeu avaliações específicas para este serviço.'} 

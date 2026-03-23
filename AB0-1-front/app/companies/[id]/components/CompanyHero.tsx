@@ -174,7 +174,7 @@ export default function CompanyHero({
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />
             {(!bannerUrl || bannerError) && (
               <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
-                <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-medium text-slate-500 backdrop-blur">
+                <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-medium text-slate-600 backdrop-blur">
                   Imagem ilustrativa
                 </span>
               </div>
@@ -221,6 +221,7 @@ export default function CompanyHero({
                         alt={company.name}
                         width={96}
                         height={96}
+                        priority
                         className="h-full w-full rounded-full object-contain object-center"
                         fallbackSrc="/images/logo-placeholder.svg"
                         onError={() => setLogoError(true)}
@@ -242,6 +243,7 @@ export default function CompanyHero({
                     <span
                       className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600 shadow-sm"
                       title="Empresa verificada"
+                      role="img"
                       aria-label="Empresa verificada"
                     >
                       <BadgeCheck className="h-4 w-4" />
@@ -256,7 +258,7 @@ export default function CompanyHero({
                   </div>
 
                   {locationLabel && (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
                       <MapPin className="h-3.5 w-3.5" />
                       {locationLabel}
                     </span>
@@ -272,7 +274,7 @@ export default function CompanyHero({
                   size="sm"
                   title="Compartilhar perfil"
                   aria-label="Compartilhar perfil"
-                  className="h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-500 shadow-none hover:bg-transparent hover:text-slate-900"
+                  className="h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-600 shadow-none hover:bg-transparent hover:text-slate-900"
                   onClick={handleShare}
                   disabled={isSharing}
                 >

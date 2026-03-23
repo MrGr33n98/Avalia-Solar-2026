@@ -69,7 +69,7 @@ export default function CompanyOverview({
           {company.description ? (
             <p>{company.description}</p>
           ) : (
-            <p className="italic text-slate-400">Nenhuma descrição disponível.</p>
+            <p className="italic text-slate-500">Nenhuma descrição disponível.</p>
           )}
         </div>
       </section>

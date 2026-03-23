@@ -53,9 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Force no cache for this page
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Enable ISR with 60s revalidation
+export const revalidate = 60;
 
 export default async function CompanyDetailPage({ params }: Props) {
   // Log the ID being requested

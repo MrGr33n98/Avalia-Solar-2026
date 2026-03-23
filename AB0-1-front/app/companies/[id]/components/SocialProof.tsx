@@ -87,7 +87,11 @@ export default function SocialProof({ companyId, companyName }: SocialProofProps
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Media atual</p>
             <div className="mt-1 flex items-center gap-2">
               <span className="text-2xl font-bold text-foreground">{averageRating}</span>
-              <div className="flex items-center gap-1 text-amber-500">
+              <div 
+                className="flex items-center gap-1 text-amber-500"
+                role="img"
+                aria-label={`Média de ${averageRating} estrelas`}
+              >
                 {Array.from({ length: 5 }).map((_, idx) => (
                   <Star key={idx} className="h-4 w-4" fill={idx < Math.round(averageRating) ? 'currentColor' : 'none'} />
                 ))}
@@ -110,7 +114,11 @@ export default function SocialProof({ companyId, companyName }: SocialProofProps
                     {new Date(review.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-amber-500" aria-label={`${review.rating} estrelas`}>
+                <div 
+                  className="flex items-center gap-1 text-amber-500" 
+                  role="img" 
+                  aria-label={`${review.rating} estrelas`}
+                >
                   {Array.from({ length: 5 }).map((_, idx) => (
                     <Star
                       key={idx}

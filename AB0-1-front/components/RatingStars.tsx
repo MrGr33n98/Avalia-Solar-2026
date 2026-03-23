@@ -40,7 +40,11 @@ export function RatingStars({
   const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
   return (
-    <div className={cn("flex items-center gap-1.5", className)}>
+    <div 
+      className={cn("flex items-center gap-1.5", className)}
+      role="img"
+      aria-label={`Avaliação: ${normalizedRating.toFixed(1)} de 5 estrelas`}
+    >
       <div className="flex items-center">
         {[...Array(fullStars)].map((_, i) => (
           <Star 

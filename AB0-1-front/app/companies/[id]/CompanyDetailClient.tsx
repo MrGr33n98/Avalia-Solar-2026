@@ -117,8 +117,8 @@ export default function CompanyDetailClient({
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
   
   // GTM Page Tracking
-  usePageTracking({
-    type: 'company',
+  const trackingOptions = useMemo(() => ({
+    type: 'company' as const,
     title: `${company.name} - Empresa de Energia Solar`,
     additionalData: {
       company: {
@@ -132,7 +132,9 @@ export default function CompanyDetailClient({
         verified: company.verified,
       },
     },
-  });
+  }), [company]);
+
+  usePageTracking(trackingOptions);
 
   const [currentCompany] = useState<Company>(company);
   const [products, setProducts] = useState<Product[]>([]);

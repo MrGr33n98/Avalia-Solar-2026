@@ -91,7 +91,7 @@ export default function CompanySidebar({
                 <Phone className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-0.5">Telefone</p>
+                <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Telefone</p>
                 <a 
                   href={`tel:${company.phone.replace(/\D/g, '')}`} 
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4"
@@ -120,7 +120,7 @@ export default function CompanySidebar({
                 <Globe className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground mb-0.5">Website</p>
+                <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Website</p>
                 <a
                   href={company.website}
                   target="_blank"
@@ -149,11 +149,11 @@ export default function CompanySidebar({
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-0.5">Localização</p>
+                <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Localização</p>
                 <p className="text-base font-semibold leading-relaxed">
                   {company.address && <span className="block">{company.address}</span>}
                   {company.city && company.state && (
-                    <span className="block text-muted-foreground font-normal">
+                    <span className="block text-slate-600 font-normal">
                       {company.city}, {company.state}
                     </span>
                   )}
@@ -168,7 +168,7 @@ export default function CompanySidebar({
                 <Mail className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground mb-0.5">Email</p>
+                <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Email</p>
                 <a 
                   href={`mailto:${company.email || company.email_public}`}
                   className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate block"
@@ -206,7 +206,7 @@ export default function CompanySidebar({
               <div className="bg-primary/10 p-2.5 rounded-full text-primary">
                 <Clock className="h-5 w-5" />
               </div>
-              <div className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              <div className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
                 {company.business_hours}
               </div>
             </div>
