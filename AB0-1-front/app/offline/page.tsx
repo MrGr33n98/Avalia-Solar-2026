@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 export const dynamic = 'force-static';
+export const revalidate = false;
 
 const quickLinks = [
   { href: '/', label: 'Voltar para a home' },
