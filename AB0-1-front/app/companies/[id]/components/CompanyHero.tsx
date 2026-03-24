@@ -216,19 +216,18 @@ export default function CompanyHero({
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
-                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white">
-                      <OptimizedImage
-                        src={logoUrl || '/images/logo-placeholder.svg'}
-                        alt={company.name}
-                        width={96}
-                        height={96}
-                        priority
-                        className="h-full w-full object-contain"
-                        containerClassName="h-full w-full rounded-full p-2"
-                        fallbackSrc="/images/logo-placeholder.svg"
-                        onError={() => setLogoError(true)}
-                      />
-                    </div>
+                    <OptimizedImage
+                      src={logoUrl || '/images/logo-placeholder.svg'}
+                      alt={company.name}
+                      width={120}
+                      height={120}
+                      priority
+                      objectFit="contain"
+                      className="h-full w-full"
+                      containerClassName="h-full w-full rounded-full p-4"
+                      fallbackSrc="/images/logo-placeholder.svg"
+                      onError={() => setLogoError(true)}
+                    />
                   </div>
                 </div>
               </div>
