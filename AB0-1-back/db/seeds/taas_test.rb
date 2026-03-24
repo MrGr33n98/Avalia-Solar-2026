@@ -14,21 +14,20 @@ end
 if weg
   # Garantir que a WEG tenha um plano que seja detectado como PRO pelo meu fix
   # Isso garante que o Analytics e as Oportunidades não fiquem bloqueados
-  active_plan = weg.current_active_plan || weg.plans.last
+  active_plan = weg.plan
   if active_plan
     unless active_plan.name =~ /Pro|Enterprise/i
       puts "Ajustando nome do plano '#{active_plan.name}' para incluir 'Pro' (Tier Gating)..."
       active_plan.update!(name: "#{active_plan.name} Pro")
     end
   else
-    puts "Criando plano Pro de teste para a WEG..."
-    Plan.create!(
-      company: weg,
+    puts "Criando/Buscando plano Pro de teste para a WEG..."
+    plan = Plan.find_by("name ILIKE ?", "%Pro%") || Plan.create!(
       name: "Plano Pro Enterprise",
-      price_cents: 69900,
-      active: true,
-      inferred_plan_tier: 'pro'
+      price: 699.00,
+      features_json: { "advanced_analytics" => true, "intent_scores" => true }
     )
+    weg.update!(plan: plan)
   end
 
   category = weg.categories.first || Category.find_by(seo_url: 'energia-solar') || Category.first
