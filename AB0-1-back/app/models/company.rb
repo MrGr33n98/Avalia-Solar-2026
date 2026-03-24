@@ -501,7 +501,10 @@ class Company < ApplicationRecord
         true
       end
 
-    status_allows_plan && plan.price.to_f.positive?
+    return true if status_allows_plan && plan.price.to_f.positive?
+
+    # Inferred tier 'pro' or 'enterprise' always counts as a paid plan for gating purposes
+    status_allows_plan && %w[pro enterprise].include?(inferred_plan_tier)
   end
 
   def can_use_social_proof?
@@ -688,8 +691,14 @@ class Company < ApplicationRecord
 
   def inferred_plan_tier
     return plan.inferred_plan_tier if plan.respond_to?(:inferred_plan_tier)
+    return plan.plan_tier if plan.respond_to?(:plan_tier)
 
-    has_paid_plan? ? 'pro' : 'free'
+    # Use a safer fallback that distinguishes between basic tiers if plan is present
+    if plan.present?
+      has_paid_plan? ? 'pro' : 'free'
+    else
+      'free'
+    end
   rescue StandardError
     'free'
   end

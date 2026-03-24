@@ -81,6 +81,7 @@ Thumbs.db
 .cursor/
 .gemini/
 .github/agents/
+.agents/
 
 ############################
 # Local docs / scratch
