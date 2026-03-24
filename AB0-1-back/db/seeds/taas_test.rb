@@ -41,17 +41,18 @@ if weg
       l.phone = "119#{rand(10000000..99999999)}"
       l.company = weg
       l.category = category
-      l.status = 'pending'
+      l.wizard_status = 'distributed'
       l.message = "Interesse nos produtos WEG."
     end
     
-    # Criar atividade para gerar score de intenção
+    # Criar atividade para gerar score de intenção (TaaS)
     BuyerIntentActivity.create!(
       company: weg,
       user_id: lead.id,
-      signal_type: 'contact_form_submission',
-      signal_category: 'contact_intent',
-      intent_weight: 50,
+      signal_type: 'pricing_interaction',
+      signal_category: 'financial_intent',
+      session_id: "seed_#{Time.now.to_i}",
+      page_path: "/produtos/weg-solar-v1",
       tracked_at: Time.current
     )
     
@@ -69,7 +70,7 @@ if weg
       phone: "119#{rand(10000000..99999999)}",
       company: (i % 2 == 0 ? outra_empresa : nil),
       category: category,
-      status: 'pending',
+      wizard_status: 'distributed',
       city: ['São Paulo', 'Curitiba', 'Joinville', 'Itajaí'].sample,
       state: ['SP', 'PR', 'SC'].sample,
       product_vertical: ['residencial', 'comercial'].sample
