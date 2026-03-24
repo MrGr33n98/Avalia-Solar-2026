@@ -26,11 +26,11 @@ export const TrustRow: React.FC<TrustRowProps> = ({
   return (
     <div className={cn("flex flex-wrap items-center gap-4 text-sm py-2", className)}>
       {rating !== undefined && (
-        <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded-md font-bold">
-          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        <div className="flex items-center gap-1 bg-yellow-50 text-yellow-800 px-2 py-1 rounded-md font-bold">
+          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
           {rating.toFixed(1)}
           {reviewsCount !== undefined && (
-            <span className="text-yellow-600 font-normal ml-1">
+            <span className="text-yellow-700 font-semibold ml-1">
               ({reviewsCount} avaliações)
             </span>
           )}
@@ -38,7 +38,7 @@ export const TrustRow: React.FC<TrustRowProps> = ({
       )}
 
       {isVerified && (
-        <div className="flex items-center gap-1.5 text-blue-600 font-semibold bg-blue-50 px-2 py-1 rounded-md">
+        <div className="flex items-center gap-1.5 text-blue-800 font-semibold bg-blue-50 px-2 py-1 rounded-md">
           <ShieldCheck className="w-4 h-4" />
           Verificada
         </div>
@@ -51,7 +51,7 @@ export const TrustRow: React.FC<TrustRowProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-md">
+      <div className="flex items-center gap-1.5 text-green-800 font-semibold bg-green-50 px-2 py-1 rounded-md">
         <CheckCircle2 className="w-4 h-4" />
         Seguro
       </div>

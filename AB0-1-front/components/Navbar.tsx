@@ -200,8 +200,8 @@ export default function Navbar() {
                       </Button>
                     )}
 
-                    <Button variant="ghost" size="sm" onClick={handleLogout} className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/5 hover:text-red-600">
-                      <LogOut className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="sm" onClick={handleLogout} className="h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/5 hover:text-red-700">
+                      <LogOut className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -241,9 +241,9 @@ export default function Navbar() {
               setIsMobileDrawerOpen(true);
             }}
             aria-label="Menu"
-            className="h-11 w-11 shrink-0 rounded-[1.15rem] border border-slate-200/80 bg-white/90 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
+            className="h-12 w-12 shrink-0 rounded-[1.15rem] border border-slate-200/80 bg-white/90 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </Button>
         </div>
       </div>

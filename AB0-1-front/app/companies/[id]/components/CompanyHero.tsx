@@ -175,7 +175,7 @@ export default function CompanyHero({
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />
             {(!bannerUrl || bannerError) && (
               <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
-                <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-medium text-slate-600 backdrop-blur">
+                <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
                   Imagem ilustrativa
                 </span>
               </div>
@@ -236,7 +236,6 @@ export default function CompanyHero({
                 <div className="flex flex-wrap items-center gap-2">
                   <h1
                     className="max-w-full text-[1.75rem] font-semibold leading-none tracking-[-0.05em] text-slate-950 sm:text-[2rem]"
-                    title={company.name}
                   >
                     {company.name}
                   </h1>

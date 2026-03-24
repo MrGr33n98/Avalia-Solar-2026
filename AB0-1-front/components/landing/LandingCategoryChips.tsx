@@ -167,7 +167,7 @@ export default function LandingCategoryChips({
 
                   {/* Labels */}
                   <div className="flex flex-col leading-none">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500 mb-0.5">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500 mb-0.5">
                       Categoria
                     </span>
                     <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 group-hover/chip:text-slate-950 dark:group-hover/chip:text-white transition-colors duration-200 tracking-[-0.01em]">
