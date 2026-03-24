@@ -6,22 +6,21 @@ weg = Company.find_by(id: 372)
 
 unless weg
   puts "ERRO: Empresa com ID 372 não encontrada no banco."
-  # Tentar buscar por slug caso o ID seja diferente no ambiente atual
   weg = Company.find_by(slug: 'weg')
   puts "Buscando por slug 'weg'..." if weg
 end
 
 if weg
-  # Garantir que a WEG tenha um plano que seja detectado como PRO pelo meu fix
-  # Isso garante que o Analytics e as Oportunidades não fiquem bloqueados
+  puts "--- Ativando recursos Premium para #{weg.name} ---"
+  # Habilitar Plano Pro e Active Admin (Requisito para receber leads/Gating)
+  weg.update!(active_admin: true) if weg.respond_to?(:active_admin)
+  
   active_plan = weg.plan
   if active_plan
     unless active_plan.name =~ /Pro|Enterprise/i
-      puts "Ajustando nome do plano '#{active_plan.name}' para incluir 'Pro' (Tier Gating)..."
       active_plan.update!(name: "#{active_plan.name} Pro")
     end
   else
-    puts "Criando/Buscando plano Pro de teste para a WEG..."
     plan = Plan.find_by("name ILIKE ?", "%Pro%") || Plan.create!(
       name: "Plano Pro Enterprise",
       price: 699.00,
@@ -33,7 +32,7 @@ if weg
   category = weg.categories.first || Category.find_by(seo_url: 'energia-solar') || Category.first
   puts "--- Gerando dados para #{weg.name} (ID: #{weg.id}) na categoria #{category.name} ---"
 
-  # 2. Gerar 3 Leads Diretos para a WEG (Para o Analytics Principal)
+  # 2. Gerar 3 Leads Diretos (Satisfazendo validações de produção)
   ['Felipe Instalador', 'Ana Project Eng', 'Carlos Solar'].each_with_index do |name, i|
     email = "lead_weg_#{i}_#{Time.now.to_i}@teste.com"
     lead = Lead.find_or_create_by!(email: email) do |l|
@@ -42,7 +41,6 @@ if weg
       l.company = weg
       l.category = category
       l.wizard_status = 'distributed'
-      l.message = "Interesse nos produtos WEG."
       l.product_vertical = 'mobilidade_eletrica'
       l.project_profile = 'residencial'
       l.quote_type = 'standard'
@@ -50,9 +48,10 @@ if weg
       l.decision_timeline = 'imediato'
       l.address_full = 'Rua Teste, 123, São Paulo - SP'
       l.consent_at = Time.current
+      l.message = "Interesse nos produtos WEG."
     end
-    
-    # Criar atividade para gerar score de intenção (TaaS)
+
+    # Atividade de intenção
     BuyerIntentActivity.create!(
       company: weg,
       user_id: lead.id,
@@ -66,9 +65,11 @@ if weg
     IntentScoringService.new(weg.id, lead_id: lead.id).calculate!
   end
 
-  # 3. Gerar 10 Oportunidades de Mercado (Mesma categoria, outra empresa ou sem empresa)
-  # Isso popula a aba "Oportunidades"
+  # 3. Gerar 10 Oportunidades de Mercado
   outra_empresa = Company.where.not(id: weg.id).first
+  # Também habilitar para a concorrente não dar erro de validação
+  outra_empresa.update!(active_admin: true) if outra_empresa && outra_empresa.respond_to?(:active_admin)
+
   10.times do |i|
     email = "oport_#{i}_#{Time.now.to_i}@mercado.com"
     lead = Lead.create!(
@@ -78,18 +79,17 @@ if weg
       company: (i % 2 == 0 ? outra_empresa : nil),
       category: category,
       wizard_status: 'distributed',
-      city: ['São Paulo', 'Curitiba', 'Joinville', 'Itajaí'].sample,
-      state: ['SP', 'PR', 'SC'].sample,
-      product_vertical: ['residencial', 'comercial'].sample,
+      product_vertical: 'residencial',
       project_profile: 'residencial',
       quote_type: 'standard',
       system_size_band: 'medio',
       decision_timeline: '30_dias',
       address_full: 'Rua Mercado, 999, Curitiba - PR',
-      consent_at: Time.current
+      consent_at: Time.current,
+      city: 'Curitiba',
+      state: 'PR'
     )
-    
-    # Simular que a WEG detectou interesse nesse lead (TaaS)
+
     IntentScore.create!(
       company_id: weg.id,
       lead_id: lead.id,
@@ -104,5 +104,5 @@ if weg
 
   puts "✅ SUCESSO! 13 leads gerados. Verifique o dashboard da WEG."
 else
-  puts "ERRO CRÍTICO: Não foi possível encontrar a WEG para gerar os dados."
+  puts "ERRO: WEG não encontrada."
 end
