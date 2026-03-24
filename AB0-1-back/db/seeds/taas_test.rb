@@ -43,6 +43,13 @@ if weg
       l.category = category
       l.wizard_status = 'distributed'
       l.message = "Interesse nos produtos WEG."
+      l.product_vertical = 'mobilidade_eletrica'
+      l.project_profile = 'residencial'
+      l.quote_type = 'standard'
+      l.system_size_band = 'pequeno'
+      l.decision_timeline = 'imediato'
+      l.address_full = 'Rua Teste, 123, São Paulo - SP'
+      l.consent_at = Time.current
     end
     
     # Criar atividade para gerar score de intenção (TaaS)
@@ -73,7 +80,13 @@ if weg
       wizard_status: 'distributed',
       city: ['São Paulo', 'Curitiba', 'Joinville', 'Itajaí'].sample,
       state: ['SP', 'PR', 'SC'].sample,
-      product_vertical: ['residencial', 'comercial'].sample
+      product_vertical: ['residencial', 'comercial'].sample,
+      project_profile: 'residencial',
+      quote_type: 'standard',
+      system_size_band: 'medio',
+      decision_timeline: '30_dias',
+      address_full: 'Rua Mercado, 999, Curitiba - PR',
+      consent_at: Time.current
     )
     
     # Simular que a WEG detectou interesse nesse lead (TaaS)
