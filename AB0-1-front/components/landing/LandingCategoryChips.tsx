@@ -113,7 +113,7 @@ export default function LandingCategoryChips({
             {includeAllChip ? (
               <Link
                 href="/categories"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-200 smooth-transition whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-200 smooth-transition whitespace-nowrap"
                 role="listitem"
               >
                 <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -131,7 +131,7 @@ export default function LandingCategoryChips({
                   href={href}
                   className={cn(
                     'group/chip relative flex items-center gap-3 rounded-[18px] whitespace-nowrap flex-shrink-0',
-                    'px-3 py-2.5 pr-4',
+                    'px-4 py-3',
                     'bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900/40',
                     'border border-slate-200/80 dark:border-slate-700/50',
                     'shadow-[0_4px_14px_-6px_rgba(0,0,0,0.10),inset_0_1px_1px_rgba(255,255,255,0.8)]',
@@ -190,14 +190,14 @@ export default function LandingCategoryChips({
           </div>
 
           <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 pl-8 bg-gradient-to-l from-white via-white/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 rounded-r-2xl pointer-events-none">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() => scrollBy(320)}
-              className="pointer-events-auto h-9 w-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 smooth-transition"
-              aria-label="Ver mais categorias"
-            >
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => scrollBy(320)}
+                className="pointer-events-auto h-11 w-11 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 smooth-transition"
+                aria-label="Ver mais categorias"
+              >
               <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </Button>
           </div>

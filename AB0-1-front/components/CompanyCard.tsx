@@ -608,7 +608,7 @@ export default function CompanyCard({
             )}
             asChild
           >
-          <Link href={companyReviewPath} aria-label={text.review} title={text.review} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
+          <Link href={companyReviewPath} aria-label={`${text.review} ${name}`} title={`${text.review} ${name}`} onClick={(e) => { e.stopPropagation(); emit('cta_review_click'); }}>
             <Star className={cn('text-slate-400 dark:text-slate-500 group-hover:text-amber-500 transition-colors duration-150', compact && canRequestQuote ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5 mr-1')} />
             {(!compact || !canRequestQuote) && <span className="text-[12px]">{text.review}</span>}
           </Link>
@@ -622,7 +622,7 @@ export default function CompanyCard({
         >
           <label 
             htmlFor={`compare-${id}`}
-            className="flex items-center gap-2 cursor-pointer group/check select-none w-fit"
+            className="flex items-center gap-2 cursor-pointer group/check select-none w-fit p-1.5 -ml-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/50"
           >
             <div
               id={`compare-${id}`}
