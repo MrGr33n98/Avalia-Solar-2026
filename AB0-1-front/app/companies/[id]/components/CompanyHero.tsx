@@ -222,9 +222,9 @@ export default function CompanyHero({
                       width={120}
                       height={120}
                       priority
-                      objectFit="contain"
+                      objectFit="cover"
                       className="h-full w-full"
-                      containerClassName="h-full w-full rounded-full p-4"
+                      containerClassName="h-full w-full rounded-full bg-white"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
                     />
