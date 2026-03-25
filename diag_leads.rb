@@ -1,0 +1,8 @@
+puts "TOTAL LEADS: #{Lead.count}"
+puts "RECENT LEADS (30d): #{Lead.where('created_at > ?', 30.days.ago).count}"
+puts "WEG (372) LEADS: #{Lead.where(company_id: 372).count}"
+puts "WEG (372) RECENT: #{Lead.where(company_id: 372).where('created_at > ?', 30.days.ago).count}"
+puts "USER 19: #{User.find(19).email} (CID: #{User.find(19).company_id})"
+puts "USER 19 COMPANY: #{User.find(19).company&.id || 'NIL'}"
+puts "CATEGORIES FOR 372: #{Company.find(372).categories.pluck(:id, :name).to_json}"
+puts "CATEGORY ID FOR 372: #{Company.find(372).respond_to?(:category_id) ? Company.find(372).category_id : 'MISSING'}"
