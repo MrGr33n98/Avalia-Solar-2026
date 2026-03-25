@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
+ActiveRecord::Schema[7.0].define(version: 2026_03_19_142000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
+  enable_extension "pgcrypto"
   enable_extension "plpgsql"
 
   create_table "action_text_rich_texts", force: :cascade do |t|
@@ -99,10 +100,31 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "event_id"
-    t.index ["company_id", "created_at"], name: "idx_analytics_company_time", order: { created_at: :desc }
+    t.string "action"
+    t.integer "duration_ms"
+    t.string "element_id"
+    t.string "element_type"
+    t.integer "position_x"
+    t.integer "position_y"
+    t.integer "viewport_width"
+    t.integer "viewport_height"
+    t.string "anonymous_id"
+    t.jsonb "context", default: {}
+    t.bigint "brand_id"
+    t.string "brand_slug"
+    t.string "app_key"
+    t.index ["action"], name: "index_analytics_events_on_action"
+    t.index ["anonymous_id"], name: "index_analytics_events_on_anonymous_id"
+    t.index ["app_key", "tracked_at"], name: "index_analytics_events_on_app_key_time"
+    t.index ["brand_id", "event_type", "tracked_at"], name: "index_analytics_events_on_brand_event_time"
+    t.index ["brand_id", "tracked_at"], name: "index_analytics_events_on_brand_time"
+    t.index ["company_id", "action"], name: "idx_analytics_company_action", where: "(company_id IS NOT NULL)"
+    t.index ["company_id", "event_type", "created_at"], name: "idx_analytics_company_event_time"
     t.index ["company_id", "event_type", "tracked_at"], name: "index_analytics_events_company_event_time"
     t.index ["company_id", "tracked_at"], name: "index_analytics_events_on_company_id_and_tracked_at"
+    t.index ["element_type"], name: "index_analytics_events_on_element_type"
     t.index ["event_id"], name: "index_analytics_events_on_event_id", unique: true
+    t.index ["event_type", "action"], name: "index_analytics_events_on_event_type_and_action"
     t.index ["event_type", "tracked_at"], name: "index_analytics_events_on_event_type_and_tracked_at"
   end
 
@@ -125,6 +147,46 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["company_id", "day", "metric_name"], name: "idx_analytics_recon_unique", unique: true
     t.index ["day"], name: "index_analytics_reconciliations_on_day"
     t.index ["status"], name: "index_analytics_reconciliations_on_status"
+  end
+
+  create_table "anonymous_sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "anonymous_id", null: false
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.string "ip_hash"
+    t.string "user_agent_hash"
+    t.string "device_fingerprint"
+    t.string "device_type"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.string "utm_content"
+    t.string "referrer_domain"
+    t.string "landing_page"
+    t.string "exit_page"
+    t.string "country_code"
+    t.string "region"
+    t.string "city"
+    t.string "timezone"
+    t.jsonb "visited_company_ids", default: []
+    t.jsonb "visited_pages", default: []
+    t.integer "pageviews_count", default: 0
+    t.integer "session_duration_sec", default: 0
+    t.datetime "first_seen_at"
+    t.datetime "last_seen_at"
+    t.string "status", default: "anonymous"
+    t.datetime "identified_at"
+    t.jsonb "stitch_metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["anonymous_id"], name: "index_anonymous_sessions_on_anonymous_id", unique: true
+    t.index ["company_id"], name: "index_anonymous_sessions_on_company_id"
+    t.index ["first_seen_at"], name: "index_anonymous_sessions_on_first_seen_at"
+    t.index ["ip_hash", "user_agent_hash"], name: "idx_anon_sessions_fingerprint"
+    t.index ["last_seen_at"], name: "index_anonymous_sessions_on_last_seen_at"
+    t.index ["status"], name: "index_anonymous_sessions_on_status"
+    t.index ["user_id"], name: "index_anonymous_sessions_on_user_id"
+    t.index ["visited_company_ids"], name: "index_anonymous_sessions_on_visited_company_ids", using: :gin
   end
 
   create_table "articles", force: :cascade do |t|
@@ -294,6 +356,49 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["category_id"], name: "index_banners_categories_on_category_id"
   end
 
+  create_table "brands", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.jsonb "aliases", default: [], null: false
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_brands_on_slug", unique: true
+    t.index ["status"], name: "index_brands_on_status"
+  end
+
+  create_table "buyer_intent_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id"
+    t.string "anonymous_id"
+    t.string "session_id", null: false
+    t.string "signal_type", null: false
+    t.string "signal_category", null: false
+    t.integer "intent_weight", default: 1, null: false
+    t.string "element_selector"
+    t.string "element_type"
+    t.string "page_path", null: false
+    t.string "referrer_host"
+    t.integer "duration_ms"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "ip_hash"
+    t.string "user_agent"
+    t.string "device_type"
+    t.datetime "tracked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["anonymous_id", "tracked_at"], name: "idx_intent_anon_time", where: "(anonymous_id IS NOT NULL)"
+    t.index ["anonymous_id"], name: "index_buyer_intent_activities_on_anonymous_id"
+    t.index ["company_id", "signal_type", "tracked_at"], name: "idx_intent_company_signal_time"
+    t.index ["company_id"], name: "index_buyer_intent_activities_on_company_id"
+    t.index ["metadata"], name: "index_buyer_intent_activities_on_metadata", using: :gin
+    t.index ["session_id"], name: "index_buyer_intent_activities_on_session_id"
+    t.index ["signal_category"], name: "index_buyer_intent_activities_on_signal_category"
+    t.index ["signal_type"], name: "index_buyer_intent_activities_on_signal_type"
+    t.index ["tracked_at"], name: "index_buyer_intent_activities_on_tracked_at"
+    t.index ["user_id"], name: "index_buyer_intent_activities_on_user_id"
+  end
+
   create_table "campaign_reviews", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.string "title"
@@ -319,7 +424,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -484,6 +589,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.integer "financing_partners_count", default: 0
     t.integer "company_members_count", default: 0
     t.integer "leads_count", default: 0
+    t.string "ga4_property_id"
+    t.datetime "ga4_last_sync"
+    t.jsonb "engagement_metrics", default: {}
+    t.string "intent_tier", default: "free", null: false
+    t.jsonb "intent_features", default: {}
+    t.string "seo_title"
+    t.text "meta_description"
     t.index "to_tsvector('portuguese'::regconfig, (((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -493,6 +605,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["email_notifications_enabled"], name: "index_companies_on_email_notifications_enabled"
     t.index ["featured"], name: "index_companies_on_featured_true", where: "(featured = true)"
     t.index ["financing_partners_count"], name: "index_companies_on_financing_partners_count"
+    t.index ["ga4_property_id"], name: "index_companies_on_ga4_property_id", where: "(ga4_property_id IS NOT NULL)"
+    t.index ["intent_tier"], name: "index_companies_on_intent_tier"
     t.index ["leads_count"], name: "index_companies_on_leads_count"
     t.index ["niche_tags"], name: "index_companies_on_niche_tags", using: :gin
     t.index ["notification_preferences"], name: "index_companies_on_notification_preferences", using: :gin
@@ -503,6 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
     t.index ["reviews_count"], name: "index_companies_on_reviews_count"
     t.index ["sector_rating_avg"], name: "index_companies_on_sector_rating_avg", where: "(sector_rating_avg IS NOT NULL)"
+    t.index ["seo_title"], name: "index_companies_on_seo_title"
     t.index ["services_offered"], name: "index_companies_on_services_offered", using: :gin
     t.index ["services_offered"], name: "index_companies_on_services_offered_gin", using: :gin
     t.index ["slug"], name: "index_companies_on_slug", unique: true
@@ -510,12 +625,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["sponsored"], name: "index_companies_on_sponsored"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
     t.index ["status", "active_admin"], name: "index_companies_on_status_and_active_admin"
+    t.index ["status", "rating_avg", "reviews_count"], name: "idx_companies_ranking", order: { rating_avg: :desc, reviews_count: :desc }
     t.index ["status"], name: "index_companies_on_status"
     t.index ["verified"], name: "index_companies_on_verified_true", where: "(verified = true)"
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -532,7 +648,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -579,8 +695,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.integer "reviews", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "email_clicks", default: 0, null: false
+    t.integer "phone_clicks", default: 0, null: false
+    t.integer "website_clicks", default: 0, null: false
+    t.integer "unique_views", default: 0, null: false
+    t.integer "returning_views", default: 0, null: false
     t.index ["company_id", "day"], name: "index_company_daily_stats_on_company_id_and_day", unique: true
     t.index ["day"], name: "index_company_daily_stats_on_day"
+  end
+
+  create_table "company_documents", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "company_faqs", force: :cascade do |t|
@@ -727,6 +853,32 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.check_constraint "score >= 0::numeric AND score <= 100::numeric", name: "check_trust_score"
   end
 
+  create_table "company_utm_attributions", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "utm_source", limit: 100
+    t.string "utm_medium", limit: 100
+    t.string "utm_campaign", limit: 200
+    t.string "utm_content", limit: 200
+    t.string "utm_term", limit: 200
+    t.integer "total_visits", default: 0, null: false
+    t.integer "total_cta_clicks", default: 0, null: false
+    t.integer "total_leads", default: 0, null: false
+    t.decimal "conversion_rate", precision: 5, scale: 2, default: "0.0"
+    t.integer "whatsapp_clicks", default: 0, null: false
+    t.integer "email_clicks", default: 0, null: false
+    t.integer "phone_clicks", default: 0, null: false
+    t.integer "website_clicks", default: 0, null: false
+    t.decimal "attributed_revenue", precision: 10, scale: 2, default: "0.0"
+    t.date "first_seen_at"
+    t.date "last_seen_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "utm_source", "utm_medium", "utm_campaign"], name: "index_utm_attributions_on_company_and_params", unique: true
+    t.index ["company_id"], name: "index_company_utm_attributions_on_company_id"
+    t.index ["last_seen_at"], name: "index_utm_attributions_on_last_seen"
+    t.index ["utm_campaign", "total_leads"], name: "index_utm_attributions_on_campaign_leads"
+  end
+
   create_table "company_videos", force: :cascade do |t|
     t.bigint "company_id", null: false
     t.string "url", null: false
@@ -741,6 +893,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["company_id", "status"], name: "index_company_videos_on_company_id_and_status"
     t.index ["company_id"], name: "index_company_videos_on_company_id"
     t.index ["video_id"], name: "index_company_videos_on_video_id"
+  end
+
+  create_table "company_webhooks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "url", null: false
+    t.string "secret_key"
+    t.boolean "active", default: true
+    t.jsonb "events", default: []
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "active"], name: "index_company_webhooks_on_company_id_and_active"
+    t.index ["company_id"], name: "index_company_webhooks_on_company_id"
   end
 
   create_table "contents", force: :cascade do |t|
@@ -881,7 +1045,83 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
+  end
+
+  create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id"
+    t.string "anonymous_id"
+    t.string "document_type", null: false
+    t.string "document_title"
+    t.string "document_url"
+    t.string "contact_name"
+    t.string "contact_email"
+    t.string "contact_phone"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["anonymous_id"], name: "index_gated_downloads_on_anonymous_id"
+    t.index ["company_id", "document_type"], name: "index_gated_downloads_on_company_id_and_document_type"
+    t.index ["company_id"], name: "index_gated_downloads_on_company_id"
+    t.index ["created_at"], name: "index_gated_downloads_on_created_at"
+    t.index ["user_id"], name: "index_gated_downloads_on_user_id"
+  end
+
+  create_table "intent_score_histories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "intent_score_id", null: false
+    t.integer "score_before", null: false
+    t.integer "score_after", null: false
+    t.string "level_before", null: false
+    t.string "level_after", null: false
+    t.string "change_reason"
+    t.jsonb "score_breakdown", default: {}
+    t.string "triggered_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_intent_score_histories_on_created_at"
+    t.index ["intent_score_id", "created_at"], name: "idx_histories_score_time"
+    t.index ["intent_score_id"], name: "index_intent_score_histories_on_intent_score_id"
+  end
+
+  create_table "intent_scores", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "lead_id"
+    t.string "anonymous_id"
+    t.string "session_id"
+    t.integer "total_score", default: 0, null: false
+    t.string "intent_level", default: "cold", null: false
+    t.integer "micro_interaction_score", default: 0
+    t.integer "financial_intent_score", default: 0
+    t.integer "research_intent_score", default: 0
+    t.integer "contact_intent_score", default: 0
+    t.integer "total_signals_count", default: 0
+    t.integer "hot_signals_count", default: 0
+    t.integer "unique_sessions_count", default: 1
+    t.integer "unique_pages_count", default: 0
+    t.datetime "first_interaction_at"
+    t.datetime "last_interaction_at"
+    t.datetime "last_hot_signal_at"
+    t.integer "days_active", default: 0
+    t.float "decay_factor", default: 1.0
+    t.float "position_bias_correction", default: 0.0
+    t.float "confidence_score", default: 0.0
+    t.string "scoring_version", default: "v1"
+    t.jsonb "score_breakdown", default: {}
+    t.jsonb "top_signals", default: []
+    t.string "recommended_action"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["anonymous_id"], name: "index_intent_scores_on_anonymous_id"
+    t.index ["company_id", "anonymous_id"], name: "idx_scores_company_anon_unique", unique: true, where: "(anonymous_id IS NOT NULL)"
+    t.index ["company_id", "lead_id"], name: "idx_scores_company_lead_unique", unique: true, where: "(lead_id IS NOT NULL)"
+    t.index ["company_id"], name: "index_intent_scores_on_company_id"
+    t.index ["intent_level", "total_score"], name: "idx_scores_level_score"
+    t.index ["intent_level"], name: "index_intent_scores_on_intent_level"
+    t.index ["last_interaction_at"], name: "index_intent_scores_on_last_interaction_at"
+    t.index ["lead_id"], name: "index_intent_scores_on_lead_id"
+    t.index ["score_breakdown"], name: "index_intent_scores_on_score_breakdown", using: :gin
+    t.index ["total_score"], name: "index_intent_scores_on_total_score"
   end
 
   create_table "lead_distributions", force: :cascade do |t|
@@ -941,15 +1181,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.string "template_key"
     t.integer "template_version"
     t.bigint "category_id"
+    t.integer "cached_score", default: 0
+    t.string "score_band"
     t.index ["category_id"], name: "index_leads_on_category_id"
     t.index ["company_id", "created_at"], name: "index_leads_on_company_id_and_created_at", order: { created_at: :desc }
     t.index ["company_id", "utm_campaign"], name: "index_leads_on_company_id_and_utm_campaign"
     t.index ["company_id", "wizard_status", "created_at"], name: "index_leads_on_company_id_and_wizard_status_and_created_at"
     t.index ["company_id"], name: "index_leads_on_company_id"
     t.index ["created_at"], name: "index_leads_on_created_at"
+    t.index ["email"], name: "index_leads_on_email"
+    t.index ["score_band"], name: "index_leads_on_score_band"
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
+    t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
-    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
+    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying::text, 'pending_otp'::character varying::text, 'verified'::character varying::text, 'distributed'::character varying::text, 'proposal_submitted'::character varying::text, 'proposal_processing'::character varying::text, 'proposal_sent'::character varying::text, 'proposal_failed'::character varying::text])", name: "ck_leads_valid_status"
   end
 
   create_table "noticed_events", force: :cascade do |t|
@@ -1200,10 +1445,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.string "seo_title"
     t.text "seo_description"
     t.string "image_url"
+    t.text "meta_description"
+    t.bigint "brand_id"
+    t.index ["brand_id"], name: "index_products_on_brand_id"
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
   end
 
   create_table "rating_criteria", force: :cascade do |t|
@@ -1295,6 +1543,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["category_id"], name: "index_reviews_on_category_id"
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "rating"], name: "index_reviews_on_company_id_and_rating", order: { rating: :desc }
+    t.index ["company_id", "status", "created_at"], name: "idx_reviews_company_status_time", order: { created_at: :desc }
     t.index ["company_id", "status", "featured", "display_order"], name: "idx_reviews_social_proof"
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
@@ -1327,6 +1576,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
     t.index ["company_id", "user_id"], name: "index_sector_ratings_on_company_and_user", unique: true
     t.index ["company_id"], name: "index_sector_ratings_on_company_id"
     t.index ["user_id"], name: "index_sector_ratings_on_user_id"
+  end
+
+  create_table "seo_landing_pages", force: :cascade do |t|
+    t.string "slug", null: false
+    t.bigint "category_id", null: false
+    t.string "city_name"
+    t.string "state_abbr"
+    t.jsonb "metadata_cache", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_seo_landing_pages_on_category_id"
+    t.index ["slug"], name: "index_seo_landing_pages_on_slug", unique: true
   end
 
   create_table "spec_templates", force: :cascade do |t|
@@ -1436,6 +1697,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "analytics_events", "brands"
+  add_foreign_key "anonymous_sessions", "companies"
+  add_foreign_key "anonymous_sessions", "users"
   add_foreign_key "articles", "admin_users", column: "author_id"
   add_foreign_key "articles", "categories"
   add_foreign_key "articles", "companies"
@@ -1450,6 +1714,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
   add_foreign_key "banners", "companies"
   add_foreign_key "banners_categories", "banners"
   add_foreign_key "banners_categories", "categories"
+  add_foreign_key "buyer_intent_activities", "companies"
+  add_foreign_key "buyer_intent_activities", "users"
   add_foreign_key "campaign_reviews", "companies"
   add_foreign_key "campaign_reviews", "products"
   add_foreign_key "campaigns", "companies"
@@ -1474,7 +1740,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
   add_foreign_key "company_members", "companies"
   add_foreign_key "company_members", "users"
   add_foreign_key "company_sector_questions", "companies"
+  add_foreign_key "company_utm_attributions", "companies"
   add_foreign_key "company_videos", "companies"
+  add_foreign_key "company_webhooks", "companies"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "forum_answers", "forum_questions"
   add_foreign_key "forum_answers", "users"
@@ -1482,6 +1750,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
   add_foreign_key "forum_questions", "companies"
   add_foreign_key "forum_questions", "products"
   add_foreign_key "forum_questions", "users"
+  add_foreign_key "gated_downloads", "companies"
+  add_foreign_key "gated_downloads", "users"
+  add_foreign_key "intent_score_histories", "intent_scores"
+  add_foreign_key "intent_scores", "companies"
   add_foreign_key "lead_distributions", "companies"
   add_foreign_key "lead_distributions", "leads"
   add_foreign_key "leads", "categories"
@@ -1497,6 +1769,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
   add_foreign_key "product_price_histories", "products"
   add_foreign_key "product_specifications", "products"
   add_foreign_key "product_specifications", "spec_templates"
+  add_foreign_key "products", "brands"
   add_foreign_key "products", "companies"
   add_foreign_key "rating_criteria", "categories"
   add_foreign_key "review_aggregates", "categories"
@@ -1510,6 +1783,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_05_230000) do
   add_foreign_key "reviews", "users"
   add_foreign_key "sector_ratings", "companies"
   add_foreign_key "sector_ratings", "users"
+  add_foreign_key "seo_landing_pages", "categories"
   add_foreign_key "sponsored_plans", "categories"
   add_foreign_key "sponsored_plans", "plans"
   add_foreign_key "sponsored_plans", "products"
