@@ -846,15 +846,17 @@ class Company < ApplicationRecord
   def raw_plan_features
     return {} unless respond_to?(:plan) && plan.present?
 
-    if plan.respond_to?(:raw_feature_flags)
-      plan.raw_feature_flags
-    elsif plan.respond_to?(:features_json) && plan.features_json.present?
-      plan.features_json
-    elsif plan.respond_to?(:features) && plan.features.present?
-      plan.features
-    else
-      {}
-    end
+    raw_features = if plan.respond_to?(:raw_feature_flags)
+                     plan.raw_feature_flags
+                   elsif plan.respond_to?(:features_json) && plan.features_json.present?
+                     plan.features_json
+                   elsif plan.respond_to?(:features) && plan.features.present?
+                     plan.features
+                   else
+                     {}
+                   end
+
+    parse_features(raw_features)
   end
 
   def raw_company_plan_overrides

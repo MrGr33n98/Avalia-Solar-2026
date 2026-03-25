@@ -15,7 +15,10 @@ class Plan < ApplicationRecord
   # =========================================================================
 
   def feature_flags
-    return features_json if features_json.present?
+    if features_json.present?
+      return JSON.parse(features_json) if features_json.is_a?(String)
+      return features_json if features_json.is_a?(Hash)
+    end
     
     # Fallback to legacy 'features' column if it's text/json
     if respond_to?(:features) && features.present?
