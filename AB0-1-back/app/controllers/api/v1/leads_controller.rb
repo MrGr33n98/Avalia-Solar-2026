@@ -15,6 +15,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def index
     @leads = scoped_leads
+    Rails.logger.info("[Leads#index] User: #{current_user&.id}, Company: #{current_user&.company_id}, Scoped Leads Count: #{@leads&.count}")
     return if performed? || @leads.nil?
 
     @leads = @leads.where(status: params[:status]) if params[:status].present? && ::Lead.column_names.include?('status')

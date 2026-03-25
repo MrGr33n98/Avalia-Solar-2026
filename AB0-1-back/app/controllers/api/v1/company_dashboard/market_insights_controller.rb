@@ -7,9 +7,10 @@ module Api
         before_action :set_company
 
         def index
-          # Identifica a categoria principal da empresa
-          category_id = @company.category_id
-          category_name = @company.category&.name || "Sua Categoria"
+          # Identifica a categoria principal da empresa (HABTM)
+          category = @company.categories.first
+          category_id = category&.id
+          category_name = category&.name || "Sua Categoria"
 
           # 1. Leads totais da categoria (últimos 30 dias)
           market_leads_scope = Lead.where(created_at: 30.days.ago..Time.current)
