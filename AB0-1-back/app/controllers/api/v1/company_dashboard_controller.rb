@@ -215,7 +215,8 @@ module Api
           intent_distribution = intent_scores.group(:intent_level).count
           
           # Top actionable leads (hot, boiling, immediate, declared)
-          top_leads = intent_scores.actionable
+          # Note: Removed .actionable to show full pipeline even for cold/warm leads as requested
+          top_leads = intent_scores
                                      .order(total_score: :desc)
                                      .limit(10)
                                      .map do |score|
