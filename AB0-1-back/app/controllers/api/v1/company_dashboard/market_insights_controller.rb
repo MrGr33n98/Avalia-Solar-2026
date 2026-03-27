@@ -2,10 +2,7 @@
 module Api
   module V1
     module CompanyDashboard
-      class MarketInsightsController < Api::V1::BaseController
-        before_action :authenticate_company_user_or_admin!
-        before_action :set_company
-
+      class MarketInsightsController < CompanyDashboardController
         def index
           # Identifica a categoria principal da empresa (HABTM)
           category = @company.categories.first
@@ -53,20 +50,8 @@ module Api
               market_share_percent: total_market_leads.positive? ? ((my_leads_count.to_f / total_market_leads) * 100).round(1) : 0
             },
             opportunities: recent_opportunities,
-            is_premium: @company.has_paid_plan? || @company.plan_status == 'active'
+            is_premium: @company.has_paid_plan?
           }
-        end
-
-        private
-
-        def set_company
-          @company = if current_user.admin? && params[:company_id].present?
-                       Company.find(params[:company_id])
-                     else
-                       current_user.company
-                     end
-
-          render_error_response(status: :not_found, message: 'Empresa não encontrada') unless @company
         end
       end
     end
