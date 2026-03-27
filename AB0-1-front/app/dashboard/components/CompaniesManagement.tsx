@@ -256,12 +256,11 @@ export default function CompaniesManagement({ currentCompanyId, onCompanyChange 
         <DropdownMenu 
           open={isOpen} 
           onOpenChange={setIsOpen}
-          className="w-56 p-0 border-none shadow-xl"
         >
           <DropdownMenuTrigger className="w-full inline-block">
             {/* Trigger is handled by the outer div */}
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 p-0 border-none shadow-xl">
+          <DropdownMenuContent className="w-56 p-0 border-none shadow-xl">
             <div className="space-y-1">
               {companiesData.map(company => (
                 <DropdownMenuItem 
