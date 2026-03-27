@@ -28,6 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import MetricCard from './MetricCard';
+import LeadIntelligenceSheet from './LeadIntelligenceSheet';
+import { Info } from 'lucide-react';
 
 interface LeadsOpportunitiesProps {
   companyId: string;
@@ -52,6 +54,10 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
   const [marketData, setMarketData] = useState<MarketInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Intelligence Dossier State
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -74,7 +80,15 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
           product_vertical: lead.product_vertical || 'Energia Solar',
           created_at: lead.last_interaction_at || new Date().toISOString(),
           status: lead.intent_level.toLowerCase(),
-          total_score: lead.total_score
+          total_score: lead.total_score,
+          // Mapping Dossier Data
+          technical_profile: lead.technical_profile || lead.dossie?.technical_profile,
+          marketing_data: lead.marketing_data || lead.dossie?.marketing_data,
+          top_signals: lead.top_signals || lead.dossie?.top_signals,
+          signals_count: lead.signals_count || 0,
+          intent_level: lead.intent_level,
+          sla_window: lead.sla_window,
+          recommended_action: lead.recommended_action
         })));
       } else {
         setLeads([]);
@@ -194,7 +208,15 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
                 <EmptyState message="Nenhum lead recebido ainda." />
               ) : (
                 leads.map((lead, idx) => (
-                  <LeadCard key={lead.id} lead={lead} delay={idx * 0.05} />
+                  <LeadCard 
+                    key={lead.id} 
+                    lead={lead} 
+                    delay={idx * 0.05} 
+                    onViewIntel={(l) => {
+                      setSelectedLead(l);
+                      setIsSheetOpen(true);
+                    }}
+                  />
                 ))
               )}
             </motion.div>
@@ -255,18 +277,46 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
                 !marketData?.is_premium && "blur-[12px] grayscale pointer-events-none opacity-30 select-none"
               )}>
                 {marketData?.opportunities.map((opp, idx) => (
-                  <LeadCard key={opp.id} lead={opp} isOpportunity delay={idx * 0.05} />
+                  <LeadCard 
+                    key={opp.id} 
+                    lead={opp} 
+                    isOpportunity 
+                    delay={idx * 0.05} 
+                    onViewIntel={(l) => {
+                      setSelectedLead(l);
+                      setIsSheetOpen(true);
+                    }}
+                  />
                 ))}
               </div>
             </div>
           </TabsContent>
         </AnimatePresence>
       </Tabs>
+
+      {/* Leads Intelligence Dossier Sheet */}
+      {selectedLead && (
+        <LeadIntelligenceSheet 
+          isOpen={isSheetOpen}
+          onClose={() => setIsSheetOpen(false)}
+          lead={selectedLead}
+        />
+      )}
     </div>
   );
 }
 
-function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity?: boolean, delay?: number }) {
+function LeadCard({ 
+  lead, 
+  isOpportunity, 
+  delay = 0,
+  onViewIntel
+}: { 
+  lead: any, 
+  isOpportunity?: boolean, 
+  delay?: number,
+  onViewIntel?: (lead: any) => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -294,6 +344,17 @@ function LeadCard({ lead, isOpportunity, delay = 0 }: { lead: any, isOpportunity
                   <Clock className="h-3.5 w-3.5" />
                   <span className="font-mono">{new Date(lead.created_at).toLocaleDateString('pt-BR')}</span>
                 </div>
+
+                {!isOpportunity && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => onViewIntel?.(lead)}
+                    className="ml-2 w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 text-brand-blue hover:bg-brand-blue hover:text-white transition-all border border-brand-blue/10"
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">

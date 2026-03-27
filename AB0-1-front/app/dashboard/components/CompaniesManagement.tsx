@@ -64,12 +64,15 @@ export default function CompaniesManagement({ currentCompanyId, onCompanyChange 
     setLoading(true);
     setError(null);
     try {
-      const data = await companiesApi.getAll({ mine: true });
+      const response = await companiesApi.getAll({ mine: true });
       
       // Handle both possible response formats
-      const companyList = Array.isArray(data) 
-        ? data 
-        : (data?.companies || []);
+      let companyList: any[] = [];
+      if (Array.isArray(response)) {
+        companyList = response;
+      } else if (response && typeof response === 'object' && Array.isArray((response as any).companies)) {
+        companyList = (response as any).companies;
+      }
       
       // Convert to our CompanyOption type
       const processedCompanies: CompanyOption[] = companyList.map((company: any) => ({
@@ -258,7 +261,7 @@ export default function CompaniesManagement({ currentCompanyId, onCompanyChange 
           <DropdownMenuTrigger className="w-full inline-block">
             {/* Trigger is handled by the outer div */}
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 p-0 border-none shadow-xl">
+          <DropdownMenuContent align="end" className="w-56 p-0 border-none shadow-xl">
             <div className="space-y-1">
               {companiesData.map(company => (
                 <DropdownMenuItem 

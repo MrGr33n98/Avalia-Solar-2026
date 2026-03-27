@@ -215,21 +215,43 @@ module Api
           intent_distribution = intent_scores.group(:intent_level).count
           
           # Top actionable leads (hot, boiling, immediate, declared)
-          # Note: Removed .actionable to show full pipeline even for cold/warm leads as requested
           top_leads = intent_scores
+                                     .includes(:lead_record)
                                      .order(total_score: :desc)
                                      .limit(10)
                                      .map do |score|
+            lead = score.lead_record
             {
               id: score.id,
               lead_id: score.lead_id,
-              anonymous_id: score.anonymous_id,
+              name: lead&.name || "Prospecto ##{score.lead_id || 'Anon'}",
+              email: lead&.email,
+              phone: lead&.phone,
               total_score: score.total_score,
               intent_level: score.intent_level,
               recommended_action: score.recommended_action,
               sla_window: score.sla_window,
               last_interaction_at: score.last_interaction_at&.iso8601,
-              signals_count: score.total_signals_count
+              signals_count: score.total_signals_count,
+              # Dossiê de Inteligência Enriquecido (A+++)
+              technical_profile: {
+                monthly_kwh: lead&.monthly_kwh,
+                bill_value: lead&.bill_value,
+                system_size: lead&.system_size_band,
+                decision_timeline: lead&.decision_timeline,
+                estimated_budget: lead&.estimated_budget,
+                project_profile: lead&.project_profile,
+                product_vertical: lead&.product_vertical
+              },
+              marketing_data: {
+                utm_source: lead&.utm_source,
+                utm_medium: lead&.utm_medium,
+                utm_campaign: lead&.utm_campaign,
+                landing_path: lead&.landing_path,
+                referrer: lead&.referrer_host
+              },
+              confidence_score: score.confidence_score,
+              top_signals: score.top_signals || []
             }
           end
           

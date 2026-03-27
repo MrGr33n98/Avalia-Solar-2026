@@ -1244,6 +1244,32 @@ export interface TrustHealth {
 }
 
 // Intent Summary Types
+export interface LeadDossie {
+  technical_profile: {
+    monthly_kwh?: number | null;
+    bill_value?: number | null;
+    system_size?: string | null;
+    decision_timeline?: string | null;
+    estimated_budget?: string | null;
+    project_profile?: string | null;
+    product_vertical?: string | null;
+  };
+  marketing_data: {
+    utm_source?: string | null;
+    utm_medium?: string | null;
+    utm_campaign?: string | null;
+    landing_path?: string | null;
+    referrer?: string | null;
+  };
+  top_signals?: Array<{
+    signal_type: string;
+    signal_category: string;
+    intent_weight: number;
+    page_path?: string;
+    tracked_at: string;
+  }>;
+}
+
 export interface IntentSummary {
   total_signals: number;
   avg_confidence: number;
@@ -1256,7 +1282,7 @@ export interface IntentSummary {
     declared: number;
   };
   top_leads: Array<{
-    id: string;
+    id: string | number;
     lead_id?: number;
     anonymous_id?: string;
     total_score: number;
@@ -1265,6 +1291,12 @@ export interface IntentSummary {
     sla_window: string;
     last_interaction_at?: string;
     signals_count: number;
+    name?: string;
+    email?: string;
+    phone?: string;
+    dossie?: LeadDossie;
+    technical_profile?: LeadDossie['technical_profile'];
+    marketing_data?: LeadDossie['marketing_data'];
   }>;
   last_updated?: string;
 }

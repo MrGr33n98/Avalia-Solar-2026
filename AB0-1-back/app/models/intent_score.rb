@@ -6,7 +6,8 @@ class IntentScore < ApplicationRecord
   self.primary_key = 'id'
 
   belongs_to :company
-  belongs_to :lead, class_name: 'User', foreign_key: 'lead_id', optional: true
+  belongs_to :lead_user, class_name: 'User', foreign_key: 'lead_id', optional: true
+  belongs_to :lead_record, class_name: 'Lead', foreign_key: 'lead_id', optional: true
   has_many :histories, class_name: 'IntentScoreHistory', foreign_key: 'intent_score_id', dependent: :destroy
 
   # Validations
