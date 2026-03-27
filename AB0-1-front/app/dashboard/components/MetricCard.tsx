@@ -104,19 +104,19 @@ export default function MetricCard({
         'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/[0.03] before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity',
         'after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 group-hover:after:opacity-100 after:transition-opacity after:pointer-events-none'
       )}>
-        <CardContent className="p-8 relative z-10">
-          <div className="flex items-start justify-between mb-8">
+        <CardContent className="p-5 relative z-10">
+          <div className="flex items-start justify-between mb-4">
             {/* Enhanced Icon Container */}
             <motion.div
               whileHover={{ scale: 1.15, rotate: 8 }}
               className={cn(
-                'p-4 rounded-2xl transition-all duration-300 shadow-lg border-2 backdrop-blur-sm relative overflow-hidden',
+                'p-2.5 rounded-xl transition-all duration-300 shadow-lg border-2 backdrop-blur-sm relative overflow-hidden',
                 colors.bg,
                 colors.border,
                 'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
               )}
             >
-              <Icon className={cn('h-6 w-6 relative z-10', colors.icon)} strokeWidth={2.2} />
+              <Icon className={cn('h-4 w-4 relative z-10', colors.icon)} strokeWidth={2.4} />
               <div className={cn(
                 "absolute -inset-1 blur-md opacity-20 group-hover:opacity-40 transition-opacity",
                 colors.bg
@@ -128,7 +128,7 @@ export default function MetricCard({
               <Badge 
                 variant="outline"
                 className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider px-2 h-6 border-[0.5px]",
+                  "text-[9px] font-bold uppercase tracking-wider px-1.5 h-5 border-[0.5px]",
                   changeType === 'positive' ? "bg-brand-green/10 text-brand-green border-emerald-500/20" :
                   changeType === 'negative' ? "bg-red-500/10 text-red-500 border-red-500/20" :
                   "bg-white/5 text-muted-foreground border-white/10"
@@ -142,15 +142,15 @@ export default function MetricCard({
           </div>
 
           {/* Enhanced Content */}
-          <div className="space-y-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 dark:text-white/40 leading-tight">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 dark:text-white/40 leading-tight">
               {title}
             </p>
-            <p className="text-4xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
+            <p className="text-2xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
             {description && (
-              <p className="text-xs text-muted-foreground/70 dark:text-white/50 leading-tight mt-1">
+              <p className="text-[10px] text-muted-foreground/70 dark:text-white/50 leading-tight mt-0.5">
                 {description}
               </p>
             )}
@@ -158,7 +158,7 @@ export default function MetricCard({
 
           {/* Enhanced Mini Trend Line */}
           {trend && trend.length > 0 && (
-            <div className="mt-8 flex items-end gap-2 h-12 w-full overflow-hidden opacity-30 group-hover:opacity-90 transition-opacity">
+            <div className="mt-4 flex items-end gap-1.5 h-8 w-full overflow-hidden opacity-30 group-hover:opacity-90 transition-opacity">
               {trend.map((height, index) => (
                 <motion.div
                   key={index}
