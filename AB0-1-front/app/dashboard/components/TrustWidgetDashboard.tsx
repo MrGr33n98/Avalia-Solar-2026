@@ -82,20 +82,20 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
             <Globe className="h-4 w-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Trust Network Distribution</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
+          <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
             Authority <span className="text-brand-green">Node</span>
           </h2>
-          <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
+          <p className="text-sm text-slate-500 dark:text-white/40 max-w-lg font-medium leading-relaxed">
             Distribua sua prova social e reputação certificada em tempo real para qualquer endpoint externo através de nosso protocolo de widget assíncrono.
           </p>
         </div>
         
         <div className="flex items-center gap-4">
-           <div className="h-14 w-14 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
-              <Code2 className="h-6 w-6 text-white/20" />
+           <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-center">
+              <Code2 className="h-6 w-6 text-slate-400 dark:text-white/20" />
            </div>
            <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">API Protocol</p>
+              <p className="text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest mb-1">API Protocol</p>
               <Badge className="bg-brand-green/10 text-brand-green border-none font-black text-[9px] px-3">ACTIVE v2.4</Badge>
            </div>
         </div>
@@ -135,10 +135,10 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 space-y-6">
-          <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border-none rounded-[3rem] overflow-hidden shadow-2xl">
-            <CardHeader className="p-8 border-b border-white/5">
-              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Configuração de Interface</CardTitle>
-              <CardDescription className="text-white/40 font-medium">Personalize os parâmetros de visualização do seu nó de autoridade.</CardDescription>
+          <Card className="clay-precision bg-white dark:bg-[#002B4D]/50 backdrop-blur-xl border-none rounded-[3rem] overflow-hidden shadow-2xl">
+            <CardHeader className="p-8 border-b border-slate-200 dark:border-white/5">
+              <CardTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Configuração de Interface</CardTitle>
+              <CardDescription className="text-slate-500 dark:text-white/40 font-medium">Personalize os parâmetros de visualização do seu nó de autoridade.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               {/* Theme Selector */}
@@ -150,11 +150,11 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                     className={cn(
                       "group h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
                       theme === 'light' 
-                        ? "bg-white text-[#002B4D] border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
-                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
+                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-[#002B4D] dark:border-white shadow-[0_0_20px_rgba(37,99,235,0.2)] dark:shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
+                        : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.02] dark:border-white/5 dark:text-white/40 dark:hover:bg-white/[0.05]"
                     )}
                   >
-                    <div className={cn("w-2 h-2 rounded-full", theme === 'light' ? "bg-primary" : "bg-white/20")} />
+                    <div className={cn("w-2 h-2 rounded-full", theme === 'light' ? "bg-primary" : "bg-slate-300 dark:bg-white/20")} />
                     Light Protocol
                   </button>
                   <button 
@@ -163,10 +163,10 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                       "group h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
                       theme === 'dark' 
                         ? "bg-brand-blue text-white border-brand-blue shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
-                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
+                        : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.02] dark:border-white/5 dark:text-white/40 dark:hover:bg-white/[0.05]"
                     )}
                   >
-                    <div className={cn("w-2 h-2 rounded-full bg-white", theme === 'dark' ? "animate-pulse" : "opacity-20")} />
+                    <div className={cn("w-2 h-2 rounded-full", theme === 'dark' ? "bg-white animate-pulse" : "bg-slate-400 opacity-50 dark:bg-white dark:opacity-20")} />
                     Silicon Dark
                   </button>
                 </div>
@@ -183,8 +183,8 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                       className={cn(
                         "h-14 rounded-2xl border transition-all text-[10px] font-black uppercase tracking-widest",
                         size === s 
-                          ? "bg-white/10 text-white border-white/20 shadow-inner" 
-                          : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
+                          ? "bg-slate-900 text-white border-slate-900 dark:bg-white/10 dark:text-white dark:border-white/20 shadow-inner" 
+                          : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.02] dark:border-white/5 dark:text-white/40 dark:hover:bg-white/[0.05]"
                       )}
                     >
                       {s}
@@ -202,8 +202,8 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                     className={cn(
                       "flex-1 h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
                       showRank 
-                        ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
-                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
+                        ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/30" 
+                        : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.02] dark:border-white/5 dark:text-white/40 dark:hover:bg-white/[0.05]"
                     )}
                   >
                     <Trophy className={cn("w-4 h-4", showRank ? "fill-amber-500/20" : "")} />
@@ -214,8 +214,8 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                     className={cn(
                       "flex-1 h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
                       !showRank 
-                        ? "bg-white/10 text-white border-white/20" 
-                        : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/[0.05]"
+                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white/10 dark:text-white dark:border-white/20" 
+                        : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.02] dark:border-white/5 dark:text-white/40 dark:hover:bg-white/[0.05]"
                     )}
                   >
                     Apenas Reputação
@@ -224,16 +224,16 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
               </div>
 
               {/* Code Snippet */}
-              <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
+              <div className="pt-8 mt-8 border-t border-slate-200 dark:border-white/5 space-y-4">
                 <div className="flex items-center justify-between">
-                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 pl-1">Pipeline Snippet (HTML/JS)</Label>
+                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 dark:text-emerald-400 pl-1">Pipeline Snippet (HTML/JS)</Label>
                    <Badge variant="outline" className="border-emerald-500/20 text-brand-green text-[8px] font-black">X64 ENCRYPTED</Badge>
                 </div>
                 <div className="relative group/snippet overflow-hidden">
-                  <pre className="p-6 bg-black/50 text-emerald-400 rounded-3xl text-[11px] overflow-x-auto border border-white/5 leading-relaxed font-mono shadow-inner scrollbar-hide">
+                  <pre className="p-6 bg-slate-100 dark:bg-black/50 text-emerald-600 dark:text-emerald-400 rounded-3xl text-[11px] overflow-x-auto border border-slate-200 dark:border-white/5 leading-relaxed font-mono shadow-inner scrollbar-hide">
                     {snippet}
                   </pre>
-                  <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black/60 to-transparent pointer-events-none group-hover/snippet:opacity-0 transition-opacity" />
+                  <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-100 dark:from-black/60 to-transparent pointer-events-none group-hover/snippet:opacity-0 transition-opacity" />
                   <Button
                     size="icon"
                     className="absolute top-4 right-4 h-12 w-12 bg-brand-green hover:bg-emerald-400 text-white rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-90"
@@ -242,10 +242,10 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                     {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
                   </Button>
                 </div>
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 mt-4">
-                   <Info className="h-4 w-4 text-blue-400 mt-0.5" />
-                   <p className="text-[10px] text-white/40 font-medium leading-relaxed">
-                     O script deve ser injetado preferencialmente no rodapé da página para garantir <span className="text-white font-bold">zero latência</span> na renderização do conteúdo principal.
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 mt-4">
+                   <Info className="h-4 w-4 text-blue-500 dark:text-blue-400 mt-0.5" />
+                   <p className="text-[10px] text-slate-500 dark:text-white/40 font-medium leading-relaxed">
+                     O script deve ser injetado preferencialmente no rodapé da página para garantir <span className="text-slate-900 dark:text-white font-bold">zero latência</span> na renderização do conteúdo principal.
                    </p>
                 </div>
               </div>
@@ -255,13 +255,13 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
 
         {/* Live Preview Column */}
         <div className="lg:col-span-5 space-y-8">
-          <Card className="clay-precision bg-[#002B4D]/50 backdrop-blur-xl border border-white/5 rounded-[3.5rem] overflow-hidden shadow-2xl sticky top-8">
-            <div className="p-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
+          <Card className="clay-precision bg-white dark:bg-[#002B4D]/50 backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[3.5rem] overflow-hidden shadow-2xl sticky top-8">
+            <div className="p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01] flex items-center justify-between">
               <div className="flex items-center gap-3">
                  <div className="h-10 w-10 rounded-2xl bg-brand-green/10 flex items-center justify-center border border-emerald-500/20">
                     <Smartphone className="h-5 w-5 text-brand-green" />
                  </div>
-                 <span className="text-sm font-black text-white uppercase tracking-tighter">Live Monitor</span>
+                 <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter">Live Monitor</span>
               </div>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
@@ -275,23 +275,23 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                 key={`${theme}-${size}-${showRank}`}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative z-10 p-5 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-md shadow-3xl"
+                className="relative z-10 p-5 rounded-[2.5rem] bg-white/80 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-3xl"
                >
                   <WidgetBadge companyData={mockCompanyData} theme={theme} />
                </motion.div>
                
                <div className="mt-12 text-center relative z-10 space-y-2">
-                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Ambiente de Preview v8.2</p>
+                  <p className="text-[10px] font-black text-slate-500 dark:text-white/20 uppercase tracking-[0.3em]">Ambiente de Preview v8.2</p>
                   <div className="flex justify-center gap-2">
-                     <Monitor className="h-4 w-4 text-white/10" />
-                     <Smartphone className="h-4 w-4 text-white/10" />
-                     <Layout className="h-4 w-4 text-white/10" />
+                     <Monitor className="h-4 w-4 text-slate-400 dark:text-white/10" />
+                     <Smartphone className="h-4 w-4 text-slate-400 dark:text-white/10" />
+                     <Layout className="h-4 w-4 text-slate-400 dark:text-white/10" />
                   </div>
                </div>
             </div>
             
-            <div className="p-8 bg-black/40 border-t border-white/5">
-                <Button className="w-full h-14 bg-white text-brand-blue font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] hover:bg-white/90 active:scale-95 shadow-2xl">
+            <div className="p-8 bg-slate-50 dark:bg-black/40 border-t border-slate-200 dark:border-white/5">
+                <Button className="w-full h-14 bg-slate-900 dark:bg-white text-white dark:text-brand-blue font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] hover:bg-slate-800 dark:hover:bg-white/90 active:scale-95 shadow-2xl">
                    Simular Integração
                    <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
