@@ -19,6 +19,8 @@ interface WidgetBadgeProps {
 }
 
 export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
+  const safeRating = Number(companyData.rating_avg) || 0;
+
   const bgColor = theme === 'light' 
     ? 'bg-[#002B4D] border-white/10' 
     : 'bg-[#002B4D] border-white/10';
@@ -72,7 +74,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
               <Star
                 key={i}
                 className={`w-3.5 h-3.5 ${
-                  i < Math.floor(companyData.rating_avg)
+                  i < Math.floor(safeRating)
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-gray-300'
                 }`}
@@ -80,7 +82,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
             ))}
           </div>
           <span className={`text-sm font-semibold ${textColor}`}>
-            {companyData.rating_avg.toFixed(1)}
+            {safeRating.toFixed(1)}
           </span>
         </div>
         <p className={`text-xs ${mutedColor}`}>
