@@ -160,7 +160,7 @@ export default function CompanyHero({
         <div className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-slate-200">
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
-              src={bannerUrl || '/images/banner-avalia-solar.png'}
+              src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
               alt=""
               fill
               priority
@@ -217,7 +217,7 @@ export default function CompanyHero({
                     )}
                   >
                     <OptimizedImage
-                      src={logoUrl || '/images/logo-placeholder.svg'}
+                      src={(!logoUrl || logoError) ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
                       fill
                       priority

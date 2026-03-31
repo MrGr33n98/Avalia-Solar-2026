@@ -6,7 +6,7 @@
  */
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_BLUR_DATA_URL =
@@ -81,6 +81,12 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Sincroniza o estado interno com a prop src caso ela mude
+  useEffect(() => {
+    setImgSrc(src);
+    setIsLoading(true);
+  }, [src]);
 
   const handleLoad = () => {
     setIsLoading(false);
