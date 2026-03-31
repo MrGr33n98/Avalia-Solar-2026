@@ -219,11 +219,10 @@ export default function CompanyHero({
                     <OptimizedImage
                       src={logoUrl || '/images/logo-placeholder.svg'}
                       alt={company.name}
-                      width={120}
-                      height={120}
+                      fill
                       priority
-                      objectFit="cover"
-                      className="h-full w-full"
+                      objectFit="contain"
+                      className="p-1"
                       containerClassName="h-full w-full rounded-full bg-white"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}

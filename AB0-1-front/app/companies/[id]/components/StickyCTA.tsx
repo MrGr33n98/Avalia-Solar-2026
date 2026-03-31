@@ -66,7 +66,7 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
             <div className="hidden md:flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                 {company.logo_url ? (
-                  <Image src={company.logo_url} alt={company.name} width={40} height={40} className="h-full w-full object-cover" />
+                  <Image src={company.logo_url} alt={company.name} width={40} height={40} className="h-full w-full object-contain p-1" />
                 ) : (
                   <div className="text-slate-400 font-bold text-xs">{company.name.substring(0, 2).toUpperCase()}</div>
                 )}
