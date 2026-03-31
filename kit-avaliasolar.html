@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AvaliaSolar — Media Kit & Sales Deck 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/framer-motion@latest/dist/framer-motion.js"></script>
+  <style>
+    /* ─── AS-EDS CORE TOKENS ─── */
+    :root {
+      /* Brand Colors */
+      --brand-blue: #0056D2;
+      --brand-blue-glow: rgba(0, 86, 210, 0.4);
+      --brand-cyan: #00AFEF;
+      --brand-green: #34C759;
+      --brand-purple: #6C5CE7;
+      --brand-amber: #F5A623;
+      
+      /* System Colors (HSL) */
+      --primary: 221 83% 53%;
+      --secondary: 38 92% 50%;
+      --accent: 142 71% 45%;
+      --destructive: 0 84.2% 60.2%;
+      
+      /* Surface & Glass */
+      --background: 222 47% 6%;
+      --foreground: 210 40% 98%;
+      --card: 222 47% 11%;
+      --border: 217 33% 17%;
+      --muted: 215 20% 65%;
+      
+      /* Claymorphism Tokens */
+      --clay-radius: 1.5rem;
+      --clay-duration: 400ms;
+      --clay-easing: cubic-bezier(0.23, 1, 0.32, 1);
+      
+      /* Fonts */
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-family: var(--font-body);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── CLAYMORPHISM ─── */
+    .clay-card {
+      background: hsla(var(--card), 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid hsla(var(--border), 0.5);
+      border-radius: var(--clay-radius);
+      padding: 3rem;
+      transition: all 0.5s var(--clay-easing);
+      position: relative;
+    }
+    .clay-card:hover {
+      transform: translateY(-8px) scale(1.01);
+      border-color: hsla(var(--primary), 0.5);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    }
+
+    .clay-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1.25rem 2.5rem; border-radius: 1.25rem;
+      font-family: var(--font-head); font-weight: 800;
+      cursor: pointer; transition: all 0.4s var(--clay-easing);
+      border: none; text-decoration: none; font-size: 1.1rem;
+      letter-spacing: -0.01em;
+    }
+    .clay-btn-primary {
+      background: var(--brand-blue); color: white;
+      box-shadow: 0 6px 0 #003FA3, 0 15px 30px var(--brand-blue-glow);
+    }
+    .clay-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #003FA3, 0 20px 40px var(--brand-blue-glow); }
+    .clay-btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #003FA3; }
+
+    /* ─── SCENE ─── */
+    #scene { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .sun-core {
+      position: absolute; bottom: -250px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, hsla(var(--secondary), 0.3) 0%, transparent 70%);
+      filter: blur(80px); animation: sun-pulse 10s infinite alternate;
+    }
+    @keyframes sun-pulse { from { opacity: 0.2; transform: translateX(-50%) scale(1); } to { opacity: 0.5; transform: translateX(-50%) scale(1.2); } }
+    
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background-image: linear-gradient(hsla(var(--border), 0.2) 1px, transparent 1px), linear-gradient(90deg, hsla(var(--border), 0.2) 1px, transparent 1px);
+      background-size: 100px 100px; mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+    }
+
+    /* ─── ENGINE ─── */
+    #deck { position: relative; z-index: 10; width: 100vw; height: 100vh; }
+    .slide {
+      position: absolute; inset: 0; padding: 5rem 8rem;
+      opacity: 0; visibility: hidden; transition: all 0.9s var(--clay-easing);
+      transform: scale(0.94) translateY(30px);
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .slide.active { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
+
+    /* ─── TYPO ─── */
+    h1 { font-family: var(--font-head); font-size: clamp(4rem, 8vw, 7rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.06em; margin-bottom: 2rem; }
+    .gradient-text { background: linear-gradient(to right, #fff, var(--brand-amber)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    h2 { font-family: var(--font-head); font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.04em; }
+    p.sub { font-size: 1.4rem; color: hsl(var(--muted)); max-width: 800px; margin-bottom: 3rem; line-height: 1.5; }
+
+    /* ─── SLIDE COMPONENTS ─── */
+    .slide-tag { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .slide-tag .num { font-family: var(--font-head); font-weight: 800; color: var(--brand-amber); font-size: 1.2rem; }
+    .slide-tag .line { height: 1px; flex: 1; background: hsla(var(--border), 0.5); }
+
+    .g2 { display: grid; grid-template-columns: 1fr 1.2fr; gap: 2.5rem; }
+    .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+    .pill { display: inline-flex; align-items: center; padding: 0.5rem 1.25rem; background: hsla(var(--primary), 0.1); border: 1px solid hsla(var(--primary), 0.2); border-radius: 100px; font-size: 0.85rem; font-weight: 700; color: hsla(var(--primary), 1); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+    .pill.amber { background: hsla(var(--secondary), 0.1); border-color: hsla(var(--secondary), 0.2); color: #f5a623; }
+
+    .metric-value { font-family: var(--font-head); font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; letter-spacing: -0.04em; }
+
+    /* Tier Cards */
+    .tier {
+      display: flex; flex-direction: column; gap: 1.5rem; padding: 2.5rem;
+      background: hsla(var(--card), 0.4); border: 1px solid hsla(var(--border), 0.3);
+      border-radius: var(--clay-radius); transition: all 0.5s var(--clay-easing);
+    }
+    .tier.featured {
+      background: hsla(var(--primary), 0.05); border-color: hsla(var(--primary), 0.3);
+      transform: scale(1.05); z-index: 2; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .tier-name { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; }
+    .tier-price { font-family: var(--font-head); font-size: 3rem; font-weight: 800; }
+    .tier-price span { font-size: 1.2rem; opacity: 0.6; }
+
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .checklist li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: hsl(var(--muted)); }
+    .checklist li i { color: var(--brand-green); width: 20px; }
+    .checklist li.no { opacity: 0.4; }
+    .checklist li.no i { color: hsl(var(--destructive)); }
+
+    /* Highlights */
+    .hl {
+      background: linear-gradient(90deg, hsla(var(--secondary), 0.1), transparent);
+      border-left: 4px solid #f5a623; padding: 1.5rem 2rem; border-radius: 0 1rem 1rem 0;
+      margin-top: 2rem; font-size: 1.1rem; line-height: 1.4;
+    }
+
+    /* Nav */
+    #prog { position: fixed; top: 0; left: 0; height: 6px; width: 0; background: linear-gradient(90deg, var(--brand-blue), var(--brand-amber)); z-index: 1000; transition: width 0.8s var(--clay-easing); }
+    #controls { position: fixed; bottom: 4rem; right: 5rem; z-index: 100; display: flex; gap: 1.5rem; }
+    .nav-btn {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: hsla(var(--card), 0.7); backdrop-filter: blur(20px);
+      border: 1.5px solid hsla(var(--border), 0.6); color: white;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.4s var(--clay-easing); font-size: 1.5rem;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--brand-blue); transform: scale(1.2) translateY(-5px); box-shadow: 0 15px 30px var(--brand-blue-glow); }
+    .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+    /* ─── UTILS (Tailwind-lite) ─── */
+    .p-4 { padding: 1rem; } .p-6 { padding: 1.5rem; } .p-8 { padding: 2rem; } .p-12 { padding: 3rem; }
+    .m-0 { margin: 0; } .mb-2 { margin-bottom: 0.5rem; } .mb-4 { margin-bottom: 1rem; } .mb-8 { margin-bottom: 2rem; } .mb-10 { margin-bottom: 2.5rem; } .mb-12 { margin-bottom: 3rem; }
+    .mt-4 { margin-top: 1rem; } .mt-8 { margin-top: 2rem; } .mt-12 { margin-top: 3rem; }
+    .flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; } .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 0.5rem; } .gap-4 { gap: 1rem; } .gap-8 { gap: 2rem; }
+    .w-full { width: 100%; } .text-center { text-align: center; } .text-right { text-align: right; }
+    .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; } .text-2xl { font-size: 1.5rem; } .text-3xl { font-size: 1.875rem; }
+    .font-bold { font-weight: 700; } .opacity-50 { opacity: 0.5; } .opacity-60 { opacity: 0.6; } .opacity-80 { opacity: 0.8; }
+    .uppercase { text-transform: uppercase; } .tracking-widest { letter-spacing: 0.1em; }
+    .text-primary { color: hsl(var(--primary)); } .text-amber-500 { color: var(--brand-amber); } .text-emerald-500 { color: var(--brand-green); }
+
+    /* ─── TIMELINE ─── */
+    .timeline { display: flex; justify-content: space-between; position: relative; padding: 2rem 0; width: 100%; }
+    .timeline::before { content: ''; position: absolute; top: 3.5rem; left: 0; right: 0; height: 2px; background: hsla(var(--border), 0.5); z-index: 0; }
+    .tl-item { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; }
+    .tl-dot { width: 3rem; height: 3rem; border-radius: 50%; background: hsla(var(--card), 1); border: 2px solid hsla(var(--border), 1); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; color: var(--brand-amber); transition: all 0.4s var(--clay-easing); box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+    .tl-item:hover .tl-dot { transform: scale(1.2); border-color: var(--brand-amber); box-shadow: 0 0 30px rgba(245,166,35,0.4); }
+    .tl-label { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; }
+    .tl-desc { font-size: 0.8rem; color: hsl(var(--muted)); line-height: 1.4; }
+
+    /* ─── TABLE ─── */
+    table.comp { width: 100%; border-collapse: collapse; }
+    table.comp th, table.comp td { padding: 1.25rem 1.5rem; border-bottom: 1px solid hsla(var(--border), 0.3); text-align: left; }
+    table.comp .ck { color: var(--brand-green); font-weight: 900; }
+    table.comp .cx { color: hsl(var(--destructive)); opacity: 0.3; }
+
+    /* ─── ENTRANCE ANIMATIONS ─── */
+    .slide > * { opacity: 0; transform: translateY(20px); transition: all 0.8s var(--clay-easing); transition-delay: calc(var(--d, 0) * 100ms); }
+    .slide.active > * { opacity: 1; transform: translateY(0); }
+    
+    .g-hero { display: grid; grid-template-columns: 1fr 1.5fr; gap: 4rem; align-items: center; }
+
+    /* Custom Logo */
+
+    /* ─── DOTS & PROGRESS ─── */
+    #dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 1rem; z-index: 100; }
+    .dot { width: 10px; height: 10px; border-radius: 20px; background: hsla(var(--border), 1); cursor: pointer; transition: all 0.4s var(--clay-easing); }
+    .dot.active { height: 40px; background: var(--brand-amber); box-shadow: 0 0 15px var(--brand-amber); }
+    .dot:hover:not(.active) { background: hsla(var(--muted), 0.5); transform: scale(1.5); }
+
+    #counter { position: fixed; top: 3.5rem; right: 4rem; font-family: var(--font-head); font-weight: 800; font-size: 1.2rem; color: hsla(var(--muted), 0.5); z-index: 100; pointer-events: none; }
+    #counter span { color: white; display: inline-block; width: 2.5rem; }
+
+    /* ─── MOBILE RESPONSIVENESS ─── */
+    @media (max-width: 768px) {
+      body { overflow-y: auto; height: auto; }
+      #deck { height: auto; min-height: 100vh; }
+      .slide { 
+        position: relative; inset: auto; padding: 6rem 1.5rem 4rem; 
+        opacity: 1; visibility: visible; transform: none; 
+        display: none; height: auto; min-height: 100vh;
+      }
+      .slide.active { display: flex; }
+      
+      h1 { font-size: 3.5rem; margin-bottom: 1.5rem; }
+      h2 { font-size: 2.2rem; }
+      p.sub { font-size: 1.1rem; margin-bottom: 2rem; }
+      
+      .g2, .g3, .g4, .g-hero { grid-template-columns: 1fr; gap: 1.5rem; }
+      .metric-value { font-size: 2.8rem; }
+      
+      .clay-card { padding: 1.5rem; }
+      .clay-btn { width: 100%; padding: 1rem; font-size: 1rem; }
+      
+      /* Hide some non-critical elements */
+      #dots { display: none; }
+      #scene { opacity: 0.5; }
+      
+      /* Reposition UI */
+      #controls { 
+        bottom: 0; right: 0; left: 0; 
+        padding: 1rem; background: hsla(var(--background), 0.8);
+        backdrop-filter: blur(10px);
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px solid hsla(var(--border), 0.5);
+      }
+      .nav-btn { width: 50px; height: 50px; font-size: 1.2rem; }
+      #counter { top: 1.5rem; right: 1.5rem; font-size: 1rem; }
+      
+      #fixed-logo { top: 1rem; left: 1rem; scale: 0.7; transform-origin: top left; }
+      .logo-wrap { justify-content: center; margin-bottom: 2rem !important; }
+      .logo-wrap img { height: 100px !important; }
+      
+      .tier.featured { transform: none; margin: 1rem 0; }
+      .timeline { flex-direction: column; gap: 2rem; padding-left: 1rem; }
+      .timeline::before { top: 0; left: 2.5rem; width: 2px; height: 100%; }
+      .tl-item { flex-direction: row; text-align: left; align-items: flex-start; }
+      
+      table.comp th:nth-child(2), table.comp td:nth-child(2),
+      table.comp th:nth-child(3), table.comp td:nth-child(3) { display: none; }
+    }
+  </style>
+<body>
+
+<!-- Background -->
+<div id="scene">
+  <div class="sun-core"></div>
+  <div class="sun-ring"></div>
+  <div class="sun-ring"></div>
+  <div class="sun-ring"></div>
+</div>
+<div class="grid-bg"></div>
+
+<!-- Progress -->
+<div id="prog"></div>
+
+<!-- Mobile/Corner Logo -->
+<div id="fixed-logo" style="position:fixed; top:2.5rem; left:4rem; z-index:100; display:flex; align-items:center; gap:1rem; pointer-events:none;">
+    <img src="AB0-1-front/public/images/logo - Copy.png" alt="" style="height:60px; filter:drop-shadow(0 0 15px rgba(0,86,210,0.3));">
+</div>
+
+<!-- Slide Deck -->
+<div id="deck">
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 01 — COVER -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide active" data-n="1">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; max-width:900px;">
+      <div class="logo-wrap" style="margin-bottom:4rem; display:flex; align-items:center; justify-content:center;">
+        <img src="AB0-1-front/public/images/logo - Copy.png" alt="AvaliaSolar" style="height:120px; filter:drop-shadow(0 0 30px rgba(0,86,210,0.4));">
+      </div>
+
+      <div class="pill">SALES DECK 2026 • REGIONAL Fpolis</div>
+
+      <h1>Trust as a<br><span class="gradient-text">Service.</span></h1>
+
+      <p class="sub">
+        A infraestrutura de credibilidade definitiva para instaladoras solares da Grande Florianópolis. Transformamos confiança em leads qualificados e receita recorrente.
+      </p>
+
+      <div style="display:flex; gap:2rem; margin-top:1rem;">
+        <button class="clay-btn clay-btn-primary">Explorar Ecossistema →</button>
+        <button class="clay-btn clay-btn-secondary">Agendar Demonstração</button>
+      </div>
+
+      <div class="m-grid" style="margin-top:5rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:3rem; border-top:1px solid hsla(var(--border), 0.5); padding-top:3rem;">
+        <div>
+          <div class="metric-value">120+</div>
+          <p style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--brand-amber);">Empresas Ativas</p>
+        </div>
+        <div>
+          <div class="metric-value">15k<span style="font-size:2rem; color:var(--brand-blue);">+</span></div>
+          <p style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--brand-blue);">Leads/Mês</p>
+        </div>
+        <div>
+          <div class="metric-value">R$2.4<span style="font-size:2rem;">b</span></div>
+          <p style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--brand-blue);">Mercado Regional</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 02 — O PROBLEMA -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="2">
+    <div class="slide-tag">
+      <span class="num">02 — O PROBLEMA</span>
+      <div class="line"></div>
+    </div>
+    
+    <div class="g2" style="align-items: center;">
+      <div>
+        <div class="pill amber">Market Analysis</div>
+        <h2>O Gap de <br><span class="gradient-text">Confiança.</span></h2>
+        <p class="sub">Por que empresas excelentes perdem vendas todos os dias na Grande Florianópolis.</p>
+        
+        <div class="hl">
+          <span style="color:var(--brand-amber); font-weight:800;">INSIGHT DE MERCADO:</span><br>
+          Perfis verificados convertem <strong>340% mais</strong> que concorrentes sem credibilidade digital vísivel.
+        </div>
+      </div>
+
+      <div style="display:grid; gap:2rem;">
+        <div class="clay-card" style="padding: 2.5rem; border-left: 6px solid #f5a623;">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1.5rem;">
+            <div style="width:50px; height:50px; border-radius:12px; background:rgba(245,166,35,0.1); display:flex; align-items:center; justify-content:center; color:#f5a623;">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="metric-value" style="font-size:3.5rem; color:#f5a623;">73%</div>
+          </div>
+          <p style="color:hsl(var(--muted)); line-height:1.6;">Dos consumidores em SC <strong>desistem do projeto solar</strong> por falta de provas de confiança da instaladora.</p>
+        </div>
+
+        <div class="clay-card" style="padding: 2.5rem; border-left: 6px solid var(--brand-blue);">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1.5rem;">
+            <div style="width:50px; height:50px; border-radius:12px; background:rgba(0,86,210,0.1); display:flex; align-items:center; justify-content:center; color:var(--brand-blue);">
+              <i data-lucide="search"></i>
+            </div>
+            <div class="metric-value" style="font-size:3.5rem; color:var(--brand-blue);">+500%</div>
+          </div>
+          <p style="color:hsl(var(--muted)); line-height:1.6;">Crescimento nas buscas mas baixa conversão: o cliente busca, mas não encontra segurança para fechar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 03 — MERCADO LOCAL -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="3">
+    <div class="slide-tag">
+      <span class="num">03 — MERCADO LOCAL</span>
+      <div class="line"></div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:4rem;">
+      <div style="max-width:600px;">
+        <h2>Grande <span class="gradient-text">Florianópolis</span></h2>
+        <p class="sub" style="margin-bottom:0;">A região que mais cresce em energia solar no estado de Santa Catarina.</p>
+      </div>
+      <div class="clay-card" style="padding: 1.5rem 2.5rem; display:flex; gap:2rem;">
+        <div>
+          <div style="font-size:2rem; font-weight:800; font-family:var(--font-head);">R$2.4B</div>
+          <div style="font-size:0.7rem; text-transform:uppercase; color:var(--brand-blue);">Potencial Regional</div>
+        </div>
+        <div style="width:1px; background:hsla(var(--border), 0.5);"></div>
+        <div>
+          <div style="font-size:2rem; font-weight:800; font-family:var(--font-head);">15K+</div>
+          <div style="font-size:0.7rem; text-transform:uppercase; color:var(--brand-blue);">Leads/Mês</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="clay-card" style="padding: 2.5rem;">
+        <h4 style="font-family:var(--font-head); margin-bottom:2rem; display:flex; align-items:center; gap:0.75rem;">
+          <i data-lucide="map-pin" style="color:var(--brand-amber);"></i> Cidades Estratégicas
+        </h4>
+        <div style="display:flex; flex-wrap:wrap; gap:1rem;">
+          <span class="pill">Florianópolis</span>
+          <span class="pill">São José</span>
+          <span class="pill">Palhoça</span>
+          <span class="pill">Biguaçu</span>
+          <span class="pill">Sto Amaro</span>
+          <span class="pill">Antônio Carlos</span>
+          <span class="pill">Gov. Celso Ramos</span>
+        </div>
+        <p style="margin-top:2rem; color:hsl(var(--muted)); font-size:0.9rem;">
+          Toda a Região Metropolitana em expansão constante de rede elétrica e geração distribuída.
+        </p>
+      </div>
+
+      <div class="clay-card" style="padding: 2.5rem; background:linear-gradient(135deg, hsla(var(--card), 0.8), hsla(var(--primary), 0.1));">
+        <h4 style="font-family:var(--font-head); margin-bottom:2rem; display:flex; align-items:center; gap:0.75rem;">
+          <i data-lucide="zap" style="color:var(--brand-cyan);"></i> Contexto Regulatório
+        </h4>
+        <ul class="checklist">
+          <li><i data-lucide="check-circle-2"></i> Marco Legal (Lei 14.300) consolidado</li>
+          <li><i data-lucide="check-circle-2"></i> Incentivos da Celesc para residencial</li>
+          <li><i data-lucide="check-circle-2"></i> Crédito facilitado via cooperativas locais</li>
+          <li><i data-lucide="check-circle-2"></i> Alta irradiação no litoral catarinense</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 04 — SOLUÇÃO -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="4">
+    <div class="slide-tag">
+      <span class="num">04 — A SOLUÇÃO</span>
+      <div class="line"></div>
+    </div>
+    <h2>Infraestrutura de <br><span class="gradient-text">Credibilidade.</span></h2>
+    <p class="sub">Quatro pilares que transformam confiança em faturamento real.</p>
+
+    <div class="g4" style="flex:1;">
+      <div class="clay-card" style="padding: 2rem; display:flex; flex-direction:column; gap:1.5rem;">
+        <div style="width:50px; height:50px; border-radius:12px; background:rgba(245,166,35,0.1); display:flex; align-items:center; justify-content:center; color:#f5a623;">
+          <i data-lucide="verified"></i>
+        </div>
+        <h3 style="font-size:1.4rem;">Perfil<br>Verificado</h3>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Auditoria completa que reduz objeções em 40% na primeira conversa.</p>
+        <div class="pill amber" style="margin-top:auto; font-size:0.7rem;">TRUST SCORE</div>
+      </div>
+
+      <div class="clay-card" style="padding: 2rem; display:flex; flex-direction:column; gap:1.5rem;">
+        <div style="width:50px; height:50px; border-radius:12px; background:rgba(0,86,210,0.1); display:flex; align-items:center; justify-content:center; color:var(--brand-blue);">
+          <i data-lucide="target"></i>
+        </div>
+        <h3 style="font-size:1.4rem;">Intent<br>Scoring</h3>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">IA que separa quem está "só olhando" de quem está pronto para comprar.</p>
+        <div class="pill" style="margin-top:auto; font-size:0.7rem;">IA POWERED</div>
+      </div>
+
+      <div class="clay-card" style="padding: 2rem; display:flex; flex-direction:column; gap:1.5rem;">
+        <div style="width:50px; height:50px; border-radius:12px; background:rgba(52,199,89,0.1); display:flex; align-items:center; justify-content:center; color:var(--brand-green);">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <h3 style="font-size:1.4rem;">Real-Time<br>Analytics</h3>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Dados precisos de mercado para ajustar seu discurso de vendas.</p>
+        <div class="pill" style="margin-top:auto; font-size:0.7rem; border-color:var(--brand-green); color:var(--brand-green); background:rgba(52,199,89,0.1);">INSIGHTS</div>
+      </div>
+
+      <div class="clay-card" style="padding: 2rem; display:flex; flex-direction:column; gap:1.5rem;">
+        <div style="width:50px; height:50px; border-radius:12px; background:rgba(108,92,231,0.1); display:flex; align-items:center; justify-content:center; color:var(--brand-purple);">
+          <i data-lucide="share-2"></i>
+        </div>
+        <h3 style="font-size:1.4rem;">Integração<br>Nativa</h3>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Webhooks para enviar seus leads direto para o seu CRM preferido.</p>
+        <div class="pill" style="margin-top:auto; font-size:0.7rem; border-color:var(--brand-purple); color:var(--brand-purple); background:rgba(108,92,231,0.1);">API ACCESS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 05 — PLANOS -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="5">
+    <div class="slide-tag">
+      <span class="num">05 — ECOSSISTEMA</span>
+      <div class="line"></div>
+    </div>
+    <div style="text-align:center; margin-bottom:4rem;">
+      <h2>Planos & <span class="gradient-text">Evolução</span></h2>
+      <p class="sub" style="margin:0 auto;">Comece grátis e escale conforme seus resultados — sem contratos longos.</p>
+    </div>
+
+    <div class="g3">
+      <!-- FREE -->
+      <div class="tier">
+        <div class="tier-name">🆓 FREE</div>
+        <div class="tier-price">R$0<span>/mês</span></div>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Presença básica para teste.</p>
+        <ul class="checklist">
+          <li><i data-lucide="check"></i> Perfil básico</li>
+          <li><i data-lucide="check"></i> Redes sociais</li>
+          <li><i data-lucide="check"></i> Exposição orgânica</li>
+          <li class="no"><i data-lucide="x-circle"></i> Selo Verificado</li>
+          <li class="no"><i data-lucide="x-circle"></i> Leads com IA</li>
+        </ul>
+        <button class="clay-btn" style="background:hsla(var(--border), 0.5); font-size:0.9rem; padding:1rem; color:white;">Ativar agora</button>
+      </div>
+
+      <!-- PRO -->
+      <div class="tier featured">
+        <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--brand-amber); color:black; padding:0.25rem 1rem; border-radius:100px; font-size:0.7rem; font-weight:900;">MAIS POPULAR</div>
+        <div class="tier-name">💼 PRO</div>
+        <div class="tier-price">R$149<span>/mês</span></div>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Foco em autoridade e provas sociais.</p>
+        <ul class="checklist">
+          <li><i data-lucide="check"></i> <strong>Selo de Verificação</strong></li>
+          <li><i data-lucide="check"></i> Banner Promocional</li>
+          <li><i data-lucide="check"></i> Galeria de Mídia</li>
+          <li><i data-lucide="check"></i> Analytics Avançado</li>
+          <li class="no"><i data-lucide="x-circle"></i> Webhooks / API</li>
+        </ul>
+        <button class="clay-btn clay-btn-primary" style="font-size:0.9rem; padding:1rem; width:100%;">Selecionar Pro</button>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="tier" style="border-color: hsla(var(--primary), 0.2);">
+        <div class="tier-name">🏆 ENTERPRISE</div>
+        <div class="tier-price" style="color:var(--brand-cyan);">R$399<span>/mês</span></div>
+        <p style="font-size:0.9rem; color:hsl(var(--muted));">Dominância total do mercado.</p>
+        <ul class="checklist">
+          <li><i data-lucide="check"></i> <strong>Marketplace de Leads IA</strong></li>
+          <li><i data-lucide="check"></i> Webhooks e API REST</li>
+          <li><i data-lucide="check"></i> Suporte Prioritário</li>
+          <li><i data-lucide="check"></i> Onboarding 1:1</li>
+          <li><i data-lucide="check"></i> Relatórios Mensais</li>
+        </ul>
+        <button class="clay-btn" style="border:1px solid var(--brand-cyan); color:var(--brand-cyan); font-size:0.9rem; padding:1rem; width:100%;">Falar com consultor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 06 — CONFIANÇA -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="6">
+    <div class="slide-tag">
+      <span class="num">06 — CREDIBILIDADE</span>
+      <div class="line"></div>
+    </div>
+    <h2>Recursos de Confiança</h2>
+    <p class="sub">Construa a credibilidade que transforma visitantes em clientes</p>
+
+    <div class="g2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div class="clay-card clay-convex p-8" style="border-left: 4px solid var(--brand-blue);">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <i data-lucide="shield-check" class="text-primary w-8 h-8"></i>
+            <h3 class="m-0">Selo de Empresa Verificada</h3>
+          </div>
+          <p>Validação completa de CNPJ e documentação. <span class="text-primary font-bold">+34% na taxa de cliques</span> reportada por empresas verificadas.</p>
+        </div>
+        
+        <div class="clay-card clay-convex p-8">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <i data-lucide="star" class="text-amber-500 w-8 h-8"></i>
+            <h3 class="m-0">Módulo de Prova Social</h3>
+          </div>
+          <p>Depoimentos reais e fotos de instalações. Prova social autêntica resulta em <span class="text-amber-500 font-bold">decisões 3× mais rápidas</span>.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div class="clay-card clay-convex p-8">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <i data-lucide="award" class="text-emerald-500 w-8 h-8"></i>
+            <h3 class="m-0">Badges de Conquista</h3>
+          </div>
+          <p>Top 10 da Região, Empresa do Mês. Destaque visual que diferencia sua marca instantaneamente no marketplace.</p>
+        </div>
+
+        <div class="hl">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+            <i data-lucide="trending-up" class="text-primary w-5 h-5"></i>
+            <strong style="color:var(--brand-blue);">IMPACTO NO FUNIL:</strong>
+          </div>
+          <p>Redução média de <strong class="text-white">55% nas objeções</strong> durante a negociação comercial ao utilizar todos os selos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 07 — FERRAMENTAS DE CONVERSÃO -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="7">
+    <div class="slide-tag">
+      <span class="num">07 — CONVERSÃO</span>
+      <div class="line"></div>
+    </div>
+    <h2>Conversão & TaaS</h2>
+    <p class="sub">Recursos exclusivos para converter intenção em fechamento</p>
+
+    <div class="clay-card clay-convex" style="padding:0; overflow:hidden; flex:1;">
+      <table class="comp">
+        <thead>
+          <tr style="background: hsla(var(--primary), 0.1);">
+            <th style="padding:1.5rem 2rem;">Funcionalidade TaaS</th>
+            <th style="text-align:center;">Free</th>
+            <th style="text-align:center;">Pro</th>
+            <th style="text-align:center; background: hsla(var(--secondary), 0.2);">Enterprise</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="font-bold">Banner Promocional Dinâmico</div><div class="text-xs opacity-50">Destaque ofertas sazonais no perfil</div></td>
+            <td style="text-align:center;"><span class="cx">✕</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="font-bold">CTAs Omnichannel</div><div class="text-xs opacity-50">WhatsApp, Telefone e E-mail integrados</div></td>
+            <td style="text-align:center;"><span class="cx">✕</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="font-bold">Tabela de Preços Pública</div><div class="text-xs opacity-50">Transparência que qualifica o lead</div></td>
+            <td style="text-align:center;"><span class="cx">✕</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="font-bold">Marketplace de Leads com IA</div><div class="text-xs opacity-50">Leads qualificados com Buyer Intent Score</div></td>
+            <td style="text-align:center;"><span class="cx">✕</span></td>
+            <td style="text-align:center;"><span class="cx">✕</span></td>
+            <td style="text-align:center;"><span class="ck">✓</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hl" style="margin-top:1.5rem;">
+      <p>Empresas <strong>Pro/Enterprise</strong> aumentam em média <strong class="text-white">127% os pedidos de orçamento</strong> comparado ao plano Free.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 08 — ANALYTICS & IA -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="8">
+    <div class="slide-tag">
+      <span class="num">08 — INTELIGÊNCIA</span>
+      <div class="line"></div>
+    </div>
+    <h2>Buyer Intent Analytics</h2>
+    <p class="sub">Dados que antecipam o fechamento do negócio</p>
+
+    <div class="g2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div class="clay-card clay-convex p-8">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+            <i data-lucide="bar-chart-3" class="text-primary w-8 h-8"></i>
+            <h3 class="m-0">Dashboard de Performance</h3>
+          </div>
+          <div style="display:grid;grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+              <div class="text-xs opacity-50">CTR Médio</div>
+              <div class="text-2xl font-bold text-primary">4.8%</div>
+            </div>
+            <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+              <div class="text-xs opacity-50">Leads/Mês</div>
+              <div class="text-2xl font-bold text-emerald-500">65+</div>
+            </div>
+          </div>
+          <p class="mt-4 text-sm">Acompanhamento em tempo real de visualizações, cliques e leads por geolocalização.</p>
+        </div>
+
+        <div class="clay-card clay-convex p-8" style="background: linear-gradient(135deg, hsla(var(--card),0.9), hsla(var(--secondary),0.1));">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <i data-lucide="zap" class="text-amber-500 w-8 h-8"></i>
+            <h3 class="m-0">Score de Intenção com IA</h3>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin:1rem 0;">
+            <span class="pill" style="background: #ef4444;">HOT</span>
+            <span class="pill" style="background: #f97316;">BOILING</span>
+            <span class="pill" style="background: #eab308;">WARM</span>
+          </div>
+          <p class="text-sm">Identificamos o momento exato de compra do cliente através de 12+ sinais trackeados.</p>
+        </div>
+      </div>
+
+      <div class="clay-card clay-convex p-8" style="position:relative; overflow:hidden;">
+        <div style="position:absolute; top:-20px; right:-20px; opacity:0.1;">
+          <i data-lucide="line-chart" style="width:200px; height:200px;"></i>
+        </div>
+        <i data-lucide="target" class="text-primary w-12 h-12 mb-6"></i>
+        <h3 style="font-size:2rem; margin-bottom:1rem;">Marketplace de Leads</h3>
+        <p style="font-size:1.1rem; line-height:1.6; opacity:0.8;">Acesso exclusivo ao banco de leads qualificados da Avalia Solar. <br><br>Leads com dados completos: <span class="text-white font-bold">Consumo Médio, Telhado, Localização e Prontidão de Compra.</span></p>
+        
+        <div class="hl" style="margin-top:2rem;">
+          <div class="text-2xl font-bold">R$ 1.2M+</div>
+          <div class="text-xs opacity-50">Volume de negócios gerado/mês na região</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 09 — TECNOLOGIA -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="9">
+    <div class="slide-tag" style="--d:1">
+      <span class="num">09 — TECNOLOGIA</span>
+      <div class="line"></div>
+    </div>
+    <h2 style="--d:2">Infraestrutura <span class="gradient-text">Enterprise</span></h2>
+    <p class="sub" style="--d:3">Tecnologia que sustenta sua operação 24/7 na Grande Florianópolis.</p>
+
+    <div class="g-hero" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:1.25rem;">
+        <div class="clay-card p-6 flex items-center gap-4" style="--d:4">
+          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <i data-lucide="smartphone" class="text-primary"></i>
+          </div>
+          <div>
+            <div class="font-bold">Mobile-First</div>
+            <div class="text-xs opacity-60">87% das buscas regionais são mobile</div>
+          </div>
+        </div>
+        <div class="clay-card p-6 flex items-center gap-4" style="--d:5">
+          <div class="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center">
+            <i data-lucide="lock" class="text-emerald-500"></i>
+          </div>
+          <div>
+            <div class="font-bold">Segurança TLS 1.3</div>
+            <div class="text-xs opacity-60">Conformidade total com LGPD</div>
+          </div>
+        </div>
+        <div class="clay-card p-6 flex items-center gap-4" style="--d:6">
+          <div class="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center">
+            <i data-lucide="refresh-cw" class="text-amber-500"></i>
+          </div>
+          <div>
+            <div class="font-bold">Uptime 99.9%</div>
+            <div class="text-xs opacity-60">Monitoramento ativo em tempo real</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="clay-card p-8 flex flex-col justify-center text-center" style="--d:7">
+        <h3 class="mb-8">Stack Tecnológico</h3>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem;">
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="atom" class="text-blue-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">React.js</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="database" class="text-emerald-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">PostgreSQL</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="cloud" class="text-purple-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">AWS</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="brain-circuit" class="text-amber-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">IA / ML</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="globe" class="text-cyan-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">CDN</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 w-full aspect-square flex items-center justify-center">
+              <i data-lucide="code-2" class="text-red-400 w-8 h-8"></i>
+            </div>
+            <span class="text-[10px] font-bold">Node.js</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 10 — ROI -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="10">
+    <div class="slide-tag" style="--d:1">
+      <span class="num">10 — RETORNO</span>
+      <div class="line"></div>
+    </div>
+    <h2 style="--d:2">ROI Claro e <span class="gradient-text">Mensurável</span></h2>
+    <p class="sub" style="--d:3">O investimento se paga com 1 a 2 vendas — e o retorno só cresce</p>
+
+    <div class="g3" style="flex:1; align-items:stretch;">
+      <div class="clay-card clay-convex p-8 flex flex-col justify-between">
+        <div>
+          <div class="text-xs opacity-50 mb-2">Plano FREE</div>
+          <div class="text-3xl font-bold mb-4">R$ 0</div>
+          <p class="text-sm">Ideal para validação inicial sem risco.</p>
+        </div>
+        <div class="bg-primary/5 p-4 rounded-xl border border-primary/10 text-center my-6">
+          <div class="text-2xl font-bold text-primary">3–8</div>
+          <div class="text-[10px] opacity-60">Leads/mês estimados</div>
+        </div>
+        <div class="text-xs font-bold text-emerald-500">PAYBACK IMEDIATO</div>
+      </div>
+
+      <div class="clay-card clay-convex p-8 flex flex-col justify-between border-2 border-amber-500/30" style="background: linear-gradient(135deg, hsla(var(--card),0.9), hsla(var(--secondary),0.05));">
+        <div class="tier-badge" style="position:static; transform:none; margin-bottom:1rem; display:inline-block; width:fit-content;">VRE RECOMMENDATION</div>
+        <div>
+          <div class="text-xs opacity-50 mb-2">Plano PRO</div>
+          <div class="text-3xl font-bold mb-4">R$ 149<span class="text-sm font-normal">/mês</span></div>
+          <p class="text-sm">Foco em autoridade regional.</p>
+        </div>
+        <div class="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 text-center my-6">
+          <div class="text-2xl font-bold text-amber-500">15–35</div>
+          <div class="text-[10px] opacity-60">Leads/mês estimados</div>
+        </div>
+        <div class="text-xs font-bold text-amber-500">3x–5x ROI EM 90 DIAS</div>
+      </div>
+
+      <div class="clay-card clay-convex p-8 flex flex-col justify-between" style="background: linear-gradient(135deg, hsla(var(--card),0.9), hsla(var(--primary),0.05));">
+        <div>
+          <div class="text-xs opacity-50 mb-2">Plano ENTERPRISE</div>
+          <div class="text-3xl font-bold mb-4">R$ 399<span class="text-sm font-normal">/mês</span></div>
+          <p class="text-sm">Dominância total do mercado.</p>
+        </div>
+        <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-center my-6">
+          <div class="text-2xl font-bold text-blue-400">40–80+</div>
+          <div class="text-[10px] opacity-60">Leads/mês estimados</div>
+        </div>
+        <div class="text-xs font-bold text-blue-400">8x–12x ROI EM 90 DIAS</div>
+      </div>
+    </div>
+
+    <div class="hl" style="margin-top:2rem; text-align:center;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:2rem;">
+        <div>
+          <div class="text-xs opacity-50 uppercase tracking-widest">Ticket Médio (Grande Floripa)</div>
+          <div class="text-2xl font-bold">R$ 25.000 — R$ 80.000</div>
+        </div>
+        <div class="h-8 w-px bg-white/10"></div>
+        <div class="text-left">
+          <div class="text-xs text-amber-500 font-bold">INSIGHT:</div>
+          <div class="text-sm opacity-80">Apenas 1 venda paga 12+ meses de plano Pro.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 11 — ONBOARDING -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="11">
+    <div class="slide-tag" style="--d:1">
+      <span class="num">11 — ONBOARDING</span>
+      <div class="line"></div>
+    </div>
+    <h2 style="--d:2">Do Setup aos <span class="gradient-text">Primeiros Leads</span></h2>
+    <p class="sub" style="--d:3">Ativação completa em menos de 7 dias úteis</p>
+
+    <div class="timeline" style="margin: 3rem 0;">
+      <div class="tl-item">
+        <div class="tl-dot">1</div>
+        <div class="tl-label">Cadastro</div>
+        <div class="tl-desc">3 minutos<br>Setup Básico</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">2</div>
+        <div class="tl-label">Verificação</div>
+        <div class="tl-desc">24-48h<br>Selo Aprovado</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">3</div>
+        <div class="tl-label">Setup</div>
+        <div class="tl-desc">Customização<br>de Perfil</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">4</div>
+        <div class="tl-label">Treinamento</div>
+        <div class="tl-desc">Onboarding<br>com CS</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">5</div>
+        <div class="tl-label">Go Live</div>
+        <div class="tl-desc">Leads em Tempo Real</div>
+      </div>
+    </div>
+
+    <div class="g2" style="flex:1;">
+      <div class="clay-card clay-convex p-8">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+          <i data-lucide="list-checks" class="text-primary w-8 h-8"></i>
+          <h3 class="m-0">O que entregamos no Setup</h3>
+        </div>
+        <ul class="checklist text-sm">
+          <li><i data-lucide="check"></i> Perfil otimizado para SEO local</li>
+          <li><i data-lucide="check"></i> Configuração de CTAs e Banners</li>
+          <li><i data-lucide="check"></i> Integração WhatsApp Business</li>
+          <li><i data-lucide="check"></i> Treinamento da Equipe Comercial</li>
+        </ul>
+      </div>
+
+      <div class="clay-card clay-convex p-8">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+          <i data-lucide="headset" class="text-emerald-500 w-8 h-8"></i>
+          <h3 class="m-0">Suporte Dedicado</h3>
+        </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-emerald-500/10 rounded-full flex items-center justify-center"><i data-lucide="message-square" class="text-emerald-500 w-5 h-5"></i></div>
+            <div class="text-sm">Chat ao vivo em horário comercial</div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-emerald-500/10 rounded-full flex items-center justify-center"><i data-lucide="mail" class="text-emerald-500 w-5 h-5"></i></div>
+            <div class="text-sm">suporte@avaliasolar.com.br</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SLIDE 12 — CTA FINAL -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="slide" data-n="12">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; max-width:900px; margin:0 auto; position:relative;">
+      <div class="clay-card clay-convex p-12 w-full" style="background: linear-gradient(135deg, hsla(var(--card),0.9), hsla(var(--primary),0.1)); --d:1">
+        <div class="logo-wrap mb-10 justify-center" style="--d:2; display:flex; align-items:center; justify-content:center;">
+          <img src="./AB0-1-front/public/images/logo - Copy.png" alt="AvaliaSolar Logo" style="height:100px; width:auto; filter: drop-shadow(0 0 10px rgba(0,86,210,0.3));">
+        </div>
+
+        <h2 style="font-size:clamp(2.5rem, 5vw, 4rem); line-height:1.1; margin-bottom:1.5rem; --d:3">Pronto para Dominar o Mercado <span class="gradient-text">Solar</span> da Região?</h2>
+        <p class="sub mb-12" style="--d:4">Não deixe seu concorrente ocupar o seu espaço. Comece hoje a transformar sua presença digital.</p>
+
+        <div style="display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap; --d:5">
+          <button class="clay-btn clay-btn-primary" style="padding: 1.5rem 3rem; font-size:1.1rem; border-radius:100px;">
+            CRIAR CONTA GRÁTIS — 3 MINUTOS
+          </button>
+          <button class="clay-btn" style="padding: 1.5rem 3rem; font-size:1.1rem; border-radius:100px; border:1px solid hsla(var(--border),0.5);">
+            FALAR COM CONSULTOR →
+          </button>
+        </div>
+
+        <div class="flex justify-center gap-8 mt-12 opacity-50 text-[10px] font-bold tracking-widest uppercase" style="--d:6">
+          <span>📍 FLORIANÓPOLIS</span>
+          <span>📍 SÃO JOSÉ</span>
+          <span>📍 PALHOÇA</span>
+          <span>📍 BIGUAÇU</span>
+        </div>
+      </div>
+
+      <div class="mt-8 text-center opacity-40 text-xs">
+        <p>© 2026 AvaliaSolar · Trust as a Service · Todos os direitos reservados</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Static Overlay -->
+<div id="prog"></div>
+
+<div id="controls">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">
+    <i data-lucide="chevron-left"></i>
+  </button>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">
+    <i data-lucide="chevron-right"></i>
+  </button>
+</div>
+
+<div id="counter"><span>01</span> / 12</div>
+<div id="dots"></div>
+
+<script>
+  const TOTAL = 12;
+  let cur = 1;
+  let transitioning = false;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function getSlide(n) { return document.querySelector(`.slide[data-n="${n}"]`); }
+
+  function goTo(n) {
+    if (transitioning || n === cur || n < 1 || n > TOTAL) return;
+    transitioning = true;
+
+    const prev = getSlide(cur);
+    const next = getSlide(n);
+
+    prev.classList.add('exit');
+    prev.classList.remove('active');
+
+    requestAnimationFrame(() => {
+      next.style.transform = n > cur ? 'translateX(60px)' : 'translateX(-60px)';
+      next.style.opacity = '0';
+      next.classList.add('active');
+
+      requestAnimationFrame(() => {
+        next.style.transition = 'opacity 0.55s cubic-bezier(.4,0,.2,1), transform 0.55s cubic-bezier(.4,0,.2,1)';
+        next.style.transform = 'translateX(0)';
+        next.style.opacity = '1';
+      });
+    });
+
+    setTimeout(() => {
+      prev.classList.remove('exit');
+      prev.style.cssText = '';
+      transitioning = false;
+    }, 580);
+
+    cur = Math.min(TOTAL, Math.max(1, n));
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Ensure top for mobile
+    updateUI();
+  }
+
+  function go(d) { goTo(cur + d); }
+
+  function updateUI() {
+    document.getElementById('prog').style.width = (cur / TOTAL * 100) + '%';
+    document.querySelector('#counter span').textContent = String(cur).padStart(2,'0');
+    document.getElementById('prevBtn').disabled = cur === 1;
+    document.getElementById('nextBtn').disabled = cur === TOTAL;
+    document.getElementById('fixed-logo').style.opacity = cur === 1 ? '0' : '1';
+    document.getElementById('fixed-logo').style.pointerEvents = cur === 1 ? 'none' : 'auto';
+
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i + 1 === cur);
+    });
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') goTo(1);
+    if (e.key === 'End') goTo(TOTAL);
+  });
+
+  // Touch
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.changedTouches[0].screenX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].screenX - tx;
+    if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
+  });
+
+  // CTA buttons
+  document.querySelectorAll('.btn-cta').forEach(b => {
+    b.addEventListener('click', () => {
+      const isMain = b.textContent.includes('Grátis');
+      window.open(isMain ? 'https://avaliasolar.com.br/cadastro' : 'https://avaliasolar.com.br/demo', '_blank');
+    });
+  });
+
+  // Init
+  updateUI();
+</script>
+</body>
+</html>

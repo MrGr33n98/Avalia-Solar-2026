@@ -161,15 +161,18 @@ export default function CompanyHero({
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
               src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
-              alt=""
+              alt={company.name}
               fill
               priority
-              fetchPriority="high"
               quality={90}
               className="object-cover"
               containerClassName="h-full w-full"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               fallbackSrc="/images/banner-avalia-solar.png"
+              useAspectRatio={false}
+              width={1600}
+              height={900}
+              unoptimized={(!bannerUrl || bannerError)}
               onError={() => setBannerError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />

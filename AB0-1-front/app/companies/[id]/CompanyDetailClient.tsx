@@ -338,13 +338,13 @@ export default function CompanyDetailClient({
   }, [activeTab, tabs]);
 
   const bannerUrl = useMemo(() => {
-    if (!currentCompany?.banner_url) return null;
+    if (!currentCompany?.banner_url || currentCompany.banner_url.trim() === "") return null;
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
     return currentCompany.banner_url.startsWith("http") ? currentCompany.banner_url : `${base}${currentCompany.banner_url.startsWith("/") ? "" : "/"}${currentCompany.banner_url}`;
   }, [currentCompany?.banner_url]);
 
   const logoUrl = useMemo(() => {
-    if (!currentCompany?.logo_url) return null;
+    if (!currentCompany?.logo_url || currentCompany.logo_url.trim() === "") return null;
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
     return currentCompany.logo_url.startsWith("http") ? currentCompany.logo_url : `${base}${currentCompany.logo_url.startsWith("/") ? "" : "/"}${currentCompany.logo_url}`;
   }, [currentCompany?.logo_url]);
