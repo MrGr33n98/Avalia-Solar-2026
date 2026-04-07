@@ -62,12 +62,7 @@ export default function LandingHeroClient({
 
         {/* Full Width Content & Search */}
         <div className="lg:col-span-12 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-blue/5 text-brand-blue text-sm font-bold mb-6 mx-auto">
-            <Zap className="w-4 h-4 fill-brand-blue" />
-            {hasVerifiedCount
-              ? `${formatCompactCount(trustMetrics.totalVerifiedCompanies || 0)}+ empresas verificadas`
-              : 'Empresas verificadas'}
-          </div>
+
 
           <h1 className={isVariant ? 'text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 mx-auto' : 'text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight mb-6 mx-auto'}>
             {isVariant ? (
@@ -140,10 +135,6 @@ export default function LandingHeroClient({
               </div>
 
               <div className="mt-8 flex flex-wrap justify-center items-center gap-6 md:gap-10 opacity-70">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-sm font-medium text-slate-600">Empresas Verificadas</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <span className="text-sm font-medium text-slate-600">Orçamentos Gratuitos</span>
