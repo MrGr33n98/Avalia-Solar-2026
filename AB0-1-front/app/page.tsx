@@ -396,7 +396,7 @@ async function CategoriesSectionWrapper({
                 <BannerByLocationLazy 
                   location="categories_top" 
                   initialBanners={categoriesBanners} 
-                  className="h-full rounded-3xl overflow-hidden border border-slate-100 shadow-xl"
+                  className="rounded-2xl overflow-hidden border border-slate-100 shadow-lg"
                 />
               </div>
             )}

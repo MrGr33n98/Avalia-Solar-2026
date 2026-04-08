@@ -51,7 +51,7 @@ function BannerImage({
       fill
       priority={priority}
       sizes={sizes}
-      className="object-cover object-center"
+      className="object-cover object-center w-full h-full"
       onError={() => {
         if (failed || !banner.image_url) return;
         console.warn('[BannerContainer] Failed to load banner image, showing fallback:', banner.image_url);
@@ -73,11 +73,11 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       switch (pos) {
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
-        case 'categories_top': return 'aspect-[4/1] sm:aspect-[6/1]';
+        case 'categories_top': return 'aspect-[3/1] sm:aspect-[21/5]';
         case 'companies_footer': 
         case 'article_footer_cta':
-          return 'aspect-[4/1] sm:aspect-[6/1]';
-        default: return 'aspect-[6/1] sm:aspect-[4/1]';
+          return 'aspect-[3/1] sm:aspect-[21/5]';
+        default: return 'aspect-[21/5] sm:aspect-[4/1]';
       }
     };
 
