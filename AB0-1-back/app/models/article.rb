@@ -70,8 +70,10 @@ class Article < ApplicationRecord
   def banner_dimensions
     return unless banner.variable?
 
-    # Garante que os metadados foram analisados
-    banner.analyze unless banner.metadata[:width].present?
+    # Só valida dimensões se os metadados já existem (analyze já foi executado).
+    # Não chamamos banner.analyze() aqui pois isso faz I/O externo (download do S3)
+    # durante a validação — antes do commit — causando ActiveStorage::FileNotFoundError.
+    # O analyze é disparado de forma assíncrona via after_create_commit/after_update_commit.
     width = banner.metadata[:width]
     height = banner.metadata[:height]
     return unless width && height
