@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -81,10 +81,11 @@ function ProductsPageContent() {
   }, [products]);
 
   // Update max price in filters when data loads
-  useMemo(() => {
-    if (maxPrice > 0 && maxPrice !== filters.priceRange[1] && filters.priceRange[1] === 50000) {
-        setFilters(prev => ({ ...prev, priceRange: [0, maxPrice] }));
+  useEffect(() => {
+    if (maxPrice > 0 && filters.priceRange[1] === 50000) {
+      setFilters(prev => ({ ...prev, priceRange: [0, maxPrice] }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxPrice]);
 
   // Filtering Logic

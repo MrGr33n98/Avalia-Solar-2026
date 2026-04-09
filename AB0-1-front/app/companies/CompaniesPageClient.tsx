@@ -67,6 +67,8 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       min_rating: filters.min_rating || undefined,
       verified: filters.verified || undefined,
       featured: filters.featured || undefined,
+      financing_enabled: filters.financing_enabled || undefined,
+      whatsapp_enabled: filters.whatsapp_enabled || undefined,
       sort: filters.sort || undefined,
       fields: 'card' as const,
     }),
@@ -79,6 +81,8 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       filters.min_rating,
       filters.verified,
       filters.featured,
+      filters.financing_enabled,
+      filters.whatsapp_enabled,
       filters.sort,
     ]
   );
@@ -128,10 +132,8 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       setLoading(true);
       setError(null);
       try {
-        console.log('[Companies] Fetching with filters:', requestParams);
         const response = await companiesApiSafe.getAllPaginated(requestParams);
 
-        console.log('[Companies] API Response:', response);
         if (!cancelled) {
           setCompanies(response.data || []);
           setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
@@ -158,19 +160,8 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   }, [requestParams]);
 
   const visibleCompanies = useMemo(
-    () => {
-      if (!companies || companies.length === 0) return [];
-      
-      const filtered = companies.filter((company) => {
-        if (filters.financing_enabled && !company.financing_enabled) return false;
-        if (filters.whatsapp_enabled && !company.whatsapp) return false;
-        return true;
-      });
-
-      console.log('[Companies] Visible/Total:', filtered.length, '/', companies.length);
-      return filtered;
-    },
-    [companies, filters.financing_enabled, filters.whatsapp_enabled]
+    () => companies ?? [],
+    [companies]
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));

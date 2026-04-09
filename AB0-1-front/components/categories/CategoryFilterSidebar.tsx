@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { X, ShieldCheck, MapPin, Star, Settings2, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocationData } from '@/hooks/useLocationData';
 
 interface FilterState {
   verified?: boolean;
@@ -27,6 +29,12 @@ export default function CategoryFilterSidebar({
   onClearFilters,
   hasActiveFilters,
 }: CategoryFilterSidebarProps) {
+  const { states, loadingStates, fetchStates } = useLocationData();
+
+  useEffect(() => {
+    fetchStates();
+  }, [fetchStates]);
+
   return (
     <aside className="hidden lg:block w-[300px] sticky top-24 space-y-6 shrink-0">
       <div className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm">
@@ -111,13 +119,13 @@ export default function CategoryFilterSidebar({
                 className="w-full px-4 py-3.5 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white appearance-none transition-all outline-none"
               >
                 <option value="">Brasil (Todos)</option>
-                <option value="SP">São Paulo</option>
-                <option value="RJ">Rio de Janeiro</option>
-                <option value="MG">Minas Gerais</option>
-                <option value="BA">Bahia</option>
-                <option value="RS">Rio Grande do Sul</option>
-                <option value="PR">Paraná</option>
-                <option value="SC">Santa Catarina</option>
+                {loadingStates ? (
+                  <option disabled>Carregando...</option>
+                ) : (
+                  states.map((state) => (
+                    <option key={state} value={state}>{state}</option>
+                  ))
+                )}
               </select>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                 <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />

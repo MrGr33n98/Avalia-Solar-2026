@@ -572,18 +572,37 @@ function SearchContent() {
   const router = useRouter();
   const query = searchParams.get('q') || '';
 
+  // Read initial filter state from URL params
+  const initialSort = (searchParams.get('sort') as SortValue) || 'recommended';
+  const initialVerified = searchParams.get('verified') === 'true';
+  const initialWhatsapp = searchParams.get('whatsapp') === 'true';
+  const initialTab = searchParams.get('tab') || 'companies';
+
   const [searchTerm, setSearchTerm] = useState(query);
   const [results, setResults] = useState<Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>>({
     companies: [], products: [], categories: [], articles: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('companies');
+  const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Sidebar / filter state
-  const [sort, setSort] = useState<SortValue>('recommended');
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [whatsappOnly, setWhatsappOnly] = useState(false);
+  // Sidebar / filter state — initialised from URL
+  const [sort, setSort] = useState<SortValue>(initialSort);
+  const [verifiedOnly, setVerifiedOnly] = useState(initialVerified);
+  const [whatsappOnly, setWhatsappOnly] = useState(initialWhatsapp);
+
+  // Helper: push filter changes to URL without losing ?q=
+  const pushFilterParams = useCallback((updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === '' || value === 'false' || value === 'recommended') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
   // Banner queries
   const { data: topBanners = [] }  = useBannersQuery({ position: 'search_top', limit: 3, enabled: true });
@@ -609,11 +628,13 @@ function SearchContent() {
     setSort('recommended');
     setVerifiedOnly(false);
     setWhatsappOnly(false);
-  }, [query]);
+    pushFilterParams({ sort: undefined, verified: undefined, whatsapp: undefined });
+  }, [query, pushFilterParams]);
 
-  // Typed sort change handler with tracking
+  // Typed sort change handler with tracking + URL sync
   const handleSortChange = useCallback((value: SortValue) => {
     setSort(value);
+    pushFilterParams({ sort: value });
     trackEvent('sort_change', {
       sort_by: value as any,
       category: `search:${query}`,
@@ -622,26 +643,28 @@ function SearchContent() {
       search_term: query,
       sort_value: value,
     });
-  }, [query]);
+  }, [query, pushFilterParams]);
 
-  // Filter toggle handlers with tracking
+  // Filter toggle handlers with tracking + URL sync
   const handleVerifiedChange = useCallback((value: boolean) => {
     setVerifiedOnly(value);
+    pushFilterParams({ verified: value ? 'true' : undefined });
     track('search_filter_applied', {
       search_term: query,
       filter_key: 'verified_only',
       filter_value: value,
     });
-  }, [query]);
+  }, [query, pushFilterParams]);
 
   const handleWhatsappChange = useCallback((value: boolean) => {
     setWhatsappOnly(value);
+    pushFilterParams({ whatsapp: value ? 'true' : undefined });
     track('search_filter_applied', {
       search_term: query,
       filter_key: 'whatsapp_only',
       filter_value: value,
     });
-  }, [query]);
+  }, [query, pushFilterParams]);
 
   // Perform search
   const performSearch = useCallback(async (term: string) => {
@@ -760,16 +783,17 @@ function SearchContent() {
   const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
   const hasResults = totalCount > 0;
 
-  // Tab change with tracking
+  // Tab change with tracking + URL sync
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
+    pushFilterParams({ tab: tab === 'companies' ? undefined : tab });
     track('search_tab_changed', {
       search_term: query,
       tab,
       counts,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, pushFilterParams]);
 
   // Auto-select tab with results
   useEffect(() => {

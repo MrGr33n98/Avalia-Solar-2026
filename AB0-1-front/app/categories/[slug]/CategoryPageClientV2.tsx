@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
@@ -57,16 +57,34 @@ export default function CategoryPageClient({
   const slug = initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
   const categoryId = initialCategory?.id || '';
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
-  const [sidebarFilters, setSidebarFilters] = useState({
-    verified: false,
-    minRating: 0,
-    state: '',
-    projectType: undefined as string | undefined,
+
+  // Initialise from URL params so filters are shareable / survive back-navigation
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(() => {
+    const raw = searchParams.get('chips');
+    return raw ? new Set(raw.split(',').filter(Boolean)) : new Set();
   });
-  const [sortBy, setSortBy] = useState('rating_desc');
+  const [sidebarFilters, setSidebarFilters] = useState(() => ({
+    verified: searchParams.get('verified') === 'true',
+    minRating: parseFloat(searchParams.get('min_rating') || '0') || 0,
+    state: searchParams.get('state') || '',
+    projectType: searchParams.get('project_type') || undefined,
+  }));
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'rating_desc');
   const isLoading = false;
+
+  // Helper: sync filter state to URL without full navigation
+  const syncToUrl = useCallback((updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === '' || value === 'false' || value === '0') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
   // Track page view / category selected on mount
   useEffect(() => {
@@ -154,10 +172,25 @@ export default function CategoryPageClient({
       newFilters.add(filterId);
     }
     setActiveQuickFilters(newFilters);
+    syncToUrl({ chips: newFilters.size > 0 ? Array.from(newFilters).join(',') : undefined });
   };
 
   const handleSidebarFilterChange = (key: string, value: any) => {
     setSidebarFilters((prev) => ({ ...prev, [key]: value }));
+    const urlKey: Record<string, string> = {
+      verified: 'verified',
+      minRating: 'min_rating',
+      state: 'state',
+      projectType: 'project_type',
+    };
+    if (urlKey[key]) {
+      syncToUrl({ [urlKey[key]]: value === undefined || value === false || value === 0 || value === '' ? undefined : String(value) });
+    }
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    syncToUrl({ sort: value === 'rating_desc' ? undefined : value });
   };
 
   const handleClearFilters = () => {
@@ -165,6 +198,7 @@ export default function CategoryPageClient({
     setActiveQuickFilters(new Set());
     setSidebarFilters({ verified: false, minRating: 0, state: '', projectType: undefined });
     setSortBy('rating_desc');
+    syncToUrl({ search: undefined, chips: undefined, verified: undefined, min_rating: undefined, state: undefined, project_type: undefined, sort: undefined });
   };
 
   const hasActiveFilters = Boolean(
@@ -276,13 +310,13 @@ export default function CategoryPageClient({
                         <Input
                           placeholder="Buscar empresas..."
                           value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onChange={(e) => { setSearchTerm(e.target.value); syncToUrl({ search: e.target.value || undefined }); }}
                           className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
                         />
                       </div>
 
                       <div className="flex gap-2 w-full sm:w-auto">
-                        <Select value={sortBy} onValueChange={setSortBy}>
+                        <Select value={sortBy} onValueChange={handleSortChange}>
                           <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200">
                             <SelectValue />
                           </SelectTrigger>
