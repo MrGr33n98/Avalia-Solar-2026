@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTracking } from '@/hooks/usePageTracking';
+import { useDebounce } from '@/hooks/useDebounce';
 
 function ProductsPageContent() {
   // GTM Page Tracking
@@ -20,21 +22,30 @@ function ProductsPageContent() {
     title: 'Produtos - Avalia Solar',
   });
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const { products, filtersMeta, loading, error } = useProducts();
-  
+
   // Pagination State (Prepared for future backend integration)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
-  
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter States — initialised from URL for shareability / back-navigation
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
   const [filters, setFilters] = useState({
-    category: 'all',
-    company: 'all',
-    priceRange: [0, 50000] as [number, number],
-    sort: 'relevance',
+    category: searchParams.get('category') || 'all',
+    company: searchParams.get('company') || 'all',
+    priceRange: [
+      Number(searchParams.get('price_min') || 0),
+      Number(searchParams.get('price_max') || 50000)
+    ] as [number, number],
+    sort: searchParams.get('sort') || 'relevance',
     specs: {} as Record<string, any>
   });
+
+  // Debounce price range to avoid hammering the URL on every slider tick
+  const debouncedPriceRange = useDebounce(filters.priceRange, 300);
 
   // Derived Data for Filters & Featured Companies
   const { categories, companies, maxPrice, companySummaries } = useMemo(() => {
@@ -87,6 +98,18 @@ function ProductsPageContent() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxPrice]);
+
+  // Sync filters to URL for shareability / back-navigation
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (filters.category !== 'all') params.set('category', filters.category);
+    if (filters.company !== 'all') params.set('company', filters.company);
+    if (filters.sort !== 'relevance') params.set('sort', filters.sort);
+    if (debouncedPriceRange[0] > 0) params.set('price_min', String(debouncedPriceRange[0]));
+    if (debouncedPriceRange[1] < maxPrice && debouncedPriceRange[1] !== 50000) params.set('price_max', String(debouncedPriceRange[1]));
+    router.replace(`/products${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+  }, [searchQuery, filters.category, filters.company, filters.sort, debouncedPriceRange, router, maxPrice]);
 
   // Filtering Logic
   const filteredProducts = useMemo(() => {
