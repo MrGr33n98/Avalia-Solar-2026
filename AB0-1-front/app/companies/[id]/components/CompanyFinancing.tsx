@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
   Banknote,
   Sparkles,
@@ -358,7 +358,14 @@ export default function CompanyFinancing({ company, companyId }: Props) {
               >
                 <div className="h-12 w-12 rounded-md border bg-white flex items-center justify-center overflow-hidden">
                   {partner.logo_url ? (
-                    <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-contain" />
+                    <Image
+                      src={partner.logo_url}
+                      alt={partner.name}
+                      width={48}
+                      height={48}
+                      className="h-full w-full object-contain"
+                      loading="lazy"
+                    />
                   ) : (
                     <Building2 className="h-6 w-6 text-muted-foreground" />
                   )}

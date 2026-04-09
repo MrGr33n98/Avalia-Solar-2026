@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +61,14 @@ export function VerifiedCompaniesMiniList({ companies, isLoading }: VerifiedComp
           >
             <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:bg-white group-hover:shadow-sm transition-all border border-slate-200">
               {company.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="w-full h-full object-cover rounded" />
+                <Image
+                  src={company.logo_url}
+                  alt={company.name}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover rounded"
+                  loading="lazy"
+                />
               ) : (
                 company.name.charAt(0)
               )}

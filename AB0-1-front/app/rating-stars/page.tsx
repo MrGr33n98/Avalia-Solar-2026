@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Trophy, Star, TrendingUp, Award, Building, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { RatingStars } from '@/components/RatingStars';
 import { Card, CardContent } from '@/components/ui/card';
@@ -115,7 +116,14 @@ export default function RatingStarsPage() {
                             {/* Logo fallback */}
                             <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
                               {company.logo_url ? (
-                                <img src={company.logo_url} alt={company.name} className="w-full h-full object-contain p-2" />
+                                <Image
+                                  src={company.logo_url}
+                                  alt={company.name}
+                                  width={56}
+                                  height={56}
+                                  className="w-full h-full object-contain p-2"
+                                  loading="lazy"
+                                />
                               ) : (
                                 <Building className="w-7 h-7" />
                               )}
