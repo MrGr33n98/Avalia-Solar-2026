@@ -65,7 +65,7 @@ function ProductsPageContent() {
     const cats = new Set<string>();
     const comps = new Set<string>();
     const compStats: Record<string, number> = {};
-    const compLogos: Record<string, string> = {};
+    const compData: Record<string, { logo_url?: string; verified?: boolean; rating?: number; city?: string }> = {};
     let maxP = 0;
 
     products.forEach(p => {
@@ -76,12 +76,21 @@ function ProductsPageContent() {
         cats.add(p.category.name);
       }
 
-      // Company extraction
+      // Company extraction — prefer richer data if available
       if (p.company?.name) {
-        comps.add(p.company.name);
-        compStats[p.company.name] = (compStats[p.company.name] || 0) + 1;
-        if (p.company.logo_url) {
-          compLogos[p.company.name] = p.company.logo_url;
+        const name = p.company.name;
+        comps.add(name);
+        compStats[name] = (compStats[name] || 0) + 1;
+        if (!compData[name]) {
+          compData[name] = {
+            logo_url: (p.company as any).logo_url || undefined,
+            verified: (p.company as any).verified ?? false,
+            rating: (p.company as any).rating_avg ?? undefined,
+            city: (p.company as any).city || undefined,
+          };
+        } else if (!compData[name].logo_url && (p.company as any).logo_url) {
+          // Backfill logo_url if first product for this company didn't have it
+          compData[name].logo_url = (p.company as any).logo_url;
         }
       }
 
@@ -92,11 +101,11 @@ function ProductsPageContent() {
 
     const companySummaries = Array.from(comps).map(name => ({
         name,
-        logo_url: compLogos[name],
+        logo_url: compData[name]?.logo_url,
         productCount: compStats[name],
-        isVerified: true, // Mock logic: all active companies are verified for now
-        rating: 4.8, // Mock logic
-        city: 'São Paulo' // Mock logic
+        isVerified: compData[name]?.verified ?? false,
+        rating: compData[name]?.rating,
+        city: compData[name]?.city,
     })).sort((a, b) => b.productCount - a.productCount).slice(0, 10);
 
     return {

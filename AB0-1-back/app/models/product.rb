@@ -95,7 +95,7 @@ class Product < ApplicationRecord
     super(options.merge(
       include: {
         categories: { only: %i[id name] },
-        company: { only: %i[id name] }
+        company: { only: %i[id name slug logo_url city state verified] }
       },
       methods: %i[image_url image_urls],
       except: %i[created_at updated_at]

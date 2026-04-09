@@ -1,9 +1,11 @@
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Building2, CheckCircle2, Star } from 'lucide-react';
+import { getFullImageUrl } from '@/utils/image';
 
 interface CompanySummary {
   name: string;
@@ -20,6 +22,12 @@ interface FeaturedCompaniesStripProps {
 
 export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProps) {
   if (companies.length === 0) return null;
+
+  const resolveLogoUrl = (url?: string) => {
+    if (!url) return undefined;
+    const full = getFullImageUrl(url);
+    return full || undefined;
+  };
 
   return (
     <div className="w-full mb-8 space-y-4">
@@ -41,11 +49,23 @@ export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProp
               className="w-[280px] flex-shrink-0 hover:shadow-md transition-shadow cursor-pointer border-slate-200"
             >
               <CardContent className="p-4 flex items-center gap-4">
-                <Avatar className="h-12 w-12 border">
-                  <AvatarImage src={company.logo_url} alt={company.name} />
-                  <AvatarFallback className="bg-primary/5 font-bold text-primary">
-                    {company.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                <Avatar className="h-12 w-12 border bg-white">
+                  {resolveLogoUrl(company.logo_url) ? (
+                    <div className="relative h-full w-full overflow-hidden rounded-full">
+                      <Image
+                        src={resolveLogoUrl(company.logo_url)!}
+                        alt={company.name}
+                        fill
+                        className="object-contain p-1"
+                        sizes="48px"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : (
+                    <AvatarFallback className="bg-primary/5 font-bold text-primary text-xs">
+                      {company.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 
                 <div className="flex flex-col overflow-hidden">
