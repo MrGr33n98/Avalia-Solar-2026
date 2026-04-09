@@ -22,6 +22,7 @@ class SlackNotificationService
     reviews:  -> { ENV.fetch('SLACK_REVIEWS_WEBHOOK_URL',  ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
     empresas: -> { ENV.fetch('SLACK_EMPRESAS_WEBHOOK_URL', ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
     alertas:  -> { ENV.fetch('SLACK_ALERTAS_WEBHOOK_URL',  ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
+    vendas_intent: -> { ENV.fetch('SLACK_VENDAS_INTENT_WEBHOOK_URL', ENV.fetch('SLACK_WEBHOOK_URL', nil)) }
   }.freeze
 
   # ----------------------------------------------------------
@@ -171,6 +172,30 @@ class SlackNotificationService
       }
     ]
     notify(message, attachments, channel: :alertas, synchronous: true)
+  end
+
+  # 🔥 Mudança de Intent (Lead Esquenta)
+  def self.notify_intent_change(score)
+    message = "🔥 *INTENT ALERT: Lead atingiu #{score.intent_level.upcase}*"
+    
+    # Prepara lead name. Se lead id existir, tenta usar do objeto, se for anônimo trata.
+    lead_identifier = score.lead_id ? "Lead ID #{score.lead_id}" : "Anônimo (ID #{score.anonymous_id})"
+    
+    attachments = [
+      {
+        color: '#ff4500',
+        fields: [
+          { title: 'Nível',       value: "#{score.thermometer_emoji} #{score.intent_level.upcase}", short: true },
+          { title: 'Pontuação',   value: "#{score.total_score} pts",             short: true },
+          { title: 'Empresa',     value: score.company&.name || 'Desconhecida',  short: true },
+          { title: 'Visitante',   value: lead_identifier,                        short: true },
+          { title: 'Ação Recomendada', value: score.recommended_action || 'Contatar rapidamente', short: false },
+          { title: 'SLA Window',  value: score.sla_window || 'N/A',              short: true }
+        ],
+        footer: "Intent Score ID: #{score.id}"
+      }
+    ]
+    notify(message, attachments, channel: :vendas_intent)
   end
 
   # ----------------------------------------------------------
