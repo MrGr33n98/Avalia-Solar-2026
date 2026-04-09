@@ -74,6 +74,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       event: 'social_login_completed',
       properties: { provider: provider_name.downcase, role: user.role }
     )
+    WelcomeEmailJob.perform_later(user.id) if user.previously_new_record?
   rescue StandardError => e
     Rails.logger.error("[OmniAuth] Token issue failed for #{provider_name}: #{e.message}")
     raise

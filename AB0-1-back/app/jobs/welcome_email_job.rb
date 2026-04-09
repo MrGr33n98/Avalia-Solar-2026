@@ -21,8 +21,8 @@ class WelcomeEmailJob < ApplicationJob
     # Send email
     UserMailer.welcome(user).deliver_later
 
-    # Mark as sent (add this column to users table)
-    # user.update_column(:welcome_email_sent_at, Time.current)
+    # Mark as sent
+    user.update_column(:welcome_email_sent_at, Time.current)
 
     Rails.logger.info "✅ Welcome email sent to user #{user.id} (#{user.email})"
   rescue StandardError => e

@@ -39,4 +39,12 @@ class UserMailer < Devise::Mailer
 
     mail(to: @user.email, subject: 'Redefinição de senha')
   end
+
+  def welcome(user)
+    @user = user
+    @frontend_url = ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br')
+    @login_url = "#{@frontend_url}/login"
+    @dashboard_url = @user.company_user? ? "#{@frontend_url}/select-company" : @frontend_url
+    mail(to: @user.email, subject: 'Bem-vindo ao Avalia Solar! ☀️')
+  end
 end
