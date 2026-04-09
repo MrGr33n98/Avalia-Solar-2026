@@ -105,16 +105,6 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       </div>
     );
 
-    if (displayBanners.length === 1) {
-      return (
-        <div className={cn("w-full py-2", className)}>
-          <div className={cn("relative overflow-hidden rounded-xl", aspectRatio)}>
-            {renderBannerItem(displayBanners[0], true)}
-          </div>
-        </div>
-      );
-    }
-
     const items = displayBanners.map((banner, idx) => renderBannerItem(banner, idx === 0));
 
     return (
