@@ -25,9 +25,7 @@ function ProductsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { products, filtersMeta, loading, error } = useProducts();
-
-  // Pagination State (Prepared for future backend integration)
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -46,6 +44,19 @@ function ProductsPageContent() {
 
   // Debounce price range to avoid hammering the URL on every slider tick
   const debouncedPriceRange = useDebounce(filters.priceRange, 300);
+
+  // Debounce search query for backend calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
+
+  // Build backend params — search/category/sort delegated to backend
+  const hookParams = useMemo(() => ({
+    q: debouncedSearchQuery || undefined,
+    sort: filters.sort !== 'relevance' ? filters.sort : undefined,
+    page: currentPage,
+    per_page: itemsPerPage,
+  }), [debouncedSearchQuery, filters.sort, currentPage, itemsPerPage]);
+
+  const { products, filtersMeta, loading, error, total, totalPages } = useProducts(hookParams);
 
   // Derived Data for Filters & Featured Companies
   const { categories, companies, maxPrice, companySummaries } = useMemo(() => {
@@ -111,34 +122,18 @@ function ProductsPageContent() {
     router.replace(`/products${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   }, [searchQuery, filters.category, filters.company, filters.sort, debouncedPriceRange, router, maxPrice]);
 
-  // Filtering Logic
+  // Local filtering — only price range and spec filters applied client-side
+  // (search, category, sort are handled by the backend)
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
-      
-      // Search
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        product.name.toLowerCase().includes(searchLower) || 
-        product.description?.toLowerCase().includes(searchLower) ||
-        product.company?.name?.toLowerCase().includes(searchLower);
 
-      if (!matchesSearch) return false;
-
-      // Category
-      if (filters.category !== 'all') {
-        const productCats =
-          (product as any).categories?.map((c: any) => c.name) ||
-          (product.category?.name ? [product.category.name] : []);
-        if (!productCats.includes(filters.category)) return false;
-      }
-
-      // Company
+      // Company — still client-side (filtered by name, not ID)
       if (filters.company !== 'all') {
         if (product.company?.name !== filters.company) return false;
       }
 
-      // Price
+      // Price range
       if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
 
       // Dynamic spec filters
@@ -170,25 +165,11 @@ function ProductsPageContent() {
       }
 
       return true;
-    }).sort((a, b) => {
-      const priceA = typeof a.price === 'number' ? a.price : parseFloat(a.price || '0');
-      const priceB = typeof b.price === 'number' ? b.price : parseFloat(b.price || '0');
-
-      switch (filters.sort) {
-        case 'price_asc': return priceA - priceB;
-        case 'price_desc': return priceB - priceA;
-        case 'name_asc': return a.name.localeCompare(b.name);
-        default: return 0; // relevance (default order)
-      }
     });
-  }, [products, searchQuery, filters]);
+  }, [products, filters.company, filters.priceRange, filters.specs]);
 
-  // Client-side Pagination Logic
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Backend handles pagination — paginatedProducts is just the (optionally client-filtered) page
+  const paginatedProducts = filteredProducts;
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -221,8 +202,8 @@ function ProductsPageContent() {
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <ProductsHeader 
-          totalProducts={filteredProducts.length} 
+        <ProductsHeader
+          totalProducts={total}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
@@ -289,7 +270,7 @@ function ProductsPageContent() {
                   </div>
                 ))}
               </div>
-            ) : filteredProducts.length > 0 ? (
+            ) : paginatedProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
                   {paginatedProducts.map((product) => (

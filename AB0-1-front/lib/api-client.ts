@@ -662,7 +662,7 @@ export const reviewsApiSafe = {
 
 // Produtos
 export const productsApiSafe = {
-  getAll: async (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number; include_specs?: boolean }): Promise<Product[]> => {
+  getAll: async (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number; include_specs?: boolean; q?: string; sort?: string; page?: number; per_page?: number }): Promise<Product[]> => {
     try {
       const url = `products${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
@@ -677,6 +677,35 @@ export const productsApiSafe = {
       console.error('Error fetching products:', error);
       // Return empty array on error to prevent breaking the UI
       return [];
+    }
+  },
+  getAllPaginated: async (params?: {
+    category_id?: number;
+    company_id?: number;
+    featured?: boolean;
+    limit?: number;
+    include_specs?: boolean;
+    q?: string;
+    sort?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<{ data: Product[]; meta: { total: number; page: number; per_page: number; total_pages: number } }> => {
+    try {
+      const url = `products${buildQueryParams(params || {})}`;
+      const response = await fetchApiSafe<any>(url);
+      if (response && Array.isArray(response.data)) {
+        return {
+          data: response.data,
+          meta: response.meta || { total: response.data.length, page: 1, per_page: response.data.length, total_pages: 1 },
+        };
+      }
+      if (Array.isArray(response)) {
+        return { data: response, meta: { total: response.length, page: 1, per_page: response.length, total_pages: 1 } };
+      }
+      return { data: [], meta: { total: 0, page: 1, per_page: 12, total_pages: 0 } };
+    } catch (error) {
+      console.error('Error fetching products paginated:', error);
+      return { data: [], meta: { total: 0, page: 1, per_page: 12, total_pages: 0 } };
     }
   },
   getById: async (id: number): Promise<Product | null> => {

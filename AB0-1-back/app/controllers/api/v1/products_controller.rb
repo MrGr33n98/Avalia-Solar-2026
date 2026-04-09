@@ -3,15 +3,44 @@ class Api::V1::ProductsController < Api::V1::BaseController
 
   def index
     include_specs = ActiveModel::Type::Boolean.new.cast(params[:include_specs])
-    @products = ::Product.includes(:company, :categories)
+    scope = ::Product.includes(:company, :categories)
 
-    # Filtra por company_id se fornecido
-    @products = @products.where(company_id: params[:company_id]) if params[:company_id].present?
+    # Filtros existentes
+    scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
 
-    # Adiciona limite se fornecido
-    @products = @products.limit(params[:limit].to_i) if params[:limit].present?
+    # Busca textual — q busca em name e description (ILIKE para case-insensitive)
+    if params[:q].present?
+      q = "%#{params[:q].gsub('%', '\\%').gsub('_', '\\_')}%"
+      scope = scope.where('products.name ILIKE ? OR products.description ILIKE ?', q, q)
+    end
 
-    render json: @products.map { |p| p.as_json(include_specs: include_specs) }
+    # Filtro por category_id via join na tabela de junção
+    if params[:category_id].present?
+      scope = scope.joins(:categories).where(categories: { id: params[:category_id] }).distinct
+    end
+
+    # Ordenação
+    scope = case params[:sort]
+            when 'price_asc'   then scope.order(price: :asc)
+            when 'price_desc'  then scope.order(price: :desc)
+            when 'name_asc'    then scope.order(name: :asc)
+            when 'rating_desc' then scope.order(created_at: :desc)
+            else scope.order(created_at: :desc)
+            end
+
+    # Paginação
+    page     = [params[:page].to_i, 1].max
+    per_page = [[params[:per_page].to_i, 1].max, 100].min
+    per_page = 12 if per_page == 0
+
+    total       = scope.count
+    total_pages = (total.to_f / per_page).ceil
+    paginated   = scope.limit(per_page).offset((page - 1) * per_page)
+
+    render json: {
+      data: paginated.map { |p| p.as_json(include_specs: include_specs) },
+      meta: { total: total, page: page, per_page: per_page, total_pages: total_pages }
+    }
   rescue StandardError => e
     Rails.logger.error("Products error: #{e.message}")
     render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
