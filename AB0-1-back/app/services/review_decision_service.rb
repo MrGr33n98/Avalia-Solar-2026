@@ -40,6 +40,10 @@ class ReviewDecisionService
 
       notify_review_owner(previous_status, new_status)
     end
+
+    # Notifica Slack no canal #reviews após commit
+    notify_slack_decision(new_status)
+
     review.reload
   rescue ActiveRecord::StaleObjectError
     raise DecisionError, 'Review was already updated by another moderator'
@@ -64,5 +68,16 @@ class ReviewDecisionService
     ).decision_notification.deliver_later
   rescue StandardError => e
     Rails.logger.error("[ReviewDecisionService] failed to notify user: #{e.message}")
+  end
+
+  def notify_slack_decision(new_status)
+    case new_status.to_sym
+    when :approved
+      SlackNotificationService.notify_review_approved(review, admin_user: admin_user, notes: notes)
+    when :rejected
+      SlackNotificationService.notify_review_rejected(review, admin_user: admin_user, notes: notes)
+    end
+  rescue StandardError => e
+    Rails.logger.error("[ReviewDecisionService] failed to notify Slack: #{e.message}")
   end
 end
