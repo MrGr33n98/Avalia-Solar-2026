@@ -219,6 +219,20 @@ jobs:
             
             echo "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
 
+            echo "🧹 Limpando imagens Docker antigas (liberar espaço)..."
+            # Remove containers parados, imagens sem tag e volumes dangling
+            docker container prune -f || true
+            docker image prune -f || true
+            # Se disco ainda crítico (< 2GB livres), limpeza mais agressiva
+            FREE_KB=$(df / --output=avail | tail -1 | tr -d ' ')
+            if [ "${FREE_KB:-0}" -lt 2097152 ]; then
+              echo "⚠️  Disco crítico (< 2GB). Removendo imagens não utilizadas..."
+              docker image prune -a -f || true
+              docker volume prune -f || true
+              docker builder prune -f || true
+            fi
+            echo "📊 Espaço disponível após limpeza: $(df -h / | tail -1 | awk '{print $4}')"
+
             echo "?? Pulling novas imagens de ghcr.io..."
             docker compose pull --quiet
 
