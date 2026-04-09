@@ -22,6 +22,7 @@ import {
   extractCategorySlugByIdFromPath,
   isCompaniesCategoriesPath,
 } from '@/lib/seo/companies-category-url';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
@@ -55,6 +56,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     [searchParamsKey, pathCategoryIds]
   );
   const [searchInput, setSearchInput] = useState(filters.search || '');
+  const debouncedSearchInput = useDebounce(searchInput, 400);
   const requestParams = useMemo(
     () => ({
       status: 'active' as const,
@@ -124,6 +126,14 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   useEffect(() => {
     setSearchInput(filters.search || '');
   }, [filters.search]);
+
+  // Auto-search after debounce — no need to press Enter
+  useEffect(() => {
+    if (debouncedSearchInput === (filters.search || '')) return;
+    const updated = { ...filters, search: debouncedSearchInput, page: 1 };
+    router.replace(buildTargetUrl(updated), { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchInput]);
 
   useEffect(() => {
     let cancelled = false;

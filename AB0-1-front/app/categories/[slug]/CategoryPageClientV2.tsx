@@ -30,6 +30,7 @@ import { trackCategorySelected } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface CategoryPageClientProps {
   initialCategory: any;
@@ -60,6 +61,7 @@ export default function CategoryPageClient({
 
   // Initialise from URL params so filters are shareable / survive back-navigation
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(() => {
     const raw = searchParams.get('chips');
     return raw ? new Set(raw.split(',').filter(Boolean)) : new Set();
@@ -86,6 +88,12 @@ export default function CategoryPageClient({
     router.replace(`?${params.toString()}`, { scroll: false });
   }, [searchParams, router]);
 
+  // Sync search term to URL after debounce
+  useEffect(() => {
+    syncToUrl({ search: debouncedSearchTerm || undefined });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm]);
+
   // Track page view / category selected on mount
   useEffect(() => {
     if (slug && categoryId) {
@@ -101,9 +109,9 @@ export default function CategoryPageClient({
     let result = [...initialCompanies];
 
     // Busca por nome
-    if (searchTerm) {
+    if (debouncedSearchTerm) {
       result = result.filter((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+        c.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
 
@@ -157,7 +165,7 @@ export default function CategoryPageClient({
     }
 
     return result;
-  }, [initialCompanies, searchTerm, activeQuickFilters, sidebarFilters, sortBy]);
+  }, [initialCompanies, debouncedSearchTerm, activeQuickFilters, sidebarFilters, sortBy]);
 
   const handleQuickFilterToggle = (filterId: string) => {
     track('quick_filter_click', {
@@ -310,7 +318,7 @@ export default function CategoryPageClient({
                         <Input
                           placeholder="Buscar empresas..."
                           value={searchTerm}
-                          onChange={(e) => { setSearchTerm(e.target.value); syncToUrl({ search: e.target.value || undefined }); }}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
                         />
                       </div>
