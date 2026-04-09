@@ -4,7 +4,7 @@ class User < ApplicationRecord
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
-         :omniauthable, omniauth_providers: %i[google_oauth2 linkedin]
+         :omniauthable, omniauth_providers: %i[google_oauth2 linkedin facebook]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :forum_answers, dependent: :destroy
@@ -182,6 +182,8 @@ class User < ApplicationRecord
                      'Usuario Google'
                    when 'linkedin'
                      'Usuario LinkedIn'
+                   when 'facebook'
+                     'Usuario Facebook'
                    else
                      'Usuario Social'
                    end

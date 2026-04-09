@@ -12,7 +12,7 @@ import {
   hasPossibleAuthSession,
   setAuthSessionHint,
 } from '@/lib/api';
-import { authClient } from '@/lib/authClient';
+import { getApiOrigin } from '@/lib/api-config';
 import { identify, track, reset } from '@/lib/analytics/lazy';
 import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
@@ -204,54 +204,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    try {
-      console.log('[AuthContext] Iniciando login com Google');
-      nextAuthRequest();
-      await authClient.signIn.social({ provider: 'google' });
-      console.log('[AuthContext] Login social iniciado');
-      const nextUser = await checkAuth();
-      if (nextUser) {
-        setAuthSessionHint();
-        await routeAfterLogin(nextUser);
-      }
-    } catch (socialError) {
-      console.error('[AuthContext] Erro no login com Google:', socialError);
-      setError('Google sign-in failed');
-      throw socialError;
-    }
+    const railsOrigin = getApiOrigin();
+    window.location.href = `${railsOrigin}/users/auth/google_oauth2`;
   };
 
   const signInWithFacebook = async () => {
-    try {
-      console.log('[AuthContext] Iniciando login com Facebook');
-      nextAuthRequest();
-      await authClient.signIn.social({ provider: 'facebook' });
-      console.log('[AuthContext] Login social iniciado');
-      const nextUser = await checkAuth();
-      if (nextUser) {
-        setAuthSessionHint();
-        await routeAfterLogin(nextUser);
-      }
-    } catch (socialError) {
-      console.error('[AuthContext] Erro no login com Facebook:', socialError);
-      setError('Facebook sign-in failed');
-      throw socialError;
-    }
+    const railsOrigin = getApiOrigin();
+    window.location.href = `${railsOrigin}/users/auth/facebook`;
   };
 
   const signInWithLinkedIn = async () => {
-    try {
-      nextAuthRequest();
-      await authClient.signIn.social({ provider: 'linkedin' });
-      const nextUser = await checkAuth();
-      if (nextUser) {
-        setAuthSessionHint();
-        await routeAfterLogin(nextUser);
-      }
-    } catch (socialError) {
-      setError('LinkedIn sign-in failed');
-      throw socialError;
-    }
+    const railsOrigin = getApiOrigin();
+    window.location.href = `${railsOrigin}/users/auth/linkedin`;
   };
 
   const logout = async () => {

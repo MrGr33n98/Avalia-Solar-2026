@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  skip_before_action :verify_authenticity_token, only: %i[google_oauth2 linkedin]
+  include JwtAuthenticatable
+
+  skip_before_action :verify_authenticity_token, only: %i[google_oauth2 linkedin facebook]
+
+  # Skip token revocation check — user is not authenticated yet during OAuth
+  def skip_token_check?
+    true
+  end
 
   def google_oauth2
     handle_oauth('Google')
@@ -11,46 +18,64 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     handle_oauth('LinkedIn')
   end
 
+  def facebook
+    handle_oauth('Facebook')
+  end
+
   def failure
-    redirect_to root_path, alert: "Autenticação falhou: #{params[:message]}"
+    message = CGI.escape(params[:message].to_s.presence || 'oauth_failed')
+    redirect_to "#{frontend_url}/auth/callback?status=error&message=#{message}",
+                allow_other_host: true
   end
 
   private
 
+  def frontend_url
+    ENV.fetch('FRONTEND_URL', 'http://localhost:3000')
+  end
+
   def handle_oauth(provider_name)
     @user = User.from_omniauth(request.env['omniauth.auth'])
 
-    if @user.persisted?
-      # Check if user needs admin approval
-      if @user.company_user? && !@user.approved_by_admin?
-        # User exists but needs approval
-        flash[:notice] = 'Sua conta foi criada e está aguardando aprovação do administrador.'
-        redirect_to new_user_session_path
-      elsif !@user.active?
-        # User is rejected or blocked
-        flash[:alert] = case @user.status
-                        when 'rejected'
-                          'Sua conta foi rejeitada. Entre em contato com o suporte.'
-                        when 'blocked'
-                          'Sua conta foi bloqueada. Entre em contato com o suporte.'
-                        else
-                          'Sua conta está inativa. Entre em contato com o suporte.'
-                        end
-        redirect_to new_user_session_path
-      else
-        # User is approved and active
-        PostHog.identify(distinct_id: @user.posthog_distinct_id, properties: @user.posthog_properties)
-        PostHog.capture(
-          distinct_id: @user.posthog_distinct_id,
-          event: 'social_login_completed',
-          properties: { provider: provider_name.downcase, role: @user.role }
-        )
-        sign_in_and_redirect @user, event: :authentication
-        set_flash_message(:notice, :success, kind: provider_name) if is_navigational_format?
-      end
-    else
-      session["devise.#{request.env['omniauth.auth'].provider}_data"] = request.env['omniauth.auth'].except('extra')
-      redirect_to new_user_registration_url, alert: "Falha ao autenticar com #{provider_name}."
+    unless @user.persisted?
+      message = CGI.escape("Falha ao autenticar com #{provider_name}.")
+      return redirect_to "#{frontend_url}/auth/callback?status=error&message=#{message}",
+                         allow_other_host: true
     end
+
+    if @user.company_user? && !@user.approved_by_admin?
+      return redirect_to "#{frontend_url}/auth/callback?status=pending_approval",
+                         allow_other_host: true
+    end
+
+    unless @user.active?
+      reason = CGI.escape(@user.status.to_s)
+      return redirect_to "#{frontend_url}/auth/callback?status=inactive&reason=#{reason}",
+                         allow_other_host: true
+    end
+
+    issue_oauth_tokens(@user, provider_name)
+    redirect_to "#{frontend_url}/auth/callback?status=success", allow_other_host: true
+  end
+
+  def issue_oauth_tokens(user, provider_name)
+    access_exp  = 15.minutes.from_now
+    refresh_exp = 30.days.from_now
+
+    access_token  = jwt_encode({ user_id: user.id, typ: 'access' },  access_exp)
+    refresh_token = jwt_encode({ user_id: user.id, typ: 'refresh' }, refresh_exp)
+
+    set_jwt_cookie(access_token,  expires: access_exp)
+    set_refresh_cookie(refresh_token, expires: refresh_exp)
+
+    PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
+    PostHog.capture(
+      distinct_id: user.posthog_distinct_id,
+      event: 'social_login_completed',
+      properties: { provider: provider_name.downcase, role: user.role }
+    )
+  rescue StandardError => e
+    Rails.logger.error("[OmniAuth] Token issue failed for #{provider_name}: #{e.message}")
+    raise
   end
 end

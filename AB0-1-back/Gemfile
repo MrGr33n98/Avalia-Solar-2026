@@ -63,6 +63,7 @@ gem 'devise-two-factor', '~> 5.0'
 gem 'image_processing', '~> 1.2'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-linkedin-oauth2', '~> 1.0'
+gem 'omniauth-facebook', '~> 9.0'
 gem 'omniauth-rails_csrf_protection' # CSRF protection for OmniAuth
 gem 'rqrcode', '~> 2.2'
 

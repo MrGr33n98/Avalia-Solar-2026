@@ -283,6 +283,12 @@ Devise.setup do |config|
                   scope: 'openid profile email',
                   fields: ['id', 'email-address', 'first-name', 'last-name']
 
+  config.omniauth :facebook,
+                  ENV.fetch('FACEBOOK_CLIENT_ID', nil),
+                  ENV.fetch('FACEBOOK_CLIENT_SECRET', nil),
+                  scope: 'email,public_profile',
+                  info_fields: 'email,name'
+
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or
   # change the failure app, you can configure them inside the config.warden block.
