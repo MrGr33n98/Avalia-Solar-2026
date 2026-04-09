@@ -50,11 +50,7 @@ export function ArticleComments({ articleId, articleSlug, articleTitle }: Articl
   }, [articleId, articleSlug, articleTitle]);
 
   if (!HYVOR_SITE_ID) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-        Comentários desativados. Configure `NEXT_PUBLIC_HYVOR_SITE_ID` para habilitar.
-      </div>
-    );
+    return null;
   }
 
   return <div id="hyvor-talk-view" className="mt-10" />;
