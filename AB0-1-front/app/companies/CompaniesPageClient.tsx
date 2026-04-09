@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import { Search, Grid, List, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -23,6 +23,8 @@ import {
   isCompaniesCategoriesPath,
 } from '@/lib/seo/companies-category-url';
 import { useDebounce } from '@/hooks/useDebounce';
+import { usePageTracking } from '@/hooks/usePageTracking';
+import { track } from '@/lib/analytics/consolidated';
 
 interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
@@ -34,6 +36,11 @@ interface CompaniesContentProps extends CompaniesPageClientProps {}
 const EMPTY_CATEGORY_IDS: number[] = [];
 
 export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canonicalPath }: CompaniesContentProps) {
+  usePageTracking({
+    type: 'category',
+    title: 'Empresas de Energia Solar - Avalia Solar',
+  });
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -167,6 +174,34 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     return () => {
       cancelled = true;
     };
+  }, [requestParams]);
+
+  // Track filter changes (skip first mount)
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (loading) return;
+
+    const activeFilters: Array<{ filter_key: string; filter_value: any }> = [];
+
+    if (requestParams.q) activeFilters.push({ filter_key: 'search', filter_value: requestParams.q });
+    if (requestParams.state) activeFilters.push({ filter_key: 'state', filter_value: requestParams.state });
+    if (requestParams.city) activeFilters.push({ filter_key: 'city', filter_value: requestParams.city });
+    if (requestParams.category_ids) activeFilters.push({ filter_key: 'category_ids', filter_value: requestParams.category_ids });
+    if (requestParams.min_rating) activeFilters.push({ filter_key: 'min_rating', filter_value: requestParams.min_rating });
+    if (requestParams.verified) activeFilters.push({ filter_key: 'verified', filter_value: requestParams.verified });
+    if (requestParams.featured) activeFilters.push({ filter_key: 'featured', filter_value: requestParams.featured });
+    if (requestParams.sort) activeFilters.push({ filter_key: 'sort', filter_value: requestParams.sort });
+
+    if (activeFilters.length > 0) {
+      activeFilters.forEach(({ filter_key, filter_value }) => {
+        track('filter_applied', { filter_key, filter_value, page: 'companies' });
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestParams]);
 
   const visibleCompanies = useMemo(
