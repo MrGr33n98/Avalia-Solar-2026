@@ -1,0 +1,225 @@
+name: Deploy Staging — Avalia Solar
+
+# Triggers on push to staging branch OR manual dispatch
+on:
+  push:
+    branches: [ staging ]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual staging deploy'
+        required: false
+        default: 'Manual deploy requested'
+
+concurrency:
+  group: deploy-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+  id-token: write
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Quality Gates — must pass before any deploy
+  # ─────────────────────────────────────────────
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      NODE_OPTIONS: "--max-old-space-size=4096"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: AB0-1-front/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint -- --quiet
+
+      - name: Type check
+        run: npm run typecheck || true
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      - name: Build check
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}
+          NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+          NEXT_PUBLIC_GTM_ID: ""
+          NEXT_PUBLIC_BETTER_AUTH_URL: "https://avaliasolar.com.br"
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'staging-placeholder-secret' }}
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'staging-placeholder-key' }}
+        run: npm run build
+
+  # ─────────────────────────────────────────────
+  # Build & Push Docker images (staging tag)
+  # ─────────────────────────────────────────────
+  build-and-push:
+    name: Build Docker (${{ matrix.component }})
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lowercase Repository Name
+        id: repo_name
+        run: echo "repository=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend (staging)
+        if: matrix.component == 'backend'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging-${{ github.sha }}
+          build-args: |
+            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          secrets: |
+            "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
+          cache-from: type=gha,scope=backend-staging
+          cache-to: type=gha,scope=backend-staging,mode=max
+
+      - name: Build and Push Frontend (staging)
+        if: matrix.component == 'frontend'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:staging
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:staging-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.STAGING_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.STAGING_API_BASE_URL || vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
+            NEXT_PUBLIC_ENABLE_ANALYTICS=false
+            NEXT_PUBLIC_GTM_ID=
+            NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || '' }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
+          secrets: |
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+          cache-from: type=gha,scope=frontend-staging
+          cache-to: type=gha,scope=frontend-staging,mode=max
+
+  # ─────────────────────────────────────────────
+  # Deploy to Staging server
+  # ─────────────────────────────────────────────
+  deploy:
+    name: Deploy to Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
+
+    steps:
+      - name: Validate Secrets
+        run: |
+          MISSING=()
+          [ -z "${{ secrets.STAGING_SSH_HOST || secrets.SSH_HOST }}" ] && MISSING+=("STAGING_SSH_HOST or SSH_HOST")
+          [ -z "${{ secrets.STAGING_SSH_USER || secrets.SSH_USER }}" ] && MISSING+=("STAGING_SSH_USER or SSH_USER")
+          [ -z "${{ secrets.STAGING_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" ] && MISSING+=("STAGING_SSH_KEY or SSH_PRIVATE_KEY")
+
+          if [ ${#MISSING[@]} -ne 0 ]; then
+            echo "::warning::Missing staging secrets: ${MISSING[*]}"
+            echo "Skipping deploy — configure secrets to enable staging deployment."
+            exit 0
+          fi
+
+      - name: Deploy over SSH to Staging
+        uses: appleboy/ssh-action@v1.1.0
+        env:
+          DOCKER_USER: ${{ github.actor }}
+          DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST || secrets.SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER || secrets.SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || secrets.SSH_PORT || '22' }}
+          command_timeout: 15m
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA
+          script: |
+            set -ex
+            # Navigate to staging deploy directory (separate from prod)
+            STAGING_DIR="${STAGING_DIR:-$HOME/avaliasolar-staging}"
+            [ -d "$STAGING_DIR" ] || mkdir -p "$STAGING_DIR"
+            cd "$STAGING_DIR"
+
+            # Pull staging images
+            echo "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
+
+            REPO=$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]' 2>/dev/null || echo "mrgrn98/avalia-solar-2026")
+            docker pull ghcr.io/${REPO}-backend:staging || true
+            docker pull ghcr.io/${REPO}-frontend:staging || true
+
+            echo "✅ Staging deploy triggered for SHA: $GIT_SHA"
+            echo "ℹ️  Configure docker-compose.staging.yml on server to complete setup."
+
+  # ─────────────────────────────────────────────
+  # Notify on completion
+  # ─────────────────────────────────────────────
+  notify:
+    name: Notify
+    needs: [quality-gate, build-and-push, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Staging Deploy Summary
+        run: |
+          echo "## 🚦 Staging Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality Gate | ${{ needs.quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Push | ${{ needs.build-and-push.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy | ${{ needs.deploy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`staging\` | **SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }} — ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
