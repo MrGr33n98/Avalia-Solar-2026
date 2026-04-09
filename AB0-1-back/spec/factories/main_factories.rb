@@ -93,6 +93,14 @@ FactoryBot.define do
     score { 5.0 }
   end
 
+  factory :product do
+    sequence(:name) { |n| "Produto Solar #{n}" }
+    sequence(:sku) { |n| "SKU-#{n}" }
+    price { 1000.0 }
+    status { 'active' }
+    association :company
+  end
+
   factory :company_daily_stat do
     association :company
     day { Date.yesterday }
