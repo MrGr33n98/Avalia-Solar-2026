@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 type CallbackStatus = 'loading' | 'success' | 'pending_approval' | 'inactive' | 'error';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, refreshAuth } = useAuth();
@@ -58,7 +58,7 @@ export default function AuthCallbackPage() {
 
     // No recognized status — redirect to login
     router.replace('/login');
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams, refreshAuth, router]);
 
   // Step 2: once user is loaded after a successful refresh, route them
   useEffect(() => {
@@ -155,5 +155,20 @@ export default function AuthCallbackPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600 text-sm">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
