@@ -22,7 +22,7 @@ export function AuthorCardWithStats({
   name, 
   bio, 
   avatarUrl, 
-  role = 'Editor & Especialista Solar',
+  role = 'Editor e Especialista em Marketing para Energia Solar',
   stats
 }: AuthorCardWithStatsProps) {
   if (!name) return null;

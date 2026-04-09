@@ -100,10 +100,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   }
 
   const articleSlug = article.slug || String(article.id);
-  const authorName = article.author_name || article.author?.name || 'Avalia Solar';
+  const authorName = article.author_name || article.author?.name || 'Felipe Morais';
   const authorAvatarUrl = article.author_avatar_url 
     ? getFullImageUrl(article.author_avatar_url) 
-    : (article.author as any)?.avatar_photo_url ? getFullImageUrl((article.author as any).avatar_photo_url) : undefined;
+    : (article.author as any)?.avatar_photo_url ? getFullImageUrl((article.author as any).avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
   const authorBio = article.author_bio || article.author?.bio || undefined;
   const categoryName = article.category?.name;
   
