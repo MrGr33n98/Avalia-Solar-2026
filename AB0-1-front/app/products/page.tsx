@@ -65,6 +65,7 @@ function ProductsPageContent() {
     const cats = new Set<string>();
     const comps = new Set<string>();
     const compStats: Record<string, number> = {};
+    const compLogos: Record<string, string> = {};
     let maxP = 0;
 
     products.forEach(p => {
@@ -79,6 +80,9 @@ function ProductsPageContent() {
       if (p.company?.name) {
         comps.add(p.company.name);
         compStats[p.company.name] = (compStats[p.company.name] || 0) + 1;
+        if (p.company.logo_url) {
+          compLogos[p.company.name] = p.company.logo_url;
+        }
       }
 
       // Price extraction
@@ -88,6 +92,7 @@ function ProductsPageContent() {
 
     const companySummaries = Array.from(comps).map(name => ({
         name,
+        logo_url: compLogos[name],
         productCount: compStats[name],
         isVerified: true, // Mock logic: all active companies are verified for now
         rating: 4.8, // Mock logic
