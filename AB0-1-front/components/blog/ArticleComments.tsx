@@ -5,9 +5,10 @@ import { track } from '@/lib/analytics/lazy';
 
 declare global {
   interface Window {
-    HYVOR_TALK_WEBSITE?: string;
-    HYVOR_TALK_CONFIG?: Record<string, any>;
-    HYVOR_TALK?: { reset?: () => void };
+    DISQUS?: {
+      reset: (args: { reload: boolean; config: () => void }) => void;
+    };
+    disqus_config?: () => void;
   }
 }
 
@@ -17,41 +18,46 @@ interface ArticleCommentsProps {
   articleTitle: string;
 }
 
-const HYVOR_SITE_ID = process.env.NEXT_PUBLIC_HYVOR_SITE_ID;
+const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME;
 
 export function ArticleComments({ articleId, articleSlug, articleTitle }: ArticleCommentsProps) {
   React.useEffect(() => {
-    if (!HYVOR_SITE_ID) return;
+    if (!DISQUS_SHORTNAME) return;
 
-    window.HYVOR_TALK_WEBSITE = HYVOR_SITE_ID;
-    window.HYVOR_TALK_CONFIG = {
-      url: window.location.href,
-      id: String(articleId || articleSlug),
-      title: articleTitle,
+    window.disqus_config = function (this: any) {
+      this.page.url = window.location.href;
+      this.page.identifier = String(articleId || articleSlug);
+      this.page.title = articleTitle;
     };
 
-    const existingScript = document.getElementById('hyvor-talk-script');
+    const scriptId = 'disqus-embed-script';
+    const existingScript = document.getElementById(scriptId);
+
     if (!existingScript) {
       const script = document.createElement('script');
-      script.id = 'hyvor-talk-script';
-      script.src = 'https://talk.hyvor.com/web-api/embed.js';
-      script.async = true;
+      script.id = scriptId;
+      script.src = `https://${DISQUS_SHORTNAME}.disqus.com/embed.js`;
+      script.setAttribute('data-timestamp', new Date().getTime().toString());
       document.body.appendChild(script);
-    } else if (window.HYVOR_TALK?.reset) {
-      window.HYVOR_TALK.reset();
+    } else if (window.DISQUS) {
+      // Refresh disqus safely if script already loaded
+      window.DISQUS.reset({
+        reload: true,
+        config: window.disqus_config,
+      });
     }
 
     track('blog_comments_view', {
       post_id: articleId,
       post_slug: articleSlug,
       post_title: articleTitle,
-      provider: 'hyvor'
+      provider: 'disqus'
     });
   }, [articleId, articleSlug, articleTitle]);
 
-  if (!HYVOR_SITE_ID) {
+  if (!DISQUS_SHORTNAME) {
     return null;
   }
 
-  return <div id="hyvor-talk-view" className="mt-10" />;
+  return <div id="disqus_thread" className="mt-10" />;
 }
