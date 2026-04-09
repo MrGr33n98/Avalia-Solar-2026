@@ -17,6 +17,9 @@ class NotifyIntentChangeJob < ApplicationJob
     # - Send email alert
     # - Push notification to mobile app
     
+    # Notifica time de Vendas via Slack
+    SlackNotificationService.notify_intent_change(score)
+    
     # For now, just log
     message = "🔥 INTENT ALERT: Company #{score.company.name} is #{score.thermometer_emoji} #{score.intent_level.upcase} (#{score.total_score} pts) - SLA: #{score.sla_window}"
 
