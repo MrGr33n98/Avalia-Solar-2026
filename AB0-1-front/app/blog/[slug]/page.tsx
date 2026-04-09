@@ -254,17 +254,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </div>
 
             {/* Article Content */}
-            <article className="prose prose-lg prose-slate max-w-none 
-              prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight
-              prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-6
+            <article className="prose prose-lg prose-slate max-w-none whitespace-pre-line leading-loose text-slate-700
+              prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight prose-headings:mt-10 prose-headings:mb-6
+              prose-p:text-slate-600 prose-p:leading-loose prose-p:mb-8
               prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
               prose-strong:text-slate-900 prose-strong:font-bold
-              prose-img:rounded-xl prose-img:shadow-md prose-img:my-8
-              prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-slate-50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-slate-700
-              prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-6 prose-ul:text-slate-600
-              prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-6 prose-ol:text-slate-600
-              prose-li:mb-2
-              prose-hr:border-slate-200 prose-hr:my-10">
+              prose-img:rounded-xl prose-img:shadow-md prose-img:my-10
+              prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-slate-50 prose-blockquote:py-6 prose-blockquote:px-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-slate-700
+              prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-8 prose-ul:text-slate-600 prose-ul:space-y-3
+              prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-8 prose-ol:text-slate-600 prose-ol:space-y-3
+              prose-li:leading-loose
+              prose-hr:border-slate-200 prose-hr:my-12">
               <div dangerouslySetInnerHTML={{ __html: fixArticleContent(article.content) }} />
             </article>
 
