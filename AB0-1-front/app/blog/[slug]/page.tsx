@@ -254,7 +254,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </div>
 
             {/* Article Content */}
-            <article className="prose prose-lg prose-slate max-w-none whitespace-pre-line leading-loose text-slate-700
+            <article className="prose prose-lg prose-slate max-w-none leading-loose text-slate-700
               prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight prose-headings:mt-10 prose-headings:mb-6
               prose-p:text-slate-600 prose-p:leading-loose prose-p:mb-8
               prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
