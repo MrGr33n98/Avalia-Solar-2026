@@ -67,7 +67,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
             }
           >
             <Card className="h-full overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="relative h-64 sm:h-80 lg:h-full w-full">
+              <div className="relative h-64 sm:h-80 lg:h-[400px] w-full">
                 <Image
                   src={mainImage}
                   alt={mainPost.title}
@@ -155,7 +155,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
               }
             >
               <Card className="h-full border-none shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden bg-white">
-                <div className="relative h-40 w-full shrink-0 overflow-hidden">
+                <div className="relative h-28 w-full shrink-0 overflow-hidden">
                   <Image
                     src={getFullImageUrl(post.cover_image_url || post.image_url) || '/images/avalia-solar-place-holder.PNG'}
                     alt={post.title}
