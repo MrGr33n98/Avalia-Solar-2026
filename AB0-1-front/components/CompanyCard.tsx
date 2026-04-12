@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy, Diamond } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -464,11 +465,7 @@ export default function CompanyCard({
                   <Building className="text-slate-300 dark:text-slate-600 w-5 h-5" />
                 </div>
               )}
-              {company.verified && (!verifiedBadgeUrl || verifiedBadgeError) && (
-                <div className="absolute -bottom-0.5 -right-0.5 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-sm" title="Empresa Verificada">
-                  <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
-                </div>
-              )}
+
             </div>
           </div>
         </div>
@@ -491,12 +488,7 @@ export default function CompanyCard({
           {/* Verified + Location row */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {company.verified && (
-              <Badge 
-                className="bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 border-none text-white font-black uppercase tracking-wider h-6 flex items-center gap-1.5 shadow-md px-2.5 rounded-full"
-              >
-                <Diamond className="w-3 h-3 fill-current" />
-                <span className="text-[10px] tracking-widest">{text.verified}</span>
-              </Badge>
+              <PremiumBadge className="h-6" />
             )}
             {(city || state) && (
               <div className="flex items-center gap-0.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">

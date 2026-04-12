@@ -19,6 +19,7 @@ import {
   Send,
 } from 'lucide-react';
 import Image from 'next/image';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 const SEARCH_MIN_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -314,9 +315,7 @@ export default function SelectCompanyPage() {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900 truncate">{company.name}</span>
                           {company.verified && (
-                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shrink-0">
-                              <Check className="h-3 w-3 text-white stroke-[3]" />
-                            </div>
+                            <PremiumBadge className="px-1.5 py-0.5" />
                           )}
                         </div>
                         <span className="text-sm text-gray-500">
@@ -400,9 +399,7 @@ export default function SelectCompanyPage() {
                               {company.company_name}
                             </span>
                             {company.verified && (
-                              <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shrink-0">
-                                <Check className="h-3 w-3 text-white stroke-[3]" />
-                              </div>
+                              <PremiumBadge className="px-1.5 py-0.5" />
                             )}
                           </div>
                           <span className="text-sm text-gray-500">

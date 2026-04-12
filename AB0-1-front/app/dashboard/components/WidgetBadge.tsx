@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Star, Check, ExternalLink } from 'lucide-react';
+import { Star, ExternalLink } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface CompanyData {
   name: string;
@@ -59,8 +60,8 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
           <h3 className={`${textColor} font-semibold`}>{companyData.name}</h3>
           {companyData.verified && (
             <div className="flex items-center gap-1 mt-1">
-              <Check className="w-4 h-4 text-brand-green" />
-              <span className={`text-xs ${mutedColor}`}>Verificado</span>
+              <PremiumBadge size="xs" />
+              <span className={`text-xs ${mutedColor}`}>Premium</span>
             </div>
           )}
         </div>
@@ -117,7 +118,7 @@ export default function WidgetBadge({ companyData, theme }: WidgetBadgeProps) {
 
       {/* Footer */}
       <p className={`text-xs text-center mt-3 ${mutedColor}`}>
-        Verificado por Avalia Solar
+        Selo Diamond por Avalia Solar
       </p>
     </div>
   );

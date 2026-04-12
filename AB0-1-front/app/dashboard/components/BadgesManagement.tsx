@@ -13,7 +13,8 @@ import {
   Info,
   Layers,
   Activity,
-  UserCheck
+  UserCheck,
+  Diamond
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Badge, badgesApi } from '@/lib/api';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
 import MetricCard from './MetricCard';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface BadgesManagementProps {
   companyId: string | number;
@@ -116,9 +118,10 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           icon={Layers}
         />
         <MetricCard
-          title="Verificação Ativa"
+          title="Selo Premium Ativo"
           value={verifiableCount.toString()}
-          icon={ShieldCheck}
+          icon={Diamond}
+          color="blue"
         />
         <MetricCard
           title="Poder de Conversão"
@@ -228,8 +231,8 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                   {/* Status Bar */}
                   <div className="px-8 py-4 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-brand-green" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO VERIFICADO</span>
+                        <PremiumBadge size="xs" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO PREMIUM</span>
                      </div>
                      <Trophy className="h-3 w-3 text-amber-500/30" />
                   </div>

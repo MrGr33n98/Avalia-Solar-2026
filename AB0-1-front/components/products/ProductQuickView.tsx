@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, Building2, ShieldCheck, ShoppingCart, Info } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import PremiumBadge from '@/components/PremiumBadge';
 import type { Product } from '@/lib/api';
 
 interface ProductQuickViewProps {
@@ -93,7 +94,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                         <div>
                             <p className="text-sm font-medium text-slate-900">{companyName}</p>
                             <p className="text-xs text-slate-500 flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3 text-blue-500" /> Fornecedor Verificado
+                                <PremiumBadge size="xs" /> Fornecedor Premium
                             </p>
                         </div>
                     </div>

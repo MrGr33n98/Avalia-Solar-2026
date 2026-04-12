@@ -409,7 +409,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#002B4D] border-white/10">
                                   <SelectItem value="declared">Declarado</SelectItem>
-                                  <SelectItem value="verified">Verificado</SelectItem>
+                                  <SelectItem value="verified">Premium</SelectItem>
                                   <SelectItem value="calculated">Calculado</SelectItem>
                                 </SelectContent>
                               </Select>
@@ -445,7 +445,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                  </div>
                  <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight">Integridade de Dados Públicos</h4>
                  <p className="text-sm text-white/40 font-medium leading-relaxed">
-                   Mantenha suas evidências atualizadas para elevar seu score de <span className="text-white font-black underline decoration-brand-blue">CONFIANÇA TÉCNICA</span>. Dados verificados possuem peso 3x maior no ranking.
+                   Mantenha suas evidências atualizadas para elevar seu score de <span className="text-white font-black underline decoration-brand-blue">CONFIANÇA TÉCNICA</span>. Dados Premium possuem peso 3x maior no ranking.
                  </p>
               </div>
 

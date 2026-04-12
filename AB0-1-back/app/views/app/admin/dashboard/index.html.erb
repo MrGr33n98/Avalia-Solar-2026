@@ -1,0 +1,56 @@
+<% content_for :page_title, "Admin — app.avaliasolar.com.br" %>
+
+<div class="mb-6">
+  <h2 class="text-xl font-semibold text-gray-900">Gestão do Ecossistema</h2>
+  <p class="text-sm text-gray-500 mt-1">Administre fornecedores, integradores e o conteúdo da Expo.</p>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+  <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+    <p class="text-3xl font-bold text-gray-900"><%= @total_suppliers %></p>
+    <p class="text-xs text-gray-400 mt-1">Fornecedores</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+    <p class="text-3xl font-bold text-gray-900"><%= @total_integrators %></p>
+    <p class="text-xs text-gray-400 mt-1">Integradores</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+    <p class="text-3xl font-bold text-gray-900"><%= @total_distributors %></p>
+    <p class="text-xs text-gray-400 mt-1">Distribuidores</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+    <p class="text-3xl font-bold text-orange-600"><%= @pending_approval %></p>
+    <p class="text-xs text-gray-400 mt-1">Pendentes</p>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h3 class="text-sm font-semibold text-gray-800">Empresas Recentes no App</h3>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+      <tr>
+        <th class="px-5 py-3 text-left">Empresa</th>
+        <th class="px-5 py-3 text-left">Segmento</th>
+        <th class="px-5 py-3 text-left">Status</th>
+        <th class="px-5 py-3 text-left">Cadastro</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <% @recent_companies.each do |company| %>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 font-medium text-gray-900"><%= company.name %></td>
+          <td class="px-5 py-3 capitalize text-gray-500"><%= company.segment %></td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium
+              <%= company.active_status? ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' %>">
+              <%= company.status %>
+            </span>
+          </td>
+          <td class="px-5 py-3 text-gray-400"><%= company.created_at.strftime('%d/%m/%Y') %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

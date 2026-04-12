@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Avalia Solar · Consultoria Premium em Reputação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        :root {
+            --avalia-azul: #0057A3;
+            /* Azul profundo mantido */
+            --avalia-verde: #4CAF50;
+            /* Verde vibrante substituindo o laranja */
+            --avalia-verde-suave: #8BC34A;
+            --avalia-bg: #F8FAFC;
+            --gartner-gray: #E2E8F0;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --white: #FFFFFF;
+            --premium-gold: #D4AF37;
+        }
+
+        .carrossel-container {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--white);
+            border-radius: 32px;
+            box-shadow: 0 30px 50px -12px rgba(0, 40, 70, 0.25);
+            overflow: hidden;
+            border: 1px solid var(--gartner-gray);
+        }
+
+        /* Top Bar Premium */
+        .top-bar {
+            background: var(--white);
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--avalia-azul);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-simbolo {
+            background: linear-gradient(135deg, var(--avalia-verde) 0%, #81C784 100%);
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 8px 16px rgba(76, 175, 80, 0.25);
+        }
+
+        .logo-texto {
+            font-weight: 700;
+            font-size: 1.7rem;
+            letter-spacing: -0.02em;
+            color: var(--avalia-azul);
+        }
+
+        .logo-texto span {
+            color: var(--avalia-verde);
+            font-weight: 800;
+        }
+
+        .badge-premium {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            color: var(--premium-gold);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            letter-spacing: 0.3px;
+        }
+
+        .badge-premium i {
+            margin-right: 8px;
+            color: var(--premium-gold);
+        }
+
+        /* Slides */
+        .slides-wrapper {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slides-track {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slide {
+            flex: 0 0 100%;
+            padding: 40px;
+            min-height: 540px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            background: var(--white);
+        }
+
+        @media (max-width: 800px) {
+            .slide {
+                grid-template-columns: 1fr;
+                padding: 30px 20px;
+                text-align: center;
+            }
+
+            .slide-visual {
+                order: -1;
+            }
+        }
+
+        .slide-content h2 {
+            font-size: 2.2rem;
+            color: var(--avalia-azul);
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .slide-content h2 i {
+            color: var(--avalia-verde);
+            margin-right: 10px;
+        }
+
+        .slide-content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .data-point {
+            display: inline-flex;
+            align-items: center;
+            background: var(--avalia-bg);
+            padding: 12px 20px;
+            border-radius: 16px;
+            border-left: 5px solid var(--avalia-verde);
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .data-point span {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--avalia-azul);
+            margin-right: 12px;
+        }
+
+        .metricas-grid {
+            display: flex;
+            gap: 28px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .metrica-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metrica-valor {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--avalia-verde);
+            line-height: 1;
+        }
+
+        .metrica-label {
+            font-weight: 500;
+            color: var(--avalia-azul);
+            opacity: 0.8;
+        }
+
+        .lista-beneficios {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .lista-beneficios li {
+            margin-bottom: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .lista-beneficios i {
+            color: var(--avalia-verde);
+            font-size: 1.3rem;
+            margin-top: 2px;
+        }
+
+        .destaque-box {
+            background: #E8F5E9;
+            padding: 18px 22px;
+            border-radius: 20px;
+            margin: 20px 0;
+            border-left: 6px solid var(--avalia-verde);
+            font-weight: 500;
+            color: var(--avalia-azul);
+        }
+
+        .modelo-tag {
+            background: rgba(0, 87, 163, 0.08);
+            border-radius: 40px;
+            padding: 8px 18px;
+            display: inline-block;
+            font-weight: 600;
+            color: var(--avalia-azul);
+            margin-bottom: 16px;
+            border: 1px solid rgba(0, 87, 163, 0.2);
+        }
+
+        /* Visual areas */
+        .slide-visual {
+            background: var(--avalia-bg);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--gartner-gray);
+            min-height: 300px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .svg-container {
+            width: 100%;
+            height: auto;
+        }
+
+        .node {
+            fill: var(--white);
+            stroke: var(--avalia-azul);
+            stroke-width: 2;
+        }
+
+        .edge {
+            stroke: var(--gartner-gray);
+            stroke-width: 2;
+        }
+
+        .highlight {
+            fill: var(--avalia-verde);
+            stroke: none;
+        }
+
+        .btn-premium {
+            background: var(--avalia-azul);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 18px -6px rgba(0, 87, 163, 0.3);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-premium i {
+            color: var(--avalia-verde);
+        }
+
+        .btn-premium:hover {
+            background: var(--avalia-verde);
+            color: white;
+            box-shadow: 0 12px 22px -6px #4caf50;
+        }
+
+        .btn-premium:hover i {
+            color: white;
+        }
+
+        /* Navegação */
+        .nav-controls {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--avalia-bg);
+            border-top: 1px solid var(--gartner-gray);
+        }
+
+        .nav-btn {
+            background: var(--white);
+            border: 1px solid var(--gartner-gray);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--avalia-azul);
+            font-size: 1.2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .nav-btn:hover {
+            background: var(--avalia-azul);
+            color: white;
+            border-color: var(--avalia-azul);
+        }
+
+        .dots {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: var(--gartner-gray);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .dot.active {
+            background: var(--avalia-verde);
+            width: 28px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+        }
+
+        .contato-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .contato-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 87, 163, 0.05);
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: var(--avalia-azul);
+            font-weight: 500;
+        }
+
+        .contato-item i {
+            color: var(--avalia-verde);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="carrossel-container">
+        <div class="top-bar">
+        <div class="logo-area">
+            <img src="../../AB0-1-front/public/images/logo_new.png" alt="Avalia Solar" style="height: 45px; width: auto;">
+        </div>
+        <div class="badge-premium">
+            <i class="fas fa-crown"></i> CONSULTORIA PREMIUM 2026
+        </div>
+    </div>
+
+        <div class="slides-wrapper">
+            <div class="slides-track" id="slidesTrack">
+
+                <!-- SLIDE 1: CAPITAL DE REPUTAÇÃO -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-star"></i> Reviews: O Novo Capital</h2>
+                        <p>No setor solar, a reputação digital é o ativo mais líquido da sua empresa. <strong>92% dos
+                                compradores</strong> leem avaliações antes de investir.</p>
+                        <div class="metricas-grid">
+                            <div class="metrica-item">
+                                <span class="metrica-valor">+37%</span>
+                                <span class="metrica-label">conversão com boas reviews</span>
+                            </div>
+                            <div class="metrica-item">
+                                <span class="metrica-valor">4.7★</span>
+                                <span class="metrica-label">média dos líderes de mercado</span>
+                            </div>
+                        </div>
+                        <div class="data-point">
+                            <span>25%</span> aumento de receita em 12 meses (BrightLocal)
+                        </div>
+                    </div>
+                    <div class="slide-visual">
+                        <svg viewBox="0 0 200 160" class="svg-container">
+                            <line x1="100" y1="80" x2="40" y2="40" class="edge" />
+                            <line x1="100" y1="80" x2="160" y2="40" class="edge" />
+                            <line x1="100" y1="80" x2="100" y2="140" class="edge" />
+                            <circle cx="100" cy="80" r="28" fill="var(--avalia-azul)" />
+                            <text x="100" y="86" text-anchor="middle" fill="white" font-weight="bold"
+                                font-size="14">AS</text>
+                            <circle cx="40" cy="40" r="18" class="node" />
+                            <text x="40" y="45" text-anchor="middle" font-size="10" fill="var(--avalia-azul)">ROI</text>
+                            <circle cx="160" cy="40" r="18" class="node" />
+                            <text x="160" y="45" text-anchor="middle" font-size="10"
+                                fill="var(--avalia-azul)">SEO</text>
+                            <circle cx="100" cy="140" r="18" class="node" />
+                            <text x="100" y="145" text-anchor="middle" font-size="10"
+                                fill="var(--avalia-azul)">TRUST</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- SLIDE 2: JORNADA DO COMPRADOR -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-magnifying-glass"></i> Decisão Solar Online</h2>
+                        <p>O cliente pesquisa <strong>3x mais</strong> antes de fechar. O filtro de reputação elimina
+                            60% dos concorrentes.</p>
+                        <ul class="lista-beneficios">
+                            <li><i class="fas fa-check-circle"></i> Notas no Google e Reclame Aqui</li>
+                            <li><i class="fas fa-check-circle"></i> Opiniões sobre equipamentos</li>
+                            <li><i class="fas fa-check-circle"></i> Relatos de pós-venda</li>
+                        </ul>
+                        <div class="destaque-box">
+                            ⚡ +50 avaliações positivas = 2,4x mais fechamentos (SolarReviews)
+                        </div>
+                    </div>
+                    <div class="slide-visual">
+                        <svg viewBox="0 0 240 120" class="svg-container">
+                            <path d="M20 60 H220" stroke="var(--gartner-gray)" stroke-width="4"
+                                stroke-dasharray="8 4" />
+                            <circle cx="40" cy="60" r="12" fill="var(--gartner-gray)" />
+                            <circle cx="120" cy="60" r="18" fill="var(--avalia-verde)" />
+                            <circle cx="200" cy="60" r="12" fill="var(--avalia-azul)" />
+                            <text x="40" y="85" text-anchor="middle" font-size="9">Pesquisa</text>
+                            <text x="120" y="95" text-anchor="middle" font-size="9" font-weight="bold"
+                                fill="var(--avalia-verde)">FILTRO AVALIA</text>
+                            <text x="200" y="85" text-anchor="middle" font-size="9">Contrato</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- SLIDE 3: SEO + CONFIANÇA -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-chart-line"></i> SEO + Autoridade</h2>
+                        <p>Reviews atualizadas melhoram o posicionamento e geram prova social contínua.</p>
+                        <div class="metrica-item">
+                            <span class="metrica-valor">+68%</span>
+                            <span class="metrica-label">CTR em buscas locais</span>
+                        </div>
+                        <p style="margin-top: 20px;">Cada avaliação positiva aumenta relevância para "energia solar
+                            [cidade]" e reduz objeções.</p>
+                    </div>
+                    <div class="slide-visual">
+                        <div
+                            style="width:100%; background:white; border-radius:16px; border:1px solid #ddd; padding:20px; box-shadow:0 4px 8px rgba(0,0,0,0.02);">
+                            <div style="color:var(--avalia-azul); font-weight:600; margin-bottom:10px;">🔍 Resultado de
+                                busca local</div>
+                            <div style="color:#1a0dab; text-decoration:underline; font-size:16px; font-weight:500;">
+                                Energia Solar em Cuiabá</div>
+                            <div style="display:flex; gap:8px; margin:5px 0;">
+                                <span style="color:var(--avalia-verde);">★★★★★</span>
+                                <span style="color:var(--text-muted);">5.0 (150+ avaliações)</span>
+                            </div>
+                            <div style="color:#006621; font-size:13px;">https://suaempresa.com.br · Avalia Solar
+                                verificado</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 4: MODELO DE NEGÓCIO SaaS PREMIUM -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <span class="modelo-tag"><i class="fas fa-cloud-sun"></i> Plataforma SaaS + Consultoria
+                            Premium</span>
+                        <h2 style="font-size:1.8rem;">Inteligência em Reputação</h2>
+                        <p>Conectamos instaladores, distribuidores e fabricantes a um sistema que:</p>
+                        <ul class="lista-beneficios">
+                            <li><i class="fas fa-robot"></i> <strong>Coleta automatizada</strong> pós-instalação
+                                (CRM/ERP)</li>
+                            <li><i class="fas fa-chart-pie"></i> <strong>Dashboard preditivo</strong> de conversão</li>
+                            <li><i class="fas fa-bullhorn"></i> <strong>Resposta inteligente</strong> e gestão de crises
+                            </li>
+                        </ul>
+                        <div class="destaque-box">
+                            💎 Modelo <strong>assinatura mensal</strong> · ROI estimado &lt;60 dias
+                        </div>
+                    </div>
+                    <div class="slide-visual">
+                        <svg viewBox="0 0 200 120" class="svg-container">
+                            <rect x="10" y="40" width="40" height="40" rx="8" class="node" />
+                            <text x="30" y="65" text-anchor="middle" font-size="8" fill="var(--avalia-azul)">CRM</text>
+                            <path d="M50 60 H80" stroke="var(--avalia-azul)" stroke-width="3"
+                                marker-end="url(#arrow)" />
+                            <circle cx="105" cy="60" r="28" fill="var(--avalia-bg)" stroke="var(--avalia-azul)"
+                                stroke-width="3" />
+                            <text x="105" y="66" text-anchor="middle" font-weight="bold" font-size="10"
+                                fill="var(--avalia-azul)">AS</text>
+                            <path d="M133 60 H160" stroke="var(--avalia-azul)" stroke-width="3"
+                                marker-end="url(#arrow)" />
+                            <rect x="160" y="40" width="30" height="40" rx="8" fill="var(--avalia-verde)" />
+                            <text x="175" y="65" text-anchor="middle" font-size="8" fill="white"
+                                font-weight="bold">ROI</text>
+                            <defs>
+                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L9,3 z" fill="var(--avalia-azul)" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- SLIDE 5: ALIADO ESTRATÉGICO (MAGIC QUADRANT) -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-handshake"></i> Aliado Estratégico</h2>
+                        <p>Mais que software: somos parceiros de crescimento. Nossa consultoria premium inclui:</p>
+                        <ul class="lista-beneficios">
+                            <li><i class="fas fa-user-check"></i> Onboarding guiado e cultura de avaliação</li>
+                            <li><i class="fas fa-certificate"></i> Selo "Avalia Solar verificado"</li>
+                            <li><i class="fas fa-file-contract"></i> Relatórios trimestrais com benchmark</li>
+                        </ul>
+                        <div class="btn-premium">
+                            <i class="fas fa-bolt"></i> Aumente vendas com reputação blindada
+                        </div>
+                    </div>
+                    <div class="slide-visual">
+                        <div
+                            style="width:100%; height:220px; border:2px solid var(--text-muted); border-radius:20px; position:relative; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; overflow:hidden;">
+                            <div style="border-right:1px solid #ccc; border-bottom:1px solid #ccc;"></div>
+                            <div style="border-bottom:1px solid #ccc; background:rgba(76, 175, 80, 0.06);"></div>
+                            <div style="border-right:1px solid #ccc;"></div>
+                            <div></div>
+                            <div style="position:absolute; top:20%; right:12%; text-align:center;">
+                                <div
+                                    style="background:var(--avalia-azul); color:white; padding:6px 12px; border-radius:20px; font-weight:bold; font-size:12px;">
+                                    LÍDER</div>
+                                <div style="font-size:9px; margin-top:4px;">Avalia Solar</div>
+                            </div>
+                            <div
+                                style="position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:bold;">
+                                COMPLETUDE DE VISÃO</div>
+                            <div
+                                style="position:absolute; left:-40px; top:50%; transform:rotate(-90deg) translateY(-50%); font-size:9px; font-weight:bold;">
+                                EXECUÇÃO</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 6: BENCHMARK DE RESULTADOS -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-trophy"></i> Resultados de Mercado</h2>
+                        <div class="metricas-grid">
+                            <div class="metrica-item">
+                                <span class="metrica-valor">3.2x</span>
+                                <span class="metrica-label">mais leads qualificados*</span>
+                            </div>
+                            <div class="metrica-item">
+                                <span class="metrica-valor">4.9★</span>
+                                <span class="metrica-label">média de nota*</span>
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem;">*Médias do setor com gestão ativa de reviews.</p>
+                        <div class="destaque-box">
+                            <i class="fas fa-circle-check"></i> Redução de <strong>37% no CAC</strong> com provas
+                            sociais (G2)
+                        </div>
+                        <p>O Avalia Solar foi desenvolvido para sua empresa alcançar esses patamares.</p>
+                    </div>
+                    <div class="slide-visual">
+                        <svg viewBox="0 0 200 140" class="svg-container">
+                            <rect x="30" y="60" width="40" height="60" fill="var(--gartner-gray)" rx="6" />
+                            <rect x="130" y="20" width="40" height="100" fill="var(--avalia-verde)" rx="6" />
+                            <text x="50" y="130" text-anchor="middle" font-size="10" font-weight="bold">Setor</text>
+                            <text x="150" y="130" text-anchor="middle" font-size="10" font-weight="bold">Com
+                                Avalia</text>
+                            <text x="150" y="12" text-anchor="middle" font-size="12" font-weight="800"
+                                fill="var(--avalia-verde)">+240%</text>
+                            <line x1="10" y1="120" x2="190" y2="120" stroke="var(--text-muted)" stroke-width="1" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- SLIDE 7: CTA FINAL PREMIUM -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <h2><i class="fas fa-rocket"></i> Comece sua Jornada Premium</h2>
+                        <p style="font-size:1.2rem;">A confiança no setor solar começa com <strong>reviews que
+                                convertem</strong>.</p>
+                        <div
+                            style="background: var(--avalia-azul); color: white; padding: 20px; border-radius: 24px; margin: 20px 0;">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                                <i class="fas fa-globe" style="font-size:1.5rem;"></i>
+                                <span style="font-weight:700; font-size:1.3rem;">www.avaliasolar.com.br</span>
+                            </div>
+                            <div class="contato-info" style="color:white;">
+                                <div class="contato-item" style="background:rgba(255,255,255,0.15); color:white;">
+                                    <i class="fas fa-phone-alt"></i> (65) 99346-5055
+                                </div>
+                                <div class="contato-item" style="background:rgba(255,255,255,0.15); color:white;">
+                                    <i class="fas fa-envelope"></i> felipe@avaliasolar.com.br
+                                </div>
+                            </div>
+                        </div>
+                        <p><i class="fas fa-calendar-check" style="color:var(--avalia-verde);"></i> Agende uma
+                            demonstração gratuita e receba um diagnóstico de reputação.</p>
+                        <div class="btn-premium"
+                            style="background:var(--avalia-verde); box-shadow:0 10px 18px -6px #4caf50;">
+                            <i class="fas fa-arrow-right"></i> Quero ser um aliado Avalia Solar
+                        </div>
+                        <p style="margin-top:15px; font-size:0.9rem;">✓ Implementação em 24h · Suporte consultivo
+                            dedicado</p>
+                    </div>
+                    <div class="slide-visual" style="flex-direction:column; gap:20px;">
+                        <div
+                            style="background:white; padding:20px; border-radius:20px; border:2px solid var(--avalia-verde); text-align:center;">
+                            <i class="fas fa-shield-alt" style="font-size:3rem; color:var(--avalia-azul);"></i>
+                            <div style="font-weight:800; color:var(--avalia-azul); margin:10px 0;">SELO DE CONFIANÇA
+                            </div>
+                            <div
+                                style="font-size:12px; background:var(--avalia-verde); color:white; padding:4px 12px; border-radius:30px; display:inline-block;">
+                                VERIFICADO 2026</div>
+                        </div>
+                        <div style="text-align:center; color:var(--premium-gold); font-weight:600;">
+                            <i class="fas fa-crown"></i> Consultoria Premium
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-controls">
+            <button class="nav-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+            <div class="dots" id="dotsContainer"></div>
+            <button class="nav-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const track = document.getElementById('slidesTrack');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const dotsContainer = document.getElementById('dotsContainer');
+            const totalSlides = 7;
+            let currentSlide = 0;
+
+            // Criar dots
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('button');
+                dot.classList.add('dot');
+                if (i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+
+            function updateDots() {
+                document.querySelectorAll('.dot').forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+            }
+
+            function goToSlide(index) {
+                currentSlide = index;
+                track.style.transform = `translateX(-${currentSlide * 100}%)`;
+                updateDots();
+            }
+
+            nextBtn.addEventListener('click', () => {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                goToSlide(currentSlide);
+            });
+
+            prevBtn.addEventListener('click', () => {
+                currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                goToSlide(currentSlide);
+            });
+
+            // Swipe
+            let startX = 0;
+            track.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+            track.addEventListener('touchend', e => {
+                const endX = e.changedTouches[0].clientX;
+                if (startX - endX > 50) nextBtn.click();
+                if (endX - startX > 50) prevBtn.click();
+            });
+
+            // Teclado
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') prevBtn.click();
+                if (e.key === 'ArrowRight') nextBtn.click();
+            });
+
+            // Efeito nos botões
+            document.querySelectorAll('.btn-premium').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    btn.style.transform = 'scale(0.97)';
+                    setTimeout(() => btn.style.transform = 'scale(1)', 120);
+                });
+            });
+        })();
+    </script>
+
+</body>
+
+</html>

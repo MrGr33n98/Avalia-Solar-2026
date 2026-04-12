@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCompanyContext } from '@/context/CompanyContext';
-import { AlertCircle, Check, Plus, Search, Building2, Loader2 } from 'lucide-react';
+import { Building2, Loader2, Plus, Search } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 interface CompanySelectorModalProps {
   open: boolean;
@@ -133,9 +134,7 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-gray-900 truncate">{company.name}</span>
                             {company.verified && (
-                              <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500">
-                                <Check className="h-3 w-3 text-white stroke-[3]" />
-                              </div>
+                              <PremiumBadge className="px-1.5 py-0.5" />
                             )}
                           </div>
                           <span className="text-sm text-gray-500 font-medium">{company.city}, {company.state}</span>
@@ -188,9 +187,7 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-gray-900 truncate">{suggestion.name}</span>
                           {suggestion.verified && (
-                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500">
-                              <Check className="h-3 w-3 text-white stroke-[3]" />
-                            </div>
+                            <PremiumBadge className="px-1.5 py-0.5" />
                           )}
                           {suggestion.special && (
                             <div className="w-4 h-4 rounded-full border-2 border-amber-400" />

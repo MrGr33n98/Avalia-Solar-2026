@@ -2,7 +2,8 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Diamond, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
+import { MessageCircle, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
@@ -242,13 +243,7 @@ export default function CompanyHero({
                     {company.name}
                   </h1>
                   {company.verified && (
-                    <div 
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 text-white shadow-lg border border-white/20"
-                      title="Empresa Premium"
-                    >
-                      <Diamond className="h-4 w-4 fill-current" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Premium</span>
-                    </div>
+                    <PremiumBadge className="h-7 px-4" />
                   )}
                 </div>
 

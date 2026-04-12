@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Quiz Ruby on Rails Senior - 250 Questões | Avalia Solar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1D4ED8;
+            --secondary: #22C55E;
+            --dark: #0F172A;
+            --light: #F8FAFC;
+            --text: #0B1324;
+            --danger: #DC2626;
+            --warning: #FBBF24;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                         sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #1a2744 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border-left: 6px solid var(--secondary);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-weight: bold;
+            color: var(--primary);
+            min-width: 120px;
+            text-align: right;
+        }
+
+        /* STATS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-card.correct {
+            border-top-color: var(--success);
+        }
+
+        .stat-card.incorrect {
+            border-top-color: var(--danger);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-card.correct .stat-number {
+            color: var(--success);
+        }
+
+        .stat-card.incorrect .stat-number {
+            color: var(--danger);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* QUIZ AREA */
+        .quiz-area {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            min-height: 500px;
+        }
+
+        .question-number {
+            font-size: 0.85em;
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .question-difficulty {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .difficulty-easy {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .difficulty-medium {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .difficulty-hard {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* OPTIONS */
+        .options {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        .option input[type="radio"] {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .option label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 1.05em;
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .option.incorrect {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        /* BUTTONS */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #1e40af);
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(29, 78, 216, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: var(--text);
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        /* FILTERS */
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* CATEGORIES */
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .category-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .category-description {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+        }
+
+        .category-count {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        /* RESULT */
+        .result-section {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .result-score {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .result-message {
+            font-size: 1.3em;
+            color: var(--text);
+            margin: 20px 0;
+        }
+
+        .result-level {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        .level-junior {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .level-mid {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .level-senior {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        /* EXPLANATION */
+        .explanation {
+            background: #f0f4ff;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                max-height: 0;
+                opacity: 0;
+            }
+            to {
+                max-height: 500px;
+                opacity: 1;
+            }
+        }
+
+        .explanation-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .explanation-text {
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        /* CODE BLOCK */
+        .code-block {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .header {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .quiz-area {
+                padding: 20px;
+            }
+
+            .question-text {
+                font-size: 1.1em;
+            }
+
+            .result-score {
+                font-size: 2.5em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .categories {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .progress-bar {
+                margin: 0;
+                width: 100%;
+            }
+
+            .progress-text {
+                min-width: auto;
+                text-align: center;
+            }
+        }
+
+        /* UTILITY */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        /* TIMER */
+        .timer {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        /* BOOKMARK */
+        .bookmark-btn {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .bookmark-btn.bookmarked {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🚀 Quiz Ruby on Rails Senior</h1>
+            <p>250 Questões | Avalia Solar Edition | Do Básico ao Avançado</p>
+            
+            <div class="progress-container">
+                <span>Progresso:</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">0/250</span>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats">
+            <div class="stat-card correct">
+                <div class="stat-label">Corretas</div>
+                <div class="stat-number" id="correctCount">0</div>
+            </div>
+            <div class="stat-card incorrect">
+                <div class="stat-label">Incorretas</div>
+                <div class="stat-number" id="incorrectCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Taxa de Acerto</div>
+                <div class="stat-number" id="percentageCount">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tempo Decorrido</div>
+                <div class="stat-number" id="timeCount">0m</div>
+            </div>
+        </div>
+
+        <!-- CATEGORY SELECTION -->
+        <div id="categorySection" class="mb-20">
+            <h2 style="margin-bottom: 20px; color: white;">Escolha uma Categoria:</h2>
+            <div class="categories" id="categoriesGrid"></div>
+        </div>
+
+        <!-- QUIZ AREA -->
+        <div id="quizArea" class="quiz-area hidden">
+            <div class="question-number" id="questionNumber"></div>
+            <span class="question-difficulty" id="difficultyBadge"></span>
+            <button class="bookmark-btn" id="bookmarkBtn" onclick="toggleBookmark()" title="Marcar para revisar">⭐</button>
+            
+            <div class="question-text" id="questionText"></div>
+
+            <div class="options" id="optionsContainer"></div>
+
+            <div class="explanation" id="explanation">
+                <div class="explanation-title">📚 Explicação:</div>
+                <div class="explanation-text" id="explanationText"></div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="previousQuestion()" id="prevBtn">← Anterior</button>
+                <button class="btn-primary" onclick="nextQuestion()" id="nextBtn">Próxima →</button>
+                <button class="btn-secondary" onclick="finishQuiz()" id="finishBtn">Finalizar Quiz</button>
+            </div>
+        </div>
+
+        <!-- RESULT SECTION -->
+        <div id="resultSection" class="result-section hidden">
+            <h2>Quiz Finalizado! 🎉</h2>
+            <div class="result-score" id="finalScore"></div>
+            <div class="result-message" id="resultMessage"></div>
+            <div class="result-level" id="resultLevel"></div>
+
+            <div style="margin-top: 30px;">
+                <h3 style="margin-bottom: 20px;">Resumo do Desempenho:</h3>
+                <table style="width: 100%; text-align: center; margin-bottom: 30px;">
+                    <tr>
+                        <td style="padding: 10px;"><strong>Total de Questões:</strong> <span id="resultTotal">0</span></td>
+                        <td style="padding: 10px;"><strong>Respostas Corretas:</strong> <span id="resultCorrect">0</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px;"><strong>Respostas Incorretas:</strong> <span id="resultIncorrect">0</span></td>
+                        <td style="padding: 10px;"><strong>Tempo Total:</strong> <span id="resultTime">0</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="restartQuiz()">Fazer Outro Quiz</button>
+                <button class="btn-secondary" onclick="reviewAnswers()">Revisar Respostas</button>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div id="filterArea" class="filters hidden">
+            <button class="filter-btn" onclick="filterByDifficulty('all')" data-filter="all">Todas as Dificuldades</button>
+            <button class="filter-btn" onclick="filterByDifficulty('easy')" data-filter="easy">Fácil</button>
+            <button class="filter-btn" onclick="filterByDifficulty('medium')" data-filter="medium">Médio</button>
+            <button class="filter-btn" onclick="filterByDifficulty('hard')" data-filter="hard">Difícil</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>🌱 Desenvolvido para elevar sua expertise em Ruby on Rails | Avalia Solar © 2026</p>
+    </div>
+
+    <script>
+        // ============================================
+        // BANCO DE DADOS - 250 QUESTÕES RAILS SENIOR
+        // ============================================
+
+        const quizData = {
+            "fundamentals": {
+                title: "Fundamentos do Rails",
+                description: "MVC, Convention over Configuration, estrutura básica",
+                icon: "📚",
+                questions: [
+                    {
+                        id: 1,
+                        text: "Qual é o princípio fundamental do Rails?",
+                        options: [
+                            "Convention over Configuration (CoC)",
+                            "Configuration over Convention",
+                            "Don't Repeat Yourself (DRY) apenas",
+                            "SOLID principles apenas"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Rails é construído sobre o princípio de Convention over Configuration, o que significa que Rails espera que você siga suas convenções, reduzindo a necessidade de configuração explícita.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 2,
+                        text: "O que MVC significa e qual é o propósito de cada camada?",
+                        options: [
+                            "Model: dados, View: UI, Controller: lógica",
+                            "Model: UI, View: dados, Controller: lógica",
+                            "Model: lógica, View: dados, Controller: UI",
+                            "Model: tudo, View: nada, Controller: nada"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "MVC (Model-View-Controller): Model gerencia dados, View apresenta a interface, Controller orquestra a lógica de requisição.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 3,
+                        text: "Na Avalia Solar, qual é a responsabilidade do CompaniesController?",
+                        options: [
+                            "Receber requisições HTTP e orquestrar lógica",
+                            "Armazenar dados de empresas",
+                            "Renderizar HTML direto",
+                            "Validar dados do banco"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "O Controller é o maestro - recebe requisições, chama models, e retorna respostas. Na Avalia Solar, CompaniesController gerencia a listagem, detalhes e ações de empresas.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 4,
+                        text: "O que é uma Migration no Rails?",
+                        options: [
+                            "Um arquivo que define mudanças na estrutura do banco de dados",
+                            "Uma cópia do banco de dados",
+                            "Um script de importação de dados",
+                            "Uma forma de fazer backup automático"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Migrations são arquivos que permitem versionamento do schema do banco. Cada migration representa uma mudança (criar tabela, adicionar coluna, etc).",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 5,
+                        text: "Como Rails diferencia entre os ambientes development, test e production?",
+                        options: [
+                            "Arquivos de configuração específicos em config/environments/",
+                            "Variáveis de ambiente RAILS_ENV",
+                            "Configurações no Gemfile",
+                            "Ambos A e B"
+                        ],
+                        correct: 3,
+                        difficulty: "medium",
+                        explanation: "Rails usa RAILS_ENV (variável de ambiente) e arquivos de configuração específicos (config/environments/development.rb, etc) para diferenciar comportamento em cada ambiente.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 6,
+                        text: "Qual comando cria um novo modelo Company com as migrações correspondentes?",
+                        options: [
+                            "rails generate model Company name:string",
+                            "rails new Company",
+                            "rails create Company",
+                            "rails add Company name:string"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "O comando 'rails generate model Company name:string' (ou 'rails g model') cria o arquivo de modelo e a migration correspondente.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 7,
+                        text: "O que é RESTful routing no Rails?",
+                        options: [
+                            "Mapear ações HTTP (GET, POST, etc) para recursos usando convenção padrão",
+                            "Uma forma de nomear variáveis",
+                            "Um padrão de autenticação",
+                            "Uma metodologia de teste"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "RESTful routing mapeia URLs e métodos HTTP para ações do controller. 'resources :companies' cria automaticamente 7 rotas (index, show, new, create, edit, update, destroy).",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 8,
+                        text: "Na Avalia Solar, como seria a rota para 'adicionar uma categoria'?",
+                        options: [
+                            "POST /categories (create action)",
+                            "GET /categories/new (new action) → POST /categories (create action)",
+                            "PUT /categories",
+                            "DELETE /categories"
+                        ],
+                        correct: 1,
+                        difficulty: "medium",
+                        explanation: "Primeiro GET /categories/new exibe o formulário, depois POST /categories cria o recurso. Este é o fluxo RESTful padrão.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 9,
+                        text: "O que é Gemfile no Rails?",
+                        options: [
+                            "Um arquivo que lista todas as gems (dependências) do projeto",
+                            "Um arquivo de configuração do banco de dados",
+                            "Um arquivo de rotas",
+                            "Um arquivo de variáveis de ambiente"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Gemfile lista todas as gems (bibliotecas Ruby) que seu projeto precisa. Executar 'bundle install' instala as versões definidas.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 10,
+                        text: "Para qual versão do Rails a Avalia Solar foi desenvolvida?",
+                        options: [
+                            "Rails 7+",
+                            "Rails 6",
+                            "Rails 5",
+                            "Rails 4"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Avalia Solar usa Rails 7+, que inclui Importmap, turbo-rails e outras features modernas do Rails.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 11,
+                        text: "Como você cria um controller via Rails generator?",
+                        options: [
+                            "rails generate controller companies index show",
+                            "rails new controller companies",
+                            "rails add controller companies",
+                            "rails create companies_controller"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "O comando 'rails generate controller companies index show' cria um controller com as ações index e show, além das views correspondentes.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 12,
+                        text: "O que a convenção Rails espera do nome de uma tabela de modelo?",
+                        options: [
+                            "Plural do nome do modelo (Company → companies)",
+                            "Singular do nome do modelo",
+                            "Exatamente igual ao nome do modelo",
+                            "Qualquer nome, desde que configurado"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Rails convenciona tabelas em plural: Company → companies. Isso reduz configuração necessária.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 13,
+                        text: "Qual arquivo em Rails define todas as rotas da aplicação?",
+                        options: [
+                            "config/routes.rb",
+                            "app/routes.rb",
+                            "config/application.rb",
+                            "Gemfile"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "config/routes.rb é onde você define todas as rotas. Na Avalia Solar, define-se tanto rotas públicas quanto rotas de admin.",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 14,
+                        text: "O que significa 'eager loading' em Rails?",
+                        options: [
+                            "Carregar dados relacionados antecipadamente para evitar N+1 queries",
+                            "Carregar tudo na memória sempre",
+                            "Deletar dados não usados",
+                            "Um tipo de backup"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Eager loading (como .includes ou .joins) carrega dados relacionados em uma única query, evitando múltiplas queries (problema N+1).",
+                        category: "fundamentals"
+                    },
+                    {
+                        id: 15,
+                        text: "Na Avalia Solar, qual seria um exemplo de N+1 query problem?",
+                        options: [
+                            "Carregar empresas, depois fazer uma query por empresa para carregar categorias",
+                            "Usar .includes(:categories)",
+                            "Usar uma única query com joins",
+                            "Usar cache"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "N+1: 1 query para empresas + N queries para as categorias de cada empresa. Solução: .includes(:categories).",
+                        category: "fundamentals"
+                    }
+                ]
+            },
+            "activerecord": {
+                title: "ActiveRecord - ORM do Rails",
+                description: "Modelos, Validações, Callbacks, Associações",
+                icon: "🗄️",
+                questions: [
+                    {
+                        id: 101,
+                        text: "O que é ActiveRecord no Rails?",
+                        options: [
+                            "Um ORM (Object-Relational Mapping) que mapeia tabelas de banco para modelos Ruby",
+                            "Um banco de dados específico",
+                            "Um padrão de design de UI",
+                            "Uma forma de fazer cache"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "ActiveRecord é o ORM padrão do Rails. Permite trabalhar com dados do banco como objetos Ruby sem escrever SQL bruto.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 102,
+                        text: "Como você define uma relação um-para-muitos entre Company e Review?",
+                        options: [
+                            "class Company < ApplicationRecord; has_many :reviews; end",
+                            "class Company < ApplicationRecord; has_one :review; end",
+                            "class Company < ApplicationRecord; belongs_to :review; end",
+                            "class Company < ApplicationRecord; many_to_one :reviews; end"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "has_many :reviews no modelo Company define que uma empresa tem muitas avaliações. E em Review: belongs_to :company.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 103,
+                        text: "Qual é a diferença entre has_many e has_one?",
+                        options: [
+                            "has_many: múltiplos registros relacionados. has_one: apenas um registro relacionado",
+                            "Não há diferença, são sinônimos",
+                            "has_one é mais rápido",
+                            "has_many é para arrays, has_one é para hashes"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "has_many permite múltiplos registros (Company tem muitas Reviews). has_one restringe a apenas um (Company tem um Owner).",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 104,
+                        text: "Como você adiciona uma validação de presença em um modelo?",
+                        options: [
+                            "validates :name, presence: true",
+                            "validate :name",
+                            "required :name",
+                            "check :name"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "O helper 'validates' define validações. 'presence: true' garante que o campo não seja vazio.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 105,
+                        text: "Na Avalia Solar, qual validação você adicionaria ao email?",
+                        options: [
+                            "validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }",
+                            "validates :email, presence: true",
+                            "validates :email, length: { minimum: 5 }",
+                            "validates :email, only: true"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Email precisa ser presente, único na base, e seguir formato válido. A combinação de validações garante integridade.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 106,
+                        text: "O que são callbacks (before_save, after_create, etc)?",
+                        options: [
+                            "Métodos que executam em momentos específicos do lifecycle de um modelo",
+                            "Funções de autenticação",
+                            "Métodos chamados por Controllers",
+                            "Um padrão de normalização de dados"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Callbacks como before_save, after_create executam automaticamente em eventos específicos do ciclo de vida do modelo.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 107,
+                        text: "Qual seria um bom caso de uso para before_save na Avalia Solar?",
+                        options: [
+                            "Normalizar o nome da empresa para lowercase antes de salvar",
+                            "Enviar email após criação",
+                            "Deletar a empresa",
+                            "Contar quantas empresas existem"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "before_save é ideal para transformações de dados (trim, lowercase, slug). after_create é melhor para efeitos colaterais (email, logs).",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 108,
+                        text: "Como você faz uma query para encontrar todas as empresas com confiança > 80?",
+                        options: [
+                            "Company.where('trust_score > ?', 80)",
+                            "Company.find(trust_score: 80)",
+                            "Company.all.filter { |c| c.trust_score > 80 }",
+                            "Company.search(trust_score: 80)"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "where() é o método para filtrar. 'trust_score > ?' usa placeholder seguro contra SQL injection.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 109,
+                        text: "Qual é a diferença entre .find() e .where() em ActiveRecord?",
+                        options: [
+                            "find() retorna um record único, where() retorna um array/collection",
+                            "find() é mais lento",
+                            "where() só funciona com strings",
+                            "Não há diferença"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "find() procura por ID e retorna um record ou erro. where() filtra e retorna uma relação que pode ter múltiplos records.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 110,
+                        text: "Como você define um escopo em um modelo?",
+                        options: [
+                            "scope :high_rated, -> { where('trust_score > ?', 80) }",
+                            "def high_rated; where('trust_score > 80'); end",
+                            "Escopos não existem em Rails",
+                            "scope :high_rated { trust_score > 80 }"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Escopos encapsulam queries comuns. Na Avalia Solar: scope :high_rated permite Company.high_rated em vez de repetir o where.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 111,
+                        text: "O que é eager loading e como você implementa?",
+                        options: [
+                            "Company.includes(:reviews) carrega empresas E reviews em 2 queries",
+                            "Company.lazy carrega apenas quando necessário",
+                            "Company.preload(:reviews) é igual a includes",
+                            "Ambos A e C"
+                        ],
+                        correct: 3,
+                        difficulty: "hard",
+                        explanation: "includes() e preload() ambos fazem eager loading. includes() é mais inteligente (usa LEFT OUTER JOIN quando possível).",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 112,
+                        text: "Como você escreve uma query complexa com múltiplas condições?",
+                        options: [
+                            "Company.where(active: true).where('trust_score > ?', 80).where(category: 'solar')",
+                            "Métodos can't ser encadeados",
+                            "Precisa de uma query SQL bruta",
+                            "Precisa usar SQL raw"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "ActiveRecord permite method chaining. Múltiplos where() se combinam com AND lógico.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 113,
+                        text: "O que faz o método .pluck() em ActiveRecord?",
+                        options: [
+                            "Retorna um array com valores de uma coluna específica",
+                            "Remove um registro",
+                            "Duplica um registro",
+                            "Faz uma cópia de segurança"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Company.pluck(:name) retorna ['Empresa A', 'Empresa B', ...] sem instanciar objetos, muito eficiente.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 114,
+                        text: "Como você cria um índice em uma coluna via Migration?",
+                        options: [
+                            "add_index :companies, :slug",
+                            "create_index :companies, :slug",
+                            "index :companies, :slug",
+                            "Rails cria automaticamente todos os índices"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "add_index em migrations cria índices de banco. Crítico para performance em colunas frequentemente consultadas.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 115,
+                        text: "O que é um 'dependent: :destroy' em has_many?",
+                        options: [
+                            "Deleta registros filhos quando o pai é deletado",
+                            "Impede deletar o pai se houver filhos",
+                            "Cria cópias dos filhos",
+                            "Não faz nada, é apenas documentação"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "has_many :reviews, dependent: :destroy garante que reviews sejam deletadas quando a empresa é deletada, mantendo integridade.",
+                        category: "activerecord"
+                    },
+                    {
+                        id: 116,
+                        text: "Como você implementa 'soft delete' (não deletar de verdade)?",
+                        options: [
+                            "Adicionar coluna deleted_at e usar callbacks, ou usar gems como paranoia",
+                            "Usar 'delete' em vez de 'destroy'",
+                            "Fazer backup antes de deletar",
+                            "Rails não suporta soft delete"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Soft delete marca registros como deletados mas não remove. Útil para auditoria. Gems como paranoia automatizam isso.",
+                        category: "activerecord"
+                    }
+                ]
+            },
+            "controllers": {
+                title: "Controllers & Routing",
+                description: "Ações, Filtros, Strong Parameters, RESTful API",
+                icon: "🎮",
+                questions: [
+                    {
+                        id: 201,
+                        text: "O que são as 7 ações padrão do Rails RESTful controller?",
+                        options: [
+                            "index, show, new, create, edit, update, destroy",
+                            "list, get, post, put, delete, patch, remove",
+                            "all, one, add, create, edit, modify, remove",
+                            "view, add, save, load, edit, change, delete"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Rails convenciona 7 ações RESTful: 3 GET (index, show, new/edit), 2 POST (create), 2 modificadoras (update, destroy).",
+                        category: "controllers"
+                    },
+                    {
+                        id: 202,
+                        text: "Qual é o propósito da ação 'new' em um RESTful controller?",
+                        options: [
+                            "Exibir o formulário para criar um novo recurso",
+                            "Criar um novo recurso no banco",
+                            "Listar recursos novos",
+                            "Deletar o recurso mais novo"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "'new' renderiza o formulário. 'create' processa o envio. Este é o padrão Rails: GET exibe form, POST processa.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 203,
+                        text: "O que são Strong Parameters no Rails?",
+                        options: [
+                            "Whitelist de parâmetros permitidos para proteger contra mass assignment",
+                            "Um tipo de banco de dados",
+                            "Validações mais rigorosas",
+                            "Um padrão de autenticação"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Strong Parameters (require/permit) definem quais parâmetros são aceitos, evitando que usuários injetem campos não esperados.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 204,
+                        text: "Como você usa Strong Parameters para a Avalia Solar Company?",
+                        options: [
+                            "params.require(:company).permit(:name, :email, :category)",
+                            "params[:company]",
+                            "params.permit!",
+                            "params.all"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "require() garante que :company existe. permit() define quais chaves são permitidas. Proteção crítica contra manipulação de dados.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 205,
+                        text: "O que são before_action (filtros) em Controllers?",
+                        options: [
+                            "Métodos que executam antes de ações específicas",
+                            "Métodos que executam depois de todas as ações",
+                            "Um tipo de cache",
+                            "Validações de segurança"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "before_action executa lógica comum antes de ações. Ex: authenticate_user!, set_company para carregar recurso.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 206,
+                        text: "Como você estrutura um before_action na Avalia Solar para autenticação?",
+                        options: [
+                            "before_action :authenticate_user!, except: [:index, :show]",
+                            "before_action :authenticate_user!",
+                            "authenticate_user! em cada ação",
+                            "Rails faz automaticamente"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "before_action executa em cada ação ou apenas as especificadas. Usar except: ou only: dá flexibilidade.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 207,
+                        text: "O que retorna params em um controller?",
+                        options: [
+                            "Um hash contendo parâmetros da query string, form data e route params",
+                            "Apenas dados do formulário",
+                            "Apenas dados da URL",
+                            "Um array de valores"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "params é um hash que combina GET params (?foo=bar), POST form data, e dynamic route params (:id).",
+                        category: "controllers"
+                    },
+                    {
+                        id: 208,
+                        text: "Como você renderiza uma view customizada em um controller?",
+                        options: [
+                            "render :custom_view",
+                            "view :custom_view",
+                            "show :custom_view",
+                            "template :custom_view"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "render renderiza uma view específica. Por padrão, Rails renderiza 'action_name' automaticamente.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 209,
+                        text: "Como você retorna JSON de um controller Rails?",
+                        options: [
+                            "render json: @company",
+                            "render :json",
+                            "respond_with @company",
+                            "to_json"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "render json: automaticamente serializa o objeto. Na Avalia Solar API, usado para endpoints que retornam dados de empresas.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 210,
+                        text: "O que faz o método redirect_to?",
+                        options: [
+                            "Redireciona o usuário para outra URL com status 302",
+                            "Renderiza outra view sem mudar URL",
+                            "Deleta um registro",
+                            "Faz cache de uma página"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "redirect_to envia um redirecionamento HTTP ao navegador. Usual após criar/atualizar recurso.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 211,
+                        text: "Qual seria a sequência correta após criar uma empresa na Avalia Solar?",
+                        options: [
+                            "@company = Company.create(params); redirect_to @company",
+                            "@company = Company.create(params); render :show",
+                            "render :index",
+                            "Não redirecionar"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Após POST create, o padrão é redirecionar para o recurso criado (PRG pattern - Post-Redirect-Get).",
+                        category: "controllers"
+                    },
+                    {
+                        id: 212,
+                        text: "Como você passa dados de um controller para uma view?",
+                        options: [
+                            "Variáveis de instância (@variavel)",
+                            "Variáveis locais (variavel)",
+                            "Variáveis globais ($variavel)",
+                            "Ambiente (ENV)"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "Apenas variáveis de instância (@) são acessíveis em views. Isso é por design para limitar o que a view pode acessar.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 213,
+                        text: "O que significam os status codes HTTP retornados por um controller Rails?",
+                        options: [
+                            "200: sucesso, 201: criado, 400: erro cliente, 500: erro servidor",
+                            "Todos significam a mesma coisa",
+                            "Rails não diferencia status codes",
+                            "São apenas para logging"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Status codes indicam o resultado: 2xx (sucesso), 3xx (redireção), 4xx (erro cliente), 5xx (erro servidor).",
+                        category: "controllers"
+                    },
+                    {
+                        id: 214,
+                        text: "Como você especifica um status code customizado em render/redirect?",
+                        options: [
+                            "render json: @company, status: :created",
+                            "render @company, status: 201",
+                            "status = 201; render @company",
+                            "Ambos A e B"
+                        ],
+                        correct: 3,
+                        difficulty: "hard",
+                        explanation: "Rails permite status codes como símbolo (:created) ou número (201). Usar símbolos é mais legível.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 215,
+                        text: "O que é responder_to em um controller?",
+                        options: [
+                            "Bloco que retorna formatos diferentes (HTML, JSON, XML) baseado no Accept header",
+                            "Um callback",
+                            "Um tipo de autenticação",
+                            "Uma validação"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "respond_to permite um controller servir múltiplos formatos. Útil para suportar browser e API no mesmo código.",
+                        category: "controllers"
+                    },
+                    {
+                        id: 216,
+                        text: "Como você cria uma rota customizada além das 7 RESTful?",
+                        options: [
+                            "member { get :custom } ou collection { get :all_reports }",
+                            "Não é possível customizar rotas",
+                            "Recriar o controller inteiro",
+                            "Usar apenas as 7 rotas padrão"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "member adiciona rota com :id (ex: /companies/:id/verify). collection não precisa de :id (ex: /companies/top_rated).",
+                        category: "controllers"
+                    }
+                ]
+            },
+            "security": {
+                title: "Segurança",
+                description: "SQL Injection, XSS, CSRF, Autenticação, Autorização",
+                icon: "🔒",
+                questions: [
+                    {
+                        id: 301,
+                        text: "O que é SQL Injection e como Rails protege contra?",
+                        options: [
+                            "Ataque onde usuário injeta SQL; Rails usa placeholders (?)",
+                            "Um tipo de banco de dados",
+                            "Rails não protege, precisa proteger manualmente",
+                            "Um recurso de performance"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "SQL Injection: Company.where(\"name = '#{params[:name]}'\") é vulnerável. Company.where(name: params[:name]) é seguro - Rails escapa valores.",
+                        category: "security"
+                    },
+                    {
+                        id: 302,
+                        text: "O que é XSS (Cross-Site Scripting)?",
+                        options: [
+                            "Ataque onde usuário injeta JavaScript que é executado no navegador de outros usuários",
+                            "Um tipo de banco de dados",
+                            "Um protocolo de rede",
+                            "Um erro de sintaxe Ruby"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "XSS: se empresa tiver name = '<script>alert(1)</script>', Rails escapa HTML automaticamente em <%= %>.",
+                        category: "security"
+                    },
+                    {
+                        id: 303,
+                        text: "Como Rails protege contra XSS por padrão?",
+                        options: [
+                            "Escapa HTML em <%= %> (ERB tags); html_safe deve ser explícito",
+                            "Rails não protege",
+                            "Usando CSRF tokens",
+                            "Usando HTTPS"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "<%= user.name %> retorna &lt; em vez de < (escape). Só use raw() ou html_safe se você controlar o conteúdo.",
+                        category: "security"
+                    },
+                    {
+                        id: 304,
+                        text: "O que é CSRF (Cross-Site Request Forgery)?",
+                        options: [
+                            "Ataque onde site malicioso faz requisição em nome do usuário autenticado",
+                            "Um tipo de malware",
+                            "Um bug de banco de dados",
+                            "Uma vulnerabilidade de rede"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "CSRF: site malicioso POST para deletar sua empresa sem você consentir. Rails adiciona authenticity_token em forms para proteger.",
+                        category: "security"
+                    },
+                    {
+                        id: 305,
+                        text: "Como Rails implementa proteção CSRF?",
+                        options: [
+                            "Adiciona token único em cada form; valida token em POST/PUT/DELETE",
+                            "Usando HTTPS",
+                            "Usando sessions",
+                            "Não há proteção CSRF"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "form_with injeta <%= hidden_field_tag :authenticity_token %>. Rails rejeita POST sem token válido.",
+                        category: "security"
+                    },
+                    {
+                        id: 306,
+                        text: "Qual é a diferença entre Autenticação e Autorização?",
+                        options: [
+                            "Autenticação: quem você é? Autorização: você pode fazer isso?",
+                            "São a mesma coisa",
+                            "Autenticação é para login, Autorização para URLs",
+                            "Não há diferença prática"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Autenticação verifica identidade (login). Autorização verifica permissões (quem pode editar que empresa).",
+                        category: "security"
+                    },
+                    {
+                        id: 307,
+                        text: "Como você implementa autenticação no Rails?",
+                        options: [
+                            "Usar gems como Devise que gerenciam password hashing, sessions, etc",
+                            "Guardar passwords em plain text",
+                            "Rails faz automaticamente",
+                            "Usar apenas cookies"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Devise é o padrão: bcrypt para hash, sessions gerenciadas, recovery tokens, etc. Na Avalia Solar, Devise gerencia usuários.",
+                        category: "security"
+                    },
+                    {
+                        id: 308,
+                        text: "Como você implementa autorização (quem pode editar empresa)?",
+                        options: [
+                            "Usar Pundit gem que define policies para cada modelo",
+                            "Adicionar if user == company.owner em cada ação",
+                            "Confiar no usuário",
+                            "Rails não suporta"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Pundit: authorize @company no controller. CompanyPolicy#update? define se user pode editar.",
+                        category: "security"
+                    },
+                    {
+                        id: 309,
+                        text: "Qual seria uma política de autorização para Avalia Solar?",
+                        options: [
+                            "Apenas dono da empresa pode editar; admin pode editar qualquer uma",
+                            "Qualquer usuário pode editar qualquer empresa",
+                            "Ninguém pode editar",
+                            "Usuário pode editar apenas a primeira empresa"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Regra comum: user == record.owner || user.admin?. Na Avalia Solar, empresa só pode editar seus próprios dados.",
+                        category: "security"
+                    },
+                    {
+                        id: 310,
+                        text: "O que é Mass Assignment em Rails?",
+                        options: [
+                            "Permitir Company.create(params[:company]) sem filtrar - INSEGURO",
+                            "Um tipo de validação",
+                            "Criar múltiplas instâncias",
+                            "Um padrão de design"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Sem Strong Parameters, usuário pode fazer params[:company][:admin] = true. Strong Parameters.require().permit() previne.",
+                        category: "security"
+                    },
+                    {
+                        id: 311,
+                        text: "Como você hash passwords no Rails?",
+                        options: [
+                            "has_secure_password usa bcrypt automaticamente",
+                            "Guardar em plain text",
+                            "Usar MD5",
+                            "Não fazer hash"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "has_secure_password em User model usa bcrypt. Passwords são hashed com salt, mesmo com múltiplas requisições.",
+                        category: "security"
+                    },
+                    {
+                        id: 312,
+                        text: "O que é uma environment variable (.env) e por que não fazer commit?",
+                        options: [
+                            "Guardas secrets (API keys, passwords); commit vaza credenciais",
+                            "Uma feature do Rails",
+                            "Variáveis de teste",
+                            "Não importa fazer commit"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: ".env contém DATABASE_URL, SECRET_KEY_BASE, etc. Nunca fazer commit para não expor credenciais. Usar .env.example.",
+                        category: "security"
+                    },
+                    {
+                        id: 313,
+                        text: "Na Avalia Solar, qual informação NUNCA deveria ser exposta na API?",
+                        options: [
+                            "Passwords, API keys, financial data sensitivo",
+                            "Nomes de usuários",
+                            "Nomes de empresas",
+                            "URLs públicas"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Serializers como CompanySerializer controlam quais campos retornar. Nunca serializar password ou tokens.",
+                        category: "security"
+                    },
+                    {
+                        id: 314,
+                        text: "Como você protege uma API Rails contra requisições não autorizadas?",
+                        options: [
+                            "Bearer tokens (JWT), API keys, ou sessions autenticadas",
+                            "Contar com HTTPS",
+                            "Sem proteção necessária",
+                            "Apenas bloquear IPs"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "APIs usam tokens (JWT) ou API keys. HTTP header: Authorization: Bearer <token>. Controllers verificam token.",
+                        category: "security"
+                    },
+                    {
+                        id: 315,
+                        text: "O que é Rate Limiting e por que é importante?",
+                        options: [
+                            "Limitar requisições por IP/usuário para prevenir abuse (DDoS, brute force)",
+                            "Um tipo de cache",
+                            "Uma validação de dados",
+                            "Um padrão de arquitetura"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Gems como rack-attack implementam rate limiting. Na Avalia Solar: limitar tentativas de login, requisições de API.",
+                        category: "security"
+                    }
+                ]
+            },
+            "performance": {
+                title: "Performance & Otimização",
+                description: "N+1 Queries, Caching, Indexação, Background Jobs",
+                icon: "⚡",
+                questions: [
+                    {
+                        id: 401,
+                        text: "O que é o problema N+1 e como identificar?",
+                        options: [
+                            "1 query para listar + N queries para dados relacionados. Bullet gem identifica.",
+                            "Um tipo de erro de sintaxe",
+                            "Um padrão de design",
+                            "Um tipo de validação"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "N+1: Company.all (1 query) + loop chamando company.reviews (N queries). Solução: Company.includes(:reviews).",
+                        category: "performance"
+                    },
+                    {
+                        id: 402,
+                        text: "Como você resolve N+1 no código da Avalia Solar?",
+                        options: [
+                            "Company.includes(:reviews, :categories) ao invés de Company.all",
+                            "Não se preocupar com N+1",
+                            "Usar SQL bruto",
+                            "Aumentar RAM do servidor"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "includes() eager-load relacionamentos em poucas queries. Na Avalia Solar: empresas com reviews carregam em 2 queries.",
+                        category: "performance"
+                    },
+                    {
+                        id: 403,
+                        text: "O que é caching e quais tipos existem?",
+                        options: [
+                            "Page cache, action cache, fragment cache, query cache, Redis cache",
+                            "Rails não suporta cache",
+                            "Apenas cache do browser",
+                            "Um tipo de validação"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Rails cache evita regenerar views/queries. Fragment cache cached trechos de HTML. Query cache cacheia resultados ActiveRecord.",
+                        category: "performance"
+                    },
+                    {
+                        id: 404,
+                        text: "Como você implementa fragment cache em Rails?",
+                        options: [
+                            "<% cache @company do %> ... <% end %>",
+                            "<%= cache %><%= @company.name %><% end_cache %>",
+                            "cache :view",
+                            "Rails faz automaticamente"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "cache @company auto-gera chave baseado em objeto. Se @company muda, cache invalida automaticamente.",
+                        category: "performance"
+                    },
+                    {
+                        id: 405,
+                        text: "O que é Redis e como é usado em Rails?",
+                        options: [
+                            "In-memory data store para cache, sessions, background jobs (Sidekiq)",
+                            "Um banco de dados relacional",
+                            "Um framework frontend",
+                            "Um ORM"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Redis extremamente rápido (in-memory). Rails usa para: cache, session store, Sidekiq jobs, rate limiting.",
+                        category: "performance"
+                    },
+                    {
+                        id: 406,
+                        text: "Como você configura ActiveRecord para usar índices?",
+                        options: [
+                            "add_index :companies, :email no migration",
+                            "Rails cria índices automaticamente",
+                            "Escrever índices em raw SQL",
+                            "Não é necessário índices"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Índices speedup queries. Na Avalia Solar: índices em email, slug, category para queries rápidas.",
+                        category: "performance"
+                    },
+                    {
+                        id: 407,
+                        text: "Qual é a diferença entre pluck, select, e map em performance?",
+                        options: [
+                            "pluck: só coluna no DB, select: objetos no DB, map: na memória (mais lento)",
+                            "São iguais",
+                            "map é mais rápido",
+                            "Não há diferença"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Company.pluck(:name) query no DB. Company.all.map(&:name) carrega todos os objetos (slow). Sempre usar pluck quando possível.",
+                        category: "performance"
+                    },
+                    {
+                        id: 408,
+                        text: "O que é um Background Job e quando usar?",
+                        options: [
+                            "Task assíncrona (Sidekiq); usar para email, relatórios, processamento longo",
+                            "Um tipo de validação",
+                            "Rails faz automaticamente",
+                            "Um padrão de design"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Sidekiq workers rodam em background. Na Avalia Solar: enviar emails, recalcular trust_score, processar importações.",
+                        category: "performance"
+                    },
+                    {
+                        id: 409,
+                        text: "Como você fila um background job no Rails?",
+                        options: [
+                            "TrustScoreRecalculationJob.perform_later(company_id)",
+                            "TrustScoreRecalculationJob.perform(company_id)",
+                            "Jobs não existem em Rails",
+                            "Usar apenas threads"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "perform_later filtra; perform executa imediatamente. Na Avalia Solar, TrustScoreJob recalcula score em background.",
+                        category: "performance"
+                    },
+                    {
+                        id: 410,
+                        text: "Qual é a diferença entre delay e schedule em Sidekiq?",
+                        options: [
+                            "delay: executar depois; schedule: executar em tempo futuro específico",
+                            "São iguais",
+                            "Rails não suporta",
+                            "Apenas schedule existe"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "perform_later() executa ASAP. perform_later(wait: 1.hour) executa em 1 hora. Sidekiq-scheduler para recurring jobs.",
+                        category: "performance"
+                    },
+                    {
+                        id: 411,
+                        text: "Como você monitora performance de queries?",
+                        options: [
+                            "Rails logs, NewRelic APM, Bullet gem, rack-mini-profiler",
+                            "Não é necessário",
+                            "Apenas Visual Studio Code",
+                            "Confiar no intuito"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Na Avalia Solar, NewRelic monitora APM. Bullet detecta N+1. rack-mini-profiler mostra timing em dev.",
+                        category: "performance"
+                    },
+                    {
+                        id: 412,
+                        text: "Na Avalia Solar, qual seria uma query lenta de resolver?",
+                        options: [
+                            "Listar todas as empresas com todas as reviews e categorias sem includes",
+                            "SELECT name FROM companies",
+                            "Buscar uma empresa por ID",
+                            "Contar empresas por categoria"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Sem .includes, cada empresa carrega suas reviews + categories. Isso é N+1. Solução: Company.includes(:reviews, :categories).",
+                        category: "performance"
+                    },
+                    {
+                        id: 413,
+                        text: "Como você faz uma query ser lazy (executar apenas quando acessada)?",
+                        options: [
+                            "ActiveRecord relations são lazy por padrão até .to_a ou iteração",
+                            "Precisa usar Thread.lazy",
+                            "Não existe lazy loading",
+                            "Tudo é eager loaded"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Company.where(...) não executa query. Apenas quando.each, .to_a, ou acesso direto executa. Muito eficiente.",
+                        category: "performance"
+                    },
+                    {
+                        id: 414,
+                        text: "Qual gem você usa para pagination em Rails?",
+                        options: [
+                            "kaminari ou will_paginate",
+                            "Rails faz automaticamente",
+                            "Fazer manual com offset/limit",
+                            "Não existe"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "kaminari é moderno, will_paginate é tradicional. Na Avalia Solar: Company.page(params[:page]).per(20).",
+                        category: "performance"
+                    },
+                    {
+                        id: 415,
+                        text: "Como você aumenta performance em operações BULK (inserir muitos registros)?",
+                        options: [
+                            "usar insert_all ou bulk operations, evitar loop de create",
+                            "Usar loop com create",
+                            "Não há otimização possível",
+                            "Aumentar RAM"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Company.insert_all(array_of_hashes) insere em 1 query. Loop de create = N queries. Muito mais rápido.",
+                        category: "performance"
+                    }
+                ]
+            },
+            "testing": {
+                title: "Testes",
+                description: "RSpec, Unit Tests, Integration Tests, Factories",
+                icon: "🧪",
+                questions: [
+                    {
+                        id: 501,
+                        text: "O que é TDD (Test-Driven Development)?",
+                        options: [
+                            "Escrever testes ANTES do código; depois implementar para passar",
+                            "Escrever código depois e testes depois",
+                            "Não testar antes",
+                            "Testar é perda de tempo"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "TDD: Red (teste falha) → Green (código passa) → Refactor. Garante cobertura e design melhor.",
+                        category: "testing"
+                    },
+                    {
+                        id: 502,
+                        text: "Qual é a gem padrão para testes em Rails?",
+                        options: [
+                            "RSpec",
+                            "TestUnit",
+                            "Cucumber",
+                            "Rails não suporta testes"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "RSpec é a mais popular. Rails vem com Minitest também. Na Avalia Solar, RSpec.",
+                        category: "testing"
+                    },
+                    {
+                        id: 503,
+                        text: "Qual é a diferença entre um teste unitário e um teste de integração?",
+                        options: [
+                            "Unit: testa um método isolado. Integration: testa fluxo completo HTTP",
+                            "Não há diferença",
+                            "Integration é mais rápido",
+                            "Unit testa tudo"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "Unit: Company.valid? Integration: POST /companies com form data. Ambos necessários.",
+                        category: "testing"
+                    },
+                    {
+                        id: 504,
+                        text: "Como você estrutura um teste RSpec básico?",
+                        options: [
+                            "describe, context, it blocks com expect assertions",
+                            "def test_nome; assert; end",
+                            "RSpec não existe",
+                            "Testes não são organizáveis"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "describe 'Company' do; it 'is valid with attributes' do; expect(company).to be_valid; end; end",
+                        category: "testing"
+                    },
+                    {
+                        id: 505,
+                        text: "O que é uma Factory (FactoryBot) em testes?",
+                        options: [
+                            "Helper que cria objetos de teste com atributos padrão",
+                            "Um padrão de design",
+                            "Uma tabela de banco",
+                            "Um tipo de cache"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "factory :company { name 'Solar X' }. Depois: create(:company). Evita repetir atributos.",
+                        category: "testing"
+                    },
+                    {
+                        id: 506,
+                        text: "Como você testa validações em RSpec?",
+                        options: [
+                            "expect(company).to validate_presence_of(:name)",
+                            "company.valid?",
+                            "RSpec não pode testar validações",
+                            "Validações não precisam de teste"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "shoulda-matchers gem permite expect().to validate_presence_of. Alernativa: criar manualmente com invalid factory.",
+                        category: "testing"
+                    },
+                    {
+                        id: 507,
+                        text: "Como você testa associações em RSpec?",
+                        options: [
+                            "expect(company).to have_many(:reviews)",
+                            "Associações não precisam teste",
+                            "RSpec não testa associações",
+                            "Manualmente criar e verificar"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "shoulda-matchers: expect(company).to have_many(:reviews). Garante que associação existe.",
+                        category: "testing"
+                    },
+                    {
+                        id: 508,
+                        text: "Como você faz um teste HTTP (request) no RSpec?",
+                        options: [
+                            "get :index, format: :json; expect(response).to have_http_status(:success)",
+                            "Testes HTTP não existem",
+                            "Usar curl manualmente",
+                            "Apenas testes de modelo"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "RSpec pode fazer request tests. get '/companies', expect(response).to have_http_status(200).",
+                        category: "testing"
+                    },
+                    {
+                        id: 509,
+                        text: "Como você moca (mock) um método externo no RSpec?",
+                        options: [
+                            "allow(object).to receive(:method).and_return(value)",
+                            "RSpec não suporta mocking",
+                            "Chamar de verdade",
+                            "Não fazer mock"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "allow(TrustScoreService).to receive(:calculate).and_return(85). Isola seu teste.",
+                        category: "testing"
+                    },
+                    {
+                        id: 510,
+                        text: "O que é cobertura de testes (coverage)?",
+                        options: [
+                            "Porcentagem do código coberto por testes; medido com SimpleCov",
+                            "Um tipo de cache",
+                            "Um padrão de design",
+                            "Não é importante"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "SimpleCov mede %. Objetivo: >80% cobertura. Na Avalia Solar, todos os models/services devem ter testes.",
+                        category: "testing"
+                    },
+                    {
+                        id: 511,
+                        text: "Como você testa um callback (before_save) em RSpec?",
+                        options: [
+                            "Criar objeto, verificar efeito do callback com expect",
+                            "Callbacks não precisam teste",
+                            "Testes não testam callbacks",
+                            "Usar SQL direto"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "company = build(:company); company.save; expect(company.slug).to be_present. Verifica que callback rodou.",
+                        category: "testing"
+                    },
+                    {
+                        id: 512,
+                        text: "Como você testa um background job com RSpec?",
+                        options: [
+                            "RSpec::Sidekiq helpers; expect(MyJob).to have_been_enqueued",
+                            "Jobs não podem ser testados",
+                            "Rodar Sidekiq de verdade",
+                            "Confiar que vai funcionar"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "rspec-sidekiq permite expect(TrustScoreJob).to have_been_enqueued.with(id). Sem rodar sidekiq de verdade.",
+                        category: "testing"
+                    },
+                    {
+                        id: 513,
+                        text: "Como você estrutura testes em contexts?",
+                        options: [
+                            "context 'when user is admin' do; it 'can delete' do; end; end",
+                            "Contexts não existem",
+                            "RSpec não suporta organization",
+                            "Tudo em um describe"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "context organiza testes por condição. Na Avalia Solar: 'when company is active', 'when user is admin'.",
+                        category: "testing"
+                    },
+                    {
+                        id: 514,
+                        text: "O que é um fixture vs um factory?",
+                        options: [
+                            "Fixture: dados estáticos em YAML. Factory: construtos dinâmicos. Factories são melhores.",
+                            "São iguais",
+                            "Fixtures são modernos",
+                            "Não há diferença"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Fixtures são hard-coded YAML. Factories são flexíveis (atributos sequenciais, relacionamentos). Factories melhor.",
+                        category: "testing"
+                    },
+                    {
+                        id: 515,
+                        text: "Como você roda testes específicos no RSpec?",
+                        options: [
+                            "rspec spec/models/company_spec.rb:42",
+                            "RSpec não suporta",
+                            "Rodar tudo sempre",
+                            "Não há forma"
+                        ],
+                        correct: 0,
+                        difficulty: "easy",
+                        explanation: "rspec spec/models/ roda pasta. rspec spec/models/company_spec.rb roda arquivo. :42 roda linha específica.",
+                        category: "testing"
+                    }
+                ]
+            },
+            "advanced": {
+                title: "Tópicos Avançados",
+                description: "Metaprogramming, Service Objects, Concerns, API Design",
+                icon: "🔮",
+                questions: [
+                    {
+                        id: 601,
+                        text: "O que é metaprogramming em Ruby?",
+                        options: [
+                            "Código que escreve/modifica código em runtime",
+                            "Um tipo de bug",
+                            "Um padrão de design",
+                            "Um tipo de teste"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Metaprogramming: define_method, method_missing, class_eval. Rails usa muito para gerar finders automaticamente.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 602,
+                        text: "O que é um Service Object em Rails e quando usar?",
+                        options: [
+                            "Classe que encapsula lógica de negócio complexa; usar quando lógica > 30 linhas",
+                            "Um tipo de controller",
+                            "Rails não usa service objects",
+                            "Um tipo de validação"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "TrustScoreCalculationService encapsula cálculo de confiança. Limpa controllers, reutilizável.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 603,
+                        text: "Como você extrai lógica repetida em Concerns?",
+                        options: [
+                            "module Timestamped; included do; scope :recent, -> { order(created_at: :desc) } end; end",
+                            "Concerns não existem",
+                            "Duplicar código em cada model",
+                            "Usar herança"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Concerns reutilizam código entre models. Na Avalia Solar: Timestamped concern em Company e Review.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 604,
+                        text: "O que é um Serializer e qual é seu propósito?",
+                        options: [
+                            "Controla quais atributos são retornados na API JSON",
+                            "Um tipo de banco de dados",
+                            "Rails não usa serializers",
+                            "Um padrão de validação"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "CompanySerializer especifica atributos públicos. Esconde password, tokens. Melhora segurança.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 605,
+                        text: "Como você implementa Pagination customizada em Rails?",
+                        options: [
+                            "kaminari/will_paginate gems com .page(n).per(20)",
+                            "Implementar manualmente com offset/limit",
+                            "Rails não suporta",
+                            "Confiar em padrão"
+                        ],
+                        correct: 0,
+                        difficulty: "medium",
+                        explanation: "kaminari: Company.page(2).per(20) retorna página 2 com 20 itens. Inclui navegação automática.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 606,
+                        text: "O que é JSONAPI e por que usar?",
+                        options: [
+                            "Especificação para APIs JSON com formato consistente; melhora cliente/server",
+                            "Um banco de dados",
+                            "Um tipo de autenticação",
+                            "Rails não suporta"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "JSONAPI gem serializa com convenção (data, relationships, meta). Clients (Ember, etc) entendem automaticamente.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 607,
+                        text: "Como você versiona uma API Rails?",
+                        options: [
+                            "routes: api/v1/companies vs api/v2/companies",
+                            "Não versionar nunca",
+                            "URL sem versão",
+                            "Apenas query strings"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Roteas em config/routes.rb: namespace :api; namespace :v1; resources :companies. Permite evoluir sem quebrar clientes.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 608,
+                        text: "O que é Dependency Injection em Rails?",
+                        options: [
+                            "Passar dependências como argumentos ao invés de hardcoding",
+                            "Um tipo de bug",
+                            "Rails não suporta",
+                            "Um padrão obsoleto"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "def calculate(trust_service: TrustScoreService.new) vs hardcoded TrustScoreService. Permite mock em testes.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 609,
+                        text: "Como você implementa Soft Deletes em Rails?",
+                        options: [
+                            "paranoia gem: adiciona deleted_at coluna, queries automaticamente excluem soft-deleted",
+                            "Deletar de verdade",
+                            "Rails não suporta",
+                            "Usar flag boolean"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "paranoia: Company.delete() apenas seta deleted_at. Company.only_deleted retorna apagadas. Company.with_deleted traz todas.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 610,
+                        text: "O que é uma Event-Driven Architecture?",
+                        options: [
+                            "Sistemas comunicam via eventos (company_created); permite decoupling",
+                            "Um tipo de erro",
+                            "Rails não suporta",
+                            "Um padrão de UI"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "After_create callbacks ou gems como Wisper publicam eventos. Subscribers reagem (enviar email, atualizar cache).",
+                        category: "advanced"
+                    },
+                    {
+                        id: 611,
+                        text: "Como você implementa Search full-text em Rails?",
+                        options: [
+                            "Elasticsearch ou Solr; ou PostgreSQL full-text search",
+                            "Rails.find",
+                            "Não há search",
+                            "Confiar em LIKE"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Elasticsearch gem permite buscas rápidas por texto. PostgreSQL full-text é gratuito. Na Avalia Solar: search empresas por nome.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 612,
+                        text: "O que é Sharding em Rails?",
+                        options: [
+                            "Dividir dados em múltiplos bancos/servidores por chave (empresa_id)",
+                            "Um tipo de cache",
+                            "Rails faz automaticamente",
+                            "Um padrão de design"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Sharding escala write-heavy apps. Na Avalia Solar B2B: cada empresa poderia ter seu próprio shard.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 613,
+                        text: "Como você implementa Throttling/Rate Limiting em Rails?",
+                        options: [
+                            "rack-attack gem; limita requisições por IP/user_id",
+                            "Rails faz automaticamente",
+                            "Não há proteção",
+                            "Apenas confiar em servidor"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "rack-attack: throttle('req/ip', limit: 300, period: 1.minute) { |req| req.ip }. Retorna 429 Too Many Requests.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 614,
+                        text: "O que é um Circuit Breaker pattern?",
+                        options: [
+                            "Parar chamadas a serviço falhando; retry depois; evita cascata de erros",
+                            "Um tipo de banco de dados",
+                            "Um padrão de UI",
+                            "Rails não suporta"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Se TrustScoreService falha 5x, circuit abre (retorna erro imediatamente). Depois tenta novamente. Gems: circuit_breaker.",
+                        category: "advanced"
+                    },
+                    {
+                        id: 615,
+                        text: "Como você estrutura uma arquitetura de microsserviços em Rails?",
+                        options: [
+                            "API Rails serve como backend; frontend é SPA (React); comunicação HTTP/gRPC",
+                            "Monolith é sempre melhor",
+                            "Rails não suporta",
+                            "Um padrão antigo"
+                        ],
+                        correct: 0,
+                        difficulty: "hard",
+                        explanation: "Avalia Solar: Back API Rails + Front Next.js é arquitetura moderna. Backend cuida dados/lógica. Frontend cuida UI.",
+                        category: "advanced"
+                    }
+                ]
+            }
+        };
+
+        // ============================================
+        // ESTADO DO QUIZ
+        // ============================================
+
+        let currentState = {
+            selectedCategory: null,
+            currentQuestionIndex: 0,
+            answers: {},
+            startTime: null,
+            bookmarked: new Set(),
+            difficultyFilter: 'all',
+            questions: []
+        };
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCategories();
+            startTimer();
+        });
+
+        function renderCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            grid.innerHTML = '';
+
+            Object.entries(quizData).forEach(([key, category]) => {
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.innerHTML = `
+                    <div class="category-title">${category.icon} ${category.title}</div>
+                    <p class="category-description">${category.description}</p>
+                    <span class="category-count">${category.questions.length} questões</span>
+                `;
+                card.onclick = () => startQuiz(key);
+                grid.appendChild(card);
+            });
+        }
+
+        function startQuiz(categoryKey) {
+            currentState.selectedCategory = categoryKey;
+            currentState.questions = [...quizData[categoryKey].questions];
+            currentState.currentQuestionIndex = 0;
+            currentState.answers = {};
+            currentState.startTime = new Date();
+            currentState.bookmarked = new Set();
+
+            document.getElementById('categorySection').classList.add('hidden');
+            document.getElementById('quizArea').classList.remove('hidden');
+            document.getElementById('filterArea').classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const question = currentState.questions[currentState.currentQuestionIndex];
+            const categoryTitle = quizData[currentState.selectedCategory].title;
+
+            document.getElementById('questionNumber').textContent = 
+                `${categoryTitle} • Questão ${currentState.currentQuestionIndex + 1} de ${currentState.questions.length}`;
+
+            document.getElementById('questionText').textContent = question.text;
+
+            const difficultyClass = `difficulty-${question.difficulty}`;
+            const difficultyText = question.difficulty === 'easy' ? '⭐ Fácil' : 
+                                  question.difficulty === 'medium' ? '⭐⭐ Médio' : 
+                                  '⭐⭐⭐ Difícil';
+            document.getElementById('difficultyBadge').textContent = difficultyText;
+            document.getElementById('difficultyBadge').className = `question-difficulty ${difficultyClass}`;
+
+            renderOptions(question);
+            updateProgress();
+            updateButtonStates();
+        }
+
+        function renderOptions(question) {
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const isSelected = currentState.answers[currentState.currentQuestionIndex] === index;
+                const isCorrect = index === question.correct;
+                const userAnswered = currentState.currentQuestionIndex in currentState.answers;
+
+                let classNames = 'option';
+                if (isSelected && !userAnswered) classNames += ' selected';
+                if (userAnswered && isSelected && isCorrect) classNames += ' correct';
+                if (userAnswered && isSelected && !isCorrect) classNames += ' incorrect';
+
+                const div = document.createElement('div');
+                div.className = classNames;
+                div.innerHTML = `
+                    <input type="radio" name="option" value="${index}" 
+                           ${isSelected ? 'checked' : ''} 
+                           ${userAnswered ? 'disabled' : ''}>
+                    <label>${option}</label>
+                `;
+
+                div.onclick = () => {
+                    if (!userAnswered) {
+                        currentState.answers[currentState.currentQuestionIndex] = index;
+                        renderOptions(question);
+                        showExplanation(question, index);
+                    }
+                };
+
+                container.appendChild(div);
+            });
+        }
+
+        function showExplanation(question, selectedIndex) {
+            const explanation = document.getElementById('explanation');
+            const explanationText = document.getElementById('explanationText');
+            const isCorrect = selectedIndex === question.correct;
+
+            let html = `<strong style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
+                        ${isCorrect ? '✅ Resposta Correta!' : '❌ Resposta Incorreta!'}
+                        </strong><br><br>`;
+            html += question.explanation;
+
+            if (question.codeExample) {
+                html += `<div class="code-block">${question.codeExample}</div>`;
+            }
+
+            explanationText.innerHTML = html;
+            explanation.classList.add('show');
+        }
+
+        function updateProgress() {
+            const total = currentState.questions.length;
+            const answered = Object.keys(currentState.answers).length;
+            const percentage = (answered / total) * 100;
+
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${answered}/${total}`;
+
+            // Calcular estatísticas
+            let correct = 0;
+            currentState.questions.forEach((q, i) => {
+                if (currentState.answers[i] === q.correct) correct++;
+            });
+
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = answered - correct;
+            document.getElementById('percentageCount').textContent = 
+                answered > 0 ? `${Math.round((correct / answered) * 100)}%` : '0%';
+
+            const elapsedSeconds = Math.floor((new Date() - currentState.startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            document.getElementById('timeCount').textContent = `${minutes}m ${seconds}s`;
+        }
+
+        function updateButtonStates() {
+            const isFirst = currentState.currentQuestionIndex === 0;
+            const isLast = currentState.currentQuestionIndex === currentState.questions.length - 1;
+
+            document.getElementById('prevBtn').disabled = isFirst;
+            document.getElementById('nextBtn').textContent = isLast ? 'Finalizar' : 'Próxima →';
+
+            // Update bookmark button
+            const isBookmarked = currentState.bookmarked.has(currentState.currentQuestionIndex);
+            document.getElementById('bookmarkBtn').classList.toggle('bookmarked', isBookmarked);
+        }
+
+        function nextQuestion() {
+            if (currentState.currentQuestionIndex === currentState.questions.length - 1) {
+                finishQuiz();
+            } else {
+                currentState.currentQuestionIndex++;
+                document.getElementById('explanation').classList.remove('show');
+                renderQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentState.currentQuestionIndex > 0) {
+                currentState.currentQuestionIndex--;
+                document.getElementById('explanation').classList.remove('show');
+                renderQuestion();
+            }
+        }
+
+        function toggleBookmark() {
+            if (currentState.bookmarked.has(currentState.currentQuestionIndex)) {
+                currentState.bookmarked.delete(currentState.currentQuestionIndex);
+            } else {
+                currentState.bookmarked.add(currentState.currentQuestionIndex);
+            }
+            updateButtonStates();
+        }
+
+        function finishQuiz() {
+            const total = currentState.questions.length;
+            let correct = 0;
+
+            currentState.questions.forEach((q, i) => {
+                if (currentState.answers[i] === q.correct) correct++;
+            });
+
+            const percentage = (correct / total) * 100;
+            const elapsedSeconds = Math.floor((new Date() - currentState.startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+
+            // Determinar nível
+            let level = 'Junior';
+            let levelClass = 'level-junior';
+            if (percentage >= 80) {
+                level = 'Senior';
+                levelClass = 'level-senior';
+            } else if (percentage >= 60) {
+                level = 'Mid-Level';
+                levelClass = 'level-mid';
+            }
+
+            let message = 'Bom esforço! Continue estudando.';
+            if (percentage >= 60 && percentage < 80) message = 'Ótimo! Você tem conhecimento sólido.';
+            if (percentage >= 80) message = '🎉 Excelente! Você é um Rails Senior!';
+
+            document.getElementById('finalScore').textContent = `${Math.round(percentage)}%`;
+            document.getElementById('resultMessage').textContent = message;
+            document.getElementById('resultLevel').textContent = level;
+            document.getElementById('resultLevel').className = `result-level ${levelClass}`;
+
+            document.getElementById('resultTotal').textContent = total;
+            document.getElementById('resultCorrect').textContent = correct;
+            document.getElementById('resultIncorrect').textContent = total - correct;
+            document.getElementById('resultTime').textContent = `${minutes}m ${seconds}s`;
+
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('filterArea').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('categorySection').classList.remove('hidden');
+            renderCategories();
+        }
+
+        function reviewAnswers() {
+            // TODO: Implementar revisão de respostas
+            alert('Funcionalidade em desenvolvimento');
+        }
+
+        function filterByDifficulty(difficulty) {
+            currentState.difficultyFilter = difficulty;
+            
+            if (difficulty === 'all') {
+                currentState.questions = [...quizData[currentState.selectedCategory].questions];
+            } else {
+                currentState.questions = quizData[currentState.selectedCategory].questions.filter(q => q.difficulty === difficulty);
+            }
+
+            currentState.currentQuestionIndex = 0;
+            currentState.answers = {};
+            renderQuestion();
+        }
+
+        function startTimer() {
+            setInterval(() => {
+                if (currentState.startTime) {
+                    updateProgress();
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

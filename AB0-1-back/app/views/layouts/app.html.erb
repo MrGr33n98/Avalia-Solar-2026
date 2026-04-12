@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) + " — Avalia Solar" : "Avalia Solar App" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="utf-8">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%# Tailwind via CDN — substituir por tailwindcss-rails em produção %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              solar: {
+                50:  '#fefce8',
+                100: '#fef9c3',
+                400: '#facc15',
+                500: '#eab308',
+                600: '#ca8a04',
+              },
+              brand: {
+                50:  '#eff6ff',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                900: '#1e3a5f',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-50 text-gray-900 antialiased" data-controller="sidebar">
+
+    <div class="flex h-screen overflow-hidden">
+
+      <%# ── SIDEBAR ────────────────────────────────────────────── %>
+      <aside id="app-sidebar"
+             class="flex flex-col w-64 bg-[#0a1628] text-white transition-all duration-300 shrink-0"
+             data-sidebar-target="nav">
+
+        <%# Logo %>
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+          <div class="w-8 h-8 rounded-full bg-solar-400 flex items-center justify-center">
+            <span class="text-[#0a1628] font-bold text-sm">AS</span>
+          </div>
+          <span class="font-semibold text-white text-sm tracking-wide">Avalia Solar</span>
+          <button class="ml-auto text-white/40 hover:text-white"
+                  data-action="click->sidebar#toggle">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+
+        <%# Nav principal %>
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'grid',
+                label: 'Painel',
+                path: app_painel_root_path,
+                active: controller_path.start_with?('app/painel/dashboard') %>
+
+          <%# Projetos %>
+          <div class="pt-2 pb-1">
+            <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest">Projetos</p>
+          </div>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'folder',
+                label: 'Todos os Projetos',
+                path: app_painel_projects_path,
+                active: controller_path.start_with?('app/painel/projects') %>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'users',
+                label: 'Leads',
+                path: app_painel_leads_path,
+                active: controller_path.start_with?('app/painel/leads') %>
+
+          <%# Empresa %>
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest">Empresa</p>
+          </div>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'building',
+                label: 'Perfil',
+                path: app_painel_company_path,
+                active: controller_path.start_with?('app/painel/companies') %>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'star',
+                label: 'Avaliações',
+                path: app_painel_reviews_path,
+                active: controller_path.start_with?('app/painel/reviews') %>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'package',
+                label: 'Catálogo',
+                path: app_painel_catalog_index_path,
+                active: controller_path.start_with?('app/painel/catalog') %>
+
+          <%# Configurações %>
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest">Conta</p>
+          </div>
+
+          <%= render 'layouts/app/nav_item',
+                icon: 'settings',
+                label: 'Configurações',
+                path: app_painel_settings_path,
+                active: controller_path.start_with?('app/painel/settings') %>
+
+          <%# Link Expo público %>
+          <div class="pt-4">
+            <%= link_to app_root_path,
+                  class: "flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-solar-400 hover:bg-white/5 transition-colors" do %>
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              <span>Ver Expo</span>
+            <% end %>
+          </div>
+
+        </nav>
+
+        <%# User footer %>
+        <% if user_signed_in? %>
+          <div class="px-4 py-4 border-t border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold">
+                <%= current_user.name&.first&.upcase || "U" %>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-white truncate"><%= current_user.name %></p>
+                <p class="text-xs text-white/40 truncate"><%= current_user.email %></p>
+              </div>
+              <%= link_to destroy_user_session_path, method: :delete,
+                    class: "text-white/40 hover:text-white shrink-0",
+                    title: "Sair" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+      </aside>
+
+      <%# ── CONTEÚDO PRINCIPAL ─────────────────────────────────── %>
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+        <%# Topbar %>
+        <header class="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0">
+          <div class="flex items-center gap-3">
+            <button class="text-gray-400 hover:text-gray-600 lg:hidden"
+                    data-action="click->sidebar#toggle">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+            <% if content_for?(:page_title) %>
+              <h1 class="text-sm font-semibold text-gray-800"><%= yield(:page_title) %></h1>
+            <% end %>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <%# Notificações %>
+            <button class="relative text-gray-400 hover:text-gray-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+            </button>
+
+            <%# Novo Projeto %>
+            <%= link_to new_app_painel_project_path,
+                  class: "flex items-center gap-2 px-3 py-1.5 bg-solar-400 hover:bg-solar-500 text-[#0a1628] text-sm font-semibold rounded-lg transition-colors" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Novo Projeto
+            <% end %>
+          </div>
+        </header>
+
+        <%# Flash messages %>
+        <% if notice.present? %>
+          <div class="mx-6 mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <%= notice %>
+          </div>
+        <% end %>
+        <% if alert.present? %>
+          <div class="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <%= alert %>
+          </div>
+        <% end %>
+
+        <%# Conteúdo da página %>
+        <main class="flex-1 overflow-y-auto p-6">
+          <%= yield %>
+        </main>
+
+      </div>
+    </div>
+
+  </body>
+</html>

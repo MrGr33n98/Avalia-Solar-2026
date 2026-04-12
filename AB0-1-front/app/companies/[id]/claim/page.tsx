@@ -197,7 +197,7 @@ export default function ClaimPage({ params }: ClaimPageProps) {
             <CardContent className="space-y-4 text-sm leading-relaxed">
               <div className="flex gap-3">
                 <div className="bg-primary/10 h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-primary font-bold">1</div>
-                <p><span className="font-bold">Selo de Confiança:</span> Exiba o badge de verificado para atrair mais clientes.</p>
+                <p><span className="font-bold">Selo de Confiança:</span> Exiba o Selo Premium para atrair mais clientes.</p>
               </div>
               <div className="flex gap-3">
                 <div className="bg-primary/10 h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-primary font-bold">2</div>

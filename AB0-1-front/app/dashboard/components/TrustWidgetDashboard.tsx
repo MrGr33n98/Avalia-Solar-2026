@@ -306,7 +306,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                Elite Distribution
              </h4>
              <p className="text-sm text-slate-400 font-medium leading-relaxed mb-6">
-               Sua empresa está operando com o protocolo de confiança <span className="text-white font-bold">Nível 1</span>. Ativos verificados aumentam a retenção de usuários no funil.
+               Sua empresa está operando com o protocolo de confiança <span className="text-white font-bold">Nível 1</span>. Ativos Premium aumentam a retenção de usuários no funil.
              </p>
              <div className="space-y-4">
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">

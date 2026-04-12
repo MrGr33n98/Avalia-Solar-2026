@@ -79,6 +79,7 @@ Rails.application.configure do
 
   # Configure host for URL generation (needed for Active Storage URLs)
   config.hosts << "localhost"
+  config.hosts << "app.localhost"   # app.avaliasolar.com.br em desenvolvimento
 
   redis_enabled = ENV.fetch('REDIS_ENABLED', 'false') == 'true'
   redis_url = ENV['REDIS_URL']
