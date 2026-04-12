@@ -9,8 +9,7 @@ begin
 
   # Enable slow query logging in production
   if Rails.env.production?
-    sql_log_path = log_dir.join('sql.log')
-    ActiveRecord::Base.logger = Logger.new(sql_log_path)
+    # ActiveRecord::Base.logger = Logger.new(sql_log_path) # REMOVED: Causing disk full in production
 
     # Custom slow query detector
     ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|

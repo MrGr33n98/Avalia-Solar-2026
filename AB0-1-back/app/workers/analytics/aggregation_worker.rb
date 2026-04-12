@@ -15,8 +15,8 @@ module Analytics
       is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
       
       if is_pg
-        result = ActiveRecord::Base.connection.execute("SELECT pg_try_advisory_lock(#{LOCK_ID})")
-        got_lock = result.first['pg_try_advisory_lock']
+        # Using select_value is safer and returns the boolean directly
+        got_lock = ActiveRecord::Base.connection.select_value("SELECT pg_try_advisory_lock(#{LOCK_ID})")
         return unless got_lock
       end
 

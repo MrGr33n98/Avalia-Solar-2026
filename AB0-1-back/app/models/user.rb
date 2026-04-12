@@ -75,7 +75,7 @@ class User < ApplicationRecord
 
   def active?
     return false unless active_status?
-    return true if review_user?
+    return true if admin? || review_user?
 
     company_user? && active_company_members.exists?
   end

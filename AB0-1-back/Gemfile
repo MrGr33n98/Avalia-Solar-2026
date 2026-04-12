@@ -40,7 +40,7 @@ gem 'redis', '~> 5.0'
 
 # TASK-017: Background job processing
 gem 'sidekiq', '~> 7.0'
-gem 'connection_pool', '~> 2.4'
+gem 'connection_pool', '~> 2.5' # Locked to 2.x to avoid API break in 3.0 with Sidekiq 7.3.9
 gem 'sidekiq-scheduler' # Cron-like job scheduler
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
