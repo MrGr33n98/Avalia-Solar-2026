@@ -11,9 +11,9 @@ module App
           reviews_total:  company.reviews.count,
           reviews_avg:    company.rating_avg.to_f.round(1),
           views_total:    company.profile_views_count,
-          views_30d:      company.company_daily_stats
-                                 .where(date: 30.days.ago..)
-                                 .sum(:views_count) rescue 0
+          views_30d:      (company.company_daily_stats
+                                  .where(date: 30.days.ago..)
+                                  .sum(:views_count) rescue 0)
         }
 
         # Atividades recentes (leads + reviews)
