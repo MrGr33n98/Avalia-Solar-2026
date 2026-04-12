@@ -1,80 +1,105 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <title>Avalia Solar | O Ecossistema da Energia Solar</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <title>Avalia Solar — Expo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
 
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "globals", "data-turbo-track": "reload" %>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-      :root {
-        --font-sans: 'Outfit', sans-serif;
+  <!-- Tailwind via CDN for Expo (Consistent with app layout) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#0056D2',
+              cyan: '#00AFEF',
+              green: '#34C759',
+              purple: '#6C5CE7'
+            },
+            'as-slate': {
+              900: '#0a1628',
+              800: '#1e293b'
+            }
+          }
+        }
       }
-      body {
-        font-family: var(--font-sans);
-        background-color: #f8fafc;
-      }
-      .as-nav-glass {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      }
-    </style>
-  </head>
+    }
+  </script>
 
-  <body class="overflow-x-hidden">
-    <!-- Navbar -->
-    <nav class="fixed top-0 left-0 right-0 z-50 as-nav-glass">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <!-- Logo -->
-          <div class="flex items-center gap-2">
-            <div class="h-10 w-10 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20">
-              <span class="text-white font-bold text-xl">AS</span>
-            </div>
-            <span class="text-as-slate-900 font-bold text-xl tracking-tight hidden sm:block">Avalia Solar</span>
-          </div>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
 
-          <!-- Links -->
-          <div class="hidden md:flex items-center gap-8">
-            <a href="#" class="text-as-slate-800 hover:text-brand-blue font-medium transition-colors">Empresas</a>
-            <a href="#" class="text-as-slate-800 hover:text-brand-blue font-medium transition-colors">Produtos</a>
-            <a href="#" class="text-as-slate-800 hover:text-brand-blue font-medium transition-colors">Marketplace</a>
-            <a href="#" class="text-as-slate-800 hover:text-brand-blue font-medium transition-colors">Sobre</a>
-          </div>
+    /* Claymorphism Tokens */
+    .clay-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff;
+    }
 
-          <!-- CTA -->
-          <div class="flex items-center gap-4">
-            <%= link_to 'Entrar', app_login_path, class: "text-as-slate-800 font-semibold px-4 py-2 hover:bg-slate-100 rounded-lg transition-all" %>
-            <a href="#" class="clay-btn-primary px-6 py-2.5 rounded-xl font-bold text-white shadow-lg">Seja Parceiro</a>
-          </div>
+    .clay-btn-primary {
+      background: #0056D2;
+      box-shadow: inset 4px 4px 8px #0047ad, inset -4px -4px 8px #0065f7;
+      transition: all 0.3s ease;
+    }
+    .clay-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: inset 6px 6px 12px #0047ad, inset -6px -6px 12px #0065f7, 0 10px 20px rgba(0, 86, 210, 0.2);
+    }
+  </style>
+
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+</head>
+
+<body class="bg-[#f8fafc] text-slate-900 antialiased overflow-x-hidden">
+  
+  <!-- Navbar Fixed -->
+  <nav class="fixed top-0 left-0 right-0 z-[100] px-4 py-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="bg-white/70 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-3 flex items-center justify-between shadow-lg">
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 group">
+          <img src="/images/logo.png" alt="Avalia Solar" class="h-8 w-auto">
+          <span class="font-extrabold text-xl tracking-tight text-as-slate-900">
+            Avalia<span class="text-brand-blue">Solar</span>
+          </span>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#" class="text-sm font-semibold text-as-slate-800 hover:text-brand-blue transition-colors">Produtos</a>
+          <a href="#" class="text-sm font-semibold text-as-slate-800 hover:text-brand-blue transition-colors">Integradores</a>
+          <a href="#" class="text-sm font-semibold text-as-slate-800 hover:text-brand-blue transition-colors">Sobre</a>
+          <a href="#" class="text-sm font-semibold text-as-slate-800 hover:text-brand-blue transition-colors">Blog</a>
+        </div>
+
+        <!-- Auth -->
+        <div class="flex items-center gap-3">
+          <%= link_to 'Entrar', app_login_path, class: "text-sm font-bold text-as-slate-800 px-5 py-2 rounded-xl hover:bg-slate-100 transition-all" %>
+          <%= link_to 'Começar Grátis', '#', class: "clay-btn-primary text-sm font-bold text-white px-6 py-2.5 rounded-xl shadow-md" %>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <main class="pt-16">
-      <%= yield %>
-    </main>
+  <main>
+    <%= yield %>
+  </main>
 
-    <!-- Footer Simples -->
-    <footer class="bg-as-slate-950 text-white/50 py-12 mt-20">
-      <div class="max-w-7xl mx-auto px-4 text-center">
-        <div class="flex justify-center gap-4 mb-6">
-          <div class="h-8 w-8 bg-white/10 rounded-lg flex items-center justify-center">AS</div>
-        </div>
-        <p>&copy; 2026 Avalia Solar. Todos os direitos reservados.</p>
-        <div class="flex justify-center gap-6 mt-4 text-sm">
-          <a href="#" class="hover:text-white">Privacidade</a>
-          <a href="#" class="hover:text-white">Termos</a>
-          <a href="#" class="hover:text-white">Contato</a>
-        </div>
+  <!-- Footer Simplificado -->
+  <footer class="bg-as-slate-900 py-12 text-white/60">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <div class="flex justify-center mb-8">
+        <img src="/images/logo.png" alt="Logo" class="h-8 w-auto brightness-0 invert opacity-50">
       </div>
-    </footer>
-  </body>
+      <p class="text-sm">&copy; <%= Date.today.year %> Avalia Solar. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+</body>
 </html>
