@@ -68,6 +68,8 @@ Rails.application.configure do
     IPAddr.new("192.168.0.0/16")
   ]
   config.action_dispatch.ip_spoofing_check = false
+  # Suporte a domínios .com.br (2 partes de TLD)
+  config.action_dispatch.tld_length = 2
 
   # --- CONFIGURAÇÃO DE CACHE (REDIS) ---
   if ENV.fetch('REDIS_ENABLED', 'true') == 'true'
