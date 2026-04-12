@@ -1,0 +1,119 @@
+<% content_for :page_title, "Painel de Informações" %>
+
+<%# ── Boas-vindas ──────────────────────────────────────────────── %>
+<div class="mb-6">
+  <h2 class="text-xl font-semibold text-gray-900">
+    Bem-vindo, <%= @current_app_company&.name || current_user.name %> 👋
+  </h2>
+  <p class="text-sm text-gray-500 mt-1">
+    Veja o desempenho da sua empresa e acompanhe seus projetos.
+  </p>
+</div>
+
+<%# ── KPIs principais (estilo OpenSolar) ─────────────────────── %>
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Leads totais',
+        value: @stats[:leads_total],
+        icon: '🎯',
+        color: 'blue' %>
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Leads (30 dias)',
+        value: @stats[:leads_new],
+        icon: '📥',
+        color: 'green' %>
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Avaliações',
+        value: @stats[:reviews_total],
+        icon: '⭐',
+        color: 'yellow' %>
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Nota média',
+        value: @stats[:reviews_avg],
+        icon: '📊',
+        color: 'purple' %>
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Visualizações',
+        value: number_with_delimiter(@stats[:views_total]),
+        icon: '👁️',
+        color: 'gray' %>
+
+  <%= render 'app/painel/dashboard/stat_card',
+        label: 'Views (30 dias)',
+        value: number_with_delimiter(@stats[:views_30d]),
+        icon: '📈',
+        color: 'indigo' %>
+
+</div>
+
+<%# ── Atividade recente ────────────────────────────────────────── %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <%# Leads recentes %>
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-800">Leads Recentes</h3>
+      <%= link_to 'Ver todos', app_painel_leads_path,
+            class: 'text-xs text-blue-600 hover:text-blue-800 font-medium' %>
+    </div>
+    <% if @recent_leads.any? %>
+      <ul class="divide-y divide-gray-100">
+        <% @recent_leads.each do |lead| %>
+          <li class="flex items-center gap-3 px-5 py-3">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
+              <%= lead.name&.first&.upcase || "?" %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate"><%= lead.name %></p>
+              <p class="text-xs text-gray-400"><%= time_ago_in_words(lead.created_at) %> atrás</p>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full
+              <%= lead.wizard_status == 'verified' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' %>">
+              <%= lead.wizard_status %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="px-5 py-8 text-center text-sm text-gray-400">
+        Nenhum lead ainda. Seu perfil público gera leads automaticamente.
+      </div>
+    <% end %>
+  </div>
+
+  <%# Avaliações recentes %>
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-800">Avaliações Recentes</h3>
+      <%= link_to 'Ver todas', app_painel_reviews_path,
+            class: 'text-xs text-blue-600 hover:text-blue-800 font-medium' %>
+    </div>
+    <% if @recent_reviews.any? %>
+      <ul class="divide-y divide-gray-100">
+        <% @recent_reviews.each do |review| %>
+          <li class="flex items-center gap-3 px-5 py-3">
+            <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-xs font-bold text-yellow-700">
+              <%= review.rating %>★
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">
+                <%= review.title.presence || "Sem título" %>
+              </p>
+              <p class="text-xs text-gray-400"><%= time_ago_in_words(review.created_at) %> atrás</p>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="px-5 py-8 text-center text-sm text-gray-400">
+        Nenhuma avaliação ainda.
+      </div>
+    <% end %>
+  </div>
+
+</div>

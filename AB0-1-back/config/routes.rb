@@ -356,5 +356,53 @@ Rails.application.routes.draw do
 
   get 'waiting_approval', to: 'dashboard/access#waiting_approval', as: :waiting_approval
 
+  # ============================================================
+  # app.avaliasolar.com.br — Ecossistema B2B Solar
+  # Mesmo banco, namespace separado, layout próprio Hotwire
+  # ============================================================
+  constraints subdomain: 'app' do
+    scope module: :app, as: :app do
+
+      # Landing pública — Expo de parceiros (tipo OpenSolar Expo)
+      root to: 'expo#index', as: :root
+
+      resources :suppliers,   only: %i[index show]
+      resources :integrators, only: %i[index show]
+      resources :distributors, only: %i[index show]
+
+      # Autenticação (reusa Devise existente)
+      get  'entrar',  to: 'sessions#new',    as: :login
+      post 'entrar',  to: 'sessions#create'
+      delete 'sair',  to: 'sessions#destroy', as: :logout
+
+      # Painel autenticado da empresa
+      namespace :painel do
+        root to: 'dashboard#index'
+
+        resources :projects do
+          member do
+            patch :advance_stage
+          end
+          resources :proposals, only: %i[show create update]
+        end
+
+        resources :leads,    only: %i[index show]
+        resources :reviews,  only: %i[index show]
+        resources :catalog,  only: %i[index show new create edit update destroy]
+        resource  :settings, only: %i[show update]
+        resource  :company,  only: %i[show edit update]
+      end
+
+      # Admin interno Avalia Solar (gestão do ecossistema app.)
+      namespace :admin do
+        root to: 'dashboard#index'
+        resources :companies,     only: %i[index show edit update]
+        resources :expo_sections, only: %i[index new create edit update destroy]
+        resources :plans,         only: %i[index new create edit update destroy]
+      end
+
+    end
+  end
+
   root 'rails/welcome#index'
 end

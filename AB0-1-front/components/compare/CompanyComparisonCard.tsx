@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, MapPin, Diamond, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
+import { X, Star, MapPin, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -93,10 +94,7 @@ export default function CompanyComparisonCard({
 
         {company.verified && (
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 bg-gradient-to-br from-violet-600 to-blue-600 rounded-full flex items-center justify-center shadow-md">
-              <Diamond className="h-3 w-3 text-white fill-current" />
-            </div>
-            <span className="text-sm text-blue-700 font-bold uppercase tracking-tight text-[10px]">Empresa Premium</span>
+            <PremiumBadge className="h-6" />
           </div>
         )}
 

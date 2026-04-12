@@ -1,0 +1,97 @@
+<% content_for :title, "Entrar" %>
+
+<div class="w-full max-w-sm">
+
+  <%# Logo + Brand %>
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full border-4 border-solar-400 mb-4">
+      <span class="text-solar-400 font-black text-xl">AS</span>
+    </div>
+    <h1 class="text-xl font-semibold text-gray-800">Avalia Solar</h1>
+    <p class="text-sm text-gray-400 mt-1">Acesse o painel da sua empresa</p>
+  </div>
+
+  <%# Card de login %>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-8">
+
+    <%= form_with url: app_login_path, method: :post, local: false,
+          data: { controller: "login" } do |f| %>
+
+      <%# E-mail %>
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+          E-mail
+        </label>
+        <input type="email"
+               name="email"
+               value="<%= @email %>"
+               required
+               autofocus
+               placeholder="seu@email.com.br"
+               class="w-full border-0 border-b-2 border-gray-200 focus:border-solar-400 outline-none pb-2 text-sm text-gray-800 placeholder-gray-300 transition-colors bg-transparent">
+        <% if flash[:alert].present? %>
+          <p class="mt-1 text-xs text-red-500">Este campo é obrigatório.</p>
+        <% end %>
+      </div>
+
+      <%# Senha %>
+      <div class="mb-6" data-controller="password-toggle">
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+          Palavra-passe
+        </label>
+        <div class="relative">
+          <input type="password"
+                 name="password"
+                 required
+                 placeholder="••••••••"
+                 data-password-toggle-target="input"
+                 class="w-full border-0 border-b-2 border-gray-200 focus:border-solar-400 outline-none pb-2 text-sm text-gray-800 placeholder-gray-300 transition-colors bg-transparent pr-8">
+          <button type="button"
+                  data-action="click->password-toggle#toggle"
+                  class="absolute right-0 bottom-2 text-gray-300 hover:text-gray-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <%# Erro de autenticação %>
+      <% if flash[:alert].present? %>
+        <div class="mb-4 text-xs text-red-500 text-center">
+          <%= flash[:alert] %>
+        </div>
+      <% end %>
+
+      <%# Botão de login %>
+      <button type="submit"
+              class="w-full py-3 bg-solar-400 hover:bg-solar-500 text-gray-900 font-semibold text-sm rounded-lg transition-colors">
+        Iniciar Sessão
+      </button>
+
+    <% end %>
+
+    <%# Links secundários %>
+    <div class="mt-6 text-center space-y-2">
+      <%= link_to 'Esqueceu a palavra-passe?',
+            new_user_password_path,
+            class: 'text-xs text-gray-400 hover:text-gray-600 underline' %>
+    </div>
+
+  </div>
+
+  <%# Link para o site público %>
+  <div class="mt-6 text-center">
+    <p class="text-xs text-gray-400">
+      Ainda não tem conta?
+      <%= link_to 'Saiba mais sobre o Avalia Solar',
+            'https://avaliasolar.com.br',
+            target: '_blank',
+            class: 'text-solar-500 hover:text-solar-600 font-medium' %>
+    </p>
+  </div>
+
+</div>

@@ -19,7 +19,7 @@ import {
 import {
   Search, X, SlidersHorizontal, Building2, Package, Tag, FileText,
   BadgeCheck, Star, TrendingUp, Zap, MessageCircle, ChevronRight,
-  ArrowUpDown, Sparkles, RotateCcw,
+  ArrowUpDown, Sparkles, RotateCcw, Diamond,
 } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
@@ -36,7 +36,7 @@ const SORT_OPTIONS = [
   { value: 'recommended', label: 'Recomendados', icon: Sparkles },
   { value: 'rating',      label: 'Melhor avaliados', icon: Star },
   { value: 'reviews',     label: 'Mais avaliações', icon: TrendingUp },
-  { value: 'verified',    label: 'Verificados primeiro', icon: BadgeCheck },
+  { value: 'verified',    label: 'Premium primeiro', icon: Sparkles },
   { value: 'name',        label: 'A–Z', icon: ArrowUpDown },
 ] as const;
 
@@ -160,9 +160,9 @@ function SearchSidebar({
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">Refinamentos</p>
           <div className="space-y-2">
             <ToggleRow
-              icon={BadgeCheck}
+              icon={Diamond}
               iconClass="text-blue-500"
-              label="Somente verificadas"
+              label="Somente Premium"
               checked={verifiedOnly}
               onChange={onVerifiedChange}
             />
@@ -305,10 +305,10 @@ function MobileFilterSheet({
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Refinamentos</p>
                 <div className="space-y-2.5">
                   <MobileToggleRow
-                    icon={BadgeCheck}
+                    icon={Diamond}
                     iconClass="text-blue-500"
-                    label="Somente verificadas"
-                    sublabel="Empresas revisadas pelo AvaliaSolar"
+                    label="Somente Premium"
+                    sublabel="Empresas com selo Diamond de confiança"
                     checked={verifiedOnly}
                     onChange={onVerifiedChange}
                   />
@@ -451,8 +451,7 @@ function ActiveFilterChips({
           onClick={() => onVerifiedChange(false)}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/40 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-950/60 transition-colors"
         >
-          <BadgeCheck className="w-3 h-3" />
-          Verificadas
+          Premium
           <X className="w-3 h-3 ml-0.5 opacity-70" />
         </button>
       )}

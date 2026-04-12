@@ -27,7 +27,7 @@ function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string):
     : DEFAULT_TITLE;
 
   const description = hasCategories
-    ? `Compare empresas especialistas em ${categoryNames.join(', ')} com avaliacoes reais, localizacao e canais de contato verificados.`
+    ? `Compare empresas especialistas em ${categoryNames.join(', ')} com avaliacoes reais, localizacao e canais de contato Premium.`
     : DEFAULT_DESCRIPTION;
 
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;

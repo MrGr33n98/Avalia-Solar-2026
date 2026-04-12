@@ -252,7 +252,7 @@ function ReviewCard({ review }: { review: Review }) {
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
-              {review.user?.name || 'Consumidor verificado'}
+              {review.user?.name || 'Consumidor Premium'}
             </p>
             {review.verified ? <SemanticBadge tone="success">Avaliação verificada</SemanticBadge> : null}
             {review.featured ? <SemanticBadge>Destaque</SemanticBadge> : null}
@@ -902,10 +902,7 @@ export default function ProductDetailClient({
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {company?.verified ? (
-                        <SemanticBadge tone="success">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          Fabricante verificado
-                        </SemanticBadge>
+                        <PremiumBadge />
                       ) : null}
                       {company?.plan_status === 'active' ? <SemanticBadge>Parceiro premium</SemanticBadge> : null}
                     </div>

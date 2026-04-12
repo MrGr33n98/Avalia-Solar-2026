@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Building2,
   ArrowRight,
-  BadgeCheck,
   ShieldCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -345,7 +344,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         <Card className="border-none shadow-lg bg-card/70 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <BadgeCheck className="h-4 w-4 text-primary" />
+              <ShieldCheck className="h-4 w-4 text-primary" />
               Bancos e parceiros
             </CardTitle>
             <CardDescription>Instituições que oferecem condições preferenciais.</CardDescription>

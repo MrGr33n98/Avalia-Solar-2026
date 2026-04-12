@@ -4,8 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Building2, CheckCircle2, Star } from 'lucide-react';
+import { Building2, Star } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface CompanySummary {
   name: string;
@@ -37,7 +38,7 @@ export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProp
           Fornecedores em Destaque
         </h2>
         <span className="text-sm text-muted-foreground">
-          {companies.length} parceiros verificados
+          {companies.length} parceiros Premium
         </span>
       </div>
 
@@ -74,7 +75,7 @@ export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProp
                       {company.name}
                     </span>
                     {company.isVerified && (
-                      <CheckCircle2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <PremiumBadge size="xs" />
                     )}
                   </div>
                   

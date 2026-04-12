@@ -29,7 +29,7 @@ interface QuotesPanelProps {
 const statusMap: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: 'Rascunho', color: 'text-slate-500', bg: 'bg-slate-100' },
   pending_otp: { label: 'Aguardando', color: 'text-amber-700', bg: 'bg-amber-100' },
-  verified: { label: 'Verificado', color: 'text-blue-700', bg: 'bg-blue-100' },
+  premium: { label: 'Premium', color: 'text-blue-700', bg: 'bg-blue-100' },
   proposal_sent: { label: 'Respondido', color: 'text-emerald-700', bg: 'bg-emerald-100' },
   canceled: { label: 'Cancelado', color: 'text-red-700', bg: 'bg-red-100' },
 };

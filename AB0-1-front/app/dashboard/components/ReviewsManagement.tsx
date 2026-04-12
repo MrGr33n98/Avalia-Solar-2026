@@ -164,7 +164,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         trend: [20, 35, 30, 45, 50, 42, 60]
       },
       {
-        title: "Reviews Verificados",
+        title: "Reviews Premium",
         value: reviews.filter(r => r.verified).length.toString(),
         icon: ShieldCheck,
         change: "85%",
@@ -265,7 +265,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                           <div className="flex items-center gap-2 mt-1">
                              {review.verified && (
                                <Badge className="h-5 px-2 bg-brand-green/10 text-brand-green border-none font-black text-[8px] uppercase tracking-widest">
-                                 Verificado
+                                 Premium
                                </Badge>
                              )}
                           </div>

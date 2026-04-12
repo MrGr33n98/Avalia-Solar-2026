@@ -1,6 +1,7 @@
 'use client';
 
-import { Star, ThumbsUp, Quote, Check, X, Diamond } from 'lucide-react';
+import { Star, ThumbsUp, Quote, Check, X } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
@@ -52,10 +53,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-900">{review.user.name}</span>
                 {review.verified && (
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 px-2 py-0.5 rounded-full border border-white/20 text-white shadow-sm">
-                    <Diamond className="h-3 w-3 fill-current" />
-                    <span className="text-[10px] font-black uppercase tracking-tighter">Premium</span>
-                  </div>
+                  <PremiumBadge className="h-6" />
                 )}
               </div>
               <div className="flex items-center gap-2">

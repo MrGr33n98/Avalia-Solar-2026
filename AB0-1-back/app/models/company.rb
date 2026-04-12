@@ -24,6 +24,22 @@ class Company < ApplicationRecord
     blocked: 'blocked'
   }, _suffix: true
 
+  # Segmento define em qual produto a empresa aparece:
+  # installer   → www.avaliasolar.com.br (marketplace B2C)
+  # supplier    → app.avaliasolar.com.br (fornecedor de equipamentos)
+  # integrator  → app.avaliasolar.com.br (integrador/EPC)
+  # distributor → app.avaliasolar.com.br (distribuidor)
+  # finance     → app.avaliasolar.com.br (parceiro financeiro)
+  SEGMENTS = %w[installer supplier integrator distributor finance].freeze
+  validates :segment, inclusion: { in: SEGMENTS }
+
+  scope :installers,   -> { where(segment: 'installer') }
+  scope :suppliers,    -> { where(segment: 'supplier') }
+  scope :integrators,  -> { where(segment: 'integrator') }
+  scope :distributors, -> { where(segment: 'distributor') }
+  scope :finances,     -> { where(segment: 'finance') }
+  scope :app_segment,  -> { where.not(segment: 'installer') }
+
   # =========================
   # Attachments
   # =========================

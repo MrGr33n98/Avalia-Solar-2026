@@ -684,9 +684,7 @@ function CompanyResultItem({
               {company.name}
             </h4>
             {company.verified && (
-              <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-              </div>
+              <PremiumBadge className="px-1.5 py-0.5" />
             )}
           </div>
           

@@ -10,9 +10,9 @@ import {
   Zap, 
   ArrowRight, 
   Trophy,
-  Diamond,
   Sparkles
 } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
@@ -142,9 +142,12 @@ export default function PremiumCompanyBanner({
                   </div>
 
                   <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-2">
-                    {company.city}, {company.state} • 
-                    {getYearsInMarket() && ` ${getYearsInMarket()} anos de experiência •`}
-                    {company.verified && ' Empresa Premium'}
+                    {getYearsInMarket() && ` ${getYearsInMarket()} anos de experiência`}
+                    {company.verified && (
+                      <div className="mt-2">
+                        <PremiumBadge />
+                      </div>
+                    )}
                   </p>
 
                   {/* Features Row */}

@@ -1,0 +1,20 @@
+<%# locals: label, value, icon, color %>
+<%
+  color_classes = {
+    'blue'   => 'bg-blue-50 text-blue-700',
+    'green'  => 'bg-green-50 text-green-700',
+    'yellow' => 'bg-yellow-50 text-yellow-700',
+    'purple' => 'bg-purple-50 text-purple-700',
+    'gray'   => 'bg-gray-50 text-gray-700',
+    'indigo' => 'bg-indigo-50 text-indigo-700',
+  }
+  bg = color_classes[color] || color_classes['gray']
+%>
+
+<div class="bg-white rounded-xl border border-gray-200 p-4">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="text-lg"><%= icon %></span>
+    <span class="text-xs text-gray-400 font-medium"><%= label %></span>
+  </div>
+  <p class="text-2xl font-bold text-gray-900"><%= value %></p>
+</div>
