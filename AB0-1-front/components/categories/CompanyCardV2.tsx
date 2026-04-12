@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Building2 } from 'lucide-react';
+import { Star, Building2, Diamond } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import LeadCTA from './LeadCTA';
 import { Company } from '@/lib/api';
@@ -68,8 +68,9 @@ export default function CompanyCardV2({
             {company.name}
           </h3>
           {company.verified && (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-0.5 rounded-full" aria-label="Empresa verificada">
-              ✓ VERIFICADA
+            <Badge className="bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 border-none text-white text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2.5 py-0.5 h-6 rounded-full shadow-md flex items-center gap-1.5" aria-label="Empresa Premium">
+              <Diamond className="w-3 h-3 fill-current" />
+              PREMIUM
             </Badge>
           )}
         </div>

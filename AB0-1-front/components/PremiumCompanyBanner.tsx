@@ -10,7 +10,7 @@ import {
   Zap, 
   ArrowRight, 
   Trophy,
-  Shield,
+  Diamond,
   Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
@@ -114,10 +114,10 @@ export default function PremiumCompanyBanner({
                     />
                   </div>
                   
-                  {/* Verified Shield */}
+                  {/* Verified Diamond */}
                   {company.verified && (
-                    <div className="absolute -bottom-2 -right-2 h-6 w-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Shield className="h-3 w-3 text-white fill-current" />
+                    <div className="absolute -bottom-2 -right-2 h-6 w-6 bg-gradient-to-br from-violet-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Diamond className="h-3 w-3 text-white fill-current" />
                     </div>
                   )}
                 </motion.div>
@@ -144,7 +144,7 @@ export default function PremiumCompanyBanner({
                   <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-2">
                     {company.city}, {company.state} • 
                     {getYearsInMarket() && ` ${getYearsInMarket()} anos de experiência •`}
-                    {company.verified && ' Empresa Verificada'}
+                    {company.verified && ' Empresa Premium'}
                   </p>
 
                   {/* Features Row */}

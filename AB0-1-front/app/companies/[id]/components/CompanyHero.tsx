@@ -2,7 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, BadgeCheck, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
+import { MessageCircle, Diamond, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
@@ -242,14 +242,13 @@ export default function CompanyHero({
                     {company.name}
                   </h1>
                   {company.verified && (
-                    <span
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600 shadow-sm"
-                      title="Empresa verificada"
-                      role="img"
-                      aria-label="Empresa verificada"
+                    <div 
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 text-white shadow-lg border border-white/20"
+                      title="Empresa Premium"
                     >
-                      <BadgeCheck className="h-4 w-4" />
-                    </span>
+                      <Diamond className="h-4 w-4 fill-current" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Premium</span>
+                    </div>
                   )}
                 </div>
 
