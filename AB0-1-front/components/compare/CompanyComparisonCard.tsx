@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, MapPin, ShieldCheck, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
+import { X, Star, MapPin, Diamond, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -93,8 +93,10 @@ export default function CompanyComparisonCard({
 
         {company.verified && (
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" aria-hidden="true" />
-            <span className="text-sm text-emerald-600 font-semibold">Empresa Verificada</span>
+            <div className="h-5 w-5 bg-gradient-to-br from-violet-600 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+              <Diamond className="h-3 w-3 text-white fill-current" />
+            </div>
+            <span className="text-sm text-blue-700 font-bold uppercase tracking-tight text-[10px]">Empresa Premium</span>
           </div>
         )}
 
@@ -194,10 +196,7 @@ export default function CompanyComparisonCard({
       {/* CTA */}
       <Button
         className={cn(
-          "w-full mt-6 rounded-2xl font-black h-12 shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-          isPremium
-            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
-            : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+          "w-full mt-6 rounded-2xl font-black h-12 shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 shadow-blue-200"
         )}
         onClick={() => onQuote(company.id)}
       >

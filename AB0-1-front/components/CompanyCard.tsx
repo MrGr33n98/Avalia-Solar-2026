@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, BadgeCheck, Info, Trophy, Diamond } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ interface Props {
 }
 
 const DICTIONARY = {
-  'pt-BR': { whatsapp: 'WhatsApp', budget: 'Orçamento', review: 'Avaliar', verified: 'Verificada', reviews: 'avaliações', noReviews: 'Seja o primeiro a avaliar', viewServices: 'Ver serviços e soluções oferecidas' },
+  'pt-BR': { whatsapp: 'WhatsApp', budget: 'Orçamento', review: 'Avaliar', verified: 'PREMIUM', reviews: 'avaliações', noReviews: 'Seja o primeiro a avaliar', viewServices: 'Ver serviços e soluções oferecidas' },
   'en-US': { whatsapp: 'WhatsApp', budget: 'Get Quote', review: 'Review', verified: 'Verified', reviews: 'reviews', noReviews: 'Be the first to review', viewServices: 'View offered services and solutions' },
   'es-ES': { whatsapp: 'WhatsApp', budget: 'Presupuesto', review: 'Evaluar', verified: 'Verificada', reviews: 'evaluaciones', noReviews: 'Sé el primero en evaluar', viewServices: 'Ver servicios y soluciones ofrecidas' },
 } as const;
@@ -491,11 +491,11 @@ export default function CompanyCard({
           {/* Verified + Location row */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {company.verified && (
-              <Badge
-                variant="secondary"
-                className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800/40 px-1.5 py-0 h-[18px] rounded font-semibold uppercase tracking-wide"
+              <Badge 
+                className="bg-gradient-to-r from-violet-600 via-purple-500 to-blue-600 border-none text-white font-black uppercase tracking-wider h-6 flex items-center gap-1.5 shadow-md px-2.5 rounded-full"
               >
-                {text.verified}
+                <Diamond className="w-3 h-3 fill-current" />
+                <span className="text-[10px] tracking-widest">{text.verified}</span>
               </Badge>
             )}
             {(city || state) && (
