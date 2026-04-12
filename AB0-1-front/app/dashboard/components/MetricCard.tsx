@@ -100,38 +100,30 @@ export default function MetricCard({
       className="h-full"
     >
       <Card className={cn(
-        'relative h-full overflow-hidden transition-all duration-500 group cursor-pointer clay-card',
-        'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/[0.03] before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity',
-        'after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 group-hover:after:opacity-100 after:transition-opacity after:pointer-events-none'
+        'relative h-full rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm',
+        'before:absolute before:inset-0 before:bg-slate-50 before:opacity-0 hover:before:opacity-100 before:transition-opacity'
       )}>
         <CardContent className="p-5 relative z-10">
           <div className="flex items-start justify-between mb-4">
             {/* Enhanced Icon Container */}
-            <motion.div
-              whileHover={{ scale: 1.15, rotate: 8 }}
+            <div
               className={cn(
-                'p-2.5 rounded-xl transition-all duration-300 shadow-lg border-2 backdrop-blur-sm relative overflow-hidden',
-                colors.bg,
-                colors.border,
-                'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
+                'p-1.5 rounded-md transition-all duration-200 border bg-slate-50 border-slate-100',
+                colors.icon
               )}
             >
-              <Icon className={cn('h-4 w-4 relative z-10', colors.icon)} strokeWidth={2.4} />
-              <div className={cn(
-                "absolute -inset-1 blur-md opacity-20 group-hover:opacity-40 transition-opacity",
-                colors.bg
-              )} />
-            </motion.div>
+              <Icon className={cn('h-4 w-4', colors.icon)} strokeWidth={2} />
+            </div>
 
             {/* Change Badge */}
             {change && (
               <Badge 
                 variant="outline"
                 className={cn(
-                  "text-[9px] font-bold uppercase tracking-wider px-1.5 h-5 border-[0.5px]",
-                  changeType === 'positive' ? "bg-brand-green/10 text-brand-green border-emerald-500/20" :
-                  changeType === 'negative' ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                  "bg-white/5 text-muted-foreground border-white/10"
+                  "text-[10px] font-semibold px-2 h-5 border",
+                  changeType === 'positive' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                  changeType === 'negative' ? "bg-red-50 text-red-600 border-red-200" :
+                  "bg-slate-50 text-slate-600 border-slate-200"
                 )}
               >
                 {changeType === 'positive' && <TrendingUp className="w-3 h-3 mr-1 inline" />}
@@ -143,14 +135,14 @@ export default function MetricCard({
 
           {/* Enhanced Content */}
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 dark:text-white/40 leading-tight">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 leading-tight">
               {title}
             </p>
-            <p className="text-2xl font-black text-foreground dark:text-white tracking-tight font-mono tabular-nums leading-none">
+            <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums leading-none">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
             {description && (
-              <p className="text-[10px] text-muted-foreground/70 dark:text-white/50 leading-tight mt-0.5">
+              <p className="text-xs text-slate-400 leading-tight mt-1">
                 {description}
               </p>
             )}
@@ -158,36 +150,21 @@ export default function MetricCard({
 
           {/* Enhanced Mini Trend Line */}
           {trend && trend.length > 0 && (
-            <div className="mt-4 flex items-end gap-1.5 h-8 w-full overflow-hidden opacity-30 group-hover:opacity-90 transition-opacity">
+            <div className="mt-4 flex items-end gap-1 h-6 w-full overflow-hidden opacity-40 group-hover:opacity-100 transition-opacity">
               {trend.map((height, index) => (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: `${Math.max(height, 8)}%`, opacity: 1 }}
-                  transition={{ delay: delay + (index * 0.08), duration: 0.6, ease: "easeOut" }}
+                  style={{ height: `${Math.max(height, 8)}%` }}
                   className={cn(
-                    'flex-1 min-w-[4px] rounded-t-lg transition-all relative overflow-hidden',
-                    changeType === 'positive' ? 'bg-gradient-to-t from-emerald-400 to-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.4)]' :
-                    changeType === 'negative' ? 'bg-gradient-to-t from-red-400 to-red-600 shadow-[0_0_12px_rgba(239,68,68,0.4)]' :
-                    'bg-gradient-to-t from-brand-blue to-brand-cyan shadow-[0_0_12px_rgba(37,99,235,0.4)]',
-                    'before:absolute before:inset-0 before:bg-gradient-to-t before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity'
+                    'flex-1 min-w-[3px] rounded-t-sm transition-all',
+                    changeType === 'positive' ? 'bg-emerald-400' :
+                    changeType === 'negative' ? 'bg-red-400' :
+                    'bg-slate-300'
                   )}
                 />
               ))}
             </div>
           )}
-          
-          {/* Enhanced Glow Effect */}
-          <div className={cn(
-            "absolute -bottom-24 -right-24 w-48 h-48 blur-[100px] rounded-full opacity-0 group-hover:opacity-15 transition-all duration-1000 delay-200",
-            colors.bg
-          )} />
-          
-          {/* Subtle Border Animation */}
-          <div className={cn(
-            "absolute inset-0 rounded-[inherit] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
-            "bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"
-          )} />
         </CardContent>
       </Card>
     </motion.div>

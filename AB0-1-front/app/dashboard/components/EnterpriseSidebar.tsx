@@ -78,10 +78,10 @@ function SidebarTree({
                   )
                 }
                 className={cn(
-                  'w-full h-11 rounded-xl border border-transparent justify-start px-3 text-left',
+                  'w-full h-11 rounded-lg border border-transparent justify-start px-3 text-left transition-all',
                   isGroupActive
-                    ? 'bg-brand-blue/15 text-white border-brand-blue/30'
-                    : 'text-white/70 hover:text-white hover:bg-white/5',
+                    ? 'bg-slate-100 text-slate-900 border-slate-200 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50',
                   isCollapsed && 'justify-center px-0'
                 )}
                 title={item.label}
@@ -97,7 +97,7 @@ function SidebarTree({
               </Button>
 
               {!isCollapsed && isOpen && (
-                <div className="ml-4 space-y-1 border-l border-white/10 pl-3">
+                <div className="ml-4 space-y-1 border-l border-slate-100 pl-3">
                   {item.children.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
@@ -111,10 +111,10 @@ function SidebarTree({
                         onClick={() => onTabChange(child.id)}
                         aria-label={child.label}
                         className={cn(
-                          'w-full h-10 rounded-lg justify-start px-3 text-left',
+                          'w-full h-10 rounded-lg justify-start px-3 text-left transition-all',
                           isChildActive
-                            ? 'bg-white/10 text-white border border-white/10'
-                            : 'text-white/65 hover:text-white hover:bg-white/5'
+                            ? 'bg-primary/5 text-primary border border-primary/10'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         )}
                       >
                         <ChildIcon className="h-4 w-4 shrink-0" />
@@ -143,10 +143,10 @@ function SidebarTree({
             variant="ghost"
             onClick={() => onTabChange(item.id)}
             className={cn(
-              'w-full h-11 rounded-xl border border-transparent justify-start px-3 text-left',
+              'w-full h-11 rounded-lg border border-transparent justify-start px-3 text-left transition-all',
               isActive
-                ? 'bg-brand-blue/15 text-white border-brand-blue/30'
-                : 'text-white/70 hover:text-white hover:bg-white/5',
+                ? 'bg-slate-100 text-slate-900 border-slate-200 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50',
               isCollapsed && 'justify-center px-0'
             )}
             title={item.label}
@@ -218,15 +218,15 @@ export default function EnterpriseSidebar({
   };
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-[#002B4D] text-white">
-      <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-blue text-white shadow-lg">
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950">
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm transition-transform hover:scale-105 active:scale-95">
           <Menu className="h-5 w-5" />
         </div>
         {!isCollapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">AvaliaSolar</p>
-            <p className="text-xs text-white/60">Dashboard empresarial</p>
+            <p className="truncate text-sm font-bold tracking-tight text-slate-900">AvaliaSolar</p>
+            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Enterprise Panel</p>
           </div>
         )}
       </div>
@@ -243,14 +243,14 @@ export default function EnterpriseSidebar({
         />
       </div>
 
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-slate-100 p-3">
         <Button
           type="button"
           variant="ghost"
           onClick={() => setIsCollapsed((prev) => !prev)}
           aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           className={cn(
-            'w-full h-10 rounded-xl justify-start px-3 text-white/70 hover:text-white hover:bg-white/5',
+            'w-full h-10 rounded-lg justify-start px-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50',
             isCollapsed && 'justify-center px-0'
           )}
         >
@@ -264,7 +264,7 @@ export default function EnterpriseSidebar({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-[280px] p-0 border-r border-white/10 bg-[#002B4D] sm:max-w-[280px]">
+        <SheetContent side="left" className="w-[280px] p-0 border-r border-slate-200 bg-white sm:max-w-[280px]">
           {sidebarContent}
         </SheetContent>
       </Sheet>
@@ -273,7 +273,7 @@ export default function EnterpriseSidebar({
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 hidden border-r border-white/10 bg-[#002B4D] lg:block',
+          'fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white lg:block',
           isCollapsed ? 'w-[72px]' : 'w-[240px]'
         )}
       >

@@ -63,12 +63,12 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
       <div className="space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-             <Skeleton key={i} className="h-32 rounded-3xl bg-white/[0.03]" />
+             <Skeleton key={i} className="h-32 rounded-xl bg-white/[0.03]" />
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[450px] w-full rounded-[2.5rem] bg-white/[0.03]" />
+            <Skeleton key={i} className="h-[450px] w-full rounded-xl bg-white/[0.03]" />
           ))}
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           </p>
         </div>
         
-        <div className="flex gap-4 p-2 bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl backdrop-blur-sm">
+        <div className="flex gap-4 p-2 bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl backdrop-blur-sm">
            <div className="px-4 py-2 border-r border-slate-200 dark:border-white/5">
               <p className="text-[10px] font-black text-slate-500 dark:text-white/30 uppercase tracking-widest mb-1">Status de Rede</p>
               <div className="flex items-center gap-2 text-brand-green font-bold text-xs">
@@ -128,9 +128,9 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
       </div>
 
       {badges.length === 0 ? (
-        <Card className="clay-precision bg-slate-50 dark:bg-white/[0.01] border-dashed border-2 border-slate-200 dark:border-white/5 rounded-[3rem] overflow-hidden">
+        <Card className="clay-precision bg-slate-50 dark:bg-white/[0.01] border-dashed border-2 border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
           <CardContent className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="h-24 w-24 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-8 relative">
+            <div className="h-24 w-24 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-8 relative">
                <Award className="h-10 w-10 text-slate-400 dark:text-white/20" />
                <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full" />
             </div>
@@ -153,7 +153,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="clay-precision bg-white dark:bg-[#002B4D]/50 backdrop-blur-xl border border-slate-200 dark:border-transparent rounded-[2.5rem] overflow-hidden group transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-2 h-full flex flex-col">
+                <Card className="clay-precision bg-white dark:bg-[#002B4D]/50 backdrop-blur-xl border border-slate-200 dark:border-transparent rounded-xl overflow-hidden group transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-2 h-full flex flex-col">
                   {/* Visual Preview */}
                   <div className="h-56 relative flex items-center justify-center overflow-hidden border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[length:100%_100%] dark:bg-gradient-to-br dark:from-white/[0.03] dark:to-transparent">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -188,7 +188,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                          <ShieldCheck className="h-3.5 w-3.5 text-brand-green/50" />
                       </div>
                       <div className="relative group/snippet">
-                        <pre className="p-4 bg-slate-100 dark:bg-black/40 text-blue-600 dark:text-blue-400 rounded-2xl text-[10px] overflow-hidden border border-slate-200 dark:border-white/5 leading-relaxed font-mono select-all">
+                        <pre className="p-4 bg-slate-100 dark:bg-black/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] overflow-hidden border border-slate-200 dark:border-white/5 leading-relaxed font-mono select-all">
                           {`<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`}
                         </pre>
                         <Button
@@ -207,16 +207,16 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
-                      <Button 
+                        <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-11 rounded-2xl border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white"
+                        className="h-11 rounded-xl border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white"
                         onClick={() => copyToClipboard(badge.image_url || '', badge.id, 'url')}
                       >
                         <Activity className="h-3.5 w-3.5 mr-2" />
                         Source Link
                       </Button>
-                      <Button asChild size="sm" className="h-11 rounded-2xl bg-primary border-none text-white dark:bg-white/[0.02] dark:border dark:border-white/5 hover:bg-primary/90 dark:hover:bg-primary dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                      <Button asChild size="sm" className="h-11 rounded-xl bg-primary border-none text-white dark:bg-white/[0.02] dark:border dark:border-white/5 hover:bg-primary/90 dark:hover:bg-primary dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">
                         <a href={badge.verifiable_url} target="_blank" rel="noreferrer">
                           <ExternalLink className="h-3.5 w-3.5 mr-2" />
                           Authority
@@ -241,7 +241,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
       )}
       
       {/* Strategic Insight Footer */}
-      <div className="p-8 rounded-[2.5rem] bg-gradient-to-r from-primary/10 to-transparent border border-slate-200 dark:border-white/5 relative overflow-hidden">
+      <div className="p-8 rounded-xl bg-gradient-to-r from-primary/10 to-transparent border border-slate-200 dark:border-white/5 relative overflow-hidden">
          <div className="absolute top-0 right-0 p-8 opacity-10">
             <Info className="h-24 w-24 text-primary" />
          </div>

@@ -111,7 +111,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
         <div className="sticky top-0 z-10 w-full p-6 bg-white/60 dark:bg-[#0B1120]/60 backdrop-blur-xl border-b border-white/20 dark:border-white/5">
           <SheetHeader className="text-left">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-brand-blue flex items-center justify-center shadow-lg shadow-brand-blue/20 clay-convex">
+              <div className="w-12 h-12 rounded-xl bg-brand-blue flex items-center justify-center shadow-lg shadow-brand-blue/20 clay-convex">
                 <Target className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -125,11 +125,11 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
             </div>
             
             <div className="flex items-center gap-4 mt-2">
-              <div className="flex-1 p-3 rounded-2xl clay-precision bg-white dark:bg-slate-900 shadow-sm">
+              <div className="flex-1 p-3 rounded-xl clay-precision bg-white dark:bg-slate-900 shadow-sm">
                 <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Potencial de Compra</p>
                 <div className="flex items-center gap-2">
                   <span className={cn(
-                    "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border",
+                    "px-2 py-0.5 rounded-xl text-[9px] font-black uppercase tracking-wider border",
                     getLevelColor(lead.intent_level)
                   )}>
                     {translateLevel(lead.intent_level)}
@@ -137,7 +137,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
                   <p className="text-sm font-black text-foreground dark:text-white">Score: {lead.total_score}</p>
                 </div>
               </div>
-              <div className="flex-1 p-3 rounded-2xl clay-precision bg-white dark:bg-slate-900 shadow-sm">
+              <div className="flex-1 p-3 rounded-xl clay-precision bg-white dark:bg-slate-900 shadow-sm">
                 <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Tempo de Resposta (SLA)</p>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-brand-blue" />
@@ -153,7 +153,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-5 rounded-[1.5rem] bg-brand-blue text-white shadow-2xl shadow-brand-blue/30 relative overflow-hidden clay-convex border border-white/10"
+            className="p-5 rounded-xl bg-brand-blue text-white shadow-2xl shadow-brand-blue/30 relative overflow-hidden clay-convex border border-white/10"
           >
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-3">
@@ -186,19 +186,19 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Consumo Mensal</p>
                 <p className="text-base font-black text-foreground dark:text-white">
                   {lead.technical_profile?.monthly_kwh ? `${lead.technical_profile.monthly_kwh} kWh` : 'Não informado'}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Fatura Média</p>
                 <p className="text-base font-black text-foreground dark:text-white">
                   {formatCurrency(lead.technical_profile?.bill_value)}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Porte Sugerido</p>
                 <div className="flex items-center gap-2">
                   <ScalingIcon className="h-4 w-4 text-brand-blue/50" />
@@ -207,7 +207,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
                   </p>
                 </div>
               </div>
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 transition-all hover:border-brand-blue/20 clay-precision shadow-sm">
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Janela de Decisão</p>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-brand-blue/50" />
@@ -218,7 +218,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/50 border-none clay-concave">
+            <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900/50 border-none clay-concave">
               <div className="flex items-start gap-4">
                 <div className="p-2 rounded-xl bg-green-500/10 text-green-500 shadow-inner">
                   <ShieldCheck className="h-4 w-4" />
@@ -241,12 +241,12 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
               <h3 className="text-sm font-black uppercase tracking-widest text-foreground dark:text-white">Sinais de Engajamento</h3>
             </div>
             
-            <div className="p-4 rounded-[1.5rem] bg-brand-blue/5 border border-brand-blue/10 clay-concave">
+            <div className="p-4 rounded-xl bg-brand-blue/5 border border-brand-blue/10 clay-concave">
               <div className="space-y-4">
                 {lead.top_signals && lead.top_signals.length > 0 ? (
                   lead.top_signals.map((signal, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-white/5 transition-transform hover:scale-[1.02]">
-                      <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-brand-blue/10 flex items-center justify-center">
                         {signal.signal_category === 'contact_intent' ? <Zap className="h-4 w-4 text-brand-blue" /> : 
                          signal.signal_category === 'financial_intent' ? <BarChart3 className="h-4 w-4 text-brand-blue" /> :
                          <MousePointer2 className="h-4 w-4 text-brand-blue" />}

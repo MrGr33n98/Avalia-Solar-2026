@@ -115,7 +115,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
             </DialogHeader>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {availableCategories.map((category) => (
-                <div key={category.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                <div key={category.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-muted transition-colors">
                   <Checkbox
                     id={`cat-${category.id}`}
                     checked={selectedCategories.includes(category.id)}
@@ -161,7 +161,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
           >
-            <Card className="hover:shadow-none transition-all duration-300">
+            <Card className="rounded-xl hover:shadow-none transition-all duration-300">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -215,7 +215,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
       </div>
 
       {categories.length === 0 && (
-        <Card className="border-dashed">
+        <Card className="rounded-xl border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-white/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma categoria adicionada</h3>

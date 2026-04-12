@@ -99,8 +99,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="clay-precision bg-card/90 backdrop-blur-xl border-none p-5 rounded-[1.5rem] shadow-2xl min-w-[200px]">
-          <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] mb-4 border-b border-white/5 pb-2">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-lg shadow-lg min-w-[180px]">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest mb-3 border-b border-slate-100 dark:border-white/5 pb-2">
             Temporal Logic: {label}
           </p>
           <div className="space-y-3">
@@ -110,9 +110,9 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{entry.name}</span>
                  </div>
-                 <span className="text-xs font-black text-white font-mono">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                     {entry.name === 'Posição' ? `${entry.value}º` : entry.value.toLocaleString()}
-                 </span>
+                  </span>
               </div>
             ))}
           </div>
@@ -143,7 +143,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="h-6 w-6 text-amber-500" />
-            <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
+            <h2 className="text-3xl font-bold tracking-tight uppercase text-foreground dark:text-white">
               Inteligência Estratégica
             </h2>
           </div>
@@ -151,9 +151,9 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             Monitoramento analítico de alta precisão para benchmarking competitivo e otimização de tração orgânica.
           </p>
         </div>
-        <div className="flex p-1 bg-slate-100 dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/5 items-center px-4 py-2 gap-3">
+        <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 items-center px-4 py-1.5 gap-3">
           <Award className="h-4 w-4 text-amber-500" />
-          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest whitespace-nowrap">
+          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest whitespace-nowrap">
             Nível Atual: Posição {data?.rank_position || 'N/D'} entre Líderes
           </span>
         </div>
@@ -201,14 +201,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Visualização de Vetor de Crescimento */}
-        <Card className="lg:col-span-8 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
+        <Card className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
           <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06] flex flex-row items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                <BarChart3 className="w-6 h-6 text-brand-blue" />
+              <CardTitle className="text-lg font-bold text-foreground dark:text-white tracking-tight flex items-center gap-3">
+                <BarChart3 className="w-5 h-5 text-brand-blue" />
                 Vetor de Velocidade de Crescimento
               </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-widest mt-1">Acompanhamento de Performance Multidimensional</CardDescription>
+              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Acompanhamento de Performance Multidimensional</CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
                 <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-brand-green" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Posição Ranking</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Posição Ranking</span>
                 </div>
             </div>
           </CardHeader>
@@ -240,7 +240,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     dataKey="week" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{fontSize: 10, fontWeight: 800, fill: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)'}} 
+                    tick={{fontSize: 10, fontWeight: 600, fill: 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-sans)'}} 
                     dy={15} 
                   />
                   <YAxis 
@@ -286,29 +286,29 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         </Card>
 
         {/* Quadrante Tático de Mercado */}
-        <Card className="lg:col-span-4 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)] flex flex-col">
+        <Card className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
           <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-black text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                  <Target className="w-6 h-6 text-brand-green" />
+                <CardTitle className="text-lg font-bold text-foreground dark:text-white tracking-tight flex items-center gap-3">
+                  <Target className="w-5 h-5 text-brand-green" />
                   Quadrante de Mercado
                 </CardTitle>
-                <div className="h-10 w-10 rounded-2xl bg-brand-green/10 flex items-center justify-center">
-                   <Activity className="h-5 w-5 text-brand-green" />
+                <div className="h-9 w-9 rounded-xl bg-brand-green/10 flex items-center justify-center">
+                   <Activity className="h-4 w-4 text-brand-green" />
                 </div>
               </div>
 
               <div className="relative group">
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
+                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
                     <SelectValue placeholder="SELETOR DE ESCOPO" />
                   </SelectTrigger>
-                  <SelectContent className="clay-precision bg-card border-none rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-black uppercase">ESCOPO GLOBAL</SelectItem>
+                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <SelectItem value="all" className="text-[10px] font-bold uppercase">ESCOPO GLOBAL</SelectItem>
                     {company.categories?.map((cat: any) => (
-                      <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-black uppercase">
+                      <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-bold uppercase">
                         {cat.name}
                       </SelectItem>
                     ))}
@@ -319,13 +319,13 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
               <div className="relative group">
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCriterionSlug} onValueChange={setSelectedCriterionSlug}>
-                  <SelectTrigger className="w-full h-12 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.03] border-none text-[10px] font-black uppercase tracking-widest focus:ring-brand-blue/30">
+                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
                     <SelectValue placeholder="CRITÉRIO" />
                   </SelectTrigger>
-                  <SelectContent className="clay-precision bg-card border-none rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-black uppercase">TODOS OS CRITÉRIOS</SelectItem>
+                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <SelectItem value="all" className="text-[10px] font-bold uppercase">TODOS OS CRITÉRIOS</SelectItem>
                     {(criteriaQuery.data?.criteria || []).map((criterion: any) => (
-                      <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-black uppercase">
+                      <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-bold uppercase">
                         {criterion.title}
                       </SelectItem>
                     ))}
@@ -335,7 +335,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             </div>
           </CardHeader>
           <CardContent className="p-8 flex-1 flex flex-col">
-            <div className="flex-1 bg-black/20 rounded-[2rem] border border-white/5 p-4 shadow-inner relative overflow-hidden group/quad">
+            <div className="flex-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden group/quad">
               {quadrantData.length > 0 ? (
                 <MagicQuadrant
                   data={quadrantData}
@@ -345,8 +345,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                  <div className="h-24 w-24 rounded-[2rem] bg-white/5 flex items-center justify-center mb-6 animate-pulse">
-                    <Target className="h-10 w-10 text-white/10" />
+                   <div className="h-20 w-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6 animate-pulse">
+                    <Target className="h-8 w-8 text-slate-300 dark:text-slate-600" />
                   </div>
                   <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] max-w-[180px]">
                     Dados insuficientes para mapear o quadrante.
@@ -355,13 +355,13 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
               )}
             </div>
             
-            <div className="mt-8 p-6 rounded-[2rem] bg-indigo-600/5 border border-indigo-500/20 group hover:bg-indigo-600/10 transition-all">
+            <div className="mt-8 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/20 group hover:border-indigo-200 transition-all">
               <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
                   <ShieldCheck className="h-5 w-5 text-indigo-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Inteligência de Otimização</p>
+                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Inteligência de Otimização</p>
                   <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                     {selectedCriterionSlug !== 'all'
                       ? `Seu quadrante agora é ponderado por ${data?.quadrant_meta?.criterion_title || 'o critério selecionado'} para esta categoria, equilibrado com sinais de autoridade de confiança e execução.`

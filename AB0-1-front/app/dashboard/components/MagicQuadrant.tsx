@@ -36,8 +36,8 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="min-w-[210px] rounded-2xl border border-white/10 bg-[#031a2e]/95 p-3 text-[10px] font-bold uppercase tracking-widest text-white shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center gap-2 mb-2 border-b border-white/10 pb-2">
+      <div className="min-w-[180px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3 text-[10px] font-bold uppercase tracking-widest text-slate-900 dark:text-white shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center gap-2 mb-2 border-b border-slate-100 dark:border-white/5 pb-2">
           {data.logo_url && (
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white p-1 shadow-[0_0_16px_rgba(56,189,248,0.18)]">
               <Image src={data.logo_url} alt={data.name} width={36} height={36} className="h-full w-full object-contain" />
@@ -49,17 +49,17 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm tracking-tight">{data.name}</p>
-            <p className="mt-0.5 text-[9px] tracking-[0.24em] text-cyan-200/70">
+            <p className="truncate text-sm font-bold tracking-tight text-slate-900 dark:text-white">{data.name}</p>
+            <p className="mt-0.5 text-[9px] tracking-widest text-slate-400">
               {data.is_current_company ? 'EMPRESA ATUAL' : 'PLAYER DO MERCADO'}
             </p>
           </div>
         </div>
         <div className="space-y-1">
-          <p className="text-white/50 flex justify-between">Visão: <span className="text-white font-mono">{data.completeness_of_vision}%</span></p>
-          <p className="text-white/50 flex justify-between">Execução: <span className="text-white font-mono">{data.ability_to_execute}%</span></p>
+          <p className="text-slate-500 dark:text-white/50 flex justify-between">Visão: <span className="text-slate-900 dark:text-white font-mono">{data.completeness_of_vision}%</span></p>
+          <p className="text-slate-500 dark:text-white/50 flex justify-between">Execução: <span className="text-slate-900 dark:text-white font-mono">{data.ability_to_execute}%</span></p>
           {criterionTitle && data.criterion_score != null && (
-            <p className="text-white/50 flex justify-between">{criterionTitle}: <span className="text-white font-mono">{Number(data.criterion_score).toFixed(2)}</span></p>
+            <p className="text-slate-500 dark:text-white/50 flex justify-between">{criterionTitle}: <span className="text-slate-900 dark:text-white font-mono">{Number(data.criterion_score).toFixed(2)}</span></p>
           )}
         </div>
         {data.is_current_company && (
@@ -76,10 +76,10 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
 
 const CompanyLogoShape = (props: any) => {
   const { cx, cy, payload } = props;
-  const size = payload.is_current_company ? 46 : 34;
+  const size = payload.is_current_company ? 42 : 32;
   const halfSize = size / 2;
-  const haloRadius = payload.is_current_company ? halfSize + 10 : halfSize + 4;
-  const ringStroke = payload.is_current_company ? '#fbbf24' : '#7dd3fc';
+  const haloRadius = payload.is_current_company ? halfSize + 8 : halfSize + 4;
+  const ringStroke = payload.is_current_company ? '#fbbf24' : '#3b82f6';
 
   return (
     <g>
@@ -87,7 +87,7 @@ const CompanyLogoShape = (props: any) => {
         cx={cx}
         cy={cy}
         r={haloRadius}
-        fill={payload.is_current_company ? 'rgba(251, 191, 36, 0.16)' : 'rgba(34, 211, 238, 0.08)'}
+        fill={payload.is_current_company ? 'rgba(251, 191, 36, 0.1)' : 'rgba(59, 130, 246, 0.05)'}
         className={cn(
           'transition-all duration-300',
           payload.is_current_company ? 'animate-pulse' : ''
@@ -97,12 +97,12 @@ const CompanyLogoShape = (props: any) => {
         cx={cx}
         cy={cy}
         r={halfSize + 2}
-        fill="rgba(2, 132, 199, 0.12)"
+        fill="white"
         stroke={ringStroke}
-        strokeWidth={payload.is_current_company ? 2.5 : 1.5}
+        strokeWidth={payload.is_current_company ? 2 : 1.5}
         className={cn(
           'transition-all duration-300',
-          payload.is_current_company ? 'drop-shadow-[0_0_14px_rgba(251,191,36,0.42)]' : 'drop-shadow-[0_0_12px_rgba(34,211,238,0.18)]'
+          payload.is_current_company ? 'drop-shadow-md' : ''
         )}
       />
       <circle
@@ -138,8 +138,8 @@ const CompanyLogoShape = (props: any) => {
           textAnchor="middle"
           dominantBaseline="middle"
           className={cn(
-            'pointer-events-none text-[9px] font-black uppercase',
-            payload.is_current_company ? 'fill-amber-500' : 'fill-slate-500'
+            'pointer-events-none text-[8px] font-bold uppercase',
+            payload.is_current_company ? 'fill-amber-600' : 'fill-slate-400'
           )}
         >
           {getCompanyInitials(payload.name)}
@@ -163,7 +163,7 @@ const CompanyLogoShape = (props: any) => {
 
 export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confiança', yAxisLabel = 'Poder de Execução', criterionTitle }: Props) {
   return (
-    <div className="relative h-[400px] w-full select-none overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.14),_transparent_34%),linear-gradient(180deg,rgba(3,24,43,0.92),rgba(2,17,30,0.86))] px-2">
+    <div className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.05} vertical={false} />
@@ -174,7 +174,7 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: `${xAxisLabel} ➔`, position: "bottom", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
+            label={{ value: `${xAxisLabel} ➔`, position: "bottom", fill: "rgba(0,0,0,0.2)", fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
           />
           <YAxis 
             type="number" 
@@ -182,16 +182,16 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: `${yAxisLabel} ➔`, angle: -90, position: "left", fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 900, letterSpacing: '0.2em' }}
+            label={{ value: `${yAxisLabel} ➔`, angle: -90, position: "left", fill: "rgba(0,0,0,0.2)", fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
           />
           
           <RechartsTooltip content={<CustomTooltip criterionTitle={criterionTitle} />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
           
-          {/* Quadrant Backgrounds - Silicon Dark Palette */}
-          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="rgba(255,255,255,0.01)" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="rgba(59,130,246,0.03)" strokeOpacity={0} />
-          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="rgba(255,255,255,0.005)" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="rgba(255,255,255,0.01)" strokeOpacity={0} />
+          {/* Quadrant Backgrounds */}
+          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="rgba(0,0,0,0.01)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="rgba(59,130,246,0.05)" strokeOpacity={0} />
+          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="rgba(0,0,0,0.005)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="rgba(0,0,0,0.01)" strokeOpacity={0} />
 
           <Scatter 
             name="Companies" 
@@ -203,23 +203,23 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
       </ResponsiveContainer>
 
       {/* Strategic Labels */}
-      <div className="absolute left-7 top-6 opacity-50">
-        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+      <div className="absolute left-7 top-6 opacity-60">
+        <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
           Desafiantes
         </span>
       </div>
       <div className="absolute right-7 top-6">
-        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.12)]">
+        <span className="rounded-md border border-blue-100 bg-blue-50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-blue-600 shadow-sm">
           Líderes
         </span>
       </div>
-      <div className="absolute bottom-10 left-7 opacity-50">
-        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+      <div className="absolute bottom-10 left-7 opacity-60">
+        <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
           Nicho
         </span>
       </div>
       <div className="absolute bottom-10 right-7 opacity-60">
-        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[8px] font-black uppercase tracking-[0.3em] text-white">
+        <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
           Visionárias
         </span>
       </div>

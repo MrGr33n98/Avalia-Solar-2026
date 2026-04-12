@@ -193,7 +193,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-             <Skeleton key={i} className="h-32 rounded-3xl bg-slate-100 dark:bg-white/5" />
+             <Skeleton key={i} className="h-32 rounded-xl bg-slate-100 dark:bg-white/5" />
           ))}
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                 transition={{ delay: 0.2 + (idx * 0.05) }}
               >
                 <Card className={cn(
-                  "clay-precision bg-card dark:bg-[#0F172A] border-none group transition-all duration-300",
+                  "clay-precision rounded-xl bg-card dark:bg-[#0F172A] border-none group transition-all duration-300",
                   review.featured && "ring-1 ring-brand-yellow/20 bg-brand-yellow/[0.02]"
                 )}>
                   <CardContent className="p-6">
@@ -316,7 +316,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
 
                           {/* Response Section */}
                           {review.reply && (
-                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 mb-6 relative overflow-hidden group/reply">
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 mb-6 relative overflow-hidden group/reply">
                                <div className="absolute top-0 left-0 w-1 h-full bg-brand-blue/30" />
                                <div className="flex items-center gap-2 mb-2">
                                  <Reply className="h-3.5 w-3.5 text-brand-blue" />

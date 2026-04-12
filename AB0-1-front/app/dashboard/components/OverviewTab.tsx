@@ -46,7 +46,7 @@ import {
 } from 'recharts';
 
 const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl" />,
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl" />,
   ssr: false
 });
 
@@ -96,26 +96,23 @@ function StatCard({
       transition={{ duration: 0.35, delay, ease: [0.23, 1, 0.32, 1] }}
     >
       <div className={cn(
-        'relative flex flex-col justify-between gap-3 p-5 rounded-2xl overflow-hidden transition-all duration-300',
-        'bg-white dark:bg-[hsl(var(--clay-surface))]',
-        'border-[0.5px] border-slate-200/80 dark:border-white/[0.08]',
-        'shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)]',
-        'dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]',
-        'hover:shadow-[3px_3px_12px_hsl(var(--clay-shadow-dark)/0.06),-3px_-3px_12px_hsl(var(--clay-shadow-light)/0.7)]',
-        'dark:hover:shadow-[3px_3px_14px_rgba(0,0,0,0.4),-3px_-3px_10px_rgba(255,255,255,0.04)]',
-        'hover:border-slate-300/80 dark:hover:border-white/[0.12]',
+        'relative flex flex-col justify-between gap-3 p-5 rounded-xl transition-all duration-300',
+        'bg-white dark:bg-slate-900',
+        'border border-slate-200 dark:border-slate-800',
+        'shadow-sm hover:shadow-md',
+        'hover:border-slate-300 dark:hover:border-slate-700',
         'group cursor-default min-h-[112px]'
       )}>
         {/* Inset highlight */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/[0.06] to-transparent" />
+
 
         <div className="flex items-center justify-between">
           <p className="text-[13px] font-medium text-slate-500 dark:text-white/50 leading-tight">
             {title}
           </p>
           {Icon && (
-            <div className="p-1.5 rounded-lg bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06]">
-              <Icon className="h-3.5 w-3.5 text-slate-400 dark:text-white/30" />
+            <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <Icon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
             </div>
           )}
         </div>
@@ -145,7 +142,7 @@ function StatCard({
 function ChartTooltipContent({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="min-w-[160px] rounded-xl border-[0.5px] border-slate-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-[hsl(var(--clay-surface))]/95 p-3 text-xs shadow-xl backdrop-blur-xl">
+    <div className="min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3 text-xs shadow-lg backdrop-blur-xl">
       <p className="font-medium text-slate-500 dark:text-white/50 mb-2">{label}</p>
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center justify-between gap-4">
@@ -201,10 +198,9 @@ function DonutLegendRow({ color, label, value }: { color: string; label: string;
 
 /* ─── Clay Panel Styles (AS-EDS Precision) ─── */
 const CLAY_PANEL = [
-  'bg-white dark:bg-[hsl(var(--clay-surface))]',
-  'border-[0.5px] border-slate-200/80 dark:border-white/[0.08]',
-  'shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)]',
-  'dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]',
+  'bg-white dark:bg-slate-900',
+  'border border-slate-200 dark:border-slate-800',
+  'shadow-sm',
 ].join(' ');
 
 /* ─── Main Component ─── */
@@ -372,15 +368,15 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[100px] rounded-[20px]" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[100px] rounded-xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Skeleton className="lg:col-span-8 h-[330px] rounded-[20px]" />
-          <Skeleton className="lg:col-span-4 h-[330px] rounded-[20px]" />
+          <Skeleton className="lg:col-span-8 h-[330px] rounded-xl" />
+          <Skeleton className="lg:col-span-4 h-[330px] rounded-xl" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <Skeleton className="h-[280px] rounded-[20px]" />
-          <Skeleton className="h-[280px] rounded-[20px]" />
+          <Skeleton className="h-[280px] rounded-xl" />
+          <Skeleton className="h-[280px] rounded-xl" />
         </div>
       </div>
     );
@@ -435,7 +431,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
           className="lg:col-span-8"
         >
           <div className={cn(
-            'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
+            'flex flex-col gap-4 p-6 rounded-xl overflow-hidden h-full',
             CLAY_PANEL,
           )}>
             {/* Chart Header — Tab group + Legend */}
@@ -527,7 +523,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
           className="lg:col-span-4"
         >
           <div className={cn(
-            'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
+            'flex flex-col gap-4 p-6 rounded-xl overflow-hidden h-full',
             CLAY_PANEL,
           )}>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -576,7 +572,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <div className={cn(
-            'flex flex-col gap-4 p-6 rounded-[20px] overflow-hidden h-full',
+            'flex flex-col gap-4 p-6 rounded-xl overflow-hidden h-full',
             CLAY_PANEL,
           )}>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -627,7 +623,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
           transition={{ duration: 0.5, delay: 0.45 }}
         >
           <div className={cn(
-            'rounded-[20px] overflow-hidden h-full',
+            'rounded-xl overflow-hidden h-full',
             CLAY_PANEL,
           )}>
             <NPSDetailedCard
@@ -645,7 +641,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         transition={{ duration: 0.5, delay: 0.5 }}
       >
         <div className={cn(
-          'rounded-[20px] overflow-hidden',
+          'rounded-xl overflow-hidden',
           CLAY_PANEL,
         )}>
           <div className="p-6">
@@ -667,7 +663,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Profile Completion */}
         <div className={cn(
-          'flex items-center gap-5 p-5 rounded-[20px]',
+          'flex items-center gap-5 p-5 rounded-xl',
           CLAY_PANEL,
         )}>
           <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20">
@@ -689,7 +685,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
 
         {/* Conversion Rate */}
         <div className={cn(
-          'flex items-center gap-5 p-5 rounded-[20px]',
+          'flex items-center gap-5 p-5 rounded-xl',
           CLAY_PANEL,
         )}>
           <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20">
@@ -707,7 +703,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
 
         {/* Active Status */}
         <div className={cn(
-          'flex items-center gap-5 p-5 rounded-[20px]',
+          'flex items-center gap-5 p-5 rounded-xl',
           CLAY_PANEL,
         )}>
           <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 rounded-2xl border border-cyan-200 dark:border-cyan-500/20">
@@ -733,7 +729,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         transition={{ duration: 0.5, delay: 0.55 }}
       >
         <div className={cn(
-          'rounded-[20px] overflow-hidden',
+          'rounded-xl overflow-hidden',
           CLAY_PANEL,
         )}>
           <div className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
@@ -793,15 +789,16 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
         </div>
       </motion.div>
 
-      {/* ═══ ROW 8: Acceleration Checklist (shown when no data) ═══ */}
-      {hasNoData && (
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          className="relative mt-8 group"
         >
+          <div className="absolute -inset-[1px] bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-xl blur-sm opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
           <div className={cn(
-            'rounded-[20px] overflow-hidden p-6',
+            'relative rounded-xl overflow-hidden p-8',
+            CLAY_PANEL,
             'bg-blue-50/50 dark:bg-blue-500/[0.04]',
             'border border-blue-200/50 dark:border-blue-500/10',
           )}>
@@ -846,7 +843,6 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
             </div>
           </div>
         </motion.div>
-      )}
     </div>
   );
 }

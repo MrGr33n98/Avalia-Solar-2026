@@ -212,7 +212,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
           >
-            <Alert className="clay-precision bg-brand-green/5 border-emerald-500/10 text-brand-green rounded-2xl p-5 flex items-center gap-4">
+            <Alert className="clay-precision bg-brand-green/5 border-emerald-500/10 text-brand-green rounded-xl p-5 flex items-center gap-4">
               <Shield className="h-5 w-5 fill-emerald-500/20" />
               <AlertDescription className="font-black uppercase tracking-widest text-[10px]">
                 Protocolo de aprovação iniciado. Os dados serão validados pelo comitê técnico.
@@ -239,7 +239,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           {!isEditing ? (
             <Button 
               onClick={() => setIsEditing(true)} 
-              className="clay-precision bg-brand-blue hover:bg-blue-700 text-white h-12 rounded-2xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
+              className="clay-precision bg-brand-blue hover:bg-blue-700 text-white h-12 rounded-xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
             >
               <Pencil className="h-4 w-4 mr-2" />
               Upgrade Info
@@ -250,14 +250,14 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 variant="ghost" 
                 onClick={() => setIsEditing(false)} 
                 disabled={saving}
-                className="h-12 rounded-2xl px-6 text-xs font-black uppercase tracking-widest text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5"
+                className="h-12 rounded-xl px-6 text-xs font-black uppercase tracking-widest text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5"
               >
                 Abortar
               </Button>
               <Button 
                 onClick={handleSave} 
                 disabled={saving}
-                className="clay-precision bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-2xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
+                className="clay-precision bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? 'Gravando...' : 'Comitar Alterações'}
@@ -278,7 +278,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
-            <div className="relative aspect-[21/9] rounded-3xl overflow-hidden bg-slate-100 dark:bg-black/40 border-[0.5px] border-slate-200 dark:border-white/10 shadow-2xl group/banner">
+            <div className="relative aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 dark:bg-black/40 border-[0.5px] border-slate-200 dark:border-white/10 shadow-2xl group/banner">
               {formData?.banner_url ? (
                 <Image src={formData.banner_url} alt="Brand Banner" fill className="w-full h-full object-cover transition-transform duration-1000 group-hover/banner:scale-105" />
               ) : (
@@ -316,8 +316,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           </CardHeader>
           <CardContent className="flex-1 p-8 flex flex-col items-center justify-center gap-8">
             <div className="relative">
-              <div className="h-32 w-32 rounded-[2.5rem] bg-white dark:bg-[#002B4D] clay-precision p-1 shadow-2xl ring-1 ring-slate-100 dark:ring-white/5">
-                <Avatar className="h-full w-full rounded-[2.4rem] overflow-hidden bg-slate-50 dark:bg-transparent">
+              <div className="h-32 w-32 rounded-xl bg-white dark:bg-[#002B4D] clay-precision p-1 shadow-2xl ring-1 ring-slate-100 dark:ring-white/5">
+                <Avatar className="h-full w-full rounded-xl overflow-hidden bg-slate-50 dark:bg-transparent">
                   <AvatarImage src={formData?.logo_url} className="object-contain p-6" />
                   <AvatarFallback className="text-3xl font-black text-brand-blue bg-brand-blue/5 uppercase">
                     {formData?.name?.substring(0, 2)}
@@ -326,7 +326,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </div>
               {isEditing && (
                 <label htmlFor="logo-upload" className="absolute -bottom-2 -right-2 cursor-pointer">
-                  <div className="h-10 w-10 rounded-2xl bg-brand-blue text-white shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-brand-blue text-white shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
                     <Upload className="h-4 w-4" />
                   </div>
                   <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
@@ -381,10 +381,10 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <Textarea 
                   value={formData?.description || ''} 
                   onChange={(e) => handleInputChange('description', e.target.value)} 
-                  className="min-h-[160px] rounded-2xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-medium leading-relaxed" 
+                  className="min-h-[160px] rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-medium leading-relaxed" 
                 />
               ) : (
-                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                <div className="p-6 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                   <p className="text-sm font-medium text-muted-foreground/80 dark:text-slate-300 leading-relaxed">
                     {company?.description}
                   </p>
@@ -398,7 +398,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                  { icon: Users, label: "Capacity", value: company?.employees_count ? `${company.employees_count}` : '-' },
                  { icon: Shield, label: "Compliance", value: "Verified" }
                ].map((item, i) => (
-                 <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 text-center group hover:border-brand-blue/20 transition-all">
+                 <div key={i} className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 text-center group hover:border-brand-blue/20 transition-all">
                     <item.icon className="h-4 w-4 text-brand-blue/40 mx-auto mb-2 group-hover:text-brand-blue transition-colors" />
                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">{item.label}</p>
                     <p className="text-xs font-black text-foreground dark:text-white uppercase">{item.value}</p>
@@ -445,7 +445,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                   { icon: Linkedin, label: "LKD", color: "sky", value: company?.linkedin }
                 ].map((social, i) => (
                   <div key={i} className={cn(
-                    "p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col items-center gap-2 group transition-all",
+                    "p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col items-center gap-2 group transition-all",
                     social.value ? "opacity-100 border-brand-blue/10" : "opacity-30 grayscale"
                   )}>
                     <social.icon className="h-5 w-5 text-muted-foreground/40 group-hover:scale-110 transition-transform" />
@@ -455,9 +455,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-brand-blue/[0.03] border border-brand-blue/10 flex items-center justify-between">
+            <div className="p-6 rounded-xl bg-brand-blue/[0.03] border border-brand-blue/10 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-brand-blue/10 flex items-center justify-center">
                   <Globe className="h-6 w-6 text-brand-blue" />
                 </div>
                 <div>
@@ -486,9 +486,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             <div className="md:col-span-2 space-y-6">
               <div className="space-y-4">
                 <TechInputLabel>Regional Headquarters</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 group hover:border-brand-blue/20 transition-all">
+                <div className="p-6 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 group hover:border-brand-blue/20 transition-all">
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
                        <MapPin className="h-6 w-6 text-brand-blue" />
                     </div>
                     <div className="flex-1">
@@ -520,7 +520,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col justify-between">
+            <div className="p-6 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col justify-between">
                <div>
                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">Response SLA</p>
                  <p className="text-2xl font-black text-brand-blue font-mono tracking-tighter">{company?.response_time_sla || 'N/A'}</p>
@@ -574,7 +574,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
            <CardContent className="p-8 space-y-8">
               <div className="space-y-2">
                 <TechInputLabel>Technical Certifications</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-brand-green/[0.03] border border-emerald-500/10 flex items-start gap-4">
+                <div className="p-6 rounded-xl bg-brand-green/[0.03] border border-emerald-500/10 flex items-start gap-4">
                    <Shield className="h-6 w-6 text-brand-green shrink-0" />
                    <p className="text-xs font-bold text-emerald-900/60 dark:text-brand-green/80 leading-relaxed">
                      {company?.certifications || 'No active certifications logged.'}
@@ -583,7 +583,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </div>
               <div className="space-y-2">
                 <TechInputLabel>Awards & Validations</TechInputLabel>
-                <div className="p-6 rounded-2xl bg-brand-yellow/[0.03] border border-brand-yellow/10 flex items-start gap-4">
+                <div className="p-6 rounded-xl bg-brand-yellow/[0.03] border border-brand-yellow/10 flex items-start gap-4">
                    <Award className="h-6 w-6 text-brand-yellow shrink-0" />
                    <p className="text-xs font-bold text-yellow-900/60 dark:text-brand-yellow/80 leading-relaxed">
                      {company?.awards || 'Awaiting formal market validation.'}

@@ -131,7 +131,7 @@ export default function EnterpriseHeader({
   };
 
   return (
-    <header className="sticky top-0 h-[68px] bg-[#002B4D]/80 backdrop-blur-md border-b border-white/[0.08] z-50">
+    <header className="sticky top-0 h-[68px] bg-white/80 backdrop-blur-md border-b border-slate-100 z-50">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between gap-4">
         {/* Left: Menu Button + Company Info */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -141,7 +141,7 @@ export default function EnterpriseHeader({
             size="icon"
             onClick={onMenuClick}
             aria-label="Abrir menu de navegação"
-            className="lg:hidden shrink-0 hover:bg-white/10 text-white/70"
+            className="lg:hidden shrink-0 hover:bg-slate-100 text-slate-600"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -151,53 +151,53 @@ export default function EnterpriseHeader({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity min-w-0">
-                  <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
+                  <Avatar className="h-9 w-9 border border-slate-200 shrink-0">
                     <AvatarImage src={company?.logo_url} alt={company?.name} />
-                    <AvatarFallback className="bg-brand-blue text-white text-xs font-bold">
+                    <AvatarFallback className="bg-primary text-white text-xs font-bold">
                       {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-sm font-bold text-white tracking-tight truncate max-w-[120px] sm:max-w-[200px]">
+                      <h1 className="text-sm font-bold text-slate-900 tracking-tight truncate max-w-[120px] sm:max-w-[200px]">
                         {company?.name || 'Minha Empresa'}
                       </h1>
-                      <MoreHorizontal className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                      <MoreHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     </div>
-                    <p className="text-[11px] sm:text-xs text-white/50 truncate">
+                    <p className="text-[11px] sm:text-xs text-slate-500 truncate">
                       {company?.city}, {company?.state}
                     </p>
                   </div>
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 bg-[#002B4D] border-white/10 text-white">
-                <DropdownMenuLabel className="text-xs text-white/50">Trocar Empresa</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuContent align="start" className="w-64 bg-white border-slate-200 text-slate-900">
+                <DropdownMenuLabel className="text-xs text-slate-500">Trocar Empresa</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-100" />
                 {companies.map((c) => (
                   <DropdownMenuItem 
                     key={c.id} 
                     className={cn(
-                      "cursor-pointer hover:bg-white/10",
-                      c.id === company?.id && "bg-brand-blue/20 text-brand-cyan"
+                      "cursor-pointer hover:bg-slate-50",
+                      c.id === company?.id && "bg-primary/5 text-primary"
                     )}
                     onClick={() => handleCompanySwitch(c)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <Avatar className="h-6 w-6 shrink-0">
                         <AvatarImage src={c.logo_url ?? undefined} alt={c.name} />
-                        <AvatarFallback className="text-[10px] bg-white/10">
+                        <AvatarFallback className="text-[10px] bg-slate-100">
                           {c.name?.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <span className="truncate">{c.name}</span>
-                      {c.id === company?.id && <CheckCircle2 className="h-3.5 w-3.5 ml-auto" />}
+                      {c.id === company?.id && <CheckCircle2 className="h-3.5 w-3.5 ml-auto text-primary" />}
                     </div>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-slate-100" />
                 <DropdownMenuItem 
-                  className="cursor-pointer hover:bg-white/10 text-brand-cyan text-xs"
+                  className="cursor-pointer hover:bg-slate-50 text-primary text-xs"
                   onClick={() => router.push('/select-company')}
                 >
                   <Shield className="mr-2 h-3.5 w-3.5" />
@@ -220,16 +220,16 @@ export default function EnterpriseHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative md:hidden hover:bg-white/10 text-white/70"
+                className="relative md:hidden hover:bg-slate-100 text-slate-600"
                 aria-label="Mais ações do dashboard"
               >
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
+            <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200 text-slate-900">
               <DropdownMenuLabel>Ações rápidas</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={handleExportCSV}>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuItem className="cursor-pointer hover:bg-slate-50" onClick={handleExportCSV}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 <span>Exportar como CSV</span>
               </DropdownMenuItem>
@@ -253,20 +253,20 @@ export default function EnterpriseHeader({
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden md:flex items-center gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                className="hidden md:flex items-center gap-2 bg-white border-slate-200 hover:bg-slate-50 text-slate-600"
               >
                 <Download className="h-4 w-4" />
                 <span>Relatórios</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
+            <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200 text-slate-900">
               <DropdownMenuLabel>Exportar Dados</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={handleExportCSV}>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuItem className="cursor-pointer hover:bg-slate-50" onClick={handleExportCSV}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 <span>Exportar como CSV</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer hover:bg-white/10" onClick={() => {
+              <DropdownMenuItem className="cursor-pointer hover:bg-slate-50" onClick={() => {
                 track('Report Exported', {
                   export_type: 'pdf',
                   company_id: company?.id,
@@ -405,39 +405,39 @@ export default function EnterpriseHeader({
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 px-2 hover:bg-white/10 text-white/70"
+                className="gap-2 px-2 hover:bg-slate-100 text-slate-600"
               >
-                <Avatar className="h-7 w-7 ring-1 ring-white/10">
+                <Avatar className="h-7 w-7 border border-slate-200">
                   <AvatarImage src={user?.avatar_url} alt="User" />
-                  <AvatarFallback className="bg-brand-gray text-white text-xs font-bold">
+                  <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-bold">
                     {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:block text-left">
-                  <p className="text-xs font-bold text-white truncate">{user?.name || 'Usuário'}</p>
-                  <p className="text-[10px] text-white/50 truncate">{user?.email || ''}</p>
+                  <p className="text-xs font-bold text-slate-900 truncate">{user?.name || 'Usuário'}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{user?.email || ''}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             
-            <DropdownMenuContent align="end" className="w-56 bg-[#002B4D] border-white/10 text-white">
-              <DropdownMenuLabel className="text-xs">Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200 text-slate-900">
+              <DropdownMenuLabel className="text-xs text-slate-500">Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-100" />
               
-              <DropdownMenuItem className="cursor-pointer text-xs hover:bg-white/10">
+              <DropdownMenuItem className="cursor-pointer text-xs hover:bg-slate-50">
                 <User className="h-3.5 w-3.5 mr-2" />
                 Perfil
               </DropdownMenuItem>
 
               
-              <DropdownMenuItem className="cursor-pointer text-xs">
+              <DropdownMenuItem className="cursor-pointer text-xs hover:bg-slate-50">
                 <Settings className="h-3.5 w-3.5 mr-2" />
                 Configurações
               </DropdownMenuItem>
               
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-slate-100" />
               
-              <DropdownMenuItem className="cursor-pointer text-xs text-red-600 focus:text-red-600 focus:bg-red-500/10">
+              <DropdownMenuItem className="cursor-pointer text-xs text-red-600 focus:text-red-600 focus:bg-red-50">
                 <LogOut className="h-3.5 w-3.5 mr-2" />
                 Sair
               </DropdownMenuItem>
