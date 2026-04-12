@@ -40,6 +40,7 @@ Rails.application.configure do
   host = uri.host || app_host
   protocol = uri.scheme || 'https'
 
+  # Usar o host vindo do APP_HOST, mas permitir que o Rails use o host atual da requisição se disponível
   Rails.application.routes.default_url_options = { host: host, protocol: protocol }
   config.action_controller.default_url_options = { host: host, protocol: protocol }
   config.active_storage.default_url_options = { host: host, protocol: protocol }

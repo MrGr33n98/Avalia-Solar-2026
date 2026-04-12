@@ -373,6 +373,7 @@ Rails.application.routes.draw do
 
       # Autenticação (reusa Devise existente)
       get  'entrar',  to: 'sessions#new',    as: :login
+      get  'entre',   to: 'sessions#new'     # Alias para evitar 404
       post 'entrar',  to: 'sessions#create'
       delete 'sair',  to: 'sessions#destroy', as: :logout
 
