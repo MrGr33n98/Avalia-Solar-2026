@@ -1,6 +1,7 @@
 module App
   class ExpoController < BaseController
     # Landing pública — não requer autenticação
+    skip_before_action :authenticate_user!
     skip_before_action :verify_authenticity_token, only: [:index]
 
     def index

@@ -35,7 +35,7 @@ Rails.application.configure do
   
   # --- CONFIGURAÇÃO UNIFICADA DE URL ---
   # Usa APP_HOST com esquema; extrai host e protocolo corretamente
-  app_host = ENV.fetch('APP_HOST', 'https://api.avaliasolar.com.br')
+  app_host = ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')
   uri = URI(app_host)
   host = uri.host || app_host
   protocol = uri.scheme || 'https'
