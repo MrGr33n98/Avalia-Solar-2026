@@ -1,0 +1,64 @@
+<aside class="hidden w-[290px] shrink-0 border-r border-slate-200/80 bg-white/88 xl:flex xl:flex-col">
+  <div class="border-b border-slate-200 px-5 py-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-panel">
+        <span class="text-sm font-bold tracking-wide">AS</span>
+      </div>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold text-slate-900">Control Panel</p>
+        <p class="truncate text-xs uppercase tracking-[0.22em] text-slate-500">AvaliaSolar App</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 space-y-6 overflow-y-auto px-4 py-5">
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Dashboard</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Visão geral', path: app_control_root_path, active: controller_path == 'app/control/dashboard' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Company</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Informações da empresa', path: app_control_company_path, active: controller_path == 'app/control/company' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Pricing & Payments</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Esquemas de preços', path: app_control_pricing_path, active: controller_path == 'app/control/pricing' && action_name == 'show' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Opções de pagamento', path: payments_app_control_pricing_path, active: controller_path == 'app/control/pricing' && action_name == 'payments' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Contratos', path: contracts_app_control_pricing_path, active: controller_path == 'app/control/pricing' && action_name == 'contracts' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Design & Hardware</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Suppliers', path: app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'show' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Supplier Preferences', path: supplier_preferences_app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'supplier_preferences' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Modules', path: modules_app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'modules' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Inverters', path: inverters_app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'inverters' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Batteries', path: batteries_app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'batteries' %>
+      <%= render 'layouts/app_control/nav_link', label: 'Design Settings', path: design_settings_app_control_hardware_path, active: controller_path == 'app/control/hardware' && action_name == 'design_settings' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Purchase Experience</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Preferências de compra', path: app_control_purchase_path, active: controller_path == 'app/control/purchase' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Customers</p>
+      <%= render 'layouts/app_control/nav_link', label: 'CRM & Workflows', path: app_control_customers_path, active: controller_path == 'app/control/customers' %>
+    </section>
+
+    <section class="space-y-2">
+      <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Other</p>
+      <%= render 'layouts/app_control/nav_link', label: 'Tarifas e incentivos', path: app_control_other_path, active: controller_path == 'app/control/other' %>
+    </section>
+
+    <% if control_owner? %>
+      <section class="space-y-2">
+        <p class="px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Staff</p>
+        <%= render 'layouts/app_control/nav_link', label: 'Usuários e permissões', path: app_control_staff_path, active: controller_path == 'app/control/staff' %>
+      </section>
+    <% end %>
+  </nav>
+</aside>

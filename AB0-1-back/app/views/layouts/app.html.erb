@@ -69,6 +69,12 @@
                 path: app_painel_root_path,
                 active: controller_path.start_with?('app/painel/dashboard') %>
 
+          <%= render 'layouts/app/nav_item',
+                icon: 'settings',
+                label: 'Control Panel',
+                path: app_control_root_path,
+                active: controller_path.start_with?('app/control') %>
+
           <%# Projetos %>
           <div class="pt-2 pb-1">
             <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest">Projetos</p>

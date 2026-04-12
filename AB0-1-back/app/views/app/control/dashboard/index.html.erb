@@ -1,0 +1,31 @@
+<% content_for :title, "Control Panel" %>
+<% content_for :page_title, "Control Panel" %>
+
+<section class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
+    <p class="text-sm text-slate-500">Produtos no catálogo</p>
+    <p class="mt-2 text-3xl font-semibold text-slate-950"><%= @control_summary[:catalog_products] %></p>
+  </div>
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
+    <p class="text-sm text-slate-500">Membros ativos</p>
+    <p class="mt-2 text-3xl font-semibold text-slate-950"><%= @control_summary[:active_members] %></p>
+  </div>
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
+    <p class="text-sm text-slate-500">Convites pendentes</p>
+    <p class="mt-2 text-3xl font-semibold text-slate-950"><%= @control_summary[:pending_members] %></p>
+  </div>
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
+    <p class="text-sm text-slate-500">Avaliações da empresa</p>
+    <p class="mt-2 text-3xl font-semibold text-slate-950"><%= @control_summary[:reviews_total] %></p>
+  </div>
+</section>
+
+<%= render 'app/control/placeholder',
+      eyebrow: 'Control / Dashboard',
+      title: 'Fundação do Control Panel em Rails',
+      description: 'A nova frente do app agora nasce no stack definido pelo PRD: Ruby on Rails 7 com renderização server-side. A partir daqui vamos substituir placeholders pelas telas reais de hardware, pricing e staff.',
+      bullets: [
+        'Conectar Suppliers e Supplier Preferences como primeiro bloco funcional.',
+        'Reaproveitar products, brands e company_members na primeira iteração.',
+        'Separar claramente configurações globais da empresa do dashboard operacional.'
+      ] %>

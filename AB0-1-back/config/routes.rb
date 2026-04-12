@@ -395,6 +395,30 @@ Rails.application.routes.draw do
         resource  :company,  only: %i[show edit update]
       end
 
+      namespace :control do
+        root to: 'dashboard#index'
+
+        resource :company, only: :show
+
+        resource :pricing, only: :show do
+          get :payments
+          get :contracts
+        end
+
+        resource :hardware, only: :show do
+          get :supplier_preferences
+          get :modules
+          get :inverters
+          get :batteries
+          get :design_settings
+        end
+
+        resource :purchase, only: :show
+        resource :customers, only: :show
+        resource :other, only: :show
+        resource :staff, only: :show
+      end
+
       # Admin interno Avalia Solar (gestão do ecossistema app.)
       namespace :admin do
         root to: 'dashboard#index'

@@ -1,0 +1,12 @@
+<% content_for :title, "Staff" %>
+<% content_for :page_title, "Staff" %>
+
+<%= render 'app/control/placeholder',
+      eyebrow: 'Control / Staff',
+      title: 'Base pronta para gestão de staff',
+      description: 'A rota já nasce isolada para owners, pronta para receber gestão de membros, convites, roles e auditoria em cima de company_members.',
+      bullets: [
+        'Listar membros ativos, pendentes e revogados com busca.',
+        'Permitir convites, mudança de papel e desativação sem apagar usuários.',
+        'Preservar a regra de owner não poder rebaixar a si próprio.'
+      ] %>

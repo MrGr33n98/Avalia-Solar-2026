@@ -1,0 +1,6 @@
+<% active ||= false %>
+
+<%= link_to path,
+      class: "block rounded-2xl border px-3 py-3 text-sm transition-colors #{active ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm' : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900'}" do %>
+  <span class="font-medium"><%= label %></span>
+<% end %>

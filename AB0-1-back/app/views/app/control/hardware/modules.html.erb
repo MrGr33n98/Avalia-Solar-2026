@@ -1,0 +1,12 @@
+<% content_for :title, "Modules" %>
+<% content_for :page_title, "Modules" %>
+
+<%= render 'app/control/placeholder',
+      eyebrow: 'Control / Modules',
+      title: 'Base para catálogo de módulos',
+      description: 'Aqui entra o primeiro CRUD de hardware apoiado em products, com filtros por especificação e busca por SKU, marca e wattagem.',
+      bullets: [
+        'Mapear product_type e specs existentes para suportar painéis desde já.',
+        'Adicionar busca com debounce e filtros por garantia, potência e fabricante.',
+        'Separar favoritos e status ativos ou arquivados para uso em projetos futuros.'
+      ] %>
