@@ -1,49 +1,119 @@
-<% content_for :page_title, "Expo — Ecossistema Solar" %>
-
-<%# Hero %>
-<div class="bg-[#0a1628] text-white py-16 px-6 text-center rounded-2xl mb-10">
-  <h1 class="text-3xl md:text-4xl font-bold mb-3">
-    O Ecossistema Solar do Brasil
-  </h1>
-  <p class="text-white/60 text-lg mb-6">
-    Onde os melhores fornecedores encontram os melhores integradores.
-  </p>
-  <div class="flex justify-center gap-3">
-    <%= link_to 'Encontrar Fornecedores', app_suppliers_path,
-          class: 'px-5 py-2.5 bg-yellow-400 text-[#0a1628] font-semibold rounded-lg hover:bg-yellow-300 transition-colors' %>
-    <%= link_to 'Sou Empresa', app_login_path,
-          class: 'px-5 py-2.5 border border-white/30 text-white rounded-lg hover:border-white/60 transition-colors' %>
+<!-- Hero Section -->
+<section class="relative min-h-[90vh] flex items-center overflow-hidden">
+  <!-- Bg Image -->
+  <div class="absolute inset-0 z-0">
+    <img src="/images/hero.png" alt="Hero" class="w-full h-full object-cover brightness-[0.4]">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#f8fafc]"></div>
   </div>
-</div>
 
-<%# Fornecedores em destaque %>
-<% if @suppliers.any? %>
-  <section class="mb-10">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Fornecedores em Destaque</h2>
-      <%= link_to 'Ver todos', app_suppliers_path,
-            class: 'text-sm text-blue-600 hover:text-blue-800' %>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="max-w-2xl">
+      <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+        Acelerando a adoção de energia <span class="text-brand-cyan">solar</span> no Brasil
+      </h1>
+      <p class="text-xl text-white/80 mb-10 leading-relaxed">
+        Conectamos os melhores integradores aos fornecedores de elite, criando o ecossistema solar mais confiável da América Latina.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <%= link_to 'Encontrar Fornecedores', '#', class: "clay-btn-primary px-8 py-4 rounded-xl font-bold text-white text-lg text-center shadow-2xl" %>
+        <%= link_to 'Sou Empresa', app_login_path, class: "bg-white/10 backdrop-blur-md border border-white/20 px-8 py-4 rounded-xl font-bold text-white text-lg text-center hover:bg-white/20 transition-all" %>
+      </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <% @suppliers.each do |company| %>
-        <%= render 'app/expo/company_card', company: company %>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-16 -mt-12 relative z-20">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <% [
+        { val: '28.000+', label: 'Profissionais Ativos' },
+        { val: '200+', label: 'Parceiros & Fabricantes' },
+        { val: '185+', label: 'Cidades Atendidas' },
+        { val: '100%', label: 'Gratuito para Integrador' }
+      ].each do |stat| %>
+        <div class="clay-card p-8 rounded-2xl bg-white/80 backdrop-blur text-center">
+          <div class="text-3xl font-bold text-brand-blue mb-1"><%= stat[:val] %></div>
+          <div class="text-as-slate-800 text-sm font-medium"><%= stat[:label] %></div>
+        </div>
       <% end %>
     </div>
-  </section>
-<% end %>
+  </div>
+</section>
 
-<%# Integradores %>
-<% if @integrators.any? %>
-  <section class="mb-10">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Integradores / EPC</h2>
-      <%= link_to 'Ver todos', app_integrators_path,
-            class: 'text-sm text-blue-600 hover:text-blue-800' %>
+<!-- Mission Section -->
+<section class="py-24">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-16 items-center">
+      <div>
+        <h2 class="text-3xl font-bold text-as-slate-900 mb-6">Estamos em uma missão para o futuro da energia</h2>
+        <p class="text-as-slate-800 leading-relaxed mb-8">
+          O Avalia Solar nasceu para trazer transparência e confiança ao mercado fotovoltaico. Nossa plataforma <strong>Trust as a Service</strong> garante que cada projeto comece com a certeza de qualidade.
+        </p>
+        <ul class="space-y-4">
+          <li class="flex items-center gap-3">
+            <span class="h-6 w-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">✓</span>
+            <span class="text-as-slate-800 font-medium">Verificação rigorosa de fornecedores</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="h-6 w-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">✓</span>
+            <span class="text-as-slate-800 font-medium">Ranking baseado em transparência algorítmica</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="h-6 w-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">✓</span>
+            <span class="text-as-slate-800 font-medium">Ecossistema B2B de alta performance</span>
+          </li>
+        </ul>
+      </div>
+      <div class="rounded-3xl overflow-hidden shadow-2xl skew-y-1">
+        <img src="https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Team" class="w-full h-full object-cover">
+      </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <% @integrators.each do |company| %>
-        <%= render 'app/expo/company_card', company: company %>
+  </div>
+</section>
+
+<!-- Categories Grid -->
+<section class="py-24 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <h2 class="text-3xl font-bold text-as-slate-900 mb-4">Navegue pelo Ecossistema</h2>
+      <p class="text-as-slate-800">Encontre exatamente o que você precisa por categoria de solução.</p>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <% @categories.first(8).each do |category| %>
+        <div class="clay-card p-6 rounded-2xl bg-white hover:-translate-y-2 transition-transform cursor-pointer group">
+          <div class="h-12 w-12 bg-brand-blue/10 rounded-xl mb-4 flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="font-bold text-as-slate-900"><%= category.name %></h3>
+          <p class="text-xs text-as-slate-800 mt-1"><%= rand(10..50) %> Soluções</p>
+        </div>
       <% end %>
     </div>
-  </section>
-<% end %>
+  </div>
+</section>
+
+<!-- Join CTA -->
+<section class="py-24">
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="clay-card bg-brand-blue p-12 rounded-[2rem] text-center relative overflow-hidden">
+      <!-- Decor -->
+      <div class="absolute -top-12 -right-12 h-64 w-64 bg-white/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-12 -left-12 h-64 w-64 bg-brand-cyan/20 rounded-full blur-3xl"></div>
+      
+      <div class="relative z-10">
+        <h2 class="text-4xl font-bold text-white mb-6">Junte-se à maior rede solar do país</h2>
+        <p class="text-white/80 text-lg mb-10 max-w-2xl mx-auto">
+          Faça parte de um ecossistema que prioriza a confiança e acelera negócios sustentáveis.
+        </p>
+        <div class="flex justify-center flex-wrap gap-4">
+          <a href="#" class="bg-white text-brand-blue px-10 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition-all shadow-xl">Começar Agora</a>
+          <a href="#" class="border border-white/30 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all">Falar com Consultor</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
