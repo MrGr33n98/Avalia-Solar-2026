@@ -14,8 +14,8 @@
         <p class="text-xs text-gray-400"><%= company.city %><%= ", #{company.state}" if company.state %></p>
       </div>
     </div>
-    <% if company.featured? %>
-      <span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full font-medium">Premium</span>
+    <% if company.verified? %>
+      <%= premium_badge %>
     <% end %>
   </div>
 

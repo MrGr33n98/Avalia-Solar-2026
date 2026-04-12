@@ -26,11 +26,11 @@ export default function PremiumBadge({ className }: PremiumBadgeProps) {
       )}
     >
       <svg 
-        viewBox="0 0 16 16" 
+        viewBox="0 0 24 24" 
         className="w-3 h-3 fill-current flex-shrink-0 drop-shadow-[0_0_2px_rgba(255,255,255,0.3)]"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path d="M8 1L15 8L8 15L1 8Z" />
+        <path d="M6 2L2 8l10 14L22 8l-4-6H6zM8.5 4h7l2 3h-11l2-3z" />
       </svg>
       <span className="text-[10px] font-black uppercase tracking-[0.1em] leading-none whitespace-nowrap">
         Premium

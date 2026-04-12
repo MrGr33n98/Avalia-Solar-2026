@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_03_19_142000) do
+ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -596,6 +596,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_19_142000) do
     t.jsonb "intent_features", default: {}
     t.string "seo_title"
     t.text "meta_description"
+    t.string "segment", default: "installer", null: false
     t.index "to_tsvector('portuguese'::regconfig, (((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -617,6 +618,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_19_142000) do
     t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
     t.index ["reviews_count"], name: "index_companies_on_reviews_count"
     t.index ["sector_rating_avg"], name: "index_companies_on_sector_rating_avg", where: "(sector_rating_avg IS NOT NULL)"
+    t.index ["segment"], name: "index_companies_on_segment"
     t.index ["seo_title"], name: "index_companies_on_seo_title"
     t.index ["services_offered"], name: "index_companies_on_services_offered", using: :gin
     t.index ["services_offered"], name: "index_companies_on_services_offered_gin", using: :gin
