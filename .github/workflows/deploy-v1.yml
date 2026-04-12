@@ -211,6 +211,34 @@ jobs:
               echo "?? /etc/nginx/conf.d nao encontrado neste host; pulando ajuste automatico de upload."
             fi
 
+            echo "?? Implantando vhost app.avaliasolar.com.br no Nginx..."
+            APP_VHOST_SRC="$HOME/Avalia-Solar-2026/infra/nginx/app.avaliasolar.com.br.conf"
+            APP_VHOST_DST="/etc/nginx/conf.d/app.avaliasolar.com.br.conf"
+
+            if [ -f "$APP_VHOST_SRC" ] && [ -d /etc/nginx/conf.d ]; then
+              # Nao sobrescreve se o certbot ja adicionou SSL (arquivo teria mais de 30 linhas)
+              EXISTING_LINES=0
+              [ -f "$APP_VHOST_DST" ] && EXISTING_LINES=$(wc -l < "$APP_VHOST_DST")
+
+              if [ "$EXISTING_LINES" -gt 30 ]; then
+                echo "?? Vhost app ja possui SSL configurado. Pulando sobrescrita."
+              else
+                if [ "$(id -u)" = "0" ]; then
+                  cp "$APP_VHOST_SRC" "$APP_VHOST_DST"
+                  nginx -t 2>/dev/null && (systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true)
+                  echo "?? Vhost app.avaliasolar.com.br implantado."
+                elif command -v sudo >/dev/null 2>&1; then
+                  sudo cp "$APP_VHOST_SRC" "$APP_VHOST_DST"
+                  sudo nginx -t 2>/dev/null && (sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true)
+                  echo "?? Vhost app.avaliasolar.com.br implantado."
+                else
+                  echo "!! Sem permissao de sudo. Copie manualmente: cp $APP_VHOST_SRC $APP_VHOST_DST"
+                fi
+              fi
+            else
+              echo "!! Arquivo $APP_VHOST_SRC nao encontrado ou /etc/nginx/conf.d ausente."
+            fi
+
             echo "?? Login no GitHub Container Registry (ghcr.io)..."
             if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
               echo "!! ERRO: DOCKER_USER ou DOCKER_TOKEN vazios no ambiente SSH"
