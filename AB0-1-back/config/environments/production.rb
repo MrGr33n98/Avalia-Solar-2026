@@ -134,6 +134,7 @@ Rails.application.configure do
     avaliasolar.com.br
     www.avaliasolar.com.br
     api.avaliasolar.com.br
+    app.avaliasolar.com.br
     ab0-1.com
     www.ab0-1.com
   ]
