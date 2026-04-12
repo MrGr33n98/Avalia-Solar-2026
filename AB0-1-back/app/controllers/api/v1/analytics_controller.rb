@@ -38,8 +38,8 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       return head :no_content
     end
 
-    event_type = params[:event_name] || params[:event_type]
-    company_id = params[:company_id]
+    event_type = Array(params[:event_name] || params[:event_type]).first
+    company_id = Array(params[:company_id]).first
     metadata = normalize_hash_param(params[:properties]) || normalize_hash_param(params[:metadata]) || {}
     
     return render json: { error: 'event_type is required' }, status: :bad_request if event_type.blank?
@@ -93,18 +93,20 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       return head :no_content
     end
 
-    raw_type = params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence
+    raw_type = Array(params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence).first
     legacy_properties =
       normalize_hash_param(params[:properties]) ||
       normalize_hash_param(params.dig(:analytic, :properties)) ||
       {}
     company_id =
-      params[:company_id].presence ||
-      params.dig(:company, :id).presence ||
-      params.dig(:analytic, :company_id).presence ||
-      legacy_properties['company_id'].presence ||
-      legacy_properties[:company_id].presence
-    event_id = params[:event_id].presence || params.dig(:analytic, :event_id).presence
+      Array(
+        params[:company_id].presence ||
+        params.dig(:company, :id).presence ||
+        params.dig(:analytic, :company_id).presence ||
+        legacy_properties['company_id'].presence ||
+        legacy_properties[:company_id].presence
+      ).first
+    event_id = Array(params[:event_id].presence || params.dig(:analytic, :event_id).presence).first
     metadata =
       normalize_hash_param(params[:metadata]) ||
       normalize_hash_param(params[:data]) ||

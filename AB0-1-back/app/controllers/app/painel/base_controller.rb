@@ -7,6 +7,7 @@ module App
       private
 
       def ensure_app_company!
+        return if current_user.admin?
         return if @current_app_company.present?
 
         redirect_to app_login_path, alert: 'Acesso restrito. Faça login com uma conta de empresa.'

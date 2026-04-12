@@ -10,6 +10,7 @@ module App
 
     def set_current_company
       @current_app_company = current_user&.company
+      @current_app_company ||= Company.first if current_user&.admin?
     end
   end
 end
