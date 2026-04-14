@@ -31,7 +31,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   private
 
   def frontend_url
-    ENV.fetch('FRONTEND_URL', 'http://localhost:3000')
+    ENV.fetch('FRONTEND_ORIGIN', ENV.fetch('FRONTEND_URL', 'http://localhost:3000'))
   end
 
   def handle_oauth(provider_name)

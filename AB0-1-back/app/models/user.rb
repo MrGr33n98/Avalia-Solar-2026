@@ -3,8 +3,8 @@ class User < ApplicationRecord
   MAX_AVATAR_SIZE_BYTES = 5.megabytes
 
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
-         # :omniauthable, omniauth_providers: %i[google_oauth2 linkedin facebook]
+         :recoverable, :rememberable, :validatable, :confirmable,
+         :omniauthable, omniauth_providers: %i[google_oauth2 linkedin facebook]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :forum_answers, dependent: :destroy
@@ -38,7 +38,7 @@ class User < ApplicationRecord
 
   validates :role, inclusion: { in: ROLES }, allow_nil: true
   validates :name, presence: true, length: { minimum: 3, maximum: 100 }
-  validates :city, presence: true, if: -> { regular_user? }
+  validates :city, presence: true, if: -> { regular_user? && provider.blank? }
   validates :state, length: { is: 2 }, allow_blank: true
   validate :password_complexity
   validate :adult_birthdate
@@ -168,47 +168,57 @@ class User < ApplicationRecord
     %w[company]
   end
 
-  # def self.from_omniauth(auth)
-  #   provider = auth.provider
-  #   uid = auth.uid
-  #   info = auth.info || {}
-  #   email = (info.respond_to?(:email) ? info.email : info['email']).to_s.downcase
-  #   name_value = info.respond_to?(:name) ? info.name : info['name']
-  #   candidate_name = name_value.presence || email.split('@').first.to_s.tr('_', ' ').strip
-  #
-  #   # Fallback name based on provider
-  #   default_name = case provider
-  #                  when 'google_oauth2'
-  #                    'Usuario Google'
-  #                  when 'linkedin'
-  #                    'Usuario LinkedIn'
-  #                  when 'facebook'
-  #                    'Usuario Facebook'
-  #                  else
-  #                    'Usuario Social'
-  #                  end
-  #   name = candidate_name.length >= 3 ? candidate_name : default_name
-  #
-  #   user = find_or_initialize_by(provider: provider, uid: uid)
-  #   user.email = email if user.email.blank?
-  #   user.name = name if user.name.blank?
-  #
-  #   if user.new_record?
-  #     user.password = "Aa1#{SecureRandom.base64(18)}"
-  #     user.terms_accepted = true
-  #     user.terms_accepted_at ||= Time.current
-  #
-  #     # OAuth users with verified email from provider can skip email confirmation
-  #     # But company users still need admin approval before accessing dashboard
-  #     user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
-  #
-  #     # Set status to pending if user is company role
-  #     user.status = user.company_user? ? :pending : :active
-  #   end
-  #
-  #   user.save
-  #   user
-  # end
+  def self.from_omniauth(auth)
+    provider = auth.provider.to_s
+    uid = auth.uid.to_s
+    info = auth.info || {}
+
+    email =
+      if info.respond_to?(:email)
+        info.email.to_s.downcase
+      else
+        info['email'].to_s.downcase
+      end
+
+    name_value =
+      if info.respond_to?(:name)
+        info.name
+      else
+        info['name']
+      end
+
+    candidate_name = name_value.presence || email.split('@').first.to_s.tr('_', ' ').strip
+    default_name = case provider
+                   when 'google_oauth2' then 'Usuario Google'
+                   when 'linkedin' then 'Usuario LinkedIn'
+                   when 'facebook' then 'Usuario Facebook'
+                   else 'Usuario Social'
+                   end
+    name = candidate_name.length >= 3 ? candidate_name : default_name
+
+    user = find_by(provider: provider, uid: uid)
+    user ||= find_by(email: email) if email.present?
+    user ||= new(provider: provider, uid: uid, email: email.presence)
+
+    user.provider = provider
+    user.uid = uid
+    user.email = email if email.present? && user.email.blank?
+    user.name = name if user.name.blank?
+    user.password ||= "Aa1#{SecureRandom.base64(18)}"
+    user.terms_accepted = true
+    user.terms_accepted_at ||= Time.current
+    user.confirmed_at ||= Time.current
+
+    if user.new_record?
+      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+      user.status = user.company_user? ? :pending : :active
+    else
+      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+    end
+
+    user.save!
+    user
+  end
 
   protected
 
