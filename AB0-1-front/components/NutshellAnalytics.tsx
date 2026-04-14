@@ -3,6 +3,9 @@
 import Script from 'next/script';
 import { useEffect } from 'react';
 
+export const NUTSHELL_INSTANCE = process.env.NEXT_PUBLIC_NUTSHELL_INSTANCE || '385068';
+export const NUTSHELL_AUTH_TOKEN = process.env.NEXT_PUBLIC_NUTSHELL_AUTH_TOKEN || 'KTE-7awqaTLwXH6lG6jbzAyKyC6DbZ8vNQBtAACppQg.2';
+
 /**
  * NutshellAnalytics — Tracking & Widget
  * 
@@ -17,16 +20,16 @@ export default function NutshellAnalytics() {
   return (
     <>
       {/* Container para o Boot do Nutshell */}
-      <div id="nutshell-boot-385068" />
+      <div id={`nutshell-boot-${NUTSHELL_INSTANCE}`} />
 
       {/* Inicialização do Nutsheller */}
       <Script id="nutshell-init" strategy="afterInteractive">
         {`
           (function(n,u,t){n[u]=n[u]||function(){(n[u].q=n[u].q||[]).push(arguments)}}(window,'Nutsheller'));
           Nutsheller('boot', {
-            instance: '385068',
-            authToken: 'KTE-7awqaTLwXH6lG6jbzAyKyC6DbZ8vNQBtAACppQg.2',
-            target: 'nutshell-boot-385068'
+            instance: '${NUTSHELL_INSTANCE}',
+            authToken: '${NUTSHELL_AUTH_TOKEN}',
+            target: 'nutshell-boot-${NUTSHELL_INSTANCE}'
           });
         `}
       </Script>
