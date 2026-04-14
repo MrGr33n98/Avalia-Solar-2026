@@ -255,6 +255,10 @@ const nextConfig = {
           source: '/api/v1/:path*',
           destination: `${apiProxyTarget}/api/v1/:path*`,
         },
+        {
+          source: '/users/auth/:path*',
+          destination: `${apiProxyTarget}/users/auth/:path*`,
+        },
       ],
     };
   },

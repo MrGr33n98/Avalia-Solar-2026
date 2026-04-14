@@ -140,6 +140,7 @@ Rails.application.configure do
     app.avaliasolar.com.br
     ab0-1.com
     www.ab0-1.com
+    64.225.59.107
   ]
   allowed_hosts << host if host.present?
 
