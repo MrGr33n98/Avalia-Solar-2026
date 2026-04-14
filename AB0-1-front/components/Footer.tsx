@@ -1,35 +1,15 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Instagram, Linkedin, Mail, Phone, Clock3 } from 'lucide-react';
+
+import {
+  CONTACT,
+  FOOTER_COMPANY_LINKS,
+  FOOTER_LEGAL_LINKS,
+  FOOTER_TRUST_LINKS,
+  SOCIAL_PROFILES,
+} from '@/lib/site';
 
 export default function Footer() {
-  const companyLinks = [
-    { href: '/about', label: 'Sobre Nós' },
-    { href: '/careers', label: 'Carreiras' },
-    { href: '/press', label: 'Imprensa' },
-    { href: '/blog', label: 'Blog' },
-  ];
-
-  const supportLinks = [
-    { href: '/help', label: 'Centro de Ajuda' },
-    { href: '/contact', label: 'Contato' },
-    { href: '/api-docs', label: 'API Docs' },
-    { href: '/status', label: 'Status' },
-  ];
-
-  const legalLinks = [
-    { href: '/terms', label: 'Termos de Uso' },
-    { href: '/privacy', label: 'Política de Privacidade' },
-    { href: '/cookies', label: 'Política de Cookies' },
-    { href: '/dmca', label: 'DMCA' },
-  ];
-
-  const socialLinks = [
-    { href: 'https://facebook.com', icon: Facebook, label: 'Facebook' },
-    { href: 'https://twitter.com', icon: Twitter, label: 'Twitter' },
-    { href: 'https://www.instagram.com/avalia_solar?igsh=MXdoMjhhYXR1OHk3eg==', icon: Instagram, label: 'Instagram' },
-    { href: 'https://www.linkedin.com/company/avalia-solar/', icon: Linkedin, label: 'LinkedIn' },
-  ];
-
   return (
     <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -40,21 +20,35 @@ export default function Footer() {
               Avalia Solar
             </Link>
             <p className="text-gray-200 text-sm leading-snug max-w-xs">
-              O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
+              Compare empresas verificadas, encontre a melhor solução para sua casa ou empresa e fale com os responsáveis certos sem ruído.
             </p>
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center space-x-2 text-gray-300">
+            <div className="space-y-3 pt-2 w-full">
+              <a
+                href={`mailto:${CONTACT.founder.email}`}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+              >
                 <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">contato@avaliasolar.com.br</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-300">
+                <span className="text-sm">Fale com Felipe</span>
+              </a>
+              <a
+                href={`mailto:${CONTACT.team.email}`}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+              >
+                <Mail className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">Fale com a equipe</span>
+              </a>
+              <a
+                href={CONTACT.phone.href}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+              >
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">+55 65 9346-5055</span>
+                <span className="text-sm">{CONTACT.phone.display}</span>
+              </a>
+              <div className="flex items-center gap-2 text-gray-300">
+                <Clock3 className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">{CONTACT.hours}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-300">
-                <MapPin className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Florianópolis, SC</span>
-              </div>
+              <p className="text-gray-400 text-sm">{CONTACT.coverage}</p>
             </div>
           </div>
 
@@ -62,7 +56,7 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4">Empresa</h3>
             <ul className="space-y-2">
-              {companyLinks.map((link) => (
+              {FOOTER_COMPANY_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
@@ -72,11 +66,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support Links */}
+          {/* Trust Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Suporte</h3>
+            <h3 className="font-bold text-lg mb-4">Confiança</h3>
             <ul className="space-y-2">
-              {supportLinks.map((link) => (
+              {FOOTER_TRUST_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
@@ -90,7 +84,7 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4">Legal</h3>
             <ul className="space-y-2">
-              {legalLinks.map((link) => (
+              {FOOTER_LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
                     {link.label}
@@ -108,16 +102,20 @@ export default function Footer() {
               © 2026 Avalia Solar. Todos os direitos reservados.
             </div>
             <div className="flex space-x-5">
-              {socialLinks.map((social) => (
+              {SOCIAL_PROFILES.map((social) => (
                 <a
-                  key={social.href}
-                  href={social.href}
+                  key={social.url}
+                  href={social.url}
                   className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label={social.label}
+                  aria-label={social.name}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <social.icon className="h-6 w-6" />
+                  {social.name === 'Instagram' ? (
+                    <Instagram className="h-6 w-6" />
+                  ) : (
+                    <Linkedin className="h-6 w-6" />
+                  )}
                 </a>
               ))}
             </div>

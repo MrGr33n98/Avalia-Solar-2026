@@ -1,100 +1,164 @@
-'use client';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PageViewTracker from '@/components/PageViewTracker';
+import { CONTACT, SITE } from '@/lib/site';
+
+export const metadata: Metadata = {
+  title: 'Central de ajuda | Avalia Solar',
+  description:
+    'Encontre respostas sobre cadastro, verificação, avaliação de empresas e como falar com a equipe da Avalia Solar.',
+  alternates: {
+    canonical: '/help',
+  },
+  openGraph: {
+    title: 'Central de ajuda | Avalia Solar',
+    description:
+      'Encontre respostas sobre cadastro, verificação, avaliação de empresas e contato com a equipe.',
+    url: '/help',
+    images: [SITE.ogImagePath],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Central de ajuda | Avalia Solar',
+    description:
+      'Encontre respostas sobre cadastro, verificação, avaliação de empresas e contato com a equipe.',
+    images: [SITE.ogImagePath],
+  },
+};
+
+const helpTopics = [
+  {
+    title: 'Como escolher uma empresa',
+    description:
+      'Compare sinais públicos de confiança, histórico de atendimento, conteúdo publicado e clareza dos canais oficiais.',
+  },
+  {
+    title: 'Como a verificação funciona',
+    description:
+      'Revisamos consistência de dados, presença digital e indicadores de transparência antes de destacar uma empresa.',
+  },
+  {
+    title: 'Como falar com a equipe',
+    description:
+      'Para suporte, use Fale com a equipe. Para imprensa e parcerias, use Fale com Felipe.',
+  },
+];
 
 export default function HelpPage() {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">Central de Ajuda</h1>
-      
-      <div className="max-w-3xl mx-auto mb-12">
-        <p className="text-lg text-center mb-8">
-          Encontre respostas para suas dúvidas mais frequentes sobre a Avalia Solar
-          e o processo de avaliação de empresas do setor solar.
-        </p>
-      </div>
+    <div className="bg-slate-50">
+      <PageViewTracker type="other" title="Central de ajuda - Avalia Solar" />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Para Consumidores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              <li>
-                <h3 className="font-semibold">Como avaliar uma empresa?</h3>
-                <p className="text-sm">Aprenda a compartilhar sua experiência de forma efetiva.</p>
-              </li>
-              <li>
-                <h3 className="font-semibold">Escolhendo uma empresa</h3>
-                <p className="text-sm">Dicas para selecionar a melhor empresa para seu projeto solar.</p>
-              </li>
-              <li>
-                <h3 className="font-semibold">Entendendo as avaliações</h3>
-                <p className="text-sm">Como interpretar as avaliações e métricas da plataforma.</p>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-16 px-4 py-16 sm:px-6 lg:px-8">
+        <section className="max-w-3xl space-y-5">
+          <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700">
+            Suporte e orientações
+          </span>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              Central de ajuda
+            </h1>
+            <p className="text-lg leading-8 text-slate-600 sm:text-xl">
+              A central existe para reduzir ida e volta desnecessária. Antes de enviar uma
+              mensagem, veja se a resposta mais rápida não está aqui.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="rounded-full px-6">
+              <Link href="/contact">Fale com a equipe</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full px-6">
+              <a href={`mailto:${CONTACT.founder.email}`}>Fale com Felipe</a>
+            </Button>
+          </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Para Empresas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              <li>
-                <h3 className="font-semibold">Cadastro de empresa</h3>
-                <p className="text-sm">Como cadastrar e gerenciar seu perfil empresarial.</p>
-              </li>
-              <li>
-                <h3 className="font-semibold">Respondendo avaliações</h3>
-                <p className="text-sm">Melhores práticas para interagir com os clientes.</p>
-              </li>
-              <li>
-                <h3 className="font-semibold">Métricas e relatórios</h3>
-                <p className="text-sm">Como acessar e interpretar seus dados de desempenho.</p>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+        <section className="grid gap-6 md:grid-cols-3">
+          {helpTopics.map((topic) => (
+            <Card key={topic.title} className="border-slate-200 bg-white/90 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xl text-slate-950">{topic.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Suporte</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+        <section className="grid gap-8 lg:grid-cols-[1fr_0.92fr]">
+          <Card className="border-slate-200 bg-white/90 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl text-slate-950">Perguntas frequentes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5 text-sm leading-6 text-slate-600">
               <div>
-                <h3 className="font-semibold mb-2">Email de Suporte</h3>
-                <a href="mailto:suporte@avaliasolar.com.br" className="text-blue-600 hover:text-blue-800">
-                  suporte@avaliasolar.com.br
+                <h2 className="font-semibold text-slate-950">A avaliação substitui orçamento?</h2>
+                <p className="mt-1">
+                  Não. A avaliação ajuda a orientar a decisão; o orçamento e o contrato continuam
+                  sendo responsabilidade da empresa escolhida.
+                </p>
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-950">Posso falar com a marca sem usar formulário?</h2>
+                <p className="mt-1">
+                  Sim. Os canais oficiais estão sempre visíveis no footer, na página de contato e
+                  nesta central.
+                </p>
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-950">Quem responde a imprensa e parcerias?</h2>
+                <p className="mt-1">
+                  O canal editorial é o email de Felipe. O canal operacional é o email da equipe.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-slate-950 text-white shadow-xl shadow-slate-900/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl text-white">Atendimento rápido</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm leading-6 text-slate-300">
+              <p>
+                {CONTACT.hours} · {CONTACT.coverage}
+              </p>
+              <div className="space-y-3">
+                <a
+                  href={`mailto:${CONTACT.team.email}`}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white transition-colors hover:bg-white/10"
+                >
+                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    Suporte
+                  </span>
+                  <span className="mt-1 block text-lg font-semibold">Fale com a equipe</span>
+                </a>
+                <a
+                  href={`mailto:${CONTACT.founder.email}`}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white transition-colors hover:bg-white/10"
+                >
+                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    Editorial
+                  </span>
+                  <span className="mt-1 block text-lg font-semibold">Fale com Felipe</span>
+                </a>
+                <a
+                  href={CONTACT.phone.href}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white transition-colors hover:bg-white/10"
+                >
+                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    Telefone
+                  </span>
+                  <span className="mt-1 block text-lg font-semibold">{CONTACT.phone.display}</span>
                 </a>
               </div>
-              <div>
-                <h3 className="font-semibold mb-2">Horário de Atendimento</h3>
-                <p className="text-sm">Segunda a Sexta: 9h às 18h</p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Chat Online</h3>
-                <p className="text-sm">Disponível durante o horário comercial</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-12 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-2xl font-semibold mb-4 text-center">Não encontrou o que procurava?</h2>
-        <p className="text-center text-lg mb-6">
-          Entre em contato conosco que teremos prazer em ajudar.
-        </p>
-        <div className="flex justify-center">
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Fale Conosco
-          </button>
-        </div>
-      </div>
+            </CardContent>
+          </Card>
+        </section>
+      </main>
     </div>
   );
 }

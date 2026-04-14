@@ -19,51 +19,58 @@ describe('Footer', () => {
   it('renders company contact information', () => {
     render(<Footer />);
     
-    expect(screen.getByText('contato@avaliasolar.com.br')).toBeInTheDocument();
-    expect(screen.getByText('+55 65 9346-5055')).toBeInTheDocument();
-    expect(screen.getByText('Florianópolis, SC')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Fale com Felipe' })).toHaveAttribute(
+      'href',
+      'mailto:felipe@avaliasolar.com.br'
+    );
+    expect(screen.getByRole('link', { name: 'Fale com a equipe' })).toHaveAttribute(
+      'href',
+      'mailto:admin@avaliasolar.com.br'
+    );
+    expect(screen.getByRole('link', { name: '+55 65 9346-5055' })).toHaveAttribute(
+      'href',
+      'tel:+556593465055'
+    );
   });
 
   it('renders company links', () => {
     render(<Footer />);
     
-    expect(screen.getByRole('link', { name: 'Sobre Nós' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sobre a Avalia Solar' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Carreiras' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Imprensa' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
   });
 
   it('renders support links', () => {
     render(<Footer />);
     
-    expect(screen.getByRole('link', { name: 'Centro de Ajuda' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Contato' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'API Docs' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Contato oficial' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Central de ajuda' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sala de imprensa' })).toBeInTheDocument();
   });
 
   it('renders legal links', () => {
     render(<Footer />);
     
-    expect(screen.getByRole('link', { name: 'Termos de Uso' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Política de Privacidade' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Política de Cookies' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Termos de uso' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Privacidade' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cookies' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'DMCA' })).toBeInTheDocument();
   });
 
   it('renders social media links', () => {
     render(<Footer />);
-    
-    expect(screen.getByLabelText('Facebook')).toBeInTheDocument();
-    expect(screen.getByLabelText('Twitter')).toBeInTheDocument();
+
     expect(screen.getByLabelText('Instagram')).toBeInTheDocument();
     expect(screen.getByLabelText('LinkedIn')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Facebook')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Twitter')).not.toBeInTheDocument();
   });
 
   it('renders copyright information', () => {
     render(<Footer />);
     
-    expect(screen.getByText(/© 2025 Avalia Solar. Todos os direitos reservados./)).toBeInTheDocument();
+    expect(screen.getByText(/© 2026 Avalia Solar. Todos os direitos reservados./)).toBeInTheDocument();
   });
 
   it('renders the home link', () => {

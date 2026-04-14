@@ -15,6 +15,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
+import { SITE } from '@/lib/site';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,7 +27,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Avalia Solar - Marketplace de Energia Solar',
-  description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.',
+  description: SITE.description,
   keywords: 'energia solar, painéis solares, instalação solar, empresas solares, comparação, marketplace, energia renovável, sustentabilidade, economia de energia',
   authors: [{ name: 'Avalia Solar' }],
   creator: 'Avalia Solar',
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
-  metadataBase: new URL('https://www.avaliasolar.com.br'),
+  metadataBase: new URL(SITE.url),
   alternates: {
     canonical: '/',
     languages: {
@@ -44,25 +45,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://www.avaliasolar.com.br',
-    siteName: 'Avalia Solar',
+    url: SITE.url,
+    siteName: SITE.name,
     title: 'Avalia Solar - Marketplace de Energia Solar',
-    description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
+    description: SITE.description,
     images: [
       {
-        url: '/images/logo.png',
+        url: SITE.ogImagePath,
         width: 1200,
         height: 630,
-        alt: 'Avalia Solar Logo',
+        alt: 'Avalia Solar',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Avalia - Marketplace de Energia Solar',
-    description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
-    images: ['/images/logo.png'],
-    creator: '@avaliasolar',
+    title: 'Avalia Solar - Marketplace de Energia Solar',
+    description: SITE.description,
+    images: [SITE.ogImagePath],
   },
   robots: {
     index: true,
@@ -97,6 +97,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://api.avaliasolar.com.br" />
         <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
+        <JsonLd />
         {analyticsEnabled && (
           <>
             <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />

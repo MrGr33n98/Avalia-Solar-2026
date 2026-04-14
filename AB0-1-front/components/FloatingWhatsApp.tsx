@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 
+import { CONTACT } from '@/lib/site';
+
 type FloatingWhatsAppProps = {
   phone?: string;
   className?: string;
@@ -14,7 +16,7 @@ function toWhatsappLink(phone: string) {
   return `https://wa.me/${normalized}`;
 }
 
-export default function FloatingWhatsApp({ phone = '+55 65 9346-5055', className = '' }: FloatingWhatsAppProps) {
+export default function FloatingWhatsApp({ phone = CONTACT.phone.display, className = '' }: FloatingWhatsAppProps) {
   const href = toWhatsappLink(phone);
   if (!href) return null;
 

@@ -1,24 +1,29 @@
 import { MetadataRoute } from 'next';
 import { buildApiUrl } from '@/lib/api-config';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
+import { SITE, STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Base URL
-  const baseUrl = 'https://www.avaliasolar.com.br';
+  const baseUrl = SITE.url;
 
-  // Static routes
   const routes = [
-    '',
-    '/blog',
-    '/login',
-    '/register',
-    '/companies',
-    '/products',
-  ].map((route) => ({
+    { route: '', priority: 1, changeFrequency: 'daily' as const },
+    { route: '/blog', priority: 0.8, changeFrequency: 'daily' as const },
+    { route: '/companies', priority: 0.9, changeFrequency: 'daily' as const },
+    { route: '/products', priority: 0.8, changeFrequency: 'daily' as const },
+    { route: '/about', priority: 0.65, changeFrequency: 'monthly' as const },
+    { route: '/contact', priority: 0.7, changeFrequency: 'monthly' as const },
+    { route: '/help', priority: 0.65, changeFrequency: 'monthly' as const },
+    { route: '/press', priority: 0.55, changeFrequency: 'monthly' as const },
+    { route: '/careers', priority: 0.55, changeFrequency: 'monthly' as const },
+    { route: '/privacy', priority: 0.45, changeFrequency: 'yearly' as const },
+    { route: '/terms', priority: 0.45, changeFrequency: 'yearly' as const },
+    { route: '/cookies', priority: 0.4, changeFrequency: 'yearly' as const },
+  ].map(({ route, priority, changeFrequency }) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
+    lastModified: STATIC_SITEMAP_LAST_MODIFIED,
+    changeFrequency,
+    priority,
   }));
 
   // Dynamic Blog Posts
@@ -30,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = json.data || json;
       blogRoutes = data.map((post: any) => ({
         url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: post.updated_at || new Date().toISOString(),
+        lastModified: post.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }));
@@ -49,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = json.data || json;
       categoryRoutes = data.map((cat: any) => ({
         url: `${baseUrl}/categories/${cat.seo_url}`,
-        lastModified: cat.updated_at || new Date().toISOString(),
+        lastModified: cat.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }));
@@ -62,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             name: cat.name,
             seo_url: cat.seo_url,
           })}`,
-          lastModified: cat.updated_at || new Date().toISOString(),
+          lastModified: cat.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
           changeFrequency: 'weekly' as const,
           priority: 0.75,
         }));
@@ -81,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = json.data || json;
       companyRoutes = data.map((company: any) => ({
         url: `${baseUrl}/companies/${company.slug}`,
-        lastModified: company.updated_at || new Date().toISOString(),
+        lastModified: company.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
         changeFrequency: 'daily' as const,
         priority: 0.9,
       }));
