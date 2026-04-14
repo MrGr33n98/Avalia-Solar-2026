@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { track } from '@/lib/analytics/lazy';
 import { buildArticleLink } from '@/lib/blog/article-links';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User } from 'lucide-react';
 
 interface FeaturedPostsSectionProps {
   posts: Article[];
@@ -93,16 +95,16 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                   <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-300 font-medium">
                     {mainAuthorName && (
                       <div className="flex items-center gap-2">
-                        {mainAuthorAvatar && (
-                          <div className="relative w-6 h-6 rounded-full overflow-hidden border border-white/20">
-                            <Image 
-                              src={getFullImageUrl(mainAuthorAvatar)} 
-                              alt={mainAuthorName} 
-                              fill 
-                              className="object-cover" 
-                            />
-                          </div>
-                        )}
+                        <Avatar className="h-6 w-6 ring-1 ring-white/30 shrink-0">
+                          <AvatarImage 
+                            src={mainAuthorAvatar ? getFullImageUrl(mainAuthorAvatar) : '/images/felipe-ceo-avalia-solar.png'} 
+                            alt={mainAuthorName} 
+                            className="object-cover object-top scale-110" 
+                          />
+                          <AvatarFallback className="bg-white/10 text-[10px] text-white">
+                            <User className="w-3 h-3" />
+                          </AvatarFallback>
+                        </Avatar>
                         <span>{mainAuthorName}</span>
                       </div>
                     )}

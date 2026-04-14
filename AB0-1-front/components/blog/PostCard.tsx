@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, ArrowRight, Sun } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, Sun, User } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
 import { format } from 'date-fns';
@@ -102,9 +103,25 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
           </p>
         </CardContent>
 
-        <CardFooter className="p-5 pt-0 mt-auto">
+        <CardFooter className="p-5 pt-0 mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6 ring-1 ring-slate-100">
+              <AvatarImage 
+                src={post.author_avatar_url ? getFullImageUrl(post.author_avatar_url) : (post.author as any)?.avatar_photo_url ? getFullImageUrl((post.author as any).avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png'} 
+                alt={post.author_name || 'Avalia Solar'} 
+                className="object-cover object-top"
+              />
+              <AvatarFallback className="text-[10px] bg-slate-100">
+                <User className="w-3 h-3 text-slate-400" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-semibold text-slate-600 truncate max-w-[120px]">
+              {post.author_name || post.author?.name || 'Avalia Solar'}
+            </span>
+          </div>
+
           <span className="text-sm font-bold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-            Ler artigo <ArrowRight className="w-4 h-4" />
+            Ler <ArrowRight className="w-4 h-4" />
           </span>
         </CardFooter>
       </Card>

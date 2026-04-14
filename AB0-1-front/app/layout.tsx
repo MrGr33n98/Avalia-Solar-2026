@@ -83,6 +83,7 @@ export const viewport: Viewport = {
 };
 
 import { ThemeProvider } from '@/components/theme-provider';
+import NutshellAnalytics from '@/components/NutshellAnalytics';
 
 export default function RootLayout({
   children,
@@ -103,6 +104,9 @@ export default function RootLayout({
             {/* PostHog */}
             <link rel="preconnect" href="https://us.i.posthog.com" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://us.i.posthog.com" />
+            {/* Nutshell */}
+            <link rel="preconnect" href="https://growth.avaliasolar.com.br" crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href="https://growth.avaliasolar.com.br" />
           </>
         )}
         {/* Analytics preconnects */}
@@ -125,6 +129,9 @@ export default function RootLayout({
 
         {/* GTM + Consent Mode: afterInteractive — não bloqueia TBT */}
         <GoogleTagManager gtmId={GTM_ID} />
+
+        {/* Nutshell Analytics */}
+        <NutshellAnalytics />
 
         <ThemeProvider
           attribute="class"
