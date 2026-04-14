@@ -33,6 +33,20 @@ stats_with_rolling AS (
       ROWS BETWEEN 7 PRECEDING AND 1 PRECEDING
     ) as stddev_7d
   FROM daily_stats
+),
+calculated_stats AS (
+  SELECT
+    date,
+    event_type,
+    event_count,
+    unique_sessions,
+    unique_users,
+    avg_7d as raw_avg_7d,
+    stddev_7d as raw_stddev_7d,
+    ROUND(avg_7d::numeric, 2) as avg_7d_rounded,
+    ROUND(stddev_7d::numeric, 2) as stddev_7d_rounded,
+    ROUND(((event_count - avg_7d) / NULLIF(avg_7d, 0) * 100)::numeric, 2) as pct_change
+  FROM stats_with_rolling
 )
 SELECT
   date,
@@ -40,24 +54,24 @@ SELECT
   event_count,
   unique_sessions,
   unique_users,
-  ROUND(avg_7d::numeric, 2) as avg_7d,
-  ROUND(stddev_7d::numeric, 2) as stddev_7d,
-  ROUND(((event_count - avg_7d) / NULLIF(avg_7d, 0) * 100)::numeric, 2) as pct_change,
+  avg_7d_rounded as avg_7d,
+  stddev_7d_rounded as stddev_7d,
+  pct_change,
   CASE
-    WHEN avg_7d IS NULL OR avg_7d = 0 THEN 'INSUFFICIENT_DATA'
-    WHEN event_count > avg_7d + (2 * COALESCE(stddev_7d, 0)) AND COALESCE(stddev_7d, 0) > 0 THEN 'SPIKE'
-    WHEN event_count < avg_7d - (2 * COALESCE(stddev_7d, 0)) AND COALESCE(stddev_7d, 0) > 0 THEN 'DROP'
-    WHEN ABS(event_count - avg_7d) / NULLIF(avg_7d, 0) > 0.5 THEN 'ANOMALY'
+    WHEN raw_avg_7d IS NULL OR raw_avg_7d = 0 THEN 'INSUFFICIENT_DATA'
+    WHEN event_count > raw_avg_7d + (2 * COALESCE(raw_stddev_7d, 0)) AND COALESCE(raw_stddev_7d, 0) > 0 THEN 'SPIKE'
+    WHEN event_count < raw_avg_7d - (2 * COALESCE(raw_stddev_7d, 0)) AND COALESCE(raw_stddev_7d, 0) > 0 THEN 'DROP'
+    WHEN ABS(event_count - raw_avg_7d) / NULLIF(raw_avg_7d, 0) > 0.5 THEN 'ANOMALY'
     ELSE 'NORMAL'
   END as status,
   CASE
-    WHEN avg_7d IS NULL OR avg_7d = 0 THEN 'Insufficient historical data (< 7 days)'
-    WHEN event_count > avg_7d + (2 * COALESCE(stddev_7d, 0)) AND COALESCE(stddev_7d, 0) > 0 THEN 'Volume spike detected (> 2σ)'
-    WHEN event_count < avg_7d - (2 * COALESCE(stddev_7d, 0)) AND COALESCE(stddev_7d, 0) > 0 THEN 'Volume drop detected (> 2σ)'
-    WHEN ABS(event_count - avg_7d) / NULLIF(avg_7d, 0) > 0.5 THEN 'Significant change detected (> 50%)'
+    WHEN raw_avg_7d IS NULL OR raw_avg_7d = 0 THEN 'Insufficient historical data (< 7 days)'
+    WHEN event_count > raw_avg_7d + (2 * COALESCE(raw_stddev_7d, 0)) AND COALESCE(raw_stddev_7d, 0) > 0 THEN 'Volume spike detected (> 2σ)'
+    WHEN event_count < raw_avg_7d - (2 * COALESCE(raw_stddev_7d, 0)) AND COALESCE(raw_stddev_7d, 0) > 0 THEN 'Volume drop detected (> 2σ)'
+    WHEN ABS(event_count - raw_avg_7d) / NULLIF(raw_avg_7d, 0) > 0.5 THEN 'Significant change detected (> 50%)'
     ELSE 'Volume within expected range'
   END as description
-FROM stats_with_rolling
+FROM calculated_stats
 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-  AND avg_7d > 0
+  AND raw_avg_7d > 0
 ORDER BY date DESC, ABS(COALESCE(pct_change, 0)) DESC;
