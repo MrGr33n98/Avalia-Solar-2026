@@ -32,7 +32,7 @@ export function AuthorCardWithStats({
       <CardContent className="p-8 flex flex-col sm:flex-row gap-8 items-start">
         <div className="flex flex-col items-center gap-4 shrink-0 mx-auto sm:mx-0">
           <Avatar className="w-20 h-20 border border-slate-100 shadow-sm">
-            <AvatarImage src={avatarUrl || ''} alt={name} className="object-cover object-top scale-[1.3] w-full h-full translate-y-2 translate-x-[2px]" />
+            <AvatarImage src={avatarUrl || ''} alt={name} className="object-cover object-center scale-[1.15] w-full h-full" />
             <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
               {name.charAt(0).toUpperCase()}
             </AvatarFallback>
