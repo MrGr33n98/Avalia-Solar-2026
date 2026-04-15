@@ -21,8 +21,12 @@ class Category < ApplicationRecord
   has_one_attached :banner
   has_one_attached :icon
   has_and_belongs_to_many :banners, join_table: :banners_categories
-  has_one :category_lead_wizard, dependent: :destroy
-  accepts_nested_attributes_for :category_lead_wizard, allow_destroy: true
+  has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :category
+  has_one :category_lead_wizard, dependent: :destroy, inverse_of: :category
+
+  def latest_published_lead_wizard_version
+    lead_wizard_versions.published.latest_first.first
+  end
 
   # =========================
   # Validations

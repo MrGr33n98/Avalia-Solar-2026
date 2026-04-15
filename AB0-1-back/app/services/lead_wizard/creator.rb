@@ -52,16 +52,16 @@ module LeadWizard
 
     def call
       @lead = build_lead
-      
+
       if validate_and_save
         { success: true, lead: @lead }
       else
         { success: false, errors: @lead.errors.messages.merge(@errors) }
       end
     rescue StandardError => e
-      Rails.logger.error("[LeadWizard::Creator] Unexpected Error: #{e.message}
-#{e.backtrace.first(10).join("
-")}")
+      Rails.logger.error(
+        "[LeadWizard::Creator] Unexpected Error: #{e.message}\n#{e.backtrace.first(10).join("\n")}"
+      )
       { success: false, error: 'internal_error', message: e.message }
     end
 
@@ -69,6 +69,7 @@ module LeadWizard
 
     def build_lead
       core_params = normalize_hash(@params['lead'])
+      @core_params = core_params
       wizard_answers = normalize_hash(@params['wizard_answers'])
 
       # Normalization logic for legacy payloads
@@ -120,7 +121,7 @@ module LeadWizard
       lead.template_version = schema_info[:template_version]
 
       apply_metadata(lead, core_params)
-      
+
       lead
     end
 
@@ -131,30 +132,68 @@ module LeadWizard
 
       # 2. Dynamic schema validation
       schema_info = @schema_info || resolve_schema_info(category_id: @lead.category_id, preferred_company_id: @lead.company_id)
-      validate_answers(@lead.wizard_answers, schema_info[:schema])
+      validate_answers(@lead.wizard_answers, schema_info[:schema], @core_params || {})
 
       return false if @errors.any?
 
       @lead.save
     end
 
-    def validate_answers(answers, schema)
+    def validate_answers(answers, schema, core_params = {})
       return if schema.blank? || schema[:steps].blank?
 
       schema[:steps].each do |step|
         step[:fields].each do |field|
-          next if field[:target].to_s == 'lead'
-
           key = field[:key].to_s
-          value = answers[key] || answers[key.to_sym]
+          value = field_value_for_schema_field(answers, core_params, key)
+          required = truthy?(field[:required])
 
-          if field[:required] && value.blank?
+          if required && value.blank?
             @errors[key] = ["is required"]
+            next
           end
 
-          # Add more validation (types, options) if needed
+          validate_field_options(key, value, field)
+          validate_field_range(key, value, field)
         end
       end
+    end
+
+    def field_value_for_schema_field(answers, core_params, key)
+      answers[key] ||
+        answers[key.to_sym] ||
+        core_params[key] ||
+        core_params[key.to_sym]
+    end
+
+    def validate_field_options(key, value, field)
+      options = Array(field[:options])
+      return if options.blank? || value.blank?
+
+      allowed_values = options.map { |option| option[:value].to_s }
+      return if allowed_values.include?(value.to_s)
+
+      @errors[key] ||= []
+      @errors[key] << 'is not a valid option'
+    end
+
+    def validate_field_range(key, value, field)
+      numeric_value = Float(value)
+      min = field[:min]
+      max = field[:max]
+      return if min.blank? && max.blank?
+
+      if min.present? && numeric_value < min.to_f
+        @errors[key] ||= []
+        @errors[key] << "must be greater than or equal to #{min}"
+      end
+
+      if max.present? && numeric_value > max.to_f
+        @errors[key] ||= []
+        @errors[key] << "must be less than or equal to #{max}"
+      end
+    rescue ArgumentError, TypeError
+      nil
     end
 
     def apply_metadata(lead, core_params)

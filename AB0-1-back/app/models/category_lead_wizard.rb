@@ -1,9 +1,9 @@
 class CategoryLeadWizard < ApplicationRecord
-  belongs_to :category
+  belongs_to :category, inverse_of: :category_lead_wizard
 
   before_validation :normalize_json_fields
 
-  validates :category_id, presence: true, uniqueness: true
+  validates :category_id, uniqueness: true, allow_nil: true
   validates :template_key, presence: true
   validate :validate_schema_format
   validate :validate_thank_you_config_format

@@ -4,8 +4,7 @@ require 'English'
 
 ActiveAdmin.register Category, namespace: :admin do
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :permissions_config, company_ids: [], product_ids: [],
-                category_lead_wizard_attributes: [:id, :enabled, :template_key, :template_version, :schema, :thank_you_config, :_destroy]
+                :banner, :icon, :permissions_config, company_ids: [], product_ids: []
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
@@ -13,6 +12,12 @@ ActiveAdmin.register Category, namespace: :admin do
 
   action_item :import_csv, only: :index do
     link_to 'Import CSV', upload_csv_admin_categories_path, class: 'button'
+  end
+
+  action_item :lead_wizard_versions, only: :show do
+    link_to 'Lead Wizard Versions',
+            admin_lead_wizard_versions_path(q: { category_id_eq: resource.id }),
+            class: 'button'
   end
 
   collection_action :upload_csv, method: :get do
@@ -39,7 +44,9 @@ ActiveAdmin.register Category, namespace: :admin do
   filter :views_count
   filter :created_at
 
-  form do |f|
+  form html: { multipart: true } do |f|
+    f.semantic_errors
+
     f.inputs 'Basic Information' do
       f.input :name
       f.input :short_description, 
@@ -80,25 +87,6 @@ ActiveAdmin.register Category, namespace: :admin do
               hint: 'Busque e selecione uma ou mais empresas relacionadas a esta categoria.'
     end
 
-    f.inputs 'Lead Wizard Settings' do
-      f.has_many :category_lead_wizard, allow_destroy: true, heading: false, new_record: 'Configure Wizard' do |w|
-        w.input :enabled
-        w.input :template_key, as: :select, collection: %w[solar ev_charger financing generic]
-        w.input :template_version
-        w.input :schema, as: :text, 
-                input_html: { 
-                  rows: 10, 
-                  value: w.object.schema.present? ? JSON.pretty_generate(w.object.schema) : '{}' 
-                },
-                hint: 'JSON schema defining steps and fields.'
-        w.input :thank_you_config, as: :text,
-                input_html: { 
-                  rows: 5, 
-                  value: w.object.thank_you_config.present? ? JSON.pretty_generate(w.object.thank_you_config) : '{}' 
-                }
-      end
-    end
-
     f.inputs 'Permission Settings' do
       f.input :permissions_config, as: :text, input_html: { rows: 5 }
     end
@@ -123,21 +111,48 @@ ActiveAdmin.register Category, namespace: :admin do
       row :created_at
     end
 
-    panel 'Lead Wizard Configuration' do
-      if category.category_lead_wizard
-        attributes_table_for category.category_lead_wizard do
-          row :enabled
+    panel 'Lead Wizard' do
+      current_version = category.latest_published_lead_wizard_version
+      legacy_wizard = CategoryLeadWizard.find_by(category_id: category.id, enabled: true)
+
+      if current_version.present?
+        attributes_table_for current_version do
+          row :scope_label
+          row :status do |version|
+            status_tag(version.status)
+          end
           row :template_key
           row :template_version
-          row :schema do |w|
-            pre JSON.pretty_generate(w.schema) if w.schema.present?
+          row :version_number
+          row :updated_at
+          row('Open') { |version| link_to 'View version', admin_lead_wizard_version_path(version) }
+        end
+      elsif legacy_wizard.present?
+        para 'Legacy JSON wizard detected. Create a Lead Wizard Version to move this category to the normalized engine.'
+      else
+        para 'No wizard configured for this category. It will fall back to the global default.'
+      end
+    end
+
+    panel 'Lead Wizard Versions' do
+      versions = category.lead_wizard_versions.latest_first
+
+      if versions.any?
+        table_for versions do
+          column :version_number
+          column :template_key
+          column :template_version
+          column :status do |version|
+            status_tag(version.status)
           end
-          row :thank_you_config do |w|
-            pre JSON.pretty_generate(w.thank_you_config) if w.thank_you_config.present?
+          column :scope_label
+          column :updated_at
+          column('Ações') do |version|
+            link_to 'Ver', admin_lead_wizard_version_path(version)
           end
         end
       else
-        span 'No wizard configured for this category. Falling back to default.'
+        para 'Nenhuma versão criada ainda.'
       end
     end
   end

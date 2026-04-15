@@ -491,6 +491,80 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["category_id"], name: "index_category_lead_wizards_on_category_id", unique: true
   end
 
+  create_table "lead_wizard_versions", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "category_id"
+    t.string "template_key", null: false
+    t.integer "template_version", default: 1, null: false
+    t.integer "version_number", default: 1, null: false
+    t.string "status", default: "draft", null: false
+    t.string "ui_theme", default: "auto", null: false
+    t.string "ui_primary_color"
+    t.string "ui_logo_url"
+    t.boolean "show_progress_bar", default: true, null: false
+    t.string "thank_you_title"
+    t.text "thank_you_message"
+    t.string "thank_you_redirect_url"
+    t.datetime "published_at"
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "status"], name: "index_lead_wizard_versions_on_published_category", unique: true, where: "((category_id IS NOT NULL) AND ((status)::text = 'published'::text))"
+    t.index ["category_id", "version_number"], name: "index_lead_wizard_versions_on_category_and_version", unique: true, where: "(category_id IS NOT NULL)"
+    t.index ["company_id", "status"], name: "index_lead_wizard_versions_on_published_company", unique: true, where: "((company_id IS NOT NULL) AND ((status)::text = 'published'::text))"
+    t.index ["company_id", "version_number"], name: "index_lead_wizard_versions_on_company_and_version", unique: true, where: "(company_id IS NOT NULL)"
+    t.index ["template_key"], name: "index_lead_wizard_versions_on_template_key"
+    t.index ["status"], name: "index_lead_wizard_versions_on_published_global", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL) AND ((status)::text = 'published'::text))"
+    t.index ["version_number"], name: "index_lead_wizard_versions_on_global_version", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL))"
+  end
+
+  create_table "lead_wizard_sections", force: :cascade do |t|
+    t.bigint "lead_wizard_version_id", null: false
+    t.string "key", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_version_id", "key"], name: "index_lead_wizard_sections_on_version_and_key", unique: true
+    t.index ["lead_wizard_version_id", "position"], name: "index_lead_wizard_sections_on_version_and_position"
+  end
+
+  create_table "lead_wizard_fields", force: :cascade do |t|
+    t.bigint "lead_wizard_section_id", null: false
+    t.string "key", null: false
+    t.string "field_type", null: false
+    t.string "label", null: false
+    t.string "target", default: "wizard_answers", null: false
+    t.string "placeholder"
+    t.text "help_text"
+    t.boolean "required", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.decimal "min_value", precision: 12, scale: 2
+    t.decimal "max_value", precision: 12, scale: 2
+    t.decimal "step_value", precision: 12, scale: 2
+    t.string "error_message"
+    t.string "depends_on_field_key"
+    t.string "depends_on_operator"
+    t.string "depends_on_value"
+    t.string "default_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_section_id", "key"], name: "index_lead_wizard_fields_on_section_and_key", unique: true
+    t.index ["lead_wizard_section_id", "position"], name: "index_lead_wizard_fields_on_section_and_position"
+  end
+
+  create_table "lead_wizard_field_options", force: :cascade do |t|
+    t.bigint "lead_wizard_field_id", null: false
+    t.string "label", null: false
+    t.string "value", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_field_id", "value"], name: "index_lead_wizard_field_options_on_field_and_value", unique: true
+    t.index ["lead_wizard_field_id", "position"], name: "index_lead_wizard_field_options_on_field_and_position"
+  end
+
   create_table "comments", force: :cascade do |t|
     t.bigint "post_id", null: false
     t.bigint "user_id", null: false
@@ -1758,6 +1832,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
   add_foreign_key "intent_scores", "companies"
   add_foreign_key "lead_distributions", "companies"
   add_foreign_key "lead_distributions", "leads"
+  add_foreign_key "lead_wizard_field_options", "lead_wizard_fields"
+  add_foreign_key "lead_wizard_fields", "lead_wizard_sections"
+  add_foreign_key "lead_wizard_sections", "lead_wizard_versions"
+  add_foreign_key "lead_wizard_versions", "categories"
+  add_foreign_key "lead_wizard_versions", "companies"
   add_foreign_key "leads", "categories"
   add_foreign_key "leads", "companies"
   add_foreign_key "notifications", "users"
