@@ -23,7 +23,8 @@ interface LocationSearchProps {
 
 export default function LocationSearch({ className, onLocationSelect }: LocationSearchProps) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState('');
+  const [selectedCity, setSelectedCity] = React.useState('');
+  const [searchValue, setSearchValue] = React.useState('');
   const [selectedLabel, setSelectedLabel] = React.useState('Localização');
   
   // Use existing hook for data
@@ -37,17 +38,20 @@ export default function LocationSearch({ className, onLocationSelect }: Location
 
   const handleStateSelect = (state: string) => {
     setSelectedState(state);
+    setSelectedCity('');
+    setSearchValue('');
     fetchCities(state);
-    setValue(''); // Reset command input value if needed
   };
 
   const handleSelect = (currentValue: string, type: 'state' | 'city') => {
     if (type === 'state') {
       handleStateSelect(currentValue);
       setSelectedLabel(currentValue);
+      setSearchValue('');
     } else {
       // City selected
-      setValue(currentValue);
+      setSelectedCity(currentValue);
+      setSearchValue('');
       setSelectedLabel(`${currentValue} - ${selectedState}`);
       setOpen(false);
 
@@ -73,6 +77,8 @@ export default function LocationSearch({ className, onLocationSelect }: Location
       if (isOpen) {
         setView('states');
         setSelectedState(null);
+        setSelectedCity('');
+        setSearchValue('');
       }
     }}>
       <PopoverTrigger asChild>
@@ -96,12 +102,14 @@ export default function LocationSearch({ className, onLocationSelect }: Location
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[280px] rounded-[1.35rem] border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
-        <Command>
-          <CommandInput 
-            placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."} 
-            aria-label={view === 'states' ? "Buscar estado" : "Buscar cidade"}
-          />
-          <CommandList className="max-h-[300px] overflow-y-auto">
+          <Command>
+            <CommandInput
+              placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."}
+              aria-label={view === 'states' ? "Buscar estado" : "Buscar cidade"}
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+            <CommandList className="max-h-[300px] overflow-y-auto">
             {loadingStates && view === 'states' && (
               <div className="p-4 text-sm text-center text-muted-foreground animate-pulse">
                 Carregando estados...
@@ -177,6 +185,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                       onSelect={() => {
                         setSelectedLabel(`Todo ${selectedState}`);
                         setOpen(false);
+                        setSearchValue('');
                         if (onLocationSelect && selectedState) onLocationSelect({ state: selectedState });
                       }}
                     >
@@ -194,7 +203,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            value === city ? "opacity-100" : "opacity-0"
+                            selectedCity === city ? "opacity-100" : "opacity-0"
                           )}
                         />
                         {city}

@@ -44,7 +44,14 @@ jest.mock('@/components/ui/popover', () => ({
 
 jest.mock('@/components/ui/command', () => ({
   Command: ({ children }: any) => <div data-testid="command">{children}</div>,
-  CommandInput: ({ placeholder }: any) => <input placeholder={placeholder} data-testid="command-input" />,
+  CommandInput: ({ placeholder, value, onValueChange }: any) => (
+    <input
+      placeholder={placeholder}
+      data-testid="command-input"
+      value={value ?? ''}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    />
+  ),
   CommandList: ({ children }: any) => <div data-testid="command-list">{children}</div>,
   CommandEmpty: ({ children }: any) => <div data-testid="command-empty">{children}</div>,
   CommandGroup: ({ children, heading }: any) => (
@@ -66,8 +73,8 @@ describe('LocationSearch', () => {
 
   beforeEach(() => {
     (useLocationData as jest.Mock).mockReturnValue({
-      states: ['SP', 'RJ'],
-      cities: ['São Paulo', 'Campinas'],
+      states: ['SC', 'SP'],
+      cities: ['Florianópolis', 'Blumenau'],
       fetchStates: mockFetchStates,
       fetchCities: mockFetchCities,
     });
@@ -84,8 +91,24 @@ describe('LocationSearch', () => {
     
     expect(screen.getByTestId('popover-content')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar estado...')).toBeInTheDocument();
+    expect(screen.getByText('SC')).toBeInTheDocument();
     expect(screen.getByText('SP')).toBeInTheDocument();
-    expect(screen.getByText('RJ')).toBeInTheDocument();
+  });
+
+  it('clears the query when moving from state search to city search', () => {
+    render(<LocationSearch />);
+
+    fireEvent.click(screen.getByTestId('location-trigger'));
+
+    const stateInput = screen.getByPlaceholderText('Buscar estado...');
+    fireEvent.change(stateInput, { target: { value: 'SC' } });
+
+    const scItem = screen.getByText('SC').closest('div[data-testid="command-item"]');
+    fireEvent.click(scItem!);
+
+    expect(mockFetchCities).toHaveBeenCalledWith('SC');
+    expect(screen.getByPlaceholderText('Buscar cidade...')).toHaveValue('');
+    expect(screen.getByText('Florianópolis')).toBeInTheDocument();
   });
 
   it('calls onLocationSelect when state and city are selected', () => {
@@ -95,15 +118,15 @@ describe('LocationSearch', () => {
     // Open
     fireEvent.click(screen.getByTestId('location-trigger'));
     
-    // Select State 'SP'
+    // Select State 'SC'
     // In our mock, CommandItem calls onSelect when clicked
     // We need to find the specific item.
     // The items render the text.
-    const spItem = screen.getByText('SP').closest('div[data-testid="command-item"]');
-    fireEvent.click(spItem!);
+    const scItem = screen.getByText('SC').closest('div[data-testid="command-item"]');
+    fireEvent.click(scItem!);
     
     // Should call fetchCities
-    expect(mockFetchCities).toHaveBeenCalledWith('SP');
+    expect(mockFetchCities).toHaveBeenCalledWith('SC');
     
     // Should switch to cities view
     // Since we mocked useLocationData to return static cities, they should be visible now if the component re-renders or updates view state.
@@ -113,9 +136,9 @@ describe('LocationSearch', () => {
     expect(screen.getByPlaceholderText('Buscar cidade...')).toBeInTheDocument();
     
     // Select City 'São Paulo'
-    const cityItem = screen.getByText('São Paulo').closest('div[data-testid="command-item"]');
+    const cityItem = screen.getByText('Florianópolis').closest('div[data-testid="command-item"]');
     fireEvent.click(cityItem!);
     
-    expect(onSelect).toHaveBeenCalledWith({ state: 'SP', city: 'São Paulo' });
+    expect(onSelect).toHaveBeenCalledWith({ state: 'SC', city: 'Florianópolis' });
   });
 });
