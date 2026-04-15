@@ -1,0 +1,332 @@
+{
+  "name": "WF-008: Daily Sales Digest (Nutshell)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cronExpression", "expression": "0 9 * * *"}]
+        },
+        "options": {}
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule - Daily 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"find\",\"params\":{\"entity\":\"Contact\",\"criteria\":{\"createdOn\":{\"after\":\"{{ $today.minus(1, 'day').startOf('day').toISOString() }}\"}},\"limit\":1},\"id\":1}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-new-contacts",
+      "name": "HTTP - New Contacts Yesterday",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 100],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"find\",\"params\":{\"entity\":\"Lead\",\"criteria\":{\"currentStage\":\"won\",\"modifiedOn\":{\"after\":\"{{ $today.minus(1, 'day').startOf('day').toISOString() }}\"}},\"limit\":100},\"id\":2}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-won-leads",
+      "name": "HTTP - Won Leads Yesterday",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"find\",\"params\":{\"entity\":\"Lead\",\"criteria\":{\"status\":\"open\"},\"limit\":500},\"id\":3}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-open-leads",
+      "name": "HTTP - Open Leads (Pipeline)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 500],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"find\",\"params\":{\"entity\":\"Lead\",\"criteria\":{\"currentStage\":\"lost\",\"modifiedOn\":{\"after\":\"{{ $today.minus(1, 'day').startOf('day').toISOString() }}\"}},\"limit\":100},\"id\":4}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-lost-leads",
+      "name": "HTTP - Lost Leads Yesterday",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 700],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "combine",
+        "options": {}
+      },
+      "id": "merge-all-data",
+      "name": "Merge - All Nutshell Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Calculate real metrics from Nutshell data\nconst items = $input.all();\nconst today = new Date();\nconst yesterday = new Date(today);\nyesterday.setDate(yesterday.getDate() - 1);\n\n// Extract data from merged inputs\nconst newContactsData = items.find(i => i.json.method === 'find' && i.json.params?.entity === 'Contact') || {};\nconst wonLeadsData = items.find(i => i.json.params?.entity === 'Lead' && i.json.params?.criteria?.currentStage === 'won') || {};\nconst openLeadsData = items.find(i => i.json.params?.entity === 'Lead' && i.json.params?.criteria?.status === 'open') || {};\nconst lostLeadsData = items.find(i => i.json.params?.entity === 'Lead' && i.json.params?.criteria?.currentStage === 'lost') || {};\n\n// Parse totalResults from Nutshell responses\nconst newLeads = parseInt(newContactsData.json?.totalResults || 0);\nconst dealsWon = parseInt(wonLeadsData.json?.totalResults || 0);\nconst dealsLost = parseInt(lostLeadsData.json?.totalResults || 0);\nconst totalOpenLeads = parseInt(openLeadsData.json?.totalResults || 0);\n\n// Calculate pipeline value from open leads\nlet pipelineValue = 0;\nconst openResults = openLeadsData.json?.results || [];\nfor (const lead of openResults) {\n  const value = parseFloat(lead.value || lead.expectedValue || 0);\n  pipelineValue += value;\n}\n\n// Calculate won revenue\nlet revenue = 0;\nconst wonResults = wonLeadsData.json?.results || [];\nfor (const lead of wonResults) {\n  const value = parseFloat(lead.value || lead.expectedValue || 0);\n  revenue += value;\n}\n\n// Conversion rates\nconst totalDeals = dealsWon + dealsLost;\nconst conversionRate = totalDeals > 0 ? ((dealsWon / totalDeals) * 100).toFixed(1) : '0';\nconst winRate = (newLeads > 0) ? ((dealsWon / newLeads) * 100).toFixed(1) : '0';\n\n// Fetch intent signals from PostgreSQL (simplified - in production use a separate node)\n// const highIntentLeads = await postgres.query(\"SELECT COUNT(*) FROM intent_signals WHERE intent_level IN ('boiling', 'immediate', 'declared')\");\n\nreturn [{\n  json: {\n    date: yesterday.toLocaleDateString('pt-BR'),\n    new_leads: newLeads,\n    deals_won: dealsWon,\n    deals_lost: dealsLost,\n    revenue: revenue.toFixed(2),\n    pipeline_value: pipelineValue.toFixed(2),\n    total_open_leads: totalOpenLeads,\n    conversion_rate: conversionRate,\n    win_rate: winRate,\n    // These would come from PostgreSQL in a complete version:\n    meetings_scheduled: 0, // TODO: query activities with type='meeting'\n    proposals_sent: 0,     // TODO: query activities with type='proposal'\n    whatsapp_sent: 0,      // TODO: query whatsapp_messages where date = yesterday\n    high_intent_leads: 0,  // TODO: query intent_signals WHERE intent_level IN ('boiling','immediate','declared')\n    _raw_won_leads: wonResults.map(l => ({name: l.name, value: l.value, stage: l.currentStage})),\n    _raw_open_leads: openResults.map(l => ({name: l.name, value: l.value, stage: l.currentStage}))\n  }\n}];"
+      },
+      "id": "code-calculate-metrics",
+      "name": "Code - Calculate Real Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "#growth-daily",
+        "text": "📊 Resumo Diário AvaliaSolar - {{$json.date}}\n\n*NOVOS LEADS*: {{$json.new_leads}}\n*DEALS WON*: {{$json.deals_won}}\n*DEALS LOST*: {{$json.deals_lost}}\n*RECEITA*: R$ {{$json.revenue}}\n*PIPELINE*: R$ {{$json.pipeline_value}}\n*LEADS ABERTOS*: {{$json.total_open_leads}}\n*CONVERSÃO*: {{$json.conversion_rate}}%\n*WIN RATE*: {{$json.win_rate}}%\n\n📱 WhatsApp enviados: {{$json.whatsapp_sent}}\n🔥 Leads alta intenção: {{$json.high_intent_leads}}\n📅 Reuniões: {{$json.meetings_scheduled}}\n📄 Propostas: {{$json.proposals_sent}}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "id": "slack-digest",
+      "name": "Slack - Send Daily Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1050, 300],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1",
+          "name": "Slack OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"new\",\"params\":{\"entity\":{\"_type\":\"Activity\",\"name\":\"Daily Digest enviado via n8n\",\"body\":\"Resumo do dia {{ $json.date }}: {{ $json.new_leads }} novos leads, {{ $json.deals_won }} ganhos, R$ {{ $json.revenue }} receita\",\"_type\":\"Activity\",\"relatedEntities\":{\"lead\":[{\"id\":{{ $json._raw_won_leads[0]?.id || 'null' }}}]}},\"id\":100}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-log-activity",
+      "name": "HTTP - Nutshell Log Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 500],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 9AM": {
+      "main": [
+        [
+          {
+            "node": "HTTP - New Contacts Yesterday",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Won Leads Yesterday",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Open Leads (Pipeline)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Lost Leads Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - New Contacts Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Nutshell Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Won Leads Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Nutshell Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - Open Leads (Pipeline)": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Nutshell Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "HTTP - Lost Leads Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Nutshell Data",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge - All Nutshell Data": {
+      "main": [
+        [
+          {
+            "node": "Code - Calculate Real Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Calculate Real Metrics": {
+      "main": [
+        [
+          {
+            "node": "Slack - Send Daily Digest",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Nutshell Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "executionTimeout": 120
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "analytics-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "2",
+      "name": "scheduled"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "3",
+      "name": "nutshell"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}

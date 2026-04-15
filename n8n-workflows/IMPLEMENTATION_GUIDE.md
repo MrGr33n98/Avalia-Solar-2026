@@ -1,4 +1,4 @@
-# 🚀 Implementação dos 16 Workflows de Vendas n8n
+# 🚀 Implementação dos 17 Workflows de Vendas n8n
 
 ## Status de Criação
 
@@ -8,6 +8,12 @@
 3. **WF-003**: Lead Enrichment Automático ✅
 4. **WF-004**: Follow-Up Automático Inteligente ✅
 5. **WF-008**: Daily Sales Digest no Slack ✅
+6. **WF-017**: Growth Command Center Solar + EV ✅
+
+#### WF-017: Growth Command Center Solar + EV
+**Trigger**: Telegram brief ou comando de campanha
+**Nodes**: Telegram Trigger → Parse Brief → Build Content Pack → Slack/Sheets/Telegram → LinkedIn/X opcional
+**Descrição**: Gera pacotes de campanha para solar e EV, salva no sheet e envia drafts para revisão interna.
 
 ### 📋 Workflows Restantes (Estrutura Simplificada)
 
@@ -147,6 +153,9 @@ CRM_API_KEY=your-crm-key
 
 ## 🎯 Ordem Recomendada de Implementação
 
+### Fase 0: Growth Content (Hoje)
+- **WF-017**: Growth Command Center Solar + EV
+
 ### Fase 1: Fundação (Semana 1)
 1. **WF-001**: Captura de Leads Multi-Canal
 2. **WF-002**: Lead Scoring Automático
@@ -264,8 +273,8 @@ CRM_API_KEY=your-crm-key
 
 ## 🎉 Próximos Passos
 
-1. ✅ Importar WF-001 a WF-005 e WF-008 (já criados)
-2. 📝 Adaptar templates para WF-006 a WF-016
+1. ✅ Importar WF-001 a WF-005, WF-008 e WF-017 (já criados)
+2. 📝 Adaptar templates para WF-006 a WF-017
 3. 🧪 Testar cada workflow individualmente
 4. 🔄 Ajustar baseado em feedback da equipe
 5. 📊 Monitorar métricas semanalmente
@@ -273,8 +282,8 @@ CRM_API_KEY=your-crm-key
 
 ---
 
-**Workflows Criados**: 5/16  
-**Estruturas Documentadas**: 16/16  
+**Workflows Criados**: 6/17  
+**Estruturas Documentadas**: 17/17  
 **Status**: Pronto para implementação  
 **Tempo estimado setup completo**: 4-6 semanas
 

@@ -1,0 +1,232 @@
+{
+  "name": "WF-026: Site Event Collector",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gtm-event",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - GTM Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "gtm-event-collector"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Validate and enrich GTM event\nconst items = $input.all();\nconst enriched = [];\n\nfor (const item of items) {\n  const body = item.json.body || item.json;\n  \n  // Validate required fields\n  const required = ['event', 'session_id', 'timestamp'];\n  const missing = required.filter(f => !body[f]);\n  if (missing.length > 0) {\n    continue; // Skip invalid events\n  }\n  \n  // Enrich with computed fields\n  const pageUrl = body.page || body.page_url || '';\n  const urlParts = pageUrl.split('/');\n  \n  // Detect vertical from URL\n  let vertical = 'solar';\n  if (pageUrl.includes('ev') || pageUrl.includes('mobilidade') || pageUrl.includes('wallbox') || pageUrl.includes('carregador')) {\n    vertical = 'ev';\n  } else if (pageUrl.includes('solar') && pageUrl.includes('ev')) {\n    vertical = 'hybrid';\n  }\n  \n  // Detect audience from URL\n  let audience = 'b2c';\n  if (pageUrl.includes('empresa') || pageUrl.includes('comercial') || pageUrl.includes('industrial') || pageUrl.includes('b2b')) {\n    audience = 'b2b';\n  }\n  \n  // Extract category from URL slug\n  let category = '';\n  if (pageUrl.includes('/categories/')) {\n    const catIndex = urlParts.indexOf('categories');\n    if (catIndex >= 0 && urlParts[catIndex + 1]) {\n      category = urlParts[catIndex + 1];\n    }\n  }\n  \n  // Extract company ID if present\n  let companyId = null;\n  if (pageUrl.includes('/companies/') || pageUrl.includes('/empresa/')) {\n    const compIndex = urlParts.findIndex(p => p === 'companies' || p === 'empresa');\n    if (compIndex >= 0 && urlParts[compIndex + 1]) {\n      companyId = parseInt(urlParts[compIndex + 1]);\n    }\n  }\n  \n  enriched.push({\n    json: {\n      event_name: body.event,\n      user_session_id: body.session_id || body.client_id,\n      user_id: body.user_id || null,\n      page_url: pageUrl,\n      city: body.city || null,\n      state: body.state || null,\n      company_id: companyId || body.company_id || null,\n      category_id: body.category_id || null,\n      category_slug: category,\n      vertical: vertical,\n      audience: audience,\n      utm_source: body.utm_source || null,\n      utm_medium: body.utm_medium || null,\n      utm_campaign: body.utm_campaign || null,\n      utm_content: body.utm_content || null,\n      referrer: body.referrer || null,\n      metadata: {\n        user_agent: body.user_agent || null,\n        screen_resolution: body.screen_resolution || null,\n        language: body.language || null\n      },\n      created_at: body.timestamp || new Date().toISOString()\n    }\n  });\n}\n\nreturn enriched;"
+      },
+      "id": "code-validate-enrich",
+      "name": "Code - Validate & Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO analytics_events (event_name, user_session_id, user_id, page_url, city, state, company_id, category_id, vertical, audience, utm_source, utm_medium, utm_campaign, utm_content, referrer, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) ON CONFLICT DO NOTHING",
+        "options": {
+          "fallbackToInput": false
+        }
+      },
+      "id": "postgres-insert",
+      "name": "PostgreSQL - Insert Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [650, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "conversion-event",
+              "leftValue": "={{ $json.event_name }}",
+              "rightValue": "wizard_complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.string.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "if-conversion",
+      "name": "IF - Conversion Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "intent-event",
+              "leftValue": "={{ $json.event_name }}",
+              "rightValue": "roi_expand",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.string.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "if-intent-signal",
+      "name": "IF - Intent Signal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $env.WF_031_ID || '' }}",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "trigger-intent-detector",
+      "name": "Execute Workflow - WF-031 Intent Detector",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"event\": $json.event_name, \"session\": $json.user_session_id, \"timestamp\": new Date().toISOString()} }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1050, 200]
+    }
+  ],
+  "connections": {
+    "Webhook - GTM Event": {
+      "main": [
+        [
+          {
+            "node": "Code - Validate & Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Validate & Enrich": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Insert Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Insert Event": {
+      "main": [
+        [
+          {
+            "node": "IF - Conversion Event?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF - Intent Signal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Conversion Event?": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Intent Signal?": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow - WF-031 Intent Detector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 60
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "data-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "2",
+      "name": "webhook"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}

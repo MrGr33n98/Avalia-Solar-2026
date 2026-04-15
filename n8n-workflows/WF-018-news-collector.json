@@ -1,0 +1,456 @@
+{
+  "name": "WF-018: News Collector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {"field": "cronExpression", "expression": "0 0,6,12,18 * * *"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule - 4x/day (0h,6h,12h,18h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "newsApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {"name": "q", "value": "\"energia solar\" Brasil"},
+            {"name": "language", "value": "pt"},
+            {"name": "sortBy", "value": "publishedAt"},
+            {"name": "pageSize", "value": "15"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-news-solar",
+      "name": "HTTP - NewsAPI (Solar)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 100],
+      "credentials": {
+        "newsApi": {
+          "id": "1",
+          "name": "NewsAPI.org"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "newsApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {"name": "q", "value": "\"mobilidade elétrica\" OR \"veículo elétrico\" OR \"wallbox\" Brasil"},
+            {"name": "language", "value": "pt"},
+            {"name": "sortBy", "value": "publishedAt"},
+            {"name": "pageSize", "value": "10"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-news-ev",
+      "name": "HTTP - NewsAPI (EV)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "credentials": {
+        "newsApi": {
+          "id": "1",
+          "name": "NewsAPI.org"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.absolar.org.br/feed/",
+        "sendHeaders": false,
+        "sendQuery": false,
+        "options": {}
+      },
+      "id": "http-rss-absolar",
+      "name": "HTTP - RSS ABSOLAR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "operation": "mergeByIndex",
+        "options": {}
+      },
+      "id": "merge-all-sources",
+      "name": "Merge - All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Deduplicate news by URL + title similarity\nconst items = $input.all();\nconst seenUrls = new Set();\nconst seenTitles = [];\nconst deduped = [];\n\n// Load existing URLs from DB (simplified - in production use Postgres node)\n// const existing = await postgres.query(\"SELECT url FROM news_articles\");\n// existing.rows.forEach(r => seenUrls.add(r.url));\n\nfunction levenshteinSimilarity(a, b) {\n  const longer = a.length > b.length ? a : b;\n  const shorter = a.length > b.length ? b : a;\n  if (longer.length === 0) return 1.0;\n  const editDist = levenshteinDistance(longer, shorter);\n  return (longer.length - editDist) / longer.length;\n}\n\nfunction levenshteinDistance(a, b) {\n  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));\n  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;\n  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;\n  for (let j = 1; j <= b.length; j++) {\n    for (let i = 1; i <= a.length; i++) {\n      const cost = a[i-1] === b[j-1] ? 0 : 1;\n      matrix[j][i] = Math.min(matrix[j][i-1] + 1, matrix[j-1][i] + 1, matrix[j-1][i-1] + cost);\n    }\n  }\n  return matrix[b.length][a.length];\n}\n\nfor (const item of items) {\n  const article = item.json;\n  const url = article.url || article.link || article.guid || '';\n  const title = (article.title || article.subject || '').toLowerCase().trim();\n  \n  // Skip if URL already seen\n  if (url && seenUrls.has(url)) continue;\n  if (url) seenUrls.add(url);\n  \n  // Skip if title too similar to existing\n  const titleMatch = seenTitles.some(s => levenshteinSimilarity(title, s) > 0.85);\n  if (titleMatch) continue;\n  seenTitles.push(title);\n  \n  // Normalize article structure\n  deduped.push({\n    json: {\n      title: article.title || article.subject || '',\n      url: url,\n      source: article.source?.name || article.creator || article.author || 'NewsAPI',\n      published_at: article.publishedAt || article.pubDate || article.date || new Date().toISOString(),\n      description: article.description || article.summary || '',\n      content: article.content || article.description || '',\n      image_url: article.urlToImage || article.enclosure?.link || '',\n      fetched_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn deduped;"
+      },
+      "id": "code-deduplicate",
+      "name": "Code - Deduplicate News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a growth intelligence engine for AvaliaSolar, Brazil's leading solar energy + electric mobility trust platform. Classify news articles for content and lead generation potential. Respond in JSON only."
+          },
+          {
+            "role": "user",
+            "content": "Classify this news article:\n\nTitle: {{ $json.title }}\nDescription: {{ $json.description }}\nSource: {{ $json.source }}\nPublished: {{ $json.published_at }}\n\nRespond in JSON:\n{\n  \"category\": \"tariff|policy|market|technology|weather|regulation\",\n  \"vertical\": \"solar|ev|hybrid\",\n  \"audience\": \"b2b|b2c|both\",\n  \"sentiment\": \"positive|neutral|negative\",\n  \"urgency\": \"low|medium|high|critical\",\n  \"relevance_score\": 0.85,\n  \"lead_potential\": 0.72,\n  \"summary_pt\": \"2-3 sentence summary in Portuguese\",\n  \"content_angles\": [\n    {\"angle\": \"education|proof|urgency|savings|trust\", \"hook\": \"specific hook\"}\n  ],\n  \"suggested_channels\": [\"linkedin\", \"instagram\", \"x\"],\n  \"suggested_cta\": \"calculadora|comparar|whatsapp|newsletter\"\n}"
+          }
+        ],
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "openai-classify",
+      "name": "OpenAI - Classify Article",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [1050, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Parse AI output and merge with article data\nconst items = $input.all();\nconst parsed = [];\n\nfor (const item of items) {\n  let aiData;\n  try {\n    const content = item.json.message?.content || item.json.content || item.json.text || '';\n    aiData = JSON.parse(content);\n  } catch (e) {\n    continue; // Skip if AI response is not valid JSON\n  }\n  \n  const article = item.json;\n  \n  parsed.push({\n    json: {\n      title: article.title,\n      url: article.url,\n      source: article.source,\n      published_at: article.published_at,\n      description: article.description,\n      image_url: article.image_url,\n      fetched_at: article.fetched_at,\n      category: aiData.category || 'market',\n      vertical: aiData.vertical || 'solar',\n      audience: aiData.audience || 'b2c',\n      sentiment: aiData.sentiment || 'neutral',\n      urgency: aiData.urgency || 'low',\n      relevance_score: aiData.relevance_score || 0.5,\n      lead_potential: aiData.lead_potential || 0.3,\n      summary_pt: aiData.summary_pt || article.description,\n      content_angles: aiData.content_angles || [],\n      suggested_channels: aiData.suggested_channels || ['linkedin'],\n      suggested_cta: aiData.suggested_cta || 'calculadora',\n      used_in_content: false\n    }\n  });\n}\n\nreturn parsed;"
+      },
+      "id": "code-parse-ai",
+      "name": "Code - Parse AI Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "relevance-threshold",
+              "leftValue": "={{ $json.relevance_score }}",
+              "rightValue": 0.6,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-relevant",
+      "name": "IF - Relevant (>0.6)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO news_articles (title, url, source, published_at, fetched_at, category, vertical, audience, sentiment, urgency, relevance_score, summary_pt, content_angles, suggested_channels, suggested_cta, used_in_content) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) ON CONFLICT (url) DO NOTHING",
+        "options": {}
+      },
+      "id": "postgres-insert",
+      "name": "PostgreSQL - Insert Article",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1650, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "critical-urgency",
+              "leftValue": "={{ $json.urgency }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-critical",
+      "name": "IF - Critical Urgency?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_GROWTH_ALERTS_CHAT_ID }}",
+        "text": "🚨 NOTÍCIA CRÍTICA DETECTADA\n\n📰 {{ $json.title }}\n📊 Relevância: {{ $json.relevance_score }}\n🏷️ Categoria: {{ $json.category }}\n🎯 Vertical: {{ $json.vertical }}\n\n{{ $json.summary_pt }}\n\n🔗 {{ $json.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "telegram-alert",
+      "name": "Telegram - Critical Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1850, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO news_articles (title, url, source, published_at, fetched_at, category, vertical, audience, sentiment, urgency, relevance_score, summary_pt, used_in_content) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false) ON CONFLICT (url) DO UPDATE SET relevance_score = EXCLUDED.relevance_score",
+        "options": {}
+      },
+      "id": "postgres-archive",
+      "name": "PostgreSQL - Archive All",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1650, 600],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_GROWTH_ALERTS_CHAT_ID }}",
+        "text": "📰 News Collector Summary\n\n⏰ {{ $now.format('HH:mm') }} - {{ new Date().toLocaleDateString('pt-BR') }}\n📊 Artigos processados: {{ $items().length }}\n✅ Artigos relevantes: {{ $json.total_relevant || 0 }}\n🚨 Alertas críticos: {{ $json.total_critical || 0 }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "telegram-summary",
+      "name": "Telegram - Run Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1850, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule - 4x/day (0h,6h,12h,18h)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - NewsAPI (Solar)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - NewsAPI (EV)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - RSS ABSOLAR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - NewsAPI (Solar)": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - NewsAPI (EV)": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - RSS ABSOLAR": {
+      "main": [
+        [
+          {
+            "node": "Merge - All Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge - All Sources": {
+      "main": [
+        [
+          {
+            "node": "Code - Deduplicate News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Deduplicate News": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Classify Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Classify Article": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse AI Output": {
+      "main": [
+        [
+          {
+            "node": "IF - Relevant (>0.6)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Relevant (>0.6)?": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Insert Article",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PostgreSQL - Archive All",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Insert Article": {
+      "main": [
+        [
+          {
+            "node": "IF - Critical Urgency?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram - Run Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Critical Urgency?": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Critical Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "executionTimeout": 300
+  },
+  "staticData": {
+    "lastRunSummary": null
+  },
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "data-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "3",
+      "name": "scheduled"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}

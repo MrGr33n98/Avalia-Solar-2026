@@ -1,0 +1,300 @@
+{
+  "name": "WF-031: Intent Detector",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intent-detect",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Intent Signal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "intent-detector"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Parse incoming signal\nconst items = $input.all();\nconst signals = [];\n\nfor (const item of items) {\n  const body = item.json.body || item.json;\n  \n  signals.push({\n    json: {\n      session_id: body.session_id || body.user_session_id,\n      user_id: body.user_id || null,\n      event_name: body.event_name || body.event,\n      city: body.city || null,\n      state: body.state || null,\n      vertical: body.vertical || 'solar',\n      audience: body.audience || 'b2c',\n      company_id: body.company_id || null,\n      timestamp: body.timestamp || new Date().toISOString()\n    }\n  });\n}\n\nreturn signals;"
+      },
+      "id": "code-parse-signal",
+      "name": "Code - Parse Signal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT signals, intent_score, intent_level, last_signal_at, confidence FROM intent_signals WHERE session_id = $1 LIMIT 1",
+        "options": {}
+      },
+      "id": "postgres-get-history",
+      "name": "PostgreSQL - Get Session History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [650, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Calculate intent score with 7-day half-life decay\nconst items = $input.all();\nconst results = [];\n\n// Event weights\nconst EVENT_WEIGHTS = {\n  page_view: 1,\n  company_profile_view: 3,\n  review_read: 2,\n  roi_expand: 8,\n  compare_view: 10,\n  cta_click: 5,\n  banner_click: 3,\n  wizard_start: 12,\n  wizard_complete: 25,\n  whatsapp_click: 30,\n  review_submit: 5\n};\n\nconst HALF_LIFE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days\nconst now = Date.now();\n\nfor (const item of items) {\n  const signal = item.json;\n  const sessionHistory = item.json._history || [];\n  \n  // Build signals map\n  const signalsMap = {};\n  \n  // Add existing signals from history\n  if (sessionHistory.length > 0 && sessionHistory[0].signals) {\n    const existing = sessionHistory[0].signals;\n    Object.assign(signalsMap, existing);\n  }\n  \n  // Add new signal\n  const eventName = signal.event_name;\n  signalsMap[eventName] = (signalsMap[eventName] || 0) + 1;\n  \n  // Calculate weighted score with decay\n  let totalScore = 0;\n  const lastSignalAt = sessionHistory.length > 0 ? new Date(sessionHistory[0].last_signal_at).getTime() : now;\n  const daysSinceLast = (now - lastSignalAt) / (1000 * 60 * 60 * 24);\n  \n  for (const [event, count] of Object.entries(signalsMap)) {\n    const weight = EVENT_WEIGHTS[event] || 1;\n    // Apply decay based on how old the signal cluster is\n    const decay = Math.pow(0.5, daysSinceLast / 7);\n    totalScore += weight * count * decay;\n  }\n  \n  // Add weight for the new event itself (no decay)\n  const newEventWeight = EVENT_WEIGHTS[eventName] || 1;\n  totalScore += newEventWeight;\n  \n  // Clamp to 0-100\n  totalScore = Math.min(100, Math.max(0, totalScore));\n  \n  // Classify intent level\n  let intentLevel;\n  if (totalScore >= 80) intentLevel = 'declared';\n  else if (totalScore >= 50) intentLevel = 'immediate';\n  else if (totalScore >= 30) intentLevel = 'boiling';\n  else if (totalScore >= 15) intentLevel = 'hot';\n  else if (totalScore >= 5) intentLevel = 'warm';\n  else intentLevel = 'cold';\n  \n  // Calculate confidence based on signal count\n  const signalCount = Object.values(signalsMap).reduce((a, b) => a + b, 0);\n  const confidence = Math.min(0.95, 0.3 + (signalCount * 0.05));\n  \n  results.push({\n    json: {\n      session_id: signal.session_id,\n      user_id: signal.user_id,\n      city: signal.city,\n      state: signal.state,\n      vertical: signal.vertical,\n      audience: signal.audience,\n      company_id: signal.company_id,\n      signals: signalsMap,\n      intent_score: Math.round(totalScore * 100) / 100,\n      intent_level: intentLevel,\n      confidence: Math.round(confidence * 100) / 100,\n      last_signal_at: new Date().toISOString(),\n      previous_level: sessionHistory.length > 0 ? sessionHistory[0].intent_level : null,\n      level_changed: sessionHistory.length > 0 && sessionHistory[0].intent_level !== intentLevel,\n      created_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "code-calculate-score",
+      "name": "Code - Calculate Intent Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO intent_signals (session_id, user_id, city, state, vertical, audience, signals, intent_score, intent_level, confidence, last_signal_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (session_id) DO UPDATE SET signals = EXCLUDED.signals, intent_score = EXCLUDED.intent_score, intent_level = EXCLUDED.intent_level, confidence = EXCLUDED.confidence, last_signal_at = EXCLUDED.last_signal_at, updated_at = NOW()",
+        "options": {}
+      },
+      "id": "postgres-upsert",
+      "name": "PostgreSQL - Upsert Intent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1050, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "high-intent",
+              "leftValue": "={{ $json.intent_score }}",
+              "rightValue": 30,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-high-intent",
+      "name": "IF - High Intent (>=30)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $env.WF_025_ID || '' }}",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "trigger-demand-notifier",
+      "name": "Execute Workflow - WF-025 Demand Notifier",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "level-changed",
+              "leftValue": "={{ $json.level_changed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-level-changed",
+      "name": "IF - Level Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO intent_score_histories (session_id, previous_level, new_level, previous_score, new_score, trigger_event, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        "options": {}
+      },
+      "id": "postgres-log-history",
+      "name": "PostgreSQL - Log History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1450, 500],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"intent_level\": $json.intent_level, \"intent_score\": $json.intent_score, \"session\": $json.session_id} }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Intent Signal": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Signal": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Get Session History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Get Session History": {
+      "main": [
+        [
+          {
+            "node": "Code - Calculate Intent Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Calculate Intent Score": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Upsert Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Upsert Intent": {
+      "main": [
+        [
+          {
+            "node": "IF - High Intent (>=30)?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF - Level Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - High Intent (>=30)?": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow - WF-025 Demand Notifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Level Changed?": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Log History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Log History": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "executionTimeout": 60
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "intelligence-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "2",
+      "name": "webhook"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}

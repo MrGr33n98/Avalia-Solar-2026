@@ -1,0 +1,218 @@
+{
+  "name": "WF-030: WhatsApp Distributor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-send",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Send WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "whatsapp-distributor"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Parse and personalize WhatsApp message\nconst items = $input.all();\nconst messages = [];\n\nfor (const item of items) {\n  const body = item.json.body || item.json;\n  \n  // Message templates by type\n  const templates = {\n    installer_notification: (data) => `\n🔔 *Novo Lead Qualificado - AvaliaSolar*\n\n👤 *Nome:* ${data.lead_name}\n📧 *Email:* ${data.lead_email}\n📱 *Telefone:* ${data.lead_phone}\n🏙️ *Cidade:* ${data.city}, ${data.state}\n☀️ *Vertical:* ${data.vertical}\n💰 *Conta de luz:* R$ ${data.energy_bill || 'N/A'}\n📊 *Intent Score:* ${data.intent_score || 0}\n🏷️ *Intent Level:* ${data.intent_level || 'cold'}\n\n🔗 *Perfil do lead:* ${data.lead_url || 'N/A'}\n\n_Responda este lead em até ${data.sla_window || '4 horas'}_`.trim(),\n\n    lead_welcome: (data) => `\nOlá ${data.lead_first_name || 'tudo bem'}! 👋\n\nVi que você calculou sua economia solar em ${data.city || 'sua cidade'}.\n\nPosso te ajudar a encontrar as melhores empresas verificadas na sua região?\n\nÉ rápido e sem compromisso: https://www.avaliasolar.com.br?utm_source=whatsapp&utm_medium=welcome`.trim(),\n\n    follow_up: (data) => `\nOlá ${data.lead_first_name || 'tudo bem'}!\n\nVi que você começou a calcular sua economia solar mas não finalizou.\n\nPosso te ajudar? Me diz qual sua dúvida que eu te mostro o caminho: https://www.avaliasolar.com.br?utm_source=whatsapp&utm_medium=followup`.trim(),\n\n    reactivation: (data) => `\nOlá ${data.lead_first_name || 'tudo bem'}!\n\nFaz um tempinho que você visitou o AvaliaSolar. Temos novidades para ${data.city || 'sua cidade'}:\n\n✅ Novas empresas verificadas\n✅ Trust Scores atualizados\n✅ Reviews recentes de clientes reais\n\nQuer dar uma olhada? https://www.avaliasolar.com.br?utm_source=whatsapp&utm_medium=reactivation`.trim(),\n\n    proposal_sent: (data) => `\nOlá ${data.lead_first_name || 'tudo bem'}!\n\nSua proposta solar está pronta! 🎉\n\n${data.proposal_summary || ''}\n\nQuer conversar sobre os detalhes? Estou à disposição!`.trim()\n  };\n  \n  const messageType = body.message_type || 'installer_notification';\n  const template = templates[messageType] || templates.lead_welcome;\n  const messageText = template(body);\n  \n  messages.push({\n    json: {\n      phone: body.phone || body.lead_phone || body.installer_phone,\n      message: messageText,\n      message_type: messageType,\n      lead_id: body.lead_id || body.avails_id,\n      company_id: body.company_id,\n      session_id: body.session_id,\n      sent_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn messages;"
+      },
+      "id": "code-personalize",
+      "name": "Code - Personalize Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "sendQuery": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"number\":\"{{ $json.phone }}\",\"message\":\"{{ $json.message }}\",\"type\":\"text\"}",
+        "options": {}
+      },
+      "id": "http-evolution-api",
+      "name": "HTTP - Evolution API Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 200],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "1",
+          "name": "Evolution API Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Log WhatsApp message to database\nconst items = $input.all();\nconst logs = [];\n\nfor (const item of items) {\n  const msg = item.json;\n  \n  logs.push({\n    json: {\n      lead_id: msg.lead_id,\n      company_id: msg.company_id,\n      direction: 'outbound',\n      message_type: msg.message_type,\n      phone: msg.phone,\n      message_preview: (msg.message || '').substring(0, 200),\n      status: item.json.response ? 'sent' : 'failed',\n      evolution_response: item.json.response ? JSON.stringify(item.json.response).substring(0, 1000) : null,\n      created_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn logs;"
+      },
+      "id": "code-format-log",
+      "name": "Code - Format Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO whatsapp_messages (lead_id, company_id, direction, message_type, phone, message_preview, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        "options": {}
+      },
+      "id": "postgres-log-message",
+      "name": "PostgreSQL - Log Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1050, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"set\",\"params\":{\"entity\":{\"_type\":\"Contact\",\"id\":{{ $json.lead_nutshell_id || 'null' }},\"customFields\":[{\"name\":\"whatsapp_sent\",\"value\":true},{\"name\":\"last_activity_type\",\"value\":\"whatsapp_{{ $json.message_type }}\"},{\"name\":\"last_activity_date\",\"value\":\"{{ $now.toISOString() }}\"}]},\"id\":1}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-update-activity",
+      "name": "HTTP - Nutshell Update Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 200],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"phone\": $json.phone, \"message_type\": $json.message_type, \"sent_at\": new Date().toISOString()} }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Code - Personalize Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Personalize Message": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Evolution API Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Evolution API Send": {
+      "main": [
+        [
+          {
+            "node": "Code - Format Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Format Log": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Log Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Log Message": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Nutshell Update Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Nutshell Update Activity": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "executionTimeout": 60
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "demand-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "2",
+      "name": "webhook"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "3",
+      "name": "whatsapp"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}

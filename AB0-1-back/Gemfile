@@ -28,6 +28,9 @@ gem 'jbuilder'
 # TASK-021: Pagination
 gem 'kaminari'
 
+# PostHog analytics (product analytics + session replay + feature flags)
+gem 'posthog-ruby', '~> 2.0.0'
+
 # TASK-008: Structured logging
 gem 'amazing_print' # Better console output
 gem 'lograge'

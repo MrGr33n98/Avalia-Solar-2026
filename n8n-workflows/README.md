@@ -20,14 +20,15 @@
 | WF-014 | Churn Prevention System | 🔄 Template | WF-014-churn-prevention.json | Alta |
 | WF-015 | CRM ↔ Slack Sync | 🔄 Template | WF-015-crm-slack-sync.json | Alta |
 | WF-016 | Multi-Platform Lead Aggregator | 🔄 Template | WF-016-lead-aggregator.json | Alta |
+| WF-017 | Growth Command Center Solar + EV | ✅ Criado | WF-017-growth-command-center-solar-ev.json | Média |
 
 ## 📊 Estatísticas
 
-- **Total de Workflows**: 16
-- **Criados (JSON completo)**: 5
+- **Total de Workflows**: 17
+- **Criados (JSON completo)**: 6
 - **Templates (estrutura)**: 11
 - **Complexidade Baixa**: 2
-- **Complexidade Média**: 7
+- **Complexidade Média**: 8
 - **Complexidade Alta**: 7
 
 ## 🎯 Categorias
@@ -60,6 +61,9 @@
 - WF-015: CRM Sync 🔄
 - WF-016: Lead Aggregator 🔄
 
+### Growth Content & Social (1 workflow)
+- WF-017: Growth Command Center Solar + EV ✅
+
 ## 🚀 Quick Start
 
 ### Importar Workflows Criados
@@ -77,10 +81,11 @@ Import → Select File → Configure Credentials → Activate
 3. **WF-003** - Enrichment básico, adicionar API keys para full enrichment
 4. **WF-004** - Follow-up logic pronta, conectar ao seu CRM
 5. **WF-008** - Digest funcionando, conectar APIs reais
+6. **WF-017** - Growth Command Center pronto para briefs de solar e EV
 
 ## 📝 Próximos Passos
 
-1. Importar os 5 workflows criados
+1. Importar os 6 workflows criados
 2. Configurar credenciais (Slack, Google Sheets)
 3. Testar com dados mock
 4. Ajustar para sua realidade

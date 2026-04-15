@@ -1,0 +1,302 @@
+  {
+    "name": "WF-017: Growth Command Center Solar EV",
+    "nodes": [
+      {
+        "parameters": {
+          "updates": [
+            "message"
+          ],
+          "additionalFields": {}
+        },
+        "id": "telegram-trigger",
+        "name": "Telegram Trigger",
+        "type": "n8n-nodes-base.telegramTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -620,
+          260
+        ],
+        "webhookId": "growth-command-center-telegram"
+      },
+      {
+        "parameters": {
+          "jsCode": "const rawText = (((($json.message || {}).text) || '')).trim();\nconst lower = rawText.toLowerCase();\nconst lines = rawText.split(String.fromCharCode(10)).map((line) => line.trim()).filter(Boolean);\n\nconst kv = {};\nfor (const line of lines) {\n  const separator = line.includes(':') ? ':' : (line.includes('=') ? '=' : null);\n  if (!separator) continue;\n  const parts = line.split(separator);\n  const key = (parts.shift() || '').trim().toLowerCase();\n  const value = parts.join(separator).trim();\n  if (key && value) kv[key] = value;\n}\n\nfunction slug(value) {\n  return String(value || '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '');\n}\n\nfunction detectVertical(text) {\n  if (text.includes('solar + ev') || text.includes('solar+ev') || text.includes('hybrid')) return 'hybrid';\n  if (text.includes('wallbox') || text.includes('carregador') || text.includes('eletromobil') || text.includes('mobilidade eletr') || text.includes('veiculo eletr') || text.includes('recarga')) return 'ev';\n  return 'solar';\n}\n\nfunction detectAudience(text, vertical) {\n  if (text.includes('cfo') || text.includes('facility') || text.includes('gestor') || text.includes('diretor') || text.includes('empresa') || text.includes('frota') || text.includes('condominio') || text.includes('condomínio')) return 'b2b';\n  if (text.includes('casa') || text.includes('residencial') || text.includes('familia') || text.includes('proprietario') || text.includes('morador')) return 'b2c';\n  return vertical === 'ev' ? 'b2b' : 'b2c';\n}\n\nfunction detectCity(text) {\n  const cities = ['florianopolis', 'sao jose', 'palhoca', 'joinville', 'blumenau', 'itajai', 'balneario camboriu', 'chapeco', 'criciuma', 'jaragua do sul'];\n  const found = cities.find((city) => text.includes(city));\n  if (!found) return 'Florianopolis';\n  return found.split(' ').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');\n}\n\nfunction detectGoal(text) {\n  if (text.includes('parceria')) return 'partner_acquisition';\n  if (text.includes('awareness') || text.includes('alcance') || text.includes('autoridade')) return 'awareness';\n  if (text.includes('demo') || text.includes('diagnostico') || text.includes('orcamento') || text.includes('orçamento') || text.includes('lead')) return 'lead_gen';\n  return 'lead_gen';\n}\n\nfunction detectOffer(vertical, audience, goal) {\n  if (vertical === 'hybrid') return 'calculadora solar + ev';\n  if (vertical === 'ev' && audience === 'b2b') return 'auditoria de recarga para condominio/frota';\n  if (vertical === 'ev') return 'calculadora de wallbox residencial';\n  if (audience === 'b2b') return 'diagnostico de ranking e confianca local';\n  return goal === 'awareness' ? 'conteudo de prova social local' : 'calculadora de economia solar';\n}\n\nfunction detectChannels() {\n  const raw = kv.channels || kv.canais || 'linkedin,instagram,x,whatsapp';\n  return raw.split(',').map((item) => item.trim().toLowerCase()).filter(Boolean);\n}\n\nconst vertical = kv.vertical ? kv.vertical.toLowerCase() : detectVertical(lower);\nconst audience = (kv.audience || detectAudience(lower, vertical)).toLowerCase();\nconst city = kv.city || detectCity(lower);\nconst goal = (kv.goal || detectGoal(lower)).toLowerCase();\nconst channels = detectChannels();\nconst publishMode = (kv.publish || kv.mode || '').toLowerCase();\nconst publish_mode = publishMode === 'auto' || publishMode === 'publish' || lower.includes('#publish') ? 'auto' : 'draft';\nconst offer = kv.offer || detectOffer(vertical, audience, goal);\nconst categorySlug = vertical === 'hybrid' ? 'integracao-solar-ev' : (vertical === 'ev' ? (audience === 'b2b' ? 'carregadores-comerciais' : 'carregadores-residenciais') : (audience === 'b2b' ? 'energia-solar-comercial-industrial' : 'energia-solar-residencial'));\nconst baseUrl = 'https://www.avaliasolar.com.br';\nconst campaignSlug = slug([vertical, city, goal].join('-'));\nconst landingUrl = `${baseUrl}/categories/${categorySlug}?utm_source=telegram&utm_medium=growth_command&utm_campaign=${campaignSlug}&utm_content=${goal}`;\nconst publishLinkedIn = publish_mode === 'auto' && (channels.includes('linkedin') || channels.includes('all'));\nconst publishX = publish_mode === 'auto' && (channels.includes('x') || channels.includes('twitter') || channels.includes('all'));\n\nreturn [{\n  json: {\n    campaign_id: `GHC-${Date.now()}`,\n    raw_text: rawText,\n    vertical,\n    audience,\n    city,\n    goal,\n    offer,\n    category_slug: categorySlug,\n    landing_url: landingUrl,\n    channels,\n    publish_mode,\n    publish_linkedin: publishLinkedIn,\n    publish_x: publishX,\n    telegram_chat_id: (($json.message || {}).chat || {}).id || '',\n    telegram_sender: (($json.message || {}).from || {}).username || (($json.message || {}).from || {}).first_name || 'team',\n    created_at: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "parse-growth-brief",
+        "name": "Code - Parse Growth Brief",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -380,
+          260
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $json;\nconst nl = String.fromCharCode(10);\n\nconst hookByVertical = {\n  solar: data.audience === 'b2b'\n    ? `Empresa solar sem ranking vira commodity em ${data.city}.`\n    : `Conta de luz alta em ${data.city} nao precisa continuar igual mes que vem.`,\n  ev: data.audience === 'b2b'\n    ? `Recarga para condominio ou frota nao pode ser decidida no escuro.`\n    : `O wallbox certo muda o custo por km mais do que parece.`,\n  hybrid: `Solar + EV e a dupla que corta energia e combustivel ao mesmo tempo.`\n};\n\nconst hook = hookByVertical[data.vertical] || hookByVertical.solar;\nconst proofLine = data.audience === 'b2b'\n  ? 'ranking verificavel, trust score e prova social local'\n  : 'economia real, reviews reais e comparacao simples';\n\nconst ctaByGoal = {\n  lead_gen: `Quer que eu te envie o briefing e o link com UTM?`,\n  awareness: `Compartilhe com o time e salve para usar depois.`,\n  partner_acquisition: `Se voce quer parceria, responda com parceria.`\n};\n\nconst cta = ctaByGoal[data.goal] || ctaByGoal.lead_gen;\nconst hashtagByVertical = {\n  solar: '#EnergiaSolar #SolarBrasil #AvaliaSolar',\n  ev: '#MobilidadeEletrica #Wallbox #AvaliaSolar',\n  hybrid: '#EnergiaSolar #MobilidadeEletrica #AvaliaSolar'\n};\n\nconst hashtags = hashtagByVertical[data.vertical] || hashtagByVertical.solar;\nconst xPostBase = `${hook} ${data.city}. ${data.offer}. ${data.landing_url}`;\nconst xPost = xPostBase.length > 280 ? `${xPostBase.slice(0, 277)}...` : xPostBase;\n\nconst linkedinPost = [\n  hook,\n  '',\n  '3 sinais que sempre convertem melhor nesse mercado:',\n  `- confianca verificavel`,\n  `- prova local em ${data.city}`,\n  `- resposta rapida no WhatsApp`,\n  '',\n  `Oferta: ${data.offer}`,\n  `CTA: ${cta}`,\n  '',\n  data.landing_url,\n  hashtags\n].join(nl);\n\nconst instagramCaption = [\n  hook,\n  '',\n  `Por que isso importa em ${data.city}:`,\n  `- ${proofLine}`,\n  `- oferta: ${data.offer}`,\n  `- CTA: ${cta}`,\n  '',\n  data.landing_url,\n  hashtags\n].join(nl);\n\nconst whatsappCopy = [\n  hook,\n  `Oferta: ${data.offer}`,\n  `${data.landing_url}`,\n  `${cta}`\n].join(nl);\n\nconst slackSummary = [\n  '*Growth pack pronto*',\n  `- Campaign: ${data.campaign_id}`,\n  `- Vertical: ${data.vertical}`,\n  `- Audience: ${data.audience}`,\n  `- City: ${data.city}`,\n  `- Goal: ${data.goal}`,\n  `- Publish mode: ${data.publish_mode}`,\n  `- LinkedIn: ${data.publish_linkedin ? 'yes' : 'no'}`,\n  `- X: ${data.publish_x ? 'yes' : 'no'}`,\n  `- Landing: ${data.landing_url}`,\n  '',\n  'Drafts generated for LinkedIn, Instagram, X and WhatsApp.',\n  'Slack is the internal control tower; public publish is optional.'\n].join(nl);\n\nconst telegramConfirmation = [\n  `Growth pack ready: ${data.campaign_id}`,\n  `Vertical: ${data.vertical}`,\n  `City: ${data.city}`,\n  `Audience: ${data.audience}`,\n  `Goal: ${data.goal}`,\n  `Publish mode: ${data.publish_mode}`,\n  `Landing: ${data.landing_url}`,\n  '',\n  `LinkedIn publish: ${data.publish_linkedin ? 'enabled' : 'disabled'}`,\n  `X publish: ${data.publish_x ? 'enabled' : 'disabled'}`\n].join(nl);\n\nreturn [{\n  json: {\n    ...data,\n    hook,\n    proof_line: proofLine,\n    hashtags,\n    linkedin_post: linkedinPost,\n    x_post: xPost,\n    instagram_caption: instagramCaption,\n    whatsapp_copy: whatsappCopy,\n    slack_summary: slackSummary,\n    telegram_confirmation: telegramConfirmation,\n    publish_linkedin: data.publish_linkedin,\n    publish_x: data.publish_x\n  }\n}];"
+        },
+        "id": "build-content-pack",
+        "name": "Code - Build Content Pack",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -140,
+          260
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "publish-linkedin",
+                "leftValue": "={{ $json.publish_linkedin }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-publish-linkedin",
+        "name": "IF - Publish LinkedIn?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          120,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "publish-x",
+                "leftValue": "={{ $json.publish_x }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-publish-x",
+        "name": "IF - Publish X?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          120,
+          380
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "message",
+          "operation": "post",
+          "channel": "#growth-marketing",
+          "text": "={{ $json.slack_summary }}"
+        },
+        "id": "slack-share-draft",
+        "name": "Slack - Share Draft Pack",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.2,
+        "position": [
+          120,
+          260
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "your-growth-campaign-sheet-id",
+            "mode": "list",
+            "cachedResultName": "Growth Campaigns"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Campaigns",
+            "mode": "list",
+            "cachedResultName": "Campaigns"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "campaign_id": "={{ $json.campaign_id }}",
+              "created_at": "={{ $json.created_at }}",
+              "vertical": "={{ $json.vertical }}",
+              "audience": "={{ $json.audience }}",
+              "city": "={{ $json.city }}",
+              "goal": "={{ $json.goal }}",
+              "publish_mode": "={{ $json.publish_mode }}",
+              "publish_linkedin": "={{ $json.publish_linkedin }}",
+              "publish_x": "={{ $json.publish_x }}",
+              "landing_url": "={{ $json.landing_url }}",
+              "linkedin_post": "={{ $json.linkedin_post }}",
+              "x_post": "={{ $json.x_post }}",
+              "instagram_caption": "={{ $json.instagram_caption }}",
+              "whatsapp_copy": "={{ $json.whatsapp_copy }}"
+            }
+          },
+          "options": {}
+        },
+        "id": "google-sheets-log",
+        "name": "Google Sheets - Log Campaign",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.4,
+        "position": [
+          120,
+          540
+        ]
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $json.telegram_chat_id }}",
+          "text": "={{ $json.telegram_confirmation }}",
+          "additionalFields": {
+            "appendAttribution": false
+          }
+        },
+        "id": "telegram-confirmation",
+        "name": "Telegram - Confirmation",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          120,
+          720
+        ]
+      },
+      {
+        "parameters": {
+          "person": "={{ $env.LINKEDIN_PERSON_URN || '<YOUR_LINKEDIN_PERSON_URN>' }}",
+          "text": "={{ $json.linkedin_post }}",
+          "additionalFields": {}
+        },
+        "id": "linkedin-publish",
+        "name": "LinkedIn - Publish",
+        "type": "n8n-nodes-base.linkedIn",
+        "typeVersion": 1,
+        "position": [
+          360,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "text": "={{ $json.x_post }}",
+          "additionalFields": {}
+        },
+        "id": "x-publish",
+        "name": "X - Publish",
+        "type": "n8n-nodes-base.twitter",
+        "typeVersion": 2,
+        "position": [
+          360,
+          380
+        ]
+      }
+    ],
+    "connections": {
+      "Telegram Trigger": {
+        "main": [
+          [
+            {
+              "node": "Code - Parse Growth Brief",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - Parse Growth Brief": {
+        "main": [
+          [
+            {
+              "node": "Code - Build Content Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - Build Content Pack": {
+        "main": [
+          [
+            {
+              "node": "IF - Publish LinkedIn?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "IF - Publish X?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Slack - Share Draft Pack",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Google Sheets - Log Campaign",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Telegram - Confirmation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF - Publish LinkedIn?": {
+        "main": [
+          [
+            {
+              "node": "LinkedIn - Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF - Publish X?": {
+        "main": [
+          [
+            {
+              "node": "X - Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "active": false
+  }

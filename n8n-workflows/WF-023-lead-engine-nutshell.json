@@ -1,0 +1,385 @@
+{
+  "name": "WF-023: Lead Engine (Nutshell)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Lead Capture",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "lead-capture-nutshell"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Normalize and deduplicate lead\nconst items = $input.all();\nconst normalized = [];\n\nfor (const item of items) {\n  const body = item.json.body || item.json;\n  \n  // Normalize fields\n  const lead = {\n    first_name: '',\n    last_name: '',\n    email: '',\n    phone: '',\n    city: body.city || null,\n    state: body.state || null,\n    vertical: body.vertical || 'solar',\n    category: body.category || '',\n    energy_bill: body.energy_bill || body.bill_amount || null,\n    message: body.message || body.comments || body.notes || '',\n    utm_source: body.utm_source || null,\n    utm_medium: body.utm_medium || null,\n    utm_campaign: body.utm_campaign || null,\n    utm_content: body.utm_content || null,\n    source: body.source || body.utm_source || 'website',\n    avails_id: `AS-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,\n    created_at: new Date().toISOString()\n  };\n  \n  // Parse name\n  const fullName = body.name || body.full_name || '';\n  const nameParts = fullName.trim().split(' ');\n  lead.first_name = nameParts[0] || 'Contato';\n  lead.last_name = nameParts.slice(1).join(' ') || '';\n  \n  // Parse email\n  lead.email = (body.email || '').toLowerCase().trim();\n  \n  // Normalize phone to E.164\n  let phone = body.phone || body.phone_number || '';\n  phone = phone.replace(/[^\\d+]/g, '');\n  if (phone.startsWith('+')) {\n    lead.phone = phone;\n  } else if (phone.startsWith('55')) {\n    lead.phone = '+' + phone;\n  } else if (phone.startsWith('0')) {\n    lead.phone = '+55' + phone.substring(1);\n  } else if (phone.length >= 10) {\n    lead.phone = '+55' + phone;\n  }\n  \n  // Normalize energy bill\n  if (lead.energy_bill) {\n    lead.energy_bill = parseFloat(String(lead.energy_bill).replace(/[^\\d.]/g, '')) || null;\n  }\n  \n  normalized.push({ json: lead });\n}\n\nreturn normalized;"
+      },
+      "id": "code-normalize",
+      "name": "Code - Normalize Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM analytics_events WHERE user_session_id = $1 AND event_name = 'wizard_complete' LIMIT 1",
+        "options": {}
+      },
+      "id": "postgres-dedup-check",
+      "name": "PostgreSQL - Dedup Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [650, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "AvaliaSolar PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "not-duplicate",
+              "leftValue": "={{ $items().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-not-duplicate",
+      "name": "IF - Not Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"find\",\"params\":{\"entity\":\"Contact\",\"criteria\":{\"emails\":{\"email\":\"{{ $json.email }}\"}},\"limit\":1},\"id\":1}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-check-existing",
+      "name": "HTTP - Nutshell Check Existing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 100],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Check if contact already exists in Nutshell\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const lead = item.json;\n  const existing = item.json._existing || [];\n  const alreadyExists = existing.length > 0 && existing[0].totalResults > 0;\n  \n  results.push({\n    json: {\n      ...lead,\n      already_exists: alreadyExists,\n      existing_contact_id: alreadyExists ? existing[0]?.results?.[0]?.id : null\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "code-check-existing",
+      "name": "Code - Check Existing Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "not-existing",
+              "leftValue": "={{ $json.already_exists }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-already-exists",
+      "name": "IF - Already Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1450, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.nutshell.com/api/v1/json",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "",
+              "value": "={\"method\":\"new\",\"params\":{\"entity\":{\"_type\":\"Contact\",\"name\":{\"first\":\"{{ $('Code - Normalize Lead').first().json.first_name }}\",\"last\":\"{{ $('Code - Normalize Lead').first().json.last_name }}\"},\"emails\":[{\"email\":\"{{ $('Code - Normalize Lead').first().json.email }}\",\"_type\":\"Home\"}],\"phones\":[{\"phone\":\"{{ $('Code - Normalize Lead').first().json.phone }}\",\"_type\":\"Mobile\"}],\"customFields\":[{\"name\":\"avaliasolar_id\",\"value\":\"{{ $('Code - Normalize Lead').first().json.avails_id }}\"},{\"name\":\"city\",\"value\":\"{{ $('Code - Normalize Lead').first().json.city || 'N/A' }}\"},{\"name\":\"vertical\",\"value\":\"{{ $('Code - Normalize Lead').first().json.vertical }}\"},{\"name\":\"category\",\"value\":\"{{ $('Code - Normalize Lead').first().json.category }}\"},{\"name\":\"energy_bill\",\"value\":\"{{ $('Code - Normalize Lead').first().json.energy_bill || '' }}\"},{\"name\":\"intent_score\",\"value\":\"0\"},{\"name\":\"intent_level\",\"value\":\"cold\"},{\"name\":\"utm_source\",\"value\":\"{{ $('Code - Normalize Lead').first().json.utm_source || '' }}\"},{\"name\":\"utm_medium\",\"value\":\"{{ $('Code - Normalize Lead').first().json.utm_medium || '' }}\"},{\"name\":\"utm_campaign\",\"value\":\"{{ $('Code - Normalize Lead').first().json.utm_campaign || '' }}\"},{\"name\":\"whatsapp_sent\",\"value\":\"0\"},{\"name\":\"enriched\",\"value\":\"false\"}]},\"useDefaultTeam\":true},\"id\":1}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "nutshell-create",
+      "name": "HTTP - Nutshell Create Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 100],
+      "credentials": {
+        "basicAuth": {
+          "id": "1",
+          "name": "Nutshell CRM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "#growth-leads",
+        "text": "🎯 Novo Lead Capturado!\n\n👤 *{{ $json.first_name }} {{ $json.last_name }}*\n📧 {{ $json.email }}\n📱 {{ $json.phone }}\n🏙️ {{ $json.city }}, {{ $json.state }}\n☀️ Vertical: {{ $json.vertical }} | Categoria: {{ $json.category }}\n💰 Conta de luz: R$ {{ $json.energy_bill }}\n🆔 ID: {{ $json.avails_id }}\n\nUTM: {{ $json.utm_source }} / {{ $json.utm_campaign }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "id": "slack-notify",
+      "name": "Slack - Notify New Lead",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1650, 200],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1",
+          "name": "Slack OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $env.WF_031_ID || '' }}",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "trigger-intent-detector",
+      "name": "Execute Workflow - WF-031 (Initial Intent)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"lead_id\": $json.avails_id, \"message\": \"Lead capturado com sucesso!\", \"nutshell_id\": $json.nutshell_contact_id} }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Lead Capture": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalize Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalize Lead": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Dedup Check": {
+      "main": [
+        [
+          {
+            "node": "IF - Not Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Not Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Nutshell Check Existing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Nutshell Check Existing": {
+      "main": [
+        [
+          {
+            "node": "Code - Check Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Check Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "IF - Already Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Already Exists?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Nutshell Create Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Notify New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Nutshell Create Contact": {
+      "main": [
+        [
+          {
+            "node": "Slack - Notify New Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute Workflow - WF-031 (Initial Intent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Notify New Lead": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow - WF-031 (Initial Intent)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "executionTimeout": 120
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "1",
+      "name": "demand-engine"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "2",
+      "name": "webhook"
+    },
+    {
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z",
+      "id": "3",
+      "name": "nutshell"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-15T00:00:00.000Z",
+  "versionId": "1"
+}
