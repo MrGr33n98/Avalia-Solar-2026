@@ -131,22 +131,22 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
             </p>
             
             <div className="grid grid-cols-2 gap-3 mt-auto">
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-colors">
-                <div className="bg-blue-100 dark:bg-blue-500/20 p-2 rounded-lg text-blue-600 dark:text-blue-400">
-                  <Building2 size={16} />
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-lg text-blue-600 dark:text-blue-400">
+                  <Building2 size={10} />
                 </div>
                 <div>
-                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Empresas</p>
-                   <p className="font-black text-sm text-slate-950 dark:text-white">{displayData.companies_count}</p>
+                   <p className="text-[7px] uppercase tracking-[0.1em] text-muted-foreground font-bold">Empresas</p>
+                   <p className="font-black text-xs text-slate-950 dark:text-white leading-none">{displayData.companies_count}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-colors">
-                <div className="bg-emerald-100 dark:bg-emerald-500/20 p-2 rounded-lg text-emerald-600 dark:text-emerald-400">
-                  <Package size={16} />
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="bg-emerald-100 dark:bg-emerald-500/20 p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400">
+                  <Package size={10} />
                 </div>
                 <div>
-                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Produtos</p>
-                   <p className="font-black text-sm text-slate-950 dark:text-white">{displayData.products_count}</p>
+                   <p className="text-[7px] uppercase tracking-[0.1em] text-muted-foreground font-bold">Produtos</p>
+                   <p className="font-black text-xs text-slate-950 dark:text-white leading-none">{displayData.products_count}</p>
                 </div>
               </div>
             </div>
