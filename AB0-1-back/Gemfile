@@ -179,3 +179,6 @@ gem 'cpf_cnpj', '~> 1.0'
 # Payment Gateways (Trust as a Service)
 gem 'stripe', '~> 13.0'
 gem 'mercadopago-sdk', '~> 2.3'
+
+# HTTP Client for webhooks and API integrations
+gem 'httparty', '~> 0.22.0'

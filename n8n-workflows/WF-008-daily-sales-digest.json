@@ -66,11 +66,32 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
       "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID || '<YOUR_CHAT_ID>' }}",
+        "text": "={{ \"📊 *Resumo de Vendas* - \" + $json.date + \"\\n\\n🎯 *Novos Leads:* \" + $json.new_leads + \"\\n✅ *Deals Ganhos:* \" + $json.deals_won + \"\\n💰 *Receita:* R$ \" + $json.revenue + \"\\n📈 *Pipeline:* R$ \" + $json.pipeline_value + \"\\n🏆 *Win Rate:* \" + $json.win_rate + \"%\" }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-digest",
+      "name": "Telegram - Send Daily Digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [650, 450]
     }
   ],
   "connections": {
     "Schedule - Daily 9AM": {"main": [[{"node": "Code - Calculate Metrics", "type": "main", "index": 0}]]},
-    "Code - Calculate Metrics": {"main": [[{"node": "Slack - Send Daily Digest", "type": "main", "index": 0}]]}
+    "Code - Calculate Metrics": {
+      "main": [
+        [
+          {"node": "Slack - Send Daily Digest", "type": "main", "index": 0},
+          {"node": "Telegram - Send Daily Digest", "type": "main", "index": 0}
+        ]
+      ]
+    }
   },
   "tags": [{"id": "1", "name": "vendas"}, {"id": "6", "name": "reporting"}, {"id": "7", "name": "slack"}]
 }

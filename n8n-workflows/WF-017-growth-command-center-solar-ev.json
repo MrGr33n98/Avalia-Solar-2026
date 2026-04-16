@@ -199,6 +199,29 @@
         360,
         380
       ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID || '<YOUR_CHAT_ID>' }}",
+        "text": "={{ $json.slack_summary }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-share-draft",
+      "name": "Telegram - Share Draft Pack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        360,
+        260
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot API"
+        }
+      }
     }
   ],
   "connections": {
@@ -233,6 +256,11 @@
           },
           {
             "node": "Google Sheets - Log Campaign",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "telegram-share-draft",
             "type": "main",
             "index": 0
           }
