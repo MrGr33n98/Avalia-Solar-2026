@@ -1,4 +1,4 @@
-class CreateGrowthAnalyticsTables < ActiveRecord::Migration[7.1]
+class CreateGrowthAnalyticsTables < ActiveRecord::Migration[7.0]
   def change
     # ── analytics_events (from PostHog webhook) ──────────────────────
     create_table :analytics_events do |t|
