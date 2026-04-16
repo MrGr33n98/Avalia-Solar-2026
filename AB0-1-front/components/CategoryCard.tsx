@@ -60,7 +60,7 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Visual Header / Banner Section */}
-          <div className="relative aspect-[16/7] overflow-hidden group">
+          <div className="relative aspect-[21/9] overflow-hidden group">
              <Image
                 src={displayData.bannerUrl}
                 alt={displayData.title}
@@ -68,15 +68,15 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className={cn(
                   "object-cover transition-transform duration-700 ease-out",
-                  isHovered ? "scale-110 blur-[1px]" : "scale-100"
+                  isHovered ? "scale-105" : "scale-100"
                 )}
                 priority={index < 3}
              />
              
-             {/* Dynamic Gradient Overlay */}
+             {/* Dynamic Gradient Overlay - Subtler for depth only */}
              <div className={cn(
-               "absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent transition-opacity duration-500",
-               isHovered ? "opacity-70" : "opacity-80"
+               "absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent transition-opacity duration-500",
+               isHovered ? "opacity-40" : "opacity-30"
              )} />
 
              {/* Sweep Effect on Hover */}
@@ -108,19 +108,30 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
                  )}
                </AnimatePresence>
              </div>
-
-             {/* Content Title Overlay */}
-             <div className="absolute bottom-0 left-0 p-5 w-full">
-                <motion.h3 
-                  className="text-white text-xl font-black tracking-tight drop-shadow-md flex items-center gap-2"
-                  animate={isHovered ? { x: 5 } : { x: 0 }}
-                >
-                  {displayData.title}
-                </motion.h3>
-             </div>
           </div>
 
-          <CardContent className="p-5 flex-grow">
+          {/* New Floating Title Container - AS-EDS Clay Precision */}
+          <div className="relative -mt-8 px-5 z-20">
+            <motion.div 
+              className="bg-white dark:bg-slate-800 p-4 rounded-xl clay-card clay-precision shadow-xl border border-white/50 dark:border-slate-700/50 flex items-center justify-between gap-4"
+              animate={isHovered ? { y: -2, scale: 1.01 } : { y: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            >
+              <h3 className="text-slate-950 dark:text-white text-[1.1rem] font-black tracking-tight leading-tight flex-1">
+                {displayData.title}
+              </h3>
+              <div className="bg-primary/10 dark:bg-primary/20 p-2.5 rounded-lg text-primary flex-shrink-0">
+                <motion.div
+                  animate={isHovered ? { rotate: [0, 15, -15, 0] } : {}}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Sparkles size={18} />
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
+          <CardContent className="p-5 pt-6 flex-grow">
             <p className="text-muted-foreground text-sm line-clamp-2 mb-4 leading-relaxed font-medium">
               {displayData.description}
             </p>
