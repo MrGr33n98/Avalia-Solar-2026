@@ -15,9 +15,6 @@ class CompanyTrustScore < ApplicationRecord
   scope :low_trust, -> { where('score < 50') }
   scope :by_score, -> { order(score: :desc) }
 
-  # Store component breakdown as JSON
-  serialize :components, JSON
-
   def health_status
     case score
     when 0..40 then 'critical'
