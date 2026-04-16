@@ -659,7 +659,6 @@ DEPENDENCIES
   pg
   pg_search (~> 2.3)
   posthog-rails
-  posthog-ruby
   puma (~> 5.0)
   pundit
   rack-attack
