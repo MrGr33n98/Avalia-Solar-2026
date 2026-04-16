@@ -1,9 +1,15 @@
 # Script PowerShell para Import de Workflows n8n
 # Alternativa ao script Node.js
 
-$N8N_URL = "https://n8n.avaliasolar.com.br"
-$N8N_API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMzNkNGZiOC0xOTA5LTQ1NDItYTdlZS00Y2JmMTRhYWYxYTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjVjN2VkN2U4LWQxOGYtNDE4ZC1iYzk4LTU1ZTI0YWFhYWU2NCIsImlhdCI6MTc3MzExNDM2MX0.7p1c8y6QPO3U3MHUyKV2aGP491C9HgqcQgoKXzfNoCQ"
-$WORKFLOWS_DIR = $PSScriptRoot
+$N8N_URL = if ($env:N8N_URL) { $env:N8N_URL } else { "https://n8n.avaliasolar.com.br" }
+$N8N_API_TOKEN = if ($env:N8N_API_KEY) { $env:N8N_API_KEY } elseif ($env:N8N_API_TOKEN) { $env:N8N_API_TOKEN } else { "" }
+$WORKFLOWS_DIR = if ($env:WORKFLOWS_DIR) { $env:WORKFLOWS_DIR } else { $PSScriptRoot }
+
+if ([string]::IsNullOrWhiteSpace($N8N_API_TOKEN)) {
+    Write-Host "❌ Missing N8N_API_KEY or N8N_API_TOKEN environment variable." -ForegroundColor Red
+    Write-Host "   Example: `$env:N8N_URL='http://localhost:5678'; `$env:N8N_API_KEY='your_key'; .\import-workflows.ps1" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "🚀 ============================================" -ForegroundColor Green
 Write-Host "   IMPORT DE WORKFLOWS N8N" -ForegroundColor Green

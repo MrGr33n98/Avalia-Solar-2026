@@ -29,7 +29,7 @@ That means the best growth hacks are not generic "post more content" ideas. They
 | YouTube | Deep authority and search intent | explainers, cases, walkthroughs | landing page, quote, subscribe |
 | WhatsApp | Closing, follow-up, reactivation | prefilled short message, offer, reminder | talk now |
 | X | Sharp hooks, PR, contrarian takes | short takes, facts, local wins | click, share |
-| Telegram | Internal command center and campaign ops | brief, approval, draft distribution | approve, publish |
+| Slack | Internal command center and campaign ops | brief, approval, draft distribution | approve, publish |
 
 ## 30 growth hacks that fit this market
 
@@ -105,14 +105,14 @@ The n8n workflow lives in `n8n-workflows/WF-017-growth-command-center-solar-ev.j
 
 It does the following:
 
-- receives a Telegram brief
+- receives a webhook brief or manually triggered payload
 - parses the market, city, audience, goal, and channels
 - generates drafts for LinkedIn, Instagram, X, and WhatsApp
 - saves the campaign to Google Sheets
 - sends the pack to Slack for review
 - optionally publishes to LinkedIn and X when `publish: auto`
 
-### Telegram command syntax
+### Brief syntax for the webhook
 
 Example for solar:
 
@@ -138,7 +138,6 @@ publish: auto
 
 ### Required credentials
 
-- Telegram bot token
 - Slack OAuth credential
 - Google Sheets OAuth credential
 - LinkedIn credential
@@ -166,7 +165,7 @@ Use a sheet with these columns:
 ## Implementation order for today
 
 1. Import the workflow JSON into n8n.
-2. Connect Telegram, Slack, Google Sheets, LinkedIn, and X credentials.
+2. Connect Slack, Google Sheets, LinkedIn, and X credentials.
 3. Create the Slack channel `#growth-marketing`.
 4. Prepare the Google Sheet with the columns above.
 5. Run the workflow in `draft` mode with one test brief.

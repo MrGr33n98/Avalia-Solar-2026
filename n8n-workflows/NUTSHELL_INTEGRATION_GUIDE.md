@@ -10,11 +10,11 @@
 | ID | Arquivo | Status | Descrição |
 |----|---------|--------|-----------|
 | WF-026 | `WF-026-site-event-collector.json` | ✅ Pronto | GTM events → PostgreSQL |
-| WF-018 | `WF-018-news-collector.json` | ✅ Pronto | News APIs → AI classify → PostgreSQL |
+| WF-018 | `WF-018-news-collector.json` | ✅ Pronto | News APIs → AI classify → PostgreSQL → Slack alerts |
 | WF-031 | `WF-031-intent-detector.json` | ✅ Pronto | Eventos → intent score com decay → PostgreSQL |
 | WF-023 | `WF-023-lead-engine-nutshell.json` | ✅ Pronto | Webhook → Nutshell Create Contact + dedup |
-| WF-030 | `WF-030-whatsapp-distributor.json` | ✅ Pronto | Evolution API → WhatsApp + log |
-| WF-025 | `WF-025-demand-notifier.json` | ✅ Pronto | Intent high → Slack + WhatsApp |
+| WF-030 | `WF-030-whatsapp-distributor.json` | ✅ Pronto | Slack handoff queue + log |
+| WF-025 | `WF-025-demand-notifier.json` | ✅ Pronto | Intent high → Slack only (manual distribution) |
 | WF-008 | `WF-008-daily-sales-digest-nutshell.json` | ✅ Pronto | Nutshell queries → métricas reais → Slack |
 
 ---
@@ -55,25 +55,11 @@ API Key: sk-...
 Name no n8n: "OpenAI Account"
 ```
 
-### 5. Telegram Bot
-```
-Type: API Key
-Bot Token: 123456:ABC-DEF...
-Name no n8n: "Telegram Bot"
-```
-
-### 6. NewsAPI.org
+### 5. NewsAPI.org
 ```
 Type: API Key
 API Key: sua_key
 Name no n8n: "NewsAPI.org"
-```
-
-### 7. Evolution API (para WhatsApp)
-```
-Type: Basic Auth ou API Key
-URL: https://evolution.avaliasolar.com.br
-Name no n8n: "Evolution API Basic Auth"
 ```
 
 ---
@@ -96,9 +82,9 @@ Settings → Custom fields → Criar estes campos:
 | `utm_source` | Text | Contact | WF-023 |
 | `utm_medium` | Text | Contact | WF-023 |
 | `utm_campaign` | Text | Contact | WF-023 |
-| `last_activity_type` | Text | Contact | WF-004, WF-006, WF-030 |
+| `last_activity_type` | Text | Contact | WF-004, WF-006 |
 | `last_activity_date` | Date | Contact | WF-004, WF-006 |
-| `whatsapp_sent` | Checkbox | Contact | WF-030 |
+| `manual_distribution_requested` | Checkbox | Contact | WF-023, WF-008 |
 | `enriched` | Checkbox | Contact | WF-003 |
 | `enriched_at` | Date | Contact | WF-003 |
 
@@ -114,11 +100,7 @@ Settings → Custom fields → Criar estes campos:
 ```env
 # Workflow IDs (para Execute Workflow nodes)
 WF_025_ID=<id_do_workflow_demand_notifier>
-WF_030_ID=<id_do_workflow_whatsapp_distributor>
 WF_031_ID=<id_do_workflow_intent_detector>
-
-# Telegram
-TELEGRAM_GROWTH_ALERTS_CHAT_ID=<chat_id_do_grupo_alertas>
 
 # URLs
 AVALIASOLAR_BASE_URL=https://www.avaliasolar.com.br
@@ -233,7 +215,7 @@ CREATE TABLE whatsapp_messages (
   phone VARCHAR(30),
   message_preview TEXT,
   status VARCHAR(20),
-  evolution_response TEXT,
+  slack_response TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_whatsapp_messages_lead ON whatsapp_messages(lead_id);
@@ -299,14 +281,14 @@ CREATE INDEX idx_whatsapp_messages_status ON whatsapp_messages(status);
 1. **WF-026** (Site Event Collector) — base de tudo
 2. **WF-031** (Intent Detector) — depende de WF-026
 3. **WF-023** (Lead Engine) — cria leads no Nutshell
-4. **WF-030** (WhatsApp Distributor) — depende de Evolution API
-5. **WF-025** (Demand Notifier) — depende de WF-031 + WF-030
+4. **WF-025** (Demand Notifier) — Slack only, distribuição manual
+5. **WF-030** (Lead Handoff Queue) — opcional, Slack helper para distribuição manual
 6. **WF-018** (News Collector) — independente
 7. **WF-008** (Daily Digest) — depende de Nutshell
 
 Após importar cada um:
 1. Configurar credenciais
-2. Atualizar variáveis de ambiente (WF IDs)
+2. Atualizar variáveis de ambiente (WF IDs relevantes)
 3. Testar com trigger manual
 4. Ativar
 
@@ -328,12 +310,10 @@ Após importar cada um:
 4. Se intent_score >= 30:
    → WF-031 triggers WF-025
    → WF-025: Slack alert (#hot-leads or #growth-leads)
-   → WF-025: Se >= 50, triggers WF-030 (WhatsApp)
+   → WF-025: distribuição manual por você no CRM ou no pipeline
 
-5. WhatsApp enviado para installer/lead:
-   → WF-030: Evolution API send message
-   → WF-030: Log in whatsapp_messages table
-   → WF-030: Nutshell update activity
+5. Opcionalmente, se você quiser um endpoint separado para handoff manual:
+   → WF-030: Slack handoff queue + log
 
 6. Todo dia às 9am:
    → WF-008: Query Nutshell (new contacts, won/lost/open leads)

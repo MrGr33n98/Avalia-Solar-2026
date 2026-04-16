@@ -8,12 +8,12 @@
 3. **WF-003**: Lead Enrichment Automático ✅
 4. **WF-004**: Follow-Up Automático Inteligente ✅
 5. **WF-008**: Daily Sales Digest no Slack ✅
-6. **WF-017**: Growth Command Center Solar + EV ✅
+6. **WF-017**: Growth Command Center Solar + EV (Webhook + Slack) ✅
 
 #### WF-017: Growth Command Center Solar + EV
-**Trigger**: Telegram brief ou comando de campanha
-**Nodes**: Telegram Trigger → Parse Brief → Build Content Pack → Slack/Sheets/Telegram → LinkedIn/X opcional
-**Descrição**: Gera pacotes de campanha para solar e EV, salva no sheet e envia drafts para revisão interna.
+**Trigger**: Webhook brief ou payload manual
+**Nodes**: Webhook → Parse Brief → Build Content Pack → Slack/Sheets → LinkedIn/X opcional
+**Descrição**: Gera pacotes de campanha para solar e EV, salva no sheet e envia drafts para revisão interna via Slack.
 
 ### 📋 Workflows Restantes (Estrutura Simplificada)
 

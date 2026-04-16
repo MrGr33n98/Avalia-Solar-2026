@@ -44,19 +44,60 @@ A tentativa de import automático via API retornou erro **401 Unauthorized**. Is
    g. **Ative o workflow:**
       - Toggle "Active" no canto superior direito
 
-3. **Repita para os 8 workflows:**
-   - ✅ WF-001-lead-capture-multi-canal.json
-   - ✅ WF-002-lead-scoring-automatico.json
-   - ✅ WF-003-lead-enrichment.json
-   - ✅ WF-004-followup-automatico.json
-   - ✅ WF-006-deals-parados.json
-   - ✅ WF-008-daily-sales-digest.json
-   - ✅ WF-011-realtime-dashboard.json
-   - ✅ WF-014-churn-prevention.json
+3. **Repita para todos os arquivos `WF-*.json` do diretório atual**:
+   - WF-001-lead-capture-multi-canal.json
+   - WF-002-lead-scoring-automatico.json
+   - WF-003-lead-enrichment.json
+   - WF-004-followup-automatico.json
+   - WF-006-deals-parados.json
+   - WF-008-daily-sales-digest-nutshell.json
+   - WF-008-daily-sales-digest.json
+   - WF-011-realtime-dashboard.json
+   - WF-014-churn-prevention.json
+   - WF-017-growth-command-center-solar-ev.json
+   - WF-018-news-collector.json
+   - WF-023-lead-engine-nutshell.json
+   - WF-025-demand-notifier.json
+   - WF-026-posthog-event-collector.json
+   - WF-026-site-event-collector.json
+   - WF-030-whatsapp-distributor.json
+   - WF-031-intent-detector.json
 
 ---
 
-## ✅ Solução 2: Renovar Token e Tentar Novamente
+## ✅ Solução 2: Import via Terminal no Container n8n
+
+Como o `services/n8n/docker-compose.yml` já monta `/volume1/docker/n8n/files` em `/files`, você pode importar direto por terminal dentro do container usando o CLI oficial do n8n.
+
+### 1. Copiar os arquivos para a pasta montada
+
+No host/VM, copie os arquivos do diretório `n8n-workflows` para o volume do n8n:
+
+```bash
+cp ~/Avalia-Solar-2026/n8n-workflows/WF-*.json /volume1/docker/n8n/files/
+```
+
+### 2. Executar a importação pelo CLI do n8n
+
+```bash
+docker exec -u node -it n8n n8n import:workflow --separate --input=/files
+```
+
+Se quiser testar um arquivo específico, use:
+
+```bash
+docker exec -u node -it n8n n8n import:workflow --input=/files/WF-001-lead-capture-multi-canal.json
+```
+
+### 3. Observação importante
+
+Esse método não depende de `N8N_API_KEY`. Se você usar o script `import-workflows.js`, a credencial precisa ser uma **API Key real do n8n** em `Settings → API Keys`, e não um JWT de login.
+
+Se o JSON foi montado manualmente e não tiver `id` no nível raiz, injete um `id` único antes do import. O n8n CLI/export espera workflows com ID para gravar corretamente no banco.
+
+---
+
+## ✅ Solução 3: Renovar Token e Tentar Novamente
 
 ### 1. Gerar Novo Token API no n8n:
 
@@ -99,7 +140,7 @@ cd C:\Users\Bobi\Desktop\AB0-1-main\n8n-workflows
 
 ---
 
-## ✅ Solução 3: Import via cURL (Terminal)
+## ✅ Solução 4: Import via cURL (Terminal)
 
 Se preferir linha de comando:
 

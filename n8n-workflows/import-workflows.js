@@ -9,21 +9,31 @@
 
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const https = require('https');
 
 // Configurações
-const N8N_URL = 'https://n8n.avaliasolar.com.br';
-const N8N_API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMzNkNGZiOC0xOTA5LTQ1NDItYTdlZS00Y2JmMTRhYWYxYTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjVjN2VkN2U4LWQxOGYtNDE4ZC1iYzk4LTU1ZTI0YWFhYWU2NCIsImlhdCI6MTc3MzExNDM2MX0.7p1c8y6QPO3U3MHUyKV2aGP491C9HgqcQgoKXzfNoCQ';
-const WORKFLOWS_DIR = path.join(__dirname, '.');
+const N8N_URL = process.env.N8N_URL || 'https://n8n.avaliasolar.com.br';
+const N8N_API_TOKEN = process.env.N8N_API_KEY || process.env.N8N_API_TOKEN || '';
+const WORKFLOWS_DIR = process.env.WORKFLOWS_DIR || path.join(__dirname, '.');
+const N8N_BASE_URL = new URL(N8N_URL);
+const HTTP_CLIENT = N8N_BASE_URL.protocol === 'http:' ? http : https;
+
+if (!N8N_API_TOKEN) {
+    console.error('❌ Missing N8N_API_KEY or N8N_API_TOKEN environment variable.');
+    console.error('   Example: N8N_URL=http://localhost:5678 N8N_API_KEY=your_key node import-workflows.js');
+    process.exit(1);
+}
 
 // Função para fazer request à API do n8n
 function n8nRequest(endpoint, method, data) {
     return new Promise((resolve, reject) => {
-        const url = new URL(endpoint, N8N_URL);
+        const url = new URL(endpoint, N8N_BASE_URL);
+        const defaultPort = url.protocol === 'http:' ? 80 : 443;
         
         const options = {
             hostname: url.hostname,
-            port: url.port || 443,
+            port: url.port || defaultPort,
             path: url.pathname,
             method: method,
             headers: {
@@ -32,7 +42,7 @@ function n8nRequest(endpoint, method, data) {
             }
         };
 
-        const req = https.request(options, (res) => {
+        const req = HTTP_CLIENT.request(options, (res) => {
             let body = '';
             
             res.on('data', (chunk) => {
@@ -70,7 +80,22 @@ async function importWorkflow(filePath) {
 
     try {
         // Ler o arquivo JSON
-        const workflowData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        let workflowData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        const workflowId = workflowData.id || path.basename(filePath, '.json').toLowerCase();
+        
+        // Limpar dados que a API pública não aceita na criação/update
+        const cleanData = {
+            id: workflowId,
+            name: workflowData.name,
+            nodes: workflowData.nodes,
+            connections: workflowData.connections,
+            settings: workflowData.settings || {},
+            active: workflowData.active ?? false,
+            tags: workflowData.tags || [],
+            versionId: workflowData.versionId || '1'
+        };
+        
+        workflowData = cleanData;
         
         // Verificar se já existe
         console.log('  🔍 Verificando se workflow já existe...');

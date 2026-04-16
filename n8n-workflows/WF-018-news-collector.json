@@ -5,7 +5,10 @@
       "parameters": {
         "rule": {
           "interval": [
-            {"field": "cronExpression", "expression": "0 0,6,12,18 * * *"}
+            {
+              "field": "cronExpression",
+              "expression": "0 0,6,12,18 * * *"
+            }
           ]
         },
         "options": {}
@@ -14,7 +17,10 @@
       "name": "Schedule - 4x/day (0h,6h,12h,18h)",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [250, 300]
+      "position": [
+        250,
+        300
+      ]
     },
     {
       "parameters": {
@@ -24,10 +30,22 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {"name": "q", "value": "\"energia solar\" Brasil"},
-            {"name": "language", "value": "pt"},
-            {"name": "sortBy", "value": "publishedAt"},
-            {"name": "pageSize", "value": "15"}
+            {
+              "name": "q",
+              "value": "\"energia solar\" Brasil"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            },
+            {
+              "name": "pageSize",
+              "value": "15"
+            }
           ]
         },
         "options": {}
@@ -36,7 +54,10 @@
       "name": "HTTP - NewsAPI (Solar)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [450, 100],
+      "position": [
+        450,
+        100
+      ],
       "credentials": {
         "newsApi": {
           "id": "1",
@@ -52,10 +73,22 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {"name": "q", "value": "\"mobilidade elétrica\" OR \"veículo elétrico\" OR \"wallbox\" Brasil"},
-            {"name": "language", "value": "pt"},
-            {"name": "sortBy", "value": "publishedAt"},
-            {"name": "pageSize", "value": "10"}
+            {
+              "name": "q",
+              "value": "\"mobilidade elétrica\" OR \"veículo elétrico\" OR \"wallbox\" Brasil"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            },
+            {
+              "name": "pageSize",
+              "value": "10"
+            }
           ]
         },
         "options": {}
@@ -64,7 +97,10 @@
       "name": "HTTP - NewsAPI (EV)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [450, 300],
+      "position": [
+        450,
+        300
+      ],
       "credentials": {
         "newsApi": {
           "id": "1",
@@ -83,7 +119,10 @@
       "name": "HTTP - RSS ABSOLAR",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [450, 500]
+      "position": [
+        450,
+        500
+      ]
     },
     {
       "parameters": {
@@ -94,7 +133,10 @@
       "name": "Merge - All Sources",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [650, 300]
+      "position": [
+        650,
+        300
+      ]
     },
     {
       "parameters": {
@@ -105,7 +147,10 @@
       "name": "Code - Deduplicate News",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [850, 300]
+      "position": [
+        850,
+        300
+      ]
     },
     {
       "parameters": {
@@ -128,7 +173,10 @@
       "name": "OpenAI - Classify Article",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.4,
-      "position": [1050, 300],
+      "position": [
+        1050,
+        300
+      ],
       "credentials": {
         "openAiApi": {
           "id": "1",
@@ -145,7 +193,10 @@
       "name": "Code - Parse AI Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1250, 300]
+      "position": [
+        1250,
+        300
+      ]
     },
     {
       "parameters": {
@@ -174,7 +225,10 @@
       "name": "IF - Relevant (>0.6)?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1450, 300]
+      "position": [
+        1450,
+        300
+      ]
     },
     {
       "parameters": {
@@ -186,7 +240,10 @@
       "name": "PostgreSQL - Insert Article",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [1650, 200],
+      "position": [
+        1650,
+        200
+      ],
       "credentials": {
         "postgres": {
           "id": "1",
@@ -221,27 +278,30 @@
       "name": "IF - Critical Urgency?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1650, 400]
+      "position": [
+        1650,
+        400
+      ]
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_GROWTH_ALERTS_CHAT_ID }}",
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{ $env.SLACK_GROWTH_ALERTS_CHANNEL || '#growth-alerts' }}",
         "text": "🚨 NOTÍCIA CRÍTICA DETECTADA\n\n📰 {{ $json.title }}\n📊 Relevância: {{ $json.relevance_score }}\n🏷️ Categoria: {{ $json.category }}\n🎯 Vertical: {{ $json.vertical }}\n\n{{ $json.summary_pt }}\n\n🔗 {{ $json.url }}",
-        "additionalFields": {
-          "appendAttribution": false
+        "otherOptions": {
+          "includeLinkToWorkflow": true
         }
       },
-      "id": "telegram-alert",
-      "name": "Telegram - Critical Alert",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1850, 400],
-      "credentials": {
-        "telegramApi": {
-          "id": "1",
-          "name": "Telegram Bot"
-        }
-      }
+      "id": "slack-alert",
+      "name": "Slack - Critical Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1850,
+        400
+      ]
     },
     {
       "parameters": {
@@ -253,7 +313,10 @@
       "name": "PostgreSQL - Archive All",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [1650, 600],
+      "position": [
+        1650,
+        600
+      ],
       "credentials": {
         "postgres": {
           "id": "1",
@@ -263,23 +326,23 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_GROWTH_ALERTS_CHAT_ID }}",
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{ $env.SLACK_GROWTH_DIGEST_CHANNEL || '#growth-marketing' }}",
         "text": "📰 News Collector Summary\n\n⏰ {{ $now.format('HH:mm') }} - {{ new Date().toLocaleDateString('pt-BR') }}\n📊 Artigos processados: {{ $items().length }}\n✅ Artigos relevantes: {{ $json.total_relevant || 0 }}\n🚨 Alertas críticos: {{ $json.total_critical || 0 }}",
-        "additionalFields": {
-          "appendAttribution": false
+        "otherOptions": {
+          "includeLinkToWorkflow": true
         }
       },
-      "id": "telegram-summary",
-      "name": "Telegram - Run Summary",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1850, 200],
-      "credentials": {
-        "telegramApi": {
-          "id": "1",
-          "name": "Telegram Bot"
-        }
-      }
+      "id": "slack-summary",
+      "name": "Slack - Run Summary",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1850,
+        200
+      ]
     }
   ],
   "connections": {
@@ -408,7 +471,7 @@
             "index": 0
           },
           {
-            "node": "Telegram - Run Summary",
+            "node": "Slack - Run Summary",
             "type": "main",
             "index": 0
           }
@@ -419,7 +482,7 @@
       "main": [
         [
           {
-            "node": "Telegram - Critical Alert",
+            "node": "Slack - Critical Alert",
             "type": "main",
             "index": 0
           }
