@@ -35,12 +35,7 @@ module CompanyDashboard
     end
 
     def trust_components
-      return {} unless trust_record&.components
-
-      JSON.parse(trust_record.components)
-    rescue JSON::ParserError => e
-      Rails.logger.error("[ReputationService] Failed to parse trust components: #{e.message}")
-      {}
+      trust_record&.components || {}
     end
 
     def trust_record

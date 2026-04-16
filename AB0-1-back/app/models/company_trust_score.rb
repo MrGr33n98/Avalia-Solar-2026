@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class CompanyTrustScore < ApplicationRecord
-  self.table_name = 'company_trust_scores'
+  self.table_name = 'company_trust_score'
+  self.primary_key = 'company_id'
 
   belongs_to :company
 
