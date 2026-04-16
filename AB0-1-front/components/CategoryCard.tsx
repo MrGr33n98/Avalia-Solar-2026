@@ -53,8 +53,8 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
       >
         <Card
           className={cn(
-            "h-full overflow-hidden transition-all duration-300 flex flex-col clay-card hover:shadow-2xl border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 rounded-2xl bg-white dark:bg-slate-900",
-            isHovered && "ring-4 ring-primary/5"
+            "h-full overflow-hidden transition-all duration-300 flex flex-col clay-card hover:shadow-xl border-[0.5px] border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl bg-white dark:bg-slate-900",
+            isHovered && "ring-2 ring-primary/5 shadow-2xl"
           )}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -73,14 +73,14 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
                 priority={index < 3}
              />
              
-             {/* Dynamic Gradient Overlay - Subtler for depth only */}
+             {/* Dynamic Gradient Overlay - Extremely Subtle */}
              <div className={cn(
-               "absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent transition-opacity duration-500",
-               isHovered ? "opacity-40" : "opacity-30"
+               "absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent transition-opacity duration-500",
+               isHovered ? "opacity-30" : "opacity-20"
              )} />
 
              {/* Sweep Effect on Hover */}
-             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
 
              {/* Badges - Floating with Staggered Feel */}
              <div className="absolute top-4 right-4 flex flex-col gap-2 items-end z-10">
@@ -89,9 +89,9 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
                    <motion.div
                      initial={{ x: 20, opacity: 0 }}
                      animate={{ x: 0, opacity: 1 }}
-                     className="bg-primary text-white shadow-lg shadow-primary/20 px-3 py-1 rounded-full flex items-center gap-1.5"
+                     className="bg-primary/90 text-white shadow-md px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm"
                    >
-                     <span className="font-bold uppercase text-[9px] tracking-[0.15em]">Destaque</span>
+                     <span className="font-bold uppercase text-[8px] tracking-[0.2em]">Destaque</span>
                    </motion.div>
                  )}
                  {displayData.rating > 0 && (
@@ -99,28 +99,28 @@ export default function CategoryCard({ category, className = "", index = 0 }: Ca
                      initial={{ x: 20, opacity: 0 }}
                      animate={{ x: 0, opacity: 1 }}
                      transition={{ delay: 0.1 }}
-                     className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-full shadow-md flex items-center gap-1.5 border border-slate-200 dark:border-slate-800"
+                     className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1.5 border-[0.5px] border-slate-200/40 dark:border-slate-800/40"
                    >
-                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                     <span className="font-bold text-xs text-slate-950 dark:text-white">{displayData.rating}</span>
+                     <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                     <span className="font-bold text-[11px] text-slate-950 dark:text-white">{displayData.rating}</span>
                    </motion.div>
                  )}
                </AnimatePresence>
              </div>
           </div>
 
-          {/* New Floating Title Container - AS-EDS Clay Precision */}
-          <div className="relative -mt-8 px-5 z-20">
+          {/* New Floating Title Container - Hairline Style */}
+          <div className="relative -mt-6 px-5 z-20">
             <motion.div 
-              className="bg-white dark:bg-slate-800 p-4 rounded-xl clay-card clay-precision shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4"
+              className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl clay-card clay-precision shadow-lg border-[0.5px] border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-4"
               animate={isHovered ? { y: -2, scale: 1.01 } : { y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
-              <h3 className="text-slate-950 dark:text-white text-[1.15rem] font-medium tracking-tight leading-tight flex-1">
+              <h3 className="text-slate-950 dark:text-white text-[0.95rem] font-medium tracking-tight leading-tight flex-1">
                 {displayData.title}
               </h3>
-              <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-slate-400 flex-shrink-0 border border-slate-200 dark:border-slate-700">
-                  <ArrowRight size={14} className={cn("transition-transform duration-300", isHovered ? "translate-x-0.5" : "opacity-50")} />
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-lg text-slate-400 flex-shrink-0 border-[0.5px] border-slate-100 dark:border-slate-800">
+                  <ArrowRight size={12} className={cn("transition-transform duration-300", isHovered ? "translate-x-0.5" : "opacity-40")} />
               </div>
             </motion.div>
           </div>
