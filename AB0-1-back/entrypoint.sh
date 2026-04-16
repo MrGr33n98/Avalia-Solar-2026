@@ -34,14 +34,14 @@ echo "✅ Postgres disponível!"
 
 # Configurar ambiente Rails
 echo "🔧 Configurando ambiente Rails..."
-bundle exec rails db:environment:set RAILS_ENV=production || true
+bundle exec rails db:environment:set RAILS_ENV=production > /dev/null 2>&1 || true
 
 # Usar db:prepare que é idempotente e cuida de tudo:
 # - Cria o banco se não existir
 # - Carrega o schema se o banco estiver vazio
 # - Executa migrações pendentes se o banco já tiver schema
 echo "🔧 Preparando banco de dados (db:prepare)..."
-bundle exec rails db:prepare
+bundle exec rails db:prepare 2>&1 | tail -20
 
 # Tentar criar extensões necessárias (requer superuser, pode falhar mas o deploy continua)
 echo "🔧 Tentando criar extensões PostgreSQL..."

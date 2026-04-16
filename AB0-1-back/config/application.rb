@@ -77,10 +77,9 @@ module RailsBlogDemo
     config.assets.initialize_on_precompile = false
 
     # TASK-022: Autoload/eager_load lib for Zeitwerk (needed for custom middleware)
+    # Note: app/* dirs (services, etc.) are added automatically by Rails 7 — no explicit registration needed
     config.autoload_paths << Rails.root.join('lib')
     config.eager_load_paths << Rails.root.join('lib')
-    config.autoload_paths << Rails.root.join('app/services')
-    config.eager_load_paths << Rails.root.join('app/services')
 
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
