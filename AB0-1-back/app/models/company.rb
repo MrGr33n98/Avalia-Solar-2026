@@ -88,6 +88,7 @@ class Company < ApplicationRecord
   has_many :company_members, dependent: :destroy
   has_many :company_badges, dependent: :destroy
   has_many :badges, through: :company_badges
+  has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy
   has_many :gated_downloads, dependent: :destroy

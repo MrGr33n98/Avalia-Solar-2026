@@ -51,7 +51,12 @@ psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENS
 # === INÍCIO DA APLICAÇÃO ===
 
 echo "🔍 Verificando boot do Rails..."
-bundle exec rails runner "puts '✅ Rails boot check passed'" || { echo "❌ Rails boot falhou"; exit 1; }
+if ! bundle exec rails runner "puts '✅ Rails boot check passed'" > /tmp/rails_boot.log 2>&1; then
+  echo "❌ Rails boot falhou! Detalhes do erro:"
+  cat /tmp/rails_boot.log
+  exit 1
+fi
+cat /tmp/rails_boot.log
 
 echo "Starting Rails server..."
 exec "$@"

@@ -95,16 +95,23 @@ module TrustScore
     # Reviews component: min((reviews / max_reviews) * max_weight, max_weight)
     # Example: 50 reviews = min((50/100) * 10, 10) = 5 points
     def calculate_reviews_component
-      return 0 unless company.reviews_count.present? && company.reviews_count > 0
+      count = company.reviews.approved.count
+      return 0 if count.zero?
 
-      raw = (company.reviews_count.to_f / MAX_VALUES[:reviews]) * WEIGHTS[:reviews]
+      raw = (count.to_f / MAX_VALUES[:reviews]) * WEIGHTS[:reviews]
       [raw, WEIGHTS[:reviews]].min.round(1)
     end
 
     # Engagement component: based on profile views and CTA clicks
     # Using log scale for better distribution
     def calculate_engagement_component
-      engagement = company.profile_views_count.to_i + (company.cta_clicks_count.to_i * 2)
+      # For now, return 0 or fetch from a reliable source if available
+      # We'll use a safe check for the column to avoid boot errors
+      engagement = 0
+      if company.respond_to?(:profile_views_count)
+        engagement = company.profile_views_count.to_i + (company.respond_to?(:cta_clicks_count) ? company.cta_clicks_count.to_i * 2 : 0)
+      end
+      
       return 0 if engagement.zero?
 
       # Logarithmic scaling: log(1 + x) / log(1 + max) * weight
@@ -114,10 +121,10 @@ module TrustScore
 
     # Leads component: based on lead volume
     def calculate_leads_component
-      leads = company.leads_count.to_i
-      return 0 if leads.zero?
+      count = company.leads.count
+      return 0 if count.zero?
 
-      raw = (leads.to_f / MAX_VALUES[:leads]) * WEIGHTS[:leads]
+      raw = (count.to_f / MAX_VALUES[:leads]) * WEIGHTS[:leads]
       [raw, WEIGHTS[:leads]].min.round(1)
     end
 
