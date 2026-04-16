@@ -8,7 +8,7 @@
 #   PosthogClient.identify(lead_id: 123, email: 'user@example.com', city: 'Florianópolis', vertical: 'solar')
 #   PosthogClient.capture_group(group_type: 'city', group_key: 'Florianópolis', properties: { state: 'SC' })
 
-require 'posthog-ruby'
+require 'posthog'
 
 class PosthogClient
   class << self

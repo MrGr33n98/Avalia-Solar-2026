@@ -216,6 +216,10 @@ GEM
     http-accept (1.7.0)
     http-cookie (1.1.0)
       domain_name (~> 0.5)
+    httparty (0.22.0)
+      csv
+      mini_mime (>= 1.0.0)
+      multi_xml (>= 0.5.2)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     image_processing (1.12.2)
@@ -641,6 +645,7 @@ DEPENDENCIES
   factory_bot_rails
   faker (~> 3.5)
   friendly_id (~> 5.5)
+  httparty (~> 0.22.0)
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
@@ -773,6 +778,7 @@ CHECKSUMS
   htmlentities (4.4.2) sha256=bbafbdf69f2eca9262be4efef7e43e6a1de54c95eb600f26984f71d2fe96c5c3
   http-accept (1.7.0) sha256=c626860682bfbb3b46462f8c39cd470fd7b0584f61b3cc9df5b2e9eb9972a126
   http-cookie (1.1.0) sha256=38a5e60d1527eebc396831b8c4b9455440509881219273a6c99943d29eadbb19
+  httparty (0.22.0) sha256=78652a5c9471cf0093d3b2083c2295c9c8f12b44c65112f1846af2b71430fa6c
   i18n (1.14.1) sha256=9d03698903547c060928e70a9bc8b6b87fda674453cda918fc7ab80235ae4a61
   image_processing (1.12.2) sha256=d3b9e9c5a1cc2607a5214cc28b90d317a03bdd06239584c97535dd73e46f62b8
   importmap-rails (1.2.1) sha256=197251346584835422e48ba479aa02b47be955d9204548ac0d3b3531cd90b3ea
