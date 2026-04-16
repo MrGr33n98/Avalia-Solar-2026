@@ -136,7 +136,7 @@ class CreateGrowthAnalyticsTables < ActiveRecord::Migration[7.0]
       t.datetime :last_updated_at
       t.datetime :created_at, null: false
 
-      t.index [:vertical, :audience, :template_key]
+      t.index [:vertical, :audience, :template_key], name: 'idx_content_tmpl_lookup'
     end
 
     # ── daily_growth_snapshots ───────────────────────────────────────
