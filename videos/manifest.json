@@ -1,0 +1,214 @@
+{
+  "project": {
+    "name": "Avalia Solar Video System",
+    "brand": "Avalia Solar",
+    "format": "9:16",
+    "fps": 30,
+    "width": 1080,
+    "height": 1920,
+    "defaultSceneDurationFrames": 90,
+    "theme": {
+      "primary": "#1D4ED8",
+      "secondary": "#22C55E",
+      "dark": "#0F172A",
+      "light": "#F8FAFC",
+      "text": "#0B1324"
+    }
+  },
+  "assets": {
+    "lp": "/public/lp.png",
+    "page": "/public/page.png",
+    "empresas": "/public/empresas.png",
+    "comparador_v1": "/public/comparador-v1.png",
+    "comparador": "/public/comparador.png",
+    "dashboard": "/public/dashboard.png",
+    "categorias_main": "/public/categorias-main.png",
+    "categories_grid": "/public/categories.png",
+    "categorias_menu": "/public/categorias.png",
+    "categoria_admin": "/public/escolha-as-categorias.png",
+    "company_admin": "/public/selecione-sua-empresa.png",
+    "logo": "/public/logo.png"
+  },
+  "compositions": [
+    {
+      "id": "ResidencialLeads",
+      "title": "Residencial | Compare antes de instalar",
+      "objective": "Gerar leads residenciais",
+      "cta": "Solicite seu orçamento gratuito",
+      "durationInFrames": 1860,
+      "fps": 30,
+      "width": 1080,
+      "height": 1920,
+      "scenes": [
+        {
+          "id": "res_01_hook",
+          "type": "text_only",
+          "durationInFrames": 75,
+          "offset": 0
+        },
+        {
+          "id": "res_02_homepage",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 75
+        },
+        {
+          "id": "res_03_listing",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 165
+        },
+        {
+          "id": "res_04_company_page",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 255
+        },
+        {
+          "id": "res_05_compare_intro",
+          "type": "screenshot",
+          "durationInFrames": 85,
+          "offset": 345
+        },
+        {
+          "id": "res_06_compare_full",
+          "type": "screenshot",
+          "durationInFrames": 95,
+          "offset": 430
+        },
+        {
+          "id": "res_07_cta",
+          "type": "brand_cta",
+          "durationInFrames": 75,
+          "offset": 525
+        }
+      ]
+    },
+    {
+      "id": "B2BEmpresas",
+      "title": "Empresas | Gere leads qualificados",
+      "objective": "Captar empresas para cadastro",
+      "cta": "Cadastre sua empresa",
+      "durationInFrames": 1750,
+      "fps": 30,
+      "width": 1080,
+      "height": 1920,
+      "scenes": [
+        {
+          "id": "b2b_01_market",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 0
+        },
+        {
+          "id": "b2b_02_categories_grid",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 90
+        },
+        {
+          "id": "b2b_03_listing_presence",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 180
+        },
+        {
+          "id": "b2b_04_dashboard",
+          "type": "screenshot",
+          "durationInFrames": 95,
+          "offset": 270
+        },
+        {
+          "id": "b2b_05_manage_categories",
+          "type": "screenshot",
+          "durationInFrames": 85,
+          "offset": 365
+        },
+        {
+          "id": "b2b_06_company_access",
+          "type": "screenshot",
+          "durationInFrames": 85,
+          "offset": 450
+        },
+        {
+          "id": "b2b_07_cta",
+          "type": "brand_cta",
+          "durationInFrames": 75,
+          "offset": 535
+        }
+      ]
+    },
+    {
+      "id": "ReviewsGeneration",
+      "title": "Reviews | Gere avaliações",
+      "objective": "Incentivar usuários a avaliar empresas",
+      "cta": "Avalie sua experiência",
+      "durationInFrames": 955,
+      "fps": 30,
+      "width": 1080,
+      "height": 1920,
+      "scenes": [
+        {
+          "id": "rev_01_question",
+          "type": "text_only",
+          "durationInFrames": 70,
+          "offset": 0
+        },
+        {
+          "id": "rev_02_company_page",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 70
+        },
+        {
+          "id": "rev_03_listing_impact",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 160
+        },
+        {
+          "id": "rev_04_cta",
+          "type": "brand_cta",
+          "durationInFrames": 75,
+          "offset": 250
+        }
+      ]
+    },
+    {
+      "id": "CategoriasDiscovery",
+      "title": "Categorias | Descoberta de soluções",
+      "objective": "Apresentar breadth do marketplace",
+      "cta": "Explore categorias",
+      "durationInFrames": 1515,
+      "fps": 30,
+      "width": 1080,
+      "height": 1920,
+      "scenes": [
+        {
+          "id": "cat_01_menu",
+          "type": "screenshot",
+          "durationInFrames": 80,
+          "offset": 0
+        },
+        {
+          "id": "cat_02_main_page",
+          "type": "screenshot",
+          "durationInFrames": 90,
+          "offset": 80
+        },
+        {
+          "id": "cat_03_full_grid",
+          "type": "screenshot",
+          "durationInFrames": 95,
+          "offset": 170
+        },
+        {
+          "id": "cat_04_cta",
+          "type": "brand_cta",
+          "durationInFrames": 70,
+          "offset": 265
+        }
+      ]
+    }
+  ]
+}

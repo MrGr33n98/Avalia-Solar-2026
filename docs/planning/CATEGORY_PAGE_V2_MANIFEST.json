@@ -1,0 +1,356 @@
+{
+  "project": "Category Page v2 - Dominante",
+  "status": "🟡 READY FOR DECISION",
+  "date": "2026-02-27T00:53:47Z",
+  "owner": "Technical Product Owner",
+  
+  "deliverables": {
+    "total_documents": 7,
+    "total_lines": 2400,
+    "total_stories": 18,
+    "total_effort_hours": 39.5,
+    "documents": {
+      "1_analysis": {
+        "name": "ANALISE_CRITICA_CATEGORIES.md",
+        "lines": 459,
+        "purpose": "Identify 13 problems + 12 recommendations",
+        "audience": "Everyone",
+        "time_to_read_min": 20,
+        "sections": 15,
+        "key_findings": [
+          "Componente duplo (CategoriesGrid morto)",
+          "Card pesado 240px (vs benchmark 160-200px)",
+          "Sem separação monetária (top/sponsored/organic)",
+          "Acessibilidade prejudicada (sem aria-labels)",
+          "CTAs confusos (botão Explorar redundante)",
+          "Mobile responsividade quebrada"
+        ]
+      },
+      "2_implementation_plan": {
+        "name": "CATEGORY_PAGE_V2_IMPLEMENTATION_PLAN.md",
+        "lines": 415,
+        "purpose": "Blueprint for implementation",
+        "audience": "Tech Lead + Architects",
+        "time_to_read_min": 30,
+        "sections": 12,
+        "components": 8,
+        "sprints": 2,
+        "key_components": [
+          "CategoryHero",
+          "DecisionChips",
+          "TopRankingSection",
+          "SponsoredSection",
+          "CompaniesToolbarSticky",
+          "CompanyCardV2",
+          "LeadCTA",
+          "LeadModalInternal"
+        ]
+      },
+      "3_stories": {
+        "name": "CATEGORY_PAGE_V2_STORIES.md",
+        "lines": 600,
+        "purpose": "Executable development stories",
+        "audience": "Development team + QA",
+        "total_stories": 18,
+        "sprint_1_stories": 8,
+        "sprint_1_hours": 14,
+        "sprint_2_stories": 10,
+        "sprint_2_hours": 21.5,
+        "each_story_includes": [
+          "Title + effort estimate",
+          "Context & why",
+          "Acceptance Criteria (testable)",
+          "Tasks decomposed",
+          "Definition of Done"
+        ]
+      },
+      "4_validation": {
+        "name": "STORY_VALIDATION_CHECKLIST.md",
+        "lines": 280,
+        "purpose": "Quality assurance for stories",
+        "audience": "PO + Tech Lead + QA",
+        "time_to_read_min": 15,
+        "includes": [
+          "Pre-dev validation template",
+          "CodeRabbit integration",
+          "Quality gates",
+          "Best practices",
+          "Rejection criteria",
+          "Acceptance criteria"
+        ]
+      },
+      "5_executive_summary": {
+        "name": "CATEGORY_PAGE_V2_EXECUTIVE_SUMMARY.md",
+        "lines": 260,
+        "purpose": "High-level overview for decision makers",
+        "audience": "PO + Leadership",
+        "time_to_read_min": 10,
+        "includes": [
+          "30-second vision",
+          "Problems vs objectives",
+          "Action items by role",
+          "ROI expectations",
+          "Timeline suggestion",
+          "Final checklist"
+        ]
+      },
+      "6_roadmap": {
+        "name": "CATEGORY_PAGE_V2_ROADMAP.md",
+        "lines": 350,
+        "purpose": "Decision framework + timeline",
+        "audience": "Everyone (especially PO)",
+        "time_to_read_min": 15,
+        "decision_options": [
+          "A: Quick-Win (2-3 days)",
+          "B: Redesign Completo (2 weeks)",
+          "C: Not doing this"
+        ],
+        "includes": [
+          "Detailed comparison",
+          "Timeline by option",
+          "When to choose each",
+          "Pro tips",
+          "Success metrics",
+          "Decision form"
+        ]
+      },
+      "7_index": {
+        "name": "CATEGORY_PAGE_V2_INDEX.md",
+        "lines": 400,
+        "purpose": "Navigation + quick reference",
+        "audience": "Everyone",
+        "includes": [
+          "Quick navigation by role",
+          "Document descriptions",
+          "Reading paths",
+          "Statistics",
+          "Search tips",
+          "Checklist"
+        ]
+      }
+    }
+  },
+
+  "problems_identified": {
+    "critical_p0": [
+      {
+        "id": 1,
+        "title": "Componente Duplo",
+        "description": "CategoriesGrid.tsx obsoleto, CategoryColumn.tsx morto",
+        "impact": "Manutenibilidade, bundle size, confusão"
+      },
+      {
+        "id": 2,
+        "title": "Card Pesado (240px)",
+        "description": "Altura excessiva, imagem 16:9 inadequada para logos",
+        "impact": "Reduz discovery -75%, CTR baixo"
+      },
+      {
+        "id": 3,
+        "title": "Sem Separação Monetária",
+        "description": "Top ranking, patrocinados e orgânico misturados",
+        "impact": "Impossível monetizar, spam perception"
+      },
+      {
+        "id": 4,
+        "title": "Acessibilidade Prejudicada",
+        "description": "Sem aria-labels, contraste baixo no overlay",
+        "impact": "WCAG AA falha, usuários cegos excluídos"
+      },
+      {
+        "id": 5,
+        "title": "CTAs Confusos",
+        "description": "Botão 'Explorar' redundante + card clicável",
+        "impact": "Confusão cognitiva, CTR penalizado"
+      }
+    ],
+    "secondary_p1": [
+      "Sidebar invisível mobile/tablet",
+      "Filtros sem UI (código ghost)",
+      "URLs duplicadas (SEO prejudicado)",
+      "Falta de dark mode",
+      "Prefetch não implementado",
+      "Grid quebra em tablet (md: falta)",
+      "Sidebar sem limite (scroll infinito)"
+    ]
+  },
+
+  "solution": {
+    "components_to_build": 8,
+    "code_cleanup_items": 4,
+    "sprint_1_focus": "Foundation + Integration",
+    "sprint_1_effort_h": 14,
+    "sprint_2_focus": "Polish + Monetization",
+    "sprint_2_effort_h": 21.5,
+    "total_development_effort_h": 39.5,
+    "team_size_estimated": 1,
+    "timeline_days": 10,
+    "timeline_weeks": 2,
+    "sprint_1_start": "2026-03-03",
+    "sprint_2_start": "2026-03-10",
+    "go_live_target": "2026-03-17"
+  },
+
+  "options": {
+    "quick_win": {
+      "label": "Option A: Quick-Win",
+      "duration_days": 3,
+      "effort_hours": 15,
+      "sprints": 1,
+      "scope": [
+        "Remove dead code",
+        "Card height 240→160px",
+        "Image 16:9→1:1",
+        "Remove 'Explorar' button",
+        "Fix basic accessibility"
+      ],
+      "excludes": [
+        "Decision chips",
+        "Top ranking",
+        "Sponsored section",
+        "Lead modal",
+        "Dark mode"
+      ],
+      "go_live": "1 week",
+      "roi": "Medium"
+    },
+    "redesign_complete": {
+      "label": "Option B: Redesign Completo",
+      "duration_days": 10,
+      "effort_hours": 39.5,
+      "sprints": 2,
+      "scope": [
+        "Everything from Option A",
+        "Decision Layer (chips)",
+        "Top Ranking section",
+        "Sponsored section",
+        "Lead modal internal",
+        "Monetization routing",
+        "Dark mode",
+        "Full analytics",
+        "E2E tests"
+      ],
+      "excludes": [],
+      "go_live": "2.5 weeks",
+      "roi": "High (dominante)"
+    }
+  },
+
+  "success_metrics": {
+    "cards_visible": {
+      "baseline": "2-3",
+      "target": "6-8",
+      "delta": "+200%"
+    },
+    "card_height": {
+      "baseline": "240px",
+      "target": "160px",
+      "delta": "-33%"
+    },
+    "lighthouse_score": {
+      "baseline": 85,
+      "target": 92,
+      "delta": "+7"
+    },
+    "wcag_compliance": {
+      "baseline": "AA",
+      "target": "AAA",
+      "delta": "+1 level"
+    },
+    "lead_modal_ctr": {
+      "baseline": "unknown",
+      "target": "3%+",
+      "delta": "new"
+    },
+    "bounce_rate": {
+      "baseline": "+5%",
+      "target": "-2%",
+      "delta": "-7%"
+    },
+    "time_on_page": {
+      "baseline": "45s",
+      "target": "60s+",
+      "delta": "+33%"
+    }
+  },
+
+  "next_steps": {
+    "today": [
+      "Read EXECUTIVE_SUMMARY.md (10 min)",
+      "Read ROADMAP.md (15 min)",
+      "Fill decision form"
+    ],
+    "by_monday": [
+      "Share decision with team",
+      "Schedule Sprint Planning"
+    ],
+    "sprint_planning": [
+      "Walkthrough stories",
+      "Estimate effort",
+      "Assign ownership",
+      "Setup branch + CI"
+    ],
+    "development": [
+      "Sprint 1: Foundation (8 stories, 14h)",
+      "Sprint 2: Polish (10 stories, 21.5h)",
+      "Daily standups",
+      "Code review with quality gates"
+    ],
+    "deployment": [
+      "QA validation",
+      "Performance audit",
+      "Deploy to staging",
+      "Monitor + celebrate"
+    ]
+  },
+
+  "timeline": {
+    "option_a": {
+      "start": "2026-03-03 (Monday)",
+      "sprint_planning": "1h",
+      "development": "2-3 days",
+      "go_live": "2026-03-10",
+      "weeks_to_live": 1
+    },
+    "option_b": {
+      "start": "2026-03-03 (Monday)",
+      "sprint_planning_s1": "2h (Monday)",
+      "sprint_1": "2026-03-04 to 2026-03-07",
+      "sprint_planning_s2": "2h (Monday Mar 10)",
+      "sprint_2": "2026-03-11 to 2026-03-14",
+      "qa_and_deploy": "2026-03-17 to 2026-03-21",
+      "go_live": "2026-03-21 (Friday)",
+      "weeks_to_live": 2.5
+    }
+  },
+
+  "files_location": {
+    "root": "C:\\Users\\Bobi\\Desktop\\AB0-1-main\\",
+    "analysis": "ANALISE_CRITICA_CATEGORIES.md",
+    "plan": "CATEGORY_PAGE_V2_IMPLEMENTATION_PLAN.md",
+    "stories": "CATEGORY_PAGE_V2_STORIES.md",
+    "validation": "STORY_VALIDATION_CHECKLIST.md",
+    "executive": "CATEGORY_PAGE_V2_EXECUTIVE_SUMMARY.md",
+    "roadmap": "CATEGORY_PAGE_V2_ROADMAP.md",
+    "index": "CATEGORY_PAGE_V2_INDEX.md"
+  },
+
+  "decision_required": {
+    "question": "Which option do you choose?",
+    "options": [
+      "A: Quick-Win (2-3 days)",
+      "B: Redesign Completo (2 weeks)",
+      "C: Not doing this"
+    ],
+    "who_decides": "Product Owner",
+    "deadline": "Today or latest by Monday morning",
+    "escalate_to": "Tech Lead if unclear"
+  },
+
+  "contact_info": {
+    "prepared_by": "Technical Product Owner (Copilot CLI)",
+    "status_emoji": "🟡 READY FOR DECISION",
+    "last_updated": "2026-02-27T00:53:47Z",
+    "next_action_by": "You (PO)"
+  }
+}

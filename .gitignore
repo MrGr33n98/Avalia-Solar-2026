@@ -1,6 +1,8 @@
-############################
-# Node / Next / Monorepo
-############################
+# ############################
+# Avalia Solar 2026 - .gitignore
+# ############################
+
+# Core Monorepo
 node_modules/
 .pnp/
 .pnp.js
@@ -9,22 +11,13 @@ coverage/
 out/
 build/
 dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 *.log
 .turbo/
-node_modules/.cache/
 
-############################
 # TypeScript
-############################
 *.tsbuildinfo
-# next-env.d.ts deve ser versionado
 
-############################
 # Environment / Secrets
-############################
 .env
 .env.local
 .env.*.local
@@ -34,11 +27,7 @@ node_modules/.cache/
 *.key
 *.pem
 
-.vercel
-
-############################
 # IDE / OS
-############################
 .idea/
 .vscode/
 *.swp
@@ -46,205 +35,59 @@ node_modules/.cache/
 .DS_Store
 Thumbs.db
 *.tmp
+*.cache
 
-############################
-# Frontend específicos
-############################
-/AB0-1-front/node_modules/
-/AB0-1-front/.env*
-/AB0-1-front/cypress/videos/
-/AB0-1-front/cypress/screenshots/
-/AB0-1-front/.nyc_output/
-
-############################
-# Rails (backend)
-############################
-/AB0-1-back/log/
-/AB0-1-back/tmp/
-/AB0-1-back/storage/
-/AB0-1-back/vendor/
-/AB0-1-back/.bundle/
-/AB0-1-back/.byebug_history
-/AB0-1-back/config/master.key
-/AB0-1-back/.env*
-/AB0-1-back/db/*.sqlite3
-/AB0-1-back/db/*.sqlite3-journal
-
-############################
 # AI tools / Local tooling
-############################
-.aios/
-.aios-core/
+.aios*
 .antigravity/
 .claude/
+.gemini/
+.qwen/
 .codex/
 .cursor/
-.gemini/
-.github/agents/
-.agents/
+.opencode*
+.spec-workflow/
+.interface-design/
+.playwright/
+.bolt/
 
-############################
-# Local docs / scratch
-############################
-/*.md
-!/README.md
-!/PROJECT.md
-!/CHANGELOG.md
-/*.ps1
-IMPLEMENTATION_SUMMARY.md
-CATEGORY_PAGE_V2_MANIFEST.json
-docs/qa/
-docs/*.md
-/AB0-1-back/docs/diagnostics/
-/AB0-1-back/docs/data/
-/AB0-1-front/docs/skills/
-Avalia Solar/
-*.csv
-
-# Planejamento de monetizacao/local task board (nao sobe para prod)
-tasks/
-docs/TASK_BOARD_PLANOS_E_MONETIZACAO.md
-docs/prd/PRD_PLANOS_E_FEATURE_GATING_V1.md
-docs/DIAGNOSTICO_PLANOS_MONETIZACAO_E_FEATURE_GATING_*.md
-docs/FIGMA_MCP_SETUP_GUIDE.md
-docs/stories/011.plan-feature-catalog-and-access-resolver.md
-docs/stories/012.activeadmin-plan-console.md
-docs/stories/013.dashboard-feature-access-control.md
-docs/stories/014.public-profile-plan-rendering.md
-docs/stories/015.pricing-page-and-upgrade-funnel.md
-
-############################
-# Local test artifacts
-############################
+# Test artifacts
 test-artifacts/
 playwright-report/
 test-results/
 test-sentinel/
 .playwright-cli/
-.cache/
 logs/
 *.webm
-comprehensive-test*.js
+screenshot.png
 error_*.png
-companies.png
-company_detail.png
-dashboard.png
-homepage.png
-login_modal.png
-register_modal.png
-/AB0-1-front/components/categories/LeadCTA.test.tsx
-/AB0-1-front/e2e/
-/AB0-1-front/.cache/
 
-############################
-# Nested local workspaces
-############################
-interface-design/
-
-############################
-# Optional: backups
-############################
+# Backups & Archive
+archive/
 backup_limpeza_*/
-
-# Dependencies (AIOS)
-node_modules
-
-# AIOS Local (AIOS)
-.aios-core/local/
-.claude/settings.local.json
-.aios/install-log.txt
-*.backup.*
-AGENTS.md.backup*
-FINAL-LEADS-FLORIANOPOLIS-HELIO.csv
-
-# Local analysis/prompts and temp assets
-ANALISE_TECNICA_DASHBOARDS_FINAL.md
-DEV_PROMPT_DASHBOARD_FIXES.md
+outputs/
 tmp/
-AB0-1-front/COMPARE_MVP_DELIVERABLES.md
-AB0-1-front/COMPARE_PAGE_MVP_IMPLEMENTATION.md
-AB0-1-front/app/compare/page.tsx.backup
-AB0-1-front/docs/UX_COMPARE_PAGE_REFACTOR.md
 
-# clay / auditorias locais (nao commitar)
-AUDITORIA_FINAL_INDEX.md
-AUDITORIA_GOVERNANCA_SEGURANCA_COMPLETA.md
-AUDITORIA_TRACKING_TAGS_COMPLETA.md
-CLAYMORPHISM_IMPLEMENTATION_GUIDE.md
-CLAYMORPHISM_QA_CHECKLIST.md
-CLAYMORPHISM_QUICK_REFERENCE.md
-docs/observability/
-docs/security/
-docs/validation/
+# ############################
+# Frontend (AB0-1-front)
+# ############################
+/AB0-1-front/node_modules/
+/AB0-1-front/.env*
+/AB0-1-front/.next/
+/AB0-1-front/out/
+/AB0-1-front/dist/
+/AB0-1-front/cypress/videos/
+/AB0-1-front/cypress/screenshots/
 
-CLAYMORPHISM_QA_VALIDATION_REPORT.md
-
-# Local secrets
-local-secrets/
-
-# MCP config files with tokens
-MCP_CONFIG.json
-opencode.json
-
-
-# P1 docs (local only)
-P1_*.md
-PR_AUDITORIA_P1_QUALITY_MONITORING.md
-DEVOPS_HANDOFF_TYPESCRIPT_FIXES.md
-
-.spec-workflow/templates/design-template.md
-.spec-workflow/templates/product-template.md
-.spec-workflow/templates/requirements-template.md
-.spec-workflow/templates/structure-template.md
-.spec-workflow/templates/tasks-template.md
-.spec-workflow/templates/tech-template.md
-docs/stories/007.integrate_real_performance_metrics.md
-docs/stories/008.secure_webhook_authentication.md
-.playwright/
-/videos/
-
-############################
-# Marketing & AI Assets (Local)
-############################
-# Ecosystem & Landing Visuals
-/AB0-1-front/ecosystem_preview.html
-/AB0-1-front/components/landing/EcosystemVisual.tsx
-
-# Generated Personas/Images
-/AB0-1-front/public/images/b2c-clientes-avalia-solar.png
-/AB0-1-front/public/images/casal-comparando.png
-/AB0-1-front/public/images/casal-persona.png
-/AB0-1-front/public/images/gestor-diretor-de-marketing.png
-/AB0-1-front/public/images/integrador-solar-v1.png
-/AB0-1-front/public/images/integrador-solar.png
-/AB0-1-front/public/images/logo_full_premium.png
-/AB0-1-front/public/images/logo_improved.svg
-/AB0-1-front/public/images/logo_new.png
-/AB0-1-front/public/images/persona-casal.png
-/AB0-1-front/public/images/persona-marketing.png
-
-# Local Tooling & Outputs
-/outputs/
-/scripts/
-/apresentacao_vendas.html
-/kit-avaliasolar.html
-/media_kit_portal.html
-/MEDIA_KIT_REDES_SOCIAIS.md
-/STORYTELLINGS.md
-/GA4_PRODUCTION_SETUP.md
-/GTM_STRATEGY.md
-/PLANO_DE_TRAFEGO.md
-/COPIES_AVALIASOLAR.md
-/BRAND_BOOK.md
-/ANALYTICS_DOSSIER.md
-/ACTIONABLE_BACKLOG.json
-/MCP_CONFIG.json
-/opencode.json
-/MCP_SETUP_GUIDE.md
-/N8N_MCP_SETUP_GUIDE.md
-/N8N_SALES_WORKFLOWS_COMPREHENSIVE.md
-/FINAL-LEADS-FLORIANOPOLIS-HELIO.csv
-/kit-avaliasolar.html
-/diag_leads.rb
-/gerar_tcc_pdf.py
-/test_ga4_prod.sh
+# ############################
+# Backend (AB0-1-back)
+# ############################
+/AB0-1-back/log/
+/AB0-1-back/tmp/
+/AB0-1-back/storage/
+/AB0-1-back/vendor/
+/AB0-1-back/.bundle/
+/AB0-1-back/config/master.key
+/AB0-1-back/.env*
+/AB0-1-back/db/*.sqlite3
+/AB0-1-back/db/*.sqlite3-journal

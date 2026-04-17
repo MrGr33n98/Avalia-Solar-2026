@@ -1,233 +1,80 @@
-## Noticed V2
-Hi, this is all about [Noticed v2](https://github.com/excid3/noticed) , a remarkable gem developed by [Chris Oliver](https://github.com/excid3)!
-This is Working Code! :tada: :rocket:
+# Avalia Solar 2026
 
-In case you’re not yet familiar, Noticed V2 is a remarkable gem developed by Chris Oliver. It simplifies the transmission of notifications of various types through different channels to diverse recipients within your application.
+Plataforma avançada para avaliação e consultoria de energia solar. Este repositório é estruturado como um monorepo profissional, integrando um ecossistema completo de backend, frontend e infraestrutura.
 
-You're more than welcome to visit my Web Pages: 
+## 🚀 Visão Geral e Arquitetura
 
- [Jungletronics](https://medium.com/jungletronics) (Arduino, RPi, PIC, Eagle, Blender, Unity3D, Pixy, and more) 
- [KidsTronics](https://medium.com/kidstronics) (MIT App Inventor, LEGO, Arduino For Kids, and more)
- 
+O projeto "Avalia Solar 2026" foi projetado para ser escalável e de fácil manutenção, separando as responsabilidades em serviços distintos:
 
-Here, the emphasy lies on:
-```
-Learning By Doing!
-``` 
-### Project Inventory Leading Up to Version 8 :ant:
+- **Backend (`AB0-1-back`)**: API robusta em **Ruby on Rails 7**. Utiliza PostgreSQL para persistência de dados e Redis/Sidekiq para processamento de tarefas em segundo plano.
+- **Frontend (`AB0-1-front`)**: Interface moderna em **Next.js 14** (React 18), focada em performance e experiência do usuário (UX), seguindo princípios **PWA-first**.
+- **Infraestrutura**: Orquestração completa via **Docker Compose** e pipelines de CI/CD automatizados para deploy na **DigitalOcean**.
 
-01# **[Quick Start](https://medium.com/jungletronics/a-rails-blog-in-vs-code-quick-start-5c3173191a64)** — **Part I** — Get started with a very simple rails 7 frame;
+---
 
-02# **[Styling](https://medium.com/jungletronics/a-rails-blog-in-vs-code-quick-start-ea2124ca2de0#85e2)** — **Part II** — Learn Bootstrap in a simply way;
+## 📂 Estrutura do Repositório
 
+A raiz foi organizada de forma limpa para facilitar o onboarding de novos desenvolvedores:
 
-03# **[Create Posts](https://medium.com/jungletronics/a-rails-blog-in-vs-code-create-posts-caf527a932e4)** — **Part III** — Learn how scaffold works; 
+- `AB0-1-back/`: Código fonte da API Rails.
+- `AB0-1-front/`: Código fonte do frontend Next.js.
+- `docs/`: Documentação técnica detalhada, guias de design e estratégias de marketing.
+- `infra/`: Arquivos de configuração de infraestrutura (Dockerfile, Nginx, etc.).
+- `scripts/`: Scripts utilitários para diagnóstico, automação e deploy.
+- `marketing/`: Ativos de marketing e páginas de destino HTML.
+- `archive/`: Arquivos legados e redundantes preservados por histórico.
 
-04# **[Posts Tips&Tricks](https://medium.com/jungletronics/a-rails-blog-in-vs-code-posts-tips-tricks-770402c76556)** — **Part IV** — Learn how make a custom migration;
+---
 
-05# **[Devise](https://medium.com/jungletronics/a-rails-blog-in-vs-code-devise-47532d9f5e0f)** — **Part V** — Learn how to use the Devise;
+## 🛠️ Onboarding: Primeiros Passos
 
-06# **[Add Comments to Post](https://medium.com/jungletronics/rails-blog-in-vs-code-post-comments-1df7ecf1edcb)**  — **Part VI** — Set up Action Text;
+### Pré-requisitos
+- Docker e Docker Compose instalados.
 
-07# **[Using Stimulus](https://medium.com/jungletronics/rails-blog-in-vs-code-using-stimulus-9d21f7a910f1)** — **Part VII** — Learn about Hotwire Turbo Family 
+### Rodando o Projeto Localmente
+A partir da raiz do repositório:
 
-08# **[Noticed V1](https://medium.com/jungletronics/rails-blog-in-vs-code-noticed-v1-78f67a002f27)**  — **Part VIII** — Learn Noticed v1- An alert system gem developed by [Chris Oliver](https://github.com/excid3);
+1. **Subir os containers:**
+   ```bash
+   docker compose up -d
+   ```
 
-09# **[Noticed V2](https://medium.com/jungletronics/rails-blog-in-vs-code-noticed-v2-7ab37f9d5cc4)** — **Part IX**
- — Get Noticed v2 running smoothly on our blog.
+2. **Preparar o Banco de Dados (Backend):**
+   ```bash
+   docker compose exec backend bundle exec rails db:migrate
+   ```
 
+3. **Acessar as Aplicações:**
+   - **Frontend:** [http://localhost:3000](http://localhost:3000)
+   - **Backend API:** [http://localhost:3001](http://localhost:3001)
 
-## Screenshots
+---
 
+## 📊 Regras de Negócio e Guidelines
 
-```
-You won't find a graphic like this anywhere on the internet
-```
-![Noticed v2](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*NaultE0FbjmWqCRhIOEo6w.png)
+### Orçamentos (Recurso Pago)
+- O fluxo de orçamentos e botões de contato só aparecem se a empresa tiver `active_admin = true` no banco de dados.
+- O gate de revisão bloqueia leads para empresas inativas.
 
-Download the [PNG](https://drive.google.com/file/d/1Wt21u-Kelk3PCVeSF9ckGIwkr2J5EL67/view)
-or [SVG](https://drive.google.com/file/d/1x8QgbI96EoeD-NxaGoE1fr-iZR5v1BHm/view?usp=drive_link) Images from my drive.
+### Mobile Development
+- A estratégia oficial é **PWA-first**.
+- Consulte `docs/architecture/MADR-001-mobile-platform.md` para decisões arquiteturais mobile.
+- **Safe-area**: Todos os elementos fixos devem respeitar as margens de segurança do dispositivo.
 
-```
-This graphic illustrates all the relationships within 
-the business and the Noticed v2 models. 
+---
 
-Here are some key points about the graphics I'd like to discuss:
+## 🚢 CI/CD & Deploy
 
-1. Business Tables Relationships:
+O deploy é automatizado via GitHub Actions na DigitalOcean.
+- **Workflow Principal:** `.github/workflows/deploy-v1.yml`.
+- **Ambientes:** Deploy automático para produção ao realizar push na branch `main`.
 
-Users have many posts, and each post belongs to one user.
-Posts have many comments, and each comment belongs to one post.
-Users also have many comments, and each comment belongs to one user.
+---
 
-2. The Noticed system:
+## 📖 Mais Documentação
+Para guias específicos de design (Claymorphism), auditorias técnicas ou manuais de segurança, explore a pasta [`docs/`](./docs/):
+- [Introdução à Documentação](./docs/00_LEIA-ME_PRIMEIRO.md)
+- [Guia de Safe-Area](./docs/guides/safe-area-guide.md)
 
-comprises two tables: noticed_notifications table: Which tracks recipients and whether they've seen or read notifications.
-noticed_events table: Stores events and comments about what happened, including the type of comments (e.g., bug notes, release notes, improvements notes).
-The polymorphic attribute is set to true, allowing a model to belong to multiple parent models. For instance, the Notification model can be associated
-with various entities like User, Post, Admin or Comment dynamically.
-
-3. Relationships and Glue Logic:
-
-In the noticed_events table, events belong to records, and in noticed_notifications, records belong to events, creating an augmented relationship.
-Recipients, defined in the Users table, are linked to notifications, serving as the glue logic for our business logic framework.
-
-4. Notification Handling:
-
-There are two types of notifications: one directly associated with users and another through delegations to posts.
-The Comments table has many 'notification_mentions', connecting to the Noticed library through 'has_noticed_notifications' linked with the Noticed::Event model.
-The Posts table also has many 'notification_mentions', linked through user delegation.
-
-5. MVC Architecture:
-
-The controller, represented by 'application_controller.rb', always sets notifications if the user is authenticated via 'Devise'.
-The view, represented by '_notifications.html.erb' file, presents the UI interface (a simple Bootstrap bell badge) and renders
-the system encapsulating the business logic.
-
-6. Olive's Framework:
-
-We should further investigate Olive's framework, though I currently lack specific details. Understanding how Olive's framework integrates
-with or enhances our existing system could offer valuable insights into our overall architecture and functionality.
-Let's explore how Olive's framework interacts with or enhances our current setup.
-
-That summarizes the key aspects of the observed graphics.
-
-If there's more you'd like to discuss about Olive's framework or any other aspect, feel free to share!
-```
-## Installation
-
-Clone my-project in linux terminal:
-
-```bash
-git clone -b rails_blog_v7 git@github.com:giljr/rails_blog_demo.git
-cd rails_blog_v7
-```
-Go To vscode:
-```bash
-code .
-```
-Here are Git Commands:
-```
-git checkout -b use_noticed_gem_2
-bundle add noticed -v 2.2
-bundle install
-rails noticed:install:migrations
-bundle install
-rails db:migrate
-rails g noticed:notifier CommentNotifier
-rails s
-rails c
-rails s
-rails db:drop
-rails db:migrate
-rails s
-git status
-git add -A
-git commit -m ":lipstick: Upload to Noticed v2"
-git push
-git push --set-upstream origin use_noticed_gem_2
-```
-Go To your GIT REPO and Merge the Request:
-```
-git checkout master
-git status
-git fetch
-git pull
-rails s
-```
-Run and hope for the best!
-## Run Locally
-
-
-#### Tutorial
-
-Rails Blog In VS Code - **Noticed V2 - 
-How To Create A Blog in VS Code** — [Part IX](https://medium.com/jungletronics/rails-blog-in-vs-code-noticed-v2-7ab37f9d5cc4
-)— Notifications for your Ruby on Rails app — RailsSeries#Episode 11
-
-
-## Acknowledgements
-
- - [Chris Oliver](https://github.com/excid3) Rails Luminary. Building GoRails.com, JumpstartRails.com, Hatchbox.io, and host of the Remote Ruby Podcast
-
-
-## Authors
-
- - [@giljr](https://www.linkedin.com/in/giljrx/)
-## Contributing
-
- - [@jeovan.farias](https://www.linkedin.com/in/jeovan-f-6283b8145/)
-
- - [@bruno.vichinheski](https://www.linkedin.com/in/brunovichinheski/)
- 
-
-
-Contributions are always welcome!
-
-See `contributing.md` for ways to get started.
-
-Please adhere to this project's `code of conduct`.
-
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
-
-# Repository Name Fix
-
-## CI/CD – Deploy na DigitalOcean
-
-- Workflow: `.github/workflows/digitalocean-deploy.yml` executa build, testes, deploy na DigitalOcean App Platform, validação de saúde, rollback automático e notificações.
-- Segredos necessários no repositório:
-  - `DIGITALOCEAN_ACCESS_TOKEN`
-  - `APP_ENV_VARS` (JSON com variáveis da aplicação)
-  - `SLACK_WEBHOOK_URL` (opcional para alertas)
-  - `SMTP_CREDENTIALS` (JSON `{user,pass,host,port,from,to}` para e-mail de falhas)
-- Disparo: automático em `push` e `pull_request` para `main`; deploy só em `push` para `main`. Disponível `workflow_dispatch` manual.
-- Troubleshooting básico:
-  - Falha em `doctl`: verifique `DIGITALOCEAN_ACCESS_TOKEN` e permissões; rode `doctl auth init` localmente para testar.
-  - Falha de validação: confira endpoints `APP_DOMAIN` e `API_DOMAIN`; logs com `doctl apps logs --app <APP_ID>`.
-  - Rollback: acionado automaticamente; pode ser manual via `doctl apps rollback`.
-- Configurações específicas DigitalOcean:
-  - App Platform constrói a partir do repositório em `main`; spec é gerada no job e injeta `APP_ENV_VARS` como envs.
-  - Ajuste `run_command` e `build_command` dos serviços conforme necessidade.
-
-## Dev Auth Flow (Docker)
-
-From repo root (Avalia-Solar-2026):
-
-```bash
-docker compose up -d backend frontend
-docker compose exec backend bundle exec rails db:migrate
-```
-
-Manual checks:
-- User signup: http://localhost:3000/signup
-- User login: http://localhost:3000/login
-- Company signup: http://localhost:3000/register
-- Review gate: open /companies/:id/review and confirm it sends return_to to login/signup
-
-API checks:
-- POST /api/v1/auth/signup
-- POST /api/v1/auth/login
-- GET /api/v1/auth/me
-
-## Regra de Negocio: Orcamentos (Recurso Pago)
-
-- Os botoes de Orcamento/WhatsApp so devem aparecer quando `companies.active_admin = true`.
-- O backend valida a regra: a API de leads bloqueia criacao de lead para empresas com `active_admin = false`.
-- Para habilitar, use o ActiveAdmin em Empresas e marque **Ativar orcamentos (recurso pago)**.
-
-## Mobile Development Guidelines
-
-- Fonte da verdade mobile: `docs/architecture/MADR-001-mobile-platform.md`
-- Estratégia oficial atual: `PWA-first` sobre `Next.js 14 + React 18`
-- Estado mobile:
-  - server state: `React Query`
-  - client/mobile UI state: `Zustand` (roadmap)
-  - offline layer planejada: `Workbox + IndexedDB`
-- Regras obrigatórias para UI mobile:
-  - sem dependência exclusiva de hover
-  - touch targets mínimos de `44px`/`48px`
-  - elementos `fixed`/`sticky` devem respeitar safe-area
-- Guia rápido de safe-area: `docs/guides/safe-area-guide.md`
+---
+*Para o histórico do tutorial original (Noticed v2), consulte [`docs/archive/blog_tutorial.md`](./docs/archive/blog_tutorial.md).*
