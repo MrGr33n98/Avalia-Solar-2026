@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
@@ -19,6 +19,8 @@ import {
 } from '@/lib/analytics/hooks/useIntentTracking';
 import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 
 type WizardCompany = {
   id: number;
@@ -55,12 +57,20 @@ const INITIAL_FORM: WizardFormState = {
   fullName: '', email: '', phone: '', consent: false, nickname: ''
 };
 
+type QuoteWizardOpenDetail = {
+  preferredCompanyId?: number;
+  source?: string;
+  categoryId?: number;
+};
+
 export default function QuoteWizardModal() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<WizardFormState>(INITIAL_FORM);
   const [leadId, setLeadId] = useState<number | null>(null);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
+  const [pendingOpen, setPendingOpen] = useState<QuoteWizardOpenDetail | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,17 +90,46 @@ export default function QuoteWizardModal() {
 
   const progressValue = useMemo(() => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)), [step]);
 
+  const resetWizard = useCallback(() => {
+    setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
+    setError(null); setSubmitting(false); setResendCooldown(0);
+    setCompanies([]); setVerificationHint('');
+    resetTracking();
+  }, [resetTracking]);
+
+  const handleOpenRequest = useCallback((detail: QuoteWizardOpenDetail) => {
+    if (authLoading) {
+      setPendingOpen(detail);
+      return;
+    }
+
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
+      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
+      openSignupGate({
+        source: 'quote_wizard',
+        returnTo: buildReturnTo(pathname, search),
+        title: 'Crie sua conta para continuar seu orçamento',
+        description: 'Desbloqueie o formulário de orçamento, salve sua solicitação e volte exatamente ao ponto em que estava.',
+      });
+      return;
+    }
+
+    setPendingOpen(null);
+    setPreferredCompanyId(detail.preferredCompanyId);
+    resetWizard();
+    setOpen(true);
+    trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
+  }, [authLoading, isAuthenticated, resetWizard]);
+
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail || {};
-      setPreferredCompanyId(detail.preferredCompanyId);
-      resetWizard();
-      setOpen(true);
-      trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
+      const detail = ((event as CustomEvent<QuoteWizardOpenDetail>).detail || {}) as QuoteWizardOpenDetail;
+      handleOpenRequest(detail);
     };
     window.addEventListener('open-quote-wizard', handler as EventListener);
     return () => window.removeEventListener('open-quote-wizard', handler as EventListener);
-  }, []);
+  }, [handleOpenRequest]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -98,12 +137,12 @@ export default function QuoteWizardModal() {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const resetWizard = () => {
-    setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
-    setError(null); setSubmitting(false); setResendCooldown(0);
-    setCompanies([]); setVerificationHint('');
-    resetTracking();
-  };
+  useEffect(() => {
+    if (authLoading || !pendingOpen) return;
+    const detail = pendingOpen;
+    setPendingOpen(null);
+    handleOpenRequest(detail);
+  }, [authLoading, handleOpenRequest, pendingOpen]);
 
   const handleResend = async () => {
     if (!leadId || resendCooldown > 0) return;

@@ -1,20 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { useAuth } from '@/contexts/AuthContext';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
+import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 import { Zap, ShieldCheck, Clock, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
 
+type QuickLeadOpenDetail = {
+  preferredCompanyId?: number;
+  source?: string;
+};
+
 export default function QuickLeadModal() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1); // 1: Form, 2: OTP, 3: Success
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
+  const [pendingOpen, setPendingOpen] = useState<QuickLeadOpenDetail | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<number | null>(null);
@@ -33,19 +42,60 @@ export default function QuickLeadModal() {
     nickname: '' // Honeypot
   });
 
+  const resetQuickLead = useCallback(() => {
+    setStep(1);
+    setPreferredCompanyId(undefined);
+    setSubmitting(false);
+    setError(null);
+    setLeadId(null);
+    setOtpCode('');
+    setResendCooldown(0);
+    setVerificationHint('');
+    setForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      zipcode: '',
+      city: '',
+      state: '',
+      consent: false,
+      nickname: '',
+    });
+  }, []);
+
+  const handleOpenRequest = useCallback((detail: QuickLeadOpenDetail) => {
+    if (authLoading) {
+      setPendingOpen(detail);
+      return;
+    }
+
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
+      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
+      openSignupGate({
+        source: 'quick_lead',
+        returnTo: buildReturnTo(pathname, search),
+        title: 'Crie sua conta para continuar sua solicitação',
+        description: 'Desbloqueie o pedido rápido, mantenha seus dados vinculados e siga sem perder o contexto.',
+      });
+      return;
+    }
+
+    setPendingOpen(null);
+    resetQuickLead();
+    setPreferredCompanyId(detail.preferredCompanyId);
+    setOpen(true);
+    track('Quick Lead Opened', { source: detail.source });
+  }, [authLoading, isAuthenticated, resetQuickLead]);
+
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail || {};
-      setPreferredCompanyId(detail.preferredCompanyId);
-      setOpen(true);
-      setStep(1);
-      setError(null);
-      setVerificationHint('');
-      track('Quick Lead Opened', { source: detail.source });
+      const detail = ((event as CustomEvent<QuickLeadOpenDetail>).detail || {}) as QuickLeadOpenDetail;
+      handleOpenRequest(detail);
     };
     window.addEventListener('open-quick-lead', handler as EventListener);
     return () => window.removeEventListener('open-quick-lead', handler as EventListener);
-  }, []);
+  }, [handleOpenRequest]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -54,6 +104,13 @@ export default function QuickLeadModal() {
     }, 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (authLoading || !pendingOpen) return;
+    const detail = pendingOpen;
+    setPendingOpen(null);
+    handleOpenRequest(detail);
+  }, [authLoading, handleOpenRequest, pendingOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

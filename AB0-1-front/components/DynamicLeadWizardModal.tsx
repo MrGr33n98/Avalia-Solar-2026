@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { LeadWizardEngine } from '@/src/modules/leadWizard/components/LeadWizardEngine';
 import { companiesApiSafe } from '@/lib/api-client';
 import { resolveWizardCategoryId } from '@/lib/lead-engine';
+import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 
 type LeadWizardEventDetail = {
   categoryId?: number;
@@ -21,38 +23,72 @@ type CategoryOption = {
 };
 
 export default function DynamicLeadWizardModal() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [isResolvingCategory, setIsResolvingCategory] = useState(false);
   const [categoryResolutionError, setCategoryResolutionError] = useState<string | null>(null);
+  const [pendingOpen, setPendingOpen] = useState<LeadWizardEventDetail | null>(null);
+
+  const resetWizardState = useCallback(() => {
+    setCategoryId(undefined);
+    setPreferredCompanyId(undefined);
+    setCategoryOptions([]);
+    setCategoryResolutionError(null);
+    setIsResolvingCategory(false);
+  }, []);
+
+  const handleOpenRequest = useCallback((detail: LeadWizardEventDetail) => {
+    if (authLoading) {
+      setPendingOpen(detail);
+      return;
+    }
+
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
+      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
+      openSignupGate({
+        source: 'dynamic_lead_wizard',
+        returnTo: buildReturnTo(pathname, search),
+        title: 'Crie sua conta para continuar seu orçamento',
+        description: 'Desbloqueie o formulário completo e siga com a empresa mais aderente ao seu projeto.',
+      });
+      return;
+    }
+
+    setPendingOpen(null);
+    resetWizardState();
+    setCategoryId(detail.categoryId);
+    setPreferredCompanyId(detail.preferredCompanyId);
+    setOpen(true);
+  }, [authLoading, isAuthenticated, resetWizardState]);
 
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = ((event as CustomEvent<LeadWizardEventDetail>).detail || {}) as LeadWizardEventDetail;
-      setCategoryId(detail.categoryId);
-      setPreferredCompanyId(detail.preferredCompanyId);
-      setCategoryOptions([]);
-      setCategoryResolutionError(null);
-      setOpen(true);
+      handleOpenRequest(detail);
     };
 
     window.addEventListener('open-dynamic-lead-wizard', handler as EventListener);
     return () => window.removeEventListener('open-dynamic-lead-wizard', handler as EventListener);
-  }, []);
+  }, [handleOpenRequest]);
 
   const handleClose = (nextOpen: boolean) => {
     setOpen(nextOpen);
 
     if (!nextOpen) {
-      setCategoryId(undefined);
-      setPreferredCompanyId(undefined);
-      setCategoryOptions([]);
-      setCategoryResolutionError(null);
-      setIsResolvingCategory(false);
+      resetWizardState();
     }
   };
+
+  useEffect(() => {
+    if (authLoading || !pendingOpen) return;
+    const detail = pendingOpen;
+    setPendingOpen(null);
+    handleOpenRequest(detail);
+  }, [authLoading, handleOpenRequest, pendingOpen]);
 
   useEffect(() => {
     if (!open || categoryId || !preferredCompanyId) return;
