@@ -33,6 +33,7 @@ import {
   CircleDollarSign,
   Phone,
   MessageCircle,
+  Mail,
   Award,
   Crown,
   ExternalLink
@@ -41,6 +42,8 @@ import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
+import { useAuth } from '@/contexts/AuthContext';
+import { openSignupGate } from '@/lib/signup-gate';
 import { cn } from '@/lib/utils';
 import {
   formatCompanyYears,
@@ -63,6 +66,7 @@ export default function CompanyComparisonModal({
   onRemoveCompany,
   onClearAll
 }: CompanyComparisonModalProps) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
@@ -406,13 +410,76 @@ export default function CompanyComparisonModal({
                         label="Telefone"
                         icon={<Phone className="h-4 w-4 text-blue-500" />}
                         companies={companies}
-                        render={(company) =>
-                          company.phone ? (
-                            <span className="text-sm font-mono text-slate-600">{company.phone}</span>
-                          ) : (
-                            <span className="text-slate-300 font-medium">—</span>
-                          )
-                        }
+                        render={(company) => {
+                          if (!company.phone) return <span className="text-slate-300 font-medium">—</span>;
+                          
+                          const isMasked = !isAuthenticated && !authLoading;
+                          const displayPhone = isMasked ? `${company.phone.substring(0, 6)}****` : company.phone;
+
+                          return (
+                            <button
+                              onClick={(e) => {
+                                if (isMasked) {
+                                  openSignupGate({
+                                    source: 'comparison_reveal',
+                                    title: 'Crie sua conta para ver os contatos',
+                                    description: 'Libere os canais de contato das empresas selecionadas.',
+                                  });
+                                }
+                              }}
+                              className={cn(
+                                "text-sm font-mono transition-colors",
+                                isMasked ? "text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1" : "text-slate-600"
+                              )}
+                            >
+                              <span>{displayPhone}</span>
+                              {isMasked && (
+                                <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                  Ver
+                                </span>
+                              )}
+                            </button>
+                          );
+                        }}
+                      />
+                      <ComparisonRow
+                        label="E-mail"
+                        icon={<Mail className="h-4 w-4 text-slate-400" />}
+                        companies={companies}
+                        render={(company) => {
+                          const email = company.email || (company as any).email_public;
+                          if (!email) return <span className="text-slate-300 font-medium">—</span>;
+                          
+                          const isMasked = !isAuthenticated && !authLoading;
+                          const displayEmail = isMasked 
+                            ? `${email.split('@')[0].substring(0, 3)}****@${email.split('@')[1]}` 
+                            : email;
+
+                          return (
+                            <button
+                              onClick={(e) => {
+                                if (isMasked) {
+                                  openSignupGate({
+                                    source: 'comparison_reveal',
+                                    title: 'Crie sua conta para ver os contatos',
+                                    description: 'Libere os canais de contato das empresas selecionadas.',
+                                  });
+                                }
+                              }}
+                              className={cn(
+                                "text-[11px] font-medium transition-colors truncate max-w-[120px]",
+                                isMasked ? "text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1" : "text-slate-600"
+                              )}
+                            >
+                              <span className="truncate">{displayEmail}</span>
+                              {isMasked && (
+                                <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                  Ver
+                                </span>
+                              )}
+                            </button>
+                          );
+                        }}
                       />
                     </ComparisonSection>
                   </TabsContent>

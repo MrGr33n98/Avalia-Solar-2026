@@ -99,8 +99,8 @@ export default function CompanySidebar({
               <div>
                 <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Telefone</p>
                 <a 
-                  href={`tel:${company.phone.replace(/\D/g, '')}`} 
-                  className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4"
+                  href={!isAuthenticated ? "#" : `tel:${company.phone.replace(/\D/g, '')}`} 
+                  className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 group/item inline-flex items-center gap-2"
                   onMouseEnter={phoneHoverIntent.onMouseEnter}
                   onMouseLeave={phoneHoverIntent.onMouseLeave}
                   onCopy={phoneCopyIntent.onCopy}
@@ -125,7 +125,16 @@ export default function CompanySidebar({
                     });
                   }}
                 >
-                  {company.phone}
+                  {(!isAuthenticated && !authLoading) ? (
+                    <>
+                      <span className="opacity-70">{company.phone.substring(0, 6)}****</span>
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-tight group-hover/item:bg-primary group-hover/item:text-white transition-colors ml-2">
+                        Ver
+                      </span>
+                    </>
+                  ) : (
+                    company.phone
+                  )}
                 </a>
               </div>
             </div>
@@ -187,8 +196,8 @@ export default function CompanySidebar({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Email</p>
                 <a 
-                  href={`mailto:${company.email || company.email_public}`}
-                  className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate block"
+                  href={!isAuthenticated ? "#" : `mailto:${company.email || company.email_public}`}
+                  className="text-base font-semibold hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate group/item inline-flex items-center gap-2 max-w-full"
                   onMouseEnter={emailHoverIntent.onMouseEnter}
                   onMouseLeave={emailHoverIntent.onMouseLeave}
                   onCopy={emailCopyIntent.onCopy}
@@ -213,7 +222,18 @@ export default function CompanySidebar({
                     });
                   }}
                 >
-                  {company.email || company.email_public}
+                  {(!isAuthenticated && !authLoading) ? (
+                    <>
+                      <span className="opacity-70 truncate">
+                        {(company.email || company.email_public || '').split('@')[0].substring(0, 3)}****@{(company.email || company.email_public || '').split('@')[1]}
+                      </span>
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-tight group-hover/item:bg-primary group-hover/item:text-white transition-colors flex-shrink-0 ml-2">
+                        Ver
+                      </span>
+                    </>
+                  ) : (
+                    company.email || company.email_public
+                  )}
                 </a>
               </div>
             </div>
