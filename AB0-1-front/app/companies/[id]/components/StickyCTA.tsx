@@ -97,6 +97,10 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
                     label="WhatsApp"
                     companyId={company.id}
                     pagePath={typeof window !== 'undefined' ? window.location.pathname : undefined}
+                    requireSignup
+                    signupGateSource="contact_reveal"
+                    signupGateTitle="Crie sua conta para falar no WhatsApp"
+                    signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
                   />
                 </div>
               )}

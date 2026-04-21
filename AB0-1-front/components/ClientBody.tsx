@@ -13,6 +13,7 @@ const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), 
 const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
 const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWizardModal'), { ssr: false });
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
+const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), { ssr: false });
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
 const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
   ssr: false,
@@ -149,6 +150,7 @@ export default function ClientBody({
               <QuickLeadModal />
               <DynamicLeadWizardModal />
               <ComparisonFloatingBar />
+              <SignupGateModalHost />
               <Toaster />
               <CookieConsent />
             </CompanyProvider>

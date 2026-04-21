@@ -4,12 +4,14 @@ import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'luc
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Company } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
 import CompanyAwardsCard from './CompanyAwardsCard';
 import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { useCopyIntent, useFaqExpand, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { openSignupGate } from '@/lib/signup-gate';
 
 
 interface CompanySidebarProps {
@@ -23,8 +25,12 @@ export default function CompanySidebar({
   showFaq = true,
   showCompetitorBanners = true,
 }: CompanySidebarProps) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const intentCompanyId = String(company.id);
   const visibleFaqs = company.faqs?.slice(0, 5) ?? [];
+  const currentReturnTo = typeof window !== 'undefined'
+    ? `${window.location.pathname}${window.location.search}`
+    : `/companies/${company.slug || company.id}`;
   const phoneHoverIntent = useHoverIntent(intentCompanyId, 'phone', 800, {
     signalCategory: 'contact_intent',
     elementSelector: 'company-sidebar-phone',
@@ -99,6 +105,17 @@ export default function CompanySidebar({
                   onMouseLeave={phoneHoverIntent.onMouseLeave}
                   onCopy={phoneCopyIntent.onCopy}
                   onClick={async (e) => {
+                    if (!authLoading && !isAuthenticated) {
+                      e.preventDefault();
+                      openSignupGate({
+                        source: 'contact_reveal',
+                        returnTo: currentReturnTo,
+                        title: 'Crie sua conta para ver os contatos',
+                        description: 'Libere telefone, e-mail e outros canais de contato desta empresa.',
+                      });
+                      return;
+                    }
+
                     await trackCTAClick({
                       ctaType: 'phone',
                       ctaLocation: 'sidebar',
@@ -176,6 +193,17 @@ export default function CompanySidebar({
                   onMouseLeave={emailHoverIntent.onMouseLeave}
                   onCopy={emailCopyIntent.onCopy}
                   onClick={async (e) => {
+                    if (!authLoading && !isAuthenticated) {
+                      e.preventDefault();
+                      openSignupGate({
+                        source: 'contact_reveal',
+                        returnTo: currentReturnTo,
+                        title: 'Crie sua conta para ver os contatos',
+                        description: 'Libere telefone, e-mail e outros canais de contato desta empresa.',
+                      });
+                      return;
+                    }
+
                     await trackCTAClick({
                       ctaType: 'email',
                       ctaLocation: 'sidebar',

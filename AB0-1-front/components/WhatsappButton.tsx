@@ -1,9 +1,11 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics/lazy';
 import { trackCTAClick, addUTMToUrl } from '@/lib/analytics/track-cta';
 import { appendUtm } from '@/lib/analytics/utm';
+import { openSignupGate, type SignupGateSource } from '@/lib/signup-gate';
 
 type Styles = {
   variant?: 'solid' | 'outline';
@@ -29,6 +31,11 @@ interface Props {
   categoryId?: number;
   bannerId?: number;
   pagePath?: string;
+  requireSignup?: boolean;
+  signupGateSource?: SignupGateSource;
+  signupGateTitle?: string;
+  signupGateDescription?: string;
+  signupGateReturnTo?: string;
 }
 
 export default function WhatsappButton({
@@ -45,7 +52,13 @@ export default function WhatsappButton({
   categoryId,
   bannerId,
   pagePath,
+  requireSignup = false,
+  signupGateSource = 'contact_reveal',
+  signupGateTitle = 'Crie sua conta para ver os contatos',
+  signupGateDescription = 'Libere telefone, e-mail e outros canais de contato desta empresa.',
+  signupGateReturnTo,
 }: Props) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   if (!enabled) return null;
 
   const s: Styles = styles || {};
@@ -98,6 +111,18 @@ export default function WhatsappButton({
 
   const handleClick = async () => {
     const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : undefined);
+    const returnTo = signupGateReturnTo || (typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : path);
+
+    if (requireSignup && !authLoading && !isAuthenticated) {
+      openSignupGate({
+        source: signupGateSource,
+        returnTo: returnTo || '/',
+        title: signupGateTitle,
+        description: signupGateDescription,
+      });
+      return;
+    }
+
     let link = (href || '').trim();
     if (link && !/^https?:\/\//i.test(link)) {
       const digitsRaw = link.replace(/\D/g, '');

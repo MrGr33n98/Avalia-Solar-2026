@@ -4,55 +4,87 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, Zap, Heart, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from './button';
 import { track } from '@/lib/analytics';
 
 interface IdentityBridgeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: () => void;
+  onSecondaryAction?: () => void;
   title?: string;
   description?: string;
+  primaryActionLabel?: string;
+  secondaryActionLabel?: string;
+  showSecondaryAction?: boolean;
+  canDismiss?: boolean;
+  trackAnalytics?: boolean;
 }
 
 export default function IdentityBridgeModal({
   isOpen,
   onClose,
   onLogin,
+  onSecondaryAction,
   title = "Bem-vindo ao Avalia Solar!",
-  description = "Acesse scores de confiança completos, compare instaladores certificados e salve seus orçamentos favoritos, tudo em um só lugar."
+  description = "Acesse scores de confiança completos, compare instaladores certificados e salve seus orçamentos favoritos, tudo em um só lugar.",
+  primaryActionLabel = "Entrar ou Criar Conta Grátis",
+  secondaryActionLabel = "Continuar sem login",
+  showSecondaryAction = true,
+  canDismiss = true,
+  trackAnalytics = true,
 }: IdentityBridgeModalProps) {
   // PostHog Tracking for Modal Lifetime
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && trackAnalytics) {
       track('identity_bridge_modal_opened', {
         title,
         source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
       });
     }
-  }, [isOpen, title]);
+  }, [isOpen, title, trackAnalytics]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const handleClose = () => {
-    track('identity_bridge_modal_closed', {
-      method: 'close_button',
-      source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    if (trackAnalytics) {
+      track('identity_bridge_modal_closed', {
+        method: 'close_button',
+        source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+      });
+    }
     onClose();
   };
 
   const handleLogin = () => {
-    track('identity_bridge_conversion_click', {
-      title,
-      source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    if (trackAnalytics) {
+      track('identity_bridge_conversion_click', {
+        title,
+        source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+      });
+    }
     onLogin();
   };
 
   const handleStayLoggedOut = () => {
-    track('identity_bridge_modal_closed', {
-      method: 'stay_logged_out',
-      source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    if (trackAnalytics) {
+      track('identity_bridge_modal_closed', {
+        method: 'stay_logged_out',
+        source_page: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+      });
+    }
+    if (onSecondaryAction) {
+      onSecondaryAction();
+      return;
+    }
     onClose();
   };
 
@@ -65,7 +97,7 @@ export default function IdentityBridgeModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={handleClose}
+            onClick={canDismiss ? handleClose : undefined}
             className="fixed inset-0 z-50 bg-as-slate-950/40 backdrop-blur-sm transition-opacity"
           />
 
@@ -82,13 +114,15 @@ export default function IdentityBridgeModal({
               )}
             >
               {/* Close Button */}
-              <button
-                onClick={handleClose}
-                className="absolute right-3 top-3 rounded-full p-1.5 hover:bg-muted smooth-transition group"
-                aria-label="Fechar"
-              >
-                <X className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-              </button>
+              {canDismiss && (
+                <button
+                  onClick={handleClose}
+                  className="absolute right-3 top-3 rounded-full p-1.5 hover:bg-muted smooth-transition group"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                </button>
+              )}
 
               {/* Icon Stack/Visual Element */}
               <div className="relative mb-5">
@@ -131,15 +165,17 @@ export default function IdentityBridgeModal({
                   onClick={handleLogin}
                   className="clay-btn-primary px-4 py-3 text-base tracking-wide smooth-transition active:scale-95"
                 >
-                  Entrar ou Criar Conta Grátis
+                  {primaryActionLabel}
                 </button>
-                
-                <button
-                  onClick={handleStayLoggedOut}
-                  className="text-xs font-medium text-muted-foreground smooth-transition underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  Continuar sem login
-                </button>
+
+                {showSecondaryAction && (
+                  <button
+                    onClick={handleStayLoggedOut}
+                    className="text-xs font-medium text-muted-foreground smooth-transition underline-offset-4 hover:text-foreground hover:underline"
+                  >
+                    {secondaryActionLabel}
+                  </button>
+                )}
               </div>
 
               {/* Trust Footer */}

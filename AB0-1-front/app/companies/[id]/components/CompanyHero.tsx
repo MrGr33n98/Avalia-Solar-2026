@@ -297,6 +297,10 @@ export default function CompanyHero({
                       className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-6 font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:min-w-[170px]"
                       label="WhatsApp"
                       companyId={company.id}
+                      requireSignup
+                      signupGateSource="contact_reveal"
+                      signupGateTitle="Crie sua conta para falar no WhatsApp"
+                      signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
                     />
                   </div>
                 )}

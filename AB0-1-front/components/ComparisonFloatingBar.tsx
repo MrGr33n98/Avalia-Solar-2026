@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useComparison } from '@/hooks/useComparison';
+import { useAuth } from '@/contexts/AuthContext';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { Company } from '@/lib/api';
 import { isPremiumCompany } from '@/components/compare/compare-company-utils';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { openSignupGate } from '@/lib/signup-gate';
 
 const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'), {
   ssr: false,
@@ -72,18 +74,53 @@ function CompanyChip({
 }
 
 export default function ComparisonFloatingBar() {
+  const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const {
     comparisonList,
     removeFromComparison,
     clearComparison,
     premiumCount,
     count,
+    isLoading: comparisonLoading,
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (count === 0) return null;
 
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
+
+  const shouldGateHighIntent = !authLoading && !comparisonLoading && !isAuthenticated && count >= 2;
+
+  const handleComparisonPageClick = () => {
+    if (shouldGateHighIntent) {
+      openSignupGate({
+        source: 'comparison_cta',
+        returnTo: '/compare',
+        comparisonCount: count,
+        title: 'Crie sua conta para continuar comparando',
+        description: 'Desbloqueie a análise completa, salve sua shortlist e volte exatamente para onde parou.',
+      });
+      return;
+    }
+
+    router.push('/compare');
+  };
+
+  const handleDetailsClick = () => {
+    if (shouldGateHighIntent) {
+      openSignupGate({
+        source: 'comparison_cta',
+        returnTo: `${window.location.pathname}${window.location.search}`,
+        comparisonCount: count,
+        title: 'Crie sua conta para ver a comparação completa',
+        description: 'Libere a visão lado a lado, mantenha suas empresas salvas e siga sua pesquisa sem perder o contexto.',
+      });
+      return;
+    }
+
+    setIsModalOpen(true);
+  };
 
   return (
     <>
@@ -131,22 +168,20 @@ export default function ComparisonFloatingBar() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleDetailsClick}
                     className="h-9 rounded-full border-slate-300 text-slate-600 font-light text-[12px] px-4 hidden sm:flex hover:border-blue-400 hover:text-blue-600 transition-colors"
                   >
                     Ver Detalhes
                   </Button>
 
                   <Button
-                    asChild
                     size="sm"
+                    onClick={handleComparisonPageClick}
                     className="h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-light text-[12px] px-5 shadow-sm shadow-blue-200 transition-colors"
                   >
-                    <Link href="/compare">
-                      <span className="hidden sm:inline">Comparar {count} {companyLabel}</span>
-                      <span className="sm:hidden">Comparar</span>
-                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                    </Link>
+                    <span className="hidden sm:inline">Comparar {count} {companyLabel}</span>
+                    <span className="sm:hidden">Comparar</span>
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                 </div>
 
