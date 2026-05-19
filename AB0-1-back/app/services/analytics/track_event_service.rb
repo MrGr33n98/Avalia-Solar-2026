@@ -152,11 +152,22 @@ module Analytics
     def persist_platform_event!
       return unless ActiveRecord::Base.connection.table_exists?('platform_events')
 
+      ensure_platform_events_partition!
+      ActiveRecord::Base.connection.execute(platform_event_insert_sql)
+    rescue ActiveRecord::StatementInvalid => e
+      raise unless missing_platform_events_partition?(e)
+
+      Rails.logger.warn("[G4-Analytics] Missing platform_events partition for #{@occurred_at}; creating and retrying")
+      ensure_platform_events_partition!(force: true)
+      ActiveRecord::Base.connection.execute(platform_event_insert_sql)
+    end
+
+    def platform_event_insert_sql
       conn = ActiveRecord::Base.connection
       payload = @metadata.to_json
       context = {}.to_json
 
-      sql = <<~SQL
+      <<~SQL
         INSERT INTO platform_events (
           event_id, event_type, schema_version, source, anonymous_id, session_id,
           user_id, company_id, subject_type, subject_id, payload, context, occurred_at, created_at
@@ -167,7 +178,30 @@ module Analytics
           #{conn.quote(payload)}, #{conn.quote(context)}, #{conn.quote(@occurred_at)}, #{conn.quote(Time.current)}
         )
       SQL
-      conn.execute(sql)
+    end
+
+    def ensure_platform_events_partition!(force: false)
+      conn = ActiveRecord::Base.connection
+      return unless conn.adapter_name.downcase.include?('postgresql')
+      return unless platform_events_partitioned?(conn)
+
+      partition_key = @occurred_at.to_time.utc.strftime('%Y%m')
+      return if !force && Rails.cache.exist?("platform_events_partition:#{partition_key}")
+
+      conn.execute("SELECT create_platform_events_partition(#{conn.quote(@occurred_at)})")
+      Rails.cache.write("platform_events_partition:#{partition_key}", true, expires_in: 1.day)
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.warn("[G4-Analytics] Unable to ensure platform_events partition: #{e.message}")
+    end
+
+    def platform_events_partitioned?(conn)
+      conn.select_value("SELECT EXISTS(SELECT 1 FROM pg_partitioned_table WHERE partrelid = 'platform_events'::regclass)")
+    rescue ActiveRecord::StatementInvalid
+      false
+    end
+
+    def missing_platform_events_partition?(error)
+      error.message.include?('no partition of relation "platform_events" found for row')
     end
 
     def persist_analytics_event!

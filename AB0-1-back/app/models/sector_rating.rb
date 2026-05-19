@@ -24,6 +24,17 @@ class SectorRating < ApplicationRecord
 
   scope :published, -> { where(status: statuses[:published]) }
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id company_id user_id homologation technical_quality safety consultancy
+      total_score status comment answers created_at updated_at
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[company user]
+  end
+
   def average_score
     total_score.to_f.round(1)
   end
