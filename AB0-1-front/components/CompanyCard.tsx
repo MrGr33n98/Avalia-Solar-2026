@@ -19,7 +19,7 @@ import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import { WhatsAppCTAButton } from '@/components/ui/WhatsAppCTAButton';
+import WhatsappButton from '@/components/WhatsappButton';
 import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useComparison } from '@/hooks/useComparison';
@@ -550,18 +550,20 @@ export default function CompanyCard({
               {...(hasWhatsapp && whatsappEnabled ? whatsappHoverIntent : quoteHoverIntent)}
             >
               {hasWhatsapp && whatsappEnabled ? (
-                WhatsAppCTAButton && (
-                  <WhatsAppCTAButton
-                    phone={whatsappLinkRaw}
-                    companyId={id.toString()}
-                    companySlug={company.slug}
-                    label={text.whatsapp}
-                    className={cn(
-                      'w-full font-semibold rounded-xl transition-all duration-150',
-                      compact ? 'h-8 text-[11px]' : 'h-9'
-                    )}
-                  />
-                )
+                <WhatsappButton
+                  href={whatsappLinkRaw}
+                  companyId={id}
+                  label={text.whatsapp}
+                  requireSignup
+                  signupGateSource="search_results"
+                  signupGateTitle="Crie sua conta para falar no WhatsApp"
+                  signupGateDescription="Cadastre-se para liberar o contato direto com esta e outras empresas."
+                  className={cn(
+                    'w-full font-semibold rounded-xl transition-all duration-150',
+                    compact ? 'h-8 text-[11px]' : 'h-9'
+                  )}
+                  preset="brandSolid"
+                />
               ) : (
                 CTAPrimaryButton && (
                   <CTAPrimaryButton

@@ -113,7 +113,7 @@ export default function WhatsappButton({
     const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : undefined);
     const returnTo = signupGateReturnTo || (typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : path);
 
-    if (requireSignup && !authLoading && !isAuthenticated) {
+    if (requireSignup && (authLoading || !isAuthenticated)) {
       openSignupGate({
         source: signupGateSource,
         returnTo: returnTo || '/',
