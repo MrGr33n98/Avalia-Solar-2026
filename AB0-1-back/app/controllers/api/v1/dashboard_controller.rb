@@ -3,6 +3,7 @@ module Api
   module V1
     class DashboardController < BaseController
       before_action :authenticate_api_user
+      after_action :verify_authorized
       
       # GET /api/v1/dashboard/stats
       def stats
@@ -81,53 +82,56 @@ module Api
         limit = [params[:limit].to_i, 20].min
         limit = 10 if limit <= 0
 
-        activities = []
+        ActiveSupport::Notifications.instrument('dashboard.activity.fetch', limit: limit) do |payload|
+          activities = []
 
-        # Recent companies
-        recent_companies = Company.order(created_at: :desc).limit(5)
-        recent_companies.each do |company|
-          activities << {
-            id: "company_#{company.id}",
-            type: 'company',
-            title: 'Nova empresa cadastrada',
-            description: "#{company.name} foi adicionada ao sistema",
-            time: time_ago_in_words(company.created_at),
-            created_at: company.created_at
-          }
+          # Recent companies
+          recent_companies = Company.order(created_at: :desc).limit(5).select(:id, :name, :created_at)
+          recent_companies.each do |company|
+            activities << {
+              id: "company_#{company.id}",
+              type: 'company',
+              title: 'Nova empresa cadastrada',
+              description: "#{company.name} foi adicionada ao sistema",
+              time: time_ago_in_words(company.created_at),
+              created_at: company.created_at
+            }
+          end
+
+          # Recent leads
+          recent_leads = Lead.order(created_at: :desc).limit(5).select(:id, :name, :email, :created_at)
+          recent_leads.each do |lead|
+            activities << {
+              id: "lead_#{lead.id}",
+              type: 'proposal',
+              title: 'Nova proposta recebida',
+              description: "Proposta de #{lead.name || lead.email}",
+              time: time_ago_in_words(lead.created_at),
+              created_at: lead.created_at
+            }
+          end
+
+          # Recent reviews
+          recent_reviews = Review.includes(:company).order(created_at: :desc).limit(5).select(:id, :company_id, :rating, :created_at)
+          recent_reviews.each do |review|
+            activities << {
+              id: "review_#{review.id}",
+              type: 'review',
+              title: 'Nova avaliação',
+              description: "#{review.company.name} recebeu #{review.rating} estrelas",
+              time: time_ago_in_words(review.created_at),
+              created_at: review.created_at
+            }
+          end
+
+          # Sort by most recent and limit
+          activities.sort_by! { |a| a[:created_at] }
+          activities.reverse!
+          activities = activities.take(limit)
+
+          payload[:activities_count] = activities.size
+          render json: activities
         end
-
-        # Recent leads
-        recent_leads = Lead.order(created_at: :desc).limit(5)
-        recent_leads.each do |lead|
-          activities << {
-            id: "lead_#{lead.id}",
-            type: 'proposal',
-            title: 'Nova proposta recebida',
-            description: "Proposta de #{lead.name || lead.email}",
-            time: time_ago_in_words(lead.created_at),
-            created_at: lead.created_at
-          }
-        end
-
-        # Recent reviews
-        recent_reviews = Review.includes(:company).order(created_at: :desc).limit(5)
-        recent_reviews.each do |review|
-          activities << {
-            id: "review_#{review.id}",
-            type: 'review',
-            title: 'Nova avaliação',
-            description: "#{review.company.name} recebeu #{review.rating} estrelas",
-            time: time_ago_in_words(review.created_at),
-            created_at: review.created_at
-          }
-        end
-
-        # Sort by most recent and limit
-        activities.sort_by! { |a| a[:created_at] }
-        activities.reverse!
-        activities = activities.take(limit)
-
-        render json: activities
       rescue StandardError => e
         Rails.logger.error("Dashboard activity error: #{e.message}")
         render json: { error: 'Erro ao buscar atividades recentes' }, status: :internal_server_error
