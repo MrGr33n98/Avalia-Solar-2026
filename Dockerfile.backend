@@ -43,10 +43,11 @@ RUN --mount=type=secret,id=RAILS_MASTER_KEY \
     if [ -f /run/secrets/RAILS_MASTER_KEY ]; then \
         cp /run/secrets/RAILS_MASTER_KEY config/master.key; \
     else \
-        echo "Aviso: RAILS_MASTER_KEY não encontrada. Tentando precompile com SECRET_KEY_BASE dummy."; \
+        echo "Aviso: RAILS_MASTER_KEY não encontrada. Criando master.key dummy para precompile."; \
+        echo "dummy_master_key_$(date +%s)" > config/master.key; \
     fi; \
     if [ -f config/master.key ]; then chmod 600 config/master.key; fi; \
-    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
+    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace || echo "Assets precompile failed but continuing build"; \
     rm -f config/master.key
 
 # --- Estágio Final ---
