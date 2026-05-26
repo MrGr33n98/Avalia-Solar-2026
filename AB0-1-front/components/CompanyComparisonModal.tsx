@@ -594,6 +594,5 @@ function ComparisonRow({
           ))}
         </div>
       </div>
-    </div>
   );
 }
