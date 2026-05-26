@@ -15,11 +15,22 @@ FactoryBot.define do
     active_admin { true }
     association :plan
 
+    # Campos obrigatórios para ativação (validation)
+    state { 'SP' }
+    city { 'São Paulo' }
+    phone { '11999999999' }
+
     # Initialize JSON columns
     profile_views_count { 0 }
     cta_clicks_count { 0 }
     whatsapp_clicks_count { 0 }
     rating_avg { 0.0 }
+
+    after(:build) do |company|
+      if company.status == 'active' && company.categories.empty?
+        company.categories << build(:category)
+      end
+    end
   end
 
   factory :category do

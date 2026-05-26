@@ -1,7 +1,8 @@
 FactoryBot.define do
   factory :intent_score do
     association :company
-    lead { nil }
+    lead_user { nil }
+    lead_record { nil }
     sequence(:anonymous_id) { |n| "anon-score-#{n}" }
     session_id { 'session-1' }
     total_score { 25 }
@@ -25,7 +26,7 @@ FactoryBot.define do
     top_signals { [] }
 
     trait :for_lead do
-      association :lead, factory: :user
+      association :lead_user, factory: :user
       anonymous_id { nil }
     end
   end
