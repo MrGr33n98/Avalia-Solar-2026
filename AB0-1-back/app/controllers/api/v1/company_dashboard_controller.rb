@@ -2,6 +2,8 @@
 module Api
   module V1
     class CompanyDashboardController < BaseController
+      include PendingChangeIdempotency
+      
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
@@ -504,15 +506,17 @@ module Api
         direct_update_attrs = company_params.slice(*direct_update_keys)
         @company.update(direct_update_attrs) if direct_update_attrs.present?
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'company_info',
           data: {
             attributes: company_params,
             previous_values: @company.attributes.slice(*company_params.keys)
-          },
-          user_id: current_user&.id,
-          status: 'pending'
+          }
         )
+
+        message = pending_change.previously_persisted? ?
+          'Solicitação já enviada' :
+          'Alterações enviadas para aprovação'
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -525,23 +529,26 @@ module Api
         )
 
         render json: {
-          message: direct_update_attrs.present? ? 'Alterações aplicadas e enviadas para aprovação' : 'Alterações enviadas para aprovação',
+          message: message,
           pending_change: pending_change
-        }, status: :created
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/add_categories
       def add_categories
         authorize @company, :edit_categories?
-        pending_change = @company.pending_changes.create!(
+        
+        pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
             action: 'add',
             category_ids: params[:category_ids]
-          },
-          user_id: current_user&.id,
-          status: 'pending'
+          }
         )
+
+        message = pending_change.previously_persisted? ?
+          'Solicitação já enviada' :
+          'Solicitação de categorias enviada para aprovação'
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -556,23 +563,26 @@ module Api
         )
 
         render json: {
-          message: 'Solicitação de categorias enviada para aprovação',
+          message: message,
           pending_change: pending_change
-        }, status: :created
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/remove_category
       def remove_category
         authorize @company, :edit_categories?
-        pending_change = @company.pending_changes.create!(
+        
+        pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
             action: 'remove',
             category_ids: [params[:category_id]]
-          },
-          user_id: current_user&.id,
-          status: 'pending'
+          }
         )
+
+        message = pending_change.previously_persisted? ?
+          'Solicitação já enviada' :
+          'Solicitação de remoção enviada para aprovação'
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -587,35 +597,24 @@ module Api
         )
 
         render json: {
-          message: 'Solicitação de remoção enviada para aprovação',
+          message: message,
           pending_change: pending_change
-        }, status: :created
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
         authorize @company, :edit_company?
-        pending_change = @company.pending_changes.create!(
+        
+        pending_change = create_idempotent_pending_change(
           change_type: 'cta_config',
-          data: cta_params,
-          user_id: current_user&.id,
-          status: 'pending'
-        )
-
-        Analytics::TrackEventService.call(
-          company_id: @company.id,
-          event_type: 'dashboard_update_requested',
-          user: current_user,
-          metadata: request_metadata.merge(
-            change_type: 'cta_config',
-            pending_change_id: pending_change.id
-          )
+          data: cta_params
         )
 
         render json: {
           message: 'Configurações de CTAs enviadas para aprovação',
           pending_change: pending_change
-        }, status: :created
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/update_logo
@@ -634,11 +633,9 @@ module Api
         blob = ActiveStorage::Blob.create_and_upload!(io: file, filename: file.original_filename,
                                                       content_type: file.content_type)
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'logo',
-          data: { signed_id: blob.signed_id },
-          user_id: current_user&.id,
-          status: 'pending'
+          data: { signed_id: blob.signed_id }
         )
 
         Analytics::TrackEventService.call(
@@ -651,7 +648,10 @@ module Api
           )
         )
 
-        render json: { message: 'Logo enviada para aprovação', pending_change: pending_change }, status: :created
+        render json: { 
+          message: 'Logo enviada para aprovação', 
+          pending_change: pending_change 
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/update_banner
@@ -681,11 +681,9 @@ module Api
           Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
         end
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'banner',
-          data: { signed_id: blob.signed_id },
-          user_id: current_user&.id,
-          status: 'pending'
+          data: { signed_id: blob.signed_id }
         )
 
         Analytics::TrackEventService.call(
@@ -698,7 +696,10 @@ module Api
           )
         )
 
-        render json: { message: 'Banner enviado para aprovação', pending_change: pending_change }, status: :created
+        render json: { 
+          message: 'Banner enviado para aprovação', 
+          pending_change: pending_change 
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # GET /api/v1/company_dashboard/pending_changes
@@ -801,14 +802,15 @@ module Api
 
         return render json: { error: 'Falha ao processar arquivos' }, status: :unprocessable_entity if signed_ids.empty?
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'media',
-          data: { signed_ids: signed_ids },
-          user_id: current_user&.id,
-          status: 'pending'
+          data: { signed_ids: signed_ids }
         )
 
-        render json: { message: 'Mídia enviada para aprovação', pending_change: pending_change }, status: :created
+        render json: { 
+          message: 'Mídia enviada para aprovação', 
+          pending_change: pending_change 
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # POST /api/v1/company_dashboard/add_video
@@ -825,7 +827,7 @@ module Api
         result = Videos::YouTubeExtractor.extract(url)
         return render json: { error: result[:error] }, status: :unprocessable_entity unless result[:valid]
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'video',
           data: {
             url: url,
@@ -833,11 +835,13 @@ module Api
             video_id: result[:video_id],
             thumbnail_url: result[:thumbnail_url],
             action: 'add'
-          },
-          user_id: current_user.id,
-          status: 'pending'
+          }
         )
-        render json: { message: 'Vídeo enviado para aprovação', pending_change: pending_change }, status: :created
+        
+        render json: { 
+          message: 'Vídeo enviado para aprovação', 
+          pending_change: pending_change 
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # DELETE /api/v1/company_dashboard/remove_video
@@ -853,14 +857,15 @@ module Api
         vid = params[:video_id].to_s.presence || params[:id].to_s
         return render json: { error: 'Parâmetro video_id ausente' }, status: :unprocessable_entity if vid.blank?
 
-        pending_change = @company.pending_changes.create!(
+        pending_change = create_idempotent_pending_change(
           change_type: 'video',
-          data: { video_id: vid, action: 'remove' },
-          user_id: current_user.id,
-          status: 'pending'
+          data: { video_id: vid, action: 'remove' }
         )
-        render json: { message: 'Remoção de vídeo enviada para aprovação', pending_change: pending_change },
-               status: :created
+        
+        render json: { 
+          message: 'Remoção de vídeo enviada para aprovação', 
+          pending_change: pending_change 
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # GET /api/v1/company_dashboard/social_proof_reviews

@@ -18,18 +18,6 @@ module PendingChangeIdempotency
   def validate_and_set_idempotency_key
     # Extract or generate idempotency key from request headers or params
     @idempotency_key = extract_or_generate_idempotency_key
-    
-    # Check if an identical pending change already exists
-    existing = find_existing_pending_change
-    
-    if existing.present?
-      # Return cached/existing response to ensure idempotency
-      return render json: {
-        message: 'Request already processed',
-        pending_change: existing.as_json,
-        cached: true
-      }, status: :ok
-    end
   end
 
   def extract_or_generate_idempotency_key
@@ -62,12 +50,42 @@ module PendingChangeIdempotency
     Digest::SHA256.hexdigest(data_to_hash)
   end
 
-  def find_existing_pending_change
-    return nil unless @company
-
-    @company.pending_changes.where(
+  def create_idempotent_pending_change(change_type:, data:)
+    # Try to find an existing pending change with the same idempotency key
+    existing = @company.pending_changes.find_by(
       idempotency_key: @idempotency_key,
       status: 'pending'
-    ).first
+    )
+
+    # If exists and is pending, mark it as previously persisted and return
+    if existing&.pending?
+      # Rails helper to identify if record was already persisted before this request
+      existing.define_singleton_method(:previously_persisted?) { true }
+      return existing
+    end
+
+    # Otherwise, try to create new pending change
+    begin
+      pending_change = @company.pending_changes.create!(
+        change_type: change_type,
+        data: data,
+        user_id: current_user&.id,
+        status: 'pending',
+        idempotency_key: @idempotency_key
+      )
+      # Mark as newly created (not previously persisted)
+      pending_change.define_singleton_method(:previously_persisted?) { false }
+      pending_change
+    rescue ActiveRecord::RecordNotUnique
+      # Another request already created this; find and return it
+      retry_pending = @company.pending_changes.find_by(
+        idempotency_key: @idempotency_key,
+        status: 'pending'
+      )
+      if retry_pending
+        retry_pending.define_singleton_method(:previously_persisted?) { true }
+      end
+      retry_pending
+    end
   end
 end
