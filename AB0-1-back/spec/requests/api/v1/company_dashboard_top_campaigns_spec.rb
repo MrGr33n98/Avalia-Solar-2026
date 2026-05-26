@@ -22,6 +22,12 @@ RSpec.describe 'Company dashboard top campaigns', type: :request do
   end
 
   before do
+    # Setup plan so feature gating allows top_campaigns
+    plan = create(:plan, name: 'Pro', price: 99.0)
+    company.update(plan: plan)
+    allow(plan).to receive(:tier).and_return('pro')
+    allow(plan).to receive(:plan_tier).and_return('pro')
+    
     create(:company_member, company: company, user: user, role: :owner, status: 'active')
     allow_any_instance_of(Api::V1::CompanyDashboardController).to receive(:current_user).and_return(user)
 
@@ -50,5 +56,28 @@ RSpec.describe 'Company dashboard top campaigns', type: :request do
         'last_seen_at' => '2026-03-11'
       }
     ])
+    expect(body['is_premium_analytics']).to be(true)
   end
+
+  describe 'feature gating for free users' do
+    before do
+      # Switch to free plan for this context
+      free_plan = create(:plan, name: 'Free', price: 0)
+      company.update(plan: free_plan)
+      allow(free_plan).to receive(:tier).and_return('free')
+      allow(free_plan).to receive(:plan_tier).and_return('free')
+    end
+
+    it 'denies access to top_campaigns and returns upsell message' do
+      get '/api/v1/company_dashboard/analytics/top_campaigns', params: { company_id: company.id, limit: 3 }
+
+      expect(response).to have_http_status(:ok)
+
+      body = JSON.parse(response.body)
+      expect(body['campaigns']).to eq([])
+      expect(body['is_premium_analytics']).to be(false)
+      expect(body['upsell_message']).to include('Upgrade to Pro')
+    end
+  end
+
 end

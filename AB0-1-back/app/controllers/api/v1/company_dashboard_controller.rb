@@ -9,6 +9,7 @@ module Api
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
         authorize @company, :view_analytics?
+
         begin
           freshness = ::CompanyDashboard::FreshnessProvider.call
           source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
@@ -21,30 +22,40 @@ module Api
           return render json: default_overview_payload.merge(freshness) unless stats
 
           views = stats[:profile_views].to_i
-          leads = stats[:leads].to_i
-          conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
-
-          # NOTE: Company model does not expose `plan_status` in all environments.
-          # Use the canonical paid-plan helper to avoid NoMethodError in production.
           is_premium = @company.has_paid_plan?
 
-          render json: {
+          # ✅ NOVO: Build response CONDICIONALMENTE
+          response = {
             views_30d: views,
-            # Dados que serão borrados se não for premium
-            cta_clicks_30d: stats[:cta_clicks].to_i,
-            whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
-            email_clicks_30d: stats[:email_clicks].to_i,
-            phone_clicks_30d: stats[:phone_clicks].to_i,
-            website_clicks_30d: stats[:website_clicks].to_i,
-            unique_views_30d: stats[:unique_views].to_i,
-            returning_views_30d: stats[:returning_views].to_i,
-            leads_30d: leads,
-            conversion_rate: conversion,
-            data_source: data_source,
-            # Controle de Paywall
-            is_premium_analytics: is_premium,
-            restricted_metrics: is_premium ? [] : %w[cta_breakdown timeseries unique_visitors conversion_details]
-          }.merge(freshness)
+            data_source: data_source
+          }
+
+          # SÓ inclui dados premium se tem permissão
+          if is_premium && FeatureGateService.can_access?(@company, 'advanced_analytics')
+            leads = stats[:leads].to_i
+            conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
+
+            response.merge!(
+              cta_clicks_30d: stats[:cta_clicks].to_i,
+              whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
+              email_clicks_30d: stats[:email_clicks].to_i,
+              phone_clicks_30d: stats[:phone_clicks].to_i,
+              website_clicks_30d: stats[:website_clicks].to_i,
+              unique_views_30d: stats[:unique_views].to_i,
+              returning_views_30d: stats[:returning_views].to_i,
+              leads_30d: leads,
+              conversion_rate: conversion,
+              is_premium_analytics: true
+            )
+          else
+            # Free users NUNCA recebem essas chaves
+            response.merge!(
+              is_premium_analytics: false,
+              upsell_message: 'Upgrade to Pro to unlock detailed analytics'
+            )
+          end
+
+          render json: response.merge(freshness)
         rescue StandardError => e
           log_analytics_error('overview', e)
           render json: default_overview_payload.merge(::CompanyDashboard::FreshnessProvider.call)
@@ -54,6 +65,18 @@ module Api
       # GET /api/v1/company_dashboard/analytics/timeseries
       def analytics_timeseries
         authorize @company, :view_analytics?
+
+        # ✅ FEATURE GATE: Timeseries só para premium
+        unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+          freshness = ::CompanyDashboard::FreshnessProvider.call
+          return render json: {
+            data: [],
+            data_source: 'feature_not_authorized',
+            is_premium_analytics: false,
+            upsell_message: 'Upgrade to Pro to view timeseries analytics'
+          }.merge(freshness)
+        end
+
         days = [(params[:days] || 90).to_i, 365].min
         freshness = ::CompanyDashboard::FreshnessProvider.call
         source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
@@ -65,7 +88,8 @@ module Api
         if data_source == 'company_daily_stats_unavailable'
           return render json: {
             data: [],
-            data_source: 'company_daily_stats_unavailable'
+            data_source: 'company_daily_stats_unavailable',
+            is_premium_analytics: true
           }.merge(freshness)
         end
 
@@ -79,15 +103,26 @@ module Api
           }
         end
 
-        render json: { 
+        render json: {
           data: data,
-          data_source: data_source
+          data_source: data_source,
+          is_premium_analytics: true
         }.merge(freshness)
       end
 
       # GET /api/v1/company_dashboard/analytics/top_campaigns
       def analytics_top_campaigns
         authorize @company, :view_analytics?
+
+        # ✅ FEATURE GATE: Top campaigns só para premium
+        unless FeatureGateService.can_access?(@company, 'top_campaigns')
+          return render json: {
+            campaigns: [],
+            is_premium_analytics: false,
+            upsell_message: 'Upgrade to Pro to access campaign analytics'
+          }, status: :ok
+        end
+
         limit = [[params[:limit].to_i, 1].max, 20].min
         limit = 5 if params[:limit].blank?
 
@@ -110,28 +145,63 @@ module Api
               conversion_rate: campaign.conversion_rate.to_f,
               last_seen_at: campaign.last_seen_at
             }
-          end
+          end,
+          is_premium_analytics: true
         }, status: :ok
       rescue StandardError => e
         log_analytics_error('top_campaigns', e)
-        render json: { campaigns: [] }, status: :ok
+        render json: { campaigns: [], is_premium_analytics: true }, status: :ok
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
         authorize @company, :view_analytics?
+
+        # ✅ FEATURE GATE: Reputation tracking só para premium
+        unless FeatureGateService.can_access?(@company, 'reputation_tracking')
+          return render json: {
+            total_reviews: 0,
+            avg_rating: 0,
+            trust_score: 0,
+            trust_components: {},
+            is_premium_analytics: false,
+            upsell_message: 'Upgrade to Pro to access reputation tracking'
+          }
+        end
+
         begin
           service = ::CompanyDashboard::ReputationService.new(company: @company)
-          render json: service.reputation_data
+          data = service.reputation_data
+          render json: data.merge(is_premium_analytics: true)
         rescue StandardError => e
           log_analytics_error('reputation', e)
-          render json: { total_reviews: 0, avg_rating: 0, trust_score: 0, trust_components: {} }
+          render json: {
+            total_reviews: 0,
+            avg_rating: 0,
+            trust_score: 0,
+            trust_components: {},
+            is_premium_analytics: true
+          }
         end
       end
 
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
         authorize @company, :view_analytics?
+
+        # ✅ FEATURE GATE: Ranking só para enterprise
+        unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+          return render json: {
+            rank_position: nil,
+            ranking_score: 0,
+            magic_quadrant_points: [],
+            quadrant_meta: {},
+            category_rankings: [],
+            is_premium_analytics: false,
+            upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
+          }
+        end
+
         begin
           category_id = params[:category_id].presence
           criterion_slug = params[:criterion_slug].presence
@@ -147,11 +217,17 @@ module Api
             ranking_score: data[:percentile],
             magic_quadrant_points: data[:magic_quadrant_competitors],
             quadrant_meta: data[:quadrant_meta],
-            category_rankings: data[:category_rankings]
+            category_rankings: data[:category_rankings],
+            is_premium_analytics: true
           }
         rescue StandardError => e
           log_analytics_error('ranking', e)
-          render json: { rank_position: nil, ranking_score: 0, magic_quadrant_points: [] }
+          render json: {
+            rank_position: nil,
+            ranking_score: 0,
+            magic_quadrant_points: [],
+            is_premium_analytics: true
+          }
         end
       end
 

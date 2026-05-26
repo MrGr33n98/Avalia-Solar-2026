@@ -7,6 +7,12 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
   let(:user) { create(:user, role: 'company', status: :active, company: company) }
 
   before do
+    # Setup pro plan so feature gating allows access
+    plan = create(:plan, name: 'Pro', price: 99.0)
+    company.update(plan: plan)
+    allow(plan).to receive(:tier).and_return('pro')
+    allow(plan).to receive(:plan_tier).and_return('pro')
+
     create(:company_member, company: company, user: user, role: :owner, status: 'active')
     allow_any_instance_of(Api::V1::CompanyDashboardController).to receive(:current_user).and_return(user)
     
@@ -104,6 +110,22 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       expect(json['data']).not_to be_empty
       day_row = json['data'].find { |row| Date.parse(row['date']) == 2.days.ago.to_date }
       expect(day_row).to include('views' => 1, 'clicks' => 1, 'whatsapp' => 0, 'leads' => 0)
+    end
+
+    it 'denies access for free users' do
+      # Switch to free plan
+      free_plan = create(:plan, name: 'Free', price: 0)
+      company.update(plan: free_plan)
+      allow(free_plan).to receive(:tier).and_return('free')
+      allow(free_plan).to receive(:plan_tier).and_return('free')
+
+      get '/api/v1/company_dashboard/analytics/timeseries'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']).to eq([])
+      expect(json['data_source']).to eq('feature_not_authorized')
+      expect(json['is_premium_analytics']).to be(false)
     end
   end
 
