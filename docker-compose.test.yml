@@ -26,7 +26,9 @@ services:
       retries: 5
 
   backend:
-    image: ab0-backend:test
+    build:
+      context: ./AB0-1-back
+      dockerfile: ../Dockerfile.backend
     depends_on:
       db:
         condition: service_healthy
@@ -50,7 +52,9 @@ services:
       retries: 5
 
   frontend:
-    image: ab0-frontend:test
+    build:
+      context: ./AB0-1-front
+      dockerfile: ../Dockerfile.frontend
     depends_on:
       backend:
         condition: service_healthy

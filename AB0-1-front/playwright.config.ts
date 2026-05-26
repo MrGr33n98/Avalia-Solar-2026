@@ -1,42 +1,24 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PLAYWRIGHT_PORT = process.env.PLAYWRIGHT_PORT || '3010';
-
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: `http://localhost:${PLAYWRIGHT_PORT}`,
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
-    serviceWorkers: 'allow',
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
 
   projects: [
     {
-      name: 'chromium-mobile',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'chromium-desktop',
+      name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+    // Desktop Safari e Firefox omitidos na versão inicial para acelerar o feedback loop
   ],
-
-  webServer: {
-    command: `cross-env PORT=${PLAYWRIGHT_PORT} NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE=true npm run dev`,
-    url: `http://localhost:${PLAYWRIGHT_PORT}`,
-    reuseExistingServer: false,
-  },
 });

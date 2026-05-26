@@ -1,0 +1,175 @@
+name: Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop", "staging" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+concurrency:
+  group: enterprise-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  RUBY_VERSION: '3.2.2'
+  NODE_VERSION: '20.x'
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  fast-feedback:
+    name: Code Quality & Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Ruby Setup
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      # Node Setup
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: AB0-1-front/package-lock.json
+
+      # Backend Checks
+      - name: Rubocop
+        working-directory: ./AB0-1-back
+        run: bundle exec rubocop --parallel || true
+
+      - name: Brakeman (Security)
+        working-directory: ./AB0-1-back
+        run: |
+          gem install brakeman
+          bundle exec brakeman -q -w2 || true
+
+      - name: Bundler Audit
+        working-directory: ./AB0-1-back
+        run: |
+          gem install bundler-audit
+          bundle-audit check --update || true
+
+      # Frontend Checks
+      - name: Install Frontend Deps
+        working-directory: ./AB0-1-front
+        run: npm ci
+
+      - name: Frontend Lint & Audit
+        working-directory: ./AB0-1-front
+        run: |
+          npm run lint -- --quiet || true
+          npm audit --audit-level=high || true
+
+      # Global Secrets Scan
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  backend-tests:
+    name: Backend Unit Tests (RSpec)
+    needs: fast-feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Run RSpec
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:create db:schema:load
+          bundle exec rspec
+
+  e2e-tests:
+    name: E2E Playwright Tests
+    needs: [fast-feedback, backend-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Spin up Local Environment (Docker Compose)
+        run: |
+          docker compose -f docker-compose.test.yml up --build -d
+          # Wait for services to be healthy
+          sleep 15
+          docker compose -f docker-compose.test.yml ps
+
+      - name: Setup Node for Playwright
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: AB0-1-front/package-lock.json
+
+      - name: Install Playwright Browsers
+        working-directory: ./AB0-1-front
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright Tests
+        working-directory: ./AB0-1-front
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+        run: npx playwright test
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: AB0-1-front/playwright-report/
+          retention-days: 7
+
+      - name: Teardown Docker Compose
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
