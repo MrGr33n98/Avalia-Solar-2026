@@ -530,13 +530,16 @@ export default function CompanyComparisonModal({
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
             </div>
-          </Tabs>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+          </div>
+        </ScrollArea>
+      </div>
+    </Tabs>
+  </div>
+</DialogContent>
+</Dialog>
+);
 }
 
 function ComparisonSection({ title, children }: { title: string; children: React.ReactNode }) {
