@@ -19,14 +19,16 @@ module CompanyDashboard
         metric_key: 'whatsapp_clicks',
         fallback_method: :whatsapp_clicks_count
       )
-      leads_received = @company.leads.count
-      conversion_rate = calculate_conversion_rate(views: profile_views, leads: leads_received)
+      leads_total = @company.leads.count
+      leads_30d = leads_received_last_30d
+      conversion_rate = calculate_conversion_rate(views: profile_views, leads: leads_total)
 
       {
         profile_views: profile_views,
         cta_clicks: cta_clicks,
         whatsapp_clicks: whatsapp_clicks,
-        leads_received: leads_received,
+        leads_total: leads_total,
+        leads_30d: leads_30d,
         marketplace_potential: calculate_marketplace_potential,
         active_categories: format_active_categories,
         reviews_count: reviews_count,
@@ -143,7 +145,8 @@ module CompanyDashboard
         profile_views: 0,
         cta_clicks: 0,
         whatsapp_clicks: 0,
-        leads_received: 0,
+        leads_total: 0,
+        leads_30d: 0,
         reviews_count: 0,
         average_rating: 0,
         pending_approvals: 0,

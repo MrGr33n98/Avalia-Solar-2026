@@ -82,6 +82,11 @@ interface CompanyData {
   banner_url?: string;
   project_types?: string[];
   services_offered?: string[];
+  installation_warranty_years?: number;
+  equipment_brands?: string[];
+  engineering_insurance?: boolean;
+  post_sales_capacity?: string[];
+  delivered_projects_score?: number;
 }
 
 export default function CompanyInfo({ companyId }: CompanyInfoProps) {
@@ -593,6 +598,75 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
            </CardContent>
          </Card>
       </div>
+
+      {/* Conversion Fundamentals */}
+      <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
+        <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Conversion Fundamentals (Proof of Value)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <TechInputLabel>Installation Warranty (Years)</TechInputLabel>
+              {isEditing ? (
+                <Input type="number" min="0" value={formData?.installation_warranty_years || ''} onChange={(e) => handleInputChange('installation_warranty_years', parseInt(e.target.value) || 0)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
+              ) : (
+                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.installation_warranty_years ? `${company.installation_warranty_years} Years` : 'Not Set'}</p>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              <TechInputLabel>Delivered Projects Score</TechInputLabel>
+              {isEditing ? (
+                <Input type="number" min="0" value={formData?.delivered_projects_score || ''} onChange={(e) => handleInputChange('delivered_projects_score', parseInt(e.target.value) || 0)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
+              ) : (
+                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.delivered_projects_score || 0}</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <TechInputLabel>Engineering Risk Insurance</TechInputLabel>
+              {isEditing ? (
+                <div className="flex items-center gap-2 h-12">
+                  <input type="checkbox" checked={!!formData?.engineering_insurance} onChange={(e) => handleInputChange('engineering_insurance', e.target.checked)} className="h-5 w-5 rounded border-slate-300 text-brand-blue focus:ring-brand-blue" />
+                  <span className="text-sm font-bold text-muted-foreground">Enabled</span>
+                </div>
+              ) : (
+                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.engineering_insurance ? 'Yes' : 'No'}</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <TechInputLabel>Equipment Brands (Tier 1)</TechInputLabel>
+              {isEditing ? (
+                <Input placeholder="WEG, Fronius, Growatt (comma separated)" value={formData?.equipment_brands?.join(', ') || ''} onChange={(e) => handleInputChange('equipment_brands', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(company?.equipment_brands || []).length > 0 ? company?.equipment_brands?.map((brand, i) => (
+                    <Badge key={i} variant="outline" className="text-[9px] uppercase tracking-widest border-slate-200 dark:border-white/10 text-muted-foreground">{brand}</Badge>
+                  )) : <p className="text-sm font-black text-muted-foreground uppercase">Not Set</p>}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 md:col-span-2">
+              <TechInputLabel>Post-Sales & O&M Capacity</TechInputLabel>
+              {isEditing ? (
+                <Input placeholder="Cleaning, Monitoring, Maintenance (comma separated)" value={formData?.post_sales_capacity?.join(', ') || ''} onChange={(e) => handleInputChange('post_sales_capacity', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(company?.post_sales_capacity || []).length > 0 ? company?.post_sales_capacity?.map((cap, i) => (
+                    <Badge key={i} variant="outline" className="text-[9px] uppercase tracking-widest bg-brand-blue/10 border-none text-brand-blue px-4 h-8 rounded-xl">{cap}</Badge>
+                  )) : <p className="text-sm font-black text-muted-foreground uppercase">Not Set</p>}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

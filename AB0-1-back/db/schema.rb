@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_26_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -621,6 +621,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_000000) do
     t.string "seo_title"
     t.text "meta_description"
     t.string "segment", default: "installer", null: false
+    t.integer "installation_warranty_years", default: 1
+    t.jsonb "equipment_brands", default: []
+    t.boolean "engineering_insurance", default: false
+    t.jsonb "post_sales_capacity", default: []
+    t.integer "delivered_projects_score", default: 0
     t.index "to_tsvector('portuguese'::regconfig, (((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"

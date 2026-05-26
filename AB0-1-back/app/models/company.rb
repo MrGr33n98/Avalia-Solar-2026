@@ -349,6 +349,8 @@ class Company < ApplicationRecord
   def normalize_multiselects
     self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:project_types)
     self.niche_tags = Array(niche_tags).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:niche_tags)
+    self.equipment_brands = Array(equipment_brands).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:equipment_brands)
+    self.post_sales_capacity = Array(post_sales_capacity).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:post_sales_capacity)
     return unless respond_to?(:services_offered)
 
     self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)

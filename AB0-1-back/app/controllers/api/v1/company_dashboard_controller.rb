@@ -156,8 +156,10 @@ module Api
           # Get stored trust score
           trust_record = CompanyTrustScore.find_by(company_id: @company.id)
           
-          # Calculate current score using unified service
-          result = TrustScore::CalculationService.new(@company).calculate!
+          # Calculate current score using unified service with cache
+          result = Rails.cache.fetch("company_#{@company.id}_trust_health_score_calc", expires_in: 1.hour) do
+            TrustScore::CalculationService.new(@company).calculate!
+          end
           
           # Determine health status based on score
           health_status = case result[:score]
@@ -950,7 +952,9 @@ module Api
           :payment_methods, :certifications, :awards,
           :founded_year, :employees_count, :latitude, :longitude,
           :minimum_ticket, :maximum_ticket, :financing_options,
-          :response_time_sla, :languages, project_types: [], services_offered: []
+          :response_time_sla, :languages, project_types: [], services_offered: [],
+          :installation_warranty_years, :engineering_insurance, :delivered_projects_score,
+          equipment_brands: [], post_sales_capacity: []
         )
       end
 

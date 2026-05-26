@@ -64,6 +64,7 @@ module TrustScore
         reviews: calculate_reviews_component,
         engagement: calculate_engagement_component,
         leads: calculate_leads_component,
+        conversion_bonus: calculate_conversion_bonus,
         penalty: calculate_penalty
       }
     end
@@ -105,18 +106,23 @@ module TrustScore
     # Engagement component: based on profile views and CTA clicks
     # Using log scale for better distribution
     def calculate_engagement_component
-      # For now, return 0 or fetch from a reliable source if available
-      # We'll use a safe check for the column to avoid boot errors
-      engagement = 0
-      if company.respond_to?(:profile_views_count)
-        engagement = company.profile_views_count.to_i + (company.respond_to?(:cta_clicks_count) ? company.cta_clicks_count.to_i * 2 : 0)
-      end
+      totals = ::CompanyDashboard::MetricsSource.new(company_id: company.id).totals
+      engagement = totals[:views].to_i + (totals[:clicks].to_i * 2)
       
       return 0 if engagement.zero?
 
       # Logarithmic scaling: log(1 + x) / log(1 + max) * weight
       raw = Math.log1p(engagement) / Math.log1p(MAX_VALUES[:engagement]) * WEIGHTS[:engagement]
       [raw, WEIGHTS[:engagement]].min.round(1)
+    end
+
+    # Bonus points for Conversion fundamentals (insurance, warranty)
+    def calculate_conversion_bonus
+      bonus = 0
+      bonus += 5 if company.respond_to?(:engineering_insurance) && company.engineering_insurance
+      bonus += 5 if company.respond_to?(:installation_warranty_years) && company.installation_warranty_years.to_i > 1
+      bonus += 5 if company.respond_to?(:delivered_projects_score) && company.delivered_projects_score.to_i > 0
+      [bonus, 10].min
     end
 
     # Leads component: based on lead volume
