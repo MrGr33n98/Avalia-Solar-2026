@@ -83,8 +83,23 @@ RSpec.describe Webhooks::SecurityService do
 
     context 'with missing secret' do
       it 'raises MissingSecretError when ENV secret not set' do
-        allow(ENV).to receive(:[]).with('STRIPE_WEBHOOK_SECRET').and_return(nil)
+        allow(ENV).to receive(:[]).with('MERCADOPAGO_WEBHOOK_SECRET').and_return(nil)
         
+        service = described_class.new(
+          provider: 'mercadopago',
+          payload: payload,
+          signature: 'any_signature'
+        )
+
+        expect { service.verify! }.to raise_error(
+          Webhooks::SecurityService::MissingSecretError,
+          /MERCADOPAGO_WEBHOOK_SECRET not configured/
+        )
+      end
+    end
+
+    context 'with stripe provider' do
+      it 'raises InvalidSignatureError because Stripe verification is delegated to StripeHandler' do
         service = described_class.new(
           provider: 'stripe',
           payload: payload,
@@ -92,8 +107,8 @@ RSpec.describe Webhooks::SecurityService do
         )
 
         expect { service.verify! }.to raise_error(
-          Webhooks::SecurityService::MissingSecretError,
-          /STRIPE_WEBHOOK_SECRET not configured/
+          Webhooks::SecurityService::InvalidSignatureError,
+          /Stripe signatures must be verified by Webhooks::StripeHandler/
         )
       end
     end

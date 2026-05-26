@@ -15,22 +15,14 @@ class Plan < ApplicationRecord
   # =========================================================================
 
   def feature_flags
-    if features_json.present?
-      return JSON.parse(features_json) if features_json.is_a?(String)
-      return features_json if features_json.is_a?(Hash)
-    end
-    
-    # Fallback to legacy 'features' column if it's text/json
-    if respond_to?(:features) && features.present?
-      begin
-        return JSON.parse(features) if features.is_a?(String)
-        return features if features.is_a?(Hash)
-      rescue JSON::ParserError
-        {}
-      end
-    end
-    
-    {}
+    raw_feature_flags
+  end
+
+  def raw_feature_flags
+    parsed_features_json = parse_feature_payload(features_json)
+    return parsed_features_json if parsed_features_json.present?
+
+    parse_feature_payload(features)
   end
 
   def enabled_feature_keys
@@ -88,5 +80,16 @@ class Plan < ApplicationRecord
 
   def to_s
     name
+  end
+
+  private
+
+  def parse_feature_payload(payload)
+    return {} if payload.blank?
+    return payload if payload.is_a?(Hash)
+
+    JSON.parse(payload) if payload.is_a?(String)
+  rescue JSON::ParserError, TypeError
+    {}
   end
 end

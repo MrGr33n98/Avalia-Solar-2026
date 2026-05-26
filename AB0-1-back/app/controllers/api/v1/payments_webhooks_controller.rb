@@ -4,7 +4,7 @@ module Api
       ALLOWED_PROVIDERS = %w[stripe mercadopago pagarme mock].freeze
       
       before_action :validate_provider
-      before_action :verify_webhook_signature
+      before_action :verify_webhook_signature, unless: :stripe_provider?
       
       def create
         case params[:provider]
@@ -16,7 +16,15 @@ module Api
           handle_mock_webhook
         end
 
+        return if performed?
+
         render json: { ok: true }
+      rescue Webhooks::SecurityService::InvalidSignatureError => e
+        log_security_failure('invalid_signature', e)
+        render json: { error: 'Invalid signature' }, status: :unauthorized
+      rescue Webhooks::SecurityService::MissingSecretError => e
+        log_security_failure('missing_secret', e)
+        render json: { error: 'Configuration error' }, status: :internal_server_error
       rescue StandardError => e
         log_webhook_error(e)
         render json: { error: e.message }, status: :internal_server_error
@@ -25,18 +33,17 @@ module Api
       private
 
       def handle_mock_webhook
-        checkout_session_id = params[:checkout_session_id]
-        status = params[:status]
+        data = webhook_payload
+        checkout_session_id = data['checkout_session_id'] || params[:checkout_session_id]
+        status = data['status'] || params[:status]
         sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
-        return if sub.nil?
+        return render json: { error: 'subscription_not_found' }, status: :not_found if sub.nil?
 
-        if status == 'success'
+        if %w[success paid].include?(status)
           ends_at = Time.current + sub.banner_offer.duration_days.days
           sub.activate!(starts_at: Time.current, ends_at: ends_at)
         end
       end
-
-      private
 
       def validate_provider
         return if ALLOWED_PROVIDERS.include?(params[:provider])
@@ -51,6 +58,10 @@ module Api
         }.to_json)
         
         render json: { error: 'Invalid provider' }, status: :unprocessable_entity
+      end
+
+      def stripe_provider?
+        params[:provider] == 'stripe'
       end
 
       def verify_webhook_signature
@@ -79,6 +90,14 @@ module Api
           log_security_failure('missing_secret', e)
           render json: { error: 'Configuration error' }, status: :internal_server_error
         end
+      end
+
+      def webhook_payload
+        return {} if request.raw_post.blank?
+
+        JSON.parse(request.raw_post)
+      rescue JSON::ParserError
+        {}
       end
 
       def log_webhook_success(subscription, status)

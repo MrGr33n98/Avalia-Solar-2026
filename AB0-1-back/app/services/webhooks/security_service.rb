@@ -18,7 +18,7 @@ module Webhooks
     def verify!
       case @provider
       when 'stripe'
-        verify_stripe_signature
+        raise InvalidSignatureError, 'Stripe signatures must be verified by Webhooks::StripeHandler'
       when 'mercadopago', 'pagarme', 'mock'
         verify_hmac_signature
       else
@@ -36,17 +36,6 @@ module Webhooks
 
     private
 
-    def verify_stripe_signature
-      secret = webhook_secret('stripe')
-      raise MissingSecretError, 'STRIPE_WEBHOOK_SECRET not configured' if secret.blank?
-
-      expected = compute_stripe_signature(secret)
-      
-      unless signatures_match?(@signature, expected)
-        raise InvalidSignatureError, 'Invalid Stripe signature'
-      end
-    end
-
     def verify_hmac_signature
       secret = webhook_secret(@provider)
       raise MissingSecretError, "#{@provider.upcase}_WEBHOOK_SECRET not configured" if secret.blank?
@@ -56,12 +45,6 @@ module Webhooks
       unless signatures_match?(@signature, expected)
         raise InvalidSignatureError, "Invalid HMAC signature for #{@provider}"
       end
-    end
-
-    def compute_stripe_signature(secret)
-      timestamp = @timestamp || Time.current.to_i
-      signed_payload = "#{timestamp}.#{@payload}"
-      OpenSSL::HMAC.hexdigest('SHA256', secret, signed_payload)
     end
 
     def verify_timestamp
@@ -81,8 +64,6 @@ module Webhooks
 
     def webhook_secret(provider)
       case provider
-      when 'stripe'
-        ENV['STRIPE_WEBHOOK_SECRET']
       when 'mercadopago'
         ENV['MERCADOPAGO_WEBHOOK_SECRET']
       when 'pagarme'

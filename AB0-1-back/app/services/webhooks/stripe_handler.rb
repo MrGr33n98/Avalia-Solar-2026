@@ -6,11 +6,12 @@ module Webhooks
     end
 
     def call
-      # Use stripe SDK to verify and parse
-      return mock_handle if ENV['STRIPE_WEBHOOK_SECRET'].blank?
+      raise Webhooks::SecurityService::InvalidSignatureError, 'Missing Stripe signature' if @signature_header.blank?
+      secret = ENV['STRIPE_WEBHOOK_SECRET']
+      raise Webhooks::SecurityService::MissingSecretError, 'STRIPE_WEBHOOK_SECRET not configured' if secret.blank?
 
       event = Stripe::Webhook.construct_event(
-        @payload, @signature_header, ENV['STRIPE_WEBHOOK_SECRET']
+        @payload, @signature_header, secret
       )
 
       case event.type
@@ -19,7 +20,7 @@ module Webhooks
       end
     rescue Stripe::SignatureVerificationError => e
       Rails.logger.error "Stripe Webhook Signature Verification Failed: #{e.message}"
-      throw :abort
+      raise Webhooks::SecurityService::InvalidSignatureError, e.message
     end
 
     private
@@ -33,14 +34,6 @@ module Webhooks
       
       ends_at = Time.current + sub.banner_offer.duration_days.days
       sub.activate!(starts_at: Time.current, ends_at: ends_at)
-    end
-
-    def mock_handle
-      # Fallback for dev if secret is missing but we want to simulate
-      data = JSON.parse(@payload)
-      if data['type'] == 'checkout.session.completed'
-        handle_checkout_completed(OpenStruct.new(data['data']['object']))
-      end
     end
   end
 end

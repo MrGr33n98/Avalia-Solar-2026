@@ -1,6 +1,41 @@
 require 'rails_helper'
 
 RSpec.describe Plan do
+  describe '#raw_feature_flags' do
+    it 'returns features_json when present' do
+      plan = described_class.new(
+        name: 'Plano Recursos JSON',
+        price: 0,
+        features_json: { 'custom_ctas' => true },
+        features: { 'custom_ctas' => false }.to_json
+      )
+
+      expect(plan.raw_feature_flags).to eq('custom_ctas' => true)
+    end
+
+    it 'falls back to legacy features JSON string' do
+      plan = described_class.new(
+        name: 'Plano Recursos Legacy',
+        price: 0,
+        features_json: {},
+        features: { 'advanced_analytics' => true }.to_json
+      )
+
+      expect(plan.raw_feature_flags).to eq('advanced_analytics' => true)
+    end
+
+    it 'returns an empty hash for empty or invalid feature data' do
+      plan = described_class.new(
+        name: 'Plano Recursos Invalidos',
+        price: 0,
+        features_json: {},
+        features: 'not-json'
+      )
+
+      expect(plan.raw_feature_flags).to eq({})
+    end
+  end
+
   describe 'feature normalization' do
     it 'applies the selected template tier before validation' do
       plan = described_class.new(
