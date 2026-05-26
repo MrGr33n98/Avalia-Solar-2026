@@ -285,34 +285,32 @@ module Api
       # Returns buyer intent score summary and top leads
       def intent_summary
         authorize @company, :view_analytics?
+        
         begin
-          # Check if intent scores table exists
           unless defined?(IntentScore) && IntentScore.table_exists?
             return render json: {
               total_signals: 0,
-              intent_distribution: { cold: 0, warm: 0, hot: 0, boiling: 0 },
+              intent_distribution: {},
               top_leads: [],
-              message: 'Intent tracking not yet enabled'
+              message: 'Intent tracking not enabled'
             }
           end
 
-          # Get all intent scores for this company
-          intent_scores = IntentScore.where(company_id: @company.id)
-          
-          # Distribution by level
-          intent_distribution = intent_scores.group(:intent_level).count
-          
-          # Top actionable leads (hot, boiling, immediate, declared)
-          top_leads = intent_scores
-                                     .includes(:lead_record)
-                                     .order(total_score: :desc)
-                                     .limit(10)
-                                     .map do |score|
+          # ✅ EAGER LOAD tudo que será usado - 1 query intent_scores + 1 query leads
+          intent_scores = IntentScore
+            .where(company_id: @company.id)
+            .select(:id, :company_id, :lead_id, :total_score, :intent_level, :confidence_score, :total_signals_count, :recommended_action, :sla_window, :last_interaction_at, :updated_at, :top_signals)
+            .includes(:lead_record)
+            .order(total_score: :desc)
+            .limit(10)
+            .to_a
+
+          top_leads = intent_scores.map do |score|
             lead = score.lead_record
             {
               id: score.id,
               lead_id: score.lead_id,
-              name: lead&.name || "Prospecto ##{score.lead_id || 'Anon'}",
+              name: lead&.name || "Prospecto ##{score.lead_id}",
               email: lead&.email,
               phone: lead&.phone,
               total_score: score.total_score,
@@ -321,7 +319,6 @@ module Api
               sla_window: score.sla_window,
               last_interaction_at: score.last_interaction_at&.iso8601,
               signals_count: score.total_signals_count,
-              # Dossiê de Inteligência Enriquecido (A+++)
               technical_profile: {
                 monthly_kwh: lead&.monthly_kwh,
                 bill_value: lead&.bill_value,
@@ -342,28 +339,24 @@ module Api
               top_signals: score.top_signals || []
             }
           end
-          
-          # Aggregate stats
-          total_signals = intent_scores.sum(:total_signals_count)
-          avg_confidence = intent_scores.average(:confidence_score).to_f.round(2)
-          
+
           render json: {
-            total_signals: total_signals,
-            avg_confidence: avg_confidence,
+            total_signals: intent_scores.sum(:total_signals_count),
+            avg_confidence: intent_scores.average(:confidence_score).to_f.round(2),
             intent_distribution: {
-              cold: intent_distribution['cold'].to_i,
-              warm: intent_distribution['warm'].to_i,
-              hot: intent_distribution['hot'].to_i,
-              boiling: intent_distribution['boiling'].to_i,
-              immediate: intent_distribution['immediate'].to_i,
-              declared: intent_distribution['declared'].to_i
+              cold: intent_scores.count { |s| s.intent_level == 'cold' },
+              warm: intent_scores.count { |s| s.intent_level == 'warm' },
+              hot: intent_scores.count { |s| s.intent_level == 'hot' },
+              boiling: intent_scores.count { |s| s.intent_level == 'boiling' },
+              immediate: intent_scores.count { |s| s.intent_level == 'immediate' },
+              declared: intent_scores.count { |s| s.intent_level == 'declared' }
             },
             top_leads: top_leads,
-            last_updated: intent_scores.maximum(:updated_at)&.iso8601
+            last_updated: intent_scores.max_by(&:updated_at)&.updated_at&.iso8601
           }
         rescue StandardError => e
           log_analytics_error('intent_summary', e)
-          render json: { total_signals: 0, intent_distribution: {}, top_leads: [], error: e.message }
+          render json: { error: e.message }, status: :unprocessable_entity
         end
       end
 
@@ -871,7 +864,13 @@ module Api
       # GET /api/v1/company_dashboard/social_proof_reviews
       def social_proof_reviews
         authorize @company, :edit_reviews?
-        reviews = @company.reviews.includes(:user).order(created_at: :desc)
+        
+        # ✅ Eager load user para não ter N+1 + select para limitar colunas
+        reviews = @company.reviews
+          .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
+          .includes(:user)
+          .order(created_at: :desc)
+
         feature_permission = current_user&.admin? || @company.can_use_social_proof?
 
         render json: {

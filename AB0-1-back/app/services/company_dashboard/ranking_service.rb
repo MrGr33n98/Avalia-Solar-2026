@@ -29,7 +29,7 @@ module CompanyDashboard
     private
 
     def base_scope
-      scope = Company.active.with_attached_logo
+      scope = Company.active.with_attached_logo.select(:id, :name, :rating_avg, :rating_count, :verified, :social_proof_enabled, :whatsapp_enabled, :cta_whatsapp_enabled, :profile_views_count, :cta_clicks_count, :leads_count, :reviews_count)
       if category_id.present?
         scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
       end
@@ -98,7 +98,7 @@ module CompanyDashboard
     end
 
     def category_rankings
-      company.categories.map do |category|
+      company.categories.each do |category|
         if criterion_slug.present?
           scoped_service = self.class.new(company: company, category_id: category.id, criterion_slug: criterion_slug)
           total = Company.active.joins(:categories).where(categories: { id: category.id }).distinct.count
@@ -113,34 +113,34 @@ module CompanyDashboard
             criterion_title: scoped_service.send(:criterion_title)
           }
         else
-        position = Company.active
-                          .joins(:categories)
-                          .where(categories: { id: category.id })
-                          .where('rating_avg > ? OR (rating_avg = ? AND rating_count > ?)',
-                                 comparison_rating(company), comparison_rating(company), company.rating_count)
-                          .count + 1
+          position = Company.active
+                            .joins(:categories)
+                            .where(categories: { id: category.id })
+                            .where('rating_avg > ? OR (rating_avg = ? AND rating_count > ?)',
+                                   comparison_rating(company), comparison_rating(company), company.rating_count)
+                            .count + 1
 
-        total = Company.active
-                       .joins(:categories)
-                       .where(categories: { id: category.id })
-                       .count
+          total = Company.active
+                         .joins(:categories)
+                         .where(categories: { id: category.id })
+                         .count
 
-        {
-          category_id: category.id,
-          category_name: category.name,
-          position: position,
-          total: total,
-          percentile: total.zero? ? 0 : ((total - position + 1).to_f / total * 100).round(1)
-        }
+          {
+            category_id: category.id,
+            category_name: category.name,
+            position: position,
+            total: total,
+            percentile: total.zero? ? 0 : ((total - position + 1).to_f / total * 100).round(1)
+          }
         end
       end
     end
 
     def ranked_companies
       @ranked_companies ||= if criterion_slug.present?
-                              base_scope.to_a.sort_by { |comp| [-comparison_rating(comp).to_f, -comp.rating_count.to_i] }
+                              base_scope.includes(:company_badges, :review_aggregates).to_a.sort_by { |comp| [-comparison_rating(comp).to_f, -comp.rating_count.to_i] }
                             else
-                              base_scope.order(rating_avg: :desc, rating_count: :desc).to_a
+                              base_scope.includes(:company_badges, :review_aggregates).order(rating_avg: :desc, rating_count: :desc).to_a
                             end
     end
 
@@ -243,9 +243,9 @@ module CompanyDashboard
     def review_aggregate_for(comp)
       @review_aggregates ||= {}
       @review_aggregates[comp.id] ||= begin
-        scope = comp.review_aggregates
+        scope = comp.review_aggregates.select(:id, :company_id, :category_id, :criteria_breakdown)
         scope = scope.find_by(category_id: category_id) if category_id.present?
-        scope ||= comp.review_aggregates.find_by(category_id: nil)
+        scope ||= comp.review_aggregates.select(:id, :company_id, :category_id, :criteria_breakdown).find_by(category_id: nil)
         scope
       end
     end
