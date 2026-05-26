@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AvaliaSolar - Mapa Completo da Jornada do Usuário</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "loose",
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true,
+        nodeSpacing: 38,
+        rankSpacing: 54
+      },
+      theme: "base",
+      themeVariables: {
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
+        primaryTextColor: "#172033",
+        lineColor: "#64748b",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#cbd5e1"
+      }
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --ink: #172033;
+      --muted: #65758b;
+      --line: #d8e0ea;
+      --client: #dbeafe;
+      --client-ink: #1d4ed8;
+      --company: #dcfce7;
+      --company-ink: #15803d;
+      --admin: #e5e7eb;
+      --admin-ink: #374151;
+      --data: #ffedd5;
+      --data-ink: #c2410c;
+      --metric: #ede9fe;
+      --metric-ink: #6d28d9;
+      --error: #fee2e2;
+      --error-ink: #b91c1c;
+      --decision: #fef3c7;
+      --decision-ink: #a16207;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    header {
+      padding: 32px 40px 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    main {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1, h2, h3 { line-height: 1.2; margin: 0; }
+    h1 { font-size: 28px; letter-spacing: 0; }
+    h2 { font-size: 21px; margin-bottom: 14px; }
+    h3 { font-size: 16px; margin-bottom: 10px; }
+    p { margin: 8px 0 0; color: var(--muted); }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 18px 0;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      flex: none;
+    }
+
+    .swatch.client { background: var(--client); }
+    .swatch.company { background: var(--company); }
+    .swatch.admin { background: var(--admin); }
+    .swatch.data { background: var(--data); }
+    .swatch.metric { background: var(--metric); }
+    .swatch.error { background: var(--error); }
+    .swatch.decision { background: var(--decision); transform: rotate(45deg); }
+
+    .diagram {
+      overflow: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .diagram pre {
+      min-width: 1100px;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .note {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #1e3a8a;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AvaliaSolar.com.br - Mapa Completo da Jornada do Usuário</h1>
+    <p>
+      Fluxograma macro e subfluxos para clientes, empresas e administração do marketplace de energia solar e mobilidade elétrica.
+      Inclui decisões, exceções, métricas, tempos estimados, gargalos e touchpoints.
+    </p>
+    <div class="meta">
+      <span class="pill">Formato: HTML + Mermaid.js</span>
+      <span class="pill">Macro: 70+ etapas/decisões</span>
+      <span class="pill">Cenários: 15+</span>
+      <span class="pill">Data: 2026-05-19</span>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Legenda</h2>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch client"></span><strong>Cliente:</strong> busca, compara, solicita e avalia</div>
+        <div class="legend-item"><span class="swatch company"></span><strong>Empresa:</strong> cadastra, recebe lead e envia proposta</div>
+        <div class="legend-item"><span class="swatch admin"></span><strong>Admin:</strong> valida, modera e opera regras</div>
+        <div class="legend-item"><span class="swatch decision"></span><strong>Decisão:</strong> sim/não ou escolha crítica</div>
+        <div class="legend-item"><span class="swatch data"></span><strong>Integração:</strong> sistemas, dados, tracking e automações</div>
+        <div class="legend-item"><span class="swatch metric"></span><strong>Métrica:</strong> evento ou conversão mensurável</div>
+        <div class="legend-item"><span class="swatch error"></span><strong>Exceção:</strong> erro, abandono ou recuperação</div>
+      </div>
+      <p class="note">
+        Convenção de forma: elipses indicam início/fim, retângulos indicam ações/processos e diamantes indicam decisões.
+        As setas numeradas indicam a sequência principal ou caminhos alternativos.
+      </p>
+    </section>
+
+    <section>
+      <h2>1. Diagrama Principal Completo - Visão Macro</h2>
+      <p>
+        Jornada fim a fim conectando cliente, empresa, admin, integrações e métricas. Cada nó inclui tempo estimado ou ponto de medição.
+      </p>
+      <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  START((1. Acesso inicial<br/>0s)):::client
+  UTYPE{2. Tipo de visitante?<br/>cliente / empresa / admin}:::decision
+
+  %% CLIENTE - ACESSO E BUSCA
+  C1[3. Cliente abre home<br/>Métrica: sessão iniciada]:::client
+  C2{4. Primeiro acesso?<br/>Sim/Não}:::decision
+  C3[5. Mostrar proposta de valor<br/>30-60s]:::client
+  C4[6. Recuperar favoritos, projetos e histórico<br/>5s]:::client
+  C5{7. Intenção principal?<br/>Buscar / calcular / ler conteúdo}:::decision
+  C6[8. Buscar por categoria<br/>solar, VE, baterias, financiamento]:::client
+  C7[9. Usar calculadora de economia<br/>3-6min]:::client
+  C8[10. Ler blog/guia educativo<br/>2-8min]:::client
+  C9[11. Ver empresas em destaque<br/>Métrica: destaque_view]:::client
+  C10{12. Selecionou categoria?}:::decision
+  C11[13. Aplicar filtros<br/>localização, segmento, score, selos]:::client
+  C12{14. Filtro com resultado?}:::decision
+  C13[15. Listagem ranqueada<br/>Métrica: search_success_rate]:::client
+  C14[16. Empty state + sugestão de ampliar raio/categoria<br/>30s]:::error
+  C15[17. Capturar interesse para área sem oferta<br/>Métrica: unmet_demand]:::data
+  C16{18. Abandona busca?}:::decision
+  C17[19. Recomendar conteúdo/WhatsApp suporte<br/>1-3min]:::client
+
+  %% CLIENTE - PERFIL, REVIEWS E COMPARAÇÃO
+  C18[20. Abrir perfil de empresa<br/>Métrica: profile_view_rate]:::client
+  C19[21. Ler descrição, cases, mídia e área atendida<br/>1-4min]:::client
+  C20[22. Ver avaliações, NPS, score setorial e critérios<br/>1-3min]:::client
+  C21[23. Ver selos: Premium, verificado, certificações<br/>30s]:::client
+  C22{24. Confiança suficiente?}:::decision
+  C23[25. Adicionar favorito<br/>Métrica: favorite_add]:::client
+  C24{26. Quer comparar?}:::decision
+  C25[27. Adicionar 2-4 empresas à comparação<br/>1-3min]:::client
+  C26[28. Abrir modal/página de comparação<br/>Métrica: compare_open]:::client
+  C27{29. Comparação esclareceu?}:::decision
+  C28[30. Continuar buscando empresas similares<br/>2-10min]:::client
+
+  %% CLIENTE - ORÇAMENTO E CONTA
+  C29{31. Solicitar orçamento agora?}:::decision
+  C30{32. Usuário autenticado?}:::decision
+  C31[33. Gate de cadastro/login<br/>email, Google, LinkedIn, Facebook]:::client
+  C32{34. Criar conta ou continuar convidado?}:::decision
+  C33[35. Conta criada/logada<br/>Métrica: signup_conversion]:::client
+  C34[36. Fluxo convidado limitado<br/>telefone/email + consentimento]:::client
+  C35[37. Wizard de projeto<br/>tipo de imóvel, consumo, endereço, prazo]:::client
+  C36{38. Dados mínimos completos?}:::decision
+  C37[39. Recuperação de formulário<br/>salvar rascunho, WhatsApp, email]:::error
+  C38{40. Solicitar 1 ou múltiplos orçamentos?}:::decision
+  C39[41. Orçamento para empresa única<br/>Métrica: quote_single]:::client
+  C40[42. Orçamento para múltiplas empresas<br/>Métrica: quote_multi]:::client
+  C41[43. Validar consentimento LGPD e dados de contato<br/>30s]:::data
+  C42[44. Criar lead/projeto<br/>Métrica: quote_request_rate]:::data
+  C43[45. Distribuir lead por categoria, localização, plano e disponibilidade<br/>segundos]:::data
+  C44[46. Cliente vê confirmação + próximos passos<br/>Métrica: quote_submitted]:::client
+  C45[47. Dashboard do cliente: projetos, propostas, favoritos<br/>recorrente]:::client
+
+  %% EMPRESA - ONBOARDING
+  E0((48. Empresa acessa plataforma<br/>0s)):::company
+  E1[49. Página de cadastro de empresa<br/>Métrica: company_signup_start]:::company
+  E2[50. Informar CNPJ, segmento e contato comercial<br/>3-6min]:::company
+  E3{51. Empresa já existe?}:::decision
+  E4[52. Solicitar acesso a perfil existente<br/>2min]:::company
+  E5[53. Criar novo perfil pendente<br/>Métrica: company_created]:::company
+  E6[54. Upload de documentos, certificações e comprovantes<br/>5-15min]:::company
+  E7[55. Definir categorias e área de atendimento<br/>3-8min]:::company
+  E8[56. Configurar perfil, portfólio, cases, CTAs e WhatsApp<br/>10-30min]:::company
+  E9{57. Perfil completo?}:::decision
+  E10[58. Checklist de pendências + lembretes<br/>email/WhatsApp]:::company
+  A1[59. Admin recebe solicitação<br/>Métrica: admin_review_queue]:::admin
+  A2[60. Verificar documentos, CNPJ, reputação e certificações<br/>1-2 dias]:::admin
+  A3{61. Aprovar empresa?}:::decision
+  A4[62. Aprovar + ativar categorias e plano<br/>Métrica: company_approved]:::admin
+  A5[63. Rejeitar/suspender + motivo e plano de correção<br/>Métrica: company_rejected]:::admin
+  E11[64. Empresa ativa no marketplace<br/>Métrica: profile_live]:::company
+
+  %% EMPRESA - LEADS E PROPOSTAS
+  E12[65. Receber notificação de lead<br/>email, WhatsApp, dashboard]:::company
+  E13[66. Abrir lead e qualificar urgência, localização e ticket<br/>2-10min]:::company
+  E14{67. Lead atende critérios?}:::decision
+  E15[68. Aceitar lead e iniciar contato<br/>Métrica: lead_accepted]:::company
+  E16[69. Recusar lead com motivo<br/>Métrica: lead_rejected]:::company
+  E17[70. Enviar proposta personalizada<br/>1-72h]:::company
+  E18[71. Atualizar status: contatado, visita, proposta, ganho/perdido<br/>recorrente]:::company
+  E19{72. Cliente responde?}:::decision
+  E20[73. Follow-up automático + lembrete empresa<br/>24-72h]:::data
+  E21[74. Negociação por WhatsApp/email/telefone<br/>1-30 dias]:::company
+
+  %% CONTRATAÇÃO E PÓS-VENDA
+  C46[75. Cliente recebe propostas e compara preços, prazo e reputação<br/>1-14 dias]:::client
+  C47{76. Contratar ou abandonar?}:::decision
+  C48[77. Contratar empresa escolhida<br/>Métrica: hire_conversion]:::client
+  C49[78. Abandono: preço, demora, falta de confiança, timing<br/>Métrica: abandonment_reason]:::error
+  C50[79. Recuperação: novo matching, financiamento, consultoria WhatsApp<br/>1-7 dias]:::client
+  C51[80. Execução do projeto + marcos de instalação/entrega<br/>dias/semanas]:::client
+  C52[81. Pós-venda: garantias, suporte e monitoramento<br/>recorrente]:::client
+  C53{82. Avaliar empresa?}:::decision
+  C54[83. Review público + notas por critério + anexos<br/>3-6min]:::client
+  C55[84. Sem avaliação: lembretes graduais<br/>email/WhatsApp]:::data
+  C56[85. Atualizar score, ranking e reputação da empresa<br/>Métrica: review_rate]:::data
+  END((86. Ciclo de retenção e indicação<br/>cliente recorrente)):::client
+
+  %% ADMIN E SISTEMAS
+  A6[87. Monitorar fraude, reviews, reclamações e qualidade de dados<br/>diário]:::admin
+  A7[88. Moderar reviews e disputas<br/>SLA 1-3 dias]:::admin
+  A8[89. Ajustar planos, selos, destaque e regras de distribuição<br/>recorrente]:::admin
+  D1[90. Analytics/PostHog/GA4<br/>funil e eventos]:::metric
+  D2[91. CRM/Email/WhatsApp<br/>comunicações]:::data
+  D3[92. Sistema de reviews e ranking<br/>confiança]:::data
+
+  START -- "1" --> UTYPE
+  UTYPE -- "2 Cliente" --> C1
+  UTYPE -- "3 Empresa" --> E0
+  UTYPE -- "4 Admin" --> A1
+
+  C1 -- "5" --> C2
+  C2 -- "6 Sim" --> C3
+  C2 -- "7 Não" --> C4
+  C3 -- "8" --> C5
+  C4 -- "9" --> C5
+  C5 -- "10 Buscar" --> C6
+  C5 -- "11 Calcular" --> C7
+  C5 -- "12 Conteúdo" --> C8
+  C6 -- "13" --> C10
+  C7 -- "14 resultado economia" --> C35
+  C8 -- "15 CTA contextual" --> C6
+  C1 -- "16" --> C9
+  C9 -- "17" --> C18
+  C10 -- "18 Sim" --> C11
+  C10 -- "19 Não" --> C6
+  C11 -- "20" --> C12
+  C12 -- "21 Sim" --> C13
+  C12 -- "22 Não" --> C14
+  C14 -- "23" --> C15
+  C15 -- "24" --> C16
+  C16 -- "25 Sim" --> C17
+  C16 -- "26 Não" --> C11
+  C17 -- "27" --> C8
+  C13 -- "28 abrir card/perfil" --> C18
+  C18 -- "29" --> C19
+  C19 -- "30" --> C20
+  C20 -- "31" --> C21
+  C21 -- "32" --> C22
+  C22 -- "33 Sim" --> C29
+  C22 -- "34 Não" --> C23
+  C23 -- "35" --> C24
+  C24 -- "36 Sim" --> C25
+  C24 -- "37 Não" --> C28
+  C25 -- "38" --> C26
+  C26 -- "39" --> C27
+  C27 -- "40 Sim" --> C29
+  C27 -- "41 Não" --> C28
+  C28 -- "42" --> C13
+  C29 -- "43 Sim" --> C30
+  C29 -- "44 Não" --> C23
+  C30 -- "45 Sim" --> C35
+  C30 -- "46 Não" --> C31
+  C31 -- "47" --> C32
+  C32 -- "48 Conta" --> C33
+  C32 -- "49 Convidado" --> C34
+  C33 -- "50" --> C35
+  C34 -- "51" --> C35
+  C35 -- "52" --> C36
+  C36 -- "53 Sim" --> C38
+  C36 -- "54 Não" --> C37
+  C37 -- "55 recuperar" --> C35
+  C38 -- "56 Único" --> C39
+  C38 -- "57 Múltiplos" --> C40
+  C39 -- "58" --> C41
+  C40 -- "59" --> C41
+  C41 -- "60" --> C42
+  C42 -- "61" --> C43
+  C43 -- "62" --> C44
+  C44 -- "63" --> C45
+  C43 -- "64" --> E12
+
+  E0 -- "65" --> E1
+  E1 -- "66" --> E2
+  E2 -- "67" --> E3
+  E3 -- "68 Sim" --> E4
+  E3 -- "69 Não" --> E5
+  E4 -- "70" --> A1
+  E5 -- "71" --> E6
+  E6 -- "72" --> E7
+  E7 -- "73" --> E8
+  E8 -- "74" --> E9
+  E9 -- "75 Não" --> E10
+  E10 -- "76" --> E8
+  E9 -- "77 Sim" --> A1
+  A1 -- "78" --> A2
+  A2 -- "79" --> A3
+  A3 -- "80 Sim" --> A4
+  A3 -- "81 Não" --> A5
+  A4 -- "82" --> E11
+  A5 -- "83 corrigir" --> E10
+  E11 -- "84" --> E12
+  E12 -- "85" --> E13
+  E13 -- "86" --> E14
+  E14 -- "87 Sim" --> E15
+  E14 -- "88 Não" --> E16
+  E16 -- "89 redistribuir" --> C43
+  E15 -- "90" --> E17
+  E17 -- "91" --> E18
+  E18 -- "92" --> E19
+  E19 -- "93 Sim" --> E21
+  E19 -- "94 Não" --> E20
+  E20 -- "95" --> E18
+  E21 -- "96 propostas" --> C46
+
+  C46 -- "97" --> C47
+  C47 -- "98 Contratar" --> C48
+  C47 -- "99 Abandonar" --> C49
+  C49 -- "100" --> C50
+  C50 -- "101" --> C13
+  C48 -- "102" --> C51
+  C51 -- "103" --> C52
+  C52 -- "104" --> C53
+  C53 -- "105 Sim" --> C54
+  C53 -- "106 Não" --> C55
+  C54 -- "107" --> C56
+  C55 -- "108" --> C53
+  C56 -- "109" --> END
+
+  C42 -. "evento" .-> D1
+  C18 -. "evento" .-> D1
+  C54 -. "evento" .-> D3
+  E18 -. "status" .-> D1
+  C44 -. "mensagem" .-> D2
+  E12 -. "notificação" .-> D2
+  A6 -. "moderação" .-> A7
+  A7 -. "reputação" .-> D3
+  A8 -. "ranking/planos" .-> C13
+
+  classDef client fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:1px;
+  classDef company fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:1px;
+  classDef admin fill:#e5e7eb,stroke:#6b7280,color:#374151,stroke-width:1px;
+  classDef decision fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1px;
+  classDef data fill:#ffedd5,stroke:#ea580c,color:#7c2d12,stroke-width:1px;
+  classDef metric fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,stroke-width:1px;
+  classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:1px;
+</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Subfluxos Detalhados por Categoria</h2>
+      <p>
+        Cada categoria ajusta perguntas, critérios de qualificação, documentos, métricas de sucesso e empresas elegíveis para receber o lead.
+      </p>
+      <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  CAT_START((Entrada por categoria<br/>home, busca, blog, anúncio)):::client
+  CAT_DECIDE{Categoria escolhida?}:::decision
+  CAT_GENERIC[Wizard base<br/>localização, contato, prazo, orçamento]:::client
+
+  R1[Residencial<br/>conta de luz, telhado, consumo, CEP<br/>Tempo: 4-7min]:::client
+  R2{Tem conta de luz/foto do telhado?}:::decision
+  R3[Calcular economia + dimensionamento inicial<br/>Métrica: calculator_to_lead]:::data
+  R4[Lead para instaladores residenciais locais<br/>SLA resposta: 24h]:::data
+
+  CI1[Comercial e industrial<br/>demanda, CNPJ, horário de operação, demanda contratada<br/>Tempo: 6-12min]:::client
+  CI2{Projeto acima de ticket mínimo?}:::decision
+  CI3[Solicitar fatura, demanda e visita técnica<br/>Métrica: qualified_b2b_lead]:::data
+  CI4[Lead para EPC/integradores B2B<br/>SLA: 48h]:::data
+
+  AG1[Rural/agro<br/>bomba, irrigação, área remota, rede disponível<br/>Tempo: 6-12min]:::client
+  AG2{Há restrição rural/off-grid?}:::decision
+  AG3[Adicionar baterias, bombeamento ou estrutura especial<br/>Métrica: rural_complexity]:::data
+  AG4[Lead para empresas com atuação rural/regional<br/>SLA: 48-72h]:::data
+
+  EVR1[Wallbox residencial<br/>modelo do veículo, garagem, padrão elétrico<br/>Tempo: 3-6min]:::client
+  EVR2{Condomínio ou casa individual?}:::decision
+  EVR3[Casa: instalação elétrica e potência desejada]:::client
+  EVR4[Condomínio: autorização, vaga, medição individual]:::client
+
+  EVC1[Carregadores comerciais/condomínios<br/>número de vagas, potência, billing, gestão de acesso<br/>Tempo: 8-15min]:::client
+  EVC2{Precisa software de gestão?}:::decision
+  EVC3[Qualificar OCPP, cobrança, RFID/app e manutenção]:::data
+  EVC4[Lead para operadores de recarga e integradores]:::data
+
+  FLEET1[Frotas elétricas<br/>quantidade de veículos, rotas, janelas de carga<br/>Tempo: 10-20min]:::client
+  FLEET2{Precisa estudo de demanda/infra?}:::decision
+  FLEET3[Gerar diagnóstico consultivo + proposta Enterprise]:::data
+  FLEET4[Lead para solução de frota, energia e recarga]:::data
+
+  BAT1[Baterias e armazenamento<br/>backup, peak shaving, off-grid, autonomia<br/>Tempo: 6-12min]:::client
+  BAT2{Uso principal é backup?}:::decision
+  BAT3[Dimensionar autonomia e cargas críticas]:::data
+  BAT4[Lead para integradores com bateria/híbrido]:::data
+
+  CARP1[Carport solar<br/>vagas, área disponível, estrutura, carregamento VE<br/>Tempo: 8-15min]:::client
+  CARP2{Tem projeto arquitetônico/área medida?}:::decision
+  CARP3[Solicitar fotos, plantas e restrições estruturais]:::data
+  CARP4[Lead para EPC + estrutura metálica + recarga]:::data
+
+  FIN1[Financiamento solar<br/>valor estimado, perfil PF/PJ, entrada, prazo<br/>Tempo: 3-8min]:::client
+  FIN2{Tem orçamento técnico?}:::decision
+  FIN3[Sem orçamento: gerar pré-simulação e pedir projeto]:::data
+  FIN4[Com orçamento: encaminhar a bancos/parceiros financeiros]:::data
+
+  MATCH[Motor de matching<br/>categoria + geografia + plano + score + disponibilidade]:::data
+  NO_MATCH{Há empresas elegíveis?}:::decision
+  RECOVERY[Sem match: ampliar raio, capturar demanda, suporte WhatsApp]:::error
+  LEAD_DONE[Lead criado e distribuído<br/>Métrica: category_lead_conversion]:::metric
+
+  CAT_START --> CAT_DECIDE
+  CAT_DECIDE -- "Solar residencial" --> R1
+  CAT_DECIDE -- "Comercial/industrial" --> CI1
+  CAT_DECIDE -- "Rural/agro" --> AG1
+  CAT_DECIDE -- "Wallbox" --> EVR1
+  CAT_DECIDE -- "Condomínio/comercial" --> EVC1
+  CAT_DECIDE -- "Frotas" --> FLEET1
+  CAT_DECIDE -- "Baterias" --> BAT1
+  CAT_DECIDE -- "Carport" --> CARP1
+  CAT_DECIDE -- "Financiamento" --> FIN1
+  CAT_DECIDE -- "Indefinida" --> CAT_GENERIC
+
+  CAT_GENERIC --> MATCH
+  R1 --> R2
+  R2 -- "Sim" --> R3
+  R2 -- "Não" --> CAT_GENERIC
+  R3 --> R4
+  R4 --> MATCH
+
+  CI1 --> CI2
+  CI2 -- "Sim" --> CI3
+  CI2 -- "Não" --> R1
+  CI3 --> CI4
+  CI4 --> MATCH
+
+  AG1 --> AG2
+  AG2 -- "Sim" --> AG3
+  AG2 -- "Não" --> CAT_GENERIC
+  AG3 --> AG4
+  AG4 --> MATCH
+
+  EVR1 --> EVR2
+  EVR2 -- "Casa" --> EVR3
+  EVR2 -- "Condomínio" --> EVR4
+  EVR3 --> MATCH
+  EVR4 --> EVC1
+
+  EVC1 --> EVC2
+  EVC2 -- "Sim" --> EVC3
+  EVC2 -- "Não" --> CAT_GENERIC
+  EVC3 --> EVC4
+  EVC4 --> MATCH
+
+  FLEET1 --> FLEET2
+  FLEET2 -- "Sim" --> FLEET3
+  FLEET2 -- "Não" --> CAT_GENERIC
+  FLEET3 --> FLEET4
+  FLEET4 --> MATCH
+
+  BAT1 --> BAT2
+  BAT2 -- "Sim" --> BAT3
+  BAT2 -- "Não / arbitragem" --> CAT_GENERIC
+  BAT3 --> BAT4
+  BAT4 --> MATCH
+
+  CARP1 --> CARP2
+  CARP2 -- "Sim" --> CARP3
+  CARP2 -- "Não" --> CAT_GENERIC
+  CARP3 --> CARP4
+  CARP4 --> MATCH
+
+  FIN1 --> FIN2
+  FIN2 -- "Sim" --> FIN4
+  FIN2 -- "Não" --> FIN3
+  FIN3 --> MATCH
+  FIN4 --> MATCH
+
+  MATCH --> NO_MATCH
+  NO_MATCH -- "Sim" --> LEAD_DONE
+  NO_MATCH -- "Não" --> RECOVERY
+  RECOVERY --> CAT_DECIDE
+
+  classDef client fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
+  classDef decision fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef data fill:#ffedd5,stroke:#ea580c,color:#7c2d12;
+  classDef metric fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+  classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Matriz de Decisão Cliente vs Empresa</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decisão crítica</th>
+            <th>Cliente</th>
+            <th>Empresa</th>
+            <th>Admin/Sistema</th>
+            <th>Métrica</th>
+            <th>Gargalo potencial</th>
+            <th>Otimização de UX sugerida</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Criar conta vs convidado</td>
+            <td>Escolhe entre salvar projeto ou enviar orçamento rápido</td>
+            <td>Recebe lead com mais/menos contexto</td>
+            <td>Aplica gate para contato direto e LGPD</td>
+            <td><code>signup_conversion</code>, <code>guest_quote_rate</code></td>
+            <td>Fricção no login antes do valor percebido</td>
+            <td>Gate progressivo após comparar ou clicar WhatsApp</td>
+          </tr>
+          <tr>
+            <td>1 vs múltiplos orçamentos</td>
+            <td>Decide velocidade vs competição de propostas</td>
+            <td>Compete com outras empresas ou recebe lead exclusivo</td>
+            <td>Regra por plano, geografia, score e disponibilidade</td>
+            <td><code>quote_single</code>, <code>quote_multi</code>, <code>proposal_rate</code></td>
+            <td>Excesso de opções causa indecisão</td>
+            <td>Recomendação padrão: 3 empresas com justificativa</td>
+          </tr>
+          <tr>
+            <td>Escolher empresa vs continuar buscando</td>
+            <td>Usa score, reviews, selos e portfólio</td>
+            <td>Precisa perfil completo e prova social</td>
+            <td>Ranking e moderação de reviews</td>
+            <td><code>profile_view_rate</code>, <code>compare_open</code></td>
+            <td>Falta de confiança ou dados incompletos</td>
+            <td>Resumo comparativo fixo e badges explicáveis</td>
+          </tr>
+          <tr>
+            <td>Contratar vs abandonar</td>
+            <td>Avalia preço, prazo, confiança e financiamento</td>
+            <td>Precisa follow-up rápido e proposta clara</td>
+            <td>Detecta abandono e dispara recuperação</td>
+            <td><code>hire_conversion</code>, <code>abandonment_reason</code></td>
+            <td>Demora de resposta e proposta pouco comparável</td>
+            <td>SLA visível, lembretes e proposta padronizada</td>
+          </tr>
+          <tr>
+            <td>Avaliar vs não avaliar</td>
+            <td>Decide se dedica 3-6 minutos ao review</td>
+            <td>Ganha reputação ou recebe feedback privado</td>
+            <td>Modera, publica e recalcula ranking</td>
+            <td><code>review_rate</code>, <code>review_quality_score</code></td>
+            <td>Review pedido tarde demais</td>
+            <td>Pedido no marco certo: instalação concluída + incentivo leve</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>4. Jornada Temporal - Primeiro Acesso vs Recorrente</h2>
+      <div class="diagram">
+<pre class="mermaid">
+journey
+  title AvaliaSolar - Jornada temporal por perfil
+  section Primeiro acesso do cliente
+    Entende proposta de valor: 4: Cliente
+    Escolhe categoria ou usa calculadora: 5: Cliente
+    Aplica localização e filtros: 4: Cliente
+    Abre perfis e reviews: 5: Cliente
+    Compara empresas: 4: Cliente
+    Enfrenta decisão de cadastro: 3: Cliente
+    Envia pedido de orçamento: 5: Cliente
+  section Cliente recorrente
+    Retoma favoritos e projeto salvo: 5: Cliente
+    Reabre comparação: 4: Cliente
+    Consulta propostas: 4: Cliente
+    Negocia via WhatsApp/email: 4: Cliente
+    Contrata ou solicita novo matching: 4: Cliente
+    Avalia empresa contratada: 3: Cliente
+  section Empresa nova
+    Solicita cadastro: 4: Empresa
+    Envia documentos e categorias: 3: Empresa
+    Aguarda verificação: 2: Admin
+    Completa perfil e portfólio: 4: Empresa
+    Recebe primeiro lead: 5: Empresa
+  section Empresa recorrente
+    Abre dashboard de leads: 5: Empresa
+    Qualifica lead: 4: Empresa
+    Envia proposta: 4: Empresa
+    Atualiza status: 3: Empresa
+    Responde reviews e melhora score: 4: Empresa
+</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Fluxo de Dados Entre Sistemas</h2>
+      <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  WEB[Web/App<br/>www.avaliasolar.com.br]:::client
+  BLOG[Blog/conteúdo<br/>educação e SEO]:::client
+  CALC[Calculadora<br/>economia/dimensionamento]:::client
+  AUTH[Auth/contas<br/>JWT, social login, convidado]:::data
+  SEARCH[Busca e ranking<br/>categoria/localização/score]:::data
+  PROFILE[Perfil da empresa<br/>mídia, selos, reviews, CTAs]:::client
+  COMPARE[Comparação<br/>2-4 empresas]:::client
+  WIZARD[Wizard de orçamento<br/>dados do projeto]:::client
+  LEADS[Lead engine<br/>matching e distribuição]:::data
+  CRM[Email/WhatsApp/notificações<br/>cliente e empresa]:::data
+  DASHC[Dashboard cliente<br/>projetos, propostas, favoritos]:::client
+  DASHE[Dashboard empresa<br/>leads, propostas, reputação]:::company
+  REVIEWS[Reviews e score<br/>confiança/ranking]:::data
+  ADMIN[ActiveAdmin<br/>moderação, planos, cadastros]:::admin
+  ANALYTICS[Analytics<br/>PostHog, GA4, platform_events]:::metric
+  DB[(Postgres/Redis<br/>dados, cache, filas)]:::data
+  ERR[Erros e recuperação<br/>empty state, retry, suporte]:::error
+
+  BLOG -- "CTA contextual" --> CALC
+  BLOG -- "links internos" --> SEARCH
+  WEB -- "sessão/eventos" --> ANALYTICS
+  WEB -- "login/gate" --> AUTH
+  CALC -- "resultado + intenção" --> WIZARD
+  SEARCH -- "cards" --> PROFILE
+  PROFILE -- "reviews/selos" --> REVIEWS
+  PROFILE -- "comparar" --> COMPARE
+  COMPARE -- "seleção" --> WIZARD
+  AUTH -- "identidade/consentimento" --> WIZARD
+  WIZARD -- "lead payload" --> LEADS
+  LEADS -- "notifica" --> CRM
+  LEADS -- "projeto" --> DASHC
+  LEADS -- "lead" --> DASHE
+  DASHE -- "status/proposta" --> DASHC
+  DASHC -- "contratação/avaliação" --> REVIEWS
+  REVIEWS -- "ranking" --> SEARCH
+  ADMIN -- "aprovação/moderação" --> REVIEWS
+  ADMIN -- "planos/selos" --> PROFILE
+  SEARCH -- "eventos" --> ANALYTICS
+  PROFILE -- "eventos" --> ANALYTICS
+  WIZARD -- "eventos" --> ANALYTICS
+  LEADS -- "dados" --> DB
+  REVIEWS -- "dados" --> DB
+  ANALYTICS -- "platform_events/analytics_events" --> DB
+  DB -- "partições/cache/fila" --> ANALYTICS
+  DB -- "falha/sem partição" --> ERR
+  ERR -- "retry/suporte" --> CRM
+
+  classDef client fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
+  classDef company fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef admin fill:#e5e7eb,stroke:#6b7280,color:#374151;
+  classDef data fill:#ffedd5,stroke:#ea580c,color:#7c2d12;
+  classDef metric fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+  classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Cenários Mapeados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cenário</th>
+            <th>Caminho principal</th>
+            <th>Exceção/recuperação</th>
+            <th>Touchpoints</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Cliente residencial orgânico</td><td>SEO → categoria residencial → filtros → perfil → orçamento múltiplo</td><td>Sem empresas: ampliar raio</td><td>Email, WhatsApp, dashboard</td></tr>
+          <tr><td>2</td><td>Cliente usa calculadora primeiro</td><td>Calculadora → resultado → wizard pré-preenchido → lead</td><td>Dados incompletos: salvar rascunho</td><td>Email com simulação</td></tr>
+          <tr><td>3</td><td>Cliente recorrente</td><td>Login → favoritos → comparação → proposta</td><td>Proposta vencida: novo matching</td><td>Dashboard, WhatsApp</td></tr>
+          <tr><td>4</td><td>Cliente sem login clica WhatsApp</td><td>Perfil/card → gate → cadastro → contato liberado</td><td>Abandono no gate: remarketing/email</td><td>Modal, email, WhatsApp</td></tr>
+          <tr><td>5</td><td>Projeto C&I qualificado</td><td>Categoria C&I → demanda/fatura → EPCs → visita técnica</td><td>Ticket baixo: redirecionar residencial/comercial leve</td><td>Email, telefone</td></tr>
+          <tr><td>6</td><td>Projeto rural complexo</td><td>Rural → off-grid/bombeamento → integrador regional</td><td>Falta de dados técnicos: consultoria</td><td>WhatsApp, anexos</td></tr>
+          <tr><td>7</td><td>Wallbox em casa</td><td>VE residencial → padrão elétrico → instalador local</td><td>Condomínio detectado: fluxo condominial</td><td>Email, WhatsApp</td></tr>
+          <tr><td>8</td><td>Condomínio com recarga</td><td>Vagas → medição/billing → operador de recarga</td><td>Sem aprovação interna: checklist síndico</td><td>Email, PDF, WhatsApp</td></tr>
+          <tr><td>9</td><td>Frota elétrica</td><td>Frota → estudo de demanda → solução Enterprise</td><td>Lead imaturo: nutrição B2B</td><td>Consultor, email, reunião</td></tr>
+          <tr><td>10</td><td>Bateria backup</td><td>Baterias → cargas críticas → integrador híbrido</td><td>Budget insuficiente: educação/financiamento</td><td>Blog, email</td></tr>
+          <tr><td>11</td><td>Financiamento sem orçamento</td><td>Financiamento → pré-simulação → pedir orçamento técnico</td><td>Crédito recusado: alternativas</td><td>Email, parceiro financeiro</td></tr>
+          <tr><td>12</td><td>Empresa nova</td><td>Cadastro → documentos → aprovação → perfil ativo</td><td>Documento pendente: checklist</td><td>Email, dashboard</td></tr>
+          <tr><td>13</td><td>Empresa reivindica perfil</td><td>Perfil existente → solicitação de acesso → admin aprova</td><td>Conflito de titularidade: moderação</td><td>Email, admin</td></tr>
+          <tr><td>14</td><td>Empresa recusa lead</td><td>Lead recebido → não atende critério → motivo → redistribuição</td><td>Recusas recorrentes: ajustar área/categoria</td><td>Dashboard, notificação</td></tr>
+          <tr><td>15</td><td>Pós-venda com review</td><td>Contratação → instalação → review → ranking atualizado</td><td>Review negativo: resposta e disputa</td><td>Email, WhatsApp, admin</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>7. Métricas de Conversão e Eventos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Etapa</th>
+            <th>Evento sugerido</th>
+            <th>Taxa principal</th>
+            <th>Dimensões úteis</th>
+            <th>Meta operacional inicial</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Busca</td><td><code>search_performed</code>, <code>search_success</code></td><td>Taxa de busca bem-sucedida</td><td>categoria, cidade, estado, resultados</td><td>&gt; 80%</td></tr>
+          <tr><td>Perfil</td><td><code>company_profile_view</code></td><td>Taxa de visualização de perfil</td><td>origem, posição ranking, selo, plano</td><td>&gt; 35% da listagem</td></tr>
+          <tr><td>Comparação</td><td><code>comparison_add</code>, <code>comparison_open</code></td><td>Taxa de comparação</td><td>quantidade empresas, categoria</td><td>&gt; 15% dos visitantes qualificados</td></tr>
+          <tr><td>Orçamento</td><td><code>quote_request_started</code>, <code>quote_request_submitted</code></td><td>Taxa de solicitação de orçamento</td><td>login/convidado, categoria, multi/single</td><td>&gt; 8% das sessões qualificadas</td></tr>
+          <tr><td>Empresa</td><td><code>lead_received</code>, <code>lead_accepted</code>, <code>proposal_sent</code></td><td>Taxa de proposta enviada</td><td>SLA, plano, segmento</td><td>&gt; 60% dos leads aceitos</td></tr>
+          <tr><td>Contratação</td><td><code>project_hired</code></td><td>Taxa de conversão em contratação</td><td>categoria, ticket, número propostas</td><td>&gt; 12% dos orçamentos</td></tr>
+          <tr><td>Pós-venda</td><td><code>review_requested</code>, <code>review_submitted</code></td><td>Taxa de avaliação pós-serviço</td><td>empresa, score, etapa do projeto</td><td>&gt; 25% dos projetos concluídos</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>8. Gargalos Prioritários e Melhorias de UX</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gargalo</th>
+            <th>Risco</th>
+            <th>Sinal mensurável</th>
+            <th>Otimização recomendada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Gate de cadastro cedo demais</td>
+            <td>Usuário sai antes de perceber valor</td>
+            <td>Queda em <code>signup_gate_view → signup_success</code></td>
+            <td>Mostrar gate após ação de alto valor: WhatsApp, comparar ou enviar orçamento</td>
+          </tr>
+          <tr>
+            <td>Filtros sem resultado</td>
+            <td>Perda de demanda em regiões sem oferta</td>
+            <td><code>empty_search_rate</code></td>
+            <td>Ampliar raio automaticamente, capturar demanda e sugerir categorias próximas</td>
+          </tr>
+          <tr>
+            <td>Perfis de empresas incompletos</td>
+            <td>Baixa confiança e queda na conversão</td>
+            <td>Baixa taxa de <code>profile_view → quote_start</code></td>
+            <td>Score de completude no dashboard da empresa e bloqueio de destaque sem portfólio</td>
+          </tr>
+          <tr>
+            <td>Demora na resposta ao lead</td>
+            <td>Cliente contrata fora da plataforma</td>
+            <td>SLA alto e baixa <code>proposal_sent_rate</code></td>
+            <td>Notificação multicanal, SLA visível e redistribuição se não aceitar em X horas</td>
+          </tr>
+          <tr>
+            <td>Review pós-venda pedido tarde</td>
+            <td>Pouca prova social nova</td>
+            <td>Baixa <code>review_submitted / review_requested</code></td>
+            <td>Automação por marco: proposta ganha, instalação concluída, suporte finalizado</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

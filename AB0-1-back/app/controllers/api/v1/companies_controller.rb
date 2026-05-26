@@ -20,6 +20,14 @@ module Api
 
         # Generate cache key based on filters
         cache_key = generate_cache_key(params)
+
+        # Analytics: Assíncrono para não impactar performance do index
+        Analytics::EventPublisher.publish(
+          'company_searched', 
+          params.permit(:q, :state, :city, :category_id, :status).to_h,
+          user_id: current_user&.id
+        )
+
         
         # Use Rails.cache with versioned keys
         result = Rails.cache.fetch(cache_key, expires_in: cache_ttl_for_params(params)) do

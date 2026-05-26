@@ -130,6 +130,13 @@ module Api
           activities = activities.take(limit)
 
           payload[:activities_count] = activities.size
+
+          Analytics::EventPublisher.publish(
+            'dashboard_activity_viewed',
+            { limit: limit, activities_count: activities.size },
+            user_id: current_user&.id
+          )
+
           render json: activities
         end
       rescue StandardError => e

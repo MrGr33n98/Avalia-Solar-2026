@@ -125,7 +125,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
         run: |
-          bundle exec rails db:create db:schema:load
+          bundle exec rails db:create db:schema:load db:migrate
           bundle exec rspec
 
   e2e-tests:
