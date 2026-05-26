@@ -1,4 +1,4 @@
-class AddPerformanceIndexesToDashboard < ActiveRecord::Migration[7.1]
+class AddPerformanceIndexesToDashboard < ActiveRecord::Migration[7.0]
   disable_ddl_transaction!
 
   def change

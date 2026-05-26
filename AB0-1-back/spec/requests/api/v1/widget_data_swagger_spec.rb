@@ -1,4 +1,4 @@
-require 'swagger_helper'
+ï»¿require 'swagger_helper'
 
 RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
   path '/api/v1/companies/{id}/widget_data' do
@@ -23,11 +23,11 @@ RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
         run_test!
       end
 
-      response '401', 'Não autorizado' do
+      response '401', 'Nao autorizado' do
         run_test!
       end
       
-      response '404', 'Empresa não encontrada' do
+      response '404', 'Empresa nao encontrada' do
         run_test!
       end
     end

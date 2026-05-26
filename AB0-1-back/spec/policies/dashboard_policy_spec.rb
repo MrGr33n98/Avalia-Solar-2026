@@ -1,6 +1,7 @@
-# frozen_string_literal: true
+﻿# frozen_string_literal: true
 
 require 'rails_helper'
+require 'pundit/rspec'
 
 RSpec.describe DashboardPolicy do
   subject { described_class }
@@ -10,7 +11,7 @@ RSpec.describe DashboardPolicy do
   let(:company_user) { build(:user, role: 'company') }
   let(:guest_user) { nil }
 
-  # No Pundit, o record passado pode ser o próprio symbol :dashboard
+  # No Pundit, o record passado pode ser o proprio symbol :dashboard
   let(:record) { :dashboard }
 
   permissions :stats? do
