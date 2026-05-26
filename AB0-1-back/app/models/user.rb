@@ -115,6 +115,10 @@ class User < ApplicationRecord
     active_company_members.exists?(company_id: company_id)
   end
 
+  def owner_of?(company)
+    company.owner_id == id || company.company_members.exists?(user_id: id, role: 'owner')
+  end
+
   # PostHog: unique identifier for this user across analytics events and error reports
   def posthog_distinct_id
     id.to_s

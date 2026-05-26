@@ -45,6 +45,42 @@ class CompanyPolicy < ApplicationPolicy
     admin?
   end
 
+  def view_dashboard?
+    admin? || company_member?
+  end
+
+  def view_analytics?
+    admin? || company_member?
+  end
+
+  def view_premium_metrics?
+    admin? || (company_member? && record.has_paid_plan?)
+  end
+
+  def view_leads?
+    admin? || company_member?
+  end
+
+  def edit_company?
+    admin? || company_owner?
+  end
+
+  def edit_categories?
+    admin? || company_owner?
+  end
+
+  def edit_reviews?
+    admin? || company_owner?
+  end
+
+  def upload_media?
+    admin? || (company_owner? && record.media_upload_allowed?)
+  end
+
+  def manage_pricing?
+    admin? || company_owner?
+  end
+
   class Scope < Scope
     def resolve
       if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
@@ -60,6 +96,18 @@ class CompanyPolicy < ApplicationPolicy
   end
 
   private
+
+  def admin?
+    user.admin?
+  end
+
+  def company_owner?
+    user.owner_of?(record)
+  end
+
+  def company_member?
+    user.active_membership_for?(record.id) || company_owner?
+  end
 
   def company_user?
     user.respond_to?(:company_user?) && user.company_user?

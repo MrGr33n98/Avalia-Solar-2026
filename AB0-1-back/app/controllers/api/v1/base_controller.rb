@@ -7,6 +7,7 @@ module Api
     class BaseController < ApplicationController
       # TASK-021: Include pagination
       include Paginatable
+      include Pundit::Authorization
 
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token
@@ -20,6 +21,7 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
+      rescue_from Pundit::NotAuthorizedError, with: :authorization_error
 
       private
 
@@ -192,6 +194,14 @@ module Api
           message: exception.message,
           status: :bad_request,
           code: 'BAD_REQUEST'
+        )
+      end
+
+      def authorization_error(exception)
+        render_error_response(
+          message: 'You are not authorized to access this resource',
+          status: :forbidden,
+          code: 'AUTHORIZATION_ERROR'
         )
       end
     end

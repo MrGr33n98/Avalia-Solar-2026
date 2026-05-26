@@ -4,9 +4,11 @@ module Api
     class CompanyDashboardController < BaseController
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
+      before_action :authorize_dashboard_access!
 
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
+        authorize @company, :view_analytics?
         begin
           freshness = ::CompanyDashboard::FreshnessProvider.call
           source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
@@ -51,6 +53,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/timeseries
       def analytics_timeseries
+        authorize @company, :view_analytics?
         days = [(params[:days] || 90).to_i, 365].min
         freshness = ::CompanyDashboard::FreshnessProvider.call
         source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
@@ -84,6 +87,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/top_campaigns
       def analytics_top_campaigns
+        authorize @company, :view_analytics?
         limit = [[params[:limit].to_i, 1].max, 20].min
         limit = 5 if params[:limit].blank?
 
@@ -115,6 +119,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
+        authorize @company, :view_analytics?
         begin
           service = ::CompanyDashboard::ReputationService.new(company: @company)
           render json: service.reputation_data
@@ -126,6 +131,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
+        authorize @company, :view_analytics?
         begin
           category_id = params[:category_id].presence
           criterion_slug = params[:criterion_slug].presence
@@ -152,6 +158,7 @@ module Api
       # GET /api/v1/company_dashboard/trust_health
       # Returns detailed trust score breakdown with health indicators
       def trust_health
+        authorize @company, :view_analytics?
         begin
           # Get stored trust score
           trust_record = CompanyTrustScore.find_by(company_id: @company.id)
@@ -199,6 +206,7 @@ module Api
       # GET /api/v1/company_dashboard/intent_summary
       # Returns buyer intent score summary and top leads
       def intent_summary
+        authorize @company, :view_analytics?
         begin
           # Check if intent scores table exists
           unless defined?(IntentScore) && IntentScore.table_exists?
@@ -284,6 +292,7 @@ module Api
       # GET /api/v1/company_dashboard/certification_progress
       # Returns badge/certification progress and pending verifications
       def certification_progress
+        authorize @company, :view_analytics?
         begin
           badges = @company.badges
           all_badges = Badge.all
@@ -404,6 +413,7 @@ module Api
 
       # POST /api/v1/company_dashboard/update_info
       def update_info
+        authorize @company, :edit_company?
         if current_user&.role == 'admin'
           if @company.update(company_params)
             return render json: { message: 'Alterações aplicadas com sucesso' }, status: :ok
@@ -446,6 +456,7 @@ module Api
 
       # POST /api/v1/company_dashboard/add_categories
       def add_categories
+        authorize @company, :edit_categories?
         pending_change = @company.pending_changes.create!(
           change_type: 'categories',
           data: {
@@ -476,6 +487,7 @@ module Api
 
       # POST /api/v1/company_dashboard/remove_category
       def remove_category
+        authorize @company, :edit_categories?
         pending_change = @company.pending_changes.create!(
           change_type: 'categories',
           data: {
@@ -506,6 +518,7 @@ module Api
 
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
+        authorize @company, :edit_company?
         pending_change = @company.pending_changes.create!(
           change_type: 'cta_config',
           data: cta_params,
@@ -531,6 +544,7 @@ module Api
 
       # POST /api/v1/company_dashboard/update_logo
       def update_logo
+        authorize @company, :edit_company?
         file = params[:file]
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
@@ -566,6 +580,7 @@ module Api
 
       # POST /api/v1/company_dashboard/update_banner
       def update_banner
+        authorize @company, :edit_company?
         file = params[:file]
         return render json: { error: 'Arquivo ausente' }, status: :unprocessable_entity if file.blank?
 
@@ -687,6 +702,7 @@ module Api
 
       # POST /api/v1/company_dashboard/upload_media
       def upload_media
+        authorize @company, :upload_media?
         unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
@@ -721,6 +737,7 @@ module Api
 
       # POST /api/v1/company_dashboard/add_video
       def add_video
+        authorize @company, :upload_media?
         unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
@@ -749,6 +766,7 @@ module Api
 
       # DELETE /api/v1/company_dashboard/remove_video
       def remove_video
+        authorize @company, :upload_media?
         unless current_user&.admin? || current_user&.role == 'company'
           return render json: { error: 'Unauthorized' }, status: :unauthorized
         end
@@ -771,6 +789,7 @@ module Api
 
       # GET /api/v1/company_dashboard/social_proof_reviews
       def social_proof_reviews
+        authorize @company, :edit_reviews?
         reviews = @company.reviews.includes(:user).order(created_at: :desc)
         feature_permission = current_user&.admin? || @company.can_use_social_proof?
 
@@ -800,6 +819,7 @@ module Api
 
       # PATCH /api/v1/company_dashboard/social_proof_reviews/:id
       def update_social_proof_review
+        authorize @company, :edit_reviews?
         review = @company.reviews.find(params[:id])
         attrs = social_proof_update_params
         wants_featured = ActiveModel::Type::Boolean.new.cast(attrs[:featured])
@@ -826,6 +846,7 @@ module Api
 
       # GET /api/v1/company_dashboard/social_proof_stats
       def social_proof_stats
+        authorize @company, :edit_reviews?
         approved_scope = @company.reviews.approved
         render json: {
           stats: {
@@ -838,6 +859,8 @@ module Api
           }
         }, status: :ok
       end
+
+      private
 
       private
 
@@ -874,6 +897,10 @@ module Api
         return if current_user&.admin?
 
         authenticate_company_user!
+      end
+
+      def authorize_dashboard_access!
+        authorize @company, :view_dashboard?
       end
 
       def authenticate_company_user!
