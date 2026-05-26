@@ -108,6 +108,13 @@ const toSafeCount = (value: unknown, fallback = 0): number => {
   return parsed > 0 ? Math.floor(parsed) : 0;
 };
 
+const consumerStatsLabels: Record<string, string> = {
+  rating: "Nota dos clientes",
+  reviewCount: "Avaliações publicadas",
+  productCount: "Soluções cadastradas",
+  yearsInBusiness: "Anos na Avalia Solar",
+};
+
 export default function CompanyDetailClient({
   company,
   initialReviews = [],
@@ -470,14 +477,17 @@ export default function CompanyDetailClient({
                   <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
                     <Card className="rounded-2xl border-none bg-white shadow-sm">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">Métricas de Desempenho</CardTitle>
+                        <CardTitle className="text-xl">Indicadores para sua escolha</CardTitle>
+                        <CardDescription>
+                          Informações rápidas para comparar empresas antes de solicitar um orçamento.
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                           {Object.entries(companyStats).map(([key, value]) => (
                             <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:shadow-md">
                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                {key.replace(/([A-Z])/g, ' $1')}
+                                {consumerStatsLabels[key] || key}
                               </p>
                               <p className="mt-1 text-2xl font-black text-slate-950">{String(value)}</p>
                             </div>
