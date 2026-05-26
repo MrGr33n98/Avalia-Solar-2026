@@ -51,6 +51,15 @@ Thumbs.db
 .playwright/
 .bolt/
 
+# Audit & Documentation (generated)
+docs/README_AUDITORIA.md
+docs/QA_STRIPE_AUDIT_SUMMARY.md
+docs/STRIPE_SUBSCRIPTIONS_AUDIT.md
+docs/BROKEN_CODE_VS_FIXES.md
+docs/SECURITY_TESTING_CHECKLIST.md
+docs/PR_TEMPLATE_AND_GUIDE.md
+docs/AUDIT_STRIPE_SUBSCRIPTIONS.md
+
 # Test artifacts
 test-artifacts/
 playwright-report/
