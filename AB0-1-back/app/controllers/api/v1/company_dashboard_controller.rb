@@ -952,9 +952,9 @@ module Api
           :payment_methods, :certifications, :awards,
           :founded_year, :employees_count, :latitude, :longitude,
           :minimum_ticket, :maximum_ticket, :financing_options,
-          :response_time_sla, :languages, project_types: [], services_offered: [],
+          :response_time_sla, :languages,
           :installation_warranty_years, :engineering_insurance, :delivered_projects_score,
-          equipment_brands: [], post_sales_capacity: []
+          project_types: [], services_offered: [], equipment_brands: [], post_sales_capacity: []
         )
       end
 
