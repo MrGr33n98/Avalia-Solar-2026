@@ -107,13 +107,25 @@ module TrustScore
     # Using log scale for better distribution
     def calculate_engagement_component
       totals = ::CompanyDashboard::MetricsSource.new(company_id: company.id).totals
-      engagement = totals[:views].to_i + (totals[:clicks].to_i * 2)
+      engagement = if totals
+                     totals[:profile_views].to_i + (totals[:cta_clicks].to_i * 2)
+                   else
+                     fallback_profile_views + (fallback_cta_clicks * 2)
+                   end
       
       return 0 if engagement.zero?
 
       # Logarithmic scaling: log(1 + x) / log(1 + max) * weight
       raw = Math.log1p(engagement) / Math.log1p(MAX_VALUES[:engagement]) * WEIGHTS[:engagement]
       [raw, WEIGHTS[:engagement]].min.round(1)
+    end
+
+    def fallback_profile_views
+      company.respond_to?(:profile_views_count) ? company.profile_views_count.to_i : 0
+    end
+
+    def fallback_cta_clicks
+      company.respond_to?(:cta_clicks_count) ? company.cta_clicks_count.to_i : 0
     end
 
     # Bonus points for Conversion fundamentals (insurance, warranty)
