@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { 
   Users, 
   TrendingUp, 
@@ -18,6 +19,7 @@ import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import DashboardLayout from './components/DashboardLayout';
 import StatsCard from './components/StatsCard';
@@ -26,7 +28,12 @@ import RecentActivity from './components/RecentActivity';
 import DataTable from './components/DataTable';
 import { DashboardCharts } from './components/DashboardCharts';
 import { dashboardApi } from '@/lib/api-dashboard';
-import EnterpriseDashboard from './components/EnterpriseDashboard';
+
+// ✅ Code splitting - lazy load EnterpriseDashboard for company users
+const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboard'), {
+  loading: () => <DashboardLoadingState />,
+  ssr: true
+});
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -34,30 +41,39 @@ export default function DashboardPage() {
   const { activeCompany, companies, isLoading: companyLoading, selectCompany } = useCompanyContext();
   
   const [viewMode, setViewMode] = useState<'loading' | 'system_admin' | 'company_admin' | 'redirecting'>('loading');
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
 
-  // Fetch dashboard stats from API (System Admin View)
-  const { data: rawStats, isLoading: statsLoading, error: statsError } = useQuery({
+  // ✅ Lazy load system admin data only when needed
+  const { data: rawStats, isLoading: statsLoadingQuery, error: statsError } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.fetchStats,
     staleTime: 5 * 60 * 1000,
     enabled: viewMode === 'system_admin',
   });
 
-  // Fetch chart data (System Admin View)
-  const { data: chartData, isLoading: chartLoading } = useQuery({
+  const { data: chartData, isLoading: chartLoadingQuery } = useQuery({
     queryKey: ['dashboard-charts', 'companies'],
     queryFn: () => dashboardApi.fetchChartData('companies', 'monthly'),
     staleTime: 10 * 60 * 1000,
     enabled: viewMode === 'system_admin',
   });
 
-  // Fetch recent proposals (System Admin View)
-  const { data: tableData, isLoading: tableLoading } = useQuery({
+  const { data: tableData, isLoading: tableLoadingQuery } = useQuery({
     queryKey: ['dashboard-proposals'],
     queryFn: () => dashboardApi.fetchRecentProposals(10),
     staleTime: 2 * 60 * 1000,
     enabled: viewMode === 'system_admin',
   });
+
+  // ✅ Sync loading states for smooth UX
+  useEffect(() => {
+    setStatsLoading(statsLoadingQuery);
+    setChartLoading(chartLoadingQuery);
+    setTableLoading(tableLoadingQuery);
+  }, [statsLoadingQuery, chartLoadingQuery, tableLoadingQuery]);
+
 
   useEffect(() => {
     if (authLoading || companyLoading) return;
@@ -262,4 +278,18 @@ export default function DashboardPage() {
   }
 
   return null;
+}
+
+// ✅ Shared loading skeleton for lazy-loaded components
+function DashboardLoadingState() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--clay-bg))]">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground font-medium animate-pulse">
+          Preparando seu painel personalizado...
+        </p>
+      </div>
+    </div>
+  );
 }
