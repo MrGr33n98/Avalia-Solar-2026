@@ -103,6 +103,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Diagnose GHCR backend image target
+        if: matrix.component == 'backend'
+        run: |
+          echo "Backend images:"
+          echo "  ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging"
+          echo "  ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging-${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          docker buildx version
+
       - name: Build and Push Backend (staging)
         if: matrix.component == 'backend'
         uses: docker/build-push-action@v5
@@ -113,8 +123,6 @@ jobs:
           tags: |
             ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging
             ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging-${{ github.sha }}
-          build-args: |
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
           secrets: |
             "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
           cache-from: type=gha,scope=backend-staging

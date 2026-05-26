@@ -36,22 +36,17 @@ COPY AB0-1-back/ ./
 # 4. Compilação de Assets
 ENV RAILS_ENV=production \
     NODE_ENV=production \
-    REDIS_ENABLED=false \
-    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only
-
-ARG RAILS_MASTER_KEY
+    REDIS_ENABLED=false
 
 RUN --mount=type=secret,id=RAILS_MASTER_KEY \
     set -eux; \
     if [ -f /run/secrets/RAILS_MASTER_KEY ]; then \
         cp /run/secrets/RAILS_MASTER_KEY config/master.key; \
-    elif [ -n "$RAILS_MASTER_KEY" ]; then \
-        echo "$RAILS_MASTER_KEY" > config/master.key; \
     else \
         echo "Aviso: RAILS_MASTER_KEY não encontrada. Tentando precompile com SECRET_KEY_BASE dummy."; \
     fi; \
     if [ -f config/master.key ]; then chmod 600 config/master.key; fi; \
-    DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
+    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
     rm -f config/master.key
 
 # --- Estágio Final ---

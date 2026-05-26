@@ -49,6 +49,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Diagnose GHCR backend image target
+        if: matrix.component == 'backend'
+        run: |
+          echo "Backend image: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest"
+          echo "Backend cache: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          docker buildx version
+
       - name: Resolve Server Actions key
         if: matrix.component == 'frontend'
         run: |
@@ -81,8 +90,6 @@ jobs:
           file: ./Dockerfile.backend
           push: true
           tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
-          build-args: |
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
           secrets: |
             "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
           cache-from: |
@@ -354,4 +361,3 @@ jobs:
 
             echo "?? Deploy finalizado com sucesso!"
             exit 0
-
