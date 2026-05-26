@@ -2,10 +2,12 @@
 module Api
   module V1
     class DashboardController < BaseController
-      before_action :require_admin
+      before_action :authenticate_api_user
       
       # GET /api/v1/dashboard/stats
       def stats
+        authorize :dashboard, :stats?
+
         companies_count = Company.count
         products_count = Product.count
         leads_count = Lead.count
@@ -49,6 +51,8 @@ module Api
       # GET /api/v1/dashboard/charts/:metric
       # Params: metric (companies|revenue|leads), period (weekly|monthly|quarterly)
       def charts
+        authorize :dashboard, :charts?
+
         metric = params[:metric] || 'companies'
         period = params[:period] || 'monthly'
         
@@ -72,6 +76,8 @@ module Api
       # GET /api/v1/dashboard/activity
       # Recent activity feed
       def activity
+        authorize :dashboard, :activity?
+
         limit = [params[:limit].to_i, 20].min
         limit = 10 if limit <= 0
 
@@ -104,7 +110,7 @@ module Api
         end
 
         # Recent reviews
-        recent_reviews = Review.order(created_at: :desc).limit(5)
+        recent_reviews = Review.includes(:company).order(created_at: :desc).limit(5)
         recent_reviews.each do |review|
           activities << {
             id: "review_#{review.id}",

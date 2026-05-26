@@ -5,6 +5,14 @@ class DashboardPolicy < ApplicationPolicy
     admin_or_review?
   end
 
+  def charts?
+    admin_or_review?
+  end
+
+  def activity?
+    admin_or_review?
+  end
+
   def export?
     admin_or_review? || company_owner?
   end

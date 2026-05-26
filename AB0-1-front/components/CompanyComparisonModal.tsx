@@ -142,13 +142,15 @@ export default function CompanyComparisonModal({
 
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="p-4 pb-16 md:p-5">
-                  {/* Companies Header */}
-                  <div className="mb-5 overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.94))] shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)] clay-surface clay-convex">
-                    <div className="overflow-x-auto scrollbar-hide">
-                      <div className="min-w-[720px]">
-                        <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100">
-                          <div className="flex items-center justify-center bg-slate-50/30 p-4">
+                <div className="p-0 md:p-5 pb-16">
+                  {/* Container Global com Scroll Horizontal Sincronizado */}
+                  <div className="overflow-x-auto snap-x snap-mandatory scrollbar-hide md:overflow-x-visible w-full">
+                    <div className="min-w-max md:min-w-0 w-full flex flex-col">
+                      
+                      {/* Companies Header - Agora Sticky! */}
+                      <div className="sticky top-0 z-30 mb-5 overflow-hidden rounded-b-2xl md:rounded-[1.8rem] border border-slate-100 bg-white/95 backdrop-blur-md shadow-[0_10px_30px_-15px_rgba(15,23,42,0.2)]">
+                        <div className="grid grid-cols-[110px_repeat(3,240px)] md:grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100">
+                          <div className="sticky left-0 z-40 flex items-center justify-center bg-slate-50/95 backdrop-blur-sm p-4 border-r border-slate-100 shadow-[4px_0_12px_-6px_rgba(0,0,0,0.1)] md:shadow-none">
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                               Empresas
                             </span>
@@ -163,8 +165,8 @@ export default function CompanyComparisonModal({
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className={cn(
-                                  "group relative flex flex-col items-center p-4 text-center transition-colors duration-500",
-                                  isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
+                                  "group relative flex flex-col items-center p-4 text-center transition-colors duration-500 snap-center",
+                                  isPremiumCompany(company) ? "bg-gradient-to-br from-blue-50/40 to-indigo-50/40" : "bg-white/80"
                                 )}
                               >
                                 {/* Premium Crown */}
@@ -224,7 +226,7 @@ export default function CompanyComparisonModal({
 
                           {/* Empty slots */}
                           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-                            <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/20 p-4">
+                            <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/20 p-4 snap-center">
                               <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                                 Slot vazio
                               </span>
@@ -232,8 +234,9 @@ export default function CompanyComparisonModal({
                           ))}
                         </div>
                       </div>
-                    </div>
-                  </div>
+
+                      {/* Tab Content wrapper is now INSIDE the horizontal scroll context */}
+                      <div className="px-4 md:px-0">
 
                   {/* Tab Content */}
                   <TabsContent value="overview" className="mt-0 space-y-0">
@@ -519,10 +522,11 @@ export default function CompanyComparisonModal({
                           ))}
 
                           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-                            <div key={`empty-cta-${i}`} className="p-4"></div>
+                            <div key={`empty-cta-${i}`} className="p-4 snap-center"></div>
                           ))}
                         </div>
                       </div>
+                      
                     </div>
                   </div>
                 </div>
@@ -537,8 +541,8 @@ export default function CompanyComparisonModal({
 
 function ComparisonSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-5 overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.94))] shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)] clay-surface clay-convex">
-      <div className="p-5 pb-0">
+    <div className="mb-5 overflow-hidden rounded-[1.2rem] md:rounded-[1.8rem] border border-slate-100 bg-white shadow-[0_4px_20px_-10px_rgba(15,23,42,0.1)]">
+      <div className="sticky left-0 z-20 p-4 md:p-5 pb-0 bg-white">
         <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-3">
           <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
           {title}
@@ -563,29 +567,30 @@ function ComparisonRow({
   render: (company: Company) => React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto scrollbar-hide">
-      <div className="min-w-[720px]">
-        <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-50 group hover:bg-blue-50/10 transition-colors">
-          <div className="flex items-center gap-3 bg-slate-50/10 p-4">
-            <div className="p-2 rounded-lg bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-colors">
-              {icon}
-            </div>
-            <span className="text-sm font-black text-slate-700 uppercase tracking-wide group-hover:text-slate-900 transition-colors">
-              {label}
-            </span>
+    <div className="w-full group hover:bg-blue-50/10 transition-colors">
+      <div className="grid grid-cols-[110px_repeat(3,240px)] md:grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-50">
+        
+        {/* Label Sticky */}
+        <div className="sticky left-0 z-20 flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-3 bg-slate-50/95 backdrop-blur-sm p-3 md:p-4 border-r border-slate-100 shadow-[4px_0_12px_-6px_rgba(0,0,0,0.05)] md:shadow-none">
+          <div className="p-1.5 md:p-2 rounded-lg bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0">
+            {icon}
           </div>
+          <span className="text-[10px] md:text-sm font-black text-slate-700 uppercase tracking-wide group-hover:text-slate-900 transition-colors text-center md:text-left leading-tight">
+            {label}
+          </span>
+        </div>
 
           {companies.slice(0, 3).map((company, idx) => (
             <div
               key={`${company.id}-${label}`}
-              className="flex items-center justify-center p-4 text-center"
+              className="flex items-center justify-center p-3 md:p-4 text-center snap-center bg-white/50"
             >
               {render(company)}
             </div>
           ))}
 
           {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-            <div key={`empty-${i}`} className="p-4"></div>
+            <div key={`empty-${i}`} className="p-4 snap-center bg-white/50"></div>
           ))}
         </div>
       </div>

@@ -612,54 +612,49 @@ export default function CompanyCard({
         {/* ── Capterra-style Compare Checkbox ──────────────── */}
         <div
           className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 print:hidden"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
-          <label 
-            htmlFor={`compare-${id}`}
-            className="flex items-center gap-2 cursor-pointer group/check select-none w-fit p-1.5 -ml-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          <button 
+            type="button"
+            role="switch"
+            aria-checked={isCompared}
+            aria-label={isCompared ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
+            className="flex items-center gap-2 cursor-pointer group/check select-none w-full sm:w-fit p-2 -ml-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500/40 min-h-[44px]"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (isCompared) {
+                removeFromComparison(company.id);
+              } else if (canAddMore) {
+                addToComparison(company);
+                track('comparison_add', { company_id: company.id, company_name: name, source: 'card_checkbox' });
+              }
+            }}
           >
             <div
-              id={`compare-${id}`}
-              role="checkbox"
-              aria-checked={isCompared}
-              aria-label={isCompared ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === ' ' || e.key === 'Enter') {
-                  e.preventDefault();
-                  if (isCompared) removeFromComparison(company.id);
-                  else if (canAddMore) addToComparison(company);
-                }
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isCompared) {
-                  removeFromComparison(company.id);
-                } else if (canAddMore) {
-                  addToComparison(company);
-                  track('comparison_add', { company_id: company.id, company_name: name, source: 'card_checkbox' });
-                }
-              }}
               className={cn(
-                'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150',
+                'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 shadow-sm',
                 isCompared
-                  ? 'bg-blue-600 border-blue-600'
+                  ? 'bg-blue-600 border-blue-600 shadow-blue-200'
                   : canAddMore
-                    ? 'border-slate-400 dark:border-slate-500 group-hover/check:border-blue-500'
-                    : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
+                    ? 'border-slate-300 dark:border-slate-500 group-hover/check:border-blue-400 bg-white'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 opacity-50 cursor-not-allowed'
               )}
             >
-              {isCompared && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+              {isCompared && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
             </div>
             <span className={cn(
-              'text-[12px] font-medium tracking-wide transition-colors',
+              'text-[13px] font-semibold tracking-wide transition-colors',
               isCompared
                 ? 'text-blue-700 dark:text-blue-400'
-                : 'text-slate-600 dark:text-slate-300 group-hover/check:text-slate-900 dark:group-hover/check:text-white'
+                : 'text-slate-600 dark:text-slate-400 group-hover/check:text-slate-900 dark:group-hover/check:text-white'
             )}>
               {isCompared ? 'Selecionada' : 'Comparar'}
             </span>
-          </label>
+          </button>
         </div>
 
         <div className="hidden print:block">
