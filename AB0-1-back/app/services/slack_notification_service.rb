@@ -22,7 +22,8 @@ class SlackNotificationService
     reviews:  -> { ENV.fetch('SLACK_REVIEWS_WEBHOOK_URL',  ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
     empresas: -> { ENV.fetch('SLACK_EMPRESAS_WEBHOOK_URL', ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
     alertas:  -> { ENV.fetch('SLACK_ALERTAS_WEBHOOK_URL',  ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
-    vendas_intent: -> { ENV.fetch('SLACK_VENDAS_INTENT_WEBHOOK_URL', ENV.fetch('SLACK_WEBHOOK_URL', nil)) }
+    vendas_intent: -> { ENV.fetch('SLACK_VENDAS_INTENT_WEBHOOK_URL', ENV.fetch('SLACK_WEBHOOK_URL', nil)) },
+    billing:  -> { ENV.fetch('SLACK_BILLING_WEBHOOK_URL',  ENV.fetch('SLACK_WEBHOOK_URL', nil)) }
   }.freeze
 
   # ----------------------------------------------------------

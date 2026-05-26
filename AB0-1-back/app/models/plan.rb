@@ -2,6 +2,7 @@ class Plan < ApplicationRecord
   # Associations
   has_many :companies, dependent: :nullify
   has_many :subscription_plans, dependent: :destroy
+  has_many :billing_company_subscriptions, class_name: 'Billing::CompanySubscription', dependent: :destroy
 
   # Validations
   validates :name, presence: true, uniqueness: true
@@ -71,7 +72,7 @@ class Plan < ApplicationRecord
   # =========================================================================
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[id name description price created_at updated_at]
+    %w[id name description price created_at updated_at stripe_product_id stripe_price_id_monthly stripe_price_id_yearly is_public display_order]
   end
 
   def self.ransackable_associations(_auth_object = nil)

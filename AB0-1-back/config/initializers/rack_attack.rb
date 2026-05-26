@@ -105,6 +105,14 @@ class Rack::Attack
     end
   end
 
+  # === Stripe SaaS Webhook Protection ===
+  # Limite: 60 requests por minuto por IP no webhook de billing
+  throttle('billing_webhook/ip', limit: 60, period: 1.minute) do |req|
+    if req.path == '/api/v1/billing/webhooks/stripe' && req.post?
+      req.ip
+    end
+  end
+
   # Limitar requests gerais por IP
   # Protege contra DDoS e scraping agressivo
   throttle('req/ip', limit: 300, period: 5.minutes) do |req|

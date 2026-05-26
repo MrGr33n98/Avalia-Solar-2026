@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_26_100004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -82,6 +82,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
     t.string "two_factor_secret"
     t.text "two_factor_recovery_codes"
     t.boolean "two_factor_enabled", default: false, null: false
+    t.string "billing_role", comment: "Papel de billing: nil=leitura, support, finance, super_admin"
+    t.index ["billing_role"], name: "index_admin_users_on_billing_role", where: "(billing_role IS NOT NULL)"
     t.index ["email"], name: "index_admin_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
@@ -355,6 +357,76 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
     t.index ["banner_id", "category_id"], name: "index_banners_categories_unique", unique: true
     t.index ["banner_id"], name: "index_banners_categories_on_banner_id"
     t.index ["category_id"], name: "index_banners_categories_on_category_id"
+  end
+
+  create_table "billing_admin_actions", force: :cascade do |t|
+    t.bigint "admin_user_id", null: false, comment: "Admin que executou a ação"
+    t.bigint "company_id", null: false, comment: "Empresa afetada pela ação"
+    t.bigint "company_subscription_id", comment: "CompanySubscription afetada (nullable — pode não existir ainda)"
+    t.string "action_type", null: false, comment: "Tipo da ação: sync_stripe|mark_enterprise|force_downgrade|cancel_at_period_end|emergency_reset|add_note|extend_trial|enterprise_lead_convert"
+    t.text "justification", null: false, comment: "Justificativa obrigatória para toda ação manual"
+    t.jsonb "metadata", default: {}, comment: "Dados contextuais da ação (reason, stripe_id, etc.)"
+    t.datetime "performed_at", null: false, comment: "Timestamp da execução da ação"
+    t.string "ip_address", comment: "IP do admin (do request HTTP)"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action_type"], name: "index_billing_admin_actions_on_action_type"
+    t.index ["admin_user_id", "performed_at"], name: "idx_billing_admin_actions_admin_time"
+    t.index ["admin_user_id"], name: "index_billing_admin_actions_on_admin_user_id"
+    t.index ["company_id", "performed_at"], name: "idx_billing_admin_actions_company_time"
+    t.index ["company_id"], name: "index_billing_admin_actions_on_company_id"
+    t.index ["performed_at"], name: "index_billing_admin_actions_on_performed_at"
+  end
+
+  create_table "billing_company_subscriptions", force: :cascade do |t|
+    t.bigint "company_id", null: false, comment: "Empresa assinante"
+    t.bigint "plan_id", null: false, comment: "Plano contratado (Free/Pro/Enterprise)"
+    t.string "status", default: "incomplete", null: false, comment: "trialing|active|past_due|canceled|unpaid|incomplete|incomplete_expired|manual|paused|enterprise_lead"
+    t.string "stripe_customer_id", comment: "Stripe Customer ID (cus_XXXX)"
+    t.string "stripe_subscription_id", comment: "Stripe Subscription ID (sub_XXXX)"
+    t.string "stripe_price_id", comment: "Stripe Price ID atual da subscription"
+    t.datetime "current_period_start", comment: "Início do período atual (UTC)"
+    t.datetime "current_period_end", comment: "Fim do período atual (UTC)"
+    t.boolean "cancel_at_period_end", default: false, null: false, comment: "Cancelamento agendado para o fim do período"
+    t.datetime "canceled_at", comment: "Timestamp do cancelamento efetivo"
+    t.datetime "trial_start", comment: "Início do trial"
+    t.datetime "trial_end", comment: "Fim do trial"
+    t.text "last_payment_error", comment: "Motivo da última falha de pagamento (sem dados de cartão)"
+    t.datetime "last_payment_error_at", comment: "Timestamp da última falha"
+    t.datetime "last_synced_at", comment: "Último sync com Stripe"
+    t.boolean "is_enterprise_manual", default: false, null: false, comment: "Conta Enterprise ativada manualmente (sem Stripe)"
+    t.text "enterprise_notes", comment: "Notas do processo Enterprise (contrato, motivo, etc.)"
+    t.text "admin_notes", comment: "Notas operacionais do admin (visível só internamente)"
+    t.string "enterprise_lead_status", comment: "Status do lead Enterprise: new|contacted|qualified|converted|lost"
+    t.jsonb "enterprise_lead_metadata", default: {}, comment: "Payload CRM-ready: tamanho da empresa, segmento, urgência, etc."
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cancel_at_period_end"], name: "idx_billing_subs_cancel_at_period_end", where: "(cancel_at_period_end = true)"
+    t.index ["company_id"], name: "idx_billing_subs_company_unique", unique: true
+    t.index ["company_id"], name: "index_billing_company_subscriptions_on_company_id"
+    t.index ["current_period_end"], name: "index_billing_company_subscriptions_on_current_period_end"
+    t.index ["is_enterprise_manual"], name: "index_billing_company_subscriptions_on_is_enterprise_manual"
+    t.index ["last_payment_error_at"], name: "idx_billing_subs_payment_failed", where: "(last_payment_error_at IS NOT NULL)"
+    t.index ["plan_id"], name: "index_billing_company_subscriptions_on_plan_id"
+    t.index ["status"], name: "index_billing_company_subscriptions_on_status"
+    t.index ["stripe_customer_id"], name: "idx_billing_subs_stripe_customer_unique", unique: true, where: "(stripe_customer_id IS NOT NULL)"
+    t.index ["stripe_subscription_id"], name: "idx_billing_subs_stripe_subscription_unique", unique: true, where: "(stripe_subscription_id IS NOT NULL)"
+  end
+
+  create_table "billing_stripe_events", force: :cascade do |t|
+    t.string "stripe_event_id", null: false, comment: "ID do evento Stripe (evt_XXXX) — UNIQUE para idempotência"
+    t.string "event_type", null: false, comment: "Tipo do evento (customer.subscription.created, etc.)"
+    t.string "processing_status", default: "processing", null: false, comment: "processing|success|failed|skipped"
+    t.text "error_message", comment: "Mensagem de erro se processing_status = failed"
+    t.jsonb "raw_payload", default: {}, comment: "Payload do evento Stripe (filtrado para remover dados sensíveis)"
+    t.datetime "processed_at", null: false, comment: "Quando o evento foi recebido para processamento"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_billing_stripe_events_on_event_type"
+    t.index ["processed_at"], name: "index_billing_stripe_events_on_processed_at"
+    t.index ["processing_status", "created_at"], name: "idx_billing_stripe_events_failed", where: "((processing_status)::text = 'failed'::text)"
+    t.index ["processing_status"], name: "index_billing_stripe_events_on_processing_status"
+    t.index ["stripe_event_id"], name: "idx_billing_stripe_events_unique", unique: true
   end
 
   create_table "brands", force: :cascade do |t|
@@ -1505,10 +1577,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
     t.string "approved_user_agent"
     t.string "rejected_ip"
     t.string "rejected_user_agent"
+    t.string "idempotency_key"
     t.index ["approved_by_id"], name: "index_pending_changes_on_approved_by_id"
     t.index ["change_type"], name: "index_pending_changes_on_change_type"
+    t.index ["company_id", "idempotency_key"], name: "idx_pending_changes_idempotency_active", unique: true, where: "((status)::text = 'pending'::text)"
     t.index ["company_id", "status"], name: "index_pending_changes_on_company_id_and_status"
     t.index ["company_id"], name: "index_pending_changes_on_company_id"
+    t.index ["idempotency_key"], name: "idx_pending_changes_idempotency_key"
     t.index ["status"], name: "index_pending_changes_on_status"
     t.index ["user_id"], name: "index_pending_changes_on_user_id"
   end
@@ -1521,6 +1596,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "features_json", default: {}
+    t.string "stripe_product_id", comment: "Stripe Product ID (prod_XXXX)"
+    t.string "stripe_price_id_monthly", comment: "Stripe Price ID mensal (price_XXXX)"
+    t.string "stripe_price_id_yearly", comment: "Stripe Price ID anual — reservado para v2"
+    t.boolean "is_public", default: true, null: false, comment: "Exibir no /pricing público"
+    t.integer "display_order", default: 0, null: false, comment: "Ordem de exibição nos cards"
+    t.index ["display_order"], name: "index_plans_on_display_order"
+    t.index ["is_public"], name: "index_plans_on_is_public"
+    t.index ["stripe_price_id_monthly"], name: "index_plans_on_stripe_price_id_monthly", unique: true, where: "(stripe_price_id_monthly IS NOT NULL)"
     t.check_constraint "price >= 0::numeric", name: "ck_plans_valid_price"
   end
 
@@ -1994,6 +2077,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_022425) do
   add_foreign_key "banners", "companies"
   add_foreign_key "banners_categories", "banners"
   add_foreign_key "banners_categories", "categories"
+  add_foreign_key "billing_admin_actions", "admin_users"
+  add_foreign_key "billing_admin_actions", "billing_company_subscriptions", column: "company_subscription_id", on_delete: :nullify
+  add_foreign_key "billing_admin_actions", "companies"
+  add_foreign_key "billing_company_subscriptions", "companies"
+  add_foreign_key "billing_company_subscriptions", "plans"
   add_foreign_key "buyer_intent_activities", "companies"
   add_foreign_key "buyer_intent_activities", "users"
   add_foreign_key "campaign_reviews", "companies"

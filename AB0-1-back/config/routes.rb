@@ -337,6 +337,15 @@ Rails.application.routes.draw do
       end
 
       resources :seo_pages, param: :slug, only: [:show]
+
+      namespace :billing do
+        get 'plans', to: 'plans#index'
+        get 'subscription', to: 'subscriptions#show'
+        post 'checkout', to: 'checkout#create'
+        post 'portal', to: 'portal#create'
+        post 'enterprise_leads', to: 'enterprise_leads#create'
+        post 'webhooks/stripe', to: 'webhooks#stripe'
+      end
     end
   end
 
