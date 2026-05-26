@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_26_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -308,6 +308,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["company_id", "status"], name: "idx_banner_subs_company_active", where: "((status)::text = 'active'::text)"
     t.index ["company_id"], name: "index_banner_subscriptions_on_company_id"
     t.index ["payment_reference"], name: "index_banner_subscriptions_on_payment_reference"
+    t.index ["status", "created_at"], name: "index_banner_subscriptions_on_status_and_created_at"
     t.index ["status"], name: "index_banner_subscriptions_on_status"
     t.check_constraint "created_at <= ends_at", name: "ck_banner_subs_valid_dates"
   end
@@ -491,78 +492,27 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["category_id"], name: "index_category_lead_wizards_on_category_id", unique: true
   end
 
-  create_table "lead_wizard_versions", force: :cascade do |t|
-    t.bigint "company_id"
-    t.bigint "category_id"
-    t.string "template_key", null: false
-    t.integer "template_version", default: 1, null: false
-    t.integer "version_number", default: 1, null: false
-    t.string "status", default: "draft", null: false
-    t.string "ui_theme", default: "auto", null: false
-    t.string "ui_primary_color"
-    t.string "ui_logo_url"
-    t.boolean "show_progress_bar", default: true, null: false
-    t.string "thank_you_title"
-    t.text "thank_you_message"
-    t.string "thank_you_redirect_url"
-    t.datetime "published_at"
-    t.datetime "archived_at"
+  create_table "classified_topics", force: :cascade do |t|
+    t.string "source_type", limit: 50
+    t.bigint "source_id"
+    t.string "vertical", limit: 20
+    t.string "category"
+    t.string "city"
+    t.string "state"
+    t.string "audience", limit: 20
+    t.string "funnel_stage", limit: 20
+    t.string "topic"
+    t.string "sentiment", limit: 20
+    t.string "urgency", limit: 20
+    t.decimal "relevance_score", precision: 3, scale: 2
+    t.decimal "lead_potential", precision: 3, scale: 2
+    t.boolean "content_worthy", default: false
+    t.jsonb "content_angles"
+    t.boolean "ready_for_content", default: false
+    t.datetime "processed_at"
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["category_id", "status"], name: "index_lead_wizard_versions_on_published_category", unique: true, where: "((category_id IS NOT NULL) AND ((status)::text = 'published'::text))"
-    t.index ["category_id", "version_number"], name: "index_lead_wizard_versions_on_category_and_version", unique: true, where: "(category_id IS NOT NULL)"
-    t.index ["company_id", "status"], name: "index_lead_wizard_versions_on_published_company", unique: true, where: "((company_id IS NOT NULL) AND ((status)::text = 'published'::text))"
-    t.index ["company_id", "version_number"], name: "index_lead_wizard_versions_on_company_and_version", unique: true, where: "(company_id IS NOT NULL)"
-    t.index ["template_key"], name: "index_lead_wizard_versions_on_template_key"
-    t.index ["status"], name: "index_lead_wizard_versions_on_published_global", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL) AND ((status)::text = 'published'::text))"
-    t.index ["version_number"], name: "index_lead_wizard_versions_on_global_version", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL))"
-  end
-
-  create_table "lead_wizard_sections", force: :cascade do |t|
-    t.bigint "lead_wizard_version_id", null: false
-    t.string "key", null: false
-    t.string "title", null: false
-    t.text "description"
-    t.integer "position", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lead_wizard_version_id", "key"], name: "index_lead_wizard_sections_on_version_and_key", unique: true
-    t.index ["lead_wizard_version_id", "position"], name: "index_lead_wizard_sections_on_version_and_position"
-  end
-
-  create_table "lead_wizard_fields", force: :cascade do |t|
-    t.bigint "lead_wizard_section_id", null: false
-    t.string "key", null: false
-    t.string "field_type", null: false
-    t.string "label", null: false
-    t.string "target", default: "wizard_answers", null: false
-    t.string "placeholder"
-    t.text "help_text"
-    t.boolean "required", default: false, null: false
-    t.integer "position", default: 0, null: false
-    t.decimal "min_value", precision: 12, scale: 2
-    t.decimal "max_value", precision: 12, scale: 2
-    t.decimal "step_value", precision: 12, scale: 2
-    t.string "error_message"
-    t.string "depends_on_field_key"
-    t.string "depends_on_operator"
-    t.string "depends_on_value"
-    t.string "default_value"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lead_wizard_section_id", "key"], name: "index_lead_wizard_fields_on_section_and_key", unique: true
-    t.index ["lead_wizard_section_id", "position"], name: "index_lead_wizard_fields_on_section_and_position"
-  end
-
-  create_table "lead_wizard_field_options", force: :cascade do |t|
-    t.bigint "lead_wizard_field_id", null: false
-    t.string "label", null: false
-    t.string "value", null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lead_wizard_field_id", "value"], name: "index_lead_wizard_field_options_on_field_and_value", unique: true
-    t.index ["lead_wizard_field_id", "position"], name: "index_lead_wizard_field_options_on_field_and_position"
+    t.index ["ready_for_content"], name: "index_classified_topics_on_ready_for_content", where: "(ready_for_content = true)"
+    t.index ["urgency"], name: "index_classified_topics_on_urgency"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -674,6 +624,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index "to_tsvector('portuguese'::regconfig, (((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
+    t.index ["created_at"], name: "index_companies_on_created_at"
     t.index ["cta_clicks_count"], name: "index_companies_on_cta_clicks_count"
     t.index ["cta_whatsapp_enabled"], name: "index_companies_on_cta_whatsapp_enabled"
     t.index ["effect"], name: "index_companies_on_effect"
@@ -983,6 +934,43 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["company_id"], name: "index_company_webhooks_on_company_id"
   end
 
+  create_table "content", force: :cascade do |t|
+    t.string "campaign_id"
+    t.bigint "topic_id"
+    t.string "source", limit: 20
+    t.string "content_type", limit: 50
+    t.string "vertical", limit: 20
+    t.string "audience", limit: 20
+    t.string "city"
+    t.string "status", limit: 20
+    t.jsonb "content_pack"
+    t.jsonb "publish_urls"
+    t.datetime "scheduled_for"
+    t.datetime "published_at"
+    t.jsonb "performance"
+    t.string "created_by", limit: 100
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_content_on_campaign_id", unique: true
+    t.index ["status", "scheduled_for"], name: "index_content_on_status_and_scheduled_for", where: "((status)::text = 'scheduled'::text)"
+    t.index ["status"], name: "index_content_on_status"
+  end
+
+  create_table "content_templates", force: :cascade do |t|
+    t.string "vertical", limit: 20
+    t.string "audience", limit: 20
+    t.string "content_type", limit: 50
+    t.string "template_key", limit: 100
+    t.text "template_text"
+    t.decimal "weight", precision: 5, scale: 2, default: "1.0"
+    t.integer "impressions", default: 0
+    t.integer "conversions", default: 0
+    t.decimal "conversion_rate", precision: 5, scale: 4
+    t.datetime "last_updated_at"
+    t.datetime "created_at", null: false
+    t.index ["vertical", "audience", "template_key"], name: "idx_content_tmpl_lookup"
+  end
+
   create_table "contents", force: :cascade do |t|
     t.string "title"
     t.text "short_description"
@@ -992,6 +980,48 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.string "level"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "daily_growth_snapshots", force: :cascade do |t|
+    t.date "snapshot_date", null: false
+    t.integer "total_page_views", default: 0
+    t.integer "total_sessions", default: 0
+    t.integer "roi_expands", default: 0
+    t.integer "wizard_starts", default: 0
+    t.integer "wizard_completions", default: 0
+    t.integer "whatsapp_clicks", default: 0
+    t.integer "compare_views", default: 0
+    t.integer "leads_created", default: 0
+    t.decimal "view_to_wizard_rate", precision: 5, scale: 4
+    t.decimal "wizard_to_complete_rate", precision: 5, scale: 4
+    t.decimal "wizard_to_lead_rate", precision: 5, scale: 4
+    t.integer "solar_events", default: 0
+    t.integer "ev_events", default: 0
+    t.integer "b2b_events", default: 0
+    t.integer "b2c_events", default: 0
+    t.jsonb "top_cities"
+    t.jsonb "top_campaigns"
+    t.jsonb "top_content"
+    t.integer "linkedin_followers", default: 0
+    t.integer "instagram_followers", default: 0
+    t.integer "x_followers", default: 0
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.index ["snapshot_date"], name: "index_daily_growth_snapshots_on_snapshot_date", unique: true
+  end
+
+  create_table "demand_notifications", force: :cascade do |t|
+    t.bigint "lead_id"
+    t.bigint "intent_signal_id"
+    t.string "notification_type", limit: 50
+    t.string "channel", limit: 20
+    t.string "status", limit: 20
+    t.string "sla_window", limit: 20
+    t.datetime "sla_expires_at"
+    t.datetime "responded_at"
+    t.datetime "created_at", null: false
+    t.index ["lead_id"], name: "index_demand_notifications_on_lead_id"
+    t.index ["status"], name: "index_demand_notifications_on_status"
   end
 
   create_table "downloadables", force: :cascade do |t|
@@ -1144,6 +1174,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["user_id"], name: "index_gated_downloads_on_user_id"
   end
 
+  create_table "growth_insights", force: :cascade do |t|
+    t.date "period_start"
+    t.date "period_end"
+    t.string "insight_type", limit: 50
+    t.jsonb "insight_data"
+    t.decimal "confidence", precision: 3, scale: 2
+    t.boolean "actioned", default: false
+    t.datetime "created_at", null: false
+    t.index ["insight_type"], name: "index_growth_insights_on_insight_type"
+    t.index ["period_start"], name: "index_growth_insights_on_period_start"
+  end
+
   create_table "intent_score_histories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "intent_score_id", null: false
     t.integer "score_before", null: false
@@ -1212,6 +1254,84 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["lead_id"], name: "index_lead_distributions_on_lead_id"
   end
 
+  create_table "lead_wizard_field_options", force: :cascade do |t|
+    t.bigint "lead_wizard_field_id", null: false
+    t.string "label", null: false
+    t.string "value", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_field_id", "position"], name: "index_lead_wizard_field_options_on_field_and_position"
+    t.index ["lead_wizard_field_id", "value"], name: "index_lead_wizard_field_options_on_field_and_value", unique: true
+    t.index ["lead_wizard_field_id"], name: "index_lead_wizard_field_options_on_lead_wizard_field_id"
+  end
+
+  create_table "lead_wizard_fields", force: :cascade do |t|
+    t.bigint "lead_wizard_section_id", null: false
+    t.string "key", null: false
+    t.string "field_type", null: false
+    t.string "label", null: false
+    t.string "target", default: "wizard_answers", null: false
+    t.string "placeholder"
+    t.text "help_text"
+    t.boolean "required", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.decimal "min_value", precision: 12, scale: 2
+    t.decimal "max_value", precision: 12, scale: 2
+    t.decimal "step_value", precision: 12, scale: 2
+    t.string "error_message"
+    t.string "depends_on_field_key"
+    t.string "depends_on_operator"
+    t.string "depends_on_value"
+    t.string "default_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_section_id", "key"], name: "index_lead_wizard_fields_on_section_and_key", unique: true
+    t.index ["lead_wizard_section_id", "position"], name: "index_lead_wizard_fields_on_section_and_position"
+    t.index ["lead_wizard_section_id"], name: "index_lead_wizard_fields_on_lead_wizard_section_id"
+  end
+
+  create_table "lead_wizard_sections", force: :cascade do |t|
+    t.bigint "lead_wizard_version_id", null: false
+    t.string "key", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_wizard_version_id", "key"], name: "index_lead_wizard_sections_on_version_and_key", unique: true
+    t.index ["lead_wizard_version_id", "position"], name: "index_lead_wizard_sections_on_version_and_position"
+    t.index ["lead_wizard_version_id"], name: "index_lead_wizard_sections_on_lead_wizard_version_id"
+  end
+
+  create_table "lead_wizard_versions", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "category_id"
+    t.string "template_key", null: false
+    t.integer "template_version", default: 1, null: false
+    t.integer "version_number", default: 1, null: false
+    t.string "status", default: "draft", null: false
+    t.string "ui_theme", default: "auto", null: false
+    t.string "ui_primary_color"
+    t.string "ui_logo_url"
+    t.boolean "show_progress_bar", default: true, null: false
+    t.string "thank_you_title"
+    t.text "thank_you_message"
+    t.string "thank_you_redirect_url"
+    t.datetime "published_at"
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "status"], name: "index_lead_wizard_versions_on_published_category", unique: true, where: "((category_id IS NOT NULL) AND ((status)::text = 'published'::text))"
+    t.index ["category_id", "version_number"], name: "index_lead_wizard_versions_on_category_and_version", unique: true, where: "(category_id IS NOT NULL)"
+    t.index ["category_id"], name: "index_lead_wizard_versions_on_category_id"
+    t.index ["company_id", "status"], name: "index_lead_wizard_versions_on_published_company", unique: true, where: "((company_id IS NOT NULL) AND ((status)::text = 'published'::text))"
+    t.index ["company_id", "version_number"], name: "index_lead_wizard_versions_on_company_and_version", unique: true, where: "(company_id IS NOT NULL)"
+    t.index ["company_id"], name: "index_lead_wizard_versions_on_company_id"
+    t.index ["status"], name: "index_lead_wizard_versions_on_published_global", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL) AND ((status)::text = 'published'::text))"
+    t.index ["version_number"], name: "index_lead_wizard_versions_on_global_version", unique: true, where: "((company_id IS NULL) AND (category_id IS NULL))"
+  end
+
   create_table "leads", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -1273,6 +1393,42 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying::text, 'pending_otp'::character varying::text, 'verified'::character varying::text, 'distributed'::character varying::text, 'proposal_submitted'::character varying::text, 'proposal_processing'::character varying::text, 'proposal_sent'::character varying::text, 'proposal_failed'::character varying::text])", name: "ck_leads_valid_status"
   end
 
+  create_table "news_articles", force: :cascade do |t|
+    t.string "title"
+    t.string "url", null: false
+    t.string "source"
+    t.datetime "published_at"
+    t.datetime "fetched_at"
+    t.string "category", limit: 50
+    t.string "vertical", limit: 20
+    t.string "audience", limit: 20
+    t.string "sentiment", limit: 20
+    t.string "urgency", limit: 20
+    t.decimal "relevance_score", precision: 3, scale: 2
+    t.text "summary_pt"
+    t.jsonb "content_angles"
+    t.jsonb "suggested_channels"
+    t.string "suggested_cta", limit: 50
+    t.boolean "used_in_content", default: false
+    t.datetime "created_at", null: false
+    t.index ["relevance_score"], name: "index_news_articles_on_relevance_score"
+    t.index ["urgency"], name: "index_news_articles_on_urgency"
+    t.index ["url"], name: "index_news_articles_on_url", unique: true
+    t.index ["used_in_content", "relevance_score"], name: "index_news_articles_on_used_in_content_and_relevance_score", where: "(used_in_content = false)"
+  end
+
+  create_table "newsletters", force: :cascade do |t|
+    t.integer "issue_number"
+    t.string "subject", limit: 300
+    t.text "content_html"
+    t.string "status", limit: 20
+    t.datetime "sent_at"
+    t.integer "recipients_count"
+    t.decimal "open_rate", precision: 5, scale: 2
+    t.decimal "click_rate", precision: 5, scale: 2
+    t.datetime "created_at", null: false
+  end
+
   create_table "noticed_events", force: :cascade do |t|
     t.string "type"
     t.string "record_type"
@@ -1316,6 +1472,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["read_at"], name: "index_notifications_on_read_at"
     t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
     t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "optimization_log", force: :cascade do |t|
+    t.string "workflow_id", limit: 20
+    t.string "optimization_type", limit: 50
+    t.jsonb "details"
+    t.datetime "created_at", null: false
+    t.index ["created_at"], name: "index_optimization_log_on_created_at"
+    t.index ["workflow_id"], name: "index_optimization_log_on_workflow_id"
   end
 
   create_table "pending_changes", force: :cascade do |t|
@@ -1624,6 +1789,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
     t.index ["company_id"], name: "index_reviews_on_company_id"
     t.index ["content_metadata"], name: "index_reviews_on_content_metadata", using: :gin
+    t.index ["created_at"], name: "index_reviews_on_created_at"
     t.index ["granular_scores_snapshot"], name: "index_reviews_on_granular_scores_snapshot", using: :gin
     t.index ["installation_status"], name: "index_reviews_on_installation_status"
     t.index ["metadata"], name: "index_reviews_on_metadata", using: :gin
@@ -1664,6 +1830,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_seo_landing_pages_on_category_id"
     t.index ["slug"], name: "index_seo_landing_pages_on_slug", unique: true
+  end
+
+  create_table "social_post_analytics", force: :cascade do |t|
+    t.string "post_id", limit: 200
+    t.string "platform", limit: 20
+    t.bigint "content_id"
+    t.datetime "published_at"
+    t.integer "impressions", default: 0
+    t.integer "engagements", default: 0
+    t.integer "link_clicks", default: 0
+    t.integer "saves", default: 0
+    t.integer "shares", default: 0
+    t.integer "comments", default: 0
+    t.decimal "ctr", precision: 5, scale: 2
+    t.datetime "fetched_at"
+    t.index ["ctr"], name: "index_social_post_analytics_on_ctr"
+    t.index ["platform"], name: "index_social_post_analytics_on_platform"
   end
 
   create_table "spec_templates", force: :cascade do |t|
@@ -1717,6 +1900,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.index ["category_id"], name: "index_subscription_plans_on_category_id"
     t.index ["plan_id"], name: "index_subscription_plans_on_plan_id"
     t.index ["product_id"], name: "index_subscription_plans_on_product_id"
+    t.index ["status", "created_at"], name: "index_subscription_plans_on_status_and_created_at"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1769,6 +1953,21 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_12_100000) do
     t.datetime "created_at"
     t.text "object_changes"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
+  end
+
+  create_table "whatsapp_messages", force: :cascade do |t|
+    t.bigint "lead_id"
+    t.bigint "company_id"
+    t.string "direction", limit: 10
+    t.string "message_type", limit: 50
+    t.string "phone", limit: 30
+    t.text "message_preview"
+    t.string "status", limit: 20
+    t.text "evolution_response"
+    t.datetime "reply_received_at"
+    t.datetime "created_at", null: false
+    t.index ["lead_id"], name: "index_whatsapp_messages_on_lead_id"
+    t.index ["status"], name: "index_whatsapp_messages_on_status"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
