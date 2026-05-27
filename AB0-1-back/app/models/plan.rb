@@ -21,14 +21,16 @@ class Plan < ApplicationRecord
     return unless plan_feature_fields.present? || plan_tier_template.present?
     
     tier = plan_tier_template.presence || inferred_plan_tier || 'free'
-    raw = plan_feature_fields.present? ? (plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h) : (features_json || {})
+    current_features = respond_to?(:features_json) && features_json.present? ? features_json : (features || {})
+    raw = plan_feature_fields.present? ? (plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h) : current_features
     
     normalized = PlanFeatureCatalog.normalize(raw, plan_tier: tier)
-    self.features_json = normalized
+    
+    self.features_json = normalized if respond_to?(:features_json=)
     self.features = normalized.to_json if self.class.column_names.include?('features')
   rescue StandardError => e
     Rails.logger.error "[PlanModel] Coercion failed: #{e.message}"
-    self.features_json = {}
+    self.features_json = {} if respond_to?(:features_json=)
   end
 
   def feature_flags
