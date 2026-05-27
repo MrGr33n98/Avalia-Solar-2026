@@ -68,48 +68,58 @@ module Api
       def analytics_timeseries
         authorize @company, :view_analytics?
 
-        # ✅ FEATURE GATE: Timeseries só para premium
-        unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+        begin
           freshness = ::CompanyDashboard::FreshnessProvider.call
-          return render json: {
-            data: [],
-            data_source: 'feature_not_authorized',
-            is_premium_analytics: false,
-            upsell_message: 'Upgrade to Pro to view timeseries analytics'
-          }.merge(freshness)
-        end
 
-        days = [(params[:days] || 90).to_i, 365].min
-        freshness = ::CompanyDashboard::FreshnessProvider.call
-        source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
-        series, data_source = source.realtime_timeseries(
-          days: days,
-          last_aggregated_at: freshness[:last_aggregated_at]
-        )
+          # ✅ FEATURE GATE: Timeseries só para premium
+          unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+            return render json: {
+              data: [],
+              data_source: 'feature_not_authorized',
+              is_premium_analytics: false,
+              upsell_message: 'Upgrade to Pro to view timeseries analytics'
+            }.merge(freshness), status: :ok
+          end
 
-        if data_source == 'company_daily_stats_unavailable'
-          return render json: {
-            data: [],
-            data_source: 'company_daily_stats_unavailable',
+          days = [(params[:days] || 90).to_i, 365].min
+          source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
+          series, data_source = source.realtime_timeseries(
+            days: days,
+            last_aggregated_at: freshness[:last_aggregated_at]
+          )
+
+          if data_source == 'company_daily_stats_unavailable'
+            return render json: {
+              data: [],
+              data_source: 'company_daily_stats_unavailable',
+              is_premium_analytics: true
+            }.merge(freshness), status: :ok
+          end
+
+          data = series.map do |row|
+            {
+              date: row[:date],
+              views: row[:profile_views],
+              clicks: row[:cta_clicks],
+              whatsapp: row[:whatsapp_clicks],
+              leads: row[:leads]
+            }
+          end
+
+          render json: {
+            data: data,
+            data_source: data_source,
             is_premium_analytics: true
-          }.merge(freshness)
+          }.merge(freshness), status: :ok
+        rescue StandardError => e
+          log_analytics_error('timeseries', e)
+          freshness = ::CompanyDashboard::FreshnessProvider.call
+          render json: {
+            data: [],
+            data_source: 'timeseries_unavailable',
+            is_premium_analytics: true
+          }.merge(freshness), status: :ok
         end
-
-        data = series.map do |row|
-          {
-            date: row[:date],
-            views: row[:profile_views],
-            clicks: row[:cta_clicks],
-            whatsapp: row[:whatsapp_clicks],
-            leads: row[:leads]
-          }
-        end
-
-        render json: {
-          data: data,
-          data_source: data_source,
-          is_premium_analytics: true
-        }.merge(freshness)
       end
 
       # GET /api/v1/company_dashboard/analytics/top_campaigns
