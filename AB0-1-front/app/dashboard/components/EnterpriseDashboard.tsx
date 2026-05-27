@@ -300,6 +300,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         pendingCount={stats?.pendingApprovals || 0}
+        pendingReviewsCount={stats?.pendingReviewsCount || 0}
         visibleTabIds={visibleTabIds}
       />
 

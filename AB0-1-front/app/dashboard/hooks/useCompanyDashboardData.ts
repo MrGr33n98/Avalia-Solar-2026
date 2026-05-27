@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApi, companiesApi, FeatureAccessEntry } from '@/lib/api';
@@ -39,6 +39,7 @@ interface DashboardStats {
     leads_in_category: number;
   }>;
   reviewsCount: number;
+  pendingReviewsCount: number;
   averageRating: number;
   pendingApprovals: number;
   activeCampaigns: number;
@@ -113,6 +114,7 @@ export function useCompanyDashboardData(companyId: string) {
         marketplace_potential: s.marketplace_potential,
         active_categories: s.active_categories,
         reviewsCount: s.reviews_count ?? 0,
+        pendingReviewsCount: s.pending_reviews_count ?? 0,
         averageRating: s.average_rating ?? 0,
         pendingApprovals: s.pending_approvals ?? 0,
         activeCampaigns: s.active_campaigns ?? 0,

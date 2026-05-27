@@ -24,6 +24,7 @@ interface EnterpriseSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   pendingCount?: number;
+  pendingReviewsCount?: number;
   visibleTabIds?: string[];
 }
 
@@ -46,6 +47,7 @@ function SidebarTree({
   activeTab,
   onTabChange,
   pendingCount = 0,
+  pendingReviewsCount = 0,
   isCollapsed,
   openGroups,
   setOpenGroups,
@@ -54,6 +56,7 @@ function SidebarTree({
   activeTab: string;
   onTabChange: (tab: string) => void;
   pendingCount?: number;
+  pendingReviewsCount?: number;
   isCollapsed: boolean;
   openGroups: string[];
   setOpenGroups: React.Dispatch<React.SetStateAction<string[]>>;
@@ -101,7 +104,7 @@ function SidebarTree({
                   {item.children.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
-                    const childBadge = child.badge && child.id === 'reviews' ? pendingCount : 0;
+                    const childBadge = child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
 
                     return (
                       <Button
@@ -174,6 +177,7 @@ export default function EnterpriseSidebar({
   isOpen,
   onClose,
   pendingCount = 0,
+  pendingReviewsCount = 0,
   visibleTabIds,
 }: EnterpriseSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -237,6 +241,7 @@ export default function EnterpriseSidebar({
           activeTab={activeTab}
           onTabChange={handleTabChange}
           pendingCount={pendingCount}
+          pendingReviewsCount={pendingReviewsCount}
           isCollapsed={isCollapsed}
           openGroups={openGroups}
           setOpenGroups={setOpenGroups}

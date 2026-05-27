@@ -32,6 +32,7 @@ module CompanyDashboard
         marketplace_potential: calculate_marketplace_potential,
         active_categories: format_active_categories,
         reviews_count: reviews_count,
+        pending_reviews_count: pending_reviews_count,
         average_rating: safe_count(:rating_avg),
         pending_approvals: pending_approvals_count,
         active_campaigns: active_campaigns_count,
@@ -117,6 +118,11 @@ module CompanyDashboard
       @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : @company.reviews.size
     end
 
+    def pending_reviews_count
+      return 0 unless @company.respond_to?(:reviews)
+      @company.reviews.where(reply: nil).count
+    end
+
     def pending_approvals_count
       if @company.respond_to?(:pending_changes) && @company.pending_changes.respond_to?(:pending)
         @company.pending_changes.pending.count
@@ -148,6 +154,7 @@ module CompanyDashboard
         leads_total: 0,
         leads_30d: 0,
         reviews_count: 0,
+        pending_reviews_count: 0,
         average_rating: 0,
         pending_approvals: 0,
         active_campaigns: 0,
