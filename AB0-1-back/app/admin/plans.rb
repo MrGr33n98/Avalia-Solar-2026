@@ -309,4 +309,17 @@ ActiveAdmin.register Plan do
     f.actions
   end
 
+  controller do
+    def update
+      super
+    rescue StandardError => e
+      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}", status: 500
+    end
+
+    def create
+      super
+    rescue StandardError => e
+      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}", status: 500
+    end
+  end
 end
