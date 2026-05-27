@@ -29,9 +29,7 @@ module Analytics
 
         scrubbed =
           ActiveRecord::Base.connection.exec_query(
-            sql,
-            'PiiScrub',
-            [[nil, limit_date]]
+            ActiveRecord::Base.sanitize_sql_array([sql, limit_date])
           )
 
         break if scrubbed.rows.empty?

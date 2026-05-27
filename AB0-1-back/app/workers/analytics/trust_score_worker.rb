@@ -21,7 +21,7 @@ module Analytics
     def perform
       return unless postgresql?
 
-      raw_lock = ActiveRecord::Base.connection.select_value("SELECT pg_try_advisory_lock($1)", 'Lock', [[nil, LOCK_ID]])
+      raw_lock = ActiveRecord::Base.connection.select_value(ActiveRecord::Base.sanitize_sql_array(["SELECT pg_try_advisory_lock(?)", LOCK_ID]))
       return unless ActiveModel::Type::Boolean.new.cast(raw_lock)
 
       begin
@@ -82,7 +82,7 @@ module Analytics
         dur = ((Time.current - start_time) * 1000).to_i
         Rails.logger.info "[TrustScoreWorker] Processed #{res.rows.size} companies in #{dur}ms"
       ensure
-        ActiveRecord::Base.connection.exec_query("SELECT pg_advisory_unlock($1)", 'Unlock', [[nil, LOCK_ID]])
+        ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array(["SELECT pg_advisory_unlock(?)", LOCK_ID]))
       end
     end
 

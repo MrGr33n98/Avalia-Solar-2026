@@ -13,7 +13,7 @@ module Analytics
     def perform
       return unless postgresql?
 
-      raw_lock = ActiveRecord::Base.connection.select_value("SELECT pg_try_advisory_lock($1)", 'Lock', [[nil, LOCK_ID]])
+      raw_lock = ActiveRecord::Base.connection.select_value(ActiveRecord::Base.sanitize_sql_array(["SELECT pg_try_advisory_lock(?)", LOCK_ID]))
       return unless ActiveModel::Type::Boolean.new.cast(raw_lock)
 
       begin
@@ -34,7 +34,7 @@ module Analytics
           log_success('FeatureStoreDaily', window_start, window_end, rows, dur)
         end
       ensure
-        ActiveRecord::Base.connection.exec_query("SELECT pg_advisory_unlock($1)", 'Unlock', [[nil, LOCK_ID]])
+        ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array(["SELECT pg_advisory_unlock(?)", LOCK_ID]))
       end
     end
     
@@ -79,7 +79,7 @@ module Analytics
     private
     
     def get_watermark
-      res = ActiveRecord::Base.connection.select_one("SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = $1", 'Watermark', [[nil, PIPELINE]])
+      res = ActiveRecord::Base.connection.select_one(ActiveRecord::Base.sanitize_sql_array(["SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = ?", PIPELINE]))
       res ? res['last_processed_at'].to_time : 1.day.ago
     end
 

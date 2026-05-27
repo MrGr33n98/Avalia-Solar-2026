@@ -43,7 +43,7 @@ module Analytics
         RETURNING 1;
       SQL
 
-      res = ActiveRecord::Base.connection.exec_query(sql, 'BackfillRecalc', [[nil, day], [nil, start_ts], [nil, end_ts]])
+      res = ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array([sql, day, start_ts, end_ts]))
       dur = ((Time.current - start_time) * 1000).to_i
       log_run('Backfill', day.to_s, res.rows.size, dur)
     end

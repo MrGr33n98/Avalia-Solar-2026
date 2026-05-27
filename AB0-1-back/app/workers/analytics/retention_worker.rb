@@ -35,7 +35,7 @@ module Analytics
           WITH doomed AS (SELECT ctid FROM analytics_event_dedup WHERE inserted_at < $1 LIMIT 5000)
           DELETE FROM analytics_event_dedup WHERE ctid IN (SELECT ctid FROM doomed) RETURNING 1;
         SQL
-        deleted = ActiveRecord::Base.connection.exec_query(sql, 'BatchCleanup', [[nil, limit_date]])
+        deleted = ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array([sql, limit_date]))
         break if deleted.rows.empty?
         total_deleted += deleted.rows.size
         sleep 0.1
@@ -60,9 +60,7 @@ module Analytics
 
         deleted =
           ActiveRecord::Base.connection.exec_query(
-            sql,
-            'CleanDLQ',
-            [[nil, limit_date]]
+            ActiveRecord::Base.sanitize_sql_array([sql, limit_date])
           )
 
         break if deleted.rows.empty?
