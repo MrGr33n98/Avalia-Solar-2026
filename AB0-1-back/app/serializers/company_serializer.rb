@@ -28,7 +28,6 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_ratings_enabled,
              :sector_rating_avg,
              :sector_rating_count,
-             :awards,
              :badges,
              :media_urls, :videos,
              :review_aggregates
