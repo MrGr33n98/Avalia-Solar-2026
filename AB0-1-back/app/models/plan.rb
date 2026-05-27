@@ -20,8 +20,10 @@ class Plan < ApplicationRecord
   end
 
   def raw_feature_flags
-    parsed_features_json = parse_feature_payload(features_json)
-    return parsed_features_json if parsed_features_json.present?
+    if respond_to?(:features_json)
+      parsed_features_json = parse_feature_payload(features_json)
+      return parsed_features_json if parsed_features_json.present?
+    end
 
     parse_feature_payload(features)
   end
