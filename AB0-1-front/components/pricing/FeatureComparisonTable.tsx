@@ -29,7 +29,7 @@ interface AvailabilityCellProps {
 export function AvailabilityCell({ value }: AvailabilityCellProps) {
   if (value === 'included') {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-500/20">
+      <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-blue/10 px-2.5 py-1.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/20">
         <Check className="h-3.5 w-3.5 shrink-0" />
         <span className="hidden md:inline">Incluído</span>
       </span>
@@ -140,10 +140,10 @@ export function FeatureComparisonTable() {
                       <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                         Gratuito
                       </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-green">
+                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-blue">
                         Pro
                       </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-purple">
+                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-700">
                         Enterprise
                       </th>
                     </tr>

@@ -274,14 +274,7 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="relative overflow-hidden min-h-screen pb-12" style={{ background: 'hsl(222 47% 95%)' }}>
-      
-      {/* Luzes ambientes com efeitos dinâmicos */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-[640px] w-[640px] rounded-full bg-brand-blue/[0.07] blur-[120px]" />
-        <div className="absolute right-0 top-10 h-[520px] w-[520px] rounded-full bg-brand-green/[0.06] blur-[100px]" />
-        <div className="absolute left-1/2 top-[55%] h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-brand-purple/[0.05] blur-[120px]" />
-      </div>
+    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--clay-bg))_44%,hsl(var(--background))_100%)] pb-12">
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative border-b border-white/50 pb-16 pt-20">
@@ -307,7 +300,7 @@ export default function PricingPage() {
             >
               Preços pensados para{' '}
               <span className="text-brand-blue">presença</span>,{' '}
-              <span className="text-brand-green">conversão</span>
+              <span className="text-brand-blue">conversão</span>
               {' '}e operação comercial madura.
             </motion.h1>
 
@@ -318,9 +311,9 @@ export default function PricingPage() {
               O gratuito garante{' '}
               <strong className="text-slate-800">presença mínima</strong> no marketplace.
               O Pro transforma seu perfil em{' '}
-              <strong className="text-brand-green">vitrine comercial ativa</strong>.
+              <strong className="text-brand-blue">vitrine comercial ativa</strong>.
               O Enterprise adiciona{' '}
-              <strong className="text-brand-purple">inteligência de mercado e governança</strong>.
+              <strong className="text-slate-900">inteligência de mercado e governança</strong>.
             </motion.p>
 
             <motion.div
@@ -437,8 +430,8 @@ export default function PricingPage() {
                 <div className="space-y-4 text-sm leading-relaxed text-slate-300">
                   {[
                     { color: 'bg-brand-blue/20 text-brand-blue', text: <><strong className="text-white">Plano</strong> define o entitlement canônico em <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-blue-light">features_json</code>.</> },
-                    { color: 'bg-brand-green/20 text-brand-green', text: <><strong className="text-white">Dashboard</strong> exibe cada feature como <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-green-light">enabled</code>, <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-green-light">locked</code> ou <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-green-light">hidden</code>.</> },
-                    { color: 'bg-brand-purple/20 text-brand-purple', text: <><strong className="text-white">Perfil público</strong> renderiza ou suprime CTAs, banners e blocos competitivos conforme o plano.</> },
+                    { color: 'bg-brand-cyan/10 text-brand-cyan-light', text: <><strong className="text-white">Dashboard</strong> exibe cada feature como <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-cyan-light">enabled</code>, <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-cyan-light">locked</code> ou <code className="rounded bg-white/10 px-1 font-mono text-xs text-brand-cyan-light">hidden</code>.</> },
+                    { color: 'bg-white/10 text-white/70', text: <><strong className="text-white">Perfil público</strong> renderiza ou suprime CTAs, banners e blocos competitivos conforme o plano.</> },
                     { color: 'bg-white/10 text-white/60', text: <><strong className="text-white">Backend</strong> aplica enforcement real: o blur é UX de upsell, não segurança falsa.</> },
                   ].map((item, i) => (
                     <div key={i} className="flex gap-3">
@@ -505,7 +498,7 @@ export default function PricingPage() {
               </button>
 
               <div className="mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-purple text-white shadow-lg mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg mb-4">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <h3 className="text-2xl font-black tracking-tight text-slate-950">
@@ -518,7 +511,7 @@ export default function PricingPage() {
 
               {modalSuccessMessage ? (
                 <div className="space-y-6 py-4 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
                     <Check className="h-8 w-8" />
                   </div>
                   <p className="text-sm font-medium text-slate-700 leading-relaxed">
@@ -550,7 +543,7 @@ export default function PricingPage() {
                       placeholder="(11) 99999-9999"
                       value={phoneContact}
                       onChange={(e) => setPhoneContact(e.target.value)}
-                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-purple focus-visible:ring-1"
+                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue focus-visible:ring-1"
                     />
                   </div>
 
@@ -564,7 +557,7 @@ export default function PricingPage() {
                       placeholder="R$ Faturamento mensal recorrente em solar"
                       value={estimatedMrr}
                       onChange={(e) => setEstimatedMrr(e.target.value)}
-                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-purple focus-visible:ring-1"
+                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue focus-visible:ring-1"
                     />
                   </div>
 
@@ -579,7 +572,7 @@ export default function PricingPage() {
                       placeholder="Ex: Integração via webhook com nosso CRM interno, sinais de intenção para equipe de outbound e relatórios personalizados."
                       value={justification}
                       onChange={(e) => setJustification(e.target.value)}
-                      className="flex w-full rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-purple focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex w-full rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-blue focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
 
@@ -596,7 +589,7 @@ export default function PricingPage() {
                     <Button
                       type="submit"
                       disabled={modalSubmitting}
-                      className="w-full h-11 rounded-full bg-brand-purple hover:bg-brand-purple/90 text-white border-0 shadow-lg shadow-brand-purple/20"
+                      className="w-full h-11 rounded-full bg-slate-900 hover:bg-brand-blue-dark text-white border-0 shadow-lg shadow-slate-900/20"
                     >
                       {modalSubmitting ? (
                         <span className="flex items-center justify-center gap-2">

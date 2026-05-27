@@ -48,26 +48,26 @@ const planConfig: Record<PlanSlug, PlanVisualConfig> = {
     checkText: 'text-slate-500',
   },
   pro: {
-    topBar: 'bg-gradient-to-r from-brand-green via-emerald-400 to-brand-green',
-    iconBg: 'bg-brand-green',
-    accentText: 'text-brand-green',
-    badgeCls: 'border border-brand-green/25 bg-brand-green/10 text-brand-green',
-    ringCls: 'ring-2 ring-brand-green/30',
-    shadowCls: 'shadow-[0_28px_64px_-20px_rgba(52,199,89,0.32)]',
-    ctaCls: 'bg-brand-green hover:bg-brand-green/90 text-white border-0',
-    checkBg: 'bg-brand-green/10',
-    checkText: 'text-brand-green',
+    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light',
+    iconBg: 'bg-brand-blue',
+    accentText: 'text-brand-blue',
+    badgeCls: 'border border-brand-blue/20 bg-brand-blue/10 text-brand-blue',
+    ringCls: 'ring-2 ring-brand-blue/20',
+    shadowCls: 'shadow-[0_24px_56px_-24px_rgba(0,86,210,0.32)]',
+    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_16px_30px_-20px_rgba(0,86,210,0.72)]',
+    checkBg: 'bg-brand-blue/10',
+    checkText: 'text-brand-blue',
   },
   enterprise: {
-    topBar: 'bg-gradient-to-r from-brand-purple via-violet-400 to-brand-purple',
-    iconBg: 'bg-brand-purple',
-    accentText: 'text-brand-purple',
-    badgeCls: 'border border-brand-purple/25 bg-brand-purple/10 text-brand-purple',
-    ringCls: 'ring-2 ring-brand-purple/25',
-    shadowCls: 'shadow-[0_28px_64px_-20px_rgba(108,92,231,0.22)]',
-    ctaCls: 'bg-brand-purple hover:bg-brand-purple/90 text-white border-0',
-    checkBg: 'bg-brand-purple/10',
-    checkText: 'text-brand-purple',
+    topBar: 'bg-gradient-to-r from-slate-900 via-brand-cyan-dark to-brand-blue',
+    iconBg: 'bg-slate-900',
+    accentText: 'text-brand-blue-dark',
+    badgeCls: 'border border-brand-cyan/25 bg-brand-cyan/10 text-brand-blue-dark',
+    ringCls: 'ring-1 ring-brand-blue/12',
+    shadowCls: 'shadow-[0_24px_56px_-24px_rgba(15,23,42,0.24)]',
+    ctaCls: 'bg-slate-900 hover:bg-brand-blue-dark text-white border-0 shadow-[0_16px_30px_-22px_rgba(15,23,42,0.7)]',
+    checkBg: 'bg-brand-cyan/10',
+    checkText: 'text-brand-blue-dark',
   },
 };
 
@@ -125,7 +125,7 @@ export function PlanCard({
         slug === 'pro' ? 'clay-convex' : 'clay-card',
         cfg.ringCls,
         cfg.shadowCls,
-        isCurrentPlan ? 'ring-2 ring-brand-blue/45' : '',
+        isCurrentPlan ? 'ring-2 ring-brand-blue/30' : '',
       ].join(' ')}
     >
       {/* Barra de destaque superior */}
@@ -145,7 +145,7 @@ export function PlanCard({
                 <div className="text-xl font-black tracking-tight text-slate-950 flex items-center gap-1.5">
                   {name}
                   {isCurrentPlan && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Seu plano ativo" />
+                    <span className="h-2 w-2 rounded-full bg-brand-blue animate-pulse" title="Seu plano ativo" />
                   )}
                 </div>
                 <div className="text-xs text-slate-500">{billingNote}</div>
