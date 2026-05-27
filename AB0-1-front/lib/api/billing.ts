@@ -36,6 +36,14 @@ export interface BillingSubscription {
   updated_at: string;
 }
 
+const createIdempotencyKey = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `checkout-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+};
+
 export const billingApi = {
   getPlans: async (): Promise<BillingPlan[]> => {
     return fetchApiSafe<BillingPlan[]>('billing/plans');
@@ -61,6 +69,9 @@ export const billingApi = {
   ): Promise<{ checkout_url: string }> => {
     return fetchApiSafe<{ checkout_url: string }>('billing/checkout', {
       method: 'POST',
+      headers: {
+        'Idempotency-Key': createIdempotencyKey(),
+      },
       body: JSON.stringify({
         company_id: companyId,
         plan_id: planId,

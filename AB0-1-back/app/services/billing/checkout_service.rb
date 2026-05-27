@@ -1,9 +1,14 @@
+require 'digest'
+require 'uri'
+
 module Billing
   class CheckoutService
-    def initialize(company:, plan:, current_user:)
+    def initialize(company:, plan:, current_user:, success_url: nil, cancel_url: nil)
       @company = company
       @plan    = plan
       @user    = current_user
+      @success_url = success_url
+      @cancel_url = cancel_url
     end
 
     def call
@@ -49,12 +54,12 @@ module Billing
     end
 
     def create_checkout_session(stripe_customer_id)
-      cache_key = "checkout_session:#{@company.id}:#{@plan.id}"
+      success_url = checkout_success_url
+      cancel_url = checkout_cancel_url
+      cache_key = "checkout_session:#{@company.id}:#{@plan.id}:#{Digest::SHA256.hexdigest("#{success_url}|#{cancel_url}")}"
       
       cached_url = Rails.cache.read(cache_key)
       return cached_url if cached_url.present?
-
-      frontend_url = ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }
       
       items = [{ price: @plan.stripe_price_id_monthly, quantity: 1 }]
       
@@ -83,8 +88,8 @@ module Billing
             plan_id: @plan.id.to_s
           } 
         },
-        success_url: "#{frontend_url}/company-dashboard/billing?session_id={CHECKOUT_SESSION_ID}&status=success",
-        cancel_url: "#{frontend_url}/company-dashboard/billing?status=cancelled",
+        success_url: success_url,
+        cancel_url: cancel_url,
         client_reference_id: @company.id.to_s,
         metadata: { 
           company_id: @company.id.to_s, 
@@ -96,6 +101,39 @@ module Billing
       Rails.cache.write(cache_key, session.url, expires_in: 30.minutes)
 
       session.url
+    end
+
+    def checkout_success_url
+      sanitized_checkout_url(
+        @success_url,
+        "#{frontend_url}/company-dashboard/billing?session_id={CHECKOUT_SESSION_ID}&status=success"
+      )
+    end
+
+    def checkout_cancel_url
+      sanitized_checkout_url(
+        @cancel_url,
+        "#{frontend_url}/company-dashboard/billing?status=cancelled"
+      )
+    end
+
+    def sanitized_checkout_url(value, fallback)
+      uri = URI.parse(value.to_s)
+      return fallback unless uri.is_a?(URI::HTTP) && uri.host.present?
+
+      allowed_hosts = [URI.parse(frontend_url).host, 'localhost', '127.0.0.1'].compact.uniq
+      return value if allowed_hosts.include?(uri.host)
+
+      Rails.logger.warn(
+        "[Billing::CheckoutService] Rejected checkout redirect host=#{uri.host} company_id=#{@company.id}"
+      )
+      fallback
+    rescue URI::InvalidURIError
+      fallback
+    end
+
+    def frontend_url
+      @frontend_url ||= ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }.delete_suffix('/')
     end
   end
 end

@@ -141,22 +141,22 @@ function shouldRetryWithFallback(upstreamResponse: Response, method: string, pat
   return !isJsonContentType(contentType);
 }
 
+async function discardResponseBody(response: Response) {
+  try {
+    await response.body?.cancel();
+  } catch {
+    // Best-effort cleanup before retrying another upstream.
+  }
+}
+
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
   const pathSegments = context.params.path ?? [];
   const upstreamBases = resolveProxyApiBases();
   const method = request.method.toUpperCase();
-
-  const init: RequestInit & { duplex?: 'half' } = {
-    method,
-    headers: buildUpstreamHeaders(request),
-    cache: 'no-store',
-    redirect: 'manual',
-  };
-
-  if (method !== 'GET' && method !== 'HEAD') {
-    init.body = request.body;
-    init.duplex = 'half';
-  }
+  const requestBody =
+    method === 'GET' || method === 'HEAD'
+      ? undefined
+      : await request.arrayBuffer();
 
   let lastError: unknown;
 
@@ -166,9 +166,22 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     const hasFallback = index < upstreamBases.length - 1;
 
     try {
+      const init: RequestInit & { duplex?: 'half' } = {
+        method,
+        headers: buildUpstreamHeaders(request),
+        cache: 'no-store',
+        redirect: 'manual',
+      };
+
+      if (requestBody) {
+        init.body = requestBody.slice(0);
+        init.duplex = 'half';
+      }
+
       const upstreamResponse = await fetch(upstreamUrl, init);
 
       if (hasFallback && shouldRetryWithFallback(upstreamResponse, method, pathSegments)) {
+        await discardResponseBody(upstreamResponse);
         continue;
       }
 

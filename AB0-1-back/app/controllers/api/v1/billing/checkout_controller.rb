@@ -26,7 +26,9 @@ module Api
           checkout_url = ::Billing::CheckoutService.new(
             company: company,
             plan: plan,
-            current_user: current_user
+            current_user: current_user,
+            success_url: params[:success_url],
+            cancel_url: params[:cancel_url]
           ).call
 
           render json: { checkout_url: checkout_url }, status: :ok

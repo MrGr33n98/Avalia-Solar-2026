@@ -10,8 +10,10 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
   let(:headers) { { 'Content-Type' => 'application/json' } }
 
   before do
+    Rails.cache.clear
     allow(Analytics::TrackEventService).to receive(:call).and_return(true)
     allow(SlackNotificationService).to receive(:notify).and_return(true)
+    allow(SlackNotificationService).to receive(:notify_member_assigned).and_return(true)
   end
 
   let!(:membership) { create(:company_member, company: company, user: user, role: :owner, status: 'active') }
@@ -61,6 +63,35 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
         expect(response).to have_http_status(:ok)
         payload = JSON.parse(response.body)
         expect(payload['checkout_url']).to eq('https://checkout.stripe.com/pay/session_123')
+      end
+
+      it 'repassa success_url e cancel_url para o Stripe' do
+        success_url = 'http://localhost:3000/dashboard?checkout=success'
+        cancel_url = 'http://localhost:3000/pricing'
+
+        post '/api/v1/billing/checkout',
+             params: {
+               company_id: company.id,
+               plan_id: plan.id,
+               success_url: success_url,
+               cancel_url: cancel_url
+             }.to_json,
+             headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(Stripe::Checkout::Session).to have_received(:create).with(
+          hash_including(success_url: success_url, cancel_url: cancel_url)
+        )
+      end
+
+      it 'retorna 422 quando o plano nao tem Stripe Price mensal' do
+        invalid_plan = create(:plan, name: "Invalid Checkout #{SecureRandom.hex(4)}", stripe_price_id_monthly: nil)
+
+        post '/api/v1/billing/checkout',
+             params: { company_id: company.id, plan_id: invalid_plan.id }.to_json,
+             headers: auth_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end

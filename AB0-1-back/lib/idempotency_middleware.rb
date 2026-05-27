@@ -10,6 +10,7 @@ class IdempotencyMiddleware
     %r{/api/v1/orders},
     %r{/api/v1/products},
     %r{/api/v1/pending_changes},
+    %r{/api/v1/billing/checkout},
     %r{/api/v1/company_dashboard/banner_checkout},
     %r{/api/v1/payments/webhooks}
   ].freeze
