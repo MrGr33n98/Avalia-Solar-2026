@@ -41,7 +41,7 @@ module CompanyDashboard
 
       base_scope
         .where('rating_avg > ? OR (rating_avg = ? AND rating_count > ?)',
-               company.rating_avg, company.rating_avg, company.rating_count)
+               comparison_rating(company), comparison_rating(company), company.rating_count.to_i)
         .count + 1
     end
 
@@ -50,9 +50,10 @@ module CompanyDashboard
     end
 
     def percentile
-      return 0 if total_companies.zero?
+      total = total_companies
+      return 0 if total.zero?
       
-      ((total_companies - current_position + 1).to_f / total_companies * 100).round(1)
+      ((total - current_position + 1).to_f / total * 100).round(1)
     end
 
     def competitors_for_quadrant
@@ -98,17 +99,18 @@ module CompanyDashboard
     end
 
     def category_rankings
-      company.categories.each do |category|
+      company.categories.map do |category|
         if criterion_slug.present?
           scoped_service = self.class.new(company: company, category_id: category.id, criterion_slug: criterion_slug)
           total = Company.active.joins(:categories).where(categories: { id: category.id }).distinct.count
+          position = scoped_service.send(:current_position_by_criterion)
 
           {
             category_id: category.id,
             category_name: category.name,
-            position: scoped_service.send(:current_position_by_criterion),
+            position: position,
             total: total,
-            percentile: total.zero? ? 0 : ((total - scoped_service.send(:current_position_by_criterion) + 1).to_f / total * 100).round(1),
+            percentile: total.zero? ? 0 : ((total - position + 1).to_f / total * 100).round(1),
             criterion_slug: criterion_slug,
             criterion_title: scoped_service.send(:criterion_title)
           }
@@ -255,7 +257,7 @@ module CompanyDashboard
         if criterion_slug.blank?
           nil
         else
-        category = Category.find_by(id: category_id)
+          category = Category.find_by(id: category_id)
           if category.nil?
             nil
           else

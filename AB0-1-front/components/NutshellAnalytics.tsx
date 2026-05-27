@@ -1,7 +1,6 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect } from 'react';
 
 export const NUTSHELL_INSTANCE = process.env.NEXT_PUBLIC_NUTSHELL_INSTANCE || '385068';
 export const NUTSHELL_AUTH_TOKEN = process.env.NEXT_PUBLIC_NUTSHELL_AUTH_TOKEN || 'KTE-7awqaTLwXH6lG6jbzAyKyC6DbZ8vNQBtAACppQg.2';
@@ -14,8 +13,9 @@ export const NUTSHELL_AUTH_TOKEN = process.env.NEXT_PUBLIC_NUTSHELL_AUTH_TOKEN |
  */
 export default function NutshellAnalytics() {
   const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
+  const nutshellEnabled = process.env.NEXT_PUBLIC_ENABLE_NUTSHELL === 'true';
   
-  if (!analyticsEnabled) return null;
+  if (!analyticsEnabled || !nutshellEnabled) return null;
 
   return (
     <>

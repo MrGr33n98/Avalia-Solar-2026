@@ -91,6 +91,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
+  const nutshellEnabled = analyticsEnabled && process.env.NEXT_PUBLIC_ENABLE_NUTSHELL === 'true';
 
   return (
     <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
@@ -105,7 +106,10 @@ export default function RootLayout({
             {/* PostHog */}
             <link rel="preconnect" href="https://us.i.posthog.com" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://us.i.posthog.com" />
-            {/* Nutshell */}
+          </>
+        )}
+        {nutshellEnabled && (
+          <>
             <link rel="preconnect" href="https://growth.avaliasolar.com.br" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://growth.avaliasolar.com.br" />
           </>
@@ -170,4 +174,3 @@ export default function RootLayout({
     </html>
   );
 }
-

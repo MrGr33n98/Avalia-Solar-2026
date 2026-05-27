@@ -56,6 +56,22 @@ const planIconMap = {
   enterprise: ShieldCheck,
 };
 
+const planOrder: Record<PlanSlug, number> = { free: 0, pro: 1, enterprise: 2 };
+
+function normalizePlanSlug(plan: Partial<BillingPlan> & { plan_tier?: string }, fallbackIndex = 0): PlanSlug {
+  const explicitSlug = plan.slug || plan.plan_tier;
+  if (explicitSlug === 'free' || explicitSlug === 'pro' || explicitSlug === 'enterprise') {
+    return explicitSlug;
+  }
+
+  const normalizedName = plan.name?.toLowerCase() || '';
+  if (normalizedName.includes('enterprise')) return 'enterprise';
+  if (/pro|starter|premium|pago/.test(normalizedName)) return 'pro';
+  if (/free|gratuito|basic/.test(normalizedName)) return 'free';
+
+  return pricingPlans[fallbackIndex]?.slug || 'free';
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
@@ -92,43 +108,42 @@ export default function PricingPage() {
           console.warn('[PricingPage] Falha ao carregar planos da API, usando catálogo estático como fallback:', err);
         }
 
-        // Mescla com os metadados do catálogo estático para preservar o visual premium
-        const displayPlans = (apiPlans.length > 0 ? apiPlans : []).map((apiPlan) => {
-          const staticPlan = pricingPlans.find((p) => p.slug === apiPlan.slug);
-          return {
-            ...apiPlan,
-            highlights: apiPlan.highlights?.length > 0 ? apiPlan.highlights : (staticPlan?.highlights || []),
-            summary: staticPlan?.summary || apiPlan.summary || '',
-            badge: staticPlan?.badge || apiPlan.badge || undefined,
-            featured: staticPlan?.featured || apiPlan.featured || false,
-            priceLabel: apiPlan.price_formatted || staticPlan?.priceLabel || '',
-            ctaLabel: staticPlan?.ctaLabel || 'Assinar',
-          };
-        });
+        const apiPlansBySlug = apiPlans.reduce<Partial<Record<PlanSlug, BillingPlan>>>((acc, apiPlan, index) => {
+          const slug = normalizePlanSlug(apiPlan as BillingPlan & { plan_tier?: string }, index);
+          acc[slug] = acc[slug] || { ...apiPlan, slug };
+          return acc;
+        }, {});
 
-        // Se a API não retornou nada (nem o fallback interno deu certo), usa o catálogo local estático bruto
-        if (displayPlans.length === 0) {
-          const rawDisplayPlans = pricingPlans.map((sp, idx) => ({
-            id: idx + 1,
-            slug: sp.slug,
-            name: sp.name,
-            price_cents: sp.slug === 'free' ? 0 : 49900,
-            price_formatted: sp.priceLabel,
-            price_label: sp.priceLabel,
-            highlights: sp.highlights,
-            summary: sp.summary,
-            badge: sp.badge,
-            featured: sp.featured,
-            priceLabel: sp.priceLabel,
-            ctaLabel: sp.ctaLabel,
-          }));
-          setPlans(rawDisplayPlans);
-        } else {
-          // Ordena os planos conforme o slug para manter free -> pro -> enterprise
-          const order = { free: 0, pro: 1, enterprise: 2 };
-          displayPlans.sort((a, b) => order[a.slug] - order[b.slug]);
-          setPlans(displayPlans);
-        }
+        // O backend define IDs/Stripe/features; o catálogo local define a apresentação pública.
+        const displayPlans = pricingPlans
+          .map((staticPlan, index) => {
+            const apiPlan = apiPlansBySlug[staticPlan.slug];
+
+            return {
+              ...apiPlan,
+              id: apiPlan?.id || index + 1,
+              slug: staticPlan.slug,
+              name: staticPlan.name,
+              price_cents: apiPlan?.price_cents ?? (staticPlan.slug === 'free' ? 0 : 49900),
+              price_formatted: apiPlan?.price_formatted || staticPlan.priceLabel,
+              price_label: apiPlan?.price_label || apiPlan?.price_formatted || staticPlan.priceLabel,
+              stripe_product_id: apiPlan?.stripe_product_id || null,
+              stripe_price_id_monthly: apiPlan?.stripe_price_id_monthly || null,
+              stripe_price_id_yearly: apiPlan?.stripe_price_id_yearly || null,
+              features: apiPlan?.features || {},
+              highlights: staticPlan.highlights,
+              audience: staticPlan.audience,
+              summary: staticPlan.summary,
+              billingNote: staticPlan.billingNote,
+              badge: staticPlan.badge,
+              featured: staticPlan.featured,
+              priceLabel: apiPlan?.price_formatted || staticPlan.priceLabel,
+              ctaLabel: staticPlan.ctaLabel,
+            };
+          })
+          .sort((a, b) => planOrder[a.slug] - planOrder[b.slug]);
+
+        setPlans(displayPlans);
 
         // Busca assinatura se estiver logado e tiver empresa associada
         if (isAuthenticated && user?.company_id) {

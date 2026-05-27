@@ -191,20 +191,15 @@ module Api
       def analytics_ranking
         authorize @company, :view_analytics?
 
-        # ✅ FEATURE GATE: Ranking só para enterprise
-        unless FeatureGateService.can_access?(@company, 'advanced_analytics')
-          return render json: {
-            rank_position: nil,
-            ranking_score: 0,
-            magic_quadrant_points: [],
-            quadrant_meta: {},
-            category_rankings: [],
-            is_premium_analytics: false,
-            upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
-          }
-        end
-
         begin
+          # ✅ FEATURE GATE: Ranking só para enterprise
+          unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+            return render json: default_ranking_payload.merge(
+              is_premium_analytics: false,
+              upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
+            ), status: :ok
+          end
+
           category_id = params[:category_id].presence
           criterion_slug = params[:criterion_slug].presence
           service = ::CompanyDashboard::RankingService.new(
@@ -224,12 +219,7 @@ module Api
           }
         rescue StandardError => e
           log_analytics_error('ranking', e)
-          render json: {
-            rank_position: nil,
-            ranking_score: 0,
-            magic_quadrant_points: [],
-            is_premium_analytics: true
-          }
+          render json: default_ranking_payload.merge(is_premium_analytics: true), status: :ok
         end
       end
 
@@ -889,37 +879,41 @@ module Api
       # GET /api/v1/company_dashboard/social_proof_reviews
       def social_proof_reviews
         authorize @company, :edit_reviews?
-        
-        # ✅ Eager load user para não ter N+1 + select para limitar colunas
-        reviews = @company.reviews
-          .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
-          .includes(:user)
-          .order(created_at: :desc)
 
-        feature_permission = current_user&.admin? || @company.can_use_social_proof?
+        begin
+          # ✅ Eager load user para não ter N+1 + select para limitar colunas
+          reviews = @company.reviews
+            .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
+            .includes(:user)
+            .order(created_at: :desc)
 
-        render json: {
-          reviews: reviews.map do |review|
-            {
-              id: review.id,
-              rating: review.rating.to_f,
-              comment: review.comment.to_s,
-              status: review.status,
-              featured: review.featured,
-              display_order: review.display_order,
-              verified: review.verified,
-              created_at: review.created_at,
-              reply: review.reply,
-              replied_at: review.replied_at,
-              user_name: review.public_reviewer_name
-            }
-          end,
-          permissions: {
-            can_feature_reviews: feature_permission,
-            social_proof_enabled: @company.respond_to?(:social_proof_enabled) ? @company.social_proof_enabled : false,
-            featured_limit: Review::MAX_FEATURED_PER_COMPANY
-          }
-        }, status: :ok
+          feature_permission = current_user&.admin? || (@company.respond_to?(:can_use_social_proof?) && @company.can_use_social_proof?)
+
+          render json: {
+            reviews: reviews.map do |review|
+              {
+                id: review.id,
+                rating: review.rating.to_f,
+                comment: review.comment.to_s,
+                status: review.status,
+                featured: review.featured,
+                display_order: review.display_order,
+                verified: review.verified,
+                created_at: review.created_at,
+                reply: review.reply,
+                replied_at: review.replied_at,
+                user_name: review.public_reviewer_name
+              }
+            end,
+            permissions: social_proof_permissions(feature_permission)
+          }, status: :ok
+        rescue StandardError => e
+          log_analytics_error('social_proof_reviews', e)
+          render json: {
+            reviews: [],
+            permissions: social_proof_permissions(false)
+          }, status: :ok
+        end
       end
 
       # PATCH /api/v1/company_dashboard/social_proof_reviews/:id
@@ -952,20 +946,24 @@ module Api
       # GET /api/v1/company_dashboard/social_proof_stats
       def social_proof_stats
         authorize @company, :edit_reviews?
-        approved_scope = @company.reviews.approved
-        render json: {
-          stats: {
-            total_reviews: @company.reviews.count,
-            approved_reviews: approved_scope.count,
-            featured_reviews: @company.reviews.where(featured: true).count,
-            average_rating: approved_scope.average(:rating).to_f.round(2),
-            rating_distribution: rating_distribution_for(approved_scope),
-            monthly_evolution: monthly_evolution_for(approved_scope)
-          }
-        }, status: :ok
-      end
 
-      private
+        begin
+          approved_scope = @company.reviews.approved
+          render json: {
+            stats: {
+              total_reviews: @company.reviews.count,
+              approved_reviews: approved_scope.count,
+              featured_reviews: @company.reviews.where(featured: true).count,
+              average_rating: approved_scope.average(:rating).to_f.round(2),
+              rating_distribution: rating_distribution_for(approved_scope),
+              monthly_evolution: monthly_evolution_for(approved_scope)
+            }
+          }, status: :ok
+        rescue StandardError => e
+          log_analytics_error('social_proof_stats', e)
+          render json: { stats: default_social_proof_stats }, status: :ok
+        end
+      end
 
       private
 
@@ -1139,6 +1137,35 @@ module Api
 
         grouped = scope.group(Arel.sql(expression)).count
         grouped.sort.to_h
+      end
+
+      def default_ranking_payload
+        {
+          rank_position: nil,
+          ranking_score: 0,
+          magic_quadrant_points: [],
+          quadrant_meta: {},
+          category_rankings: []
+        }
+      end
+
+      def social_proof_permissions(feature_permission)
+        {
+          can_feature_reviews: feature_permission,
+          social_proof_enabled: @company.respond_to?(:social_proof_enabled) ? @company.social_proof_enabled : false,
+          featured_limit: Review::MAX_FEATURED_PER_COMPANY
+        }
+      end
+
+      def default_social_proof_stats
+        {
+          total_reviews: 0,
+          approved_reviews: 0,
+          featured_reviews: 0,
+          average_rating: 0,
+          rating_distribution: { 5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0 },
+          monthly_evolution: {}
+        }
       end
 
       def calculate_conversion_rate
