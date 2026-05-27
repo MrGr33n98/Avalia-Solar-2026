@@ -293,8 +293,8 @@ jobs:
             echo "?? Aguardando db/redis ficarem healthy..."
             sleep 5
 
-            echo "?? Reiniciando backend..."
-            docker compose up -d backend
+            echo "?? Reiniciando backend e worker..."
+            docker compose up -d backend worker
 
             BACKEND_CID=$(docker compose ps -q backend)
             if [ -z "$BACKEND_CID" ]; then
