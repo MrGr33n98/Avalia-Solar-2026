@@ -18,9 +18,14 @@ module Billing
       stripe_customer_id = ensure_stripe_customer!(subscription)
       
       create_checkout_session(stripe_customer_id)
+    rescue Stripe::AuthenticationError => e
+      Rails.logger.error(stripe_error_log_message(e))
+      raise Billing::Errors::StripeSessionCreationFailed,
+            'Pagamentos temporariamente indisponíveis. Verifique a configuração do Stripe.'
     rescue Stripe::StripeError => e
-      Rails.logger.error("[Billing::CheckoutService] Stripe Error: #{e.message} for company_id=#{@company.id}")
-      raise Billing::Errors::StripeSessionCreationFailed, "Falha na comunicação com o Stripe: #{e.message}"
+      Rails.logger.error(stripe_error_log_message(e))
+      raise Billing::Errors::StripeSessionCreationFailed,
+            'Falha temporária ao iniciar o checkout. Tente novamente em instantes.'
     end
 
     private
@@ -134,6 +139,14 @@ module Billing
 
     def frontend_url
       @frontend_url ||= ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }.delete_suffix('/')
+    end
+
+    def stripe_error_log_message(error)
+      "[Billing::CheckoutService] #{error.class} company_id=#{@company.id} plan_id=#{@plan.id}: #{redact_secret(error.message)}"
+    end
+
+    def redact_secret(message)
+      message.to_s.gsub(/sk_(?:live|test)_[A-Za-z0-9*_]+/, 'sk_[REDACTED]')
     end
   end
 end

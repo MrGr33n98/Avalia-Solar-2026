@@ -5,6 +5,8 @@ RSpec.describe Billing::CheckoutService, type: :service do
   let(:company) { create(:company, plan: plan) }
   let(:user) { create(:user, company: company) }
 
+  before { Rails.cache.clear }
+
   describe '#call' do
     context 'quando o plano não tem stripe_price_id_monthly configurado' do
       let(:invalid_plan) { Plan.find_by(name: 'Invalid Plan') || create(:plan, name: 'Invalid Plan', stripe_price_id_monthly: nil) }
@@ -66,6 +68,28 @@ RSpec.describe Billing::CheckoutService, type: :service do
         subscription = Billing::CompanySubscription.find_by(company: company)
         expect(subscription).to be_present
         expect(subscription.stripe_customer_id).to eq('cust_novo')
+      end
+    end
+
+    context 'quando o Stripe rejeita a chave de API' do
+      let(:service) { described_class.new(company: company, plan: plan, current_user: user) }
+
+      before do
+        allow(Stripe::Customer).to receive(:create).and_raise(
+          Stripe::AuthenticationError.new('Invalid API Key provided: sk_test_********XXXX')
+        )
+      end
+
+      it 'lança erro seguro sem expor a chave Stripe' do
+        captured_error = nil
+
+        expect { service.call }.to raise_error(
+          Billing::Errors::StripeSessionCreationFailed,
+          /Pagamentos temporariamente indisponíveis/
+        ) { |error| captured_error = error }
+
+        expect(captured_error.message).not_to include('sk_test')
+        expect(captured_error.message).not_to include('XXXX')
       end
     end
   end

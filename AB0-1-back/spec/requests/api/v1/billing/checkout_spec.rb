@@ -93,6 +93,20 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
 
         expect(response).to have_http_status(:unprocessable_entity)
       end
+
+      it 'retorna erro seguro quando a chave Stripe é inválida' do
+        allow(Stripe::Customer).to receive(:create).and_raise(
+          Stripe::AuthenticationError.new('Invalid API Key provided: sk_test_********XXXX')
+        )
+
+        post '/api/v1/billing/checkout', params: params, headers: auth_headers
+
+        expect(response).to have_http_status(:service_unavailable)
+        payload = JSON.parse(response.body)
+        expect(payload['error']).to include('Pagamentos temporariamente indisponíveis')
+        expect(payload['error']).not_to include('sk_test')
+        expect(payload['error']).not_to include('XXXX')
+      end
     end
   end
 
