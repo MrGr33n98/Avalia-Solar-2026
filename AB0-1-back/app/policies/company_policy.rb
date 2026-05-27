@@ -98,7 +98,7 @@ class CompanyPolicy < ApplicationPolicy
   private
 
   def admin?
-    user.admin?
+    super
   end
 
   def company_owner?
