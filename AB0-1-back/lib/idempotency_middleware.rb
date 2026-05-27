@@ -62,12 +62,15 @@ class IdempotencyMiddleware
 
       # Armazena a resposta se foi sucesso (2xx)
       if status >= 200 && status < 300
+        response_body = extract_body(body)
+        headers = headers.to_h
         response_data = {
           status: status,
-          headers: headers.to_h,
-          body: extract_body(body)
+          headers: headers,
+          body: response_body
         }
         Rails.cache.write(cache_key, response_data, expires_in: CACHE_EXPIRY)
+        body = [response_body]
       end
 
       [status, headers, body]
@@ -109,8 +112,19 @@ class IdempotencyMiddleware
   end
 
   def extract_body(response_body)
-    body_content = response_body.map { |part| part }
+    body_content = []
+
+    if response_body.respond_to?(:each)
+      response_body.each { |part| body_content << part.to_s }
+    elsif response_body.respond_to?(:body)
+      body_content << response_body.body.to_s
+    else
+      body_content << response_body.to_s
+    end
+
     body_content.join
+  ensure
+    response_body.close if response_body.respond_to?(:close)
   end
 
   def build_response_from_cache(cached_data)
