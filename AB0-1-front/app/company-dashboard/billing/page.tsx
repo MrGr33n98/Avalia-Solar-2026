@@ -266,7 +266,7 @@ export default function BillingDashboardPage() {
           <div className="p-5 rounded-2xl border border-white bg-white/40 space-y-2">
             <h6 className="font-bold text-slate-900">Como são cobradas as assinaturas?</h6>
             <p className="leading-relaxed text-slate-500">
-              O plano Pro é cobrado mensalmente e de forma recorrente em seu cartão de crédito através do Stripe. Você pode cancelar ou alterar a qualquer momento.
+              O plano Pro é cobrado anualmente e de forma recorrente em seu cartão de crédito através do Stripe. Você pode cancelar ou alterar a qualquer momento.
             </p>
           </div>
           <div className="p-5 rounded-2xl border border-white bg-white/40 space-y-2">

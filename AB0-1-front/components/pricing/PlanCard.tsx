@@ -180,7 +180,7 @@ export function PlanCard({
               {priceLabel}
             </div>
             <div className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-slate-400">
-              {slug === 'free' ? 'Para sempre' : slug === 'pro' ? 'Mensal' : 'Personalizado'}
+              {slug === 'free' ? 'Para sempre' : slug === 'pro' ? 'Anual' : 'Personalizado'}
             </div>
           </div>
         </div>

@@ -71,6 +71,43 @@ RSpec.describe Billing::CheckoutService, type: :service do
       end
     end
 
+    context 'quando o redirect usa a variante www do FRONTEND_URL' do
+      let!(:subscription) { Billing::CompanySubscription.create!(company: company, plan: plan, stripe_customer_id: 'cust_existente', status: 'incomplete') }
+      let(:success_url) { 'https://www.avaliasolar.com.br/dashboard?checkout=success' }
+      let(:cancel_url) { 'https://www.avaliasolar.com.br/pricing' }
+      let(:service) do
+        described_class.new(
+          company: company,
+          plan: plan,
+          current_user: user,
+          success_url: success_url,
+          cancel_url: cancel_url
+        )
+      end
+
+      around do |example|
+        original_frontend_url = ENV['FRONTEND_URL']
+        ENV['FRONTEND_URL'] = 'https://avaliasolar.com.br'
+        example.run
+      ensure
+        ENV['FRONTEND_URL'] = original_frontend_url
+      end
+
+      before do
+        allow(Stripe::Checkout::Session).to receive(:create).and_return(
+          double('Stripe::Checkout::Session', url: 'https://checkout.stripe.com/pay/session_www')
+        )
+      end
+
+      it 'aceita www e dominio raiz como hosts seguros de retorno' do
+        service.call
+
+        expect(Stripe::Checkout::Session).to have_received(:create).with(
+          hash_including(success_url: success_url, cancel_url: cancel_url)
+        )
+      end
+    end
+
     context 'quando o Stripe rejeita a chave de API' do
       let(:service) { described_class.new(company: company, plan: plan, current_user: user) }
 

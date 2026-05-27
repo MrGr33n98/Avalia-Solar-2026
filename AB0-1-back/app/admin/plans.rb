@@ -42,7 +42,7 @@ ActiveAdmin.register Plan do
 
   filter :name, label: 'Nome'
   filter :description, label: 'Descrição'
-  filter :price, label: 'Preço Mensal'
+  filter :price, label: 'Preço Anual'
   filter :created_at, label: 'Criado em'
   filter :updated_at, label: 'Atualizado em'
 
@@ -69,7 +69,7 @@ ActiveAdmin.register Plan do
     column 'Preço', :price do |plan|
       div class: 'aa-metric-stack' do
         div(class: 'aa-metric-value') { number_to_currency(plan.price, unit: 'R$', separator: ',', delimiter: '.') } +
-          div(class: 'aa-metric-caption') { 'mensalidade base' }
+          div(class: 'aa-metric-caption') { 'cobrança anual' }
       end
     end
     column('Setup') do |plan|
@@ -102,13 +102,13 @@ ActiveAdmin.register Plan do
       row :id
       row('Nome do Plano') { resource.name }
       row('Descrição Interna') { resource.description }
-      row('Preço Mensal') { number_to_currency(resource.price, unit: 'R$', separator: ',', delimiter: '.') }
+      row('Preço Anual') { number_to_currency(resource.price, unit: 'R$', separator: ',', delimiter: '.') }
       row('Configuração de Setup') { resource.full_implementation_summary }
       row('Tier Inferido') { status_tag(resource.inferred_plan_tier) }
       row('Total de Recursos') { resource.enabled_feature_keys.count }
       row('Stripe Product ID') { resource.stripe_product_id.presence || 'Não configurado' }
-      row('Stripe Price ID Mensal') { resource.stripe_price_id_monthly.presence || 'Não configurado' }
-      row('Stripe Price ID Anual') { resource.stripe_price_id_yearly.presence || 'Não configurado' }
+      row('Stripe Price ID Principal') { resource.stripe_price_id_monthly.presence || 'Não configurado' }
+      row('Stripe Price ID Anual Alternativo') { resource.stripe_price_id_yearly.presence || 'Não configurado' }
       row('Exibir no /pricing') { resource.is_public ? '✅ Sim' : '❌ Não' }
       row('Ordem de exibição') { resource.display_order }
       row('Data de Criação') { resource.created_at }
@@ -254,7 +254,7 @@ ActiveAdmin.register Plan do
     f.inputs 'Informações Básicas do Plano' do
       f.input :name, label: 'Nome do Plano'
       f.input :description, label: 'Descrição Interna', hint: 'Apenas para uso administrativo.'
-      f.input :price, label: 'Preço Mensal (R$)', hint: 'Use 0 para planos gratuitos.'
+      f.input :price, label: 'Preço Anual (R$)', hint: 'Use 0 para planos gratuitos.'
       f.input :plan_tier_template,
               as: :select,
               label: 'Template de Referência',
@@ -267,8 +267,8 @@ ActiveAdmin.register Plan do
 
     f.inputs 'Integração Stripe (Faturamento)' do
       f.input :stripe_product_id, label: 'Stripe Product ID', hint: 'Ex: prod_XXXX'
-      f.input :stripe_price_id_monthly, label: 'Stripe Price ID Mensal', hint: 'Ex: price_XXXX'
-      f.input :stripe_price_id_yearly, label: 'Stripe Price ID Anual', hint: 'Ex: price_XXXX (opcional)'
+      f.input :stripe_price_id_monthly, label: 'Stripe Price ID Principal', hint: 'Use o price_ anual que será usado no checkout.'
+      f.input :stripe_price_id_yearly, label: 'Stripe Price ID Anual Alternativo', hint: 'Opcional; mantenha vazio se o principal já for anual.'
       f.input :is_public, as: :boolean, label: 'Exibir publicamente no site (/pricing)'
       f.input :display_order, label: 'Ordem de exibição', hint: 'Menor número aparece primeiro no carrossel.'
     end

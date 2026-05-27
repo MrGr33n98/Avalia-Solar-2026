@@ -137,7 +137,7 @@ export default function PricingPage() {
               id: apiPlan?.id || index + 1,
               slug: staticPlan.slug,
               name: staticPlan.name,
-              price_cents: apiPlan?.price_cents ?? (staticPlan.slug === 'free' ? 0 : 49900),
+              price_cents: apiPlan?.price_cents ?? (staticPlan.slug === 'pro' ? 150000 : 0),
               price_formatted: apiPlan?.price_formatted || staticPlan.priceLabel,
               price_label: apiPlan?.price_label || apiPlan?.price_formatted || staticPlan.priceLabel,
               stripe_product_id: apiPlan?.stripe_product_id || null,

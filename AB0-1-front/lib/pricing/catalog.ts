@@ -56,7 +56,7 @@ export const pricingPlans: PricingPlan[] = [
     name: 'Pro',
     badge: 'Mais vendido',
     featured: true,
-    priceLabel: 'Sob proposta comercial',
+    priceLabel: 'R$ 1.500,00',
     billingNote: 'Vitrine comercial com conversão',
     summary: 'Transforma o perfil em um ativo de geração de demanda com merchandising, CTA e remoção de distração competitiva.',
     audience: 'Empresas que querem converter melhor e controlar a vitrine pública.',

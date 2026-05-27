@@ -126,7 +126,7 @@ module Billing
       uri = URI.parse(value.to_s)
       return fallback unless uri.is_a?(URI::HTTP) && uri.host.present?
 
-      allowed_hosts = [URI.parse(frontend_url).host, 'localhost', '127.0.0.1'].compact.uniq
+      allowed_hosts = allowed_checkout_hosts
       return value if allowed_hosts.include?(uri.host)
 
       Rails.logger.warn(
@@ -139,6 +139,21 @@ module Billing
 
     def frontend_url
       @frontend_url ||= ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }.delete_suffix('/')
+    end
+
+    def allowed_checkout_hosts
+      frontend_host = URI.parse(frontend_url).host
+      hosts = [frontend_host, 'localhost', '127.0.0.1']
+
+      if frontend_host&.start_with?('www.')
+        hosts << frontend_host.delete_prefix('www.')
+      elsif frontend_host.present?
+        hosts << "www.#{frontend_host}"
+      end
+
+      hosts.compact.uniq
+    rescue URI::InvalidURIError
+      ['localhost', '127.0.0.1']
     end
 
     def stripe_error_log_message(error)
