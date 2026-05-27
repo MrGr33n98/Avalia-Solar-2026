@@ -56,10 +56,27 @@ module Billing
 
       frontend_url = ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }
       
+      items = [{ price: @plan.stripe_price_id_monthly, quantity: 1 }]
+      
+      # Adiciona a Taxa de Setup dinamicamente no Checkout (Pagamento único)
+      if @plan.respond_to?(:setup_fee) && @plan.setup_fee.to_i > 0 && !@plan.setup_included
+        items << {
+          price_data: {
+            currency: 'brl',
+            unit_amount: (@plan.setup_fee.to_f * 100).to_i, # Stripe cobra em centavos
+            product_data: {
+              name: "Taxa de Setup - #{@plan.name}",
+              description: "Implementação completa e onboarding assistido"
+            }
+          },
+          quantity: 1
+        }
+      end
+
       session = Stripe::Checkout::Session.create(
         customer: stripe_customer_id,
         mode: 'subscription',
-        line_items: [{ price: @plan.stripe_price_id_monthly, quantity: 1 }],
+        line_items: items,
         subscription_data: { 
           metadata: { 
             company_id: @company.id.to_s,

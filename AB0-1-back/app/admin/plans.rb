@@ -309,39 +309,4 @@ ActiveAdmin.register Plan do
     f.actions
   end
 
-  controller do
-    def update
-      coerce_plan_console_params
-      super
-    end
-
-    def create
-      coerce_plan_console_params
-      super
-    end
-
-    private
-
-    def coerce_plan_console_params
-      raw_params = params[:plan]
-      return unless raw_params.present?
-
-      tier = raw_params[:plan_tier_template].presence || 'free'
-      feature_fields = raw_params.delete(:plan_feature_fields)
-
-      raw_features =
-        if feature_fields.present?
-          feature_fields.respond_to?(:to_unsafe_h) ? feature_fields.to_unsafe_h : feature_fields.to_h
-        else
-          raw_params[:features_json] || {}
-        end
-
-      normalized = PlanFeatureCatalog.normalize(raw_features, plan_tier: tier)
-      raw_params[:features_json] = normalized
-      raw_params[:features] = normalized.to_json if Plan.column_names.include?('features')
-    rescue StandardError => e
-      Rails.logger.error "[PlansAdmin] Coercion failed: #{e.message}"
-      raw_params[:features_json] = {}
-    end
-  end
 end

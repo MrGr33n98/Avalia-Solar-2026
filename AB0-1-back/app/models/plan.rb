@@ -15,6 +15,22 @@ class Plan < ApplicationRecord
   # Feature Management
   # =========================================================================
 
+  before_validation :normalize_feature_fields
+
+  def normalize_feature_fields
+    return unless plan_feature_fields.present? || plan_tier_template.present?
+    
+    tier = plan_tier_template.presence || inferred_plan_tier || 'free'
+    raw = plan_feature_fields.present? ? (plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h) : (features_json || {})
+    
+    normalized = PlanFeatureCatalog.normalize(raw, plan_tier: tier)
+    self.features_json = normalized
+    self.features = normalized.to_json if self.class.column_names.include?('features')
+  rescue StandardError => e
+    Rails.logger.error "[PlanModel] Coercion failed: #{e.message}"
+    self.features_json = {}
+  end
+
   def feature_flags
     raw_feature_flags
   end
