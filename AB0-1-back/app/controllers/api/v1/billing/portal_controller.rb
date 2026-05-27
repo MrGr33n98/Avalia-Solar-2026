@@ -10,6 +10,17 @@ module Api
           # Autorização Pundit usando a classe de política explícita
           authorize company, :portal?, policy_class: BillingPolicy
 
+          BillingAuditLog.create!(
+            user_id: current_user.id,
+            company_id: company.id,
+            action: :portal_opened,
+            metadata: {
+              ip_address: request.remote_ip,
+              user_agent: request.user_agent,
+              timestamp: Time.current.iso8601
+            }
+          )
+
           portal_url = ::Billing::PortalService.new(company: company).call
 
           render json: { portal_url: portal_url }, status: :ok

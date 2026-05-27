@@ -17,7 +17,7 @@ export const isFeatureLockedEntry = (entry: FeatureAccessEntry | null | undefine
   entry?.state === 'locked';
 
 export const isFeatureEnabledEntry = (entry: FeatureAccessEntry | null | undefined): boolean => {
-  if (!entry || entry.state !== 'enabled') return false;
+  if (!entry || !['enabled', 'limited', 'trial'].includes(entry.state)) return false;
 
   if (entry.value === false || entry.value === null) return false;
   if (typeof entry.value === 'number') return entry.value > 0;

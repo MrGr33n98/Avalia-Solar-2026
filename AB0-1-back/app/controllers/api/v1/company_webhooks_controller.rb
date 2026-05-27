@@ -1,6 +1,8 @@
 module Api
   module V1
     class CompanyWebhooksController < BaseController
+      include FeatureGateEnforceable
+
       before_action :authenticate_api_user
       before_action :require_company_user
       before_action :set_company
@@ -58,13 +60,7 @@ module Api
       end
 
       def ensure_webhooks_available!
-        return if @company&.can_use_webhooks?
-
-        render_error_response(
-          message: 'Webhooks disponíveis apenas para empresas Enterprise.',
-          status: :forbidden,
-          code: 'WEBHOOKS_NOT_AVAILABLE'
-        )
+        enforce_feature_access!(:webhooks, company: @company)
       end
 
       def set_webhook

@@ -49,6 +49,11 @@ module Billing
     end
 
     def create_checkout_session(stripe_customer_id)
+      cache_key = "checkout_session:#{@company.id}:#{@plan.id}"
+      
+      cached_url = Rails.cache.read(cache_key)
+      return cached_url if cached_url.present?
+
       frontend_url = ENV.fetch('FRONTEND_URL') { 'http://localhost:3000' }
       
       session = Stripe::Checkout::Session.create(
@@ -71,6 +76,8 @@ module Billing
         }
       )
       
+      Rails.cache.write(cache_key, session.url, expires_in: 30.minutes)
+
       session.url
     end
   end

@@ -26,6 +26,7 @@ RSpec.describe Analytics::TrackEventService do
     context 'when the flag is absent in non-test environments' do
       it 'keeps analytics ingestion enabled by default' do
         allow(Rails.env).to receive(:test?).and_return(false)
+        allow(ENV).to receive(:[]).and_call_original
         allow(ENV).to receive(:[]).with('G4_ANALYTICS_ENABLED').and_return(nil)
 
         result = nil

@@ -12,6 +12,7 @@ import { UpgradeButton } from '@/components/billing/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ErrorBanner } from '@/components/billing/ErrorBanner';
 
 // ─── Animações ────────────────────────────────────────────────────────────
 
@@ -135,6 +136,8 @@ export default function BillingDashboardPage() {
           Gerencie o plano da sua empresa, visualize informações de pagamento, data de renovação e solicite upgrades de vitrine comercial.
         </p>
       </div>
+
+      <ErrorBanner error={error} />
 
       {/* Banner de status crítico (past_due, unpaid, canceled) */}
       {subscription && (
@@ -334,11 +337,7 @@ export default function BillingDashboardPage() {
                 </div>
               ) : (
                 <form onSubmit={handleEnterpriseSubmit} className="space-y-5">
-                  {modalError && (
-                    <div className="p-3 text-xs rounded-xl bg-red-50 border border-red-200 text-red-700">
-                      {modalError}
-                    </div>
-                  )}
+                  <ErrorBanner error={modalError} onDismiss={() => setModalError(null)} />
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">

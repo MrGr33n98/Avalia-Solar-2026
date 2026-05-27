@@ -6,7 +6,15 @@ RSpec.describe 'Company Dashboard Query Optimization', type: :request do
   let(:token) { user.tokens.create.token }
 
   before do
+    allow(Analytics::TrackEventService).to receive(:call).and_return(true)
+    allow(RoiCalculationWorker).to receive(:perform_async)
+    allow(LeadScoringWorker).to receive(:perform_async)
     create(:company_member, user: user, company: company, role: 'owner')
+    company.plan.update!(
+      name: 'Enterprise',
+      price: 499.0,
+      features_json: PlanFeatureCatalog.defaults_for_tier('enterprise')
+    )
   end
 
   describe 'intent_summary endpoint' do

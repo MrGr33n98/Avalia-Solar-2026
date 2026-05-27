@@ -1,7 +1,12 @@
 module Api
   module V1
     class IntentScoresController < BaseController
+      include FeatureGateEnforceable
+
       before_action :authenticate_api_user, except: []
+      before_action :set_company_for_intent_scores
+      before_action :authorize_intent_scores_company!
+      before_action :enforce_intent_scores_access!
 
       # GET /api/v1/intent_scores
       # Get ranked intent scores for a company
@@ -14,7 +19,7 @@ module Api
         
         scores = IntentScore.where(company_id: company_id)
                            .by_score
-                           .includes(:lead, :company)
+                           .includes(:lead_record, :company)
                            .limit(100)
         
         render json: {
@@ -78,6 +83,32 @@ module Api
       end
 
       private
+
+      def set_company_for_intent_scores
+        company_id = params[:company_id].presence
+        company_id ||= IntentScore.where(id: params[:id]).pick(:company_id) if params[:id].present?
+
+        if company_id.blank?
+          render json: { error: 'company_id required' }, status: :bad_request
+          return
+        end
+
+        @company = ::Company.find(company_id)
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Company not found' }, status: :not_found
+      end
+
+      def authorize_intent_scores_company!
+        return if performed?
+
+        authorize @company, :show?
+      end
+
+      def enforce_intent_scores_access!
+        return if performed?
+
+        enforce_feature_access!(:intent_scores, company: @company)
+      end
 
       def score_json(score, detailed: false)
         base = {

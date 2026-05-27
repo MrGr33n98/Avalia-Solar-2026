@@ -3,10 +3,12 @@ module Api
   module V1
     class CompanyDashboardController < BaseController
       include PendingChangeIdempotency
+      include FeatureGateEnforceable
       
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
+      before_action :enforce_intent_summary_feature_access!, only: %i[intent_summary]
 
       # GET /api/v1/company_dashboard/analytics/overview
       def analytics_overview
@@ -976,6 +978,10 @@ module Api
       end
 
       private
+
+      def enforce_intent_summary_feature_access!
+        enforce_feature_access!(:intent_scores, company: @company)
+      end
 
       def set_company
         @company =

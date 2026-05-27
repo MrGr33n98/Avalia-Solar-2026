@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_26_100004) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_27_162518) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -376,6 +376,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_100004) do
     t.index ["company_id", "performed_at"], name: "idx_billing_admin_actions_company_time"
     t.index ["company_id"], name: "index_billing_admin_actions_on_company_id"
     t.index ["performed_at"], name: "index_billing_admin_actions_on_performed_at"
+  end
+
+  create_table "billing_audit_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "company_id", null: false
+    t.integer "action"
+    t.integer "plan_id"
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_billing_audit_logs_on_company_id"
+    t.index ["user_id"], name: "index_billing_audit_logs_on_user_id"
   end
 
   create_table "billing_company_subscriptions", force: :cascade do |t|
@@ -2080,6 +2092,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_26_100004) do
   add_foreign_key "billing_admin_actions", "admin_users"
   add_foreign_key "billing_admin_actions", "billing_company_subscriptions", column: "company_subscription_id", on_delete: :nullify
   add_foreign_key "billing_admin_actions", "companies"
+  add_foreign_key "billing_audit_logs", "companies"
+  add_foreign_key "billing_audit_logs", "users"
   add_foreign_key "billing_company_subscriptions", "companies"
   add_foreign_key "billing_company_subscriptions", "plans"
   add_foreign_key "buyer_intent_activities", "companies"

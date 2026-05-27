@@ -25,6 +25,7 @@ import { pricingPlans, type PlanSlug } from '@/lib/pricing/catalog';
 import { PlanCard, PlanCardSkeleton } from './PlanCard';
 import { FeatureComparisonTable } from './FeatureComparisonTable';
 import { PricingFaq } from './PricingFaq';
+import { ErrorBanner } from '@/components/billing/ErrorBanner';
 
 // ─── Variantes de Animação ──────────────────────────────────────────────────
 
@@ -81,6 +82,8 @@ export default function PricingPage() {
   const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoadingPlanId, setActionLoadingPlanId] = useState<number | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [lastFailedPlan, setLastFailedPlan] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Estado para o Modal de Lead Enterprise
@@ -176,6 +179,8 @@ export default function PricingPage() {
     }
 
     setActionLoadingPlanId(plan.id);
+    setCheckoutError(null);
+    setLastFailedPlan(plan);
 
     try {
       if (plan.slug === 'free') {
@@ -219,7 +224,7 @@ export default function PricingPage() {
       }
     } catch (err: any) {
       console.error('[PricingPage] Erro ao processar ação de faturamento:', err);
-      alert(err?.message || 'Falha ao processar solicitação. Por favor, tente novamente.');
+      setCheckoutError(err?.message || 'Falha ao processar solicitação. Por favor, tente novamente.');
     } finally {
       setActionLoadingPlanId(null);
     }
@@ -342,11 +347,19 @@ export default function PricingPage() {
       {/* ── PLANS CARDS SECTION ───────────────────────────────────────────── */}
       <section className="relative py-16 md:py-20">
         <div className="container mx-auto px-4 md:px-6">
-          {error && (
-            <div className="mb-10 max-w-2xl mx-auto p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center text-sm">
-              {error}
-            </div>
-          )}
+          <div className="mb-10 max-w-2xl mx-auto space-y-4">
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center text-sm">
+                {error}
+              </div>
+            )}
+
+            <ErrorBanner 
+              error={checkoutError}
+              onRetry={() => lastFailedPlan && handlePlanCta(lastFailedPlan)}
+              onDismiss={() => setCheckoutError(null)}
+            />
+          </div>
 
           <div className="grid gap-5 xl:grid-cols-3">
             {loading ? (
@@ -526,11 +539,7 @@ export default function PricingPage() {
                 </div>
               ) : (
                 <form onSubmit={handleEnterpriseLeadSubmit} className="space-y-5">
-                  {modalError && (
-                    <div className="p-3 text-xs rounded-xl bg-red-50 border border-red-200 text-red-700">
-                      {modalError}
-                    </div>
-                  )}
+                  <ErrorBanner error={modalError} onDismiss={() => setModalError(null)} />
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">

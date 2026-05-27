@@ -6,10 +6,10 @@ module Api
 
       before_action :set_company,
                     only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories
-                             social_proof]
+                             feature_access social_proof]
       before_action :authenticate_api_user,
                     only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
-                             analytics_traffic mine]
+                             analytics_traffic feature_access mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!,
                     only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
@@ -102,6 +102,27 @@ module Api
       def categories
         cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
         render json: { categories: cats.as_json }, status: :ok
+      end
+
+      # GET /api/v1/companies/:id/feature_access
+      def feature_access
+        authorize @company, :show?
+
+        render json: feature_access_payload(@company), status: :ok
+      rescue Pundit::NotAuthorizedError
+        render json: {
+          error: 'Unauthorized',
+          reason: 'User is not a member of this company'
+        }, status: :forbidden
+      rescue StandardError => e
+        Rails.logger.error("[CompaniesController#feature_access] company_id=#{@company&.id} error=#{e.class}: #{e.message}")
+        render json: {
+          error: 'Unable to determine feature access',
+          features: nil,
+          metadata: {
+            fallback_timestamp: Time.current.iso8601
+          }
+        }, status: :internal_server_error
       end
 
       # GET /api/v1/companies/:id/social_proof
@@ -543,6 +564,40 @@ module Api
             verified: company.verified
           }
         end
+      end
+
+      def feature_access_payload(company)
+        {
+          features: feature_access_entries_for_api(company),
+          plan: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free',
+          subscription: feature_access_subscription_payload(company),
+          metadata: {
+            timestamp: Time.current.iso8601,
+            version: 1,
+            cache_ttl_seconds: 300
+          }
+        }
+      end
+
+      def feature_access_entries_for_api(company)
+        raw_access = company.respond_to?(:feature_access) ? company.feature_access : {}
+        raw_access.transform_values do |entry|
+          payload = entry.respond_to?(:dup) ? entry.dup : {}
+          payload['state'] = 'locked' if payload['state'] == 'hidden'
+          payload
+        end
+      end
+
+      def feature_access_subscription_payload(company)
+        subscription = ::Billing::CompanySubscription.find_by(company_id: company.id)
+
+        {
+          status: subscription&.status || (company.respond_to?(:plan_status) ? company.plan_status : nil) || 'inactive',
+          current_period_start: subscription&.current_period_start&.iso8601,
+          current_period_end: subscription&.current_period_end&.iso8601,
+          trial_end: subscription&.trial_end&.iso8601,
+          canceled_at: subscription&.canceled_at&.iso8601
+        }
       end
 
       # Serializer used by index/featured endpoints

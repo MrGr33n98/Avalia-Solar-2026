@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { AlertOctagon, AlertTriangle, ShieldX, RefreshCw } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, ShieldX, RefreshCw, CheckCircle2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BillingStatusBannerProps {
@@ -16,12 +16,39 @@ export function BillingStatusBanner({
   actionLoading = false,
 }: BillingStatusBannerProps) {
   
-  if (!['past_due', 'unpaid', 'canceled'].includes(status)) {
+  if (!['active', 'trialing', 'past_due', 'unpaid', 'canceled', 'enterprise_lead'].includes(status)) {
     return null;
   }
 
   // Define os estilos e mensagens baseado no status da assinatura
   const bannerConfig = {
+    active: {
+      bgCls: 'bg-emerald-50 border-emerald-200 text-emerald-950',
+      icon: CheckCircle2,
+      iconCls: 'text-emerald-600',
+      title: 'Assinatura Ativa',
+      message: 'Sua assinatura Pro está ativa e operando normalmente.',
+      btnText: 'Gerenciar',
+      btnCls: 'bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm shadow-emerald-600/10',
+    },
+    trialing: {
+      bgCls: 'bg-blue-50 border-blue-200 text-blue-950',
+      icon: Info,
+      iconCls: 'text-blue-600',
+      title: 'Período de Teste (Trial)',
+      message: 'Sua assinatura está em período de teste. Adicione um método de pagamento para não perder o acesso.',
+      btnText: 'Adicionar Pagamento',
+      btnCls: 'bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-sm shadow-blue-600/10',
+    },
+    enterprise_lead: {
+      bgCls: 'bg-purple-50 border-purple-200 text-purple-950',
+      icon: Info,
+      iconCls: 'text-purple-600',
+      title: 'Solicitação Enterprise Pendente',
+      message: 'Sua solicitação está em análise. Nosso time comercial entrará em contato em breve.',
+      btnText: '',
+      btnCls: 'hidden',
+    },
     past_due: {
       bgCls: 'bg-amber-50 border-amber-200 text-amber-950',
       icon: AlertTriangle,
@@ -49,7 +76,7 @@ export function BillingStatusBanner({
       btnText: 'Reativar Plano Pro',
       btnCls: 'bg-brand-green hover:bg-brand-green/90 text-white border-0 shadow-sm shadow-brand-green/10',
     },
-  }[status as 'past_due' | 'unpaid' | 'canceled'];
+  }[status as 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled' | 'enterprise_lead'];
 
   if (!bannerConfig) return null;
 
@@ -72,7 +99,7 @@ export function BillingStatusBanner({
         </div>
       </div>
 
-      {onActionClick && (
+      {onActionClick && !bannerConfig.btnCls.includes('hidden') && (
         <Button
           onClick={onActionClick}
           disabled={actionLoading}

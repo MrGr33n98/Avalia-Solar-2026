@@ -23,8 +23,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, type FeatureAccessEntry } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
+import { isFeatureEnabled } from '@/lib/feature-access';
 import MetricCard from './MetricCard';
 import OpportunityBoard from './OpportunityBoard';
 import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
@@ -53,6 +54,7 @@ const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
 type OverviewTabProps = {
   companyId: string;
   company?: any;
+  featureAccess?: Record<string, FeatureAccessEntry>;
   themeMode?: 'light' | 'dark';
   onNavigateToReviews?: () => void;
 };
@@ -204,7 +206,7 @@ const CLAY_PANEL = [
 ].join(' ');
 
 /* ─── Main Component ─── */
-export default function OverviewTab({ companyId, company, themeMode, onNavigateToReviews }: OverviewTabProps) {
+export default function OverviewTab({ companyId, company, featureAccess, themeMode, onNavigateToReviews }: OverviewTabProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [reviewLink, setReviewLink] = useState('');
@@ -272,7 +274,7 @@ export default function OverviewTab({ companyId, company, themeMode, onNavigateT
   }, [companyId, queryClient]);
 
   const stats = statsQuery.data;
-  const isPremium = Boolean(company?.has_paid_plan || company?.featured || company?.plan_id);
+  const isPremium = isFeatureEnabled(featureAccess, 'leads_marketplace');
 
   // ─── Chart Data ───
   const timeseriesData = useMemo(() => {

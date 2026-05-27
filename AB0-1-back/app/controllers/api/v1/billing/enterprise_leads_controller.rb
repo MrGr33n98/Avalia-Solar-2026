@@ -11,6 +11,18 @@ module Api
           # Autoriza Pundit
           authorize company, :enterprise_lead?, policy_class: BillingPolicy
 
+          BillingAuditLog.create!(
+            user_id: current_user.id,
+            company_id: company.id,
+            action: :enterprise_lead_created,
+            plan_id: plan.id,
+            metadata: {
+              ip_address: request.remote_ip,
+              user_agent: request.user_agent,
+              timestamp: Time.current.iso8601
+            }
+          )
+
           lead_params = params.permit(:justification, :phone_contact, :estimated_mrr)
           
           # Validação básica de parâmetros exigidos para o lead

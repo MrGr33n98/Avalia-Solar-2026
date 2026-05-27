@@ -25,9 +25,17 @@ module Api
           render json: { error: e.message }, status: :bad_request
         rescue StandardError => e
           Rails.logger.error("[Billing::Webhook] #{e.class}: #{e.message}")
-          # Envia para o Sentry se configurado
           Sentry.capture_exception(e) if defined?(Sentry)
-          render json: { error: e.message }, status: :unprocessable_entity
+          
+          if defined?(Billing::SlackNotifier)
+            Billing::SlackNotifier.notify_webhook_failure(
+              error: e.message,
+              backtrace: e.backtrace.first(10)
+            ) rescue nil
+          end
+
+          # Still return 200 to Stripe (don't retry failed webhooks)
+          render json: { status: 'error', error: e.message }, status: :ok
         end
       end
     end

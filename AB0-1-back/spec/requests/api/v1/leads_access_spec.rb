@@ -1,9 +1,17 @@
 require 'rails_helper'
 
 RSpec.describe 'Leads RBAC', type: :request do
-  let(:company) { create(:company, status: 'active') }
-  let(:other_company) { create(:company, status: 'active') }
-  let(:inactive_company) { create(:company, status: 'inactive') }
+  let(:leads_plan) do
+    create(
+      :plan,
+      name: 'Pro Leads',
+      price: 99.0,
+      features_json: PlanFeatureCatalog.defaults_for_tier('enterprise')
+    )
+  end
+  let(:company) { create(:company, status: 'active', plan: leads_plan) }
+  let(:other_company) { create(:company, status: 'active', plan: leads_plan) }
+  let(:inactive_company) { create(:company, status: 'inactive', plan: leads_plan) }
 
   let!(:lead_owned) { create(:lead, company: company) }
   let!(:lead_other) { create(:lead, company: other_company) }
@@ -18,6 +26,11 @@ RSpec.describe 'Leads RBAC', type: :request do
   def stub_auth(user)
     allow_any_instance_of(Api::V1::LeadsController).to receive(:authenticate_api_user).and_return(true)
     allow_any_instance_of(Api::V1::LeadsController).to receive(:current_user).and_return(user)
+  end
+
+  before do
+    allow(RoiCalculationWorker).to receive(:perform_async)
+    allow(LeadScoringWorker).to receive(:perform_async)
   end
 
   describe 'GET /api/v1/leads' do

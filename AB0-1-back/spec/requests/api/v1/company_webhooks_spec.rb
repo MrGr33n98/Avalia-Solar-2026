@@ -22,6 +22,7 @@ RSpec.describe 'Company webhooks API', type: :request do
   end
 
   before do
+    allow(Analytics::TrackEventService).to receive(:call).and_return(true)
     create(:company_member, company: company, user: user, role: :owner, status: 'active')
     allow_any_instance_of(Api::V1::CompanyWebhooksController).to receive(:current_user).and_return(user)
   end
@@ -68,7 +69,7 @@ RSpec.describe 'Company webhooks API', type: :request do
 
   describe 'GET /api/v1/company_webhooks' do
     it 'lists webhooks without exposing secret keys' do
-      create(:company_webhook, company: company, secret_key: 'sensitive-secret')
+      create(:company_webhook, company: company, secret_key: 'sensitive-secret-value-for-testing')
 
       get '/api/v1/company_webhooks', headers: headers
 

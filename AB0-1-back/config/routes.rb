@@ -72,6 +72,7 @@ Rails.application.routes.draw do
           get 'analytics/traffic', to: 'companies#analytics_traffic'
           get :widget_data, to: 'widget_data#show'
           get :badges, to: 'badges#index'
+          get :feature_access
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :social_proof

@@ -9,6 +9,8 @@ module Billing
 
     def call
       company_sub = find_or_initialize_subscription
+      return nil if company_sub.nil?
+
       old_status  = company_sub.status
 
       update_subscription!(company_sub)
@@ -48,7 +50,17 @@ module Billing
       end
 
       if company.nil?
-        raise "Company not found for Stripe Subscription #{@stripe_sub.id} (customer: #{@stripe_sub.customer})"
+        Billing::SlackNotifier.notify_unknown_company(
+          stripe_sub_id: @stripe_sub.id,
+          stripe_customer_id: @stripe_sub.customer,
+          error: "Company lookup failed"
+        ) if defined?(Billing::SlackNotifier)
+        
+        Sentry.capture_exception(
+          StandardError.new("SubscriptionSyncService: Company not found for Stripe subscription #{@stripe_sub.id}")
+        ) if defined?(Sentry)
+        
+        return nil
       end
 
       # 6. Inicializa ou reusa

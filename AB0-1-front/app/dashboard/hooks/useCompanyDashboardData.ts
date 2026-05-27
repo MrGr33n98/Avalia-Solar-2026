@@ -123,13 +123,28 @@ export function useCompanyDashboardData(companyId: string) {
         monthly_views: s.monthly_views ?? [],
       });
       setPlanFeatures(data?.plan_features || {});
-      setFeatureAccess(data?.feature_access || {});
     } catch (error) {
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
         endpoint: '/company_dashboard/stats',
         error,
       });
+    }
+  }, [companyId]);
+
+  const fetchFeatureAccess = useCallback(async () => {
+    try {
+      console.debug('[CompanyDashboardData] Fetching canonical feature access', { companyId });
+
+      const data = await companiesApi.getFeatureAccess(companyId);
+      setFeatureAccess(data?.features || {});
+    } catch (error) {
+      console.error('[CompanyDashboardData] Error fetching feature access', {
+        companyId,
+        endpoint: '/companies/:id/feature_access',
+        error,
+      });
+      setFeatureAccess({});
     }
   }, [companyId]);
 
@@ -163,13 +178,14 @@ export function useCompanyDashboardData(companyId: string) {
 
   const refreshData = useCallback(() => {
     fetchDashboardStats();
+    fetchFeatureAccess();
     fetchNotifications();
-  }, [fetchDashboardStats, fetchNotifications]);
+  }, [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]);
 
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([fetchCompanyData(), fetchDashboardStats(), fetchNotifications()]);
+      await Promise.all([fetchCompanyData(), fetchDashboardStats(), fetchFeatureAccess(), fetchNotifications()]);
       setLoading(false);
     };
 
@@ -180,7 +196,7 @@ export function useCompanyDashboardData(companyId: string) {
     });
 
     return () => cleanupRealtimeSubscription(subscription);
-  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications, refreshData]);
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchFeatureAccess, fetchNotifications, refreshData]);
 
   const markNotificationAsRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));

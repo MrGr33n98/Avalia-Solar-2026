@@ -2,7 +2,7 @@ require 'base64'
 
 FactoryBot.define do
   factory :plan do
-    name { 'Basic Plan' }
+    sequence(:name) { |n| "Basic Plan #{n}" }
     price { 99.90 }
     features { { max_products: 50, dashboard_access: true } }
   end
@@ -28,7 +28,7 @@ FactoryBot.define do
 
     after(:build) do |company|
       if company.status == 'active' && company.categories.empty?
-        company.categories << build(:category)
+        company.categories << create(:category)
       end
     end
   end

@@ -4,12 +4,15 @@ require 'json'
 require 'uri'
 
 class Api::V1::LeadsController < Api::V1::BaseController
+  include FeatureGateEnforceable
+
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
   IDENTITY_KEYS = %w[anonymous_id session_id].freeze
 
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
   before_action :authenticate_api_user, only: %i[index show update destroy mine]
   before_action :ensure_leads_access!, only: %i[index]
+  before_action :ensure_leads_feature_access!, only: %i[index]
   before_action :ensure_lead_access!, only: %i[show update destroy]
   before_action :check_honeypot, only: %i[create wizard_create]
 
@@ -325,6 +328,12 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def ensure_leads_access!
     return if performed? || current_user.nil?
     scoped_leads
+  end
+
+  def ensure_leads_feature_access!
+    return if performed? || current_user&.admin?
+
+    enforce_feature_access!(:leads_marketplace, company: current_user&.company)
   end
 
   def ensure_lead_access!

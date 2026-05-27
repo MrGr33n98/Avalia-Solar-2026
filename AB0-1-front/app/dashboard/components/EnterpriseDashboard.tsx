@@ -333,6 +333,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <OverviewTab
                   companyId={companyId}
                   company={company}
+                  featureAccess={featureAccess}
                   themeMode={themeMode}
                   onNavigateToReviews={() => handleTabChange('reviews')}
                 />

@@ -11,6 +11,18 @@ module Api
           # Autorização Pundit usando a classe de política explícita
           authorize company, :checkout?, policy_class: BillingPolicy
 
+          BillingAuditLog.create!(
+            user_id: current_user.id,
+            company_id: company.id,
+            action: :checkout_initiated,
+            plan_id: plan.id,
+            metadata: {
+              ip_address: request.remote_ip,
+              user_agent: request.user_agent,
+              timestamp: Time.current.iso8601
+            }
+          )
+
           checkout_url = ::Billing::CheckoutService.new(
             company: company,
             plan: plan,
