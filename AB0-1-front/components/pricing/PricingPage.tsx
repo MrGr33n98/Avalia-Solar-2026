@@ -67,7 +67,11 @@ function normalizePlanSlug(plan: Partial<BillingPlan> & { plan_tier?: string }, 
 
   const normalizedName = plan.name?.toLowerCase() || '';
   if (normalizedName.includes('enterprise')) return 'enterprise';
-  if (/pro|starter|premium|pago/.test(normalizedName)) return 'pro';
+  
+  // Prefer exact 'pro' match first to avoid 'starter' overriding it
+  if (normalizedName.includes('pro')) return 'pro';
+  if (/starter|premium|pago/.test(normalizedName)) return 'pro'; // fallback for other paid plans
+  
   if (/free|gratuito|basic/.test(normalizedName)) return 'free';
 
   return pricingPlans[fallbackIndex]?.slug || 'free';
@@ -113,7 +117,13 @@ export default function PricingPage() {
 
         const apiPlansBySlug = apiPlans.reduce<Partial<Record<PlanSlug, BillingPlan>>>((acc, apiPlan, index) => {
           const slug = normalizePlanSlug(apiPlan as BillingPlan & { plan_tier?: string }, index);
-          acc[slug] = acc[slug] || { ...apiPlan, slug };
+          
+          if (slug === 'pro' && apiPlan.name.toLowerCase().includes('pro')) {
+            acc[slug] = { ...apiPlan, slug }; // Sobrescreve se for o verdadeiro 'pro'
+          } else {
+            acc[slug] = acc[slug] || { ...apiPlan, slug };
+          }
+          
           return acc;
         }, {});
 
