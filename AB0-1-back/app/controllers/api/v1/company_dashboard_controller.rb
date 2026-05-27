@@ -296,14 +296,35 @@ module Api
             }
           end
 
+          selectable_columns = [
+            :id,
+            :company_id,
+            :lead_id,
+            :total_score,
+            :intent_level,
+            :confidence_score,
+            :total_signals_count,
+            :recommended_action,
+            :last_interaction_at,
+            :updated_at,
+            :top_signals
+          ].select { |column| IntentScore.column_names.include?(column.to_s) }
+
           # ✅ EAGER LOAD tudo que será usado - 1 query intent_scores + 1 query leads
           intent_scores = IntentScore
             .where(company_id: @company.id)
-            .select(:id, :company_id, :lead_id, :total_score, :intent_level, :confidence_score, :total_signals_count, :recommended_action, :sla_window, :last_interaction_at, :updated_at, :top_signals)
+            .select(*selectable_columns)
             .includes(:lead_record)
             .order(total_score: :desc)
             .limit(10)
             .to_a
+
+          total_signals = intent_scores.sum { |score| score.total_signals_count.to_i }
+          avg_confidence = if intent_scores.any?
+                             (intent_scores.sum { |score| score.confidence_score.to_f } / intent_scores.size).round(2)
+                           else
+                             0.0
+                           end
 
           top_leads = intent_scores.map do |score|
             lead = score.lead_record
@@ -313,6 +334,10 @@ module Api
               name: lead&.name || "Prospecto ##{score.lead_id}",
               email: lead&.email,
               phone: lead&.phone,
+              city: lead&.city,
+              state: lead&.state,
+              message: lead&.message,
+              product_vertical: lead&.product_vertical,
               total_score: score.total_score,
               intent_level: score.intent_level,
               recommended_action: score.recommended_action,
@@ -336,13 +361,13 @@ module Api
                 referrer: lead&.referrer_host
               },
               confidence_score: score.confidence_score,
-              top_signals: score.top_signals || []
+              top_signals: score.has_attribute?(:top_signals) ? (score.top_signals || []) : []
             }
           end
 
           render json: {
-            total_signals: intent_scores.sum(:total_signals_count),
-            avg_confidence: intent_scores.average(:confidence_score).to_f.round(2),
+            total_signals: total_signals,
+            avg_confidence: avg_confidence,
             intent_distribution: {
               cold: intent_scores.count { |s| s.intent_level == 'cold' },
               warm: intent_scores.count { |s| s.intent_level == 'warm' },

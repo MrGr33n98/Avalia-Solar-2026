@@ -69,17 +69,17 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
 
       // Map IntentSummary top_leads to our leads format
       if (intentData && intentData.top_leads) {
-        setLeads(intentData.top_leads.map((lead: any) => ({
-          id: lead.id || lead.lead_id || lead.anonymous_id || Math.random().toString(36).substr(2, 9),
-          name: lead.name || `Lead ${lead.id}`,
-          email: lead.email || `lead${lead.id}@example.com`,
-          phone: lead.phone || `(11) 9${Math.floor(Math.random()*90000)+10000}-${Math.floor(Math.random()*9000)+1000}`,
-          city: lead.city || 'São Paulo',
-          state: lead.state || 'SP',
-          message: lead.message || `Interesse em serviço com score ${lead.total_score}`,
-          product_vertical: lead.product_vertical || 'Energia Solar',
-          created_at: lead.last_interaction_at || new Date().toISOString(),
-          status: lead.intent_level.toLowerCase(),
+        setLeads(intentData.top_leads.map((lead: any, index: number) => ({
+          id: lead.id || lead.lead_id || lead.anonymous_id || `intent-${index}`,
+          name: lead.name || (lead.lead_id ? `Lead #${lead.lead_id}` : 'Prospecto anônimo'),
+          email: lead.email || null,
+          phone: lead.phone || null,
+          city: lead.city || null,
+          state: lead.state || null,
+          message: lead.message || null,
+          product_vertical: lead.product_vertical || lead.technical_profile?.product_vertical || null,
+          created_at: lead.last_interaction_at || null,
+          status: lead.intent_level?.toLowerCase?.() || 'unknown',
           total_score: lead.total_score,
           // Mapping Dossier Data
           technical_profile: lead.technical_profile || lead.dossie?.technical_profile,
@@ -135,28 +135,28 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
       title: "Total na Categoria",
       value: marketData?.stats.total_market_leads || 0,
       icon: Target,
-      change: "+12.5%",
-      changeType: "positive" as const,
+      change: "",
+      changeType: "neutral" as const,
       color: "brand-blue",
-      trend: [20, 40, 35, 50, 45, 60, 55]
+      trend: []
     },
     {
       title: "Market Share",
       value: `${marketData?.stats.market_share_percent}%`,
       icon: TrendingUp,
-      change: "+2.1%",
-      changeType: "positive" as const,
+      change: "",
+      changeType: "neutral" as const,
       color: "brand-green",
-      trend: [10, 15, 12, 18, 20, 22, 25]
+      trend: []
     },
     {
       title: "Oportunidades Perdidas",
       value: marketData?.stats.opportunities_count || 0,
       icon: ArrowUpRight,
-      change: "-5.2%",
-      changeType: "negative" as const,
+      change: "",
+      changeType: "neutral" as const,
       color: "brand-yellow",
-      trend: [50, 45, 40, 35, 30, 25, 20]
+      trend: []
     }
   ];
 
@@ -337,13 +337,15 @@ function LeadCard({
                   {isOpportunity ? 'Oportunidade Blind' : 'Lead Direto'}
                 </div>
                 <h3 className="font-black text-xl tracking-tight uppercase text-foreground dark:text-white">
-                  {isOpportunity ? `Potencial Cliente em ${lead.city}` : lead.name}
+                  {isOpportunity ? `Potencial Cliente em ${lead.city || 'local não informado'}` : lead.name}
                 </h3>
                 
-                <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/60 dark:text-white/30 ml-auto lg:ml-0">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span className="font-mono">{new Date(lead.created_at).toLocaleDateString('pt-BR')}</span>
-                </div>
+                {lead.created_at && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/60 dark:text-white/30 ml-auto lg:ml-0">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span className="font-mono">{new Date(lead.created_at).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                )}
 
                 {!isOpportunity && (
                   <Button 
@@ -362,7 +364,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Localização</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <MapPin className="h-4 w-4 text-brand-blue/50" />
-                    <span>{lead.city} - {lead.state}</span>
+                    <span>{[lead.city, lead.state].filter(Boolean).join(' - ') || 'Não informado'}</span>
                   </div>
                 </div>
 
@@ -370,7 +372,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">E-mail</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <Mail className="h-4 w-4 text-brand-blue/50" />
-                    <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : lead.email}</span>
+                    <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : (lead.email || 'Não informado')}</span>
                   </div>
                 </div>
 
@@ -378,7 +380,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Telefone</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <Phone className="h-4 w-4 text-brand-blue/50" />
-                    <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : lead.phone}</span>
+                    <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : (lead.phone || 'Não informado')}</span>
                   </div>
                 </div>
 
@@ -386,14 +388,14 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Segmento</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70 text-brand-blue">
                     <Globe className="h-4 w-4 opacity-50" />
-                    <span className="truncate">{lead.product_vertical || 'Energia Solar'}</span>
+                    <span className="truncate">{lead.product_vertical || 'Não informado'}</span>
                   </div>
                 </div>
               </div>
               
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 relative group-hover:border-slate-200 transition-colors">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic pr-10">
-                  &quot;{lead.message || 'Interesse em cotação de energia solar para residência/empresa.'}&quot;
+                  &quot;{lead.message || 'Mensagem não informada pelo lead.'}&quot;
                 </p>
                 <MessageSquare className="absolute right-4 top-4 h-4 w-4 text-slate-300 dark:text-white/10" />
               </div>

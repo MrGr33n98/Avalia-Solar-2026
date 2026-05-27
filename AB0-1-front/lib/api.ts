@@ -1294,6 +1294,10 @@ export interface IntentSummary {
     name?: string;
     email?: string;
     phone?: string;
+    city?: string | null;
+    state?: string | null;
+    message?: string | null;
+    product_vertical?: string | null;
     dossie?: LeadDossie;
     technical_profile?: LeadDossie['technical_profile'];
     marketing_data?: LeadDossie['marketing_data'];
