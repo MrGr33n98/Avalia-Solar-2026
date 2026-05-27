@@ -41,6 +41,7 @@ jest.mock('framer-motion', () => ({
 
 describe('PricingPage Component Integration & Behaviors', () => {
   const mockPush = jest.fn();
+  const mockRefreshAuth = jest.fn();
   const mockPlans = [
     {
       id: 1,
@@ -80,12 +81,14 @@ describe('PricingPage Component Integration & Behaviors', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRefreshAuth.mockResolvedValue(true);
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (billingApi.getPlans as jest.Mock).mockResolvedValue(mockPlans);
     (billingApi.getSubscription as jest.Mock).mockResolvedValue(null);
     (useAuth as jest.Mock).mockReturnValue({
       user: null,
       isAuthenticated: false,
+      refreshAuth: mockRefreshAuth,
     });
   });
 
@@ -120,6 +123,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 42, company_id: 10 },
       isAuthenticated: true,
+      refreshAuth: mockRefreshAuth,
     });
     (billingApi.createCheckoutSession as jest.Mock).mockResolvedValue({
       checkout_url: 'https://stripe.com/checkout_session_url',
@@ -147,10 +151,34 @@ describe('PricingPage Component Integration & Behaviors', () => {
     window.location = originalLocation;
   });
 
+  it('should refresh auth before starting Stripe Checkout and redirect to login when session is expired', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 42, company_id: 10 },
+      isAuthenticated: true,
+      refreshAuth: mockRefreshAuth,
+    });
+    mockRefreshAuth.mockResolvedValue(false);
+
+    await act(async () => {
+      render(<PricingPage />);
+    });
+
+    const proBtn = screen.getByText('Quero o Pro').closest('button')!;
+
+    await act(async () => {
+      fireEvent.click(proBtn);
+    });
+
+    expect(mockRefreshAuth).toHaveBeenCalled();
+    expect(billingApi.createCheckoutSession).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith('/login?reason=session_expired&redirect=/pricing');
+  });
+
   it('should redirect authenticated user with active Pro subscription to Stripe Customer Portal when clicking Pro CTA', async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 42, company_id: 10 },
       isAuthenticated: true,
+      refreshAuth: mockRefreshAuth,
     });
     
     const mockSubscription = {
@@ -192,6 +220,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 42, company_id: 10 },
       isAuthenticated: true,
+      refreshAuth: mockRefreshAuth,
     });
     (billingApi.createEnterpriseLead as jest.Mock).mockResolvedValue({
       message: 'Success',

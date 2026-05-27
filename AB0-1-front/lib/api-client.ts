@@ -205,6 +205,7 @@ export async function fetchApiSafe<T>(
           ...defaultHeaders,
           ...requestOptions.headers,
         },
+        credentials: requestOptions.credentials || 'include',
       });
 
       const responseBody = await response.json().catch(() => null);

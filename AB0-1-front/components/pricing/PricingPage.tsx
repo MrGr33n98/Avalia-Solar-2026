@@ -79,7 +79,7 @@ function normalizePlanSlug(plan: Partial<BillingPlan> & { plan_tier?: string }, 
 
 export default function PricingPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Estados locais
   const [plans, setPlans] = useState<any[]>([]);
@@ -193,6 +193,13 @@ export default function PricingPage() {
     setLastFailedPlan(plan);
 
     try {
+      const hasFreshSession = await refreshAuth();
+      if (!hasFreshSession) {
+        setCheckoutError('Sua sessão expirou. Entre novamente para continuar.');
+        router.push('/login?reason=session_expired&redirect=/pricing');
+        return;
+      }
+
       if (plan.slug === 'free') {
         // CTA do gratuito para logados
         router.push('/dashboard');
