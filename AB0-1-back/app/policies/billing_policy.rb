@@ -4,11 +4,11 @@ class BillingPolicy < ApplicationPolicy
   end
 
   def checkout?
-    admin? || company_owner? || company_editor?
+    admin_or_member?
   end
 
   def portal?
-    admin? || company_owner? || company_editor?
+    admin_or_member?
   end
 
   def enterprise_lead?
@@ -18,7 +18,7 @@ class BillingPolicy < ApplicationPolicy
   private
 
   def admin_or_member?
-    admin? || company_member_active?
+    can_manage_company_id?(record.id)
   end
 
   def admin?
