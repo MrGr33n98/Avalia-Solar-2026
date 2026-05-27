@@ -12,6 +12,7 @@ module Billing
     end
 
     def call
+      configure_stripe!
       validate_plan_configuration!
       
       subscription = find_or_initialize_subscription
@@ -29,6 +30,14 @@ module Billing
     end
 
     private
+
+    def configure_stripe!
+      Stripe.api_key = stripe_secret_key
+    end
+
+    def stripe_secret_key
+      ENV['STRIPE_SECRET_KEY'].to_s.strip
+    end
 
     def validate_plan_configuration!
       if @plan.stripe_price_id_monthly.blank?
@@ -157,7 +166,13 @@ module Billing
     end
 
     def stripe_error_log_message(error)
-      "[Billing::CheckoutService] #{error.class} company_id=#{@company.id} plan_id=#{@plan.id}: #{redact_secret(error.message)}"
+      "[Billing::CheckoutService] #{error.class} company_id=#{@company.id} plan_id=#{@plan.id} #{stripe_key_diagnostic}: #{redact_secret(error.message)}"
+    end
+
+    def stripe_key_diagnostic
+      key = stripe_secret_key
+
+      "stripe_key_present=#{key.present?} stripe_key_prefix_ok=#{key.start_with?('sk_live_', 'sk_test_')} stripe_key_length=#{key.length}"
     end
 
     def redact_secret(message)

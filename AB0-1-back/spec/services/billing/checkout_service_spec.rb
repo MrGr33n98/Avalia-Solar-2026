@@ -37,6 +37,20 @@ RSpec.describe Billing::CheckoutService, type: :service do
         url = service.call
         expect(url).to eq('https://checkout.stripe.com/pay/session_123')
       end
+
+      it 'recarrega a chave Stripe a partir do ENV antes da chamada' do
+        original_key = ENV['STRIPE_SECRET_KEY']
+        original_stripe_key = Stripe.api_key
+        ENV['STRIPE_SECRET_KEY'] = 'sk_test_checkout_service_runtime_key'
+        Stripe.api_key = 'sk_test_stale_key'
+
+        service.call
+
+        expect(Stripe.api_key).to eq('sk_test_checkout_service_runtime_key')
+      ensure
+        ENV['STRIPE_SECRET_KEY'] = original_key
+        Stripe.api_key = original_stripe_key
+      end
     end
 
     context 'quando o plano é válido e a empresa NÃO possui stripe_customer_id' do
