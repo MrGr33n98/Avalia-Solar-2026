@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackDashboardViewed, trackChurnIntent, trackCheckoutStarted, track } from '@/lib/analytics/consolidated';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
 import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
 
