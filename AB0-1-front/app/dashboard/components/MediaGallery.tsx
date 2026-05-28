@@ -33,41 +33,16 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
-
-function hasMediaUploadFeature(planFeatures: any): boolean | null {
-  if (!planFeatures) return null;
-  if (typeof planFeatures === 'string') {
-    try {
-      return hasMediaUploadFeature(JSON.parse(planFeatures));
-    } catch {
-      return null;
-    }
-  }
-  const candidates = [
-    planFeatures.media_upload,
-    planFeatures.media_gallery,
-    planFeatures.allow_media_uploads,
-    planFeatures.gallery_uploads,
-    planFeatures.media,
-  ];
-  for (const candidate of candidates) {
-    if (candidate === undefined || candidate === null) continue;
-    if (typeof candidate === 'string') {
-      return candidate === 'true';
-    }
-    return !!candidate;
-  }
-  return null;
-}
+import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
+import { isFeatureEnabled } from '@/lib/feature-access';
 
 interface MediaGalleryProps {
   companyId: string;
   showControls?: boolean;
   showHeader?: boolean;
-  planFeatures?: any;
 }
 
-export default function MediaGallery({ companyId, showControls = true, showHeader = true, planFeatures }: MediaGalleryProps) {
+export default function MediaGallery({ companyId, showControls = true, showHeader = true }: MediaGalleryProps) {
   const { user } = useAuth();
   const { trackGalleryDwell } = useImageGalleryWatch(companyId);
   const { gallery, dispatchGallery } = useGalleryContext7();
@@ -120,15 +95,9 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
 
   const isSuperAdmin = user?.role === 'admin';
   const isCompanyMember = user?.role === 'company' && Number(user.company_id) === Number(companyId);
-  const planFlag = useMemo(() => hasMediaUploadFeature(planFeatures), [planFeatures]);
-  const companyFlag = useMemo(
-    () =>
-      hasMediaUploadFeature(companyData?.plan_features) ??
-      (companyData?.media_upload_allowed ?? (companyData?.featured || companyData?.verified)),
-    [companyData]
-  );
-
-  const canUpload = Boolean(isSuperAdmin || (isCompanyMember && (planFlag ?? companyFlag ?? false)));
+  const { features } = useCompanyFeatures(companyId);
+  
+  const canUpload = Boolean(isSuperAdmin || (isCompanyMember && isFeatureEnabled(features, 'media_gallery')));
   const controlsVisible = showControls && canUpload;
 
   const flushPhotoView = useCallback(() => {

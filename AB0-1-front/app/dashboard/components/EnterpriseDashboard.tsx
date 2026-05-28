@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackDashboardViewed, trackChurnIntent, trackCheckoutStarted, track } from '@/lib/analytics/consolidated';
+import { useToast } from '@/components/ui/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
 import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
 
@@ -121,13 +122,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const { 
     loading, 
     company, 
     companyError, 
     stats, 
-    planFeatures,
     featureAccess,
     notifications, 
     markNotificationAsRead 
@@ -256,6 +257,30 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       document.documentElement.classList.remove('dark');
     }
   }, []);
+
+  // Track Checkout Success
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus === 'success') {
+      track('checkout_completed', {
+        company_id: companyId,
+        user_id: user?.id,
+        plan_id: (company as any)?.plan_id,
+        plan_tier: (company as any)?.plan_tier
+      });
+
+      toast({
+        title: 'Assinatura confirmada!',
+        description: 'Seu plano foi atualizado com sucesso. Aproveite os novos recursos.',
+        variant: 'default'
+      });
+
+      // Remove checkout query param
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('checkout');
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [searchParams, companyId, user, company, pathname, router, toast]);
 
   if (loading) {
     return (
@@ -637,7 +662,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
               <TabsContent value="sector-questions" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
-                  <SectorQuestionsManager companyId={companyId} planFeatures={planFeatures} />
+                  <SectorQuestionsManager companyId={companyId} />
                 </div>
               </TabsContent>
 

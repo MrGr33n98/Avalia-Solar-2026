@@ -51,12 +51,11 @@ type Meta = {
 
 interface Props {
   companyId: string;
-  planFeatures?: Record<string, any>;
 }
 
 const EMPTY_FORM: SectorQuestion = { prompt: '', weight: 1, order: 1, enabled: true };
 
-export default function SectorQuestionsManager({ companyId, planFeatures }: Props) {
+export default function SectorQuestionsManager({ companyId }: Props) {
   const [questions, setQuestions] = useState<SectorQuestion[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(false);

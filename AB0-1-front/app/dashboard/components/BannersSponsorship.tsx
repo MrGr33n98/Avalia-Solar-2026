@@ -5,6 +5,8 @@ import { Sparkles, Plus, Lock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
+import { isFeatureEnabled } from '@/lib/feature-access';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,6 @@ import { fetchApi } from '@/lib/api';
 
 interface BannersSponsorshipProps {
   companyId: string;
-  planFeatures?: any;
 }
 
 type CompanyBanner = {
@@ -35,18 +36,7 @@ type CompanyBanner = {
   image_url?: string | null;
 };
 
-function hasBannersFeature(planFeatures: any): boolean {
-  const f = planFeatures || {};
-  const candidates = [
-    f.banners,
-    f.has_banners,
-    f.banner_management,
-    f.has_banner_management,
-    f.allow_banners,
-    f.banners_enabled,
-  ];
-  return candidates.some((v) => v === true || v === 1 || v === 'true');
-}
+
 
 type BannerOffer = {
   id: number;
@@ -180,8 +170,9 @@ function CheckoutDialog({ trigger }: { trigger: ReactNode }) {
   );
 }
 
-export default function BannersSponsorship({ companyId, planFeatures }: BannersSponsorshipProps) {
-  const allowed = useMemo(() => hasBannersFeature(planFeatures), [planFeatures]);
+export default function BannersSponsorship({ companyId }: BannersSponsorshipProps) {
+  const { features } = useCompanyFeatures(companyId);
+  const allowed = useMemo(() => isFeatureEnabled(features, 'promo_banner'), [features]);
   const [loading, setLoading] = useState(false);
   const [banners, setBanners] = useState<CompanyBanner[]>([]);
   const [error, setError] = useState<string | null>(null);

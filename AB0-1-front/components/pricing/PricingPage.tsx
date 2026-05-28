@@ -26,6 +26,7 @@ import { PlanCard, PlanCardSkeleton } from './PlanCard';
 import { FeatureComparisonTable } from './FeatureComparisonTable';
 import { PricingFaq } from './PricingFaq';
 import { ErrorBanner } from '@/components/billing/ErrorBanner';
+import { trackCheckoutStarted } from '@/lib/analytics/consolidated';
 
 // ─── Variantes de Animação ──────────────────────────────────────────────────
 
@@ -224,6 +225,9 @@ export default function PricingPage() {
             successUrl,
             cancelUrl
           );
+          
+          trackCheckoutStarted(plan.id);
+          
           window.location.href = checkout_url;
         }
         return;

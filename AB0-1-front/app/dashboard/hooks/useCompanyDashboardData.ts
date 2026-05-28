@@ -69,7 +69,6 @@ export function useCompanyDashboardData(companyId: string) {
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [planFeatures, setPlanFeatures] = useState<Record<string, any>>({});
   const [featureAccess, setFeatureAccess] = useState<Record<string, FeatureAccessEntry>>({});
 
   const fetchCompanyData = useCallback(async () => {
@@ -122,7 +121,6 @@ export function useCompanyDashboardData(companyId: string) {
         leads_count: s.leads_count ?? 0,
         monthly_views: s.monthly_views ?? [],
       });
-      setPlanFeatures(data?.plan_features || {});
     } catch (error) {
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
@@ -207,7 +205,6 @@ export function useCompanyDashboardData(companyId: string) {
     company,
     companyError,
     stats,
-    planFeatures,
     featureAccess,
     notifications,
     markNotificationAsRead,
