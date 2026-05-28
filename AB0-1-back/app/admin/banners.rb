@@ -1,7 +1,29 @@
+banner_position_options = [
+  ['Navbar (Topo Global)', 'navbar'],
+  ['Sidebar (Lateral genérica)', 'sidebar'],
+  ['Topo Categorias', 'categories_top'],
+  ['Topo Home', 'home_top'],
+  ['Topo Empresas', 'companies_top'],
+  ['Rodapé Empresas', 'companies_footer'],
+  ['Rodapé Artigo (Blog)', 'article_footer_cta'],
+  ['Busca - Topo', 'search_top'],
+  ['Busca - Meio dos Resultados', 'search_mid'],
+  ['Categorias - Lateral dos Filtros', 'categories_filter_sidebar'],
+  ['Categorias - Coluna Direita', 'categories_right_rail'],
+  ['Empresas - Coluna Direita', 'companies_right_rail']
+].freeze
+
 ActiveAdmin.register Banner do
   permit_params :title, :image, :company_id, :link, :active, :sponsored, :banner_type, :position,
                 :start_date, :end_date, :moderation_status, :priority, :rejected_reason,
                 :width, :height, :slot_key, category_ids: []
+
+  scope :all, default: true
+  scope('Ativos agora') { |scope| scope.currently_active }
+  scope('Aprovados') { |scope| scope.where(moderation_status: 'approved') }
+  scope('Inativos') { |scope| scope.where(active: false) }
+  scope('Agendados') { |scope| scope.where('start_date > ?', Time.current) }
+  scope('Expirados') { |scope| scope.where('end_date < ?', Time.current) }
 
   index title: 'Gerenciamento de Banners' do
     selectable_column
@@ -53,15 +75,7 @@ ActiveAdmin.register Banner do
             ['Retangular Pequeno', 'rectangular_small']
           ], include_blank: false
           
-          f.input :position, as: :select, collection: [
-            ['Navbar (Topo Global)', 'navbar'],
-            ['Sidebar (Lateral)', 'sidebar'],
-            ['Topo Categorias', 'categories_top'],
-            ['Topo Home', 'home_top'],
-            ['Topo Empresas', 'companies_top'],
-            ['Rodapé Empresas', 'companies_footer'],
-            ['Rodapé Artigo (Blog)', 'article_footer_cta']
-          ], include_blank: false
+          f.input :position, as: :select, collection: banner_position_options, include_blank: false
 
           f.input :slot_key, label: 'Slot Key (Opcional)', 
                   hint: 'Chave técnica para injeção em locais específicos (ex: home_hero, sponsored_v2)'
@@ -102,6 +116,10 @@ ActiveAdmin.register Banner do
             if (position === 'navbar') return { w: 960, h: 100 };
             if (position === 'sidebar') return { w: 150, h: 125 };
             if (position === 'companies_footer' || position === 'article_footer_cta') return { w: 1200, h: 160 };
+            if (position === 'search_top') return { w: 1200, h: 180 };
+            if (position === 'search_mid') return { w: 1200, h: 160 };
+            if (position === 'categories_filter_sidebar') return { w: 300, h: 250 };
+            if (position === 'categories_right_rail' || position === 'companies_right_rail') return { w: 300, h: 600 };
             return { w: 600, h: 200 };
           }
 
@@ -178,11 +196,13 @@ ActiveAdmin.register Banner do
   filter :company
   filter :moderation_status
   filter :banner_type
-  filter :position
+  filter :position, as: :select, collection: banner_position_options
   filter :categories
   filter :link
   filter :active
   filter :sponsored
+  filter :slot_key
+  filter :priority
   filter :start_date
   filter :end_date
   filter :created_at

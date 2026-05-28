@@ -56,6 +56,17 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         expect(json.all? { |b| b['position'] == 'navbar' }).to be true
       end
 
+      it 'serves newly managed conversion positions' do
+        right_rail = create(:banner, :approved, active: true, position: 'companies_right_rail')
+        create(:banner, :approved, active: true, position: 'categories_right_rail')
+
+        get '/api/v1/banners', params: { position: 'companies_right_rail' }
+
+        json = JSON.parse(response.body)
+        expect(json.map { |b| b['id'] }).to include(right_rail.id)
+        expect(json.all? { |b| b['position'] == 'companies_right_rail' }).to be true
+      end
+
       it 'limits results' do
         create_list(:banner, 5, :approved, active: true)
 

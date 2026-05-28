@@ -32,6 +32,16 @@ RSpec.describe Banner, type: :model do
       it { should validate_inclusion_of(:banner_type).in_array(Banner::ALLOWED_BANNER_TYPES) }
       it { should validate_inclusion_of(:position).in_array(Banner::ALLOWED_POSITIONS) }
       it { should validate_inclusion_of(:moderation_status).in_array(Banner::MODERATION_STATUSES) }
+
+      it 'allows the public conversion banner positions' do
+        expect(Banner::ALLOWED_POSITIONS).to include(
+          'search_top',
+          'search_mid',
+          'categories_filter_sidebar',
+          'categories_right_rail',
+          'companies_right_rail'
+        )
+      end
     end
 
     describe 'dimensions validations (Fase 1)' do
@@ -196,6 +206,16 @@ RSpec.describe Banner, type: :model do
           expect(banner).to be_valid
         end
       end
+    end
+  end
+
+  describe '.default_dimensions_for_position' do
+    it 'returns dimensions for managed conversion slots' do
+      expect(described_class.default_dimensions_for_position('categories_filter_sidebar')).to eq([300, 250])
+      expect(described_class.default_dimensions_for_position('categories_right_rail')).to eq([300, 600])
+      expect(described_class.default_dimensions_for_position('companies_right_rail')).to eq([300, 600])
+      expect(described_class.default_dimensions_for_position('search_top')).to eq([1200, 180])
+      expect(described_class.default_dimensions_for_position('search_mid')).to eq([1200, 160])
     end
   end
 

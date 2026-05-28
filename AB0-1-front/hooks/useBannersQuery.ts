@@ -10,6 +10,7 @@ export interface Banner {
   sponsored?: boolean;
   banner_type?: string;
   position?: string;
+  company_id?: number | null;
   width?: number | null;
   height?: number | null;
   active?: boolean;

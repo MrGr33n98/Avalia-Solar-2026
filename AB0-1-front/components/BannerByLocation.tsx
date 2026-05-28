@@ -13,7 +13,12 @@ type BannerLocation =
   | 'home_top' 
   | 'companies_top' 
   | 'companies_footer'
-  | 'article_footer_cta';
+  | 'article_footer_cta'
+  | 'search_top'
+  | 'search_mid'
+  | 'categories_filter_sidebar'
+  | 'categories_right_rail'
+  | 'companies_right_rail';
 
 interface BannerByLocationProps {
   location: BannerLocation;

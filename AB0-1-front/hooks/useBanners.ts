@@ -9,7 +9,19 @@ interface Banner {
   link?: string;
   title?: string;
   banner_type: 'rectangular_large' | 'rectangular_small';
-  position: 'navbar' | 'sidebar' | 'categories_top' | 'home_top' | 'companies_top' | 'companies_footer' | 'article_footer_cta';
+  position:
+    | 'navbar'
+    | 'sidebar'
+    | 'categories_top'
+    | 'home_top'
+    | 'companies_top'
+    | 'companies_footer'
+    | 'article_footer_cta'
+    | 'search_top'
+    | 'search_mid'
+    | 'categories_filter_sidebar'
+    | 'categories_right_rail'
+    | 'companies_right_rail';
   sponsored?: boolean;
   width?: number | null;
   height?: number | null;

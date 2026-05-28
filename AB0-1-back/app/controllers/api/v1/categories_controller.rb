@@ -170,7 +170,9 @@ module Api
         banners_scope = banners_scope.limit(params[:limit].to_i) if limit_present?
 
         max_updated_at = banners_scope.maximum(:updated_at).to_i
-        cache_key = "categories/#{@category.id}/banners/#{max_updated_at}"
+        position_key = params[:position].presence || 'all'
+        limit_key = limit_present? ? params[:limit].to_i : 'all'
+        cache_key = "categories/#{@category.id}/banners/position:#{position_key}/limit:#{limit_key}/updated:#{max_updated_at}"
 
         cached_json(cache_key, expires_in: 30.minutes) do
           banners_scope.map do |banner|

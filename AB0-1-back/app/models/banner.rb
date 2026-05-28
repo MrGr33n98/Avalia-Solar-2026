@@ -11,8 +11,32 @@ class Banner < ApplicationRecord
   has_one_attached :image
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
-  ALLOWED_POSITIONS = %w[navbar sidebar categories_top home_top companies_top companies_footer article_footer_cta].freeze
+  ALLOWED_POSITIONS = %w[
+    navbar
+    sidebar
+    categories_top
+    home_top
+    companies_top
+    companies_footer
+    article_footer_cta
+    search_top
+    search_mid
+    categories_filter_sidebar
+    categories_right_rail
+    companies_right_rail
+  ].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
+  DEFAULT_DIMENSIONS_BY_POSITION = {
+    'navbar' => [960, 100],
+    'sidebar' => [150, 125],
+    'companies_footer' => [1200, 160],
+    'article_footer_cta' => [1200, 160],
+    'search_top' => [1200, 180],
+    'search_mid' => [1200, 160],
+    'categories_filter_sidebar' => [300, 250],
+    'categories_right_rail' => [300, 600],
+    'companies_right_rail' => [300, 600]
+  }.freeze
 
   # === Validações Básicas ===
   validates :title, :banner_type, :position, presence: true
@@ -98,6 +122,10 @@ class Banner < ApplicationRecord
 
   scope :approved, -> { where(moderation_status: 'approved') }
 
+  def self.default_dimensions_for_position(position)
+    DEFAULT_DIMENSIONS_BY_POSITION.fetch(position.to_s, [600, 200])
+  end
+
   def submit_for_review!
     update!(moderation_status: 'submitted', active: false)
   end
@@ -165,16 +193,7 @@ class Banner < ApplicationRecord
   end
 
   def default_dimensions_for_position(pos)
-    case pos.to_s
-    when 'navbar'
-      [960, 100]
-    when 'sidebar'
-      [150, 125]
-    when 'companies_footer', 'article_footer_cta'
-      [1200, 160]
-    else
-      [600, 200]
-    end
+    self.class.default_dimensions_for_position(pos)
   end
 
   def sync_legacy_category_id

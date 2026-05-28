@@ -335,13 +335,13 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
         </form>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           <aside className="lg:w-[300px] shrink-0">
             <FilterSidebar />
           </aside>
 
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 min-w-0 space-y-6">
             <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -459,6 +459,13 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
               <BannerByLocation location="companies_footer" />
             </section>
           </div>
+
+          <BannerByLocation
+            location="companies_right_rail"
+            limit={1}
+            categoryId={filters.category_ids[0]}
+            className="hidden xl:block w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))] rounded-2xl"
+          />
         </div>
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
   SheetTrigger 
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import BannerByLocation from '@/components/BannerByLocation';
 
 import { useCategoriesBannersQuery } from '@/hooks/useBannersQuery';
 import { useFeaturedCategoriesQuery, useAllCategoriesQuery } from '@/hooks/useCategoriesQuery';
@@ -120,19 +121,27 @@ export default function CategoriesIndexWithSidebar() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
           
           {/* 2. Sidebar de Filtros - Hierarquia Reforçada */}
-          <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-[calc(6rem+var(--safe-area-inset-top))]">
-              <SidebarFilters 
-                filters={filters} 
-                onFilterChange={handleFilterChange} 
-                onClear={clearFilters}
-                hasActiveFilters={!!hasActiveFilters}
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-[calc(6rem+var(--safe-area-inset-top))] space-y-6">
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <SidebarFilters
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  onClear={clearFilters}
+                  hasActiveFilters={!!hasActiveFilters}
+                />
+              </div>
+
+              <BannerByLocation
+                location="categories_filter_sidebar"
+                limit={1}
+                className="rounded-2xl"
               />
             </div>
           </aside>
 
           {/* 3. Main Content - Redução de Espaços Mortos */}
-          <main className="flex-1 space-y-8 md:space-y-12">
+          <main className="flex-1 min-w-0 space-y-8 md:space-y-12">
             
             {/* Toolbar: Busca + Mobile Toggle */}
             <div
@@ -192,7 +201,7 @@ export default function CategoriesIndexWithSidebar() {
                     Categorias em Destaque
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 lg:gap-6">
                   {featuredCategories.map((category) => (
                     <CategoryCard key={category.id} category={category} />
                   ))}
@@ -235,6 +244,12 @@ export default function CategoriesIndexWithSidebar() {
             )}
 
           </main>
+
+          <BannerByLocation
+            location="categories_right_rail"
+            limit={1}
+            className="hidden xl:block w-[300px] flex-shrink-0 sticky top-[calc(6rem+var(--safe-area-inset-top))] rounded-2xl"
+          />
         </div>
       </div>
     </div>
