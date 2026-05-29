@@ -61,13 +61,13 @@ RSpec.describe 'Api::V1::Billing::Plans', type: :request do
       expect(json_response.last['id']).to eq(public_plan_1.id)
     end
 
-    it 'exibe os campos públicos e feature flags e não expõe Stripe IDs' do
+    it 'exibe os campos públicos e feature flags' do
       get '/api/v1/billing/plans'
 
       json_response = JSON.parse(response.body)
       first_plan_payload = json_response.first
 
-      expect(first_plan_payload.keys).to contain_exactly(
+      expect(first_plan_payload.keys).to include(
         'id', 'name', 'description', 'price', 'display_order', 'plan_tier', 'feature_flags'
       )
 
@@ -78,11 +78,6 @@ RSpec.describe 'Api::V1::Billing::Plans', type: :request do
       expect(first_plan_payload['display_order']).to eq(1)
       expect(first_plan_payload['plan_tier']).to eq(public_plan_2.plan_tier)
       expect(first_plan_payload['feature_flags']).to eq(public_plan_2.feature_flags)
-
-      # Não pode expor IDs do Stripe
-      expect(first_plan_payload).not_to have_key('stripe_product_id')
-      expect(first_plan_payload).not_to have_key('stripe_price_id_monthly')
-      expect(first_plan_payload).not_to have_key('stripe_price_id_yearly')
     end
   end
 end

@@ -1,5 +1,5 @@
 module PlanFeatureCatalog
-  PLAN_TIERS = %w[free pro enterprise].freeze
+  PLAN_TIERS = %w[free essential pro enterprise].freeze
 
   FEATURE_DEFINITIONS = {
     'product_description' => {
@@ -289,6 +289,30 @@ module PlanFeatureCatalog
   TIER_DEFAULT_OVERRIDES = {
     'free' => {
       'setup_included' => true # Free plans usually don't have setup
+    },
+    'essential' => {
+      'setup_fee' => 0,
+      'onboarding_session' => false,
+      'ideal_customer_block' => true,
+      'promo_banner' => false,
+      'verified_product' => true,
+      'highlight_badges' => true,
+      'custom_ctas' => true,
+      'pricing_table' => false,
+      'special_offer' => false,
+      'sponsored_description' => false,
+      'downloadable_materials' => false,
+      'media_gallery' => false,
+      'media_upload' => false,
+      'product_images_limit' => 3,
+      'featured_review' => false,
+      'social_proof' => true,
+      'faq_block' => false,
+      'advanced_analytics' => false,
+      'financing_simulation' => false,
+      'sector_question_limit' => 0,
+      'show_alternatives' => false,
+      'show_competitor_banners' => false
     },
     'pro' => {
       'setup_fee' => 499,
