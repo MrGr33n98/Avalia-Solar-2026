@@ -163,9 +163,13 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
     const raw = Array.isArray(rawBanners) ? rawBanners : [];
     let banners = filterBannersForCategory(raw, category.id, now);
 
-    // fallback: se não vier banner por categoria, busca top banners globais
-    if (banners.length === 0) {
-      banners = await fetchFallbackTopBanners(now);
+    // Verifica se temos algum banner específico para o topo
+    const hasTopBanner = banners.some(b => b.position === 'categories_top');
+
+    // fallback: se não vier banner para o topo, busca os top banners globais
+    if (!hasTopBanner) {
+      const fallbackTopBanners = await fetchFallbackTopBanners(now);
+      banners = [...banners, ...fallbackTopBanners];
     }
 
     timeEnd(parallelLabel);
