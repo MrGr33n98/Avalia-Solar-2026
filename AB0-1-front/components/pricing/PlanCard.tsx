@@ -50,24 +50,24 @@ const planConfig: Record<PlanSlug, PlanVisualConfig> = {
     checkText: 'text-slate-500',
   },
   essential: {
-    topBar: 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400',
-    iconBg: 'bg-teal-600',
-    accentText: 'text-teal-600',
-    badgeCls: 'border border-emerald-500/25 bg-emerald-500/10 text-teal-700',
+    topBar: 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400',
+    iconBg: 'bg-emerald-500',
+    accentText: 'text-emerald-600',
+    badgeCls: 'border border-emerald-400 bg-emerald-50 text-emerald-700 font-bold',
     ringCls: '',
-    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(13,148,136,0.12)]',
-    ctaCls: 'bg-teal-600 hover:bg-teal-500 text-white border-0 shadow-[0_16px_30px_-20px_rgba(13,148,136,0.5)]',
+    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(16,185,129,0.14)]',
+    ctaCls: 'bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_16px_30px_-20px_rgba(16,185,129,0.65)]',
     checkBg: 'bg-emerald-50',
-    checkText: 'text-emerald-600',
+    checkText: 'text-emerald-500',
   },
   pro: {
-    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light',
+    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light h-[8px]',
     iconBg: 'bg-brand-blue',
     accentText: 'text-brand-blue',
-    badgeCls: 'bg-brand-blue text-white border-0 shadow-[0_4px_12px_rgba(0,87,231,0.25)]',
-    ringCls: 'ring-[3px] ring-brand-blue/35',
-    shadowCls: 'shadow-[0_32px_64px_-16px_rgba(0,86,210,0.22)]',
-    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_16px_30px_-20px_rgba(0,86,210,0.72)]',
+    badgeCls: 'bg-brand-blue text-white border-0 shadow-[0_4px_16px_rgba(0,87,231,0.35)] font-extrabold scale-105',
+    ringCls: 'ring-[4px] ring-brand-blue/40 border-brand-blue/30',
+    shadowCls: 'shadow-[0_32px_80px_-12px_rgba(0,86,210,0.30)]',
+    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_16px_30px_-20px_rgba(0,86,210,0.85)] scale-[1.02] transition-transform duration-200',
     checkBg: 'bg-brand-blue/10',
     checkText: 'text-brand-blue',
   },
@@ -135,9 +135,9 @@ export function PlanCard({
     <motion.div
       variants={cardVariant}
       className={[
-        'relative flex flex-col overflow-hidden rounded-[2rem] border border-white/60',
+        'relative flex flex-col overflow-hidden rounded-[2rem] border border-white/60 h-full',
         'bg-white/95 backdrop-blur-md transition-all duration-300',
-        slug === 'pro' ? 'clay-convex scale-[1.02] md:scale-[1.03] lg:scale-[1.04] z-10' : 'clay-card hover:scale-[1.01]',
+        slug === 'pro' ? 'clay-convex scale-[1.02] md:scale-[1.03] lg:scale-[1.04] z-10 border-brand-blue/35' : 'clay-card hover:scale-[1.01]',
         cfg.ringCls,
         cfg.shadowCls,
         isCurrentPlan ? 'ring-2 ring-brand-blue/30' : '',
@@ -222,7 +222,7 @@ export function PlanCard({
         <div className="my-5 h-px bg-slate-100/80" />
 
         {/* Resumo */}
-        <p className="text-sm leading-relaxed text-slate-600 min-h-[48px]">{summary}</p>
+        <p className="text-sm leading-relaxed text-slate-600 min-h-[64px]">{summary}</p>
 
         {/* Destaques (Highlights) */}
         <ul className="mt-5 flex-1 space-y-3">

@@ -1,12 +1,14 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Check, Lock, X } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Lock, X, ChevronDown } from 'lucide-react';
 import {
   pricingFeatureGroups,
   type Availability,
   type PricingFeatureRow,
 } from '@/lib/pricing/catalog';
+import { CompactComparison } from './CompactComparison';
 
 // ─── Variants ─────────────────────────────────────────────────────────────
 
@@ -88,6 +90,18 @@ export function CompareRow({ row }: CompareRowProps) {
 // ─── Main Comparison Table Component ─────────────────────────────────────────
 
 export function FeatureComparisonTable() {
+  // Accordion state
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    'public-profile': true, // Primeiro grupo aberto por padrão
+  });
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   return (
     <section className="border-y border-white/50 bg-white/30 py-16 backdrop-blur-sm md:py-20">
       <div className="container mx-auto px-4 md:px-6">
@@ -97,7 +111,7 @@ export function FeatureComparisonTable() {
           whileInView="visible"
           viewport={{ once: true, margin: '-60px' }}
           variants={stagger}
-          className="mb-10"
+          className="mb-12"
         >
           <motion.h2
             variants={fadeUp}
@@ -107,62 +121,105 @@ export function FeatureComparisonTable() {
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600"
+            className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 font-medium"
           >
             Escolha o nível que melhor atende aos objetivos de captação e inteligência comercial de sua empresa.
-            Cada categoria abaixo detalha a matriz completa de entitlements.
           </motion.p>
         </motion.div>
 
-        {/* Feature groups */}
+        {/* 1. Comparativo Compacto (Primeiro Diferencial Rápido) */}
+        <CompactComparison />
+
+        {/* Cabeçalho da tabela de detalhes */}
+        <div className="mb-6">
+          <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
+            Comparativo Detalhado de Funcionalidades
+          </h4>
+        </div>
+
+        {/* 2. Feature groups como Accordions */}
         <motion.div
-          className="space-y-6"
+          className="space-y-4"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-40px' }}
           variants={stagger}
         >
-          {pricingFeatureGroups.map((group) => (
-            <motion.div
-              key={group.id}
-              variants={fadeUp}
-              className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md"
-            >
-              {/* Group title */}
-              <div className="border-b border-slate-100/80 px-6 py-5 bg-slate-50/50">
-                <h3 className="text-base font-black tracking-tight text-slate-900">{group.title}</h3>
-              </div>
+          {pricingFeatureGroups.map((group) => {
+            const isExpanded = !!expandedGroups[group.id];
 
-              <div className="overflow-x-auto">
-                <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
-                  <thead>
-                    <tr>
-                      <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">
-                        Funcionalidade
-                      </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                        Gratuito
-                      </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-teal-600">
-                        Essencial
-                      </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-brand-blue">
-                        Pro
-                      </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-900">
-                        Enterprise
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.rows.map((row) => (
-                      <CompareRow key={row.key} row={row} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          ))}
+            return (
+              <motion.div
+                key={group.id}
+                variants={fadeUp}
+                className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md shadow-sm transition-all duration-300"
+              >
+                {/* Clickable Accordion Header */}
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between border-b border-slate-100/50 px-6 py-5 bg-slate-50/40 hover:bg-slate-100/40 transition-colors duration-200 text-left"
+                >
+                  <h3 className="text-base font-black tracking-tight text-slate-900">
+                    {group.title}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 hidden sm:inline uppercase tracking-wider">
+                      {isExpanded ? 'Ocultar tabela' : 'Expandir tabela'}
+                    </span>
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="text-slate-400"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </motion.div>
+                  </div>
+                </button>
+
+                {/* Smooth Expandable Content */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.24, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="overflow-x-auto">
+                        <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
+                          <thead>
+                            <tr>
+                              <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">
+                                Funcionalidade
+                              </th>
+                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                                Gratuito
+                              </th>
+                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">
+                                Essencial
+                              </th>
+                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-brand-blue">
+                                Pro
+                              </th>
+                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-900">
+                                Enterprise
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((row) => (
+                              <CompareRow key={row.key} row={row} />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>

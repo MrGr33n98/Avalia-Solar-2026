@@ -97,6 +97,7 @@ export default function PricingPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastFailedPlan, setLastFailedPlan] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [heroMockupError, setHeroMockupError] = useState(false);
 
   // Estado para o Modal de Lead Enterprise
   const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
@@ -322,9 +323,17 @@ export default function PricingPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] pb-12">
       
-      {/* ── 1. HERO SECTION (2 colunas com CSS Mockup responsivo) ────────────────── */}
-      <section className="relative pb-16 pt-20 border-b border-slate-200/50 bg-gradient-to-b from-[#EBF2FC] to-[#F5F8FC]">
-        <div className="container mx-auto px-4 md:px-6">
+      {/* ── 1. HERO SECTION (2 colunas com suporte a Mockup e Fundo Solar) ────────────────── */}
+      <section className="relative pb-16 pt-20 border-b border-slate-200/50 bg-gradient-to-b from-[#EBF2FC] to-[#F5F8FC] overflow-hidden">
+        {/* Imagem de Fundo Solar discreta na lateral direita */}
+        <div 
+          className="absolute inset-y-0 right-0 w-full lg:w-1/2 opacity-20 pointer-events-none bg-cover bg-right bg-no-repeat hidden md:block"
+          style={{ backgroundImage: 'url(/images/pricing/pricing-hero-solar-bg.jpg)' }}
+        />
+        {/* Overlay suave para integrar o fundo e garantir legibilidade perfeita */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#EBF2FC] via-[#EBF2FC]/80 to-transparent pointer-events-none" />
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             
             {/* Esquerda: Texto de captação */}
@@ -345,16 +354,16 @@ export default function PricingPage() {
 
               <motion.h1
                 variants={fadeUp}
-                className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.25rem] leading-[1.1]"
+                className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.5rem] leading-[1.1]"
               >
-                Escolha como sua empresa quer aparecer no <span className="text-brand-blue">mercado solar</span>
+                Escolha como sua empresa quer aparecer no <span className="text-brand-blue bg-gradient-to-r from-brand-blue to-brand-blue-light bg-clip-text text-transparent">mercado solar</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeUp}
-                className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 font-medium"
+                className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 font-medium max-w-xl"
               >
-                Do perfil gratuito à vitrine comercial com mais conversão, menos concorrência e mais inteligência de mercado.
+                Do perfil gratuito à vitrine comercial premium com mais conversão, menos concorrência e inteligência de mercado.
               </motion.p>
 
               <motion.div
@@ -378,95 +387,136 @@ export default function PricingPage() {
               </motion.div>
             </motion.div>
 
-            {/* Direita: Mockup simulado em CSS Glassmorphism */}
+            {/* Direita: Mockup Real ou Simulado */}
             <motion.div
-              className="relative w-full h-[320px] sm:h-[400px] flex items-center justify-center lg:justify-end"
+              className="relative w-full min-h-[320px] sm:min-h-[400px] flex items-center justify-center lg:justify-end"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.68, ease: 'easeOut' }}
             >
-              {/* Notebook simulado em CSS */}
-              <div className="relative w-[340px] sm:w-[460px] h-[220px] sm:h-[280px] rounded-2xl border border-white bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
-                {/* Tela do Notebook */}
-                <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
-                  {/* Navegação simulada */}
-                  <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
-                    <span className="h-2 w-2 rounded-full bg-red-400" />
-                    <span className="h-2 w-2 rounded-full bg-yellow-400" />
-                    <span className="h-2 w-2 rounded-full bg-green-400" />
-                    <span className="h-3 w-40 sm:w-60 bg-white border border-slate-200 rounded text-[7px] text-slate-400 pl-1.5 flex items-center">
-                      avaliasolar.com.br/solare-energia
-                    </span>
-                  </div>
-                  {/* Conteúdo simulado */}
-                  <div className="mt-3 flex items-start gap-3">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-300 shrink-0 shadow animate-pulse" />
-                    <div className="space-y-1.5 w-full">
-                      <div className="text-[11px] sm:text-xs font-black text-slate-900 flex items-center gap-1.5">
-                        Solare Energia Solar
-                        <span className="h-3 w-3 rounded-full bg-brand-blue flex items-center justify-center text-white text-[7px] font-bold">✓</span>
+              {!heroMockupError ? (
+                <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/pricing/pricing-hero-mockup.png"
+                    alt="Mockup do Perfil Comercial"
+                    className="w-full h-auto object-contain drop-shadow-[0_24px_48px_rgba(0,86,210,0.18)]"
+                    onError={() => setHeroMockupError(true)}
+                  />
+
+                  {/* Micro-cards flutuantes da direita do Hero sobrepostos à imagem */}
+                  <motion.div 
+                    className="absolute top-4 left-0 sm:left-4 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
+                  >
+                    <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                      <UserCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Empresas</div>
+                      <div className="text-[8px] font-bold text-slate-400">confiáveis</div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    className="absolute bottom-12 right-0 sm:right-4 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
+                    animate={{ y: [0, 6, 0] }}
+                    transition={{ repeat: Infinity, duration: 5.2, ease: 'easeInOut' }}
+                  >
+                    <div className="h-7 w-7 rounded-xl bg-brand-blue/10 text-brand-blue flex items-center justify-center">
+                      <LineChart className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Oportunidades</div>
+                      <div className="text-[8px] font-bold text-slate-400">de negócio</div>
+                    </div>
+                  </motion.div>
+                </div>
+              ) : (
+                /* Notebook simulado em CSS como Fallback */
+                <div className="relative w-full h-[320px] sm:h-[400px] flex items-center justify-center lg:justify-end">
+                  <div className="relative w-[340px] sm:w-[460px] h-[220px] sm:h-[280px] rounded-2xl border border-white bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
+                    {/* Tela do Notebook */}
+                    <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
+                      {/* Navegação simulada */}
+                      <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
+                        <span className="h-2 w-2 rounded-full bg-red-400" />
+                        <span className="h-2 w-2 rounded-full bg-yellow-400" />
+                        <span className="h-2 w-2 rounded-full bg-green-400" />
+                        <span className="h-3 w-40 sm:w-60 bg-white border border-slate-200 rounded text-[7px] text-slate-400 pl-1.5 flex items-center">
+                          avaliasolar.com.br/solare-energia
+                        </span>
                       </div>
-                      <div className="text-[8px] sm:text-[9px] text-slate-500 font-medium">96% dos usuários recomendam</div>
-                      <div className="h-8 sm:h-12 bg-white rounded-lg border border-slate-200 p-2 text-[7px] sm:text-[8px] text-slate-400 leading-relaxed overflow-hidden">
-                        Projetos residenciais e comerciais de alta eficiência com suporte e homologação inclusos...
+                      {/* Conteúdo simulado */}
+                      <div className="mt-3 flex items-start gap-3">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-350 shrink-0 shadow animate-pulse" />
+                        <div className="space-y-1.5 w-full">
+                          <div className="text-[11px] sm:text-xs font-black text-slate-900 flex items-center gap-1.5">
+                            Solare Energia Solar
+                            <span className="h-3 w-3 rounded-full bg-brand-blue flex items-center justify-center text-white text-[7px] font-bold">✓</span>
+                          </div>
+                          <div className="text-[8px] sm:text-[9px] text-slate-500 font-medium">96% dos usuários recomendam</div>
+                          <div className="h-8 sm:h-12 bg-white rounded-lg border border-slate-200 p-2 text-[7px] sm:text-[8px] text-slate-400 leading-relaxed overflow-hidden">
+                            Projetos residenciais e comerciais de alta eficiência com suporte e homologação inclusos...
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Base do Notebook */}
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[380px] sm:w-[500px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
+                  </div>
+
+                  {/* Smartphone flutuante sobreposto em CSS */}
+                  <div className="absolute -bottom-4 right-4 sm:right-16 w-[110px] sm:w-[130px] h-[200px] sm:h-[240px] rounded-[24px] border-[5px] border-slate-900 bg-white shadow-2xl p-1.5 flex flex-col overflow-hidden z-20">
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-slate-900 rounded-full flex items-center justify-center" />
+                    
+                    {/* Tela do Celular */}
+                    <div className="flex-1 rounded-[16px] bg-[#F5F8FC] overflow-hidden flex flex-col p-2 pt-4 relative">
+                      <div className="h-6 w-6 rounded-lg bg-slate-350 shrink-0 mb-1.5 animate-pulse" />
+                      <div className="text-[8px] font-black text-slate-900 leading-none">Solare Energia</div>
+                      <div className="text-[5px] text-slate-500 font-bold mb-1">96% aprovação</div>
+                      <div className="h-14 bg-white rounded-md border border-slate-200 p-1 text-[5px] text-slate-400 overflow-hidden leading-snug">
+                        Ideal para começar a garantir presença no maior portal...
+                      </div>
+                      <div className="mt-auto h-4 w-full rounded bg-brand-blue flex items-center justify-center text-[5px] font-bold text-white shadow-sm">
+                        Falar no WhatsApp
                       </div>
                     </div>
                   </div>
-                </div>
-                {/* Base do Notebook */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[380px] sm:w-[500px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
-              </div>
 
-              {/* Smartphone flutuante sobreposto em CSS */}
-              <div className="absolute -bottom-4 right-4 sm:right-16 w-[110px] sm:w-[130px] h-[200px] sm:h-[240px] rounded-[24px] border-[5px] border-slate-900 bg-white shadow-2xl p-1.5 flex flex-col overflow-hidden z-20">
-                {/* Alto-falante/Câmera notch */}
-                <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-slate-900 rounded-full flex items-center justify-center" />
-                
-                {/* Tela do Celular */}
-                <div className="flex-1 rounded-[16px] bg-[#F5F8FC] overflow-hidden flex flex-col p-2 pt-4 relative">
-                  <div className="h-6 w-6 rounded-lg bg-slate-350 shrink-0 mb-1.5 animate-pulse" />
-                  <div className="text-[8px] font-black text-slate-900 leading-none">Solare Energia</div>
-                  <div className="text-[5px] text-slate-500 font-bold mb-1">96% aprovação</div>
-                  <div className="h-14 bg-white rounded-md border border-slate-200 p-1 text-[5px] text-slate-400 overflow-hidden leading-snug">
-                    Ideal para começar a garantir presença no maior portal...
-                  </div>
-                  {/* Botão de CTA flutuante do Celular */}
-                  <div className="mt-auto h-4 w-full rounded bg-brand-blue flex items-center justify-center text-[5px] font-bold text-white shadow-sm">
-                    Falar no WhatsApp
-                  </div>
-                </div>
-              </div>
+                  {/* Micro-cards flutuantes da direita do Hero */}
+                  <motion.div 
+                    className="absolute top-6 left-2 sm:left-12 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
+                  >
+                    <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                      <UserCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Empresas</div>
+                      <div className="text-[8px] font-bold text-slate-400">confiáveis</div>
+                    </div>
+                  </motion.div>
 
-              {/* Micro-cards flutuantes da direita do Hero */}
-              <motion.div 
-                className="absolute top-6 left-2 sm:left-12 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
-              >
-                <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <UserCheck className="h-4 w-4" />
+                  <motion.div 
+                    className="absolute top-28 right-0 sm:right-6 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
+                    animate={{ y: [0, 6, 0] }}
+                    transition={{ repeat: Infinity, duration: 5.2, ease: 'easeInOut' }}
+                  >
+                    <div className="h-7 w-7 rounded-xl bg-brand-blue/10 text-brand-blue flex items-center justify-center">
+                      <LineChart className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Oportunidades</div>
+                      <div className="text-[8px] font-bold text-slate-400">de negócio</div>
+                    </div>
+                  </motion.div>
                 </div>
-                <div>
-                  <div className="text-[9px] font-black text-slate-900 leading-none">+ Empresas</div>
-                  <div className="text-[8px] font-bold text-slate-400">confiáveis</div>
-                </div>
-              </motion.div>
-
-              <motion.div 
-                className="absolute top-28 right-0 sm:right-6 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                animate={{ y: [0, 6, 0] }}
-                transition={{ repeat: Infinity, duration: 5.2, ease: 'easeInOut' }}
-              >
-                <div className="h-7 w-7 rounded-xl bg-brand-blue/10 text-brand-blue flex items-center justify-center">
-                  <LineChart className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-[9px] font-black text-slate-900 leading-none">+ Oportunidades</div>
-                  <div className="text-[8px] font-bold text-slate-400">de negócio</div>
-                </div>
-              </motion.div>
-
+              )}
             </motion.div>
+
           </div>
         </div>
       </section>
@@ -588,6 +638,23 @@ export default function PricingPage() {
       {/* ── 5. SEÇÃO "ANUNCIE NA AVALIA SOLAR" (3 colunas com BannerSlot) ────────── */}
       <section className="py-16 md:py-20 bg-white border-b border-slate-200/50">
         <div className="container mx-auto px-4 md:px-6">
+          
+          {/* Cabeçalho Unificado Comercial Premium */}
+          <div className="mb-12 text-center max-w-2xl mx-auto space-y-3">
+            <Badge
+              variant="outline"
+              className="bg-brand-blue/10 text-brand-blue border-brand-blue/20 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em]"
+            >
+              Mídia e Parcerias
+            </Badge>
+            <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              Anuncie no maior portal solar do Brasil
+            </h2>
+            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+              Posicione sua marca onde os compradores decidem seus parceiros e integradores de energia solar.
+            </p>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr_0.9fr] items-stretch">
             
             {/* Coluna 1: Card pitch */}
