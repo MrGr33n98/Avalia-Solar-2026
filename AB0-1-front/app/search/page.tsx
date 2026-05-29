@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
+import BannerByLocation from '@/components/BannerByLocation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
@@ -1102,6 +1103,11 @@ function SearchContent() {
                           </>
                         )}
                       </div>
+
+                      {/* Right Sidebar Banner */}
+                      <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
+                        <BannerByLocation location="sidebar" />
+                      </aside>
                     </div>
                   </TabsContent>
                 )}

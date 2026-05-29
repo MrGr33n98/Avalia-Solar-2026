@@ -367,6 +367,11 @@ export default function CategoryPageClient({
                   />
                 </div>
               </main>
+
+              {/* Right Sidebar Banner */}
+              <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
+                <BannerByLocation location="sidebar" />
+              </aside>
             </div>
           </div>
         </>

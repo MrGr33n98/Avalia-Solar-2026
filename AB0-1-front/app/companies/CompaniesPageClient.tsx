@@ -460,12 +460,20 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
             </section>
           </div>
 
-          <BannerByLocation
-            location="companies_right_rail"
-            limit={1}
-            categoryId={filters.category_ids[0]}
-            className="hidden xl:block w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))] rounded-2xl"
-          />
+          <div className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
+            <BannerByLocation
+              location="sidebar"
+              limit={1}
+              categoryId={filters.category_ids[0]}
+              className="rounded-2xl"
+            />
+            <BannerByLocation
+              location="companies_right_rail"
+              limit={1}
+              categoryId={filters.category_ids[0]}
+              className="rounded-2xl"
+            />
+          </div>
         </div>
       </div>
     </div>
