@@ -37,7 +37,7 @@ export function AvailabilityCell({ value }: AvailabilityCellProps) {
   }
   if (value === 'contact_sales') {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-blue/10 px-2.5 py-1.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/20">
+      <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-900/10 px-2.5 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-900/20">
         <Lock className="h-3.5 w-3.5 shrink-0" />
         <span className="hidden md:inline">Comercial</span>
       </span>
@@ -46,7 +46,7 @@ export function AvailabilityCell({ value }: AvailabilityCellProps) {
   return (
     <span className="inline-flex items-center justify-center">
       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
-        <X className="h-3 w-3 text-slate-350" />
+        <X className="h-3 w-3 text-slate-400" />
       </span>
     </span>
   );
@@ -71,6 +71,9 @@ export function CompareRow({ row }: CompareRowProps) {
       </td>
       <td className="bg-slate-50/80 px-3 py-4 text-center transition-colors group-hover:bg-slate-100/80">
         <AvailabilityCell value={row.availability.free} />
+      </td>
+      <td className="bg-slate-50/80 px-3 py-4 text-center transition-colors group-hover:bg-slate-100/80">
+        <AvailabilityCell value={row.availability.essential} />
       </td>
       <td className="bg-slate-50/80 px-3 py-4 text-center transition-colors group-hover:bg-slate-100/80">
         <AvailabilityCell value={row.availability.pro} />
@@ -106,14 +109,14 @@ export function FeatureComparisonTable() {
             variants={fadeUp}
             className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600"
           >
-            O plano pago entrega mais conversão e menos distração competitiva.
-            Cada categoria abaixo mostra exatamente o que muda entre os níveis.
+            Escolha o nível que melhor atende aos objetivos de captação e inteligência comercial de sua empresa.
+            Cada categoria abaixo detalha a matriz completa de entitlements.
           </motion.p>
         </motion.div>
 
         {/* Feature groups */}
         <motion.div
-          className="space-y-4"
+          className="space-y-6"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-40px' }}
@@ -126,24 +129,27 @@ export function FeatureComparisonTable() {
               className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md"
             >
               {/* Group title */}
-              <div className="border-b border-slate-100/80 px-6 py-5">
+              <div className="border-b border-slate-100/80 px-6 py-5 bg-slate-50/50">
                 <h3 className="text-base font-black tracking-tight text-slate-900">{group.title}</h3>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="min-w-[700px] w-full border-separate border-spacing-y-2 p-4">
+                <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
                   <thead>
                     <tr>
-                      <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 w-[45%]">
+                      <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">
                         Funcionalidade
                       </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                         Gratuito
                       </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-blue">
+                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-teal-600">
+                        Essencial
+                      </th>
+                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-brand-blue">
                         Pro
                       </th>
-                      <th className="pb-1 px-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                      <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-900">
                         Enterprise
                       </th>
                     </tr>
