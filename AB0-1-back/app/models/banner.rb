@@ -24,6 +24,7 @@ class Banner < ApplicationRecord
     categories_filter_sidebar
     categories_right_rail
     companies_right_rail
+    pricing_advertise_section
   ].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
   DEFAULT_DIMENSIONS_BY_POSITION = {
@@ -35,7 +36,8 @@ class Banner < ApplicationRecord
     'search_mid' => [1200, 160],
     'categories_filter_sidebar' => [300, 250],
     'categories_right_rail' => [300, 600],
-    'companies_right_rail' => [300, 600]
+    'companies_right_rail' => [300, 600],
+    'pricing_advertise_section' => [1200, 160]
   }.freeze
 
   # === Validações Básicas ===

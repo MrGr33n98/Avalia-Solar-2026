@@ -1,6 +1,6 @@
 import { fetchApiSafe } from '../api-client';
 
-export type PlanSlug = 'free' | 'pro' | 'enterprise';
+export type PlanSlug = 'free' | 'essential' | 'pro' | 'enterprise';
 
 export interface BillingPlan {
   id: number;
