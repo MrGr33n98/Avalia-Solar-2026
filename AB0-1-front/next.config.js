@@ -218,10 +218,10 @@ const nextConfig = {
 
   // TASK-024: Enable image optimization
   images: {
-    formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60 * 60 * 24 * 30,
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60 * 60, // 1 hora — banners atualizam sem precisar reiniciar servidor
     deviceSizes: [320, 420, 640, 768, 1024, 1280, 1600, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 600, 900],
     remotePatterns: [
       {
         protocol: 'https',

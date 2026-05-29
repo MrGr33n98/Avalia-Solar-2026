@@ -177,6 +177,29 @@ export function BannerContainer({ banners, position, className }: BannerContaine
 
     const aspectRatio = getAspectRatio(position);
 
+    const getSizes = (pos?: string) => {
+      switch (pos) {
+        case 'companies_right_rail':
+        case 'categories_right_rail':
+          // Sidebar fixa de 300px. Retina = 600px. Nunca maior que isso.
+          return '(max-width: 1279px) 0px, 300px';
+        case 'categories_filter_sidebar':
+          return '(max-width: 1023px) 0px, 280px';
+        case 'sidebar':
+          return '(max-width: 1023px) 100vw, 300px';
+        case 'navbar':
+          return '(max-width: 640px) 100vw, 200px';
+        case 'search_mid':
+        case 'search_top':
+        case 'categories_top':
+        case 'companies_footer':
+        case 'article_footer_cta':
+        default:
+          // Banners full-width
+          return '(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1200px';
+      }
+    };
+
     const renderBannerItem = (banner: BannerData, isPriority = false) => (
       <div className="relative w-full h-full bg-muted/20">
         <Link 
@@ -189,7 +212,7 @@ export function BannerContainer({ banners, position, className }: BannerContaine
           <BannerImage
             banner={banner}
             priority={isPriority}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+            sizes={getSizes(position)}
           />
           {banner.sponsored && (
             <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
