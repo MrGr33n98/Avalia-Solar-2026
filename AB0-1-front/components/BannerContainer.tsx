@@ -49,6 +49,7 @@ function BannerImage({
       fill
       priority={priority}
       sizes={sizes}
+      quality={95}
       className="object-cover object-center w-full h-full"
       onError={() => {
         if (failed || !banner.image_url) return;
