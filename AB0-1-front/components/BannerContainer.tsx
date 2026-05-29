@@ -40,7 +40,11 @@ function BannerImage({
   priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const src = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
+  const baseUrl = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
+  // Cache buster for Next.js Image Optimization and Cloudflare
+  const src = baseUrl === FALLBACK_BANNER_SRC 
+    ? baseUrl 
+    : `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}v=3`;
 
   return (
     <Image
