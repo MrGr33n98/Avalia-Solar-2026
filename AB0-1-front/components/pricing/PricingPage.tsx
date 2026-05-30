@@ -353,11 +353,12 @@ export default function PricingPage() {
                 </Badge>
               </motion.div>
 
-              <motion.h1
+      <motion.h1
                 variants={fadeUp}
-                className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.5rem] leading-[1.1]"
+                className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.25rem] leading-[1.1]"
               >
-                Escolha como sua empresa quer aparecer no <span className="text-brand-blue bg-gradient-to-r from-brand-blue to-brand-blue-light bg-clip-text text-transparent">mercado solar</span>
+                Escolha o plano ideal para sua empresa se destacar no{' '}
+                <span className="text-brand-blue bg-gradient-to-r from-brand-blue to-brand-blue-light bg-clip-text text-transparent">mercado solar</span>
               </motion.h1>
 
               <motion.p
@@ -385,6 +386,21 @@ export default function PricingPage() {
                 >
                   <Link href="/contact">Falar com vendas</Link>
                 </Button>
+              </motion.div>
+
+              {/* Microbadges */}
+              <motion.div variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                {[
+                  { icon: ShieldCheck, label: 'Sem fidelidade' },
+                  { icon: Zap, label: 'Ative em minutos' },
+                  { icon: Check, label: 'Pagamento seguro' },
+                  { icon: MessageSquare, label: 'Cancele quando quiser' },
+                ].map((mb) => (
+                  <span key={mb.label} className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <mb.icon className="h-3.5 w-3.5 text-emerald-500" />
+                    {mb.label}
+                  </span>
+                ))}
               </motion.div>
             </motion.div>
 
@@ -636,6 +652,30 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* ── 3b. FAIXA DE BENEFÍCIOS COMERCIAIS ──────────────────────────────────── */}
+      <section className="py-8 bg-white border-b border-slate-100">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: ShieldCheck, title: 'Pagamento seguro', desc: 'Ambiente 100% protegido' },
+              { icon: Zap, title: 'Ativação imediata', desc: 'Seu plano ativo em minutos' },
+              { icon: ArrowRight, title: 'Sem fidelidade', desc: 'Cancele quando quiser' },
+              { icon: MessageSquare, title: 'Suporte humano', desc: 'Atendimento especializado' },
+            ].map((b) => (
+              <div key={b.title} className="flex flex-col sm:flex-row items-center sm:items-start gap-3 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-blue/8 text-brand-blue">
+                  <b.icon className="h-4.5 w-4.5" />
+                </div>
+                <div className="text-center sm:text-left">
+                  <div className="text-sm font-black text-slate-900">{b.title}</div>
+                  <div className="text-xs text-slate-500 font-medium">{b.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 4. COMPARISON TABLE ──────────────────────────────────────────────── */}
       <FeatureComparisonTable />
 
@@ -761,14 +801,9 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── 6. FAQ & PERGUNTAS FREQUENTES ──────────────────────────────────────── */}
-      <section className="py-16 md:py-20 bg-slate-50/50">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto">
-            <PricingFaq />
-          </div>
-        </div>
-      </section>
+      {/* ── 6. FAQ & AJUDA ────────────────────────────────────────────────────── */}
+      <PricingFaq />
+
 
       {/* ── ENTERPRISE LEAD MODAL (Premium Glassmorphic) ───────────────────── */}
       <AnimatePresence>

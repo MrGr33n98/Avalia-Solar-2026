@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { Check, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { type PlanSlug } from '@/lib/pricing/catalog';
 
 export interface PlanCardProps {
@@ -21,66 +20,66 @@ export interface PlanCardProps {
   subscriptionStatus?: string;
   isLoading?: boolean;
   onCtaClick: () => void;
-  yearlyPriceLabel?: string; // Ex: "ou R$ 599/ano"
-  savingBadge?: string; // Ex: "Economize 2 meses"
+  yearlyPriceLabel?: string;
+  savingBadge?: string;
 }
 
 interface PlanVisualConfig {
   topBar: string;
   iconBg: string;
-  accentText: string;
-  badgeCls: string;
+  topBadgeCls: string;
   ringCls: string;
   shadowCls: string;
   ctaCls: string;
   checkBg: string;
   checkText: string;
+  priceCls: string;
 }
 
 const planConfig: Record<PlanSlug, PlanVisualConfig> = {
   free: {
     topBar: 'bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200',
     iconBg: 'bg-slate-900',
-    accentText: 'text-slate-900',
-    badgeCls: '',
+    topBadgeCls: '',
     ringCls: '',
-    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)]',
-    ctaCls: 'clay-chip border-slate-200 bg-white hover:bg-slate-50 text-slate-800',
+    shadowCls: 'shadow-[0_4px_24px_-8px_rgba(15,23,42,0.10)]',
+    ctaCls: 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-800',
     checkBg: 'bg-slate-100',
     checkText: 'text-slate-500',
+    priceCls: 'text-slate-900',
   },
   essential: {
     topBar: 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400',
     iconBg: 'bg-emerald-500',
-    accentText: 'text-emerald-600',
-    badgeCls: 'border border-emerald-400 bg-emerald-50 text-emerald-700 font-bold',
-    ringCls: '',
-    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(16,185,129,0.14)]',
-    ctaCls: 'bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_16px_30px_-20px_rgba(16,185,129,0.65)]',
+    topBadgeCls: 'bg-emerald-500 text-white',
+    ringCls: 'ring-2 ring-emerald-400/40',
+    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(16,185,129,0.22)]',
+    ctaCls: 'bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)]',
     checkBg: 'bg-emerald-50',
     checkText: 'text-emerald-500',
+    priceCls: 'text-emerald-600',
   },
   pro: {
-    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light h-[8px]',
+    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light',
     iconBg: 'bg-brand-blue',
-    accentText: 'text-brand-blue',
-    badgeCls: 'bg-brand-blue text-white border-0 shadow-[0_4px_16px_rgba(0,87,231,0.35)] font-extrabold scale-105',
-    ringCls: 'ring-[4px] ring-brand-blue/40 border-brand-blue/30',
-    shadowCls: 'shadow-[0_32px_80px_-12px_rgba(0,86,210,0.30)]',
-    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_16px_30px_-20px_rgba(0,86,210,0.85)] scale-[1.02] transition-transform duration-200',
+    topBadgeCls: 'bg-brand-blue text-white',
+    ringCls: 'ring-2 ring-brand-blue/40 border-brand-blue/30',
+    shadowCls: 'shadow-[0_24px_64px_-12px_rgba(0,86,210,0.28)]',
+    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_8px_24px_-8px_rgba(0,86,210,0.6)]',
     checkBg: 'bg-brand-blue/10',
     checkText: 'text-brand-blue',
+    priceCls: 'text-brand-blue',
   },
   enterprise: {
     topBar: 'bg-gradient-to-r from-slate-900 via-brand-cyan-dark to-brand-blue',
     iconBg: 'bg-slate-900',
-    accentText: 'text-slate-950',
-    badgeCls: 'border border-slate-200 bg-slate-100 text-slate-700',
-    ringCls: 'ring-1 ring-slate-950/5',
-    shadowCls: 'shadow-[0_24px_56px_-24px_rgba(15,23,42,0.15)]',
-    ctaCls: 'bg-slate-900 hover:bg-slate-850 text-white border-0 shadow-[0_16px_30px_-22px_rgba(15,23,42,0.7)]',
+    topBadgeCls: '',
+    ringCls: 'ring-1 ring-slate-950/10',
+    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)]',
+    ctaCls: 'border border-slate-300 bg-white hover:bg-slate-50 text-slate-900',
     checkBg: 'bg-slate-100',
-    checkText: 'text-slate-800',
+    checkText: 'text-slate-700',
+    priceCls: 'text-slate-950',
   },
 };
 
@@ -111,23 +110,17 @@ export function PlanCard({
   savingBadge,
 }: PlanCardProps) {
   const cfg = planConfig[slug] || planConfig.free;
+  const showTopBadge = badge && cfg.topBadgeCls && (slug === 'essential' || slug === 'pro');
 
-  // Formata o rótulo do status de assinatura para exibição amigável se for o plano atual
   const getStatusLabel = () => {
     if (!subscriptionStatus) return '';
     switch (subscriptionStatus) {
-      case 'trialing':
-        return ' (Período de Teste)';
-      case 'past_due':
-        return ' (Pagamento Pendente)';
-      case 'unpaid':
-        return ' (Inadimplente)';
-      case 'canceled':
-        return ' (Cancelada)';
-      case 'enterprise_lead':
-        return ' (Lead Solicitado)';
-      default:
-        return '';
+      case 'trialing': return ' (Período de Teste)';
+      case 'past_due': return ' (Pagamento Pendente)';
+      case 'unpaid': return ' (Inadimplente)';
+      case 'canceled': return ' (Cancelada)';
+      case 'enterprise_lead': return ' (Lead Solicitado)';
+      default: return '';
     }
   };
 
@@ -135,117 +128,95 @@ export function PlanCard({
     <motion.div
       variants={cardVariant}
       className={[
-        'relative flex flex-col overflow-hidden rounded-[2rem] border border-white/60 h-full',
-        'bg-white/95 backdrop-blur-md transition-all duration-300',
-        slug === 'pro' ? 'clay-convex scale-[1.02] md:scale-[1.03] lg:scale-[1.04] z-10 border-brand-blue/35' : 'clay-card hover:scale-[1.01]',
+        'relative flex flex-col overflow-hidden rounded-[24px] border border-slate-200/70 h-full',
+        'bg-white transition-all duration-300',
+        slug === 'pro' ? 'z-10' : 'hover:shadow-md',
         cfg.ringCls,
         cfg.shadowCls,
         isCurrentPlan ? 'ring-2 ring-brand-blue/30' : '',
       ].join(' ')}
     >
-      {/* Barra de destaque superior */}
-      <div className={`h-[6px] w-full ${cfg.topBar}`} />
+      {/* Badge superior destacado (MAIS ESCOLHIDO / MAIS VENDIDO) */}
+      {showTopBadge && (
+        <div className={`w-full py-2 text-center text-[11px] font-black uppercase tracking-[0.2em] ${cfg.topBadgeCls}`}>
+          {badge}
+        </div>
+      )}
+
+      {/* Barra de cor superior */}
+      <div className={`h-[5px] w-full ${cfg.topBar}`} />
 
       <div className="flex flex-1 flex-col p-7">
-        {/* Cabeçalho do plano */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3">
-              <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconBg} text-white shadow-lg`}
-              >
-                <Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xl font-black tracking-tight text-slate-950 flex items-center gap-1.5">
-                  {name}
-                  {isCurrentPlan && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-brand-blue animate-pulse" title="Seu plano ativo" />
-                  )}
-                </div>
-                <div className="text-xs text-slate-500 font-medium">{billingNote}</div>
-              </div>
-            </div>
-
-            {badge && (
-              <motion.div
-                className="inline-block"
-                animate={
-                  slug === 'pro'
-                    ? { scale: [1, 1.03, 1] }
-                    : {}
-                }
-                transition={
-                  slug === 'pro'
-                    ? { repeat: Infinity, duration: 3, ease: 'easeInOut' }
-                    : {}
-                }
-              >
-                <Badge
-                  className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] ${cfg.badgeCls}`}
-                >
-                  {badge}
-                </Badge>
-              </motion.div>
-            )}
+        {/* Ícone + Nome + Subtítulo */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconBg} text-white shadow-md`}>
+            <Icon className="h-5 w-5" />
           </div>
-
-          <div className="shrink-0 text-right">
-            <div className="flex flex-col items-end">
-              <div className={`text-2xl font-black tracking-tight ${cfg.accentText}`}>
-                {priceLabel}
-                {slug !== 'free' && slug !== 'enterprise' && (
-                  <span className="text-xs font-semibold text-slate-500">/mês</span>
-                )}
-              </div>
-              
-              {yearlyPriceLabel && (
-                <div className="mt-1 text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                  <span>{yearlyPriceLabel}</span>
-                  {savingBadge && (
-                    <span className="bg-emerald-500/10 text-emerald-600 text-[8px] font-black px-1 rounded uppercase tracking-wider">
-                      {savingBadge}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {!yearlyPriceLabel && (
-                <div className="mt-0.5 text-[9px] uppercase tracking-[0.16em] text-slate-400 font-bold">
-                  {slug === 'free' ? 'Para sempre' : 'Personalizado'}
-                </div>
+          <div>
+            <div className="text-lg font-black tracking-tight text-slate-950 flex items-center gap-1.5">
+              {name}
+              {isCurrentPlan && (
+                <span className="h-2 w-2 rounded-full bg-brand-blue animate-pulse" title="Seu plano ativo" />
               )}
             </div>
+            <div className="text-xs text-slate-500 font-medium">{billingNote}</div>
           </div>
         </div>
 
-        <div className="my-5 h-px bg-slate-100/80" />
+        {/* Preço — hierarquia: valor mensal grande > anual secundário > savings badge */}
+        <div className="mb-5">
+          <div className={`text-4xl font-black tracking-tight leading-none ${cfg.priceCls}`}>
+            {priceLabel}
+            {slug !== 'free' && slug !== 'enterprise' && (
+              <span className="text-base font-semibold text-slate-500 ml-0.5">/mês</span>
+            )}
+          </div>
 
-        {/* Resumo */}
-        <p className="text-sm leading-relaxed text-slate-600 min-h-[64px]">{summary}</p>
+          {slug === 'free' && (
+            <div className="mt-1 text-sm text-slate-500 font-medium">para sempre</div>
+          )}
+          {slug === 'enterprise' && (
+            <div className="mt-1 text-sm text-slate-500 font-medium">Fale com nosso time</div>
+          )}
 
-        {/* Destaques (Highlights) */}
-        <ul className="mt-5 flex-1 space-y-3">
+          {yearlyPriceLabel && (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-500 font-medium">{yearlyPriceLabel}</span>
+              {savingBadge && (
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  slug === 'essential'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-sky-50 text-brand-blue border border-brand-blue/20'
+                }`}>
+                  {savingBadge}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-slate-100 mb-5" />
+
+        {/* Highlights / Features */}
+        <ul className="flex-1 space-y-3 mb-7">
           {highlights.map((h) => (
-            <li key={h} className="flex items-start gap-3 text-sm text-slate-700 font-medium">
-              <span
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${cfg.checkBg} ${cfg.checkText}`}
-              >
-                <Check className="h-3.5 w-3.5" />
+            <li key={h} className="flex items-start gap-3 text-sm text-slate-700">
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${cfg.checkBg} ${cfg.checkText}`}>
+                <Check className="h-3 w-3" />
               </span>
               <span>{h}</span>
             </li>
           ))}
         </ul>
 
-        {/* Botão de Chamada para Ação (CTA) */}
+        {/* CTA */}
         <Button
           onClick={onCtaClick}
           disabled={isLoading}
           size="lg"
           className={[
-            'mt-7 h-12 w-full rounded-full font-bold text-sm transition-all',
-            isCurrentPlan ? 'bg-slate-200 text-slate-500 hover:bg-slate-200 border-0 cursor-default shadow-none' : cfg.ctaCls,
+            'h-12 w-full rounded-full font-bold text-sm transition-all',
+            isCurrentPlan ? 'bg-slate-100 text-slate-500 hover:bg-slate-100 border-0 cursor-default shadow-none' : cfg.ctaCls,
           ].join(' ')}
         >
           {isLoading ? (
@@ -267,29 +238,23 @@ export function PlanCard({
 
 export function PlanCardSkeleton() {
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/40 backdrop-blur-md shadow-sm h-[500px]">
-      <div className="h-[6px] w-full bg-slate-200 animate-pulse" />
+    <div className="relative flex flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm h-[520px]">
+      <div className="h-[5px] w-full bg-slate-200 animate-pulse" />
       <div className="flex flex-1 flex-col p-7 space-y-6">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-slate-200 animate-pulse shrink-0" />
-            <div className="space-y-2">
-              <div className="h-5 w-24 bg-slate-200 animate-pulse rounded" />
-              <div className="h-3 w-32 bg-slate-200 animate-pulse rounded" />
-            </div>
-          </div>
-          <div className="space-y-1 text-right">
-            <div className="h-5 w-20 bg-slate-200 animate-pulse rounded ml-auto" />
-            <div className="h-3 w-12 bg-slate-200 animate-pulse rounded ml-auto" />
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-2xl bg-slate-200 animate-pulse shrink-0" />
+          <div className="space-y-2">
+            <div className="h-5 w-24 bg-slate-200 animate-pulse rounded" />
+            <div className="h-3 w-20 bg-slate-200 animate-pulse rounded" />
           </div>
         </div>
-        <div className="h-px bg-slate-100/80" />
         <div className="space-y-2">
-          <div className="h-4 w-full bg-slate-200 animate-pulse rounded" />
-          <div className="h-4 w-5/6 bg-slate-200 animate-pulse rounded" />
+          <div className="h-10 w-32 bg-slate-200 animate-pulse rounded" />
+          <div className="h-3 w-40 bg-slate-200 animate-pulse rounded" />
         </div>
-        <div className="space-y-3 flex-1 pt-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="h-px bg-slate-100" />
+        <div className="space-y-3 flex-1">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="h-5 w-5 rounded-full bg-slate-200 animate-pulse shrink-0" />
               <div className="h-4 w-3/4 bg-slate-200 animate-pulse rounded" />
