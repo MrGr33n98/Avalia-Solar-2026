@@ -449,6 +449,7 @@ module PlanFeatureCatalog
       lower_name = name.to_s.downcase
       return 'enterprise' if lower_name.include?('enterprise')
       return 'pro' if lower_name.match?(/\b(pro|premium|pago)\b/)
+      return 'essential' if lower_name.match?(/\b(essential|essencial)\b/)
       return 'free' if lower_name.match?(/\b(free|gratis|gratuito|basic|basico)\b/)
 
       return 'enterprise' if enterprise_capabilities?(raw)

@@ -25,7 +25,8 @@ plans_data = [
     price: 59.90,
     tier: 'essential',
     display_order: 1,
-    stripe_price_id_monthly: nil,
+    stripe_price_id_monthly: 'price_1Tco98AyddIZ7JJTucmaV1Qt',
+    stripe_price_id_yearly: 'price_1TcoAMAyddIZ7JJTBCtfFkyO',
     features_override: {
       'custom_ctas' => true,
       'verified_product' => true,
@@ -105,6 +106,9 @@ plans_data.each do |data|
   # Atribui o ID do Stripe seguro
   if plan.respond_to?(:stripe_price_id_monthly=)
     plan.stripe_price_id_monthly = data[:stripe_price_id_monthly]
+  end
+  if plan.respond_to?(:stripe_price_id_yearly=)
+    plan.stripe_price_id_yearly = data[:stripe_price_id_yearly]
   end
 
   # Fallback defensivo para evitar UnknownAttributeError
