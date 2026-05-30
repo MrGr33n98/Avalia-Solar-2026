@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Megaphone, Compass, Sparkles } from 'lucide-react';
 
 export function DefaultPricingAdBanner() {
@@ -10,10 +11,13 @@ export function DefaultPricingAdBanner() {
     <div className="relative overflow-hidden w-full h-full min-h-[280px] sm:min-h-[320px] rounded-3xl border border-blue-500/20 shadow-xl flex flex-col justify-between group cursor-pointer transition-all duration-300 hover:shadow-brand-blue/10 hover:border-brand-blue/30 bg-slate-950">
       {!imageError ? (
         <div className="absolute inset-0 w-full h-full bg-slate-950 overflow-hidden flex flex-col justify-end">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/pricing/pricing-ad-preview.png"
+          <Image
+            src="/images/pricing/pricing-ad-preview.webp"
             alt="Preview de Anúncio Avalia Solar"
+            width={600}
+            height={600}
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, 33vw"
             className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
             onError={() => setImageError(true)}
           />

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
@@ -146,9 +147,9 @@ export default function PricingPage() {
               id: apiPlan?.id || index + 1,
               slug: staticPlan.slug,
               name: staticPlan.name,
-              price_cents: apiPlan?.price_cents ?? (staticPlan.slug === 'pro' ? 14990 : staticPlan.slug === 'essential' ? 5990 : 0),
-              price_formatted: apiPlan?.price_formatted || staticPlan.priceLabel,
-              price_label: apiPlan?.price_label || apiPlan?.price_formatted || staticPlan.priceLabel,
+              price_cents: apiPlan?.price_cents ?? (staticPlan.slug === 'pro' ? 15000 : staticPlan.slug === 'essential' ? 5900 : 0),
+              price_formatted: staticPlan.slug === 'essential' ? 'R$ 59' : staticPlan.slug === 'pro' ? 'R$ 150' : (apiPlan?.price_formatted || staticPlan.priceLabel),
+              price_label: staticPlan.slug === 'essential' ? 'R$ 59' : staticPlan.slug === 'pro' ? 'R$ 150' : (apiPlan?.price_label || apiPlan?.price_formatted || staticPlan.priceLabel),
               stripe_product_id: apiPlan?.stripe_product_id || null,
               stripe_price_id_monthly: apiPlan?.stripe_price_id_monthly || null,
               stripe_price_id_yearly: apiPlan?.stripe_price_id_yearly || null,
@@ -159,7 +160,7 @@ export default function PricingPage() {
               billingNote: staticPlan.billingNote,
               badge: staticPlan.badge,
               featured: staticPlan.featured,
-              priceLabel: apiPlan?.price_formatted || staticPlan.priceLabel,
+              priceLabel: staticPlan.slug === 'essential' ? 'R$ 59' : staticPlan.slug === 'pro' ? 'R$ 150' : (apiPlan?.price_formatted || staticPlan.priceLabel),
               ctaLabel: staticPlan.ctaLabel,
             };
           })
@@ -328,7 +329,7 @@ export default function PricingPage() {
         {/* Imagem de Fundo Solar discreta na lateral direita */}
         <div 
           className="absolute inset-y-0 right-0 w-full lg:w-1/2 opacity-20 pointer-events-none bg-cover bg-right bg-no-repeat hidden md:block"
-          style={{ backgroundImage: 'url(/images/pricing/pricing-hero-solar-bg.jpg)' }}
+          style={{ backgroundImage: 'url(/images/pricing/pricing-hero-solar-bg.webp)' }}
         />
         {/* Overlay suave para integrar o fundo e garantir legibilidade perfeita */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#EBF2FC] via-[#EBF2FC]/80 to-transparent pointer-events-none" />
@@ -396,10 +397,13 @@ export default function PricingPage() {
             >
               {!heroMockupError ? (
                 <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/pricing/pricing-hero-mockup.png"
+                  <Image
+                    src="/images/pricing/pricing-hero-mockup.webp"
                     alt="Mockup do Perfil Comercial"
+                    width={1200}
+                    height={800}
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     className="w-full h-auto object-contain drop-shadow-[0_24px_48px_rgba(0,86,210,0.18)]"
                     onError={() => setHeroMockupError(true)}
                   />
@@ -598,11 +602,11 @@ export default function PricingPage() {
                 let yearlyPrice;
                 let savingText;
                 if (plan.slug === 'essential') {
-                  yearlyPrice = 'ou R$ 599/ano';
-                  savingText = 'Economize 2 meses';
+                  yearlyPrice = 'ou R$ 629 à vista no plano anual';
+                  savingText = 'ECONOMIZE R$ 79';
                 } else if (plan.slug === 'pro') {
-                  yearlyPrice = 'ou R$ 1.499/ano';
-                  savingText = 'Economize 2 meses';
+                  yearlyPrice = 'ou R$ 1.600 à vista no plano anual';
+                  savingText = 'ECONOMIZE R$ 200';
                 }
 
                 return (
