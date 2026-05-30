@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { parseArgs, writeCsv, retry } from "../../.planning/skills/utils.ts";
+import { parseArgs, writeCsv, retry } from "../../utils.ts";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -57,17 +57,17 @@ const CIDADES_PERMITIDAS = [
 async function main() {
   const { flags } = parseArgs();
   const output = (flags.output as string) || "gmail-classifier-actions.csv";
-  
+
   console.log("📥 Buscando e-mails comerciais não lidos na inbox do Avalia Solar...");
   const emails = getMockEmails();
-  
+
   console.log(`📊 Coletados ${emails.length} e-mails na inbox. Analisando semântica e limites geográficos...`);
-  
+
   const processedEmails: any[] = [];
-  
+
   for (const email of emails) {
     console.log(`\n📧 Analisando e-mail: "${email.subject}" de ${email.sender_name}`);
-    
+
     // Validação geográfica rígida
     const cidadeNormalizada = CIDADES_PERMITIDAS.find(
       c => c.toLowerCase().trim() === email.city.toLowerCase().trim()

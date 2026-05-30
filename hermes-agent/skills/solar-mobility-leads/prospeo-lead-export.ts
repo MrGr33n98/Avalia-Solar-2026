@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { parseArgs, writeCsv, retry } from "../../.planning/skills/utils.ts";
+import { parseArgs, writeCsv, retry } from "../../utils.ts";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -69,7 +69,7 @@ async function main() {
   }
 
   console.log(`📡 Iniciando exportador Prospeo para o segmento: [${segmento.toUpperCase()}]`);
-  
+
   let rawLeads: any[] = [];
 
   if (prospeoKey) {
@@ -122,7 +122,7 @@ async function main() {
       populacao_cidade: infoRegional.populacao,
       potencial_solar: infoRegional.potencial_solar,
       potencial_mobilidade: infoRegional.potencial_mobilidade,
-      lead_magnet: segmento === "solar" 
+      lead_magnet: segmento === "solar"
         ? `Relatório de competitividade solar de ${cidadeNormalizada}`
         : `Estudo de viabilidade para frota elétrica em ${cidadeNormalizada}`
     });

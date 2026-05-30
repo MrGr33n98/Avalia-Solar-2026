@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { parseArgs, writeCsv, retry } from "../../.planning/skills/utils.ts";
+import { parseArgs, writeCsv, retry } from "../../utils.ts";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -62,7 +62,7 @@ async function main() {
 
   console.log(`📡 Iniciando prospecção regional no LinkedIn para o segmento: [${segmento.toUpperCase()}]`);
   const targets = getMockLinkedInTargets(segmento);
-  
+
   console.log(`📊 Total de alvos mapeados na campanha: ${targets.length}`);
   console.log("⚠️  Processando e gerando abordagens geolocalizadas...");
 
