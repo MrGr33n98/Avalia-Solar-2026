@@ -492,6 +492,105 @@ flowchart TB
 
 ---
 
+### 🏛️ Bloco 6: Operações Reais de Backend e Monetização (Financiamentos, Reivindicações, Fórum, Banners e Moderação)
+
+Este bloco mapeia os fluxos avançados identificados diretamente nas tabelas de banco de dados Rails do backend, essenciais para a monetização B2B, prospecção automática contextualizada e governança de dados da plataforma.
+
+```mermaid
+flowchart TB
+    classDef startEvent fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff;
+    classDef endEvent fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff;
+    classDef gateway fill:#FFEB3B,stroke:#F57F17,stroke-width:2px,color:#000;
+    classDef hermesTask fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff;
+    classDef humanTask fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff;
+    classDef systemNode fill:#E0E0E0,stroke:#757575,stroke-width:1px,color:#333;
+
+    subgraph Pool_Hermes_Bloco6 [Pool: Hermes Agent - Operações de Backend]
+        direction TB
+
+        subgraph Lane_AR [Raia: Reivindicação de Perfis B2B]
+            AR1([Evento: Reivindicação de Perfil]) --> AR2[Tarefa: Validar E-mail Corporativo e Domínio]
+            AR2 --> AR3{Gateway: Domínio Bate com Site da Empresa?}
+            AR3 -- Sim --> AR4[Tarefa: Disparar E-mail com Acesso e Chave Provisória]
+            AR3 -- Não --> AR5[Tarefa: Gerar Card de Aprovação de Legitimidade no Slack]
+            AR5 --> AR6([Evento Final: Aguardar Moderação Humana])
+            AR4 --> AR7([Evento Final: Acesso Liberado e Notificado])
+        end
+
+        subgraph Lane_FN [Raia: Simulador de Financiamento Solar]
+            FN1([Evento: Simulação Iniciada B2C]) --> FN2[Tarefa: Calcular Parcelamento via Configurações de Bancos]
+            FN2 --> FN3{Gateway: Simulação Viável?}
+            FN3 -- Sim --> FN4[Tarefa: Encaminhar Proposta a APIs de Bancos Parceiros]
+            FN4 --> FN5[Tarefa: Criar Lead Qualificado de Financiamento no Nutshell]
+            FN5 --> FN6([Evento Final: Notificar Integrador Parceiro])
+            FN3 -- Não --> FN7[Tarefa: Sugerir Ajustes de Prazos e Parcelas]
+            FN7 --> FN8([Evento Final: Solicitar Novas Parâmetros])
+        end
+
+        subgraph Lane_PC [Raia: Controle de Alterações de Perfil]
+            PC1([Evento: Empresa Edita Perfil]) --> PC2[Tarefa: Reter Alteração em Fila de pending_changes]
+            PC2 --> PC3[Tarefa: Notificar Canal de Moderador Slack]
+            PC3 --> PC4([Evento Final: Aguardar Moderação])
+        end
+
+        subgraph Lane_FQ [Raia: Roteamento de Fórum e Dúvidas]
+            FQ1([Evento: Nova Dúvida Enviada no Fórum]) --> FQ2[Tarefa: Classificar Intenção e Sentimento da Mensagem]
+            FQ2 --> FQ3{Gateway: Alta Intenção Comercial B2C?}
+            FQ3 -- Sim --> FQ4[Tarefa: Selecionar 3 Integradores Locais Próximos]
+            FQ4 --> FQ5[Tarefa: Criar Lead no Nutshell CRM e Notificar Empresas]
+            FQ5 --> FQ6([Evento Final: Notificar Vendas])
+            FQ3 -- Não --> FQ7[Tarefa: Responder com Rascunho Baseado no FAQ Interno]
+            FQ7 --> FQ8([Evento Final: Arquivar ou Aguardar Resposta Humana])
+        end
+
+        subgraph Lane_BN [Raia: Monetização e ROI de Banners]
+            BN1([Evento: Clique em Banner]) --> BN2[Tarefa: Incrementar Evento no Banco de Dados]
+            BN2 --> BN3[Tarefa: Consolidar Estatísticas Diárias no Data Lake]
+            BN3 --> BN4[Tarefa: Calcular CTR Acumulado e Custo por Clique]
+            BN4 --> BN5([Evento Final: Enviar Relatório de Performance ao Distribuidor])
+        end
+    end
+
+    subgraph Pool_Humano_Bloco6 [Pool: Humano Solo Operator]
+        direction TB
+        subgraph Lane_Humano_Backend [Raia: Auditoria de Operações]
+            H_AuditAR[Tarefa: Verificar Legitimidade de Empresa Reivindicada]
+            H_AuditPC[Tarefa: Auditar e Liberar Imagens/Textos Editados]
+        end
+    end
+
+    subgraph Pool_Sistemas_Bloco6 [Pool: Sistemas Externos]
+        SYS_DB6[Banco de Dados PostgreSQL]
+        SYS_Slack6[Slack Canais]
+        SYS_Nutshell6[Nutshell CRM]
+        SYS_Banks6[APIs Bancos Parceiros]
+    end
+
+    %% Integrações
+    AR5 -.-> SYS_Slack6
+    SYS_Slack6 -.-> H_AuditAR
+    H_AuditAR -- Aprovado -.-> AR4
+    PC3 -.-> SYS_Slack6
+    SYS_Slack6 -.-> H_AuditPC
+    H_AuditPC -- Liberado -.-> SYS_DB6
+    FN4 -.-> SYS_Banks6
+    FN5 -.-> SYS_Nutshell6
+    FQ5 -.-> SYS_Nutshell6
+    BN2 -.-> SYS_DB6
+
+    class AR1,FN1,PC1,FQ1,BN1 startEvent;
+    class AR6,AR7,FN6,FN8,PC4,FQ6,FQ8,BN5 endEvent;
+    class AR3,FN3,FQ3 gateway;
+    class AR2,AR4,AR5,FN2,FN4,FN5,FN7,PC2,PC3,FQ2,FQ4,FQ5,FQ7,BN2,BN3,BN4 hermesTask;
+    class H_AuditAR,H_AuditPC humanTask;
+    class SYS_DB6,SYS_Slack6,SYS_Nutshell6,SYS_Banks6 systemNode;
+```
+
+*   **Processos Automatizados**: Validação e saneamento imediato de e-mails corporativos; distribuição ponderada de simulações viáveis de financiamento para integradores qualificados; retenção e versionamento preventivo de edições de perfis; classificação semântica de dúvidas do fórum.
+*   **Moderações Técnicas (Gateways)**: O e-mail de reivindicação pertence ao domínio oficial da empresa? A simulação de crédito é viável dentro das taxas e limites operacionais dos bancos? A dúvida técnica possui apelo comercial ou deve ser respondida de forma passiva?
+
+---
+
 ## 🔒 Regras de Compliance, Segurança e Tratamento de Exceções
 
 Para assegurar a máxima confiabilidade operacional e evitar riscos regulatórios ou de marca, as seguintes diretrizes são implementadas pelo Hermes Agent em todo o ecossistema:
@@ -501,3 +600,6 @@ Para assegurar a máxima confiabilidade operacional e evitar riscos regulatório
 3.  **Controle de SPF / DKIM / DMARC e Bounces**: Visando blindar a entregabilidade dos domínios da plataforma, o monitor diário de DNS analisa logs do servidor de e-mail. Se qualquer um dos registros SPF, DKIM ou DMARC apresentar inconsistência ou o índice de bounce ultrapassar 2%, a fila de saídas é congelada até que o administrador aprove manualmente o reestabelecimento.
 4.  **Enriquecimento Qualificado e Cidades Homologadas**: Para respeitar o direcionamento de negócio do Avalia Solar, os leads coletados são cruzados com uma base de dados das 34 cidades brasileiras cadastradas com população superior a 500 mil habitantes. Leads fora dessas praças não seguem para prospecção personalizada e entram na esteira de nutrição estática.
 5.  **Deduplicação de Contatos no Nutshell**: Antes de registrar qualquer nova oportunidade ou contato comercial, o Hermes realiza uma checagem de concorrência por CNPJ e e-mail corporativo. Se um registro existente for localizado, o lead é atualizado mantendo o histórico de interações unificado para evitar interações duplicadas com o mesmo decisor.
+6.  **Governança Financeira e Estornos**: Estornos, cancelamentos de faturas ou disputas registradas via webhook do Stripe suspendem imediatamente privilégios de visibilidade premium no banco de dados operacional, geram um alerta técnico na central do Slack e criam uma tarefa prioritária no Nutshell, garantindo que estornos nunca ocorram de forma puramente autônoma pela IA.
+7.  **Isolamento de Alterações Cadastrais (Pending Changes)**: Modificações de dados sensíveis de perfil (como CEP de atendimento, logomarcas, segmentos de atuação) inseridas por empresas são armazenadas de forma isolada na tabela `pending_changes` do PostgreSQL do Rails, impedindo publicação imediata e exigindo gate humano de auditoria para proteção de marca do portal.
+

@@ -1,6 +1,6 @@
 # 📊 Especificação Técnica: Dashboard Geral de RevOps — Hermes Agent
 
-Este documento descreve a especificação técnica de arquitetura de dados e visualização do **Dashboard Geral de RevOps** do Avalia Solar. O painel unifica métricas agregadas do **Nutshell CRM, Stripe, Google Search Console, WordPress e logs do Hermes Agent**, permitindo que o Solo Operator tenha uma visão integrada da performance de atração, conversão, retenção e infraestrutura.
+Este documento descreve a especificação técnica de arquitetura de dados e visualização do **Dashboard Geral de RevOps** do Avalia Solar. O painel unifica métricas agregadas do **Nutshell CRM, Stripe, Google Search Console, WordPress e logs do Hermes Agent**, permitindo que o Solo Operator tenha uma visão integrada da performance de atração, conversão, retenção, monetização real de banners, simulações de crédito e infraestrutura.
 
 ---
 
@@ -16,9 +16,12 @@ Este documento descreve a especificação técnica de arquitetura de dados e vis
 | **Índice de Clientes Premium Inativos** | Site logs (Banco de Dados) | `Inativos = (Premium sem login nos últimos 30 dias / Total de Premium) * 100` | Diário | Índice de integradores premium inativos ultrapassar 15% da base. | Customer Success | Acionar preventivamente o time de CS para suporte consultivo ou disparar automação de reengajamento. |
 | **Taxa de Aceitação LinkedIn** | Smartlead API, Logs Hermes | `Aceitação = (Convites Aceitos / Convites Enviados pelo Hermes) * 100` | Semanal | Taxa de aceitação no LinkedIn cair abaixo de 20%. | Marketing | Revisar os templates de copy gerados por IA, reajustar ICP ou testar novos ganchos regionais. |
 | **Volume de Orçamentos Gerados (B2C)**| Site BD (quote_requested) | `Orçamentos = Contagem total de solicitações B2C no período` | Semanal | Queda de mais de 25% em orçamentos gerados em relação à semana anterior. | Growth | Aumentar investimentos em anúncios locais B2C ou otimizar fluxo de solicitação no front. |
-| **Artigos Publicados (SEO)** | WordPress Rest API | `Artigos = Contagem total de posts novos publicados no blog` | Semanal | Zero artigos publicados no fechamento da semana operacional. | Marketing | Revisar a fila de pauta gerada pelo Hermes, auditar fila de aprovação ou repensar temas locais. |
+| **Artigos Publicados (SEO)** | WordPress Rest API | `Artigos = Contagem total de posts novos publicados no blog` | Semanal | Zero artigos publicados no fechamento da semana operacional. | Marketing | Revisar a fila de pauta gerada pelo Hermes, auditar pautas ou readequar temas de cidades. |
 | **Bounce Rate de Campanhas** | Servidor SMTP / Logs Hermes | `Bounce Rate = (E-mails Devolvidos / E-mails Enviados) * 100` | Diário | Bounce Rate diário ultrapassar a marca de 2%. | TI / Infra | Pausar imediatamente campanhas outbound frias, checar chaves DNS (SPF/DKIM) e aquecer IPs. |
 | **Taxa de Erro de Ingestão de Dados** | Logs de Auditoria do Hermes | `Erros Ingestão = (Payloads Rejeitados / Total de Payloads Recebidos) * 100` | Diário | Ocorrência de mais de 3 erros de schema validation no mesmo dia. | TI / Infra | Auditar mudanças recentes no front-end do site ou ajustar os JSON schemas na API do Hermes. |
+| **Volume de Crédito Solar Simulado** | Tabela `company_financing_profiles` | `Crédito = Somatório (default_amount_cents / 100) de simulações bem-sucedidas` | Semanal | Volume de crédito simulado cair abaixo de R$ 1 milhão na semana. | Vendas / TI | Ajustar critérios de cálculo do parcelamento ou acionar novos parceiros financeiros no portal. |
+| **Taxa de Reivindicação de Perfis** | Tabela `company_access_requests` | `Reivindicações = (Solicitações Aprovadas / Total de Perfis Orgânicos) * 100` | Mensal | Queda de mais de 30% nas requisições mensais de reivindicações de integradores. | Growth | Criar campanhas de marketing direcionadas aos integradores listados organicamente. |
+| **CTR Geral de Banners Publicitários**| Tabela `banner_events` | `CTR Banners = (Cliques em Banners / Exibições Totais) * 100` | Semanal | CTR Geral de banners corporativos cair abaixo de 0.8% na semana. | Marketing | Otimizar imagens e layouts dos banners premium dos distribuidores do portal. |
 
 ---
 
@@ -27,7 +30,7 @@ Este documento descreve a especificação técnica de arquitetura de dados e vis
 Para alimentar o Dashboard sem comprometer a performance do banco de dados operacional, a arquitetura implementa o seguinte fluxo de dados assíncrono:
 
 ```
-[Fontes: Stripe, Nutshell, Site BD, WordPress, SMTP] 
+[Fontes: Stripe, Nutshell, Site BD, WordPress, SMTP, Bancos] 
        │
        ▼ (Eventos Webhook / Cron Jobs)
 [Barramento do Hermes Agent IA] (Validação de Schema & Logs de Auditoria)

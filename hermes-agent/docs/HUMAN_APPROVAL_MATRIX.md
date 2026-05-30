@@ -25,17 +25,20 @@ Este documento regulamenta a governança de automações do **Avalia Solar & Mob
 | **Publicação de Artigo no WordPress** | Não | Sim | Não | Revisão final de copy, links internos, formatação e verificação de coerência de marca antes do artigo ir ao ar. | WordPress Rascunhos / Slack | Editor de Conteúdo |
 | **Alteração de Parâmetros SMTP/DNS** | Não | Não | Sim | Ajustes de chaves SPF, DKIM e DMARC alteram a infraestrutura e podem derrubar a entregabilidade global dos domínios. | Painel Host / DNS Interno | Operador de Infra/TI |
 | **Alteração de Prompt/Regras Hermes** | Não | Sim | Não | Modificações na lógica de decisões cognitivas do Hermes Agent devem passar por crivo antes de serem enviadas para produção. | CLI / Config de Repositório | Engenheiro IA / Ops |
+| **Reivindicação de Perfis (`Access Request`)** | Não | Sim | Não | Quando o e-mail do solicitante diverge do domínio do site da empresa, é obrigatório auditar manualmente para evitar roubo de lead. | Slack `#solicita-acesso` | Suporte / TI |
+| **Controle de Mudanças (`pending_changes`)** | Não | Sim | Não | Alterações de dados sensíveis de perfil (como logomarca e cobertura) devem passar por crivo visual antes da publicação. | Slack `#auditoria-perfil` | Operações / Moderação |
+| **Estorno e Disputa Financeira Stripe** | Não | Não | Sim | Disputas ou cobranças contestadas no Stripe travam preventivamente o plano B2B e requerem cancelamento manual auditado. | Dashboard Stripe / Slack | Diretor Financeiro |
 
 ---
 
 ## ⚡ Fluxo de Trabalho de Aprovação no Slack (Hermes IA -> Slack -> Humano)
 
-1.  **Ingestão de Ação Sensível**: O Hermes Agent detecta que uma tarefa (como postagem de artigo ou envio de convite LinkedIn personalizado) está pronta para ser executada.
+1.  **Ingestão de Ação Sensível**: O Hermes Agent detecta que uma tarefa (como postagem de artigo, envio de convite LinkedIn personalizado, liberação de acesso de empresa reivindicada ou moderação de perfil) está pronta para ser executada.
 2.  **Postagem de Card de Aprovação**: O Hermes monta um bloco no Slack (`block_kit`) contendo:
     *   **Título**: Identificação clara da ação.
-    *   **Payload**: Cópia do texto gerado ou parâmetros que seriam enviados.
+    *   **Payload**: Cópia do texto gerado ou parâmetros que seriam enviados (ex: novos campos alterados do perfil).
     *   **Contexto**: ID do Lead, Cidade e Potencial.
     *   **Botões**: `Aprovar` e `Rejeitar` (com campo opcional de feedback).
 3.  **Processamento da Decisão**:
-    *   Se o Humano clica em **Aprovar**: O webhook é recebido pelo script `verify-credentials.ts` (ou orquestrador correspondente), grava a aprovação técnica nos logs e executa a tarefa imediatamente.
+    *   Se o Humano clica em **Aprovar**: O webhook é recebido pelo script orquestrador correspondente, grava a aprovação técnica nos logs e executa a tarefa imediatamente (ex: publica a alteração da tabela `pending_changes` em produção).
     *   Se o Humano clica em **Rejeitar**: O Hermes cancela a tarefa na fila, envia um alerta de confirmação e, se houver justificativa escrita, alimenta a base de feedback para readequação inteligente de prompts nas próximas rodadas.

@@ -1,20 +1,14 @@
 flowchart TB
-    %% Mapeamento Operacional Unificado - Avalia Solar & Mobilidade Elétrica
-    
-    %% Configuração de Classes e Estilos Visuais
-    classDef startEvent fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff;
-    classDef endEvent fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff;
-    classDef gateway fill:#FFEB3B,stroke:#F57F17,stroke-width:2px,color:#000;
-    classDef hermesTask fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff;
-    classDef humanTask fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff;
-    classDef systemNode fill:#E0E0E0,stroke:#757575,stroke-width:1px,color:#333;
+    classDef start fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff
+    classDef endEvent fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff
+    classDef gateway fill:#FFEB3B,stroke:#F57F17,stroke-width:2px,color:#000
+    classDef hermes fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
+    classDef human fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff
+    classDef system fill:#E0E0E0,stroke:#757575,stroke-width:1px,color:#333
 
-    %% ==========================================
-    %% POOL 1 — HERMES AGENT (IA ORCHESTRATOR)
-    %% ==========================================
     subgraph Pool_Hermes [Pool: Hermes Agent IA]
         direction TB
-
+        
         subgraph Lane_Cadastro_Empresas [Raia: Cadastro de Empresas B2B]
             CE1([Evento: Inicia Cadastro B2B]) --> CE2[Tarefa: Validar CNPJ via API]
             CE2 --> CE3{Gateway: CNPJ Válido?}
@@ -71,7 +65,7 @@ flowchart TB
         end
 
         subgraph Lane_Gmail [Raia: Gmail e E-mails Comerciais]
-            GM1([Evento: E-mail Corporativo Recebido]) --> GM2[Tarefa: Classificar Tipo de Mensagem]
+            GM1([Evento: E-mail Corporativo Recebido]) --> GM2[Tarefa: Classificar Tipo de E-mail]
             GM2 --> GM3{Gateway: Qual a Categoria?}
             GM3 -- Lead B2B --> GM4[Tarefa: Criar Lead CRM e Rascunho]
             GM3 -- FAQ / Dúvida --> GM5[Tarefa: Responder FAQ Automaticamente]
@@ -184,11 +178,61 @@ flowchart TB
             I4 -- Não --> I8[Tarefa: Registrar Log Operação OK]
             I8 --> I9([Evento Final: Manter Operações])
         end
+
+        %% ==========================================
+        %% OPORTUNIDADES REAIS DO BACKEND ADICIONADAS
+        %% ==========================================
+
+        subgraph Lane_AR [Raia: Reivindicação de Perfis B2B]
+            AR1([Evento: Reivindicação de Perfil]) --> AR2[Tarefa: Validar E-mail Corporativo e Domínio]
+            AR2 --> AR3{Gateway: Domínio Bate com Site da Empresa?}
+            AR3 -- Sim --> AR4[Tarefa: Disparar E-mail com Acesso e Chave Provisória]
+            AR3 -- Não --> AR5[Tarefa: Gerar Card de Aprovação de Legitimidade no Slack]
+            AR5 --> AR6([Evento Final: Moderação Requerida])
+            AR4 --> AR7([Evento Final: Acesso Liberado e Notificado])
+        end
+
+        subgraph Lane_FN [Raia: Simulador de Financiamento Solar]
+            FN1([Evento: Simulação Iniciada B2C]) --> FN2[Tarefa: Calcular Parcelamento via Configurações de Bancos]
+            FN2 --> FN3{Gateway: Simulação Viável?}
+            FN3 -- Sim --> FN4[Tarefa: Encaminhar Proposta a APIs de Bancos Parceiros]
+            FN4 --> FN5[Tarefa: Criar Lead Qualificado de Financiamento no Nutshell]
+            FN5 --> FN6([Evento Final: Notificar Integrador Parceiro])
+            FN3 -- Não --> FN7[Tarefa: Sugerir Ajustes de Prazos e Parcelas]
+            FN7 --> FN8([Evento Final: Solicitar Novas Parâmetros])
+        end
+
+        subgraph Lane_PC [Raia: Controle de Alterações de Perfil]
+            PC1([Evento: Empresa Edita Perfil]) --> PC2[Tarefa: Reter Alteração em Fila de pending_changes]
+            PC2 --> PC3[Tarefa: Notificar Canal de Moderador Slack]
+            PC3 --> PC4([Evento Final: Aguardar Moderação])
+        end
+
+        subgraph Lane_FQ [Raia: Roteamento de Fórum e Dúvidas]
+            FQ1([Evento: Nova Dúvida Enviada no Fórum]) --> FQ2[Tarefa: Classificar Intenção e Sentimento da Mensagem]
+            FQ2 --> FQ3{Gateway: Alta Intenção Comercial B2C?}
+            FQ3 -- Sim --> FQ4[Tarefa: Selecionar 3 Integradores Locais Próximos]
+            FQ4 --> FQ5[Tarefa: Criar Lead no Nutshell CRM e Notificar Empresas]
+            FQ5 --> FQ6([Evento Final: Notificar Vendas])
+            FQ3 -- Não --> FQ7[Tarefa: Responder com Rascunho Baseado no FAQ Interno]
+            FQ7 --> FQ8([Evento Final: Arquivar ou Aguardar Resposta Humana])
+        end
+
+        subgraph Lane_CR [Raia: Campanhas de Coleta de Reviews B2B]
+            CR1([Gatilho: Campanha Solicitada]) --> CR2[Tarefa: Coletar Lista de Clientes do Integrador]
+            CR2 --> CR3[Tarefa: Enviar Pedidos de Reviews Personalizados]
+            CR3 --> CR4[Tarefa: Monitorar Taxa de Resposta e Entregabilidade]
+            CR4 --> CR5([Evento Final: Registrar Reviews Recebidos])
+        end
+
+        subgraph Lane_BN [Raia: Monetização e ROI de Banners]
+            BN1([Evento: Clique em Banner]) --> BN2[Tarefa: Incrementar Evento no Banco de Dados]
+            BN2 --> BN3[Tarefa: Consolidar Estatísticas Diárias no Data Lake]
+            BN3 --> BN4[Tarefa: Calcular CTR Acumulado e Custo por Clique]
+            BN4 --> BN5([Evento Final: Relatório de Performance Enviado])
+        end
     end
 
-    %% ==========================================
-    %% POOL 2 — HUMANO (SOLO OPERATOR / EQUIPE)
-    %% ==========================================
     subgraph Pool_Humano [Pool: Humano Solo Operator]
         direction TB
 
@@ -232,11 +276,24 @@ flowchart TB
             E3 --> E4[Tarefa: Atualizar Configurações do Hermes]
             E4 --> E5([Evento Final: Concluir Ajuste Direcional])
         end
+
+        subgraph Lane_Humano_Backend [Raia: Auditoria de Operações]
+            HAR1([Alerta Legitimidade]) --> HAR2[Tarefa: Auditar Redes e CNPJ da Reivindicante]
+            HAR2 --> HAR3{Gateway: Empresa Legítima?}
+            HAR3 -- Sim --> HAR4[Tarefa: Liberar Acesso Administrativo no BD]
+            HAR3 -- Não --> HAR5[Tarefa: Negar Requisição e Notificar]
+            HAR4 --> HAR6([Evento Final: Reivindicação Concluída])
+            HAR5 --> HAR7([Evento Final: Reivindicação Negada])
+
+            HPC1([Alerta Alteração Pendente]) --> HPC2[Tarefa: Revisar Imagens e Textos Editados]
+            HPC2 --> HPC3{Gateway: Aprovado?}
+            HPC3 -- Sim --> HPC4[Tarefa: Publicar Alterações no Banco de Produção]
+            HPC3 -- Não --> HPC5[Tarefa: Notificar Empresa com Justificativa]
+            HPC4 --> HPC6([Evento Final: Mudanças Aplicadas])
+            HPC5 --> HPC7([Evento Final: Mudanças Rejeitadas])
+        end
     end
 
-    %% ==========================================
-    %% POOL 3 — SISTEMAS EXTERNOS (INTEGRAÇÕES)
-    %% ==========================================
     subgraph Pool_Sistemas [Pool: Sistemas Externos]
         direction TB
         
@@ -267,13 +324,14 @@ flowchart TB
             SYS_ST2[payment_succeeded]
             SYS_ST3[payment_failed]
         end
+
+        subgraph Lane_SYS_Backend [Raia: Backend Rails Core]
+            SYS_DB[Banco de Dados PostgreSQL]
+            SYS_Banks[APIs de Bancos Parceiros]
+        end
     end
 
-    %% ==========================================
-    %% CONEXÕES E INTEGRAÇÕES ENTRE POOLS (TRACEJADAS)
-    %% ==========================================
-    
-    %% Cadastro Empresas / Usuários
+    %% Conexões assíncronas entre Pools (tracejadas)
     SYS2 -.-> CE1
     SYS3 -.-> CU1
     CE11 -.-> SYS_N3
@@ -282,14 +340,12 @@ flowchart TB
     CU2 -.-> Lane_Cadastro_Usuarios
     CU7 -.-> Lane_Cadastro_Usuarios
 
-    %% LinkedIn e Instagram
     LK8 -.-> SYS_S4
     LK11 -.-> SYS_N3
     IG1 -.-> Lane_Instagram
     IG9 -.-> SYS_S1
     IG9 -.-> VD1
 
-    %% Gmail e Follow-up
     GM1 -.-> Lane_Gmail
     GM6 -.-> SYS_S2
     GM6 -.-> CS1
@@ -298,7 +354,6 @@ flowchart TB
     FU4 -.-> SYS_N2
     FU8 -.-> VD1
 
-    %% Stripe, CS e Reviews
     SYS_ST2 -.-> ST1
     ST6 -.-> Lane_Stripe
     ST4 -.-> SYS_N4
@@ -308,37 +363,42 @@ flowchart TB
     RV9 -.-> SYS_S2
     RV10 -.-> CS1
 
-    %% SEO, Conteúdo e RevOps
     SEO6 -.-> SYS_S4
     SEO10 -.-> MK1
     MK6 -.-> SEO7
     CRM7 -.-> SYS_S1
     CRM7 -.-> VD1
 
-    %% Auditoria, Dados e Governança
     DA11 -.-> SYS_S1
     AP3 -.-> SYS_S4
     SYS_S4 -.-> H_OpsAprove
     I6 -.-> SYS_S3
     I7 -.-> OP1
-    OP4 -.-> I1
     VD8 -.-> SYS_ST2
     CS7 -.-> SYS_ST3
 
-    %% Definições de Estilos Finais nos Elementos
-    class CE1,CU1,LK1,IG1,GM1,FU1,ST1,RT1,RV1,SEO1,CRM1,DA1,AP1,I1 startEvent;
-    class VD1,CS1,MK1,OP1,E1 startEvent;
-    class CE5,CE12,CE14,CU6,CU9,LK6,LK8,LK11,IG10,GM8,GM9,GM10,GM11 endEvent;
-    class FU8,FU9,ST6,ST8,RT5,RT9,RV7,RV10,SEO9,SEO10,CRM8,DA6,DA8,DA11 endEvent;
-    class AP6,AP7,I7,I9,VD6,VD8,CS6,CS7,MK6,OP4,E5 endEvent;
+    %% Conexões das novas esteiras integradas
+    AR5 -.-> SYS_S4
+    SYS_S4 -.-> HAR1
+    HAR4 -.-> SYS_DB
+    HAR5 -.-> SYS_Gmail
     
-    class CE3,CE6,CE10,CU4,LK4,LK7,IG3,IG6,GM3,FU3,FU6,ST2,RT3,RT6,RV3,SEO5,CRM6,DA3,DA4,AP3,I4,VD4,CS3,MK3 gateway;
+    FN1 -.-> SYS_DB
+    FN4 -.-> SYS_Banks
+    FN5 -.-> SYS_Nutshell
     
-    class CE2,CE4,CE7,CE8,CE9,CE11,CE13,CU2,CU3,CU5,CU7,CU8,LK2,LK3,LK5,LK9,LK10 hermesTask;
-    class IG2,IG4,IG5,IG7,IG8,IG9,GM2,GM4,GM5,GM6,GM7,FU2,FU4,FU5,FU7,ST3,ST4,ST5,ST7 hermesTask;
-    class RT2,RT4,RT7,RT8,RV2,RV4,RV5,RV6,RV8,RV9,SEO2,SEO3,SEO4,SEO6,SEO7,SEO8,SEO9 hermesTask;
-    class CRM2,CRM3,CRM4,CRM5,CRM7,DA2,DA4,DA5,DA7,DA9,DA10,AP2,AP4,AP5,I2,I3,I5,I6,I8 hermesTask;
-    
-    class VD2,VD3,VD5,VD7,CS2,CS4,CS5,MK2,MK4,MK5,OP2,OP3,E2,E3,E4 humanTask;
-    
-    class SYS1,SYS2,SYS3,SYS4,SYS5,SYS_N1,SYS_N2,SYS_N3,SYS_N4,SYS_S1,SYS_S2,SYS_S3,SYS_S4,SYS_ST1,SYS_ST2,SYS_ST3 systemNode;
+    PC1 -.-> SYS_DB
+    PC3 -.-> SYS_S4
+    SYS_S4 -.-> HPC1
+    HPC4 -.-> SYS_DB
+
+    FQ1 -.-> SYS_DB
+    FQ4 -.-> SYS_Nutshell
+    FQ6 -.-> SYS_Slack
+    FQ5 -.-> SYS_Gmail
+
+    CR2 -.-> SYS_DB
+    CR3 -.-> SYS_Gmail
+
+    BN2 -.-> SYS_DB
+    BN5 -.-> SYS_Nutshell

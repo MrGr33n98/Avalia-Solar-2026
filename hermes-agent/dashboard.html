@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avalia Solar + Hermes Agent — Dashboard 360°</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1f2a42;
+            --border: #2a3550;
+            --border-light: #3a4a68;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #60a5fa;
+            --accent-green: #10b981;
+            --accent-green-light: #34d399;
+            --accent-red: #ef4444;
+            --accent-red-light: #f87171;
+            --accent-yellow: #f59e0b;
+            --accent-yellow-light: #fbbf24;
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #a78bfa;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f97316;
+            --accent-pink: #ec4899;
+            --gradient-blue: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            --gradient-green: linear-gradient(135deg, #10b981, #059669);
+            --gradient-red: linear-gradient(135deg, #ef4444, #dc2626);
+            --gradient-yellow: linear-gradient(135deg, #f59e0b, #d97706);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4, #0891b2);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+            --shadow-glow-blue: 0 0 20px rgba(59,130,246,0.3);
+            --shadow-glow-green: 0 0 20px rgba(16,185,129,0.3);
+            --shadow-glow-red: 0 0 20px rgba(239,68,68,0.3);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+        /* Background Animation */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(59,130,246,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139,92,246,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(16,185,129,0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+        }
+
+        .header-inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: 0 0 20px rgba(245,158,11,0.3);
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--accent-yellow);
+        }
+
+        .logo-badge {
+            background: var(--gradient-purple);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .status-dot.online { background: var(--accent-green); box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .status-dot.warning { background: var(--accent-yellow); box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+        .status-dot.error { background: var(--accent-red); box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .header-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-header {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-header:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        .btn-header.primary {
+            background: var(--gradient-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-header.primary:hover {
+            box-shadow: var(--shadow-glow-blue);
+        }
+
+        /* Main Content */
+        .main {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 0.3rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-secondary);
+            background: var(--bg-card);
+        }
+
+        .nav-tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Section */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* Section Title */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .kpi-card.blue::before { background: var(--gradient-blue); }
+        .kpi-card.green::before { background: var(--gradient-green); }
+        .kpi-card.red::before { background: var(--gradient-red); }
+        .kpi-card.yellow::before { background: var(--gradient-yellow); }
+        .kpi-card.purple::before { background: var(--gradient-purple); }
+        .kpi-card.cyan::before { background: var(--gradient-cyan); }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+
+        .kpi-icon.blue { background: rgba(59,130,246,0.15); }
+        .kpi-icon.green { background: rgba(16,185,129,0.15); }
+        .kpi-icon.red { background: rgba(239,68,68,0.15); }
+        .kpi-icon.yellow { background: rgba(245,158,11,0.15); }
+        .kpi-icon.purple { background: rgba(139,92,246,0.15); }
+        .kpi-icon.cyan { background: rgba(6,182,212,0.15); }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 0.4rem;
+        }
+
+        .kpi-value.blue { color: var(--accent-blue-light); }
+        .kpi-value.green { color: var(--accent-green-light); }
+        .kpi-value.red { color: var(--accent-red-light); }
+        .kpi-value.yellow { color: var(--accent-yellow-light); }
+        .kpi-value.purple { color: var(--accent-purple-light); }
+        .kpi-value.cyan { color: var(--accent-cyan); }
+
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .kpi-change.up { color: var(--accent-green); }
+        .kpi-change.down { color: var(--accent-red); }
+        .kpi-change.neutral { color: var(--text-muted); }
+
+        .kpi-bar {
+            margin-top: 0.75rem;
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .kpi-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .kpi-bar-fill.blue { background: var(--accent-blue); }
+        .kpi-bar-fill.green { background: var(--accent-green); }
+        .kpi-bar-fill.red { background: var(--accent-red); }
+        .kpi-bar-fill.yellow { background: var(--accent-yellow); }
+        .kpi-bar-fill.purple { background: var(--accent-purple); }
+
+        /* Chart Cards */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: all 0.3s;
+        }
+
+        .chart-card:hover {
+            border-color: var(--border-light);
+        }
+
+        .chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .chart-card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-card-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-live {
+            background: rgba(16,185,129,0.15);
+            color: var(--accent-green);
+            animation: pulse-live 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Flowchart Section */
+        .flowchart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .flowchart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .flowchart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flowchart-legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .mermaid {
+            width: 100%;
+            overflow-x: auto;
+            background: #0f172a;
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        /* Tables */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .table-search {
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            width: 220px;
+        }
+
+        .table-search:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-active { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+        .badge-error { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .badge-info { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .badge-purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .badge-cyan { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+
+        /* Alert Feed */
+        .alert-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .alert-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .alert-dot.critical { background: var(--accent-red); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+        .alert-dot.warning { background: var(--accent-yellow); box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+        .alert-dot.info { background: var(--accent-blue); box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+        .alert-dot.success { background: var(--accent-green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+
+        .alert-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alert-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .alert-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .alert-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Pipeline Visual */
+        .pipeline-visual {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .pipeline-stage {
+            flex: 1;
+            min-width: 140px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pipeline-stage:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .pipeline-stage::after {
+            content: '→';
+            position: absolute;
+            right: -0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--border-light);
+            font-size: 1rem;
+        }
+
+        .pipeline-stage:last-child::after {
+            display: none;
+        }
+
+        .stage-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stage-count {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stage-value {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stage-bar {
+            margin-top: 0.5rem;
+            height: 3px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .stage-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        /* Automation Cards */
+        .automation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .automation-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: all 0.3s;
+        }
+
+        .automation-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .auto-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .auto-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--accent-purple-light);
+            background: rgba(139,92,246,0.1);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .auto-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .auto-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .auto-stats {
+            display: flex;
+            gap: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .auto-stat {
+            flex: 1;
+        }
+
+        .auto-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .auto-stat-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* ROI Section */
+        .roi-banner {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .roi-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .roi-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: var(--gradient-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-glow-green);
+        }
+
+        .roi-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .roi-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .roi-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-green);
+            letter-spacing: -1px;
+        }
+
+        .roi-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* Channel Grid */
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .channel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .channel-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .channel-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .channel-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .channel-leads {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 0.15rem;
+        }
+
+        .channel-rate {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Subagent Section */
+        .subagent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .subagent-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: all 0.3s;
+        }
+
+        .subagent-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .subagent-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .subagent-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .subagent-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .subagent-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .subagent-role {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .subagent-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .skill-tag {
+            font-size: 0.65rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .subagent-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-inner { flex-wrap: wrap; height: auto; padding: 0.75rem 0; gap: 0.5rem; }
+            .header-status { display: none; }
+            .main { padding: 1rem; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-grid { grid-template-columns: 1fr; }
+            .pipeline-visual { flex-direction: column; }
+            .pipeline-stage::after { display: none; }
+            .roi-banner { flex-direction: column; text-align: center; }
+            .roi-left { flex-direction: column; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo-section">
+                <div class="logo-icon">☀️</div>
+                <div>
+                    <div class="logo-text">Avalia<span>Solar</span> <span class="logo-badge">Hermes Agent</span></div>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <div class="status-dot online"></div>
+                    <span>Hermes Online</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot online"></div>
+                    <span>Nutshell Sync</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot warning"></div>
+                    <span>Instagram API</span>
+                </div>
+                <div class="header-time" id="headerTime">--:--:--</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-header" onclick="refreshData()">🔄 Atualizar</button>
+                <button class="btn-header" onclick="exportReport()">📊 Exportar</button>
+                <button class="btn-header primary">⚡ Auto-Run</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" data-tab="overview">📊 Visão Geral</button>
+            <button class="nav-tab" data-tab="pipeline">🔄 CRM Pipeline</button>
+            <button class="nav-tab" data-tab="channels">📱 Social Outbound</button>
+            <button class="nav-tab" data-tab="automations">⚙️ Backlog Automações</button>
+            <button class="nav-tab" data-tab="flowchart">🧭 Mapa BPMN Mestre</button>
+            <button class="nav-tab" data-tab="revenue">💰 SaaS & Financeiro</button>
+            <button class="nav-tab" data-tab="alerts">🔔 Alertas e Auditoria</button>
+            <button class="nav-tab" data-tab="subagents">🤖 Especialistas IA</button>
+        </nav>
+
+        <!-- Section: Overview -->
+        <section class="section active" id="section-overview">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">📊 Dashboard 360° — Visão Geral</div>
+                    <div class="section-subtitle">Última atualização: <span id="lastUpdate">agora</span></div>
+                </div>
+            </div>
+
+            <!-- ROI Banner -->
+            <div class="roi-banner">
+                <div class="roi-left">
+                    <div class="roi-icon">📈</div>
+                    <div>
+                        <div class="roi-title">ROI do Hermes Agent (Projeção 6 Meses)</div>
+                        <div class="roi-subtitle">Retorno financeiro estimado sobre investimentos em infraestrutura e IA.</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="roi-value">8.5x</div>
+                    <div class="roi-label">Baseado no Nutshell CRM & Stripe</div>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Leads Cadastrados (30d)</span>
+                        <div class="kpi-icon blue">🏢</div>
+                    </div>
+                    <div class="kpi-value blue">1,247</div>
+                    <div class="kpi-change up">↑ 23.5% vs mês anterior</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill blue" style="width:72%"></div></div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Conversão SaaS</span>
+                        <div class="kpi-icon green">💎</div>
+                    </div>
+                    <div class="kpi-value green">4.2%</div>
+                    <div class="kpi-change up">↑ 0.8pp vs mês anterior</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill green" style="width:42%"></div></div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-header">
+                        <span class="kpi-label">MRR Ativo (Stripe)</span>
+                        <div class="kpi-icon purple">💰</div>
+                    </div>
+                    <div class="kpi-value purple">R$ 47.3k</div>
+                    <div class="kpi-change up">↑ 12.1% vs mês anterior</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill purple" style="width:65%"></div></div>
+                </div>
+                <div class="kpi-card cyan">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Métricas do Dashboard</span>
+                        <div class="kpi-icon cyan">⚙️</div>
+                    </div>
+                    <div class="kpi-value cyan">47/50</div>
+                    <div class="kpi-change neutral">→ 3 em homologação</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill" style="width:94%; background: var(--accent-cyan)"></div></div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-header">
+                        <span class="kpi-label">SLA Médio (CRM)</span>
+                        <div class="kpi-icon yellow">⏳</div>
+                    </div>
+                    <div class="kpi-value yellow">8 min</div>
+                    <div class="kpi-change up">↑ Meta: < 10 min ✅</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill yellow" style="width:90%"></div></div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Show Rate Reuniões</span>
+                        <div class="kpi-icon green">📅</div>
+                    </div>
+                    <div class="kpi-value green">87%</div>
+                    <div class="kpi-change up">↑ +27pp com Deal Brief</div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill green" style="width:87%"></div></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">📈 Leads por Canal de Prospecção</div>
+                        <span class="chart-card-badge badge-live">● LIVE</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="leadsByChannel"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">💰 Receita SaaS por Categoria de Plano</div>
+                        <span class="chart-card-badge badge-live">● LIVE</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueByPlan"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">⚙️ Taxa de Execução e Sucesso das Automações</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="automationSuccess"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">🎯 Funil de Conversão Comercial B2B</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="conversionFunnel"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Pipeline -->
+        <section class="section" id="section-pipeline">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">🔄 Pipeline Comercial — Nutshell CRM</div>
+                    <div class="section-subtitle">Acompanhamento e rastreamento das etapas reais do funil</div>
+                </div>
+            </div>
+
+            <!-- Pipeline Visual -->
+            <div class="pipeline-visual">
+                <div class="pipeline-stage">
+                    <div class="stage-label">1. Ingestão</div>
+                    <div class="stage-count" style="color: var(--accent-blue)">342</div>
+                    <div class="stage-value">R$ 171k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:100%; background: var(--accent-blue)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">2. Qualificado</div>
+                    <div class="stage-count" style="color: var(--accent-cyan)">198</div>
+                    <div class="stage-value">R$ 99k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:58%; background: var(--accent-cyan)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">3. Abordagem</div>
+                    <div class="stage-count" style="color: var(--accent-green)">87</div>
+                    <div class="stage-value">R$ 43.5k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:25%; background: var(--accent-green)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">4. Respondeu</div>
+                    <div class="stage-count" style="color: var(--accent-yellow)">45</div>
+                    <div class="stage-value">R$ 22.5k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:13%; background: var(--accent-yellow)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">5. Demo Agendada</div>
+                    <div class="stage-count" style="color: var(--accent-orange)">23</div>
+                    <div class="stage-value">R$ 11.5k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:7%; background: var(--accent-orange)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">6. Proposta</div>
+                    <div class="stage-count" style="color: var(--accent-purple)">12</div>
+                    <div class="stage-value">R$ 6k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:3.5%; background: var(--accent-purple)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">7. Negociação</div>
+                    <div class="stage-count" style="color: var(--accent-pink)">7</div>
+                    <div class="stage-value">R$ 3.5k pot.</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:2%; background: var(--accent-pink)"></div></div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-label">✅ Ganho B2B</div>
+                    <div class="stage-count" style="color: var(--accent-green)">18</div>
+                    <div class="stage-value">R$ 9k/mês MRR</div>
+                    <div class="stage-bar"><div class="stage-bar-fill" style="width:5%; background: var(--accent-green)"></div></div>
+                </div>
+            </div>
+
+            <!-- Pipeline Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">📋 Negócios B2B Recentes</div>
+                    <input type="text" class="table-search" placeholder="🔍 Buscar oportunidade...">
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Decisor</th>
+                                <th>Cidade</th>
+                                <th>Etapa CRM</th>
+                                <th>Plano</th>
+                                <th>Valor Assinatura</th>
+                                <th>Lead Score</th>
+                                <th>SLA Primeiro Contato</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>SolarTech Campinas</strong></td>
+                                <td>Carlos Silva</td>
+                                <td>Campinas - SP</td>
+                                <td><span class="badge badge-info">Proposta</span></td>
+                                <td>Premium Anual</td>
+                                <td style="color: var(--accent-green)">R$ 1.800</td>
+                                <td>92</td>
+                                <td>2 min</td>
+                                <td><span class="badge badge-active">● Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Voltaic Mobilidade</strong></td>
+                                <td>Ana Rodrigues</td>
+                                <td>São Paulo - SP</td>
+                                <td><span class="badge badge-purple">Demo Agendada</span></td>
+                                <td>Enterprise</td>
+                                <td style="color: var(--accent-green)">R$ 3.200</td>
+                                <td>88</td>
+                                <td>45 seg</td>
+                                <td><span class="badge badge-active">● Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sol do Amanhã</strong></td>
+                                <td>Ricardo Mendes</td>
+                                <td>Belo Horizonte - MG</td>
+                                <td><span class="badge badge-warning">Negociação</span></td>
+                                <td>Premium Mensal</td>
+                                <td style="color: var(--accent-green)">R$ 500</td>
+                                <td>75</td>
+                                <td>8 min</td>
+                                <td><span class="badge badge-warning">⏳ Humano</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PV Solar Sul</strong></td>
+                                <td>Fernanda Costa</td>
+                                <td>Porto Alegre - RS</td>
+                                <td><span class="badge badge-info">Abordado</span></td>
+                                <td>Essencial</td>
+                                <td style="color: var(--accent-green)">R$ 150</td>
+                                <td>68</td>
+                                <td>5 min</td>
+                                <td><span class="badge badge-active">● Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Minas E-Recarga</strong></td>
+                                <td>Marcos Oliveira</td>
+                                <td>Curitiba - PR</td>
+                                <td><span class="badge badge-cyan">Ingestão</span></td>
+                                <td>Premium Anual</td>
+                                <td style="color: var(--accent-green)">R$ 1.500</td>
+                                <td>71</td>
+                                <td>3 min</td>
+                                <td><span class="badge badge-active">● Ativo</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Channels -->
+        <section class="section" id="section-channels">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">📱 Canais e Outbound Social Selling</div>
+                    <div class="section-subtitle">Performance das interações do Hermes Agent no LinkedIn, Instagram e Gmail</div>
+                </div>
+            </div>
+
+            <!-- Channel Grid -->
+            <div class="channel-grid">
+                <div class="channel-card">
+                    <div class="channel-icon">🔵</div>
+                    <div class="channel-name">LinkedIn Outbound</div>
+                    <div class="channel-leads">324</div>
+                    <div class="channel-rate" style="color: var(--accent-green)">38% Resposta</div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-icon">📸</div>
+                    <div class="channel-name">Instagram Inbound</div>
+                    <div class="channel-leads">182</div>
+                    <div class="channel-rate" style="color: var(--accent-green)">84% Conversão</div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-icon">🔴</div>
+                    <div class="channel-name">Gmail Outbound</div>
+                    <div class="channel-leads">512</div>
+                    <div class="channel-rate" style="color: var(--accent-green)">22% Abertura</div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-icon">💻</div>
+                    <div class="channel-name">Site Orgânico</div>
+                    <div class="channel-leads">229</div>
+                    <div class="channel-rate" style="color: var(--accent-green)">4.2% Cadastro</div>
+                </div>
+            </div>
+
+            <!-- Prospecção de Leads Recentes -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">👥 Prospecções Ativas (Últimas 24h)</div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Decisor</th>
+                                <th>Empresa</th>
+                                <th>Canal</th>
+                                <th>Abordagem Enviada</th>
+                                <th>Status Conversa</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Guilherme Mota</strong></td>
+                                <td>GigaSolar Integradores</td>
+                                <td>LinkedIn Outbound</td>
+                                <td>"Olá Guilherme, vi o excelente crescimento da GigaSolar em Campinas..."</td>
+                                <td><span class="badge badge-active">Convite Aceito</span></td>
+                                <td><button class="btn-header" style="padding: 2px 8px;">Revisar</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Patrícia Medeiros</strong></td>
+                                <td>E-Recargas Curitiba</td>
+                                <td>Instagram Inbound</td>
+                                <td>"Olá! Temos o mapa de demanda de Curitiba pronto. Aqui está..."</td>
+                                <td><span class="badge badge-active">Lead Qualificado B2B</span></td>
+                                <td><button class="btn-header" style="padding: 2px 8px;">Nutshell</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>André Albuquerque</strong></td>
+                                <td>Nordeste Solar</td>
+                                <td>Gmail Outbound</td>
+                                <td>"Apresentação da plataforma de reputação Avalia Solar..."</td>
+                                <td><span class="badge badge-warning">Aguardando Resposta</span></td>
+                                <td><button class="btn-header" style="padding: 2px 8px;">Rascunho</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Automations -->
+        <section class="section" id="section-automations">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">⚙️ Backlog e Fila de Automações</div>
+                    <div class="section-subtitle">Status das 50 automações integradas na prioridade do Hermes Agent</div>
+                </div>
+            </div>
+
+            <!-- Automation Grid -->
+            <div class="automation-grid">
+                <div class="automation-card">
+                    <div class="auto-header">
+                        <span class="auto-id">P0 — CRÍTICO</span>
+                        <span class="badge badge-active">● Executando</span>
+                    </div>
+                    <div class="auto-name">Validação de CNPJ e Deduplicação B2B</div>
+                    <div class="auto-desc">Garante dados cadastrais perfeitamente limpos no banco de dados e Nutshell CRM.</div>
+                    <div class="auto-stats">
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Execuções</div>
+                            <div class="auto-stat-value">1,452</div>
+                        </div>
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Sucesso</div>
+                            <div class="auto-stat-value" style="color: var(--accent-green)">99.8%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="automation-card">
+                    <div class="auto-header">
+                        <span class="auto-id">P0 — COMPLIANCE</span>
+                        <span class="badge badge-active">● Executando</span>
+                    </div>
+                    <div class="auto-name">Anonimização LGPD & Opt-Out</div>
+                    <div class="auto-desc">Anonimiza registros de leads e para sequências temporalmente ao receber solicitação de opt-out.</div>
+                    <div class="auto-stats">
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Processados</div>
+                            <div class="auto-stat-value">23</div>
+                        </div>
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Tempo Resposta</div>
+                            <div class="auto-stat-value" style="color: var(--accent-green)">< 2s</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="automation-card">
+                    <div class="auto-header">
+                        <span class="auto-id">P1 — CONVERSÃO</span>
+                        <span class="badge badge-active">● Executando</span>
+                    </div>
+                    <div class="auto-name">Recuperação de Checkout Abandonado</div>
+                    <div class="auto-desc">Dispara incentivos e cupons por e-mail no momento em que o Stripe detecta abandono.</div>
+                    <div class="auto-stats">
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Recuperados</div>
+                            <div class="auto-stat-value">42</div>
+                        </div>
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Conversão</div>
+                            <div class="auto-stat-value" style="color: var(--accent-green)">12.5%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="automation-card">
+                    <div class="auto-header">
+                        <span class="auto-id">P1 — TRIAGEM</span>
+                        <span class="badge badge-warning">⏳ Homologação</span>
+                    </div>
+                    <div class="auto-name">Inbox Triager Gmail Cognitivo</div>
+                    <div class="auto-desc">Triagem inteligente de e-mails corporativos, criação de rascunhos de propostas comerciais.</div>
+                    <div class="auto-stats">
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Fase</div>
+                            <div class="auto-stat-value">Homologação</div>
+                        </div>
+                        <div class="auto-stat">
+                            <div class="auto-stat-label">Acurácia IA</div>
+                            <div class="auto-stat-value" style="color: var(--accent-yellow)">94.2%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Flowchart -->
+        <section class="section" id="section-flowchart">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">🧭 Mapa BPMN Mestre Operacional da Empresa</div>
+                    <div class="section-subtitle">Renderização em tempo real do Mermaid Flowchart integrado unindo os Pools: Hermes, Humano e Sistemas</div>
+                </div>
+            </div>
+
+            <div class="flowchart-container">
+                <div class="flowchart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> Evento Início</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#2196F3"></div> Hermes IA</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> Humano Solo</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#E0E0E0"></div> Sistemas Externos</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#FFEB3B"></div> Gateway Decisão</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> Evento Fim</div>
+                </div>
+                <div class="mermaid">
+flowchart TB
+    classDef start fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff
+    classDef endEvent fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff
+    classDef gateway fill:#FFEB3B,stroke:#F57F17,stroke-width:2px,color:#000
+    classDef hermes fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
+    classDef human fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff
+    classDef system fill:#E0E0E0,stroke:#757575,stroke-width:1px,color:#333
+
+    subgraph Pool_Hermes [Pool: Hermes Agent IA]
+        direction TB
+        
+        subgraph Lane_Cadastro_Empresas [Raia: Cadastro B2B / Access Request]
+            CE1([Empresa Inicia]) --> CE2[Validar CNPJ e Duplicidade]
+            CE2 --> CE3{CNPJ Válido?}
+            CE3 -- Sim --> CE4[Enriquecer dados e Cidades prioritárias]
+            CE3 -- Não --> CE5([Pedir correção])
+            CE4 --> CE6{Score >= 70?}
+            CE6 -- Sim --> CE7[Registrar no Nutshell CRM como Hot Lead]
+            CE6 -- Não --> CE8([Enviar para Nutrição])
+            CE7 --> CE9([Lead Qualificado])
+        end
+
+        subgraph Lane_Outbound [Raia: Social Outbound LinkedIn / Meta]
+            LK1([Lead Sinalizado]) --> LK2[Geração Abordagem IA]
+            LK2 --> LK3{Requer Aprovação Humana?}
+            LK3 -- Sim --> LK4[Enviar Card Aprovação Slack]
+            LK3 -- Não --> LK5[Enviar Outbound no LinkedIn]
+            LK5 --> LK6[Agendar Follow-up D+3]
+            LK6 --> LK7([Registrar Oportunidade])
+        end
+    end
+
+    subgraph Pool_Humano [Pool: Humano Solo Operator]
+        direction TB
+        
+        subgraph Lane_Vendas [Raia: Vendas e Fechamento B2B]
+            VD1([Alerta Lead Quente Slack]) --> VD2[Revisar Perfil e Cidades]
+            VD2 --> VD3[Agendar e Realizar Demo]
+            VD3 --> VD4{Interesse Fechamento?}
+            VD4 -- Sim --> VD5[Enviar Proposta Comercial]
+            VD4 -- Não --> VD6([Arquivar Perdido])
+            VD5 --> VD7[Negociar e Fechar]
+            VD7 --> VD8([Ativar Assinatura Stripe])
+        end
+    end
+
+    subgraph Pool_Sistemas [Pool: Sistemas Integrados]
+        direction TB
+        SYS_Nutshell[Nutshell CRM]
+        SYS_Slack[Slack]
+        SYS_Stripe[Stripe]
+    end
+
+    %% Conexões
+    CE7 -.-> SYS_Nutshell
+    CE9 -.-> VD1
+    LK4 -.-> SYS_Slack
+    VD8 -.-> SYS_Stripe
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Revenue -->
+        <section class="section" id="section-revenue">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">💰 SaaS, Assinaturas e Financeiro</div>
+                    <div class="section-subtitle">Performance de faturamento recorrente do Stripe integrado</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card chart-full">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">📈 Faturamento Mensal Recorrente (MRR) - Histórico e Projeção</div>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="mrrHistoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Alerts -->
+        <section class="section" id="section-alerts">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">🔔 Alertas Críticos, Auditoria e Compliance</div>
+                    <div class="section-subtitle">Controle de segurança do barramento de eventos técnicos</div>
+                </div>
+            </div>
+
+            <!-- Alerts Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">⚠️ Feed de Alertas Recentes</div>
+                </div>
+                <div class="alert-feed">
+                    <div class="alert-item">
+                        <div class="alert-dot critical"></div>
+                        <div class="alert-content">
+                            <div class="alert-title">SPF/DKIM Fail Detected</div>
+                            <div class="alert-desc">Inconsistência identificada nos registros de DNS do servidor corporativo de Gmail outbound.</div>
+                        </div>
+                        <div class="alert-time">Hoje, 02:24</div>
+                    </div>
+                    <div class="alert-item">
+                        <div class="alert-dot success"></div>
+                        <div class="alert-content">
+                            <div class="alert-title">Opt-Out Processed Successfully</div>
+                            <div class="alert-desc">Anonimização em lote efetuada com sucesso nas tabelas de leads para o e-mail: removido@empresa.com.</div>
+                        </div>
+                        <div class="alert-time">Hoje, 01:15</div>
+                    </div>
+                    <div class="alert-item">
+                        <div class="alert-dot warning"></div>
+                        <div class="alert-content">
+                            <div class="alert-title">High Bounce Rate Alert</div>
+                            <div class="alert-desc">Taxa de bounce atingiu 2.1% no disparo de follow-ups regionais no Gmail. Campanhas pausadas temporariamente.</div>
+                        </div>
+                        <div class="alert-time">Ontem, 21:05</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Subagents -->
+        <section class="section" id="section-subagents">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">🤖 Agentes IA Especialistas do Hermes</div>
+                    <div class="section-subtitle">Estrutura cognitiva e status das sub-threads em execução</div>
+                </div>
+            </div>
+
+            <div class="subagent-grid">
+                <div class="subagent-card">
+                    <div class="subagent-header">
+                        <div class="subagent-avatar">🕵️ B2B</div>
+                        <div class="subagent-info">
+                            <div class="subagent-name">Hermes Prospector</div>
+                            <div class="subagent-role">Outbound Specialist</div>
+                        </div>
+                    </div>
+                    <div class="subagent-skills">
+                        <span class="skill-tag">LinkedIn API</span>
+                        <span class="skill-tag">Smartlead Sync</span>
+                        <span class="skill-tag">CNPJ API</span>
+                    </div>
+                    <div class="subagent-status">
+                        <span style="color: var(--text-muted)">Status</span>
+                        <span style="color: var(--accent-green); font-weight:600">🟢 ONLINE (Leads Encontrados: 324)</span>
+                    </div>
+                </div>
+                <div class="subagent-card">
+                    <div class="subagent-header">
+                        <div class="subagent-avatar">📩 Triager</div>
+                        <div class="subagent-info">
+                            <div class="subagent-name">Hermes Triager</div>
+                            <div class="subagent-role">Inbox & CRM Specialist</div>
+                        </div>
+                    </div>
+                    <div class="subagent-skills">
+                        <span class="skill-tag">Gmail IMAP</span>
+                        <span class="skill-tag">Nutshell RPC</span>
+                        <span class="skill-tag">ChatGPT Classification</span>
+                    </div>
+                    <div class="subagent-status">
+                        <span style="color: var(--text-muted)">Status</span>
+                        <span style="color: var(--accent-green); font-weight:600">🟢 ONLINE (Rascunhos Criados: 42)</span>
+                    </div>
+                </div>
+                <div class="subagent-card">
+                    <div class="subagent-header">
+                        <div class="subagent-avatar">📝 SEO</div>
+                        <div class="subagent-info">
+                            <div class="subagent-name">Hermes Writer</div>
+                            <div class="subagent-role">SEO & CMS Specialist</div>
+                        </div>
+                    </div>
+                    <div class="subagent-skills">
+                        <span class="skill-tag">WordPress API</span>
+                        <span class="skill-tag">Search Console</span>
+                        <span class="skill-tag">Content Creation</span>
+                    </div>
+                    <div class="subagent-status">
+                        <span style="color: var(--text-muted)">Status</span>
+                        <span style="color: var(--accent-yellow); font-weight:600">⏳ AGUARDANDO APROVAÇÃO (Fila: 2)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Chart Configuration Script -->
+    <script>
+        // Relógio do cabeçalho
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('headerTime').textContent = now.toTimeString().split(' ')[0];
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Navegação de abas
+        const tabs = document.querySelectorAll('.nav-tab');
+        const sections = document.querySelectorAll('.section');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const targetSection = document.getElementById('section-' + tab.dataset.tab);
+                if (targetSection) targetSection.classList.add('active');
+            });
+        });
+
+        // Configuração de Gráficos do Chart.js
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+            },
+            scales: {
+                x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+            }
+        };
+
+        // 1. Leads por Canal
+        new Chart(document.getElementById('leadsByChannel').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['LinkedIn', 'Instagram', 'Gmail Outbound', 'Busca Orgânica', 'Referências'],
+                datasets: [{
+                    label: 'Leads Capturados',
+                    data: [324, 182, 512, 129, 100],
+                    backgroundColor: ['#3b82f6', '#ec4899', '#ef4444', '#10b981', '#a78bfa'],
+                    borderWidth: 0,
+                    borderRadius: 6
+                }]
+            },
+            options: chartOptions
+        });
+
+        // 2. Receita por Plano
+        new Chart(document.getElementById('revenueByPlan').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Essencial', 'Premium Mensal', 'Premium Anual', 'Banners / Visibilidade'],
+                datasets: [{
+                    data: [4500, 12500, 22300, 8000],
+                    backgroundColor: ['#64748b', '#3b82f6', '#8b5cf6', '#10b981'],
+                    borderColor: '#1a2236',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // 3. Taxa de Sucesso das Automações
+        new Chart(document.getElementById('automationSuccess').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Dia 05', 'Dia 10', 'Dia 15', 'Dia 20', 'Dia 25', 'Dia 30'],
+                datasets: [{
+                    label: 'Taxa de Sucesso (%)',
+                    data: [98.2, 98.5, 99.1, 99.4, 99.2, 99.8],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: chartOptions
+        });
+
+        // 4. Funil Conversão
+        new Chart(document.getElementById('conversionFunnel').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Ingestão B2B', 'CNPJ Validado', 'Lead Score >=70', 'Reuniões Show', 'Plano SaaS Ganho'],
+                datasets: [{
+                    label: 'Taxa de Conversão da Etapa (%)',
+                    data: [100, 92.5, 78.4, 87.2, 23.5],
+                    backgroundColor: 'rgba(59,130,246,0.6)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: chartOptions
+        });
+
+        // 5. Histórico MRR (Full width)
+        new Chart(document.getElementById('mrrHistoryChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai (Atual)', 'Jun (Proj)', 'Jul (Proj)'],
+                datasets: [{
+                    label: 'MRR Histórico (Stripe R$)',
+                    data: [28000, 32000, 37500, 41200, 47300, null, null],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139,92,246,0.05)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'MRR Projetado (R$)',
+                    data: [null, null, null, null, 47300, 52000, 58000],
+                    borderColor: '#06b6d4',
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, min: 20000, max: 70000 }
+                }
+            }
+        });
+
+        // Inicializa biblioteca Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+        // Ações de cabeçalho
+        function refreshData() {
+            alert('🔄 Sincronizando com Nutshell CRM e Stripe em tempo real...');
+        }
+        function exportReport() {
+            alert('📊 Exportando relatório operacional consolidado da empresa...');
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # 📋 Inventário de Processos Operacionais: Avalia Solar & Mobilidade Elétrica
 
-Este inventário apresenta todas as atividades operacionais mapeadas para o **Avalia Solar & Mobilidade Elétrica**. Ele serve como um catálogo de processos para auditoria, governança e orquestração de desenvolvimento de software e IA.
+Este inventário apresenta todas as atividades operacionais mapeadas para o **Avalia Solar & Mobilidade Elétrica**, integrando as esteiras tradicionais do portal com os processos reais de banco de dados e APIs do backend Rails (`AB0-1-back`). Ele serve como um catálogo de processos para auditoria, governança e orquestração de desenvolvimento de software e IA.
 
 ---
 
@@ -22,7 +22,7 @@ Este inventário apresenta todas as atividades operacionais mapeadas para o **Av
 | **ST-02** | Carrinho SaaS Abandonado | Financeiro | Vendas | Carrinho abandonado Stripe | E-mail do checkout iniciado | Fluxo de e-mail de recuperação | Stripe, Gmail SMTP, CRM | Automático | Baixo | Taxa de Recuperação de SaaS (%) |
 | **RT-01** | Monitoramento de Inatividade | CS | CS | Cron diário de acessos | Logins e dados de uso premium | Alerta de CS ou e-mail enviado | Banco de Dados, Slack, Gmail | Automático | Médio | Redução de Churn Prematuro (%) |
 | **RT-02** | Resgate CS Humano | CS | CS | Alerta crítico de inatividade | Lead com risco alto de churn | Cliente reengajado ou retido | Slack, Telefone, Nutshell | Humano | Alto | Taxa de Retenção de CS (%) |
-| **RV-01** | Triagem de Sentimento Reviews | Reputação | CS | Review submetido por B2C | Texto e estrelas do review | Sentimento e publicação | Site, BD, OpenAI API, Slack | Automático | Médio | NPS do Avalia Solar |
+| **RV-01** | Sentimento de Reviews | Reputação | CS | Review submetido por B2C | Texto e estrelas do review | Sentimento e publicação | Site, BD, OpenAI API, Slack | Automático | Médio | NPS do Integrador |
 | **RV-02** | Contenção de Review Ruim | Reputação | CS | Review recebido < 4 estrelas | Alerta crítico e review oculto | Contato humano e negociação | Slack, Nutshell CRM, Suporte | Humano | Alto | Reviews revertidos / resolvidos |
 | **SEO-01** | Geração Conteúdo Local | Growth | Marketing | Gatilho semanal de SEO | Palavras-chaves GSC e Cidades | Rascunho de post de blog | GSC API, OpenAI, WordPress | Automático | Médio | Posição Média de Rank (SEO) |
 | **SEO-02** | Aprovação e Distribuição Blog | Growth | Marketing | Rascunho de SEO gerado | Texto do post no WordPress | Artigo publicado e compartilhado | WordPress CMS, Redes Sociais | Híbrido | Baixo | Cliques orgânicos mensais |
@@ -30,6 +30,12 @@ Este inventário apresenta todas as atividades operacionais mapeadas para o **Av
 | **DA-01** | Auditoria LGPD e Opt-Out | Governança | TI | Solicitação de Opt-Out/LGPD | E-mail ou texto do contato | Dados limpos e log de auditoria | Banco de Dados, CRM, Gmail | Automático | Alto | Conformidade com Regulamento (%) |
 | **AP-01** | Gate de Ação Sensível | Governança | Operações | Ação sensível acionada | Dados da transação (ex. disparo) | Aprovação gravada e executada | Slack, Banco de Dados, CRM | Híbrido | Alto | Tempo de Aprovação Humana (min) |
 | **I-01** | Deliverability DNS Audit | Infra | TI | Cron diário de e-mails | Registros SPF/DKIM e Bounce | Status OK ou bloqueio preventivo | Servidor SMTP, DNS, Slack | Automático | Alto | Entregabilidade de E-mail (%) |
+| **AR-01** | Reivindicação de Perfis | Cadastro B2B | Suporte / TI | requisição de acesso de integrador | Dados do decisor e e-mail corporat. | Acesso liberado no BD e log | Site, BD Rails, Gmail, Slack | Híbrido | Médio | Tempo de Ativação do Perfil (< 1h) |
+| **FN-01** | Simulador de Crédito Solar | Comercial | Vendas | Simulação iniciada por B2C | Perfil energético B2C e CEP | Proposta enviada a bancos / CRM | Site, BD Rails, APIs Bancos, CRM | Automático | Alto | Volume de Crédito Gerado (R$) |
+| **PC-01** | Moderação de Perfis B2B | Governança | Operações | Edição de perfil sensível premium | Payload com dados editados | pending_changes aprovado e BD | Site, BD PostgreSQL, Slack, CRM | Híbrido | Médio | Tempo de Moderação (< 30 min) |
+| **FQ-01** | Roteamento de Fórum | Growth | Marketing | Pergunta técnica no fórum | Tópico e descrição do fórum | Lead comercial ou resposta FAQ | Fórum BD, Nutshell CRM, Gmail | Automático | Baixo | Engajamento de Posts Fórum (%) |
+| **CR-01** | Campanha Review B2B | Reputação | CS | Gatilho de campanha premium | Lista de contatos concluídos B2B | E-mails enviados e reviews salvos | Nutshell CRM, Gmail SMTP, BD | Automático | Baixo | Taxa de Resposta de Reviews (%) |
+| **BN-01** | ROI de Banners B2B | Financeiro | Operações | Clique de usuário em publicidade | Evento de clique cadastrado | CTR calculado e relatório no CRM | Banners BD, Nutshell, Metabase | Automático | Baixo | CTR Geral dos Banners (%) |
 
 ---
 
@@ -37,4 +43,4 @@ Este inventário apresenta todas as atividades operacionais mapeadas para o **Av
 
 1.  **Risco Baixo**: Processos internos de coleta e armazenamento passivo que não interagem de forma externa com o cliente final (ex: *CU-01 - Cadastro de Usuários B2C*).
 2.  **Risco Médio**: Processos com automação de envio de mensagens baseadas em modelos padronizados, ou rotinas de enriquecimento cadastral público (ex: *CE-01 - Cadastro e Validação CNPJ*).
-3.  **Risco Alto**: Processos que envolvem processamento de dados confidenciais (Stripe), e-mails críticos de compliance (LGPD/Opt-Out), abordagens ativas que podem queimar a reputação do domínio (Prospecção LinkedIn) ou contenção de danos em crises de clientes (Reviews Negativos). Exigem maior volume de portões humanos de validação.
+3.  **Risco Alto**: Processos que envolvem processamento de dados confidenciais (Stripe), e-mails críticos de compliance (LGPD/Opt-Out), abordagens ativas que podem queimar a reputação do domínio (Prospecção LinkedIn), moderações sensíveis de editais e dados de simulações de financiamento bancário (`FN-01`). Exigem maior volume de portões humanos de validação.
