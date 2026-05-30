@@ -1,18 +1,21 @@
-# STATE — Avalia Solar SaaS Pricing
+# STATE — Refatoração Premium Leve do Perfil da Empresa
 
 ## Current Phase
-- Phase 1: Refatorar página /pricing no estilo G2, mantendo identidade Avalia Solar
+- **Fase 1: Discovery, Auditoria e Proteção do Backend** (Concluída em 2026-05-30)
+- **Fase 2: Layout Base, Shell e Hero Premium** (Discussão de Contexto Concluída em 2026-05-30)
+- **Próxima Fase:** Planejamento e Execução da Fase 2 (`/gsd-plan-phase 2`)
 
 ## Session Continuity
-Nenhuma sessão anterior.
+Fase 1 e Fase 2 de Discovery/Assumptions concluídas com sucesso. Todos os contratos de dados e diretrizes de conformidade estão salvos em `.planning/`. Os novos componentes de layout base e hero dinâmico já possuem especificações claras.
 
 ## Accumulated Context
 
 ### Roadmap Evolution
-- Phase 1 added: Refatorar página /pricing no estilo G2 mantendo identidade Avalia Solar
+- Roadmap estruturado de 1 a 10 fases de refatoração visual incremental.
+- Feature Flag local integrada ao Next.js para isolamento total da nova UI em ambiente de desenvolvimento.
 
 ### Key Decisions
-- Ver PROJECT.md para decisões registradas anteriormente.
+- Mapeado no PROJECT.md, 01-CONTEXT.md e 02-CONTEXT.md.
 
 ---
 *Last updated: 2026-05-30*

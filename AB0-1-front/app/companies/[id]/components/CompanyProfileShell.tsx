@@ -1,0 +1,343 @@
+"use client";
+
+import { useMemo } from "react";
+import { 
+  Building2, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Globe, 
+  ExternalLink,
+  MessageSquare,
+  HelpCircle,
+  FileText,
+  Lock,
+  ChevronRight,
+  TrendingUp,
+  LineChart
+} from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AppBreadcrumb } from "@/components/AppBreadcrumb";
+import { Company, Product, Review } from "@/lib/api";
+import { isFeatureEnabled } from "@/lib/feature-access";
+
+import CompanyPremiumHero from "./CompanyPremiumHero";
+import CompanyIdentityCard from "./CompanyIdentityCard";
+import CompanyCTAGroup from "./CompanyCTAGroup";
+import CompanyProfileTabs from "./CompanyProfileTabs";
+
+// Novos componentes da Fase 3
+import OverviewTab from "./OverviewTab";
+import SidebarPremium from "./SidebarPremium";
+
+// Importações dos subcomponentes legados de exibição para manter as abas funcionais
+import CompanyProducts from "./CompanyProducts";
+import CompanyReviews from "./CompanyReviews";
+
+interface CompanyProfileShellProps {
+  company: Company;
+  companyStats: {
+    rating: string;
+    reviewCount: number;
+    productCount: number;
+    yearsInBusiness: number;
+  };
+  products: Product[];
+  reviews: Review[];
+  productsLoading: boolean;
+  reviewsLoading: boolean;
+  bannerUrl: string | null;
+  bannerError: boolean;
+  setBannerError: (error: boolean) => void;
+  logoUrl: string | null;
+  logoError: boolean;
+  setLogoError: (error: boolean) => void;
+  canRequestQuote: boolean;
+  ctaEnabled: boolean;
+  ctaUrl: string | null;
+  activeTab: string;
+  onTabChange: (tabId: string) => void;
+}
+
+export default function CompanyProfileShell({
+  company,
+  companyStats,
+  products,
+  reviews,
+  productsLoading,
+  reviewsLoading,
+  bannerUrl,
+  bannerError,
+  setBannerError,
+  logoUrl,
+  logoError,
+  setLogoError,
+  canRequestQuote,
+  ctaEnabled,
+  ctaUrl,
+  activeTab,
+  onTabChange,
+}: CompanyProfileShellProps) {
+  
+  const breadcrumbItems = useMemo(() => {
+    const items = [{ label: "Empresas", href: "/companies" }];
+    if (company.category_info) {
+      items.push({ 
+        label: company.category_info.name, 
+        href: `/categories/${company.category_info.seo_url}` 
+      });
+    }
+    items.push({ label: company.name, active: true });
+    return items;
+  }, [company]);
+
+  // Checagem de entitlements para abas e blocos
+  const showFaq = isFeatureEnabled(company.feature_access, "faq_block");
+  const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
+  const showCompetitorBanners = isFeatureEnabled(company.feature_access, "show_competitor_banners");
+  const showAlternatives = isFeatureEnabled(company.feature_access, "show_alternatives");
+  const hasPaidPlan = ["pro", "enterprise"].includes((company as any).plan_tier || "");
+
+  return (
+    <div id="company-profile-shell" className="min-h-screen bg-[#f8fafc] text-slate-900 pb-16">
+      
+      {/* Cabeçalho & Hero Premium */}
+      <header className="bg-transparent border-none">
+        <div className="mx-auto max-w-[1240px] px-4 pt-4 md:px-6">
+          <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
+          
+          <div className="flex flex-col gap-6">
+            {/* Hero Banner */}
+            <CompanyPremiumHero
+              company={company}
+              bannerUrl={bannerUrl}
+              bannerError={bannerError}
+              setBannerError={setBannerError}
+            />
+
+            {/* Identidade da Empresa e CTAs */}
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between -mt-12 sm:-mt-16 z-20 relative px-4 md:px-6">
+              <CompanyIdentityCard
+                company={company}
+                companyStats={companyStats}
+                logoUrl={logoUrl}
+                logoError={logoError}
+                setLogoError={setLogoError}
+              />
+              <div className="lg:pt-8 shrink-0">
+                <CompanyCTAGroup
+                  company={company}
+                  canRequestQuote={canRequestQuote}
+                  ctaEnabled={ctaEnabled}
+                  ctaUrl={ctaUrl}
+                />
+              </div>
+            </div>
+
+            {/* Banners Estratégicos Placeholder */}
+            <div className="h-0.5 bg-slate-200/50 w-full mt-2" />
+
+            {/* Navegação por Abas Responsiva */}
+            <CompanyProfileTabs
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              showFinancing={false}
+              showGallery={false}
+              showFaq={showFaq}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Grid Principal responsivo de 12 colunas */}
+      <main className="mx-auto max-w-[1240px] px-4 py-8 md:px-6">
+        <Tabs value={activeTab} className="w-full">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            
+            {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}
+            <div className="lg:col-span-8 space-y-6">
+              
+              {/* ABA 1: VISÃO GERAL */}
+              <TabsContent value="overview" className="mt-0 space-y-6 focus-visible:outline-none">
+                <OverviewTab
+                  company={company}
+                  companyStats={companyStats}
+                  reviews={reviews}
+                  reviewsLoading={reviewsLoading}
+                  onTabChange={onTabChange}
+                />
+              </TabsContent>
+
+              {/* ABA 2: PRODUTOS E SERVIÇOS (Placeholder com visualização do legado) */}
+              <TabsContent value="products" className="mt-0 focus-visible:outline-none">
+                <CompanyProducts products={products} loading={productsLoading} />
+              </TabsContent>
+
+              {/* ABA 3: AVALIAÇÕES (Placeholder com mural de reviews legadas) */}
+              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none">
+                <CompanyReviews
+                  reviews={reviews}
+                  loading={reviewsLoading}
+                  companyId={Number(company.id)}
+                  companySlug={company.slug}
+                  companyName={company.name}
+                  aggregates={company.review_aggregates}
+                />
+              </TabsContent>
+
+              {/* ABA 4: PROJETOS (Placeholder elegante da Fase 2) */}
+              <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
+                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
+                  <div className="text-center py-10 space-y-4">
+                    <Building2 className="h-12 w-12 text-blue-500 mx-auto animate-bounce" />
+                    <h3 className="text-lg font-bold text-slate-900">Portfólio de Projetos Realizados</h3>
+                    <p className="text-sm text-slate-500 max-w-md mx-auto">
+                      Estamos preparando a vitrine de obras e instalações desta empresa. Em breve você verá fotos de cases e especificações técnicas reais.
+                    </p>
+                    <div className="flex justify-center gap-2 pt-2">
+                      <Skeleton className="h-24 w-32 rounded-xl" />
+                      <Skeleton className="h-24 w-32 rounded-xl" />
+                      <Skeleton className="h-24 w-32 rounded-xl" />
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* ABA 5: ESTATÍSTICAS (Placeholder elegante + Teaser de Upgrade de Planos) */}
+              <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
+                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm overflow-hidden relative">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                      <div>
+                        <h3 className="text-lg font-black tracking-tight text-slate-950">Analytics & Performance do Perfil</h3>
+                        <p className="text-xs text-slate-500">Métricas exclusivas de engajamento do portal.</p>
+                      </div>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100">
+                        Painel Pro
+                      </span>
+                    </div>
+
+                    {/* Preview Borrado se for plano Free/Essential */}
+                    {!hasPaidPlan ? (
+                      <div className="relative">
+                        {/* Grade Borrada */}
+                        <div className="grid grid-cols-2 gap-4 filter blur-[6px] select-none pointer-events-none">
+                          {[
+                            { label: "Visualizações do perfil", value: "1.420" },
+                            { label: "Cliques em orçamento", value: "348" },
+                            { label: "Origem de tráfego", value: "Google Organic" },
+                            { label: "Score de intenção", value: "Alto (92)" },
+                          ].map((metric, idx) => (
+                            <div key={idx} className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                              <p className="text-[10px] font-black text-slate-400 uppercase">{metric.label}</p>
+                              <p className="text-2xl font-black text-slate-950 mt-1">{metric.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Overlay Card de Upsell */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/40 backdrop-blur-[2px] rounded-xl border border-slate-100 shadow-sm">
+                          <Lock className="h-8 w-8 text-blue-600 mb-3" />
+                          <h4 className="font-black text-slate-950">Métricas de Analytics Avançadas Bloqueadas</h4>
+                          <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
+                            Faça o upgrade para o plano **PRO** ou **Enterprise** para acompanhar visualizações, origens de leads, CRM e score de intenção de compra de clientes.
+                          </p>
+                          <Button size="sm" className="rounded-xl bg-blue-700 hover:bg-blue-800 text-xs font-bold text-white shadow-md">
+                            Conhecer Planos Premium
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Se for Pro, exibe a tabela legada */
+                      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        {[
+                          { label: "Cliques no telefone", value: "23" },
+                          { label: "Cliques no site", value: "84" },
+                          { label: "Cliques no WhatsApp", value: "112" },
+                          { label: "Taxa de conversão", value: "8.4%" },
+                        ].map((metric, idx) => (
+                          <div key={idx} className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <p className="text-[10px] font-black text-slate-400 uppercase">{metric.label}</p>
+                            <p className="text-2xl font-black text-slate-950 mt-1">{metric.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* ABA 6: CONTATO (Placeholder com detalhes de e-mail, telefone e FAQs expansíveis) */}
+              <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
+                  <h3 className="text-lg font-black tracking-tight text-slate-950 mb-4">Informações de Contato</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      {company.phone && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="h-5 w-5 text-slate-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">Telefone Comercial</p>
+                            <p className="text-sm font-semibold text-slate-800">{company.phone}</p>
+                          </div>
+                        </div>
+                      )}
+                      {company.email_public && (
+                        <div className="flex items-center gap-3">
+                          <Mail className="h-5 w-5 text-slate-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">E-mail de Contato</p>
+                            <p className="text-sm font-semibold text-slate-800">{company.email_public}</p>
+                          </div>
+                        </div>
+                      )}
+                      {company.website && (
+                        <div className="flex items-center gap-3">
+                          <Globe className="h-5 w-5 text-slate-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">Website Oficial</p>
+                            <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-700 hover:underline inline-flex items-center gap-1">
+                              Visitar site
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Placeholder Mapa */}
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-center p-6 text-center text-xs text-slate-400 select-none">
+                      <div>
+                        <MapPin className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+                        {company.address ? company.address : `${company.city}, ${company.state}`}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {showFaq && (
+                  <FaqSection companyId={Number(company.id)} />
+                )}
+              </TabsContent>
+
+            </div>
+
+            {/* Coluna da Direita (4 Colunas) — Sidebar Premium */}
+            <aside className="lg:col-span-4 space-y-6">
+              <SidebarPremium
+                company={company}
+                canRequestQuote={canRequestQuote}
+                ctaEnabled={ctaEnabled}
+                ctaUrl={ctaUrl}
+              />
+            </aside>
+
+          </div>
+        </Tabs>
+      </main>
+
+    </div>
+  );
+}

@@ -78,6 +78,7 @@ import { trackCompanyProfileViewed, trackDashboardViewed } from "@/lib/analytics
 import { track } from "@/lib/analytics/lazy";
 import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
 import { isFeatureEnabled } from "@/lib/feature-access";
+import CompanyProfileShell from "./components/CompanyProfileShell";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -365,6 +366,35 @@ export default function CompanyDetailClient({
     track('company_tab_change', { company_id: companyId, company_name: company.name, tab_id: value, tab_label: tab?.label || value });
     setActiveTab(value);
   };
+
+  // ===================================================
+  // FEATURE FLAG PARA REFACTOR PREMIUM LEVE (FASE 2)
+  // ===================================================
+  const ENABLE_PREMIUM_PROFILE = process.env.NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE === 'true';
+
+  if (ENABLE_PREMIUM_PROFILE) {
+    return (
+      <CompanyProfileShell
+        company={currentCompany}
+        companyStats={companyStats as any}
+        products={products}
+        reviews={reviews}
+        productsLoading={productsLoading}
+        reviewsLoading={reviewsLoading}
+        bannerUrl={bannerUrl}
+        bannerError={bannerError}
+        setBannerError={setBannerError}
+        logoUrl={logoUrl}
+        logoError={logoError}
+        setLogoError={setLogoError}
+        canRequestQuote={canRequestQuote}
+        ctaEnabled={ctaEnabled}
+        ctaUrl={ctaUrl}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f3f4f6]">
