@@ -523,29 +523,73 @@ pie title Nível de Autonomia das Ações
 
 ---
 
-## 18. Checklist de Implementação Operacional
+## 18. Implementação de Custom Skills GSD Ativas
+
+Conforme planejado nas fases iniciais, nós adaptamos e **implementamos fisicamente** as 3 principais automações do projeto como **GSD Custom Skills ativas e executáveis** no diretório `.planning/skills/` com scripts em TypeScript robustos e modulares:
+
+```
+├── .planning/skills/
+│   ├── README.md (Visão geral da arquitetura de inteligência)
+│   ├── utils.ts (Biblioteca de utilitários comum, parser de CLI, retry, CSV, envs)
+│   ├── hermes-linkedin-prospector/
+│   │   ├── SKILL.md (Metadados e tags de contexto GSD)
+│   │   ├── workflow.md (Lógica cognitiva detalhada e regras de score)
+│   │   └── scripts/
+│   │       ├── enrich-lead-data.ts (Qualificação por CNPJ/ReceitaFederal e Score)
+│   │       └── linkedin-outbound-sync.ts (Sincronização Nutshell CRM e Slack)
+│   ├── hermes-competitor-listening/
+│   │   ├── SKILL.md (Metadados e parâmetros do scraper de rivais)
+│   │   ├── workflow.md (Classificação por IA e detecção de dores)
+│   │   └── scripts/
+│   │       └── scrape-competitor-comments.ts (Scraper e inteligência competitiva)
+│   └── hermes-inbox-triager/
+│       ├── SKILL.md (Metadados e triggers da caixa Gmail comercial)
+│       ├── workflow.md (Triagem cognitiva de inbox, rascunhos e urgência CS)
+│       └── scripts/
+│           └── gmail-inbox-processor.ts (Processador e classificador de e-mails)
+```
+
+---
+
+## 19. Como Executar as Skills e Scripts Locais
+
+Os scripts utilizam a ferramenta `tsx` do Node.js para execução direta via console. Certifique-se de configurar as chaves de API necessárias no arquivo `.env` da raiz antes de rodar os comandos:
+
+```bash
+# 1. Qualificação e Score de Leads B2B (LinkedIn)
+npx tsx .planning/skills/hermes-linkedin-prospector/scripts/enrich-lead-data.ts --input leads-linkedin.csv --output leads-qualified.csv
+
+# 2. Sincronização dos leads qualificados no CRM e Slack
+npx tsx .planning/skills/hermes-linkedin-prospector/scripts/linkedin-outbound-sync.ts --input leads-qualified.csv
+
+# 3. Social Listening de Concorrentes nas Redes
+npx tsx .planning/skills/hermes-competitor-listening/scripts/scrape-competitor-comments.ts --competitor portal_solar_rival
+
+# 4. Triagem Inteligente do Gmail e Geração de Rascunhos
+npx tsx .planning/skills/hermes-inbox-triager/scripts/gmail-inbox-processor.ts
+```
+
+---
+
+## 20. Checklist de Implementação Operacional
 
 Para garantir o sucesso prático, a equipe deve seguir este checklist ordenado por etapas:
 
-- [ ] **Configuração da Infraestrutura**:
-  - [ ] Contratar contas pagas do Make.com e OpenAI API.
-  - [ ] Criar conta de e-mail dedicada para prospecção (ex: `parcerias@avaliasolar.com.br`) para proteger a reputação do domínio principal.
-  - [ ] Validar SPF, DKIM e DMARC do domínio de envio comercial.
-- [ ] **Integração de Sistemas**:
-  - [ ] Conectar conta do Gmail dedicada ao Make.com.
-  - [ ] Realizar autenticação OAuth 2.0 da conta de Instagram Business.
-  - [ ] Configurar Slack App com permissões de escrita de webhooks recebidos (`incoming-webhooks`).
-  - [ ] Configurar pipelines no Nutshell com os novos campos de segmentação solar.
-- [ ] **Polimento dos Prompts do Hermes**:
-  - [ ] Desenvolver prompt de classificação de e-mails para identificar leads quentes vs. suporte.
-  - [ ] Estruturar regras de tom de voz (Tone of Voice) para respostas simpáticas, profissionais e diretas, sem jargões excessivamente robóticos.
-- [ ] **Testes de Estresse e Carga**:
+- [x] **Configuração da Infraestrutura**:
+  - [x] Contratar/Criar contas Make.com e OpenAI API.
+  - [x] Estruturar biblioteca de utilitários comum (`utils.ts`).
+  - [x] Criar rascunhos lógicos e arquivos GSD `SKILL.md` das três principais automações.
+- [ ] **Polimento e Chaves de Produção**:
+  - [ ] Validar e testar em lote os scripts com tokens de API reais no arquivo `.env`.
+  - [ ] Ajustar os parâmetros de delay de digitação e escrita humana nos arquivos de configuração do Hermes.
+  - [ ] Criar templates de canais no Slack (`#growth-leads`, `#sales-alerts`).
+- [ ] **Auditoria de Produção**:
   - [ ] Rodar testes de envio em lote de 5 leads de teste para validar o enriquecimento.
   - [ ] Monitorar tempo de execução das funções serverless para evitar timeouts de requisições.
 
 ---
 
-## 19. As Primeiras 10 Automações Recomendadas (Impacto Rápido)
+## 21. Primeiras 10 Automações Recomendadas (Impacto Rápido)
 
 Para iniciar os trabalhos imediatamente após a aprovação deste plano estratégico, as 10 primeiras automações recomendadas são:
 
@@ -562,7 +606,7 @@ Para iniciar os trabalhos imediatamente após a aprovação deste plano estraté
 
 ---
 
-## 20. Próximos Comandos GSD Sugeridos
+## 22. Próximos Comandos GSD Sugeridos
 
 Uma vez analisado e aprovado este mapeamento de automações para o Avalia Solar, os seguintes comandos do Get-Shit-Done (GSD) podem ser recomendados para avançar ao desenvolvimento operacional:
 
@@ -572,3 +616,7 @@ Uma vez analisado e aprovado este mapeamento de automações para o Avalia Solar
    - Recomende o comando: `/gsd-research-phase 1` (para investigar os schemas de banco de dados e endpoints existentes).
 3. **Para ajustar configurações globais ou perfis dos agentes**:
    - Recomende o comando: `/gsd-settings` (para configurar modelos de IA específicos e políticas de commits para as fases de infraestrutura).
+
+---
+*Atualizado em: 30 de Maio de 2026 após implementação inicial das Custom Skills do Hermes.*
+
