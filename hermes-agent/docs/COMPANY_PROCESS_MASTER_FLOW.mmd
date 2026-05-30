@@ -1,0 +1,344 @@
+flowchart TB
+    %% Mapeamento Operacional Unificado - Avalia Solar & Mobilidade Elétrica
+    
+    %% Configuração de Classes e Estilos Visuais
+    classDef startEvent fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff;
+    classDef endEvent fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff;
+    classDef gateway fill:#FFEB3B,stroke:#F57F17,stroke-width:2px,color:#000;
+    classDef hermesTask fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff;
+    classDef humanTask fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff;
+    classDef systemNode fill:#E0E0E0,stroke:#757575,stroke-width:1px,color:#333;
+
+    %% ==========================================
+    %% POOL 1 — HERMES AGENT (IA ORCHESTRATOR)
+    %% ==========================================
+    subgraph Pool_Hermes [Pool: Hermes Agent IA]
+        direction TB
+
+        subgraph Lane_Cadastro_Empresas [Raia: Cadastro de Empresas B2B]
+            CE1([Evento: Inicia Cadastro B2B]) --> CE2[Tarefa: Validar CNPJ via API]
+            CE2 --> CE3{Gateway: CNPJ Válido?}
+            CE3 -- Sim --> CE4[Tarefa: Verificar Duplicidade no BD]
+            CE3 -- Não --> CE5([Evento Final: Rejeitar e Notificar])
+            CE4 --> CE6{Gateway: Duplicado?}
+            CE6 -- Não --> CE7[Tarefa: Enriquecer com Dados de Localização]
+            CE6 -- Sim --> CE8[Tarefa: Mesclar Contato e Atualizar Nutshell]
+            CE7 --> CE9[Tarefa: Calcular Score Inicial de Lead]
+            CE9 --> CE10{Gateway: Cidades Homologadas e Segmento?}
+            CE10 -- Sim --> CE11[Tarefa: Registrar no Nutshell CRM como Hot Lead]
+            CE10 -- Não --> CE12([Evento Final: Nutrição Geral])
+            CE11 --> CE13[Tarefa: Enviar E-mail de Boas-Vindas]
+            CE13 --> CE14([Evento Final: Lead Qualificado])
+            CE8 --> CE11
+        end
+
+        subgraph Lane_Cadastro_Usuarios [Raia: Cadastro de Novos Usuários B2C]
+            CU1([Evento: Cria Conta B2C]) --> CU2[Tarefa: Registrar Evento no Banco]
+            CU2 --> CU3[Tarefa: Analisar Localização e Intenção de Compra]
+            CU3 --> CU4{Gateway: Solicita Orçamento?}
+            CU4 -- Sim --> CU5[Tarefa: Sugerir Empresas Locais]
+            CU4 -- Não --> CU6([Evento Final: Confirmar Conta e FAQ])
+            CU5 --> CU7[Tarefa: Registrar Oportunidade e Evento no BD]
+            CU7 --> CU8[Tarefa: Agendar Pedido de Review para D+15]
+            CU8 --> CU9([Evento Final: Confirmar por E-mail])
+        end
+
+        subgraph Lane_LinkedIn [Raia: Prospecção LinkedIn]
+            LK1([Evento: Lead Frio Sinalizado]) --> LK2[Tarefa: Enriquecer Perfil e Empresa]
+            LK2 --> LK3[Tarefa: Calcular Score do Lead]
+            LK3 --> LK4{Gateway: Score >= 70?}
+            LK4 -- Sim --> LK5[Tarefa: Gerar Mensagem Customizada]
+            LK4 -- Não --> LK6([Evento Final: Arquivar Lead])
+            LK5 --> LK7{Gateway: Necessita Revisão Humana?}
+            LK7 -- Sim --> LK8([Evento Final: Enviar p/ Aprovação Slack])
+            LK7 -- Não --> LK9[Tarefa: Enviar Convite + Abordagem LinkedIn]
+            LK9 --> LK10[Tarefa: Agendar Follow-up 1 para D+3]
+            LK10 --> LK11([Evento Final: Registrar Oportunidade CRM])
+        end
+
+        subgraph Lane_Instagram [Raia: Prospecção Instagram]
+            IG1([Evento: DM ou Comentário Recebido]) --> IG2[Tarefa: Classificar Intenção por IA]
+            IG2 --> IG3{Gateway: Segmento do Lead?}
+            IG3 -- Consumidor --> IG4[Tarefa: Responder com Dúvidas e Link do Orçamento]
+            IG3 -- Integrador --> IG5[Tarefa: Classificar Intenção e Score]
+            IG5 --> IG6{Gateway: Alta Intenção / Dor?}
+            IG6 -- Sim --> IG7[Tarefa: Criar Lead no Nutshell CRM]
+            IG6 -- Não --> IG8[Tarefa: Responder com Template de Apresentação]
+            IG7 --> IG9[Tarefa: Notificar Slack Vendas]
+            IG9 --> IG10([Evento Final: Responder DM])
+            IG4 --> IG10
+            IG8 --> IG10
+        end
+
+        subgraph Lane_Gmail [Raia: Gmail e E-mails Comerciais]
+            GM1([Evento: E-mail Corporativo Recebido]) --> GM2[Tarefa: Classificar Tipo de Mensagem]
+            GM2 --> GM3{Gateway: Qual a Categoria?}
+            GM3 -- Lead B2B --> GM4[Tarefa: Criar Lead CRM e Rascunho]
+            GM3 -- FAQ / Dúvida --> GM5[Tarefa: Responder FAQ Automaticamente]
+            GM3 -- Cancelamento --> GM6[Tarefa: Alertar Slack CS]
+            GM3 -- Jurídico --> GM7[Tarefa: Alertar Slack Operações e Pausar Automações]
+            GM4 --> GM8([Evento Final: Notificar Vendas])
+            GM5 --> GM9([Evento Final: Arquivar])
+            GM6 --> GM10([Evento Final: Atribuir CS])
+            GM7 --> GM11([Evento Final: Atribuir Operações])
+        end
+
+        subgraph Lane_FollowUp [Raia: Follow-up Comercial]
+            FU1([Evento: Lead Criado no CRM]) --> FU2[Tarefa: Agendar Sequência D+1, D+3, D+7]
+            FU2 --> FU3{Gateway: Houve Resposta?}
+            FU3 -- Sim --> FU4[Tarefa: Mover p/ Oportunidade no CRM]
+            FU3 -- Não --> FU5[Tarefa: Disparar Próxima Mensagem]
+            FU5 --> FU6{Gateway: Limite Atingido?}
+            FU6 -- Sim --> FU7[Tarefa: Mover para Nutrição e Arquivar]
+            FU6 -- Não --> FU3
+            FU4 --> FU8([Evento Final: Notificar Vendas])
+            FU7 --> FU9([Evento Final: Arquivar Oportunidade])
+        end
+
+        subgraph Lane_Stripe [Raia: Checkout e Planos SaaS]
+            ST1([Evento: Stripe Confirma Transação]) --> ST2{Gateway: Aprovado?}
+            ST2 -- Sim --> ST3[Tarefa: Ativar Plano Premium no BD]
+            ST3 --> ST4[Tarefa: Atualizar Nutshell para Ganho]
+            ST4 --> ST5[Tarefa: Enviar Onboarding por E-mail]
+            ST5 --> ST6([Evento Final: Plano Ativado])
+            ST2 -- Não --> ST7[Tarefa: Disparar E-mail Recuperação de Faturamento]
+            ST7 --> ST8([Evento Final: Notificar Slack Financeiro])
+        end
+
+        subgraph Lane_CS_Retencao [Raia: Retenção e Customer Success]
+            RT1([Evento: Gatilho Diário CS]) --> RT2[Tarefa: Analisar Atividade do Cliente]
+            RT2 --> RT3{Gateway: Inativo >= 30 dias?}
+            RT3 -- Sim --> RT4[Tarefa: Calcular Risco de Churn]
+            RT3 -- Não --> RT5([Evento Final: Registrar Log de Saúde])
+            RT4 --> RT6{Gateway: Risco Crítico?}
+            RT6 -- Sim --> RT7[Tarefa: Criar Alerta Churn no Slack]
+            RT6 -- Não --> RT8[Tarefa: Enviar E-mail Reengajamento]
+            RT7 --> RT9([Evento Final: Atribuir Atendimento Humano CS])
+            RT8 --> RT5
+        end
+
+        subgraph Lane_Reviews [Raia: Reviews e Prova Social]
+            RV1([Evento: Review Enviado]) --> RV2[Tarefa: Classificar Sentimento por IA]
+            RV2 --> RV3{Gateway: Sentimento?}
+            RV3 -- Positivo --> RV4[Tarefa: Publicar Review no Site]
+            RV4 --> RV5[Tarefa: Sugerir Post Redes para Cliente]
+            RV5 --> RV6[Tarefa: Atualizar Score e Ranking no BD]
+            RV6 --> RV7([Evento Final: Notificar Cliente])
+            RV3 -- Negativo --> RV8[Tarefa: Pausar Respostas Automáticas]
+            RV8 --> RV9[Tarefa: Criar Alerta Crítico Slack CS]
+            RV9 --> RV10([Evento Final: Direcionar Humano CS])
+        end
+
+        subgraph Lane_SEO_Content [Raia: Conteúdo e SEO]
+            SEO1([Evento: Gatilho Semanal SEO]) --> SEO2[Tarefa: Analisar Keywords GSC e CRM]
+            SEO2 --> SEO3[Tarefa: Mapear Cidades Prioritárias (>500k)]
+            SEO3 --> SEO4[Tarefa: Redigir Rascunho de Artigo Customizado]
+            SEO4 --> SEO5{Gateway: Requer Aprovação Humana?}
+            SEO5 -- Sim --> SEO6[Tarefa: Postar no Slack para Revisão]
+            SEO5 -- Não --> SEO7[Tarefa: Publicar no CMS WordPress]
+            SEO7 --> SEO8[Tarefa: Distribuir Postagem Redes Sociais]
+            SEO8 --> SEO9([Evento Final: Logar Métricas])
+            SEO6 --> SEO10([Evento Final: Aguardar Editor])
+        end
+
+        subgraph Lane_RevOps [Raia: RevOps e Pipeline CRM]
+            CRM1([Evento: Entrada de Lead CRM]) --> CRM2[Tarefa: Executar Deduplicação e Enriquecimento]
+            CRM2 --> CRM3[Tarefa: Calcular Lead Score do Nutshell]
+            CRM3 --> CRM4[Tarefa: Atribuir Proprietário no CRM]
+            CRM4 --> CRM5[Tarefa: Monitorar SLA de Resposta]
+            CRM5 --> CRM6{Gateway: SLA Vencido?}
+            CRM6 -- Sim --> CRM7[Tarefa: Enviar Alerta SLA no Slack]
+            CRM6 -- Não --> CRM8([Evento Final: Acompanhar Pipeline])
+            CRM7 --> CRM8
+        end
+
+        subgraph Lane_Auditoria [Raia: Dados, Dashboard e Auditoria]
+            DA1([Evento: Ingestão de Dados]) --> DA2[Tarefa: Validar JSON Schema do Evento]
+            DA2 --> DA3{Gateway: Consistente?}
+            DA3 -- Sim --> DA4{Gateway: Opt-Out / LGPD?}
+            DA3 -- Não --> DA5[Tarefa: Registrar Erro e Alertar Dev Slack]
+            DA5 --> DA6([Evento Final: Rejeitar Transação])
+            DA4 -- Sim --> DA7[Tarefa: Anonimizar no BD/Nutshell]
+            DA7 --> DA8([Evento Final: Gravar Log Compliance])
+            DA4 -- Não --> DA9[Tarefa: Atualizar Data Lake e Dashboards]
+            DA9 --> DA10[Tarefa: Gerar Relatório de Auditoria]
+            DA10 --> DA11([Evento Final: Disparar no Slack])
+        end
+
+        subgraph Lane_Aprovacao [Raia: Autorizações e Aprovações]
+            AP1([Evento: Ação Sensível Detectada]) --> AP2[Tarefa: Gerar Card de Aprovação Slack]
+            AP2 --> AP3{Gateway: Humano Aprovou?}
+            AP3 -- Sim --> AP4[Tarefa: Executar Ação Sensível]
+            AP3 -- Não --> AP5[Tarefa: Cancelar Ação e Registrar Motivo]
+            AP4 --> AP6([Evento Final: Gravar Log de Ação])
+            AP5 --> AP7([Evento Final: Notificar Cancelamento])
+        end
+
+        subgraph Lane_Infra [Raia: Deliverability e DNS]
+            I1([Evento: Auditoria Diária SMTP]) --> I2[Tarefa: Verificar SPF, DKIM e DMARC]
+            I2 --> I3[Tarefa: Verificar Bounce Rate das Campanhas]
+            I3 --> I4{Gateway: Problema SPF/DKIM ou Bounce > 2%?}
+            I4 -- Sim --> I5[Tarefa: Pausar Envio das Campanhas]
+            I5 --> I6[Tarefa: Alertar Dev Slack]
+            I6 --> I7([Evento Final: Encaminhar para Humano TI])
+            I4 -- Não --> I8[Tarefa: Registrar Log Operação OK]
+            I8 --> I9([Evento Final: Manter Operações])
+        end
+    end
+
+    %% ==========================================
+    %% POOL 2 — HUMANO (SOLO OPERATOR / EQUIPE)
+    %% ==========================================
+    subgraph Pool_Humano [Pool: Humano Solo Operator]
+        direction TB
+
+        subgraph Lane_Vendas [Raia: Vendas B2B]
+            VD1([Alerta Lead Quente Slack]) --> VD2[Tarefa: Revisar Perfil do Lead]
+            VD2 --> VD3[Tarefa: Agendar e Realizar Demonstração]
+            VD3 --> VD4{Gateway: Interesse Fechamento?}
+            VD4 -- Sim --> VD5[Tarefa: Enviar Proposta e Negociar]
+            VD4 -- Não --> VD6([Evento Final: Mover p/ Perdido CRM])
+            VD5 --> VD7[Tarefa: Fechar Negócio]
+            VD7 --> VD8([Evento Final: Ativar Assinatura Stripe])
+        end
+
+        subgraph Lane_CS [Raia: Customer Success]
+            CS1([Alerta Churn Slack]) --> CS2[Tarefa: Contatar Cliente Premium]
+            CS2 --> CS3{Gateway: Reverteu Churn?}
+            CS3 -- Sim --> CS4[Tarefa: Oferecer Benefício e Reter]
+            CS3 -- Não --> CS5[Tarefa: Processar Cancelamento e Feedback]
+            CS4 --> CS6([Evento Final: Registrar Retenção BD])
+            CS5 --> CS7([Evento Final: Cancelar Assinatura])
+        end
+
+        subgraph Lane_Marketing [Raia: Marketing e Growth]
+            MK1([Alerta Revisão Conteúdo Slack]) --> MK2[Tarefa: Revisar Rascunho do Artigo]
+            MK2 --> MK3{Gateway: Artigo Aprovado?}
+            MK3 -- Sim --> MK4[Tarefa: Autorizar Publicação WordPress]
+            MK3 -- Não --> MK5[Tarefa: Realizar Ajustes no Texto]
+            MK4 --> MK6([Evento Final: Enviar para Publicação])
+            MK5 --> MK2
+        end
+
+        subgraph Lane_Operacoes [Raia: Operações e TI]
+            OP1([Alerta Erro de Infra/DNS]) --> OP2[Tarefa: Diagnosticar Configuração SMTP/DNS]
+            OP2 --> OP3[Tarefa: Ajustar Registros SPF/DKIM na Hospedagem]
+            OP3 --> OP4([Evento Final: Retomar Automações e Disparos])
+        end
+
+        subgraph Lane_Estrategia [Raia: Estratégia e Direção]
+            E1([Reunião Mensal Métricas]) --> E2[Tarefa: Revisar Dashboard RevOps]
+            E2 --> E3[Tarefa: Ajustar ICP e Cidades Prioritárias]
+            E3 --> E4[Tarefa: Atualizar Configurações do Hermes]
+            E4 --> E5([Evento Final: Concluir Ajuste Direcional])
+        end
+    end
+
+    %% ==========================================
+    %% POOL 3 — SISTEMAS EXTERNOS (INTEGRAÇÕES)
+    %% ==========================================
+    subgraph Pool_Sistemas [Pool: Sistemas Externos]
+        direction TB
+        
+        subgraph Lane_SYS_Site [Raia: Site/App Avalia Solar]
+            SYS1[signup_started]
+            SYS2[company_registered]
+            SYS3[user_registered]
+            SYS4[quote_requested]
+            SYS5[review_submitted]
+        end
+
+        subgraph Lane_SYS_Nutshell [Raia: Nutshell CRM]
+            SYS_N1[contact_created]
+            SYS_N2[lead_updated]
+            SYS_N3[deal_created]
+            SYS_N4[deal_won]
+        end
+
+        subgraph Lane_SYS_Slack [Raia: Slack]
+            SYS_S1[hot_lead_alert]
+            SYS_S2[churn_alert]
+            SYS_S3[automation_error]
+            SYS_S4[approval_card]
+        end
+
+        subgraph Lane_SYS_Stripe [Raia: Stripe]
+            SYS_ST1[checkout_started]
+            SYS_ST2[payment_succeeded]
+            SYS_ST3[payment_failed]
+        end
+    end
+
+    %% ==========================================
+    %% CONEXÕES E INTEGRAÇÕES ENTRE POOLS (TRACEJADAS)
+    %% ==========================================
+    
+    %% Cadastro Empresas / Usuários
+    SYS2 -.-> CE1
+    SYS3 -.-> CU1
+    CE11 -.-> SYS_N3
+    CE14 -.-> VD1
+    CE14 -.-> SYS_S1
+    CU2 -.-> Lane_Cadastro_Usuarios
+    CU7 -.-> Lane_Cadastro_Usuarios
+
+    %% LinkedIn e Instagram
+    LK8 -.-> SYS_S4
+    LK11 -.-> SYS_N3
+    IG1 -.-> Lane_Instagram
+    IG9 -.-> SYS_S1
+    IG9 -.-> VD1
+
+    %% Gmail e Follow-up
+    GM1 -.-> Lane_Gmail
+    GM6 -.-> SYS_S2
+    GM6 -.-> CS1
+    GM7 -.-> SYS_S3
+    GM7 -.-> OP1
+    FU4 -.-> SYS_N2
+    FU8 -.-> VD1
+
+    %% Stripe, CS e Reviews
+    SYS_ST2 -.-> ST1
+    ST6 -.-> Lane_Stripe
+    ST4 -.-> SYS_N4
+    RT7 -.-> SYS_S2
+    RT9 -.-> CS1
+    SYS5 -.-> RV1
+    RV9 -.-> SYS_S2
+    RV10 -.-> CS1
+
+    %% SEO, Conteúdo e RevOps
+    SEO6 -.-> SYS_S4
+    SEO10 -.-> MK1
+    MK6 -.-> SEO7
+    CRM7 -.-> SYS_S1
+    CRM7 -.-> VD1
+
+    %% Auditoria, Dados e Governança
+    DA11 -.-> SYS_S1
+    AP3 -.-> SYS_S4
+    SYS_S4 -.-> H_OpsAprove
+    I6 -.-> SYS_S3
+    I7 -.-> OP1
+    OP4 -.-> I1
+    VD8 -.-> SYS_ST2
+    CS7 -.-> SYS_ST3
+
+    %% Definições de Estilos Finais nos Elementos
+    class CE1,CU1,LK1,IG1,GM1,FU1,ST1,RT1,RV1,SEO1,CRM1,DA1,AP1,I1 startEvent;
+    class VD1,CS1,MK1,OP1,E1 startEvent;
+    class CE5,CE12,CE14,CU6,CU9,LK6,LK8,LK11,IG10,GM8,GM9,GM10,GM11 endEvent;
+    class FU8,FU9,ST6,ST8,RT5,RT9,RV7,RV10,SEO9,SEO10,CRM8,DA6,DA8,DA11 endEvent;
+    class AP6,AP7,I7,I9,VD6,VD8,CS6,CS7,MK6,OP4,E5 endEvent;
+    
+    class CE3,CE6,CE10,CU4,LK4,LK7,IG3,IG6,GM3,FU3,FU6,ST2,RT3,RT6,RV3,SEO5,CRM6,DA3,DA4,AP3,I4,VD4,CS3,MK3 gateway;
+    
+    class CE2,CE4,CE7,CE8,CE9,CE11,CE13,CU2,CU3,CU5,CU7,CU8,LK2,LK3,LK5,LK9,LK10 hermesTask;
+    class IG2,IG4,IG5,IG7,IG8,IG9,GM2,GM4,GM5,GM6,GM7,FU2,FU4,FU5,FU7,ST3,ST4,ST5,ST7 hermesTask;
+    class RT2,RT4,RT7,RT8,RV2,RV4,RV5,RV6,RV8,RV9,SEO2,SEO3,SEO4,SEO6,SEO7,SEO8,SEO9 hermesTask;
+    class CRM2,CRM3,CRM4,CRM5,CRM7,DA2,DA4,DA5,DA7,DA9,DA10,AP2,AP4,AP5,I2,I3,I5,I6,I8 hermesTask;
+    
+    class VD2,VD3,VD5,VD7,CS2,CS4,CS5,MK2,MK4,MK5,OP2,OP3,E2,E3,E4 humanTask;
+    
+    class SYS1,SYS2,SYS3,SYS4,SYS5,SYS_N1,SYS_N2,SYS_N3,SYS_N4,SYS_S1,SYS_S2,SYS_S3,SYS_S4,SYS_ST1,SYS_ST2,SYS_ST3 systemNode;

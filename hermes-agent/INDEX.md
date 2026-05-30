@@ -15,7 +15,14 @@ hermes-agent/
 ├── docs/
 │   ├── growth-automation-map.md   # Plano estratégico de 50+ automações
 │   ├── mobility-alignment.md      # Alinhamento de restrições de cidades e segmentos
-│   └── roadmap.md                 # Roadmap de priorização e fases (P0, P1, P2)
+│   ├── roadmap.md                 # Roadmap de priorização e fases (P0, P1, P2)
+│   ├── COMPANY_PROCESS_MASTER_FLOW.md # Fluxos Mermaid e explicações de processos operacionais
+│   ├── COMPANY_PROCESS_MASTER_FLOW.mmd # Código Mermaid limpo para Live Editor
+│   ├── PROCESS_INVENTORY.md       # Tabela completa detalhando todos os processos mapeados
+│   ├── AUTOMATION_BACKLOG.md      # Backlog priorizado de automações (P0 a P3)
+│   ├── HUMAN_APPROVAL_MATRIX.md   # Matriz de governança e portões de decisão humana
+│   ├── DATA_EVENT_TAXONOMY.md     # Taxonomia de payloads e análise LGPD
+│   └── REVOPS_DASHBOARD_SPEC.md   # Métricas do dashboard Nutshell/Stripe/Slack
 ├── skills/
 │   ├── linkedin-prospector/       # Custom Skill GSD: Prospecção de integradores
 │   │   ├── SKILL.md
@@ -81,6 +88,17 @@ npx tsx hermes-agent/skills/solar-mobility-leads/prospeo-lead-export.ts --segmen
 # Rodar triagem e classificação de e-mails recebidos
 npx tsx hermes-agent/skills/inbox-triager/scripts/gmail-classifier.ts
 ```
+
+## 🗺️ Mapeamento Operacional e BPMN Mestre
+
+Consulte os novos documentos operacionais gerados para a estruturação estratégica da empresa:
+*   [COMPANY_PROCESS_MASTER_FLOW.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/COMPANY_PROCESS_MASTER_FLOW.md): Diagrama mestre em Mermaid (dividido por raias de atuação) e documentação teórica completa dos processos.
+*   [COMPANY_PROCESS_MASTER_FLOW.mmd](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/COMPANY_PROCESS_MASTER_FLOW.mmd): Arquivo contendo unicamente a sintaxe Mermaid completa e limpa para edição no Mermaid Live Editor.
+*   [PROCESS_INVENTORY.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/PROCESS_INVENTORY.md): Tabela detalhada catalogando os 22 processos de cadastros B2B/B2C, social selling, triagens, Stripe e auditoria.
+*   [AUTOMATION_BACKLOG.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/AUTOMATION_BACKLOG.md): Backlog de priorização técnica de desenvolvimento de automações do Hermes Agent, ordenado de P0 a P3.
+*   [HUMAN_APPROVAL_MATRIX.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/HUMAN_APPROVAL_MATRIX.md): Matriz de governança definindo portões manuais para ações sensíveis, e-mails comerciais e financeiro.
+*   [DATA_EVENT_TAXONOMY.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/DATA_EVENT_TAXONOMY.md): Taxonomia de ingestão e tráfego de dados, descrevendo os payloads mínimos JSON e riscos legais sob a ótica da LGPD.
+*   [REVOPS_DASHBOARD_SPEC.md](file:///c:/Users/Bobi/Desktop/AB0-1-main/hermes-agent/docs/REVOPS_DASHBOARD_SPEC.md): Especificação detalhada de KPIs comerciais, financeiros, de growth e técnicos, integrando Stripe, CRM, Slack e Hermes.
 
 ---
 *Índice criado em: 30 de Maio de 2026. Todos os caminhos e referências atualizados.*
