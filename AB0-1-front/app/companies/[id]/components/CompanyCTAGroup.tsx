@@ -78,7 +78,7 @@ export default function CompanyCTAGroup({
       {/* Comparar */}
       <ComparisonToggleButton 
         company={company}
-        variant="outline"
+        variant="default"
         size="default"
         animated={true}
         className="h-11 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center shadow-none sm:min-w-[140px]"
