@@ -36,6 +36,7 @@ import SidebarPremium from "./SidebarPremium";
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
 import CompanyProducts from "./CompanyProducts";
 import CompanyReviews from "./CompanyReviews";
+import FaqSection from "./FaqSection";
 
 interface CompanyProfileShellProps {
   company: Company;
