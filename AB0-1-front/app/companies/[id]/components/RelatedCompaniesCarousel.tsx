@@ -1,11 +1,12 @@
 "use client";
 
-import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Building2 } from "lucide-react";
+import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Zap, BatteryCharging, Leaf, PlugZap, CarFront } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
 import Link from "next/link";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import React from "react";
 
 interface RelatedCompaniesCarouselProps {
   company: Company;
@@ -42,13 +43,13 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     );
   }
 
-  // Dados mockados baseados no design de referência
+  // Dados mockados baseados no design de referência com ícones e cores
   const recommendedCompanies = [
-    { name: "Volt Solar", rating: 4.8, reviews: 24, location: "Florianópolis, SC", category: "Carregadores", initial: "V" },
-    { name: "ChargeUp", rating: 4.6, reviews: 15, location: "São Paulo, SP", category: "Infraestrutura", initial: "C" },
-    { name: "EcoCharging", rating: 4.5, reviews: 18, location: "Curitiba, PR", category: "Mobilidade Elétrica", initial: "E" },
-    { name: "PowerEV", rating: 4.7, reviews: 22, location: "Belo Horizonte, MG", category: "Soluções EV", initial: "P" },
-    { name: "EV Solutions", rating: 4.6, reviews: 19, location: "Rio de Janeiro, RJ", category: "Carregadores", initial: "EV" },
+    { name: "Volt Solar", rating: 4.8, reviews: 24, location: "Florianópolis, SC", category: "Carregadores", slug: "volt-solar", icon: Zap, iconColor: "text-emerald-500" },
+    { name: "ChargeUp", rating: 4.6, reviews: 15, location: "São Paulo, SP", category: "Infraestrutura", slug: "chargeup", icon: BatteryCharging, iconColor: "text-blue-900" },
+    { name: "EcoCharging", rating: 4.5, reviews: 18, location: "Curitiba, PR", category: "Mobilidade Elétrica", slug: "ecocharging", icon: Leaf, iconColor: "text-emerald-600" },
+    { name: "PowerEV", rating: 4.7, reviews: 22, location: "Belo Horizonte, MG", category: "Soluções EV", slug: "powerev", icon: PlugZap, iconColor: "text-pink-500" },
+    { name: "EV Solutions", rating: 4.6, reviews: 19, location: "Rio de Janeiro, RJ", category: "Carregadores", slug: "ev-solutions", icon: CarFront, iconColor: "text-blue-500" },
   ];
 
   return (
@@ -72,9 +73,9 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
               <CardContent className="p-5 flex flex-col gap-4 h-full">
                 {/* Topo do Card: Logo + Infos */}
                 <div className="flex gap-4">
-                  {/* Logo Placeholder */}
-                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-center shrink-0 text-slate-300 font-black text-xl shadow-inner">
-                    {comp.initial}
+                  {/* Logo com ícone simulando a marca */}
+                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                    {React.createElement(comp.icon, { className: `h-8 w-8 ${comp.iconColor}` })}
                   </div>
                   <div className="flex flex-col justify-center min-w-0">
                     <h4 className="font-bold text-slate-900 text-base truncate">{comp.name}</h4>
@@ -99,8 +100,10 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
 
                 {/* Botão de Ver Perfil no rodapé do card */}
                 <div className="mt-auto pt-2">
-                  <Button variant="outline" className="w-full rounded-xl border-blue-100 text-blue-700 hover:bg-blue-50 hover:border-blue-200 font-bold shadow-sm transition-all h-11">
-                    Ver Perfil
+                  <Button variant="outline" className="w-full rounded-xl border-blue-100 text-blue-700 hover:bg-blue-50 hover:border-blue-200 font-bold shadow-sm transition-all h-11" asChild>
+                    <Link href={`/companies/${comp.slug}`}>
+                      Ver Perfil
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
