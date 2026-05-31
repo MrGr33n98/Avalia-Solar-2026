@@ -1,13 +1,12 @@
 "use client";
 
-import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Building2 } from "lucide-react";
+import { ShieldCheck, Lock, ChevronRight, ChevronLeft, Star, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
 import { companiesApiSafe } from "@/lib/api-client";
 import Link from "next/link";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 
 interface RelatedCompaniesCarouselProps {
@@ -18,6 +17,7 @@ interface RelatedCompaniesCarouselProps {
 export default function RelatedCompaniesCarousel({ company, showAlternatives }: RelatedCompaniesCarouselProps) {
   const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!showAlternatives) {
@@ -33,7 +33,6 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
           status: 'active'
         });
         
-        // Remove a própria empresa da lista de relacionadas e limita a 5
         let filtered = (response.data || []).filter(c => c.id !== company.id).slice(0, 5);
         setRelatedCompanies(filtered);
       } catch (error) {
@@ -46,7 +45,18 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     fetchRelated();
   }, [company.id, company.category_id, company.category_info?.id, showAlternatives]);
 
-  // Se o entitlement de empresas alternativas for desabilitado (Plano Pro/Enterprise que bloqueia concorrentes)
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const { current } = scrollContainerRef;
+      const scrollAmount = 300; // Largura do card + gap
+      if (direction === 'left') {
+        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  };
+
   if (!showAlternatives) {
     return (
       <Card className="rounded-2xl border border-blue-100 bg-blue-50/20 p-6 shadow-sm overflow-hidden relative">
@@ -82,21 +92,38 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
   return (
     <div className="w-full flex flex-col gap-4 mt-8">
       {/* Cabeçalho do Carrossel */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-1 gap-4">
         <div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Empresas Relacionadas</h3>
           <p className="text-sm text-slate-500 font-medium">Recomendadas para soluções similares</p>
         </div>
-        <Link href="/companies" className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-          Ver todas <ChevronRight className="h-4 w-4" />
-        </Link>
+        
+        <div className="flex items-center gap-4">
+          {/* Setas de navegação (apenas visíveis se houver overflow ou no desktop) */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200" onClick={() => scroll('left')}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200" onClick={() => scroll('right')}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Link href="/companies" className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+            Ver todas <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
-      {/* Carrossel Horizontal usando ScrollArea */}
-      <ScrollArea className="w-full pb-4">
-        <div className="flex gap-4 w-max px-1 pt-1 pb-2">
+      {/* Carrossel Horizontal Customizado (sem ScrollArea do Radix para permitir botões) */}
+      <div className="relative w-full pb-4">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 w-full overflow-x-auto snap-x scroll-smooth px-1 pt-1 pb-2 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {relatedCompanies.map((comp) => (
-            <Card key={comp.id} className="w-[280px] rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
+            <Card key={comp.id} className="w-[280px] snap-start rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
               <CardContent className="p-5 flex flex-col gap-4 h-full">
                 {/* Topo do Card: Logo + Infos */}
                 <div className="flex gap-4">
@@ -149,8 +176,7 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
             </Card>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" className="hidden sm:flex" />
-      </ScrollArea>
+      </div>
     </div>
   );
 }
