@@ -12,6 +12,7 @@ import ReviewsPreview from "./ReviewsPreview";
 import ProjectsPreview from "./ProjectsPreview";
 import RelatedCompaniesCarousel from "./RelatedCompaniesCarousel";
 import SocialProof from "./SocialProof";
+import { BannerSlot } from "@/components/banners/BannerSlot";
 
 interface OverviewTabProps {
   company: Company;
@@ -84,6 +85,13 @@ export default function OverviewTab({
         </div>
       </Card>
 
+      {/* Banner Inline após Sobre a Empresa */}
+      {showAlternatives && (
+        <div className="mt-6 mb-6">
+          <BannerSlot placement="company_about_inline" />
+        </div>
+      )}
+
       {/* 3. Provas Sociais Coletivas */}
       {showSocialProof && (
         <SocialProof companyId={Number(company.id)} companyName={company.name} />
@@ -99,6 +107,13 @@ export default function OverviewTab({
 
       {/* 5. Vitrine de Especialidades (Projects Preview) */}
       <ProjectsPreview company={company} onTabChange={onTabChange} />
+
+      {/* Banner de Carrossel antes de Empresas Relacionadas */}
+      {showAlternatives && (
+        <div className="mt-6">
+          <BannerSlot placement="related_companies_carousel" />
+        </div>
+      )}
 
       {/* 6. Empresas Similares / Proteção (Related Companies) */}
       <RelatedCompaniesCarousel company={company} showAlternatives={showAlternatives} />
