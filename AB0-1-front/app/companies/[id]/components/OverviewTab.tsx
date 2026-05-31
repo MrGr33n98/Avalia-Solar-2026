@@ -88,7 +88,7 @@ export default function OverviewTab({
       {/* Banner Inline após Sobre a Empresa */}
       {showAlternatives && (
         <div className="mt-6 mb-6">
-          <BannerSlot placement="company_about_inline" />
+          <BannerSlot placement="company_profile_about_inline" />
         </div>
       )}
 
@@ -111,7 +111,7 @@ export default function OverviewTab({
       {/* Banner de Carrossel antes de Empresas Relacionadas */}
       {showAlternatives && (
         <div className="mt-6">
-          <BannerSlot placement="related_companies_carousel" />
+          <BannerSlot placement="company_profile_related_carousel" />
         </div>
       )}
 

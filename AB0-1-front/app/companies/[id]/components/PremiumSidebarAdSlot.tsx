@@ -4,7 +4,7 @@ import { Award, ShieldAlert, ArrowRight, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
-import SponsoredBanner from "./SponsoredBanner";
+import { BannerSlot } from "@/components/banners/BannerSlot";
 import Link from "next/link";
 
 interface PremiumSidebarAdSlotProps {
@@ -38,7 +38,7 @@ export default function PremiumSidebarAdSlot({ company, showCompetitorBanners }:
     );
   }
 
-  // Caso contrário, renderiza o banner patrocinado dinâmico herdado com rótulo apropriado
+  // Caso contrário, renderiza o banner patrocinado dinâmico com a nova position
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
@@ -46,10 +46,8 @@ export default function PremiumSidebarAdSlot({ company, showCompetitorBanners }:
           Parceiro Patrocinado
         </span>
       </div>
-      <SponsoredBanner
-        slotKey="company_sidebar_square"
-        companyId={company.id}
-        variant="square"
+      <BannerSlot
+        placement="company_profile_sidebar_sponsored"
         className="w-full"
       />
     </div>

@@ -37,6 +37,7 @@ import PremiumBannerSection from '@/components/compare/PremiumBannerSection';
 import CompanyComparisonCard from '@/components/compare/CompanyComparisonCard';
 import ComparisonFooterCTA from '@/components/compare/ComparisonFooterCTA';
 import TrustScoreDial from '@/components/compare/TrustScoreDial';
+import { BannerSlot } from '@/components/banners/BannerSlot';
 import { useScrollDepthMilestone, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import {
   formatCompanyYears,
@@ -203,6 +204,10 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50/50 to-blue-50/20 pb-20">
+      <div className="mx-auto max-w-[1180px] px-4 pt-4">
+        <BannerSlot placement="compare_page_top" />
+      </div>
+
       {/* Header */}
       <ComparePageHeader
         companiesCount={comparisonList.length}
@@ -227,7 +232,13 @@ export default function ComparePage() {
           />
         )}
 
-        {/* Mobile: Card Layout */}
+        <div className="mb-8">
+          <BannerSlot placement="compare_page_inline" />
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1 w-full min-w-0">
+            {/* Mobile: Card Layout */}
         <div className="block md:hidden space-y-6 mb-8">
           {comparisonList.map((company, idx) => (
             <CompanyComparisonCard
@@ -509,12 +520,25 @@ export default function ComparePage() {
             </ScrollArea>
           </div>
         </div>
+          </div>
+
+          {/* Sidebar Area (Banner) */}
+          <div className="hidden lg:block w-[300px] shrink-0">
+            <div className="sticky top-24">
+              <BannerSlot placement="compare_page_sidebar" />
+            </div>
+          </div>
+        </div>
 
         {/* Footer CTA */}
         <ComparisonFooterCTA 
           hasPremiumCompanies={hasPremiumCompanies}
           className="mt-12"
         />
+
+        <div className="mt-12">
+          <BannerSlot placement="compare_page_bottom" />
+        </div>
       </main>
     </div>
   );

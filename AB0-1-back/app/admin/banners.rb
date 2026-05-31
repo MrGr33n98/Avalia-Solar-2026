@@ -11,8 +11,13 @@ banner_position_options = [
   ['Categorias - Lateral dos Filtros', 'categories_filter_sidebar'],
   ['Categorias - Coluna Direita', 'categories_right_rail'],
   ['Empresas - Coluna Direita', 'companies_right_rail'],
-  ['Perfil Empresa - Inline (Sobre)', 'company_about_inline'],
-  ['Perfil Empresa - Carrossel (Relacionadas)', 'related_companies_carousel']
+  ['Perfil Empresa - Inline (Sobre)', 'company_profile_about_inline'],
+  ['Perfil Empresa - Carrossel (Relacionadas)', 'company_profile_related_carousel'],
+  ['Perfil Empresa - Sidebar Patrocinada', 'company_profile_sidebar_sponsored'],
+  ['Compare - Topo', 'compare_page_top'],
+  ['Compare - Inline (Meio)', 'compare_page_inline'],
+  ['Compare - Sidebar', 'compare_page_sidebar'],
+  ['Compare - Bottom (Rodapé)', 'compare_page_bottom']
 ].freeze
 
 ActiveAdmin.register Banner do
@@ -122,7 +127,10 @@ ActiveAdmin.register Banner do
             if (position === 'search_mid') return { w: 1200, h: 160 };
             if (position === 'categories_filter_sidebar') return { w: 300, h: 250 };
             if (position === 'categories_right_rail' || position === 'companies_right_rail') return { w: 300, h: 600 };
-            if (position === 'company_about_inline' || position === 'related_companies_carousel') return { w: 1200, h: 160 };
+            if (position === 'company_profile_about_inline' || position === 'company_profile_related_carousel') return { w: 1200, h: 160 };
+            if (position === 'company_profile_sidebar_sponsored') return { w: 300, h: 600 };
+            if (position === 'compare_page_top' || position === 'compare_page_inline' || position === 'compare_page_bottom') return { w: 1200, h: 160 };
+            if (position === 'compare_page_sidebar') return { w: 300, h: 600 };
             return { w: 600, h: 200 };
           }
 

@@ -25,8 +25,13 @@ class Banner < ApplicationRecord
     categories_right_rail
     companies_right_rail
     pricing_advertise_section
-    company_about_inline
-    related_companies_carousel
+    company_profile_about_inline
+    company_profile_related_carousel
+    company_profile_sidebar_sponsored
+    compare_page_top
+    compare_page_inline
+    compare_page_sidebar
+    compare_page_bottom
   ].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
   DEFAULT_DIMENSIONS_BY_POSITION = {
@@ -40,8 +45,13 @@ class Banner < ApplicationRecord
     'categories_right_rail' => [300, 600],
     'companies_right_rail' => [300, 600],
     'pricing_advertise_section' => [1200, 160],
-    'company_about_inline' => [1200, 160],
-    'related_companies_carousel' => [1200, 160]
+    'company_profile_about_inline' => [1200, 160],
+    'company_profile_related_carousel' => [1200, 160],
+    'company_profile_sidebar_sponsored' => [300, 600],
+    'compare_page_top' => [1200, 160],
+    'compare_page_inline' => [1200, 160],
+    'compare_page_sidebar' => [300, 600],
+    'compare_page_bottom' => [1200, 160]
   }.freeze
 
   # === Validações Básicas ===
