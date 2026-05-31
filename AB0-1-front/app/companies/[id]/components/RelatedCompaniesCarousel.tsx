@@ -1,12 +1,14 @@
 "use client";
 
-import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Zap, BatteryCharging, Leaf, PlugZap, CarFront } from "lucide-react";
+import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
+import { companiesApiSafe } from "@/lib/api-client";
 import Link from "next/link";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface RelatedCompaniesCarouselProps {
   company: Company;
@@ -14,6 +16,36 @@ interface RelatedCompaniesCarouselProps {
 }
 
 export default function RelatedCompaniesCarousel({ company, showAlternatives }: RelatedCompaniesCarouselProps) {
+  const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!showAlternatives) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchRelated = async () => {
+      try {
+        const response = await companiesApiSafe.getAllPaginated({
+          category_id: company.category_info?.id || company.category_id,
+          per_page: 6,
+          status: 'active'
+        });
+        
+        // Remove a própria empresa da lista de relacionadas e limita a 5
+        let filtered = (response.data || []).filter(c => c.id !== company.id).slice(0, 5);
+        setRelatedCompanies(filtered);
+      } catch (error) {
+        console.error("Erro ao buscar empresas relacionadas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRelated();
+  }, [company.id, company.category_id, company.category_info?.id, showAlternatives]);
+
   // Se o entitlement de empresas alternativas for desabilitado (Plano Pro/Enterprise que bloqueia concorrentes)
   if (!showAlternatives) {
     return (
@@ -43,14 +75,9 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     );
   }
 
-  // Dados mockados baseados no design de referência com ícones e cores
-  const recommendedCompanies = [
-    { name: "Volt Solar", rating: 4.8, reviews: 24, location: "Florianópolis, SC", category: "Carregadores", slug: "volt-solar", icon: Zap, iconColor: "text-emerald-500" },
-    { name: "ChargeUp", rating: 4.6, reviews: 15, location: "São Paulo, SP", category: "Infraestrutura", slug: "chargeup", icon: BatteryCharging, iconColor: "text-blue-900" },
-    { name: "EcoCharging", rating: 4.5, reviews: 18, location: "Curitiba, PR", category: "Mobilidade Elétrica", slug: "ecocharging", icon: Leaf, iconColor: "text-emerald-600" },
-    { name: "PowerEV", rating: 4.7, reviews: 22, location: "Belo Horizonte, MG", category: "Soluções EV", slug: "powerev", icon: PlugZap, iconColor: "text-pink-500" },
-    { name: "EV Solutions", rating: 4.6, reviews: 19, location: "Rio de Janeiro, RJ", category: "Carregadores", slug: "ev-solutions", icon: CarFront, iconColor: "text-blue-500" },
-  ];
+  if (loading || relatedCompanies.length === 0) {
+    return null;
+  }
 
   return (
     <div className="w-full flex flex-col gap-4 mt-8">
@@ -68,33 +95,45 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
       {/* Carrossel Horizontal usando ScrollArea */}
       <ScrollArea className="w-full pb-4">
         <div className="flex gap-4 w-max px-1 pt-1 pb-2">
-          {recommendedCompanies.map((comp, idx) => (
-            <Card key={idx} className="w-[280px] rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
+          {relatedCompanies.map((comp) => (
+            <Card key={comp.id} className="w-[280px] rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
               <CardContent className="p-5 flex flex-col gap-4 h-full">
                 {/* Topo do Card: Logo + Infos */}
                 <div className="flex gap-4">
-                  {/* Logo com ícone simulando a marca */}
-                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
-                    {React.createElement(comp.icon, { className: `h-8 w-8 ${comp.iconColor}` })}
+                  {/* Logo do Banco de Dados */}
+                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden relative">
+                    {comp.logo_url ? (
+                      <Image 
+                        src={comp.logo_url} 
+                        alt={`Logo ${comp.name}`} 
+                        fill 
+                        className="object-contain p-1"
+                        sizes="60px"
+                      />
+                    ) : (
+                      <Building2 className="h-8 w-8 text-slate-300" />
+                    )}
                   </div>
                   <div className="flex flex-col justify-center min-w-0">
-                    <h4 className="font-bold text-slate-900 text-base truncate">{comp.name}</h4>
+                    <h4 className="font-bold text-slate-900 text-base truncate" title={comp.name}>{comp.name}</h4>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-sm font-black text-slate-800">{comp.rating}</span>
-                      <span className="text-xs font-medium text-slate-400">({comp.reviews})</span>
+                      <span className="text-sm font-black text-slate-800">{comp.rating_avg || comp.rating || "5.0"}</span>
+                      <span className="text-xs font-medium text-slate-400">({comp.reviews_count || comp.total_reviews || 0})</span>
                     </div>
                     <div className="flex items-center gap-1 mt-1 text-slate-500">
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="text-xs font-medium truncate">{comp.location}</span>
+                      <span className="text-xs font-medium truncate">
+                        {comp.city && comp.state ? `${comp.city}, ${comp.state}` : (comp.city || comp.state || "Brasil")}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Badge de Categoria centralizado */}
                 <div className="flex justify-center mt-1">
-                  <span className="bg-slate-100 text-slate-600 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                    {comp.category}
+                  <span className="bg-slate-100 text-slate-600 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider truncate max-w-full">
+                    {comp.category_info?.name || comp.category_name || comp.category || "Energia Solar"}
                   </span>
                 </div>
 
