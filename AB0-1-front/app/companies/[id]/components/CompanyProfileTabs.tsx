@@ -10,7 +10,7 @@ import {
   HelpCircle,
   LucideIcon,
 } from "lucide-react";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -50,23 +50,24 @@ export default function CompanyProfileTabs({
   return (
     <div id="company-profile-tabs" className="w-full border-b border-slate-200 bg-transparent mt-5">
       <ScrollArea className="w-full">
-        <TabsList className="h-auto min-w-full justify-start gap-6 rounded-none bg-transparent p-0 text-slate-500">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={cn(
-                "h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none transition-all duration-200",
-                "text-slate-500 hover:bg-transparent hover:text-slate-900",
-                "data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none data-[state=active]:font-bold"
-              )}
-            >
-              <tab.icon className="mr-2 h-4 w-4 shrink-0" />
-              <span className="whitespace-nowrap">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <Tabs value={activeTab} onValueChange={onTabChange}>
+          <TabsList className="h-auto min-w-full justify-start gap-6 rounded-none bg-transparent p-0 text-slate-500">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className={cn(
+                  "h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none transition-all duration-200",
+                  "text-slate-500 hover:bg-transparent hover:text-slate-900",
+                  "data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none data-[state=active]:font-bold"
+                )}
+              >
+                <tab.icon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         <ScrollBar orientation="horizontal" className="opacity-0 hover:opacity-100 transition-opacity" />
       </ScrollArea>
     </div>
