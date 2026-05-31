@@ -120,6 +120,7 @@ jobs:
             NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
+            NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE=true
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
