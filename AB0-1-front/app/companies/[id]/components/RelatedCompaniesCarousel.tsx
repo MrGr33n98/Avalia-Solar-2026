@@ -1,10 +1,11 @@
 "use client";
 
-import { ShieldCheck, Lock, ExternalLink, HelpCircle, ArrowRight } from "lucide-react";
+import { ShieldCheck, Lock, ChevronRight, Star, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
 import Link from "next/link";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface RelatedCompaniesCarouselProps {
   company: Company;
@@ -41,82 +42,73 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     );
   }
 
-  // Fallback institucional de empresas similares para planos Free/Essential (simulação dinâmica estática e elegante)
+  // Dados mockados baseados no design de referência
+  const recommendedCompanies = [
+    { name: "Volt Solar", rating: 4.8, reviews: 24, location: "Florianópolis, SC", category: "Carregadores", initial: "V" },
+    { name: "ChargeUp", rating: 4.6, reviews: 15, location: "São Paulo, SP", category: "Infraestrutura", initial: "C" },
+    { name: "EcoCharging", rating: 4.5, reviews: 18, location: "Curitiba, PR", category: "Mobilidade Elétrica", initial: "E" },
+    { name: "PowerEV", rating: 4.7, reviews: 22, location: "Belo Horizonte, MG", category: "Soluções EV", initial: "P" },
+    { name: "EV Solutions", rating: 4.6, reviews: 19, location: "Rio de Janeiro, RJ", category: "Carregadores", initial: "EV" },
+  ];
+
   return (
-    <Card className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm overflow-hidden">
-      <div className="flex flex-col gap-6">
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 flex items-center justify-center">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black tracking-tight text-slate-950">Empresas Recomendadas</h3>
-              <p className="text-xs text-slate-500">Outras opções qualificadas na sua região.</p>
-            </div>
-          </div>
+    <div className="w-full flex flex-col gap-4 mt-8">
+      {/* Cabeçalho do Carrossel */}
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">Empresas Relacionadas</h3>
+          <p className="text-sm text-slate-500 font-medium">Recomendadas para soluções similares</p>
         </div>
-
-        {/* Empresas Similares - Exibição elegante baseada na vertical e localização da empresa ativa */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 hover:shadow-md hover:border-slate-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tight">
-                  {company.category_info?.name || "Energia Solar"}
-                </span>
-                <span className="text-xs text-slate-500 font-medium">
-                  {company.city}, {company.state}
-                </span>
-              </div>
-              <h4 className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-700 transition-colors uppercase">
-                EcoVolt Soluções Solares
-              </h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
-                Referência em homologação rápida e pós-venda premiado na região.
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                4.8 ★ (24 reviews)
-              </span>
-              <span className="text-[10px] font-black text-blue-700 group-hover:underline inline-flex items-center gap-0.5">
-                Ver perfil
-                <ArrowRight className="h-3 w-3" />
-              </span>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 hover:shadow-md hover:border-slate-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tight">
-                  {company.category_info?.name || "Energia Solar"}
-                </span>
-                <span className="text-xs text-slate-500 font-medium">
-                  {company.city}, {company.state}
-                </span>
-              </div>
-              <h4 className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-700 transition-colors uppercase">
-                Helios Solar Brasil
-              </h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
-                Projetos industriais de grande porte com financiamento facilitado.
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                4.6 ★ (18 reviews)
-              </span>
-              <span className="text-[10px] font-black text-blue-700 group-hover:underline inline-flex items-center gap-0.5">
-                Ver perfil
-                <ArrowRight className="h-3 w-3" />
-              </span>
-            </div>
-          </div>
-        </div>
+        <Link href="/companies" className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+          Ver todas <ChevronRight className="h-4 w-4" />
+        </Link>
       </div>
-    </Card>
+
+      {/* Carrossel Horizontal usando ScrollArea */}
+      <ScrollArea className="w-full pb-4">
+        <div className="flex gap-4 w-max px-1 pt-1 pb-2">
+          {recommendedCompanies.map((comp, idx) => (
+            <Card key={idx} className="w-[280px] rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
+              <CardContent className="p-5 flex flex-col gap-4 h-full">
+                {/* Topo do Card: Logo + Infos */}
+                <div className="flex gap-4">
+                  {/* Logo Placeholder */}
+                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-center shrink-0 text-slate-300 font-black text-xl shadow-inner">
+                    {comp.initial}
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0">
+                    <h4 className="font-bold text-slate-900 text-base truncate">{comp.name}</h4>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      <span className="text-sm font-black text-slate-800">{comp.rating}</span>
+                      <span className="text-xs font-medium text-slate-400">({comp.reviews})</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1 text-slate-500">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span className="text-xs font-medium truncate">{comp.location}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badge de Categoria centralizado */}
+                <div className="flex justify-center mt-1">
+                  <span className="bg-slate-100 text-slate-600 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                    {comp.category}
+                  </span>
+                </div>
+
+                {/* Botão de Ver Perfil no rodapé do card */}
+                <div className="mt-auto pt-2">
+                  <Button variant="outline" className="w-full rounded-xl border-blue-100 text-blue-700 hover:bg-blue-50 hover:border-blue-200 font-bold shadow-sm transition-all h-11">
+                    Ver Perfil
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" className="hidden sm:flex" />
+      </ScrollArea>
+    </div>
   );
 }
