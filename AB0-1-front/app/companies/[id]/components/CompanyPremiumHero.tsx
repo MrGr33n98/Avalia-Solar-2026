@@ -22,7 +22,7 @@ export default function CompanyPremiumHero({
     <div id="company-premium-hero" className="relative w-full overflow-hidden rounded-[24px] border border-slate-200 bg-slate-900 shadow-lg">
       <div className="relative h-[180px] sm:h-[240px] lg:h-[280px] w-full">
         <OptimizedImage
-          src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
+          src={(!bannerUrl || bannerError) ? '/images/avalia-solar-banner-placeholder-v1.png' : bannerUrl}
           alt={company.name}
           fill
           priority
@@ -30,7 +30,7 @@ export default function CompanyPremiumHero({
           className="object-cover transition-transform duration-700 hover:scale-105"
           containerClassName="h-full w-full"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-          fallbackSrc="/images/banner-avalia-solar.png"
+          fallbackSrc="/images/avalia-solar-banner-placeholder-v1.png"
           useAspectRatio={false}
           width={1600}
           height={900}
