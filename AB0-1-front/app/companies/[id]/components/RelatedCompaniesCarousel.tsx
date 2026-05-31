@@ -18,6 +18,8 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
   const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (!showAlternatives) {
@@ -45,14 +47,45 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     fetchRelated();
   }, [company.id, company.category_id, company.category_info?.id, showAlternatives]);
 
-  const scroll = (direction: 'left' | 'right') => {
+  // Autoplay Effect
+  useEffect(() => {
+    if (loading || relatedCompanies.length <= 1 || isHovered) return;
+
+    const intervalTime = 50; // ms
+    const totalTime = 5000; // 5 segundos
+    const increment = (intervalTime / totalTime) * 100;
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          scroll('right', true);
+          return 0;
+        }
+        return prev + increment;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [loading, relatedCompanies.length, isHovered]);
+
+  const scroll = (direction: 'left' | 'right', isAutoplay = false) => {
     if (scrollContainerRef.current) {
       const { current } = scrollContainerRef;
       const scrollAmount = 300; // Largura do card + gap
+      
       if (direction === 'left') {
         current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
       } else {
-        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        const isAtEnd = current.scrollLeft + current.clientWidth >= current.scrollWidth - 20;
+        if (isAtEnd && isAutoplay) {
+          current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+      }
+
+      if (!isAutoplay) {
+        setProgress(0); // Reseta a barra ao clicar manualmente
       }
     }
   };
@@ -90,7 +123,11 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
   }
 
   return (
-    <div className="w-full flex flex-col gap-4 mt-8">
+    <div 
+      className="w-full flex flex-col gap-4 mt-8"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Cabeçalho do Carrossel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-1 gap-4">
         <div>
@@ -99,13 +136,13 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
         </div>
         
         <div className="flex items-center gap-4">
-          {/* Setas de navegação (apenas visíveis se houver overflow ou no desktop) */}
-          <div className="hidden sm:flex items-center gap-1.5">
+          {/* Barra de progresso circular simulada nos botões ou linear embaixo */}
+          <div className="hidden sm:flex items-center gap-1.5 relative">
             <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200" onClick={() => scroll('left')}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200" onClick={() => scroll('right')}>
-              <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 relative overflow-hidden" onClick={() => scroll('right')}>
+              <ChevronRight className="h-4 w-4 relative z-10" />
             </Button>
           </div>
           
@@ -115,7 +152,17 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
         </div>
       </div>
 
-      {/* Carrossel Horizontal Customizado (sem ScrollArea do Radix para permitir botões) */}
+      {/* Barra de Progresso Linear */}
+      {relatedCompanies.length > 1 && (
+        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
+          <div 
+            className="h-full bg-blue-500 transition-all duration-75 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Carrossel Horizontal Customizado */}
       <div className="relative w-full pb-4">
         <div 
           ref={scrollContainerRef}
