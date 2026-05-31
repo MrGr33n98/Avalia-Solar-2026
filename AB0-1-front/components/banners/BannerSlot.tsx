@@ -11,6 +11,8 @@ interface BannerSlotProps {
   fallback?: React.ReactNode;
   limit?: number;
   priority?: boolean;
+  companyId?: number;
+  blockCompetitors?: boolean;
 }
 
 export function BannerSlot({
@@ -18,12 +20,14 @@ export function BannerSlot({
   className,
   fallback,
   limit = 3,
-  priority = false
+  priority = false,
+  companyId,
+  blockCompetitors = false
 }: BannerSlotProps) {
   // Consome a rota do admin /banners passando a position correspondente ao placement
   const { data: banners, isLoading, error } = useBannersQuery({
     position: placement,
-    limit,
+    limit: limit * 2, // Fetch more to account for filtering
   });
 
   // Renderiza um skeleton suave de carregamento
@@ -31,7 +35,7 @@ export function BannerSlot({
     return (
       <div 
         className={cn(
-          "w-full animate-pulse bg-slate-100 rounded-3xl min-h-[280px] sm:min-h-[320px] flex items-center justify-center border border-slate-200/50",
+          "w-full animate-pulse bg-slate-100 rounded-3xl min-h-[160px] sm:min-h-[160px] flex items-center justify-center border border-slate-200/50",
           className
         )}
       >
@@ -43,13 +47,22 @@ export function BannerSlot({
     );
   }
 
+  let finalBanners = banners || [];
+
+  if (blockCompetitors && companyId) {
+    finalBanners = finalBanners.filter(b => b.company_id === null || b.company_id === companyId);
+  }
+
+  // Slice to the actual limit
+  finalBanners = finalBanners.slice(0, limit);
+
   // Se houver erros na API ou não houver banners ativos retornados
-  if (error || !banners || banners.length === 0) {
+  if (error || finalBanners.length === 0) {
     return fallback ? <>{fallback}</> : null;
   }
 
   // Adapter seguro para mapear as chaves opcionais e evitar erros TypeScript no build de produção
-  const formattedBanners = banners.map(b => ({
+  const formattedBanners = finalBanners.map(b => ({
     id: b.id,
     banner_type: b.banner_type,
     position: b.position,

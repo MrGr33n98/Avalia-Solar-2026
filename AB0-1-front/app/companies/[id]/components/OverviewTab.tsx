@@ -86,11 +86,13 @@ export default function OverviewTab({
       </Card>
 
       {/* Banner Inline após Sobre a Empresa */}
-      {showAlternatives && (
-        <div className="mt-6 mb-6">
-          <BannerSlot placement="company_profile_about_inline" />
-        </div>
-      )}
+      <div className="mt-6 mb-6">
+        <BannerSlot 
+          placement="company_profile_about_inline" 
+          companyId={Number(company.id)}
+          blockCompetitors={!showAlternatives}
+        />
+      </div>
 
       {/* 3. Provas Sociais Coletivas */}
       {showSocialProof && (
@@ -109,11 +111,13 @@ export default function OverviewTab({
       <ProjectsPreview company={company} onTabChange={onTabChange} />
 
       {/* Banner de Carrossel antes de Empresas Relacionadas */}
-      {showAlternatives && (
-        <div className="mt-6">
-          <BannerSlot placement="company_profile_related_carousel" />
-        </div>
-      )}
+      <div className="mt-6">
+        <BannerSlot 
+          placement="company_profile_related_carousel" 
+          companyId={Number(company.id)}
+          blockCompetitors={!showAlternatives}
+        />
+      </div>
 
       {/* 6. Empresas Similares / Proteção (Related Companies) */}
       <RelatedCompaniesCarousel company={company} showAlternatives={showAlternatives} />
