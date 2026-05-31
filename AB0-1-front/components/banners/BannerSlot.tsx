@@ -25,9 +25,10 @@ export function BannerSlot({
   blockCompetitors = false
 }: BannerSlotProps) {
   // Consome a rota do admin /banners passando a position correspondente ao placement
+  // Hack: limit * 2 + 1 força um cache miss no backend Redis gerando uma nova chave hash!
   const { data: banners, isLoading, error } = useBannersQuery({
     position: placement,
-    limit: limit * 2, // Fetch more to account for filtering
+    limit: (limit * 2) + 7, // Valor fixo diferente para dar bypass no cache do backend
   });
 
   // Renderiza um skeleton suave de carregamento
@@ -49,15 +50,23 @@ export function BannerSlot({
 
   let finalBanners = banners || [];
 
+  // DEBUG LOGS (Temporary)
+  console.log(`[BannerSlot DEBUG] Placement: ${placement}`);
+  console.log(`[BannerSlot DEBUG] Raw API banners:`, banners);
+  console.log(`[BannerSlot DEBUG] blockCompetitors: ${blockCompetitors}, companyId: ${companyId}`);
+
   if (blockCompetitors && companyId) {
-    finalBanners = finalBanners.filter(b => b.company_id === null || b.company_id === companyId);
+    finalBanners = finalBanners.filter(b => b.company_id === null || b.company_id === undefined || b.company_id === companyId);
+    console.log(`[BannerSlot DEBUG] After blocking competitors:`, finalBanners);
   }
 
   // Slice to the actual limit
   finalBanners = finalBanners.slice(0, limit);
+  console.log(`[BannerSlot DEBUG] Final Banners to render:`, finalBanners);
 
   // Se houver erros na API ou não houver banners ativos retornados
   if (error || finalBanners.length === 0) {
+    if (error) console.error(`[BannerSlot ERROR] API Error:`, error);
     return fallback ? <>{fallback}</> : null;
   }
 
