@@ -29,7 +29,11 @@ const normalizeCompanyRecommendation = (company: any) => {
     review_snippet: company?.review_snippet,
     profile_url: company?.profile_url || company?.link_perfil,
     slug: company?.slug,
-    whatsapp: company?.whatsapp
+    whatsapp: company?.whatsapp,
+    warranty_years: company?.warranty_years,
+    has_financing: company?.has_financing ?? false,
+    years_in_business: company?.years_in_business,
+    post_sales_support: company?.post_sales_support ?? false
   };
 };
 

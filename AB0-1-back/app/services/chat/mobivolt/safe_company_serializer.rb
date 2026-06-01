@@ -28,7 +28,11 @@ module Chat
           recommendation_reason: build_recommendation_reason,
           servicos: Array(@company.services_offered),
           nichos: Array(@company.niche_tags),
-          logo_url: @company.respond_to?(:logo_url) ? @company.logo_url : nil
+          logo_url: @company.respond_to?(:logo_url) ? @company.logo_url : nil,
+          warranty_years: @company.respond_to?(:warranty_years) ? @company.warranty_years : nil,
+          has_financing: @company.respond_to?(:financing_enabled) ? !!@company.financing_enabled : false,
+          years_in_business: @company.respond_to?(:founded_year) && @company.founded_year ? Date.today.year - @company.founded_year : nil,
+          post_sales_support: @company.respond_to?(:post_sales_support) ? !!@company.post_sales_support : false
         }
       rescue StandardError => e
         Rails.logger.error("[Chat::Mobivolt::SafeCompanySerializer] Error serializing company #{@company&.id}: #{e.message}")

@@ -9,6 +9,7 @@ import { posthog } from '@/lib/posthog';
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
 
 import ChatCompanyRecommendations from './ChatCompanyRecommendations';
+import ChatComparisonModal from './ChatComparisonModal';
 import MarkdownRenderer from './MarkdownRenderer';
 
 export default function ChatWidget() {
@@ -29,10 +30,11 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     city: '',
     state: '',
+    monthly_bill: '',
+    property_type: 'Casa',
     consent_given: false
   });
 
@@ -40,9 +42,14 @@ export default function ChatWidget() {
   const [clickedCompanyId, setClickedCompanyId] = useState<number | null>(null);
   const [selectedCompanyForQuote, setSelectedCompanyForQuote] = useState<number | null>(null);
   const [comparedCompanyIds, setComparedCompanyIds] = useState<number[]>([]);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const allCompanies = messages
+    .filter(msg => msg.metadata?.type === 'company_recommendations')
+    .flatMap(msg => msg.metadata.companies || []);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -177,10 +184,10 @@ export default function ChatWidget() {
   };
 
   const initialQuickReplies = [
-    'Como funciona a comparação de empresas?',
-    'Simular financiamento de energia solar',
-    'Indicar uma empresa confiável',
-    'Dúvidas sobre manutenção solar'
+    'Quero energia solar',
+    'Quero orçamento',
+    'Tenho uma proposta',
+    'Mobilidade elétrica'
   ];
 
   return (
@@ -357,54 +364,84 @@ export default function ChatWidget() {
                   <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Consultoria Personalizada Grátis</h4>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Preencha seus dados para receber propostas e orçamentos recomendados.</p>
                 </div>
-                <form onSubmit={handleFormSubmit} className="space-y-2">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nome Completo"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
+                <form onSubmit={handleFormSubmit} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Nome completo</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: João da Silva"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2 space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-medium ml-1">Cidade</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: São Paulo"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-medium ml-1">UF</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={2}
+                        placeholder="Ex: SP"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                        className="w-full text-xs px-3 py-2 text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-500 font-medium ml-1">WhatsApp</label>
                     <input
                       type="tel"
                       required
-                      placeholder="WhatsApp (com DDD)"
+                      placeholder="(11) 99999-9999"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Conta de luz (média mensal)</label>
                     <input
-                      type="email"
+                      type="text"
                       required
-                      placeholder="E-mail"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="R$ 450,00"
+                      value={formData.monthly_bill}
+                      onChange={(e) => setFormData({ ...formData, monthly_bill: e.target.value })}
                       className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Cidade"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="col-span-2 w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    />
-                    <input
-                      type="text"
-                      required
-                      maxLength={2}
-                      placeholder="UF"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                      className="w-full text-xs px-3 py-2 text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    />
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Tipo de imóvel</label>
+                    <select
+                      value={formData.property_type}
+                      onChange={(e) => setFormData({ ...formData, property_type: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                    >
+                      <option value="Casa">Casa</option>
+                      <option value="Empresa">Empresa</option>
+                      <option value="Rural">Rural</option>
+                      <option value="Condominio">Condomínio</option>
+                    </select>
                   </div>
 
-                  <label className="flex items-start space-x-2 pt-1 cursor-pointer">
+                  <label className="flex items-start space-x-2 pt-2 cursor-pointer">
                     <input
                       type="checkbox"
                       required
@@ -413,31 +450,115 @@ export default function ChatWidget() {
                       className="mt-0.5 rounded text-brand-blue focus:ring-brand-blue border-zinc-300 dark:border-zinc-700"
                     />
                     <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
-                      Aceito que a equipe Avalia Solar processe meus dados conforme a LGPD para me conectar com as melhores ofertas.
+                      Aceito compartilhar meus dados para receber contato e orçamentos das empresas parceiras do Avalia Solar, conforme a LGPD. <a href="#" className="text-brand-blue hover:underline">Saiba mais</a>
                     </span>
                   </label>
 
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue text-white font-medium py-2 rounded-lg text-xs shadow-md transition-colors"
+                  <div className="pt-2 space-y-2">
+                    <button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-brand-yellow to-amber-500 hover:from-amber-500 hover:to-amber-600 text-zinc-900 font-bold py-2 rounded-lg text-sm shadow-md transition-colors"
+                    >
+                      Continuar &rarr;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowLeadForm(false)}
+                      className="w-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium py-2 rounded-lg text-sm transition-colors"
+                    >
+                      Pular por enquanto
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Success State (Conversion) */}
+            {hasLeadCaptured && (
+              <div className="bg-white dark:bg-zinc-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg space-y-4 animate-in fade-in zoom-in-95 mt-4">
+                <div className="flex flex-col items-center justify-center text-center space-y-2">
+                  <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h4 className="font-bold text-base text-zinc-800 dark:text-zinc-100">Seu interesse foi enviado com sucesso!</h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-[250px]">
+                    As melhores empresas vão entrar em contato com você em breve.
+                  </p>
+                </div>
+
+                <div className="bg-zinc-50 dark:bg-zinc-950 rounded-xl p-3 space-y-2 text-xs border border-zinc-100 dark:border-zinc-800">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-zinc-400 mt-0.5">📍</span>
+                    <div>
+                      <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Cidade</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">{formData.city} - {formData.state}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="text-zinc-400 mt-0.5">☀️</span>
+                    <div>
+                      <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Interesse</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">Analisar proposta solar</span>
+                    </div>
+                  </div>
+                  {comparedCompanyIds.length > 0 && (
+                    <div className="flex items-start space-x-2">
+                      <span className="text-zinc-400 mt-0.5">🏢</span>
+                      <div>
+                        <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Empresas selecionadas</span>
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{comparedCompanyIds.length} empresa(s) selecionada(s)</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-start space-x-2">
+                    <span className="text-zinc-400 mt-0.5">⏱️</span>
+                    <div>
+                      <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Próxima ação</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">Empresas entrarão em contato pelo WhatsApp</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <a
+                    href="https://wa.me/5511999999999?text=Olá,%20acabei%20de%20enviar%20meus%20dados%20pelo%20MobiVolt%20AI%20e%20gostaria%20de%20falar%20com%20um%20especialista!"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition-colors"
                   >
-                    Receber Orçamentos
-                  </button>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                    </svg>
+                    <span>Falar no WhatsApp</span>
+                  </a>
+                  
                   <button
                     type="button"
-                    onClick={() => setShowLeadForm(false)}
-                    className="w-full text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-medium py-1 text-[11px] transition-colors"
+                    onClick={() => {
+                      setHasLeadCaptured(false);
+                      sendMessage("Gostaria de receber mais opções de empresas.");
+                    }}
+                    className="w-full border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-bold py-2 rounded-lg text-xs transition-colors"
                   >
-                    Continuar Apenas no Chat
+                    Receber mais opções
                   </button>
-                </form>
+                  
+                  <button
+                    type="button"
+                    className="w-full text-brand-blue hover:underline font-medium py-1.5 text-xs transition-colors"
+                  >
+                    Salvar comparação
+                  </button>
+                </div>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
+            {/* Input Area */}
           <form onSubmit={handleSend} className="p-3 border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center space-x-2">
             <input
               type="text"
@@ -458,6 +579,27 @@ export default function ChatWidget() {
               </svg>
             </button>
           </form>
+
+          {/* Floating Compare Button when 2+ companies selected */}
+          {comparedCompanyIds.length >= 2 && !showLeadForm && !hasLeadCaptured && (
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-40 animate-in slide-in-from-bottom-2 fade-in">
+              <button
+                onClick={() => setShowComparisonModal(true)}
+                className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold px-4 py-2.5 rounded-full shadow-xl text-xs flex items-center space-x-2 hover:scale-105 transition-transform"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+                <span>Ver Comparação ({comparedCompanyIds.length})</span>
+              </button>
+            </div>
+          )}
+
+          <ChatComparisonModal
+            isOpen={showComparisonModal}
+            onClose={() => setShowComparisonModal(false)}
+            companies={allCompanies}
+            comparedCompanyIds={comparedCompanyIds}
+            onRequestQuote={handleRequestQuote}
+          />
         </div>
       )}
 
