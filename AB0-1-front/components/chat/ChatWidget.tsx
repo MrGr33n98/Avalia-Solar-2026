@@ -83,12 +83,12 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="w-[380px] max-w-[calc(100vw-2rem)] h-[580px] max-h-[calc(100vh-8rem)] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5">
           {/* Header */}
-          <div className="bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white p-4 flex items-center justify-between shadow-md">
+          <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
                   <img
-                    src="/images/MobiVolt-ai-Avalia-solar.png"
+                    src="/images/mobivolt-ai-avaliasolar.png"
                     alt="MobiVolt AI Avatar"
                     className="w-full h-full object-cover"
                   />
@@ -127,7 +127,7 @@ export default function ChatWidget() {
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                     <img
-                      src="/images/MobiVolt-ai-Avalia-solar.png"
+                      src="/images/mobivolt-ai-avaliasolar.png"
                       alt="MobiVolt AI"
                       className="w-full h-full object-cover"
                     />
@@ -137,7 +137,7 @@ export default function ChatWidget() {
                   <div
                     className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                       msg.role === 'user'
-                        ? 'bg-amber-500 text-white rounded-tr-none'
+                        ? 'bg-brand-blue text-white rounded-tr-none'
                         : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-200/50 dark:border-zinc-700 rounded-tl-none'
                     }`}
                   >
@@ -150,7 +150,7 @@ export default function ChatWidget() {
                       <span>Esta resposta foi útil?</span>
                       <button
                         onClick={() => sendFeedback(msg.id, 1)}
-                        className={`hover:text-amber-500 transition-colors ${msg.feedback === 1 ? 'text-amber-500 font-bold' : ''}`}
+                        className={`hover:text-brand-blue transition-colors ${msg.feedback === 1 ? 'text-brand-blue font-bold' : ''}`}
                         aria-label="Útil"
                       >
                         👍
@@ -173,7 +173,7 @@ export default function ChatWidget() {
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                   <img
-                    src="/images/MobiVolt-ai-Avalia-solar.png"
+                    src="/images/mobivolt-ai-avaliasolar.png"
                     alt="MobiVolt AI"
                     className="w-full h-full object-cover"
                   />
@@ -193,7 +193,7 @@ export default function ChatWidget() {
                   <button
                     key={i}
                     onClick={() => handleQuickReply(reply)}
-                    className="text-xs text-left bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50 hover:bg-amber-100 dark:hover:bg-amber-950/40 rounded-full px-3.5 py-1.5 transition-all font-medium duration-200"
+                    className="text-xs text-left bg-brand-blue/5 dark:bg-brand-blue/10 text-brand-blue dark:text-brand-blue-light border border-brand-blue/20 dark:border-brand-blue/30 hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-full px-3.5 py-1.5 transition-all font-medium duration-200"
                   >
                     {reply}
                   </button>
@@ -203,7 +203,7 @@ export default function ChatWidget() {
 
             {/* Lead Form inside Messages */}
             {showLeadForm && !hasLeadCaptured && (
-              <div className="bg-amber-50 dark:bg-zinc-800/80 border border-amber-200 dark:border-zinc-700 rounded-2xl p-4 shadow-md space-y-3 animate-in fade-in zoom-in-95">
+              <div className="bg-brand-blue/5 dark:bg-[#0F172A] border border-brand-blue/20 dark:border-zinc-700 rounded-2xl p-4 shadow-md space-y-3 animate-in fade-in zoom-in-95">
                 <div className="text-center space-y-1">
                   <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Consultoria Personalizada Grátis</h4>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Preencha seus dados para receber propostas e orçamentos recomendados.</p>
@@ -215,7 +215,7 @@ export default function ChatWidget() {
                     placeholder="Nome Completo"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -224,7 +224,7 @@ export default function ChatWidget() {
                       placeholder="WhatsApp (com DDD)"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
                     <input
                       type="email"
@@ -232,7 +232,7 @@ export default function ChatWidget() {
                       placeholder="E-mail"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -242,7 +242,7 @@ export default function ChatWidget() {
                       placeholder="Cidade"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="col-span-2 w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="col-span-2 w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
                     <input
                       type="text"
@@ -251,7 +251,7 @@ export default function ChatWidget() {
                       placeholder="UF"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                      className="w-full text-xs px-3 py-2 text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full text-xs px-3 py-2 text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                     />
                   </div>
 
@@ -261,7 +261,7 @@ export default function ChatWidget() {
                       required
                       checked={formData.consent_given}
                       onChange={(e) => setFormData({ ...formData, consent_given: e.target.checked })}
-                      className="mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-zinc-300 dark:border-zinc-700"
+                      className="mt-0.5 rounded text-brand-blue focus:ring-brand-blue border-zinc-300 dark:border-zinc-700"
                     />
                     <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
                       Aceito que a equipe Avalia Solar processe meus dados conforme a LGPD para me conectar com as melhores ofertas.
@@ -270,7 +270,7 @@ export default function ChatWidget() {
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium py-2 rounded-lg text-xs shadow-md transition-colors"
+                    className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue text-white font-medium py-2 rounded-lg text-xs shadow-md transition-colors"
                   >
                     Receber Orçamentos
                   </button>
@@ -296,12 +296,12 @@ export default function ChatWidget() {
               disabled={isLoading || showLeadForm}
               onChange={(e) => setInput(e.target.value)}
               placeholder={showLeadForm ? "Preencha o formulário acima..." : "Escreva sua mensagem..."}
-              className="flex-1 px-4 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading || showLeadForm}
-              className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl p-2 transition-colors disabled:opacity-50 shadow-md shadow-amber-500/10"
+              className="bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl p-2 transition-colors disabled:opacity-50 shadow-md shadow-brand-blue/10"
               aria-label="Enviar mensagem"
             >
               <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,18 +316,18 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-amber-500 bg-white dark:bg-zinc-900 overflow-hidden"
+          className="h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}
           <span className="absolute top-0 right-0 flex h-4 w-4 z-10">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 border-2 border-white dark:border-zinc-900 text-[9px] font-bold items-center justify-center text-white">1</span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-brand-blue border-2 border-white dark:border-zinc-900 text-[9px] font-bold items-center justify-center text-white">1</span>
           </span>
 
           {/* Avatar Image as launcher icon */}
           <img
-            src="/images/MobiVolt-ai-Avalia-solar.png"
+            src="/images/mobivolt-ai-avaliasolar.png"
             alt="MobiVolt AI Avatar"
             className="w-full h-full object-cover rounded-full"
           />
