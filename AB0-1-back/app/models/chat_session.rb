@@ -13,6 +13,7 @@ class ChatSession < ApplicationRecord
 
   validates :visitor_id, presence: true
 
+  before_validation :generate_visitor_id, on: :create
   before_create :set_started_at
 
   scope :recent, -> { order(created_at: :desc) }
@@ -46,5 +47,9 @@ class ChatSession < ApplicationRecord
 
   def set_started_at
     self.started_at ||= Time.current
+  end
+
+  def generate_visitor_id
+    self.visitor_id ||= SecureRandom.uuid
   end
 end
