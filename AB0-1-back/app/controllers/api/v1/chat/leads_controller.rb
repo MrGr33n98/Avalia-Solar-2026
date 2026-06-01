@@ -25,15 +25,24 @@ module Api
             )
           end
 
-          lead = ChatLead.create!(lead_params.merge(
-            chat_session_id: session.id,
-            consent_given: true,
-            consent_given_at: Time.current,
-            source_page: session.source_page,
-            utm_source: session.utm_source,
-            utm_medium: session.utm_medium,
-            utm_campaign: session.utm_campaign
-          ))
+          lead = ChatLead.find_or_initialize_by(chat_session_id: session.id)
+
+          # Impede sobrescrita maligna de dados válidos por campos vazios no submit duplo
+          safe_params = lead_params.to_h.reject do |key, value|
+            lead.respond_to?(key) && lead.send(key).present? && value.blank?
+          end
+
+          lead.assign_attributes(safe_params)
+          
+          # Preenche defaults de sessão apenas se não existirem
+          lead.consent_given = true
+          lead.consent_given_at ||= Time.current
+          lead.source_page ||= session.source_page
+          lead.utm_source ||= session.utm_source
+          lead.utm_medium ||= session.utm_medium
+          lead.utm_campaign ||= session.utm_campaign
+
+          lead.save!
 
           # Extract insights (async-safe)
           ::Chat::InsightExtractionService.extract_from_lead(lead)

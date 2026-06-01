@@ -115,10 +115,23 @@ module Chat
         )
         should_trigger = qualifier_result[:should_trigger_lead]
 
+        # 6.6 CRM Handoff (Middleware)
+        handoff_result = Chat::Agents::CRMHandoffAgent.process(
+          session: @session,
+          user_message: safe_message,
+          router_state: new_router_state,
+          lead_qualification_result: qualifier_result,
+          agent_result: agent_result,
+          context: context
+        )
+
         msg_metadata ||= {}
         msg_metadata.merge!({
           'lead_score' => qualifier_result[:lead_score],
-          'lead_temperature' => qualifier_result[:lead_temperature]
+          'lead_temperature' => qualifier_result[:lead_temperature],
+          'handoff_status' => handoff_result[:lead_status],
+          'handoff_triggered' => handoff_result[:handoff_triggered],
+          'duplicate_prevented' => handoff_result[:duplicate_prevented]
         })
       else
         # Fallback para Lógica Legada de Qualificação
