@@ -86,14 +86,18 @@ export default function ChatWidget() {
           <div className="bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg text-white">
-                  ☀️
+                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
+                  <img
+                    src="/images/MobiVolt-ai-Avalia-solar.png"
+                    alt="MobiVolt AI Avatar"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full"></span>
               </div>
               <div>
-                <h3 className="font-semibold text-sm tracking-wide">Assistente Avalia Solar</h3>
-                <span className="text-xs text-white/80">Online • Respostas Instantâneas</span>
+                <h3 className="font-semibold text-sm tracking-wide">MobiVolt AI</h3>
+                <span className="text-xs text-white/80">Online • Assistente Avalia Solar</span>
               </div>
             </div>
             <button
@@ -118,47 +122,67 @@ export default function ChatWidget() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1`}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-2`}
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
-                    msg.role === 'user'
-                      ? 'bg-amber-500 text-white rounded-tr-none'
-                      : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-200/50 dark:border-zinc-700 rounded-tl-none'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                </div>
-
-                {/* Feedback Option for AI replies */}
-                {msg.role === 'assistant' && msg.id && (
-                  <div className="flex items-center space-x-2 px-1 text-xs text-zinc-400 dark:text-zinc-500">
-                    <span>Esta resposta foi útil?</span>
-                    <button
-                      onClick={() => sendFeedback(msg.id, 1)}
-                      className={`hover:text-amber-500 transition-colors ${msg.feedback === 1 ? 'text-amber-500 font-bold' : ''}`}
-                      aria-label="Útil"
-                    >
-                      👍
-                    </button>
-                    <button
-                      onClick={() => sendFeedback(msg.id, -1)}
-                      className={`hover:text-red-500 transition-colors ${msg.feedback === -1 ? 'text-red-500 font-bold' : ''}`}
-                      aria-label="Não útil"
-                    >
-                      👎
-                    </button>
+                {msg.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
+                    <img
+                      src="/images/MobiVolt-ai-Avalia-solar.png"
+                      alt="MobiVolt AI"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
+                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1 max-w-[80%]`}>
+                  <div
+                    className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                      msg.role === 'user'
+                        ? 'bg-amber-500 text-white rounded-tr-none'
+                        : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-200/50 dark:border-zinc-700 rounded-tl-none'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+
+                  {/* Feedback Option for AI replies */}
+                  {msg.role === 'assistant' && msg.id && (
+                    <div className="flex items-center space-x-2 px-1 text-xs text-zinc-400 dark:text-zinc-500">
+                      <span>Esta resposta foi útil?</span>
+                      <button
+                        onClick={() => sendFeedback(msg.id, 1)}
+                        className={`hover:text-amber-500 transition-colors ${msg.feedback === 1 ? 'text-amber-500 font-bold' : ''}`}
+                        aria-label="Útil"
+                      >
+                        👍
+                      </button>
+                      <button
+                        onClick={() => sendFeedback(msg.id, -1)}
+                        className={`hover:text-red-500 transition-colors ${msg.feedback === -1 ? 'text-red-500 font-bold' : ''}`}
+                        aria-label="Não útil"
+                      >
+                        👎
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
 
             {/* Typing Indicator */}
             {isLoading && (
-              <div className="flex items-center space-x-2 bg-white dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80px] shadow-sm">
-                <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce"></span>
-                <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              <div className="flex justify-start items-start space-x-2">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
+                  <img
+                    src="/images/MobiVolt-ai-Avalia-solar.png"
+                    alt="MobiVolt AI"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex items-center space-x-2 bg-white dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80px] shadow-sm">
+                  <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                </div>
               </div>
             )}
 
@@ -292,29 +316,21 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative"
+          className="h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-amber-500 bg-white dark:bg-zinc-900 overflow-hidden"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+          <span className="absolute top-0 right-0 flex h-4 w-4 z-10">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 border-2 border-white dark:border-zinc-900 text-[9px] font-bold items-center justify-center text-white">1</span>
           </span>
 
-          {/* Icon */}
-          <svg
-            className="w-7 h-7 animate-in fade-in duration-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+          {/* Avatar Image as launcher icon */}
+          <img
+            src="/images/MobiVolt-ai-Avalia-solar.png"
+            alt="MobiVolt AI Avatar"
+            className="w-full h-full object-cover rounded-full"
+          />
         </button>
       )}
     </div>
