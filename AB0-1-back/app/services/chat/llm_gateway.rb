@@ -34,7 +34,7 @@ module Chat
       new.call(messages: messages, context: context, model: model)
     end
 
-    def call(messages:, context: nil, model: nil)
+    def call(messages:, context: nil, model: nil, is_fallback: false)
       api_key = ENV.fetch('AI_API_KEY', nil)
       unless api_key.present?
         Rails.logger.warn('[Chat::LlmGateway] AI_API_KEY not configured')
@@ -44,7 +44,7 @@ module Chat
       provider = ENV.fetch('AI_PROVIDER', 'openai').to_s.downcase
       base_url = ENV.fetch('AI_BASE_URL', provider == 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1')
       
-      model_name = model || ENV.fetch('AI_MODEL', DEFAULT_MODEL)
+      model_name = model || (is_fallback ? ENV.fetch('AI_FALLBACK_MODEL', DEFAULT_MODEL) : ENV.fetch('AI_MODEL', DEFAULT_MODEL))
       system_content = context.present? ? "#{SYSTEM_PROMPT}\n\nCONTEXTO ATUAL:\n#{context}" : SYSTEM_PROMPT
 
       payload = {
@@ -89,7 +89,7 @@ module Chat
 
         if content.blank?
           Rails.logger.error("[Chat::LlmGateway] Empty response content from API")
-          return fallback_response(latency_ms: latency_ms)
+          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms)
         end
 
         {
@@ -101,16 +101,26 @@ module Chat
         }
       else
         handle_error_response(response, latency_ms)
+        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms)
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
-      fallback_response
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback)
     rescue StandardError => e
       Rails.logger.error("[Chat::LlmGateway] Error: #{e.class} - #{e.message}")
-      fallback_response
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback)
     end
 
     private
+
+    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil)
+      fallback_model = ENV.fetch('AI_FALLBACK_MODEL', nil)
+      if !is_fallback && fallback_model.present?
+        Rails.logger.warn("[Chat::LlmGateway] Call failed. Retrying with fallback model: #{fallback_model}")
+        return call(messages: messages, context: context, model: fallback_model, is_fallback: true)
+      end
+      fallback_response(latency_ms: latency_ms)
+    end
 
     def handle_error_response(response, latency_ms)
       case response.code
@@ -123,7 +133,6 @@ module Chat
       else
         Rails.logger.error("[Chat::LlmGateway] API error: #{response.code} - #{response.body}")
       end
-      fallback_response(latency_ms: latency_ms)
     end
 
     def fallback_response(latency_ms: nil)
@@ -137,4 +146,5 @@ module Chat
     end
   end
 end
+
 
