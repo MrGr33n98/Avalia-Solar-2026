@@ -110,32 +110,38 @@ export default function ChatWidget() {
     setSelectedCompanyForQuote(companyId);
     setShowLeadForm(true);
     
-    posthog.capture('mobivolt_quote_request_clicked', {
-      session_id: messages[0]?.id,
-      company_id: companyId
-    });
+    try {
+      posthog.capture('mobivolt_quote_request_clicked', {
+        session_id: messages[0]?.id,
+        company_id: companyId
+      });
 
-    posthog.capture('mobivolt_lead_optin_started', {
-      session_id: messages[0]?.id,
-      company_id: companyId
-    });
+      posthog.capture('mobivolt_lead_optin_started', {
+        session_id: messages[0]?.id,
+        company_id: companyId
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Ao clicar no botão "Comparar"
   const handleCompare = (companyId: number) => {
     setComparedCompanyIds(prev => {
-      const next = prev.includes(companyId) 
+      return prev.includes(companyId) 
         ? prev.filter(id => id !== companyId)
         : [...prev, companyId];
-      
+    });
+    
+    try {
       posthog.capture('mobivolt_compare_clicked', {
         session_id: messages[0]?.id,
         company_id: companyId,
-        is_comparing: next.includes(companyId)
+        is_comparing: !comparedCompanyIds.includes(companyId)
       });
-      
-      return next;
-    });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {

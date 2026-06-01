@@ -7,22 +7,31 @@ const MOBIVOLT_SPONSORED_CARDS_ENABLED = true;
 const MOBIVOLT_CARD_WHATSAPP_ENABLED = false;
 const MOBIVOLT_COMPARE_BUTTON_ENABLED = true;
 
-const normalizeCompanyRecommendation = (company: any) => ({
-  id: typeof company?.id === 'number' ? company.id : null,
-  name: company?.name || company?.nome || 'Empresa recomendada',
-  city: company?.city || company?.cidade || '',
-  state: company?.state || company?.estado || '',
-  logo_url: company?.logo_url || company?.image || company?.logo || company?.image_url || company?.avatar || null,
-  sponsored: company?.sponsored ?? company?.patrocinada ?? false,
-  verified: company?.verified ?? company?.verificada ?? false,
-  rating_avg: company?.rating_avg ?? company?.nota_media,
-  rating_count: company?.rating_count ?? company?.total_avaliacoes ?? 0,
-  services: Array.isArray(company?.services) ? company.services : (Array.isArray(company?.servicos) ? company.servicos : []),
-  review_snippet: company?.review_snippet,
-  profile_url: company?.profile_url || company?.link_perfil,
-  slug: company?.slug,
-  whatsapp: company?.whatsapp
-});
+const normalizeCompanyRecommendation = (company: any) => {
+  let cid = null;
+  if (typeof company?.id === 'number') {
+    cid = company.id;
+  } else if (typeof company?.id === 'string') {
+    cid = parseInt(company.id, 10);
+  }
+
+  return {
+    id: cid,
+    name: company?.name || company?.nome || 'Empresa recomendada',
+    city: company?.city || company?.cidade || '',
+    state: company?.state || company?.estado || '',
+    logo_url: company?.logo_url || company?.image || company?.logo || company?.image_url || company?.avatar || null,
+    sponsored: company?.sponsored ?? company?.patrocinada ?? false,
+    verified: company?.verified ?? company?.verificada ?? false,
+    rating_avg: company?.rating_avg ?? company?.nota_media,
+    rating_count: company?.rating_count ?? company?.total_avaliacoes ?? 0,
+    services: Array.isArray(company?.services) ? company.services : (Array.isArray(company?.servicos) ? company.servicos : []),
+    review_snippet: company?.review_snippet,
+    profile_url: company?.profile_url || company?.link_perfil,
+    slug: company?.slug,
+    whatsapp: company?.whatsapp
+  };
+};
 
 export interface ChatCompanyRecommendationsProps {
   metadata: any;

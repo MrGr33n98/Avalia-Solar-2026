@@ -27,7 +27,8 @@ module Chat
           recommendation_score: @company.respond_to?(:calculate_ranking_score) ? @company.calculate_ranking_score.to_f.round(2) : nil,
           recommendation_reason: build_recommendation_reason,
           servicos: Array(@company.services_offered),
-          nichos: Array(@company.niche_tags)
+          nichos: Array(@company.niche_tags),
+          logo_url: @company.respond_to?(:logo_url) ? @company.logo_url : nil
         }
       rescue StandardError => e
         Rails.logger.error("[Chat::Mobivolt::SafeCompanySerializer] Error serializing company #{@company&.id}: #{e.message}")
