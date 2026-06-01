@@ -15,6 +15,7 @@ module Chat
         return {} if @company.nil?
 
         {
+          id: @company.id,
           nome: @company.name,
           cidade: @company.city,
           estado: @company.state,

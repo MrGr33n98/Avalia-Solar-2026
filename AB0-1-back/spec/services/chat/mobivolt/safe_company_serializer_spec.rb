@@ -26,6 +26,7 @@ RSpec.describe Chat::Mobivolt::SafeCompanySerializer, type: :service do
     subject(:serialized) { described_class.serialize(company) }
 
     it 'inclui campos públicos e estruturados permitidos' do
+      expect(serialized).to include(id: company.id)
       expect(serialized[:nome]).to eq('Instalador Premium')
       expect(serialized[:cidade]).to eq('São Paulo')
       expect(serialized[:estado]).to eq('SP')

@@ -11,6 +11,23 @@ const MOBIVOLT_SPONSORED_CARDS_ENABLED = true;
 const MOBIVOLT_CARD_WHATSAPP_ENABLED = false;
 const MOBIVOLT_COMPARE_BUTTON_ENABLED = true;
 
+const normalizeCompanyRecommendation = (company: any) => ({
+  id: typeof company?.id === 'number' ? company.id : null,
+  name: company?.name || company?.nome || 'Empresa recomendada',
+  city: company?.city || company?.cidade || '',
+  state: company?.state || company?.estado || '',
+  logo_url: company?.logo_url || null,
+  sponsored: company?.sponsored ?? company?.patrocinada ?? false,
+  verified: company?.verified ?? company?.verificada ?? false,
+  rating_avg: company?.rating_avg ?? company?.nota_media,
+  rating_count: company?.rating_count ?? company?.total_avaliacoes ?? 0,
+  services: company?.services || company?.servicos || [],
+  review_snippet: company?.review_snippet,
+  profile_url: company?.profile_url || company?.link_perfil,
+  slug: company?.slug,
+  whatsapp: company?.whatsapp
+});
+
 export default function ChatWidget() {
   const {
     isOpen,
@@ -143,7 +160,9 @@ export default function ChatWidget() {
     if (!formData.consent_given) return;
 
     // Compila os metadados de RAG, cliques e LGPD
-    const allRecommendedCompanyIds = messages.flatMap(m => m.metadata?.companies?.map((c: any) => c.id) || []);
+    const allRecommendedCompanyIds = messages
+      .flatMap(m => m.metadata?.companies?.map((c: any) => c.id) || [])
+      .filter((id): id is number => typeof id === 'number');
     
     const enrichedMetadata = {
       recommended_company_ids: allRecommendedCompanyIds,
@@ -263,9 +282,13 @@ export default function ChatWidget() {
                           </div>
                         ) : (
                           /* Lista de Empresas Recomendadas */
-                          msg.metadata.companies.map((company: any) => (
+                          msg.metadata.companies.map((rawCompany: any, companyIndex: number) => {
+                            const company = normalizeCompanyRecommendation(rawCompany);
+                            const trackableCompanyId = company.id;
+
+                            return (
                             <div
-                              key={company.id}
+                              key={company.id ?? `${company.name}-${companyIndex}`}
                               className={`p-3.5 rounded-xl border transition-all duration-200 bg-white dark:bg-zinc-900 ${
                                 company.sponsored && MOBIVOLT_SPONSORED_CARDS_ENABLED
                                   ? 'border-amber-400 dark:border-amber-500 shadow-md relative overflow-hidden bg-gradient-to-br from-amber-50/10 to-transparent dark:from-amber-950/10'
@@ -366,48 +389,51 @@ export default function ChatWidget() {
                               {/* Ações Comerciais do Card */}
                               <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
                                 <a
-                                  href={company.profile_url || `/companies/${company.slug}`}
+                                  href={company.profile_url || (company.slug ? `/companies/${company.slug}` : '/companies')}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  onClick={() => handleCompanyClick(company.id, 'profile')}
+                                  onClick={() => trackableCompanyId !== null && handleCompanyClick(trackableCompanyId, 'profile')}
                                   className="flex items-center justify-center text-[10px] font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 py-1.5 rounded-lg transition-colors cursor-pointer text-center"
                                 >
                                   Ver Perfil
                                 </a>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRequestQuote(company.id)}
-                                  className="flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue py-1.5 rounded-lg shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                                >
-                                  Quero Orçamento
-                                </button>
-
-                                {MOBIVOLT_CARD_WHATSAPP_ENABLED && company.whatsapp && (
+                                {trackableCompanyId !== null && (
                                   <button
                                     type="button"
-                                    onClick={() => handleCompanyClick(company.id, 'whatsapp')}
+                                    onClick={() => handleRequestQuote(trackableCompanyId)}
+                                    className="flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue py-1.5 rounded-lg shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                  >
+                                    Quero Orçamento
+                                  </button>
+                                )}
+
+                                {MOBIVOLT_CARD_WHATSAPP_ENABLED && trackableCompanyId !== null && company.whatsapp && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCompanyClick(trackableCompanyId, 'whatsapp')}
                                     className="col-span-2 flex items-center justify-center text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 py-1.5 rounded-lg transition-colors shadow-sm"
                                   >
                                     WhatsApp
                                   </button>
                                 )}
 
-                                {MOBIVOLT_COMPARE_BUTTON_ENABLED && (
+                                {MOBIVOLT_COMPARE_BUTTON_ENABLED && trackableCompanyId !== null && (
                                   <button
                                     type="button"
-                                    onClick={() => handleCompare(company.id)}
+                                    onClick={() => handleCompare(trackableCompanyId)}
                                     className={`col-span-2 flex items-center justify-center text-[10px] font-bold border py-1.5 rounded-lg transition-colors ${
-                                      comparedCompanyIds.includes(company.id)
+                                      comparedCompanyIds.includes(trackableCompanyId)
                                         ? 'border-brand-blue text-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10 dark:border-brand-blue'
                                         : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
                                     }`}
                                   >
-                                    {comparedCompanyIds.includes(company.id) ? '✓ Comparando' : 'Comparar Instalador'}
+                                    {comparedCompanyIds.includes(trackableCompanyId) ? '✓ Comparando' : 'Comparar Instalador'}
                                   </button>
                                 )}
                               </div>
                             </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     )}
