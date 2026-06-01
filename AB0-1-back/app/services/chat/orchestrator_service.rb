@@ -60,14 +60,24 @@ module Chat
       track_response_event(assistant_msg, llm_response)
 
       # 10. Return response
+      commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
+      should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+
       {
         message: {
+          id: user_msg.id,
+          role: 'user',
+          content: user_msg.content,
+          created_at: user_msg.created_at
+        },
+        response: {
           id: assistant_msg.id,
           role: 'assistant',
-          content: llm_response[:content],
+          content: assistant_msg.content,
           intent_detected: intent,
           created_at: assistant_msg.created_at
         },
+        should_trigger_lead: should_trigger,
         session: {
           id: @session.id,
           message_count: @session.message_count

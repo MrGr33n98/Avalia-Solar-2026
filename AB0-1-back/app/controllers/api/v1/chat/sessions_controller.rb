@@ -30,10 +30,13 @@ module Api
           )
 
           render json: {
-            id: session.id,
-            visitor_id: session.visitor_id,
-            status: session.status,
-            started_at: session.started_at
+            session: {
+              id: session.id,
+              visitor_id: session.visitor_id,
+              status: session.status,
+              started_at: session.started_at
+            },
+            messages: []
           }, status: :created
         end
 
