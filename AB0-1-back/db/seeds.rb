@@ -1,4 +1,4 @@
-﻿# db/seeds.rb
+# db/seeds.rb
 # Seed único, idempotente e seguro para Avalia Solar (reviews-only)
 # - Mobilidade Elétrica sempre em primeiro (hub principal)
 # - Energia Solar como segundo hub forte

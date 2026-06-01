@@ -72,14 +72,14 @@ module Seeds
       company.moderation_status = 'approved' if company.respond_to?(:moderation_status=)
       company.featured = true if company.respond_to?(:featured=) && company.featured.nil?
 
-      company.save!
-
       blueprint[:company_category_seo_urls].each do |seo_url|
         category = Category.find_by(seo_url: seo_url)
         next unless category
 
-        company.categories << category unless company.categories.exists?(category.id)
+        company.categories << category unless company.categories.include?(category)
       end
+
+      company.save!
 
       company
     end
