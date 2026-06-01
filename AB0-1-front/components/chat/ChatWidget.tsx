@@ -9,6 +9,7 @@ import { posthog } from '@/lib/posthog';
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
 
 import ChatCompanyRecommendations from './ChatCompanyRecommendations';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export default function ChatWidget() {
   const {
@@ -240,7 +241,13 @@ export default function ChatWidget() {
                         : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-200/50 dark:border-zinc-700 rounded-tl-none'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <div className="max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600">
+                      {msg.role === 'assistant' ? (
+                        <MarkdownRenderer content={msg.content} />
+                      ) : (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                    </div>
 
                     {/* Renderiza Cards de Empresas recomendadas pelo MobiVolt AI */}
                     {MOBIVOLT_COMPANY_CARDS_ENABLED && msg.role === 'assistant' && msg.metadata?.type === 'company_recommendations' && (

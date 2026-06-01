@@ -40,7 +40,24 @@ module Chat
       )
 
       # 6. Detect intent from response
-      intent = detect_intent(safe_message, llm_response[:content])
+      old_intent = detect_intent(safe_message, llm_response[:content])
+
+      intent_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_ENABLED', 'false'))
+      shadow_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_SHADOW_ENABLED', 'false'))
+
+      if intent_enabled || shadow_enabled
+        new_router_state = Chat::IntentRouterService.route(safe_message, @session)
+        track_intent_router_events(new_router_state, old_intent)
+      end
+
+      if intent_enabled
+        intent = new_router_state[:intent]
+        should_trigger = new_router_state[:should_trigger_lead]
+      else
+        intent = old_intent
+        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
+        should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+      end
 
       # Recupera o payload de recomendações salvo temporariamente na sessão
       msg_metadata = {}
@@ -69,8 +86,7 @@ module Chat
       track_response_event(assistant_msg, llm_response, context)
 
       # 10. Return response
-      commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
-      should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+      # should_trigger was already determined at step 6
 
       {
         message: {
@@ -188,6 +204,56 @@ module Chat
       end
     rescue StandardError => e
       Rails.logger.warn("[Chat::Orchestrator] PostHog tracking failed: #{e.message}")
+    end
+
+    def track_intent_router_events(router_state, old_intent)
+      Chat::PosthogTrackingService.track(
+        event: 'mobivolt_intent_router_evaluated',
+        properties: {
+          session_id: @session.id,
+          new_intent: router_state[:intent],
+          confidence_score: router_state[:confidence_score],
+          vertical: router_state[:vertical],
+          urgency: router_state[:urgency]
+        }
+      )
+
+      # Mapeamento para divergência (heurística simples, já que nomes mudaram na refatoração)
+      # Exemplo: 'solar_quote' antigo corresponde a 'lead_qualification'
+      mapped_old_intent = case old_intent
+                          when 'solar_quote' then 'lead_qualification'
+                          when 'solar_financing' then 'financing_question'
+                          when 'solar_maintenance' then 'solar_support'
+                          when 'compare_companies' then 'proposal_analysis' # aproximado
+                          when 'general_question' then 'fallback' # aproximado
+                          else old_intent
+                          end
+
+      is_divergent = mapped_old_intent.to_s != router_state[:intent].to_s
+      if is_divergent
+        Chat::PosthogTrackingService.track(
+          event: 'mobivolt_intent_router_divergence',
+          properties: {
+            session_id: @session.id,
+            old_intent: old_intent,
+            new_intent: router_state[:intent]
+          }
+        )
+      end
+
+      if router_state[:fallback_triggered]
+        Chat::PosthogTrackingService.track(
+          event: 'mobivolt_intent_router_fallback',
+          properties: {
+            session_id: @session.id
+          }
+        )
+      end
+    rescue StandardError => e
+      Chat::PosthogTrackingService.track(
+        event: 'mobivolt_intent_router_error',
+        properties: { error_message: e.message, session_id: @session.id }
+      )
     end
   end
 end

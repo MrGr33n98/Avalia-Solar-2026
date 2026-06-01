@@ -12,7 +12,7 @@ const normalizeCompanyRecommendation = (company: any) => ({
   name: company?.name || company?.nome || 'Empresa recomendada',
   city: company?.city || company?.cidade || '',
   state: company?.state || company?.estado || '',
-  logo_url: company?.logo_url || null,
+  logo_url: company?.logo_url || company?.image || company?.logo || company?.image_url || company?.avatar || null,
   sponsored: company?.sponsored ?? company?.patrocinada ?? false,
   verified: company?.verified ?? company?.verificada ?? false,
   rating_avg: company?.rating_avg ?? company?.nota_media,

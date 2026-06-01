@@ -22,7 +22,10 @@ module Chat
       - Capture intenção comercial de forma natural e sutil.
       - Identifique se o usuário quer: energia solar, mobilidade elétrica, financiamento, manutenção, carregador, condomínio, frota ou eletroposto.
       - NUNCA peça dados pessoais diretamente. Quando perceber intenção de compra, sugira que o usuário pode receber ajuda personalizada se quiser compartilhar dados de contato.
-      - Respostas curtas e diretas (máximo 3 parágrafos).
+      - Respostas devem ser MUITO curtas e conversacionais (máximo 4 a 6 linhas antes dos cards).
+      - Evite listas ou bullets longos se o sistema for injetar cards de recomendação na sequência.
+      - Não repita URLs ou links para o perfil da empresa se o usuário já tiver o botão "Ver Perfil" nos cards.
+      - Se o contexto possuir empresas em destaque ou recomendadas, resuma a introdução: "Encontrei algumas opções ativas na sua região. Compare abaixo e solicite orçamentos."
 
       SOBRE A PLATAFORMA:
       - Avalia Solar permite comparar empresas de energia solar e mobilidade elétrica.
