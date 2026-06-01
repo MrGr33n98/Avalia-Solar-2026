@@ -31,6 +31,7 @@ module Chat
       location = extract_location
       
       trigger_lead = should_trigger_lead?(intent, urgency)
+      next_agent = intent == 'company_recommendation' ? 'company_recommendation' : intent
 
       {
         intent: intent,
@@ -38,7 +39,7 @@ module Chat
         vertical: detect_vertical(intent),
         location: location,
         urgency: urgency,
-        next_agent: intent,
+        next_agent: next_agent,
         should_trigger_lead: trigger_lead,
         fallback_triggered: intent == 'fallback'
       }

@@ -65,5 +65,46 @@ RSpec.describe Chat::OrchestratorService do
         expect(result[:should_trigger_lead]).to be true
       end
     end
+
+    context 'when MOBIVOLT_AGENTS_ENABLED is true' do
+      before do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('MOBIVOLT_INTENT_ROUTER_ENABLED', 'false').and_return('true')
+        allow(ENV).to receive(:fetch).with('MOBIVOLT_AGENTS_ENABLED', 'false').and_return('true')
+        
+        # Mock Intent Router to return company_recommendation
+        allow(Chat::IntentRouterService).to receive(:route).and_return({
+          intent: 'company_recommendation',
+          next_agent: 'company_recommendation',
+          should_trigger_lead: false,
+          fallback_triggered: false,
+          confidence_score: 0.9,
+          vertical: 'solar',
+          urgency: 'low'
+        })
+        
+        # Mock Agent
+        allow(Chat::Agents::CompanyRecommendationAgent).to receive(:process).and_return({
+          content: 'Agente Recomendando...',
+          metadata: { 'type' => 'company_recommendations', 'companies' => [] },
+          intent: 'company_recommendation',
+          next_agent: 'company_recommendation',
+          success: true,
+          should_trigger_lead: false,
+          fallback_triggered: false,
+          error: nil
+        })
+      end
+
+      it 'dispatches to CompanyRecommendationAgent and skips LLMGateway' do
+        expect(Chat::LlmGateway).not_to receive(:call)
+        expect(Chat::Agents::CompanyRecommendationAgent).to receive(:process)
+        expect(Chat::PosthogTrackingService).to receive(:track).with(hash_including(event: 'mobivolt_agent_invoked')).at_least(:once)
+        
+        result = service.process(user_message)
+        expect(result[:response][:content]).to eq('Agente Recomendando...')
+        expect(result[:response][:intent_detected]).to eq('company_recommendation')
+      end
+    end
   end
 end

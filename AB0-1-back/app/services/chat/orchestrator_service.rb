@@ -33,47 +33,92 @@ module Chat
       # 4. Get context from retrieval service (MVP: simple DB lookup)
       context = Chat::RetrievalService.context_for(@session)
 
-      # 5. Call LLM
-      llm_response = Chat::LlmGateway.call(
-        messages: history,
-        context: context
-      )
-
-      # 6. Detect intent from response
-      old_intent = detect_intent(safe_message, llm_response[:content])
-
+      # 5. Intent Router
+      old_intent = detect_intent(safe_message, "") # Mocking llm response
       intent_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_ENABLED', 'false'))
       shadow_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_SHADOW_ENABLED', 'false'))
+      agents_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_AGENTS_ENABLED', 'false'))
 
-      if intent_enabled || shadow_enabled
+      if intent_enabled || shadow_enabled || agents_enabled
         new_router_state = Chat::IntentRouterService.route(safe_message, @session)
         track_intent_router_events(new_router_state, old_intent)
-      end
-
-      if intent_enabled
-        intent = new_router_state[:intent]
-        should_trigger = new_router_state[:should_trigger_lead]
       else
-        intent = old_intent
-        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
-        should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+        new_router_state = { intent: old_intent, should_trigger_lead: false, next_agent: nil }
       end
 
-      # Recupera o payload de recomendações salvo temporariamente na sessão
-      msg_metadata = {}
+      # 6. Agentes ou Legacy
+      if agents_enabled && new_router_state[:next_agent] == 'company_recommendation'
+        agent_result = Chat::Agents::CompanyRecommendationAgent.process(
+          session: @session,
+          user_message: safe_message,
+          router_state: new_router_state,
+          context: context
+        )
+
+        intent = agent_result[:intent]
+        should_trigger = agent_result[:should_trigger_lead]
+        llm_content = agent_result[:content]
+        msg_metadata = agent_result[:metadata]
+        llm_model = 'mobivolt-agent'
+        llm_token_count = 0
+        llm_latency_ms = 0
+        llm_success = agent_result[:success]
+
+        llm_response = {
+          content: llm_content,
+          model: llm_model,
+          token_count: llm_token_count,
+          latency_ms: llm_latency_ms,
+          success: llm_success
+        }
+
+        # PostHog Agent Tracking
+        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked', properties: { session_id: @session.id, agent: 'company_recommendation' })
+        if agent_result[:fallback_triggered]
+          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback', properties: { session_id: @session.id, agent: 'company_recommendation' })
+        end
+        if msg_metadata['companies']&.empty?
+          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_empty', properties: { session_id: @session.id })
+        else
+          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_success', properties: { session_id: @session.id })
+        end
+
+      else
+        # Fluxo Clássico (LlmGateway)
+        llm_response = Chat::LlmGateway.call(messages: history, context: context)
+        llm_content = llm_response[:content]
+        llm_model = llm_response[:model]
+        llm_token_count = llm_response[:token_count]
+        llm_latency_ms = llm_response[:latency_ms]
+        llm_success = llm_response[:success]
+
+        if intent_enabled
+          intent = new_router_state[:intent]
+          should_trigger = new_router_state[:should_trigger_lead]
+        else
+          intent = old_intent
+          commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
+          should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+        end
+
+        msg_metadata = {}
+        if @session.metadata['last_recommendation_payload'].present?
+          msg_metadata = @session.metadata['last_recommendation_payload']
+        end
+      end
+
+      # 6.5 Cleanup incondicional de payload obsoleto na sessão (evita memory leak no DB)
       if @session.metadata['last_recommendation_payload'].present?
-        msg_metadata = @session.metadata['last_recommendation_payload']
-        # Limpa o payload da sessão
         @session.update!(metadata: @session.metadata.except('last_recommendation_payload'))
       end
 
       # 7. Save assistant message
       assistant_msg = @session.chat_messages.create!(
         role: 'assistant',
-        content: llm_response[:content],
-        model: llm_response[:model],
-        token_count: llm_response[:token_count],
-        latency_ms: llm_response[:latency_ms],
+        content: llm_content,
+        model: llm_model,
+        token_count: llm_token_count,
+        latency_ms: llm_latency_ms,
         safety_status: 'clean',
         intent_detected: intent,
         metadata: msg_metadata
