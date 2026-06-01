@@ -18,6 +18,19 @@ module Chat
             if dynamic_context.present?
               parts << dynamic_context
               dynamic_success = true
+              
+              # Salva o payload estruturado para que o OrchestratorService possa anexar à mensagem
+              if payload[:empresas_encontradas]&.any?
+                session.update!(
+                  metadata: (session.metadata || {}).merge(
+                    'last_recommendation_payload' => {
+                      'type' => 'company_recommendations',
+                      'source' => 'mobivolt_ai',
+                      'companies' => payload[:empresas_encontradas]
+                    }
+                  )
+                )
+              end
             end
           end
         rescue StandardError => e

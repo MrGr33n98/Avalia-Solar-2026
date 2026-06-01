@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_01_040411) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -1613,14 +1613,40 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
     t.bigint "category_id"
     t.integer "cached_score", default: 0
     t.string "score_band"
+    t.bigint "chat_lead_id"
+    t.bigint "chat_session_id"
+    t.string "source", default: "portal", null: false
+    t.jsonb "recommended_company_ids", default: [], null: false
+    t.bigint "clicked_company_id"
+    t.bigint "quote_requested_company_id"
+    t.bigint "whatsapp_clicked_company_id"
+    t.jsonb "comparison_company_ids", default: [], null: false
+    t.string "intent_type"
+    t.string "vertical"
+    t.string "qualification_level"
+    t.integer "lead_score"
+    t.text "ai_summary"
+    t.string "next_best_action"
+    t.text "initial_question"
+    t.text "last_user_message"
+    t.string "source_page_url"
+    t.string "lgpd_consent_version"
+    t.datetime "lgpd_consent_at"
+    t.text "lgpd_consent_text"
     t.index ["category_id"], name: "index_leads_on_category_id"
+    t.index ["chat_lead_id"], name: "index_leads_on_chat_lead_id"
+    t.index ["chat_session_id"], name: "index_leads_on_chat_session_id"
+    t.index ["clicked_company_id"], name: "index_leads_on_clicked_company_id"
     t.index ["company_id", "created_at"], name: "index_leads_on_company_id_and_created_at", order: { created_at: :desc }
     t.index ["company_id", "utm_campaign"], name: "index_leads_on_company_id_and_utm_campaign"
     t.index ["company_id", "wizard_status", "created_at"], name: "index_leads_on_company_id_and_wizard_status_and_created_at"
     t.index ["company_id"], name: "index_leads_on_company_id"
     t.index ["created_at"], name: "index_leads_on_created_at"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["quote_requested_company_id"], name: "index_leads_on_quote_requested_company_id"
+    t.index ["recommended_company_ids"], name: "index_leads_on_recommended_company_ids", using: :gin
     t.index ["score_band"], name: "index_leads_on_score_band"
+    t.index ["source"], name: "index_leads_on_source"
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
@@ -1765,7 +1791,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigserial "id", null: false
+    t.bigint "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1
@@ -2293,6 +2319,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
   add_foreign_key "lead_wizard_versions", "categories"
   add_foreign_key "lead_wizard_versions", "companies"
   add_foreign_key "leads", "categories"
+  add_foreign_key "leads", "chat_leads"
+  add_foreign_key "leads", "chat_sessions"
   add_foreign_key "leads", "companies"
   add_foreign_key "notifications", "users"
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"

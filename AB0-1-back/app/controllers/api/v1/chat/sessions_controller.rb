@@ -43,7 +43,7 @@ module Api
         # GET /api/v1/chat/sessions/:id
         def show
           session = ChatSession.find(params[:id])
-          messages = session.chat_messages.chronological.select(:id, :role, :content, :intent_detected, :created_at)
+          messages = session.chat_messages.chronological.select(:id, :role, :content, :intent_detected, :metadata, :created_at)
 
           render json: {
             id: session.id,

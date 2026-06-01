@@ -42,6 +42,14 @@ module Chat
       # 6. Detect intent from response
       intent = detect_intent(safe_message, llm_response[:content])
 
+      # Recupera o payload de recomendações salvo temporariamente na sessão
+      msg_metadata = {}
+      if @session.metadata['last_recommendation_payload'].present?
+        msg_metadata = @session.metadata['last_recommendation_payload']
+        # Limpa o payload da sessão
+        @session.update!(metadata: @session.metadata.except('last_recommendation_payload'))
+      end
+
       # 7. Save assistant message
       assistant_msg = @session.chat_messages.create!(
         role: 'assistant',
@@ -50,7 +58,8 @@ module Chat
         token_count: llm_response[:token_count],
         latency_ms: llm_response[:latency_ms],
         safety_status: 'clean',
-        intent_detected: intent
+        intent_detected: intent,
+        metadata: msg_metadata
       )
 
       # 8. Update session
@@ -75,6 +84,7 @@ module Chat
           role: 'assistant',
           content: assistant_msg.content,
           intent_detected: intent,
+          metadata: assistant_msg.metadata,
           created_at: assistant_msg.created_at
         },
         should_trigger_lead: should_trigger,

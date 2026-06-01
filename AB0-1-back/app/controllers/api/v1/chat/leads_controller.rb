@@ -38,6 +38,25 @@ module Api
           # Extract insights (async-safe)
           ::Chat::InsightExtractionService.extract_from_lead(lead)
 
+          # Sincroniza para a tabela principal de Leads (Lead Sync v2)
+          if ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_LEAD_SYNC_ENABLED', 'true'))
+            begin
+              ::Chat::Mobivolt::LeadSyncJob.perform_later(lead.id)
+              
+              # Dispara evento analítico PostHog informando que o lead foi salvo localmente
+              ::Chat::PosthogTrackingService.track(
+                event: 'mobivolt_lead_saved',
+                distinct_id: session.visitor_id,
+                properties: {
+                  chat_lead_id: lead.id,
+                  session_id: session.id
+                }
+              )
+            rescue StandardError => e
+              Rails.logger.error("[Chat::LeadsController] Failed to enqueue sync job: #{e.message}")
+            end
+          end
+
           # Track PostHog
           ::Chat::PosthogTrackingService.track(
             event: 'chat_lead_created',
@@ -76,7 +95,8 @@ module Api
             :urgency, :decision_timeline, :decision_role,
             :property_type, :company_size,
             :summary, :recommended_next_action,
-            pain_points: [], objections: []
+            pain_points: [], objections: [],
+            metadata: {}
           )
         end
       end

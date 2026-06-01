@@ -10,6 +10,7 @@ export interface ChatMessage {
   intent_detected?: string;
   latency_ms?: number;
   feedback?: number;
+  metadata?: any;
   created_at: string;
 }
 
@@ -195,6 +196,7 @@ export function useChatSession() {
     city?: string;
     state?: string;
     consent_given: boolean;
+    metadata?: any;
   }) => {
     if (!session) return false;
 
