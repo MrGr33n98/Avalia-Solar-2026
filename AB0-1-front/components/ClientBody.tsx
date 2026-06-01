@@ -154,7 +154,7 @@ export default function ClientBody({
               <SignupGateModalHost />
               <Toaster />
               <CookieConsent />
-              <ChatWidget />
+              {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && <ChatWidget />}
             </CompanyProvider>
           </AuthProvider>
         </Context7Provider>

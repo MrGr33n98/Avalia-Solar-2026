@@ -41,6 +41,9 @@ module Chat
         return fallback_response
       end
 
+      provider = ENV.fetch('AI_PROVIDER', 'openai').to_s.downcase
+      base_url = ENV.fetch('AI_BASE_URL', provider == 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1')
+      
       model_name = model || ENV.fetch('AI_MODEL', DEFAULT_MODEL)
       system_content = context.present? ? "#{SYSTEM_PROMPT}\n\nCONTEXTO ATUAL:\n#{context}" : SYSTEM_PROMPT
 
@@ -55,14 +58,23 @@ module Chat
         top_p: 0.9
       }
 
+      headers = {
+        'Authorization' => "Bearer #{api_key}",
+        'Content-Type' => 'application/json'
+      }
+
+      if provider == 'openrouter'
+        referer = ENV.fetch('AI_HTTP_REFERER', 'https://www.avaliasolar.com.br')
+        title = ENV.fetch('AI_APP_TITLE', 'Avalia Solar')
+        headers['HTTP-Referer'] = referer if referer.present?
+        headers['X-OpenRouter-Title'] = title if title.present?
+      end
+
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       response = HTTParty.post(
-        'https://api.openai.com/v1/chat/completions',
-        headers: {
-          'Authorization' => "Bearer #{api_key}",
-          'Content-Type' => 'application/json'
-        },
+        "#{base_url.gsub(/\/+$/, '')}/chat/completions",
+        headers: headers,
         body: payload.to_json,
         timeout: DEFAULT_TIMEOUT
       )
@@ -72,18 +84,23 @@ module Chat
       if response.success?
         body = response.parsed_response
         choice = body.dig('choices', 0, 'message')
+        content = choice&.dig('content')
         usage = body['usage'] || {}
 
+        if content.blank?
+          Rails.logger.error("[Chat::LlmGateway] Empty response content from API")
+          return fallback_response(latency_ms: latency_ms)
+        end
+
         {
-          content: choice&.dig('content') || 'Desculpe, não consegui processar sua mensagem.',
-          model: body['model'],
-          token_count: usage['total_tokens'],
+          content: content,
+          model: body['model'] || model_name,
+          token_count: usage['total_tokens'] || 0,
           latency_ms: latency_ms,
           success: true
         }
       else
-        Rails.logger.error("[Chat::LlmGateway] API error: #{response.code} - #{response.body}")
-        fallback_response(latency_ms: latency_ms)
+        handle_error_response(response, latency_ms)
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
@@ -95,11 +112,23 @@ module Chat
 
     private
 
+    def handle_error_response(response, latency_ms)
+      case response.code
+      when 401
+        Rails.logger.error("[Chat::LlmGateway] Auth error (401): Invalid API Key")
+      when 402
+        Rails.logger.error("[Chat::LlmGateway] Insufficient credits / Payment Required (402)")
+      when 429
+        Rails.logger.error("[Chat::LlmGateway] Rate limited by provider (429)")
+      else
+        Rails.logger.error("[Chat::LlmGateway] API error: #{response.code} - #{response.body}")
+      end
+      fallback_response(latency_ms: latency_ms)
+    end
+
     def fallback_response(latency_ms: nil)
       {
-        content: 'Desculpe, estou com dificuldade para processar sua mensagem agora. ' \
-                 'Enquanto isso, você pode comparar empresas de energia solar diretamente na nossa plataforma ' \
-                 'ou solicitar um orçamento gratuito. Posso ajudar com outra coisa?',
+        content: 'No momento não consegui responder automaticamente, mas posso registrar sua solicitação para que nossa equipe ajude você.',
         model: 'fallback',
         token_count: 0,
         latency_ms: latency_ms,
@@ -108,3 +137,4 @@ module Chat
     end
   end
 end
+
