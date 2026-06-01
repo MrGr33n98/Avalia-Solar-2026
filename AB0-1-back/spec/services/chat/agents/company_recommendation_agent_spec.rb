@@ -29,7 +29,7 @@ RSpec.describe Chat::Agents::CompanyRecommendationAgent, type: :service do
         expect(result[:success]).to be true
         expect(result[:metadata]['companies'].length).to eq(1)
         expect(result[:metadata]['companies'].first[:name]).to eq('Empresa Teste Solar')
-        expect(result[:should_trigger_lead]).to be true
+        expect(result[:should_trigger_lead]).to be false
         expect(result[:content]).to match(/Encontrei.*opções ativas/)
       end
     end
@@ -53,14 +53,14 @@ RSpec.describe Chat::Agents::CompanyRecommendationAgent, type: :service do
         expect(result[:content]).to match(/Não encontrei instaladores ativos/)
       end
 
-      it 'seta should_trigger_lead true se a mensagem indicar urgência ou orcamento' do
+      it 'mantém qualificação centralizada mesmo se a mensagem indicar urgência ou orçamento' do
         result = described_class.process(
           session: session,
           user_message: 'Preciso de orçamento urgente',
           router_state: router_state
         )
 
-        expect(result[:should_trigger_lead]).to be true
+        expect(result[:should_trigger_lead]).to be false
       end
     end
 
@@ -81,7 +81,7 @@ RSpec.describe Chat::Agents::CompanyRecommendationAgent, type: :service do
         expect(result[:fallback_triggered]).to be true
         expect(result[:intent]).to eq('fallback')
         expect(result[:metadata]).to eq({})
-        expect(result[:content]).to match(/Não.*consegui.*buscar/)
+        expect(result[:content]).to match(/consegui buscar/)
       end
     end
   end

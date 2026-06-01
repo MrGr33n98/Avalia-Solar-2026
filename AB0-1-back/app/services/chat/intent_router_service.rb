@@ -66,12 +66,12 @@ module Chat
     def detect_intent
       patterns = {
         'proposal_analysis' => /(?:analisar proposta|comparar orçamento|recebi um orçamento|esta proposta)/,
-        'ev_charger_question' => /(?:carregador|wallbox|tomada.+elétric|carro elétrico|veículo elétrico|condomínio.+carregador|frota)/,
+        'company_recommendation' => /(?:recomendar|indic(?:ar|a)|melhor empresa|qual empresa|onde encontro|instalador)/,
+        'lead_qualification' => /(?:orçamento|cotação|contratar|quero instalar|preciso instalar|gostaria de instalar|instalação)/,
+        'ev_charger_question' => /(?:carregador|wallbox|tomada.+elétric|carro elétrico|veículo elétrico|condomínio.+carregador|frota|recarga\s+(?:ac|dc)|ac\s*(?:\/|e|vs\.?)\s*dc)/,
         'financing_question' => /(?:financ|parcela|crédito solar|consórcio|banco|taxa de juros)/,
-        'lead_qualification' => /(?:orçamento|cotação|preço|quanto custa|quero instalar|instalação)/,
-        'company_recommendation' => /(?:recomendar|indicar|melhor empresa|qual empresa|onde encontro|instalador)/,
+        'solar_support' => /(?:manutenção|limpeza|garantia|inversor.+problema|quebrou|parou de funcionar|microinversor|energia injetada|créditos? de energia|bateria solar|carport solar)/,
         'solar_assessment' => /(?:vale a pena|gera quanto|simulação|tamanho do sistema|quantas placas|potência)/,
-        'solar_support' => /(?:manutenção|limpeza|garantia|inversor.+problema|quebrou|parou de funcionar)/,
         'feedback' => /(?:sugestão|reclamação|feedback|melhorar)/,
         'greeting' => /^(?:oi|olá|bom dia|boa tarde|boa noite|tudo bem|ola)\b/
       }
@@ -100,11 +100,8 @@ module Chat
       end
 
       # UF regex
-      if match = @text.match(/\b([A-Z]{2})\b/i)
-        states = %w[AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO]
-        state = match[1].upcase
-        location[:state] = state if states.include?(state)
-      end
+      states = %w[AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO]
+      location[:state] = @text.scan(/\b[a-z]{2}\b/i).map(&:upcase).find { |token| states.include?(token) }
 
       location
     end

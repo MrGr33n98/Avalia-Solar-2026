@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_01_040411) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_01_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -651,7 +651,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_040411) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id"
+    t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id", unique: true
     t.index ["city"], name: "index_chat_leads_on_city"
     t.index ["consent_given"], name: "index_chat_leads_on_consent_given"
     t.index ["created_at"], name: "index_chat_leads_on_created_at"
@@ -1474,6 +1474,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_040411) do
     t.index ["lead_id"], name: "index_intent_scores_on_lead_id"
     t.index ["score_breakdown"], name: "index_intent_scores_on_score_breakdown", using: :gin
     t.index ["total_score"], name: "index_intent_scores_on_total_score"
+  end
+
+  create_table "knowledge_articles", force: :cascade do |t|
+    t.string "title", null: false
+    t.string "slug", null: false
+    t.text "content", null: false
+    t.bigint "category_id", null: false
+    t.string "status", default: "published", null: false
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_knowledge_articles_on_category_id"
+    t.index ["slug"], name: "index_knowledge_articles_on_slug", unique: true
+    t.index ["status"], name: "index_knowledge_articles_on_status"
   end
 
   create_table "lead_distributions", force: :cascade do |t|
@@ -2311,6 +2325,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_040411) do
   add_foreign_key "gated_downloads", "users"
   add_foreign_key "intent_score_histories", "intent_scores"
   add_foreign_key "intent_scores", "companies"
+  add_foreign_key "knowledge_articles", "categories"
   add_foreign_key "lead_distributions", "companies"
   add_foreign_key "lead_distributions", "leads"
   add_foreign_key "lead_wizard_field_options", "lead_wizard_fields"

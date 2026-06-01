@@ -105,12 +105,29 @@ RSpec.describe Chat::Agents::CRMHandoffAgent do
           hash_including(event: 'mobivolt_crm_handoff_duplicate_prevented')
         )
       end
+
+      it 'preserva o lead quando a qualificação atual é informativa mesmo com score maior' do
+        lead_qualification_result[:should_trigger_lead] = false
+        lead_qualification_result[:lead_score] = 80
+        lead_qualification_result[:lead_temperature] = 'hot'
+
+        result = described_class.process(
+          session: session,
+          user_message: 'Como funciona o wallbox?',
+          router_state: { intent: 'ev_charger_question', next_agent: 'ev_charger_question' },
+          lead_qualification_result: lead_qualification_result
+        )
+
+        expect(existing_lead).not_to have_received(:update!)
+        expect(result[:lead_status]).to eq('duplicate_prevented')
+        expect(result[:lead_score]).to eq(30)
+        expect(result[:lead_temperature]).to eq('cold')
+      end
     end
 
     context 'em caso de falha' do
       before do
         allow(ChatLead).to receive(:find_by).and_raise(StandardError, 'DB Error')
-        allow(described_class).to receive(:log_error)
       end
 
       it 'retorna fallback seguro' do

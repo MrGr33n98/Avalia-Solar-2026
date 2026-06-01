@@ -15,4 +15,12 @@ FactoryBot.define do
     content { 'Olá' }
     safety_status { 'clean' }
   end
+
+  factory :knowledge_article do
+    association :category
+    title { 'Artigo de Suporte de Teste' }
+    content { 'Conteúdo explicativo e detalhado do teste de suporte.' }
+    status { 'published' }
+    published_at { Time.current }
+  end
 end

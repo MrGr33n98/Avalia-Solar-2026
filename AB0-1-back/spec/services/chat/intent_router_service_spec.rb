@@ -33,6 +33,34 @@ RSpec.describe Chat::IntentRouterService do
         expect(result[:intent]).to eq('company_recommendation')
         expect(result[:should_trigger_lead]).to be true
       end
+
+      it 'identifies explicit commercial installation request' do
+        result = described_class.route("quero instalar energia solar")
+        expect(result[:intent]).to eq('lead_qualification')
+        expect(result[:should_trigger_lead]).to be true
+      end
+
+      it 'does not treat isolated price question as commercial intent' do
+        result = described_class.route("qual o preço do microinversor?")
+        expect(result[:intent]).to eq('solar_support')
+        expect(result[:should_trigger_lead]).to be false
+      end
+
+      {
+        'o que é microinversor?' => 'solar_support',
+        'qual a diferença entre inversor vs microinversor?' => 'solar_support',
+        'o que é energia injetada?' => 'solar_support',
+        'como funcionam os créditos de energia?' => 'solar_support',
+        'qual a diferença entre recarga AC/DC?' => 'ev_charger_question',
+        'o que é bateria solar?' => 'solar_support',
+        'o que é carport solar?' => 'solar_support',
+        'o que é wallbox?' => 'ev_charger_question',
+        'posso instalar carregador em condomínio?' => 'ev_charger_question'
+      }.each do |message, expected_intent|
+        it "routes '#{message}' to #{expected_intent}" do
+          expect(described_class.route(message)[:intent]).to eq(expected_intent)
+        end
+      end
     end
 
     context 'with location extraction' do

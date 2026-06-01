@@ -484,6 +484,9 @@ all_categories.compact.each do |cat|
   end
 end
 
+require_relative 'seeds/knowledge_base'
+Seeds::KnowledgeBase.run!
+
 puts "\n=== SEED CONCLUÍDO ==="
 puts "Mobilidade Elétrica em primeiro lugar."
 puts "Novos hubs adicionados para expansão estratégica."

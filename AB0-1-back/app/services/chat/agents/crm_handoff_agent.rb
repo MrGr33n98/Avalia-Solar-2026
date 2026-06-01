@@ -16,8 +16,27 @@ module Chat
         if existing_lead
           # Avaliar se a temperatura/score atual da conversa é maior (Enriquecimento)
           old_score = existing_lead.lead_score.to_i
-          
-          if score > old_score
+
+          if !should_trigger
+            track_handoff(
+              event: 'mobivolt_crm_handoff_duplicate_prevented',
+              session_id: session.id,
+              properties: { intent: intent, next_agent: next_agent, lead_score: old_score, lead_temperature: existing_lead.lead_temperature, lead_reason: reason, handoff_triggered: false, duplicate_prevented: true }
+            )
+
+            {
+              success: true,
+              handoff_triggered: false,
+              lead_id: existing_lead.id,
+              lead_status: 'duplicate_prevented',
+              lead_score: old_score,
+              lead_temperature: existing_lead.lead_temperature,
+              lead_reason: reason,
+              duplicate_prevented: true,
+              fallback_triggered: false,
+              error: nil
+            }
+          elsif score > old_score
             # Atualiza apenas campos permitidos de inteligência comercial
             existing_lead.update!(
               lead_score: score,
@@ -100,7 +119,7 @@ module Chat
           end
         end
       rescue StandardError => e
-        log_error("CRMHandoffAgent failed: #{e.message}")
+        Rails.logger.error("[Chat::Agents::CRMHandoffAgent] Failed: #{e.message}")
         track_handoff(
           event: 'mobivolt_crm_handoff_fallback',
           session_id: session.id,

@@ -12,6 +12,7 @@
 
 ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular 'criterion', 'criteria'
+  inflect.acronym 'CRM'
 end
 
 # These inflection rules are supported but not enabled by default:

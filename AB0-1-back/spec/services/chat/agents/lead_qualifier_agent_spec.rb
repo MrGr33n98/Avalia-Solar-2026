@@ -65,6 +65,46 @@ RSpec.describe Chat::Agents::LeadQualifierAgent do
           expect(result[:lead_reason]).to eq('engagement_count')
         end
       end
+
+      %w[solar_support financing_question ev_charger_question solar_assessment].each do |technical_intent|
+        context "com intent técnica #{technical_intent}" do
+          let(:user_message) { "Preciso de ajuda urgente agora" }
+          let(:router_state) { { intent: technical_intent } }
+
+          it 'NÃO dispara lead por engajamento ou urgência isolada' do
+            result = described_class.process(session: session, user_message: user_message, router_state: router_state)
+
+            expect(result[:should_trigger_lead]).to be false
+            expect(result[:commercial_intent]).to be false
+            expect(result[:lead_reason]).to eq('informative_intent')
+          end
+        end
+      end
+    end
+
+    context 'com pergunta técnica sobre preço isolado' do
+      let(:user_message) { "Qual o preço do wallbox?" }
+      let(:router_state) { { intent: 'ev_charger_question' } }
+
+      it 'NÃO dispara lead sem ação comercial explícita' do
+        result = described_class.process(session: session, user_message: user_message, router_state: router_state)
+
+        expect(result[:should_trigger_lead]).to be false
+        expect(result[:commercial_intent]).to be false
+      end
+    end
+
+    context 'com pergunta técnica e ação comercial explícita' do
+      let(:user_message) { "Quero instalar um wallbox e solicitar orçamento" }
+      let(:router_state) { { intent: 'ev_charger_question' } }
+
+      it 'dispara lead' do
+        result = described_class.process(session: session, user_message: user_message, router_state: router_state)
+
+        expect(result[:should_trigger_lead]).to be true
+        expect(result[:commercial_intent]).to be true
+        expect(result[:lead_reason]).to eq('technical_commercial_override')
+      end
     end
 
     context 'com erro interno' do

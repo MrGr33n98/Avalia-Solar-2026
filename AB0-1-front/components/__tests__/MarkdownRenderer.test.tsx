@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownRenderer from '../chat/MarkdownRenderer';
 
 describe('MarkdownRenderer', () => {
   it('renders bold text correctly', () => {

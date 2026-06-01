@@ -72,7 +72,7 @@ module Chat
           # Keywords adaptadas para texto sem acentos
           keywords = [
             'orcamento', 'cotacao', 'instalar', 'contratar',
-            'pra ontem', 'comparar proposta', 'preco', 'custo'
+            'instalacao', 'comparar proposta', 'proposta'
           ]
           
           keywords.any? { |kw| text.match?(/\b#{Regexp.escape(kw)}\b/i) }
@@ -105,20 +105,14 @@ module Chat
                 [false, 'company_recommendation_informative']
               end
             end
-          elsif %w[solar_assessment].include?(intent)
-            [false, 'needs_more_data']
-          elsif %w[solar_financing ev_charger_installation].include?(intent)
+          elsif %w[solar_support solar_assessment financing_question ev_charger_question solar_financing ev_charger_installation].include?(intent)
             if has_commercial_intent
-              [true, 'commercial_intent_detected']
-            else
-              [false, 'informative_only']
-            end
-          elsif %w[solar_support greeting fallback general_question].include?(intent)
-            if has_commercial_intent
-              [true, 'commercial_override']
+              [true, 'technical_commercial_override']
             else
               [false, 'informative_intent']
             end
+          elsif %w[greeting fallback general_question].include?(intent)
+            [false, 'informative_intent']
           else
             # Outras intents
             if has_commercial_intent

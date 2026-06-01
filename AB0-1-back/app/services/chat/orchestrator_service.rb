@@ -47,6 +47,8 @@ module Chat
       end
 
       # 6. Agentes ou Legacy
+      support_intents = %w[solar_support financing_question ev_charger_question solar_assessment]
+
       if agents_enabled && new_router_state[:next_agent] == 'company_recommendation'
         agent_result = Chat::Agents::CompanyRecommendationAgent.process(
           session: @session,
@@ -82,6 +84,36 @@ module Chat
           Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_success', properties: { session_id: @session.id })
         end
 
+      elsif agents_enabled && support_intents.include?(new_router_state[:next_agent])
+        agent_result = Chat::Agents::SupportAgent.process(
+          session: @session,
+          user_message: safe_message,
+          router_state: new_router_state,
+          context: context
+        )
+
+        intent = agent_result[:intent]
+        llm_content = agent_result[:content]
+        msg_metadata = agent_result[:metadata]
+        llm_model = 'mobivolt-agent-support'
+        llm_token_count = 0
+        llm_latency_ms = 0
+        llm_success = agent_result[:success]
+
+        llm_response = {
+          content: llm_content,
+          model: llm_model,
+          token_count: llm_token_count,
+          latency_ms: llm_latency_ms,
+          success: llm_success
+        }
+
+        # PostHog Agent Tracking
+        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked', properties: { session_id: @session.id, agent: 'support' })
+        if agent_result[:fallback_triggered]
+          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback', properties: { session_id: @session.id, agent: 'support' })
+        end
+
       else
         # Fluxo Clássico (LlmGateway)
         llm_response = Chat::LlmGateway.call(messages: history, context: context)
@@ -113,6 +145,12 @@ module Chat
           context: context,
           agent_result: agent_result
         )
+        if agent_result&.dig(:metadata, 'type') == 'support_answer' && agent_result[:should_trigger_lead] == false
+          qualifier_result = qualifier_result.merge(
+            should_trigger_lead: false,
+            lead_reason: 'support_answer_informative'
+          )
+        end
         should_trigger = qualifier_result[:should_trigger_lead]
 
         # 6.6 CRM Handoff (Middleware)
@@ -135,8 +173,10 @@ module Chat
         })
       else
         # Fallback para Lógica Legada de Qualificação
-        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
-        should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
+        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification lead_qualification proposal_analysis]
+        technical_intents = %w[solar_support solar_assessment financing_question ev_charger_question solar_maintenance]
+        should_trigger = commercial_intents.include?(intent) ||
+                         (!technical_intents.include?(intent) && @session.chat_messages.user_messages.count >= 3)
       end
 
       # 6.5 Cleanup incondicional de payload obsoleto na sessão (evita memory leak no DB)
