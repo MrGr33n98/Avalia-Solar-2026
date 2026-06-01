@@ -56,7 +56,6 @@ module Chat
         )
 
         intent = agent_result[:intent]
-        should_trigger = agent_result[:should_trigger_lead]
         llm_content = agent_result[:content]
         msg_metadata = agent_result[:metadata]
         llm_model = 'mobivolt-agent'
@@ -91,20 +90,40 @@ module Chat
         llm_token_count = llm_response[:token_count]
         llm_latency_ms = llm_response[:latency_ms]
         llm_success = llm_response[:success]
+        agent_result = nil
 
         if intent_enabled
           intent = new_router_state[:intent]
-          should_trigger = new_router_state[:should_trigger_lead]
         else
           intent = old_intent
-          commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
-          should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
         end
 
         msg_metadata = {}
         if @session.metadata['last_recommendation_payload'].present?
           msg_metadata = @session.metadata['last_recommendation_payload']
         end
+      end
+
+      # 6.5 Qualificação de Lead (Middleware)
+      if agents_enabled
+        qualifier_result = Chat::Agents::LeadQualifierAgent.process(
+          session: @session,
+          user_message: safe_message,
+          router_state: new_router_state,
+          context: context,
+          agent_result: agent_result
+        )
+        should_trigger = qualifier_result[:should_trigger_lead]
+
+        msg_metadata ||= {}
+        msg_metadata.merge!({
+          'lead_score' => qualifier_result[:lead_score],
+          'lead_temperature' => qualifier_result[:lead_temperature]
+        })
+      else
+        # Fallback para Lógica Legada de Qualificação
+        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
+        should_trigger = commercial_intents.include?(intent) || @session.chat_messages.user_messages.count >= 3
       end
 
       # 6.5 Cleanup incondicional de payload obsoleto na sessão (evita memory leak no DB)

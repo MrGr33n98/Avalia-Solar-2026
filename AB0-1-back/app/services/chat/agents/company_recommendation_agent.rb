@@ -8,8 +8,6 @@ module Chat
         payload = Chat::Mobivolt::CompanyContextBuilderService.build_for(session, user_message)
         companies = payload[:empresas_encontradas] || []
 
-        should_trigger = determine_lead_trigger(session, user_message, companies)
-
         if companies.any?
           content = "Encontrei algumas opções ativas na sua região. Compare abaixo e solicite orçamentos."
           metadata = {
@@ -31,23 +29,11 @@ module Chat
           metadata: metadata,
           intent: router_state[:intent],
           next_agent: router_state[:next_agent],
-          should_trigger_lead: should_trigger
+          should_trigger_lead: false
         )
       rescue StandardError => e
         Rails.logger.error("[Chat::Agents::CompanyRecommendationAgent] Error: #{e.message}")
         fallback_response(error: e)
-      end
-
-      private
-
-      def self.determine_lead_trigger(session, user_message, companies)
-        # Regra definida no UAT da Fase 3A: true apenas se o usuário demonstrou intenção comercial clara
-        # ou pressa, ou orçamento. Além disso, se for a 3ª mensagem, disparar lead automaticamente.
-        text = user_message.downcase
-        commercial_keywords = %w[orçamento cotação instalar contratar pra\ ontem urgente preço comparar\ proposta]
-        has_commercial_intent = commercial_keywords.any? { |kw| text.include?(kw) }
-        
-        has_commercial_intent || session.chat_messages.user_messages.count >= 3
       end
     end
   end
