@@ -199,6 +199,17 @@ Rails.application.routes.draw do
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
 
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Chat IA endpoints
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      namespace :chat do
+        resources :sessions, only: [:create, :show] do
+          resources :messages, only: [:create]
+        end
+        resources :leads, only: [:create]
+        post 'messages/:id/feedback', to: 'messages#feedback', as: :message_feedback
+      end
+
       resources :banners, only: [:index]
       resources :banner_globals, only: [:index]
       resources :badges, param: :slug, only: [:show]

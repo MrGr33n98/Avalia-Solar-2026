@@ -15,6 +15,7 @@ const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWiz
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
 const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), { ssr: false });
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
+const ChatWidget = dynamic(() => import('@/components/chat/ChatWidget'), { ssr: false });
 const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
   ssr: false,
   loading: () => null,
@@ -153,6 +154,7 @@ export default function ClientBody({
               <SignupGateModalHost />
               <Toaster />
               <CookieConsent />
+              <ChatWidget />
             </CompanyProvider>
           </AuthProvider>
         </Context7Provider>

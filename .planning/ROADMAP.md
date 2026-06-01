@@ -15,6 +15,16 @@ graph TD
   F9 --> F10[Fase 10: Responsividade & Polimento]
 ```
 
+### Phase 1: Implementar novos espacos de banners na pagina de empresa
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 0
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 1 to break down)
+
 ---
 
 ## Detalhamento das Fases

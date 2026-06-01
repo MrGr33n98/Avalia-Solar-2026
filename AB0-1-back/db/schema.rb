@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_27_162518) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -574,6 +574,151 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_27_162518) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_category_lead_wizards_on_category_id", unique: true
+  end
+
+  create_table "chat_insights", force: :cascade do |t|
+    t.string "insight_type", null: false
+    t.string "vertical"
+    t.string "city"
+    t.string "state"
+    t.string "title", null: false
+    t.text "summary"
+    t.integer "volume", default: 1
+    t.float "confidence_score"
+    t.date "source_period_start"
+    t.date "source_period_end"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city"], name: "index_chat_insights_on_city"
+    t.index ["created_at"], name: "index_chat_insights_on_created_at"
+    t.index ["insight_type", "created_at"], name: "index_chat_insights_on_insight_type_and_created_at"
+    t.index ["insight_type", "vertical"], name: "index_chat_insights_on_insight_type_and_vertical"
+    t.index ["insight_type"], name: "index_chat_insights_on_insight_type"
+    t.index ["state"], name: "index_chat_insights_on_state"
+    t.index ["vertical"], name: "index_chat_insights_on_vertical"
+  end
+
+  create_table "chat_lead_activities", force: :cascade do |t|
+    t.bigint "chat_lead_id", null: false
+    t.string "activity_type", null: false
+    t.text "description"
+    t.string "old_status"
+    t.string "new_status"
+    t.bigint "performed_by_id"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_type"], name: "index_chat_lead_activities_on_activity_type"
+    t.index ["chat_lead_id"], name: "index_chat_lead_activities_on_chat_lead_id"
+    t.index ["created_at"], name: "index_chat_lead_activities_on_created_at"
+  end
+
+  create_table "chat_leads", force: :cascade do |t|
+    t.bigint "chat_session_id", null: false
+    t.string "name"
+    t.string "email"
+    t.string "phone"
+    t.string "city"
+    t.string "state"
+    t.string "vertical"
+    t.string "intent"
+    t.string "project_type"
+    t.decimal "monthly_bill", precision: 10, scale: 2
+    t.integer "vehicle_count"
+    t.string "solution_type"
+    t.string "budget_range"
+    t.string "urgency"
+    t.string "decision_timeline"
+    t.string "decision_role"
+    t.string "property_type"
+    t.string "company_size"
+    t.integer "lead_score", default: 0, null: false
+    t.string "lead_temperature", default: "frio", null: false
+    t.string "sales_status", default: "new", null: false
+    t.bigint "assigned_to_id"
+    t.bigint "assigned_company_id"
+    t.boolean "consent_given", default: false, null: false
+    t.datetime "consent_given_at"
+    t.string "source_page"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.text "summary"
+    t.jsonb "pain_points", default: []
+    t.jsonb "objections", default: []
+    t.string "recommended_next_action"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id"
+    t.index ["city"], name: "index_chat_leads_on_city"
+    t.index ["consent_given"], name: "index_chat_leads_on_consent_given"
+    t.index ["created_at"], name: "index_chat_leads_on_created_at"
+    t.index ["intent"], name: "index_chat_leads_on_intent"
+    t.index ["lead_score"], name: "index_chat_leads_on_lead_score"
+    t.index ["lead_temperature", "created_at"], name: "index_chat_leads_on_lead_temperature_and_created_at"
+    t.index ["lead_temperature"], name: "index_chat_leads_on_lead_temperature"
+    t.index ["sales_status", "created_at"], name: "index_chat_leads_on_sales_status_and_created_at"
+    t.index ["sales_status"], name: "index_chat_leads_on_sales_status"
+    t.index ["source_page"], name: "index_chat_leads_on_source_page"
+    t.index ["state"], name: "index_chat_leads_on_state"
+    t.index ["utm_campaign"], name: "index_chat_leads_on_utm_campaign"
+    t.index ["utm_source"], name: "index_chat_leads_on_utm_source"
+    t.index ["vertical", "created_at"], name: "index_chat_leads_on_vertical_and_created_at"
+    t.index ["vertical"], name: "index_chat_leads_on_vertical"
+  end
+
+  create_table "chat_messages", force: :cascade do |t|
+    t.bigint "chat_session_id", null: false
+    t.string "role", null: false
+    t.text "content", null: false
+    t.string "model"
+    t.integer "token_count"
+    t.integer "latency_ms"
+    t.string "safety_status", default: "clean"
+    t.string "intent_detected"
+    t.integer "feedback"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_session_id", "created_at"], name: "index_chat_messages_on_chat_session_id_and_created_at"
+    t.index ["chat_session_id"], name: "index_chat_messages_on_chat_session_id"
+    t.index ["created_at"], name: "index_chat_messages_on_created_at"
+    t.index ["intent_detected"], name: "index_chat_messages_on_intent_detected"
+    t.index ["role"], name: "index_chat_messages_on_role"
+    t.index ["safety_status"], name: "index_chat_messages_on_safety_status"
+  end
+
+  create_table "chat_sessions", force: :cascade do |t|
+    t.string "visitor_id", null: false
+    t.bigint "user_id"
+    t.string "page_url"
+    t.string "source_page"
+    t.string "referrer"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.string "utm_term"
+    t.string "utm_content"
+    t.string "vertical"
+    t.string "status", default: "active", null: false
+    t.datetime "started_at", null: false
+    t.datetime "ended_at"
+    t.datetime "last_message_at"
+    t.integer "message_count", default: 0, null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_chat_sessions_on_created_at"
+    t.index ["source_page"], name: "index_chat_sessions_on_source_page"
+    t.index ["status"], name: "index_chat_sessions_on_status"
+    t.index ["user_id"], name: "index_chat_sessions_on_user_id"
+    t.index ["utm_campaign"], name: "index_chat_sessions_on_utm_campaign"
+    t.index ["utm_source"], name: "index_chat_sessions_on_utm_source"
+    t.index ["vertical"], name: "index_chat_sessions_on_vertical"
+    t.index ["visitor_id", "created_at"], name: "index_chat_sessions_on_visitor_id_and_created_at"
+    t.index ["visitor_id"], name: "index_chat_sessions_on_visitor_id"
   end
 
   create_table "classified_topics", force: :cascade do |t|
@@ -2106,6 +2251,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_27_162518) do
   add_foreign_key "categories_products", "categories"
   add_foreign_key "categories_products", "products"
   add_foreign_key "category_lead_wizards", "categories"
+  add_foreign_key "chat_lead_activities", "chat_leads"
+  add_foreign_key "chat_leads", "chat_sessions"
+  add_foreign_key "chat_messages", "chat_sessions"
+  add_foreign_key "chat_sessions", "users"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "companies", "plans"

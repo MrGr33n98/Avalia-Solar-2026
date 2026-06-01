@@ -11,6 +11,7 @@ Fase 1 e Fase 2 de Discovery/Assumptions concluídas com sucesso. Todos os contr
 ## Accumulated Context
 
 ### Roadmap Evolution
+- Phase 1 added: Implementar dois novos espaços de banners na página pública de empresa do Avalia Solar (1. Banner inline após "Sobre a Empresa", 2. Banner/carrossel próximo de "Empresas Relacionadas")
 - Roadmap estruturado de 1 a 10 fases de refatoração visual incremental.
 - Feature Flag local integrada ao Next.js para isolamento total da nova UI em ambiente de desenvolvimento.
 
