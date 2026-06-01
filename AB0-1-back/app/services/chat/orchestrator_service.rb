@@ -57,7 +57,7 @@ module Chat
       @session.increment_message_count!
 
       # 9. Track PostHog event (async, non-blocking)
-      track_response_event(assistant_msg, llm_response)
+      track_response_event(assistant_msg, llm_response, context)
 
       # 10. Return response
       commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification]
@@ -125,7 +125,8 @@ module Chat
       }
     end
 
-    def track_response_event(msg, llm_response)
+    def track_response_event(msg, llm_response, context = nil)
+      # 1. Track standard response event
       Chat::PosthogTrackingService.track(
         event: 'chat_assistant_response_generated',
         properties: {
@@ -140,6 +141,41 @@ module Chat
           vertical: @session.vertical
         }
       )
+
+      # 2. Track specialized dynamic recommendation context events
+      if context.to_s.include?("=== DYNAMIC COMPANY CONTEXT ===")
+        if context.to_s.include?("NENHUMA EMPRESA ENCONTRADA")
+          Chat::PosthogTrackingService.track(
+            event: 'chat_company_context_empty',
+            properties: {
+              session_id: @session.id,
+              message_id: msg.id,
+              vertical: @session.vertical
+            }
+          )
+        else
+          Chat::PosthogTrackingService.track(
+            event: 'chat_company_context_found',
+            properties: {
+              session_id: @session.id,
+              message_id: msg.id,
+              vertical: @session.vertical
+            }
+          )
+
+          if llm_response[:success]
+            Chat::PosthogTrackingService.track(
+              event: 'chat_company_recommendation_shown',
+              properties: {
+                session_id: @session.id,
+                message_id: msg.id,
+                vertical: @session.vertical,
+                intent_detected: msg.intent_detected
+              }
+            )
+          end
+        end
+      end
     rescue StandardError => e
       Rails.logger.warn("[Chat::Orchestrator] PostHog tracking failed: #{e.message}")
     end

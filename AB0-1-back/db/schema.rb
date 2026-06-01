@@ -1765,7 +1765,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_000005) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
+    t.bigserial "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1

@@ -283,7 +283,7 @@ export default async function Home() {
       </section>
 
       <HomeIdentityModalTrigger />
-      <FloatingWhatsApp />
+      {/* <FloatingWhatsApp /> */}
     </main>
   );
 }

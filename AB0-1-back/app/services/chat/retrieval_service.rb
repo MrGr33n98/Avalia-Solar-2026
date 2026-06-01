@@ -6,9 +6,27 @@ module Chat
     # Future: pgvector embeddings + semantic search
     def self.context_for(session)
       parts = []
+      dynamic_success = false
 
-      # Add page-specific context
-      if session.page_url&.include?('/companies/')
+      # 1. Tenta buscar o contexto dinâmico se a feature flag estiver habilitada
+      if ActiveModel::Type::Boolean.new.cast(ENV.fetch('CHAT_DYNAMIC_CONTEXT_ENABLED', 'false'))
+        begin
+          last_msg = session.chat_messages.user_messages.last&.content
+          if last_msg.present?
+            payload = Chat::Mobivolt::CompanyContextBuilderService.build_for(session, last_msg)
+            dynamic_context = Chat::Mobivolt::PromptContextComposer.compose(payload)
+            if dynamic_context.present?
+              parts << dynamic_context
+              dynamic_success = true
+            end
+          end
+        rescue StandardError => e
+          Rails.logger.error("[Chat::RetrievalService] Failed to build dynamic context: #{e.message}")
+        end
+      end
+
+      # 2. Fallback para comportamento MVP de URL se a busca dinâmica falhar ou estiver desativada
+      if !dynamic_success && session.page_url&.include?('/companies/')
         slug = session.page_url.split('/companies/').last&.split('?')&.first
         company = Company.find_by(slug: slug) if slug.present?
         if company
@@ -34,7 +52,7 @@ module Chat
         EMPRESA NA PÁGINA ATUAL:
         - Nome: #{company.name}
         - Cidade: #{company.city}, #{company.state}
-        - Categoria: #{company.category_name}
+        - Categoria: #{company.categories.first&.name || 'Geral'}
         - Nota média: #{company.rating_avg || 'Sem avaliações'}
         - Total de avaliações: #{company.rating_count || 0}
         - Descrição: #{company.description.to_s.truncate(200)}
