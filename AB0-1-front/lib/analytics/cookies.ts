@@ -7,9 +7,10 @@
 
 const isBrowser = typeof window !== 'undefined';
 
-type CookieOptions = {
+export type CookieOptions = {
   days?: number;
   path?: string;
+  domain?: string;
   sameSite?: 'Lax' | 'Strict' | 'None';
   secure?: boolean;
 };
@@ -23,7 +24,7 @@ export function getCookie(name: string): string | null {
 export function setCookie(name: string, value: string, days = 30, options: CookieOptions = {}): void {
   if (!isBrowser) return;
 
-  const { path = '/', sameSite = 'Lax' } = options;
+  const { path = '/', sameSite = 'Lax', domain } = options;
   const secure = options.secure ?? (process.env.NODE_ENV === 'production');
   const expires = new Date();
   expires.setDate(expires.getDate() + days);
@@ -33,13 +34,21 @@ export function setCookie(name: string, value: string, days = 30, options: Cooki
     `Expires=${expires.toUTCString()}`,
     `Path=${path}`,
     `SameSite=${sameSite}`,
+    domain ? `Domain=${domain}` : '',
     secure ? 'Secure' : '',
   ].filter(Boolean).join('; ');
 
   document.cookie = cookie;
 }
 
-export function deleteCookie(name: string): void {
+export function deleteCookie(name: string, options: CookieOptions = {}): void {
   if (!isBrowser) return;
-  document.cookie = `${name}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax`;
+  const { path = '/', domain } = options;
+  
+  let cookie = `${name}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=${path}; SameSite=Lax`;
+  if (domain) {
+    cookie += `; Domain=${domain}`;
+  }
+  
+  document.cookie = cookie;
 }

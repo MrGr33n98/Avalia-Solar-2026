@@ -44,7 +44,7 @@ export function initPostHog() {
     // Performance
     bootstrap: {},
     persistence: 'localStorage',
-    cross_subdomain_cookie: false,
+    cross_subdomain_cookie: true,
   })
 
   initialized = true
