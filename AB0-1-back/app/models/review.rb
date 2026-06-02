@@ -39,11 +39,13 @@ class Review < ApplicationRecord
   after_commit :create_notification_for_company, on: :create
 
   # Validations
-  validates :rating, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
-  validates :comment, presence: true, length: { minimum: 10 }
+  validates :rating, presence: true, inclusion: { in: 1..5 }
+  validates :comment, length: { maximum: 500 }
   validates :category_id, presence: true, unless: :is_legacy?
   validates :headline, length: { maximum: 120 }, allow_blank: true
   
+  validate :require_comment_or_criteria
+  validate :prevent_self_review
   validate :validate_uniqueness_v2
   validate :validate_featured_requires_paid_plan
   validate :validate_featured_limit_per_company
@@ -78,6 +80,33 @@ class Review < ApplicationRecord
     Rails.logger.warn("[Review] failed to invalidate social proof cache for company=#{company_id}: #{e.message}")
   end
 
+  def reviewer_user
+    user
+  end
+
+  def reviewer_consented_to_full_name?
+    reviewer_user&.display_full_name_consent? && reviewer_user&.lgpd_name_consent?
+  end
+
+  def anonymized_reviewer_name
+    if reviewer_user.nil?
+      "Anônimo"
+    elsif reviewer_consented_to_full_name?
+      reviewer_user.name
+    else
+      # Format: "F. L." (first initial, last initial)
+      parts = (reviewer_user.name || "").split(' ')
+      return "Anônimo" if parts.empty?
+      first_initial = parts.first[0]
+      last_initial = parts.last[0]
+      "#{first_initial}. #{last_initial}."
+    end
+  end
+
+  def display_reviewer_name
+    anonymized_reviewer_name
+  end
+
   def public_reviewer_name
     raw_name = user&.name.to_s.strip
     return 'Cliente' if raw_name.blank?
@@ -87,6 +116,21 @@ class Review < ApplicationRecord
   end
 
   private
+
+  def require_comment_or_criteria
+    return if comment.present? || review_criterion_scores.present?
+    errors.add(:base, "Review must have either a comment or criteria scores")
+  end
+
+  def prevent_self_review
+    return if reviewer_user.nil? || company.nil?
+    return if reviewer_user.id != company.user_id if company.respond_to?(:user_id)
+    return if reviewer_user.id != company.owner_id if company.respond_to?(:owner_id)
+    # se não houver user_id na company, vamos usar owner_of? do User que checa members
+    return unless reviewer_user.owner_of?(company)
+    
+    errors.add(:base, "Companies cannot review themselves")
+  end
 
   def persist_granular_scores_snapshot
     # Snapshot imutável para performance de leitura e histórico.
