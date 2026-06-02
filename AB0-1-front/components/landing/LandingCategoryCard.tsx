@@ -32,19 +32,21 @@ export default function LandingCategoryCard({ category, className }: LandingCate
   const ratingLabel = avgRating > 0 ? avgRating.toFixed(1) : null;
 
   return (
-    <Card className={cn('overflow-hidden clay-card border border-slate-200/90 dark:border-slate-700/70 shadow-sm hover:shadow-md smooth-transition h-full max-h-[320px]', className)}>
+    <Card className={cn('overflow-hidden clay-card border border-slate-200/90 dark:border-slate-700/70 shadow-sm hover:shadow-md smooth-transition h-full max-h-[360px] group/card', className)}>
       <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-clay-lg">
-        <div className="relative aspect-[3/1] bg-clay-bg overflow-hidden">
+        <div className="relative aspect-video bg-clay-bg overflow-hidden">
           <Image
             src={resolveCategoryImage(category)}
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover object-center smooth-transition hover:scale-105"
+            className="object-cover object-center smooth-transition group-hover/card:scale-105"
           />
+          {/* Overlay gradient for better text legibility if needed */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity" />
         </div>
 
-        <div className="p-2.5 flex flex-col justify-between min-h-[110px]">
+        <div className="p-3 flex flex-col justify-between min-h-[120px]">
           <div>
             <h3 className="text-sm md:text-base font-extrabold text-slate-900 leading-tight line-clamp-1">
               {category?.name || 'Categoria'}
