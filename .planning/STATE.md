@@ -18,5 +18,11 @@ Fase 1 e Fase 2 de Discovery/Assumptions concluídas com sucesso. Todos os contr
 ### Key Decisions
 - Mapeado no PROJECT.md, 01-CONTEXT.md e 02-CONTEXT.md.
 
+## Quick Tasks Completed
+
+| Date | Task | Status | Summary |
+|------|------|--------|---------|
+| 2026-06-02 | Wizard de qualificação de leads no MobiVolt AI | Complete | `.planning/quick/20260602-chat-lead-qualification-wizard/SUMMARY.md` |
+
 ---
-*Last updated: 2026-05-30*
+*Last updated: 2026-06-02*
