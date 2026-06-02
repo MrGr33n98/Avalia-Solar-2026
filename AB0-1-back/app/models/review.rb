@@ -10,9 +10,10 @@ class Review < ApplicationRecord
 
   MAX_FEATURED_PER_COMPANY = 5
 
-  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3 }
+  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4 }
   enum project_type: { residential: 0, commercial: 1, industrial: 2, rural: 3 }
   enum installation_status: { completed: 0, in_progress: 1, waiting: 2 }
+  enum capture_flow_source: { profile: 'profile', lead: 'lead', chat: 'chat' }
 
   # Columns: headline (string), pros (jsonb), cons (jsonb), buyer_tip (text), project_context (jsonb)
   # category_id (fk), is_legacy (boolean), granular_scores_snapshot (jsonb)
@@ -43,6 +44,7 @@ class Review < ApplicationRecord
   validates :comment, length: { maximum: 500 }
   validates :category_id, presence: true, unless: :is_legacy?
   validates :headline, length: { maximum: 120 }, allow_blank: true
+  validates :capture_flow_source, presence: true
   
   validate :require_comment_or_criteria
   validate :prevent_self_review
