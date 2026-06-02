@@ -44,6 +44,15 @@ class CategorySerializer < ActiveModel::Serializer
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.icon, options)
   end
 
+  def home_carousel_banner_url
+    return unless object.home_carousel_banner.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(object.home_carousel_banner, options)
+  end
+
   def parent
     return nil unless object.parent
 

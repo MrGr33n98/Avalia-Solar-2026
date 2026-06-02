@@ -380,6 +380,8 @@ async function CategoriesSectionWrapper({
     safeCategories.length > 0 &&
     safeCategories.every((category) => Number(category?.id) >= FALLBACK_CATEGORY_MIN_ID);
 
+  const homeCategoryCarouselEnabled = process.env.NEXT_PUBLIC_HOME_CATEGORY_CAROUSEL_ENABLED === 'true';
+
   return (
     <SectionShell zebra>
       <SectionHeader
@@ -389,22 +391,26 @@ async function CategoriesSectionWrapper({
 
       {safeCategories.length > 0 ? (
         <CategoryCardsErrorBoundary>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            {/* Editorial Banner Integrated in Grid */}
-            {categoriesBanners.length > 0 && (
-              <div className="sm:col-span-2 lg:col-span-4">
-                <BannerByLocationLazy 
-                  location="categories_top" 
-                  initialBanners={categoriesBanners} 
-                  className="rounded-2xl overflow-hidden border border-slate-100 shadow-lg"
-                />
-              </div>
-            )}
-            
-            {safeCategories.map((category) => (
-              <LandingCategoryCard key={category.id} category={category} />
-            ))}
-          </div>
+          {homeCategoryCarouselEnabled ? (
+            <HomeCategoryCarousel categories={safeCategories} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+              {/* Editorial Banner Integrated in Grid */}
+              {categoriesBanners.length > 0 && (
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <BannerByLocationLazy 
+                    location="categories_top" 
+                    initialBanners={categoriesBanners} 
+                    className="rounded-2xl overflow-hidden border border-slate-100 shadow-lg"
+                  />
+                </div>
+              )}
+              
+              {safeCategories.map((category) => (
+                <LandingCategoryCard key={category.id} category={category} />
+              ))}
+            </div>
+          )}
         </CategoryCardsErrorBoundary>
       ) : (
         <EmptyState message="Nenhuma categoria encontrada." />
@@ -416,13 +422,15 @@ async function CategoriesSectionWrapper({
         </p>
       ) : null}
 
-      <div className="mt-8 md:mt-10 text-center">
-        <Button asChild variant="outline" className="clay-chip rounded-full">
-          <Link href="/categories" className="group">
-            Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
-          </Link>
-        </Button>
-      </div>
+      {!homeCategoryCarouselEnabled && (
+        <div className="mt-8 md:mt-10 text-center">
+          <Button asChild variant="outline" className="clay-chip rounded-full">
+            <Link href="/categories" className="group">
+              Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </SectionShell>
   );
 }

@@ -154,6 +154,12 @@ export default function ChatLeadQualificationWizard({
         subtitle: 'Vamos ajustar a recomendação ao seu momento de compra.',
         options: TIMELINES,
       },
+      {
+        id: 'review_interest',
+        title: 'Que tipo de avaliação você quer ver?',
+        subtitle: 'Isso ajuda a filtrar as empresas antes do orçamento.',
+        options: REVIEW_INTERESTS,
+      },
     ];
   }, [needOptions, profileOptions, vertical]);
 
@@ -312,6 +318,21 @@ export default function ChatLeadQualificationWizard({
       <div className="flex items-center justify-between pt-1">
         <button type="button" onClick={stepIndex === 0 ? onCancel : goBack} className="text-[11px] font-medium text-zinc-500 hover:text-brand-blue transition-colors">
           {stepIndex === 0 ? 'Continuar pelo chat' : 'Voltar'}
+        </button>
+        {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
+      </div>
+    </div>
+  );
+}
+ ? onCancel : goBack} className="text-[11px] font-medium text-zinc-500 hover:text-brand-blue transition-colors">
+          {stepIndex === 0 ? 'Continuar pelo chat' : 'Voltar'}
+        </button>
+        {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
+      </div>
+    </div>
+  );
+}
+t' : 'Voltar'}
         </button>
         {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
       </div>

@@ -4,7 +4,7 @@ require 'English'
 
 ActiveAdmin.register Category, namespace: :admin do
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :permissions_config, company_ids: [], product_ids: []
+                :banner, :icon, :home_carousel_banner, :permissions_config, company_ids: [], product_ids: []
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
@@ -72,7 +72,10 @@ ActiveAdmin.register Category, namespace: :admin do
 
     f.inputs 'Assets' do
       f.input :icon, as: :file, hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
-      f.input :banner, as: :file
+      f.input :banner, as: :file, hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), size: '200x100') : 'No banner'
+      f.input :home_carousel_banner, 
+              as: :file, 
+              hint: f.object.home_carousel_banner.attached? ? image_tag(url_for(f.object.home_carousel_banner), size: '200x100') : 'Imagem usada no carrossel de categorias da home. Recomendada proporção horizontal/card.'
     end
 
     f.inputs 'Associations' do

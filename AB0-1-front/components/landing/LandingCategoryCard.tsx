@@ -18,9 +18,10 @@ type LandingCategoryCardProps = {
 };
 
 function resolveCategoryImage(category: Category): string {
+  const carouselBanner = category?.home_carousel_banner_url;
   const banner = category?.banner_url;
   const logo = category?.logo?.url;
-  return getFullImageUrl(banner || logo) || '/images/category-placeholder.jpg';
+  return getFullImageUrl(carouselBanner || banner || logo) || '/images/category-placeholder.jpg';
 }
 
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {

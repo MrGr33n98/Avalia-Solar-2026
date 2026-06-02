@@ -114,6 +114,19 @@ class Category < ApplicationRecord
     end
   end
 
+  def home_carousel_banner_url
+    return nil unless home_carousel_banner.attached?
+
+    begin
+      options = Rails.application.routes.default_url_options.dup
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(home_carousel_banner, options)
+    rescue StandardError => e
+      Rails.logger.error("Error generating category home carousel banner URL: #{e.message}")
+      nil
+    end
+  end
+
   def total_reviews_count
     companies.joins(:reviews).count
   end
@@ -224,5 +237,10 @@ class Category < ApplicationRecord
     return unless blob.byte_size > 500.kilobytes
 
     errors.add(:banner, 'deve ter no máximo 500KB')
+  end
+end
+e > 500.kilobytes
+      errors.add(:home_carousel_banner, 'deve ter no máximo 500KB')
+    end
   end
 end
