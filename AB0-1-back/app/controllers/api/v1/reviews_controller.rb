@@ -61,6 +61,12 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     ))
 
     if @review.save
+      begin
+        Reviews::ModerationService.new.evaluate(@review)
+      rescue StandardError => e
+        Rails.logger.error("Failed to run moderation service for review #{@review.id}: #{e.message}")
+      end
+
       # ... Track event e Notificações ...
       PostHog.capture(
         distinct_id: current_user.posthog_distinct_id,
@@ -177,8 +183,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     # Aceita os campos editoriais como colunas físicas e project_context como JSONB
     params.require(:review).permit(
       :rating, :comment, :company_id, :category_id, :headline, :buyer_tip,
-      :project_type, :installation_status, :estimated_power,
-      { pros: [] }, { cons: [] }, { project_context: {} },
+      :project_type, :installation_status, :estimated_power, :capture_flow_source,
+      { pros: [] }, { cons: [] }, { project_context: {} }, { metadata: {} },
       review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy]
     )
   end
