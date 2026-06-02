@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
+import { COMPANY_BANNER_FALLBACK_SRC, resolveCompanyBannerSrc } from '@/utils/company-banner';
 import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
@@ -186,7 +187,7 @@ export default function CompanyCard({
     }
   };
 
-  const bannerUrl = getFullImageUrl(company.banner_url || undefined);
+  const bannerSrc = resolveCompanyBannerSrc(company.banner_url, bannerError);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
   const verifiedBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
@@ -404,19 +405,17 @@ export default function CompanyCard({
 
           <AspectRatio ratio={BANNER_RATIO} className="w-full">
             <div className="relative w-full h-full bg-slate-100 dark:bg-slate-800">
-              {bannerUrl && !bannerError ? (
-                <Image
-                  src={bannerUrl}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  onError={() => setBannerError(true)}
-                  className="object-cover"
-                  data-testid="company-banner"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900" />
-              )}
+              <Image
+                src={bannerSrc}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                onError={() => {
+                  if (bannerSrc !== COMPANY_BANNER_FALLBACK_SRC) setBannerError(true);
+                }}
+                className="object-cover"
+                data-testid="company-banner"
+              />
 
               {/* Subtle vignette on hover */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
