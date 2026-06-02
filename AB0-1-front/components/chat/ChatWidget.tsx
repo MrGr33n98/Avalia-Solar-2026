@@ -262,25 +262,48 @@ export default function ChatWidget() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-bold text-zinc-900 dark:text-white">Bem-vindo ao MobiVolt AI</h3>
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base">Oi, como posso te ajudar?</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Sua inteligência especializada em energia solar e mobilidade elétrica do Avalia Solar.
+                    Escolha uma área para iniciarmos sua consultoria gratuita:
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    const vertical = pathname.includes('mobilidade') || pathname.includes('electric') ? 'electric_mobility' : 'solar';
-                    startSession(vertical, window.location.href);
-                  }}
-                  className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-blue/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center space-x-2 mt-4"
-                >
-                  <span>Entrar no chat agora</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
+                
+                <div className="grid grid-cols-1 gap-3 w-full mt-2">
+                  <button
+                    onClick={() => startSession('solar', window.location.href)}
+                    className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">☀️</span>
+                      <div className="text-left">
+                        <span className="block text-sm">Energia Solar</span>
+                        <span className="block text-[10px] font-medium text-zinc-500">Economia e Sustentabilidade</span>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => startSession('electric_mobility', window.location.href)}
+                    className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">🚗</span>
+                      <div className="text-left">
+                        <span className="block text-sm">Mobilidade Elétrica</span>
+                        <span className="block text-[10px] font-medium text-zinc-500">Carregadores e Frotas</span>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pt-2">
-                  Ao entrar, você concorda com nossos termos de uso.
+                  Consultoria especializada 100% gratuita.
                 </p>
               </div>
             )}

@@ -16,6 +16,19 @@ module Api
 
           session = ChatSession.create!(session_params)
 
+          # Add initial greeting message based on vertical
+          initial_content = if session.vertical == 'electric_mobility'
+                             "Olá! Sou o MobiVolt AI, seu assistente para mobilidade elétrica. Como posso te ajudar com carregadores ou frotas hoje?"
+                           else
+                             "Olá! Sou o MobiVolt AI, seu assistente para energia solar. Como posso te ajudar a economizar na conta de luz hoje?"
+                           end
+
+          initial_message = session.chat_messages.create!(
+            role: 'assistant',
+            content: initial_content,
+            safety_status: 'clean'
+          )
+
           # Track session creation
           ::Chat::PosthogTrackingService.track(
             event: 'chat_session_created',
@@ -36,7 +49,14 @@ module Api
               status: session.status,
               started_at: session.started_at
             },
-            messages: []
+            messages: [
+              {
+                id: initial_message.id,
+                role: initial_message.role,
+                content: initial_message.content,
+                created_at: initial_message.created_at
+              }
+            ]
           }, status: :created
         end
 
