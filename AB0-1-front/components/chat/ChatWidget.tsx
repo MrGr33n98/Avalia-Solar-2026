@@ -60,11 +60,6 @@ export default function ChatWidget() {
 
   // Start session on first open
   const handleToggle = () => {
-    if (!isOpen && messages.length === 0) {
-      // Auto-detect vertical based on pathname
-      const vertical = pathname.includes('mobilidade') || pathname.includes('electric') ? 'electric_mobility' : 'solar';
-      startSession(vertical, window.location.href);
-    }
     setIsOpen(!isOpen);
   };
 
@@ -227,8 +222,35 @@ export default function ChatWidget() {
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50 dark:bg-zinc-950">
             {messages.length === 0 && !isLoading && (
-              <div className="text-center py-6 text-zinc-500 dark:text-zinc-400">
-                <p className="text-sm font-medium">Olá! Como posso te ajudar hoje?</p>
+              <div className="flex flex-col items-center justify-center h-full space-y-4 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
+                   <img
+                    src="/images/mobivolt-ai-avaliasolar.png"
+                    alt="MobiVolt AI"
+                    className="w-12 h-12 object-cover rounded-full"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-bold text-zinc-900 dark:text-white">Bem-vindo ao MobiVolt AI</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Sua inteligência especializada em energia solar e mobilidade elétrica do Avalia Solar.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const vertical = pathname.includes('mobilidade') || pathname.includes('electric') ? 'electric_mobility' : 'solar';
+                    startSession(vertical, window.location.href);
+                  }}
+                  className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-blue/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center space-x-2 mt-4"
+                >
+                  <span>Entrar no chat agora</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </button>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pt-2">
+                  Ao entrar, você concorda com nossos termos de uso.
+                </p>
               </div>
             )}
 
@@ -343,7 +365,7 @@ export default function ChatWidget() {
             )}
 
             {/* Quick Replies */}
-            {messages.length <= 1 && !isLoading && (
+            {messages.length === 1 && !isLoading && (
               <div className="flex flex-wrap gap-2 pt-2">
                 {initialQuickReplies.map((reply, i) => (
                   <button
