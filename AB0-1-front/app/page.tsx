@@ -19,6 +19,7 @@ const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalc
 });
 
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
+import { HomeCategoryCarousel } from '@/components/home/HomeCategoryCarousel';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

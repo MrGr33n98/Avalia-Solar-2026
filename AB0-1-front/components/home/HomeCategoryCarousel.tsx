@@ -36,8 +36,8 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
       if (aHasBanner && !bHasBanner) return -1;
       if (!aHasBanner && bHasBanner) return 1;
 
-      // Manter ordem alfabética ou original
-      return a.name.localeCompare(b.name);
+      // Manter ordem alfabética ou original usando locale estável para evitar hydration mismatch
+      return a.name.localeCompare(b.name, 'pt-BR');
     });
   }, [categories]);
 
