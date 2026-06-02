@@ -15,6 +15,7 @@
  */
 
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
+import { EventPayloadMap, AnalyticsEventName } from './schema';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId } from './session';
@@ -88,13 +89,13 @@ export function initializeAnalytics(): void {
   });
 }
 
-function enqueueEvent(
-  eventName: string,
-  properties: Record<string, any>,
+function enqueueEvent<K extends AnalyticsEventName>(
+  eventName: K,
+  properties: K extends keyof EventPayloadMap ? EventPayloadMap[K] : Record<string, any>,
   options: EventOptions
 ): string {
   const eventId = options.eventId || generateEventId();
-  const payload = { name: eventName, properties, options: { ...options, eventId }, eventId };
+  const payload = { name: eventName as string, properties, options: { ...options, eventId }, eventId };
   if (eventQueue.length >= EVENT_QUEUE_LIMIT) eventQueue.shift();
   eventQueue.push(payload);
   return eventId;
@@ -104,7 +105,7 @@ function flushEventQueue(): void {
   if (!initialized || eventQueue.length === 0) return;
   const queued = eventQueue.splice(0, eventQueue.length);
   queued.forEach((item) => {
-    track(item.name, item.properties, item.options);
+    track(item.name as any, item.properties, item.options);
   });
 }
 
@@ -172,9 +173,9 @@ export function getAnalyticsContext(): AnalyticsContext {
 /**
  * Track event - Unified Matrix Logic
  */
-export function track(
-  eventName: string,
-  properties: Record<string, any> = {},
+export function track<K extends AnalyticsEventName>(
+  eventName: K,
+  properties: K extends keyof EventPayloadMap ? EventPayloadMap[K] : Record<string, any> = {} as any,
   options: EventOptions = {}
 ): void {
   if (!hasAnalyticsConsent()) return;
@@ -182,6 +183,20 @@ export function track(
   if (!initialized) {
     enqueueEvent(eventName, properties, options);
     return;
+  }
+
+  // Dev warning for unknown events
+  if (process.env.NODE_ENV === 'development') {
+    const knownEvents = [
+      'page_view', 'search_submitted', 'search_results_loaded', 'search_error',
+      'search_performance', 'whatsapp_click', 'company_card_click', 'wizard_started',
+      'wizard_step_completed', 'wizard_success', 'blog_cta_click', 'blog_conversion',
+      'web_vitals', 'cta_click', 'cta_clicked', 'banner_view', 'banner_click',
+      'comparison_add', 'comparison_remove', 'filter_applied', 'quick_filter_click'
+    ];
+    if (!knownEvents.includes(eventName as string)) {
+      console.warn(`[Analytics] Evento desconhecido ou não mapeado: "${eventName}". Por favor, adicione ao schema.ts.`);
+    }
   }
   
   const context = getAnalyticsContext();
