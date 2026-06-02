@@ -24,7 +24,7 @@ module JwtAuthenticatable
 
     # Check if specific token is blacklisted
     if JwtBlacklistService.revoked?(current_token)
-      Rails.logger.warn("[Auth] Revoked token attempt: user_id=#{current_user&.id} ip=#{request.remote_ip}")
+      Rails.logger.warn("[Auth] Revoked token attempt: user_id=#{current_user&.id}")
 
       render json: {
         error: 'Token has been revoked',

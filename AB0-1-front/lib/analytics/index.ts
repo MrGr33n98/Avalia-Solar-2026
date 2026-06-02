@@ -14,12 +14,12 @@
  * diretamente, sem chamar posthog.init() novamente.
  */
 
-import posthog from 'posthog-js';
 import { AnalyticsContext, EventOptions, UserTraits } from './types';
 import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
+import { opaqueUserId, sanitizeAnalyticsProperties } from './sanitize';
 import {
   isQueuedOfflineMutationResult,
   sendJsonApiMutationWithOfflineQueue,
@@ -43,6 +43,11 @@ const eventQueue: Array<{
 const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 let backendLastSentAt = 0;
 let backendBlockedUntil = 0;
+
+function getPostHogBridge() {
+  if (typeof window === 'undefined') return null;
+  return window.__analyticsPosthog ?? null;
+}
 
 /**
  * Initialize analytics — configura attribution e marca como pronto.
@@ -186,7 +191,7 @@ export function track(
   if (!shouldTrackEvent(eventName, eventId, options.critical)) return;
   
   // Matrix Property Mapping (VAR-007 to VAR-016)
-  const matrixProps = {
+  const matrixProps = sanitizeAnalyticsProperties({
     ...context,
     ...properties,
     is_internal: context.is_internal || properties.is_internal,
@@ -206,16 +211,16 @@ export function track(
     app_key: properties.app_key || context.app_key,
     brand_id: properties.brand_id || context.brand_id,
     brand_slug: properties.brand_slug || context.brand_slug,
-  };
+  }) as Record<string, any>;
   
   // 1. Centraliza no PostHog (Canonical Data) — usa o singleton inicializado pelo PostHogProvider
-  if (options.sendTo?.posthog !== false && posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (options.sendTo?.posthog !== false && posthogBridge?.isLoaded()) {
     try {
-      const sanitized = sanitizeProperties(matrixProps);
-      posthog.capture(eventName, sanitized);
+      posthogBridge.capture(eventName, matrixProps);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('[PostHog] Unified Event:', eventName, sanitized);
+        console.log('[PostHog] Unified Event:', eventName, matrixProps);
       }
     } catch (e) {
       console.error('[Analytics] PostHog capture failed:', e);
@@ -255,40 +260,6 @@ function mapToGtmEvent(name: string): string {
 /**
  * Sanitize properties to remove PII and normalize data (Matrix VAR-017)
  */
-function sanitizeProperties(properties: Record<string, any>): Record<string, any> {
-  if (!properties || typeof properties !== 'object') return properties;
-  const sanitized = { ...properties };
-  
-  // List of keys that might contain PII - Updated per Auditoria TaaS v2.0
-  const piiKeys = [
-    'email', 'phone', 'name', 'first_name', 'last_name', 
-    'address', 'zipcode', 'cnpj', 'cpf', 'password',
-    'address_full', 'full_address', 'phone_number', 'phoneNumber',
-    'email_address', 'emailAddress', 'whatsapp', 'client_name'
-  ];
-  
-  piiKeys.forEach(key => {
-    if (key in sanitized) {
-      // Regra de segurança: manter apenas os primeiros 3 dígitos do telefone se necessário, 
-      // ou remover completamente para PostHog (padrão).
-      delete sanitized[key];
-    }
-  });
-  
-  // Deep clean for metadata or nested objects
-  Object.keys(sanitized).forEach(key => {
-    if (sanitized[key] && typeof sanitized[key] === 'object' && !Array.isArray(sanitized[key])) {
-      sanitized[key] = sanitizeProperties(sanitized[key]);
-    } else if (Array.isArray(sanitized[key])) {
-      sanitized[key] = sanitized[key].map((item: any) => 
-        (typeof item === 'object' && item !== null) ? sanitizeProperties(item) : item
-      );
-    }
-  });
-  
-  return sanitized;
-}
-
 function compact(obj: Record<string, any>): Record<string, any> {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined && value !== null));
 }
@@ -303,18 +274,19 @@ function sendToBackend(
   properties: Record<string, any>
 ): void {
   if (typeof window === 'undefined') return;
+  const safeProperties = sanitizeAnalyticsProperties(properties) as Record<string, any>;
   const now = Date.now();
   if (now < backendBlockedUntil) return;
   if (now - backendLastSentAt < BACKEND_MIN_INTERVAL_MS) return;
   const backendEndpoint = '/api/v1/analytics/track';
 
-  const companyId = properties.company_id ?? context.company_id ?? null;
+  const companyId = safeProperties.company_id ?? context.company_id ?? null;
   if (!companyId && !GLOBAL_EVENTS.has(eventName)) return;
   const trackedAt =
-    typeof properties.tracked_at === 'string'
-      ? properties.tracked_at
-      : typeof properties.timestamp === 'string'
-        ? properties.timestamp
+    typeof safeProperties.tracked_at === 'string'
+      ? safeProperties.tracked_at
+      : typeof safeProperties.timestamp === 'string'
+        ? safeProperties.timestamp
         : new Date().toISOString();
 
   // Guardrail: never send malformed backend tracking payloads.
@@ -324,7 +296,7 @@ function sendToBackend(
   const attribution = getAttribution();
 
   const metadata = compact({
-    ...properties,
+    ...safeProperties,
     session_id: context.session_id,
     source: context.source,
     utm_source: utm.utm_source,
@@ -414,7 +386,7 @@ export function page(
     timestamp: new Date().toISOString()
   };
   
-  const sanitized = sanitizeProperties(pageProps);
+  const sanitized = sanitizeAnalyticsProperties(pageProps) as Record<string, any>;
 
   sendToBackend('page_view', eventId, context, {
     ...properties,
@@ -424,9 +396,10 @@ export function page(
   });
   
   // PostHog — usa o singleton inicializado pelo PostHogProvider
-  if (posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (posthogBridge?.isLoaded()) {
     try {
-      posthog.capture('page_view', {
+      posthogBridge.capture('page_view', {
         page_url: window.location.href,
         ...sanitized,
       });
@@ -449,18 +422,19 @@ export function identify(
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  currentUserId = userId;
+  currentUserId = opaqueUserId(userId);
   
   // Sanitize traits (no PII)
-  const sanitizedTraits = sanitizeProperties(traits);
+  const sanitizedTraits = sanitizeAnalyticsProperties(traits) as UserTraits;
   
   // PostHog
-  if (posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (posthogBridge?.isLoaded()) {
     try {
-      posthog.identify(userId, sanitizedTraits);
+      posthogBridge.identify(currentUserId, sanitizedTraits);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('[PostHog] Identify:', userId, sanitizedTraits);
+        console.log('[PostHog] Identify:', currentUserId, sanitizedTraits);
       }
     } catch (e) {
       console.error('[Analytics] PostHog identify failed:', e);
@@ -480,12 +454,13 @@ export function setUserProperties(traits: UserTraits): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  const sanitized = sanitizeProperties(traits);
+  const sanitized = sanitizeAnalyticsProperties(traits) as UserTraits;
   
   // PostHog
-  if (posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (posthogBridge?.isLoaded()) {
     try {
-      posthog.capture('$set', { $set: sanitized });
+      posthogBridge.capture('$set', { $set: sanitized });
     } catch (e) {
       console.error('[Analytics] PostHog set user properties failed:', e);
     }
@@ -499,9 +474,10 @@ export function alias(newId: string): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  if (posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (posthogBridge?.isLoaded()) {
     try {
-      posthog.alias(newId);
+      posthogBridge.alias(newId);
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Alias:', newId);
@@ -521,9 +497,10 @@ export function reset(): void {
   currentUserId = null;
   currentContext = {};
   
-  if (posthog.__loaded) {
+  const posthogBridge = getPostHogBridge();
+  if (posthogBridge?.isLoaded()) {
     try {
-      posthog.reset();
+      posthogBridge.reset();
     } catch (e) {
       console.error('[Analytics] PostHog reset failed:', e);
     }
@@ -543,3 +520,4 @@ export * from './consent';
 export * from './utm';
 export * from './session';
 export * from './dedupe';
+export * from './sanitize';

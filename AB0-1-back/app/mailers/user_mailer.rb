@@ -22,7 +22,7 @@ class UserMailer < Devise::Mailer
     # para evitar que o token vaze em logs de servidor ou analytics.
     @confirmation_url = "#{frontend_url}/confirm-email#token=#{token}"
 
-    Rails.logger.info "[Audit] Generating confirmation email for #{user.email}. URL: #{@confirmation_url}"
+    Rails.logger.info "[Audit] Generating confirmation email for user #{user.id}"
 
     mail(to: @user.email, subject: 'Confirme seu e-mail', template_name: 'email_confirmation')
   end

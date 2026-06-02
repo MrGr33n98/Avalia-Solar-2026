@@ -43,6 +43,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     metadata = normalize_hash_param(params[:properties]) || normalize_hash_param(params[:metadata]) || {}
     
     return render json: { error: 'event_type is required' }, status: :bad_request if event_type.blank?
+    event_type = map_event_type(event_type)
 
     # Validate micro-interaction events
     if event_type == 'micro_interaction'
@@ -122,7 +123,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       )
 
     unless raw_type.present?
-      Rails.logger.warn("[Analytics] Rejecting event: event_type missing. Payload: #{params.to_unsafe_h.slice('event', 'event_type', 'analytic')}")
+      Rails.logger.warn('[Analytics] Rejecting event: event_type missing')
       return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request 
     end
 
@@ -130,7 +131,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     log_legacy_alias_usage(raw_type: raw_type, canonical_event_type: event_type, company_id: company_id) if raw_type.to_s != event_type.to_s
     
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
-      Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'. Payload: #{params.to_unsafe_h.slice('company_id', 'company', 'properties')}")
+      Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'")
       return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request
     end
 

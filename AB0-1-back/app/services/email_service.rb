@@ -88,7 +88,7 @@ class EmailService
 
     def log_email_queued(email_type, recipient, urgent: false)
       priority = urgent ? '🔴' : '📧'
-      Rails.logger.info "#{priority} [EmailService] Queued #{email_type} to #{recipient}"
+      Rails.logger.info "#{priority} [EmailService] Queued #{email_type}"
 
       # Track metrics
       track_email_metric(email_type, 'queued')

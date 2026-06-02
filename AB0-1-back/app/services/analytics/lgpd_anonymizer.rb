@@ -1,6 +1,13 @@
 module Analytics
   class LgpdAnonymizer
-    PII_KEYS = %w[email phone cellphone cpf cnpj ip_address ip address name].freeze
+    BLOCKED_KEYS = %w[
+      address address_full author_name cellphone client_name cnpj company_name contact_email
+      contact_name content cpf description email email_address emailaddress faq_question
+      first_name full_address full_name ip ip_address item_name last_name message name
+      page_name page_title password phone phone_number phonenumber previous_term product_name
+      query reviewer_name search_term secret summary tab_label token whatsapp zipcode
+    ].freeze
+    URL_KEYS = %w[$current_url page_url referrer].freeze
 
     def initialize(payload)
       @payload = payload.deep_stringify_keys
@@ -20,16 +27,29 @@ module Analytics
 
     def deep_redact(hash)
       hash.each_with_object({}) do |(key, value), result|
-        if PII_KEYS.include?(key.downcase)
-          result[key] = '[REDACTED]'
+        if BLOCKED_KEYS.include?(key.downcase)
+          next
+        elsif URL_KEYS.include?(key.downcase)
+          result[key] = sanitize_url(value)
         elsif value.is_a?(Hash)
           result[key] = deep_redact(value)
         elsif value.is_a?(Array)
-          result[key] = value.map { |v| v.is_a?(Hash) ? deep_redact(v) : v }
+          result[key] = value.map { |item| deep_redact_value(item) }
         else
           result[key] = value
         end
       end
+    end
+
+    def deep_redact_value(value)
+      return deep_redact(value) if value.is_a?(Hash)
+      return value.map { |item| deep_redact_value(item) } if value.is_a?(Array)
+
+      value
+    end
+
+    def sanitize_url(value)
+      value.is_a?(String) ? value.split(/[?#]/).first : value
     end
 
     def hash_identity(id)

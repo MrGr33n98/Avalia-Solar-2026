@@ -30,21 +30,24 @@ describe('identity stitching analytics', () => {
     localStorage.setItem('ajs_anonymous_id', 'anon-123');
 
     await stitchIdentity({
-      user_id: 'user-1',
-      email: 'lead@example.com',
-      name: 'Lead User',
+      user_id: 1,
+      role: 'review',
     });
 
-    expect(identifyMock).toHaveBeenCalledWith('user-1', {
-      email: 'lead@example.com',
-      name: 'Lead User',
+    expect(identifyMock).toHaveBeenCalledWith('user_1', {
+      role: 'review',
     });
-    expect(aliasMock).toHaveBeenCalledWith('user-1');
+    expect(aliasMock).toHaveBeenCalledWith('user_1');
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/v1/identity/stitch',
       expect.objectContaining({
         method: 'POST',
         keepalive: true,
+        body: JSON.stringify({
+          user_id: 'user_1',
+          anonymous_id: 'anon-123',
+          role: 'review',
+        }),
       })
     );
   });

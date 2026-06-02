@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { initWebVitalsMonitoring } from '@/lib/web-vitals';
+import { track } from '@/lib/analytics/lazy';
 
 /**
  * Hook to initialize Web Vitals monitoring on component mount
@@ -16,14 +17,11 @@ export function useWebVitals() {
 
     // Initialize monitoring with custom handler
     initWebVitalsMonitoring((metric) => {
-      // Send to PostHog if available
-      if (typeof window !== 'undefined' && (window as any).posthog) {
-        (window as any).posthog.capture('web_vital', {
-          metric_name: metric.name,
-          metric_value: metric.value,
-          metric_rating: metric.rating,
-        });
-      }
+      track('web_vital', {
+        metric_name: metric.name,
+        metric_value: metric.value,
+        metric_rating: metric.rating,
+      });
 
       // Send to custom analytics endpoint
       if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === 'true') {

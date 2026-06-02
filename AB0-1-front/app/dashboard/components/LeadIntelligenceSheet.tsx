@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { LeadDossie } from '@/lib/api';
-import posthog from 'posthog-js';
+import { track } from '@/lib/analytics/lazy';
 import { useEffect } from 'react';
 
 interface LeadIntelligenceSheetProps {
@@ -51,7 +51,7 @@ export default function LeadIntelligenceSheet({ isOpen, onClose, lead }: LeadInt
   // PostHog Tracking
   useEffect(() => {
     if (isOpen && lead.id) {
-      posthog.capture('lead_dossier_viewed', {
+      track('lead_dossier_viewed', {
         lead_id: lead.id,
         intent_level: lead.intent_level,
         total_score: lead.total_score,

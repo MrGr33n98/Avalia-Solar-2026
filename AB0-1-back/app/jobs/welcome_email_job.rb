@@ -24,7 +24,7 @@ class WelcomeEmailJob < ApplicationJob
     # Mark as sent
     user.update_column(:welcome_email_sent_at, Time.current)
 
-    Rails.logger.info "✅ Welcome email sent to user #{user.id} (#{user.email})"
+    Rails.logger.info "Welcome email sent to user #{user.id}"
   rescue StandardError => e
     Rails.logger.error "❌ Failed to send welcome email to user #{user_id}: #{e.message}"
     raise # Re-raise to trigger retry

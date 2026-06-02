@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApiSafe } from '../lib/api-client';
 import { getCurrentUTMs } from '../lib/analytics/utm';
-import { posthog } from '../lib/posthog';
+import { track } from '../lib/analytics/lazy';
 
 export interface ChatMessage {
   id: number;
@@ -84,7 +84,7 @@ export function useChatSession() {
         setSession(nextSession);
         setMessages(response.messages || []);
         localStorage.setItem('as_chat_session', JSON.stringify(nextSession));
-        posthog.capture('chat_session_started', {
+        track('chat_session_started', {
           session_id: response.session.id,
           vertical,
           page_url: payload.page_url
@@ -130,7 +130,7 @@ export function useChatSession() {
     };
     setMessages(prev => [...prev, tempUserMsg]);
 
-    posthog.capture('chat_message_sent', {
+    track('chat_message_sent', {
       session_id: currentSession.id,
       content_length: content.length
     });
@@ -156,7 +156,7 @@ export function useChatSession() {
         // Trigger lead form if LLM detected purchase intent or requested details
         if (res.should_trigger_lead && !hasLeadCaptured) {
           setShowLeadForm(true);
-          posthog.capture('chat_lead_form_triggered', { session_id: currentSession.id });
+          track('chat_lead_form_triggered', { session_id: currentSession.id });
         }
       }
     } catch (error) {
@@ -169,7 +169,7 @@ export function useChatSession() {
         created_at: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorMsg]);
-      posthog.capture('chat_message_failed', { session_id: currentSession.id });
+      track('chat_message_failed', { session_id: currentSession.id });
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +184,7 @@ export function useChatSession() {
       });
       // Update local state to reflect feedback
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback: score } : m));
-      posthog.capture('chat_message_feedback', { message_id: messageId, score });
+      track('chat_message_feedback', { message_id: messageId, score });
     } catch (error) {
       console.error('[Chat] Failed to send feedback:', error);
     }
@@ -223,7 +223,7 @@ export function useChatSession() {
       if (response && (response.success || leadId)) {
         setHasLeadCaptured(true);
         setShowLeadForm(false);
-        posthog.capture('chat_lead_submitted', {
+        track('chat_lead_submitted', {
           session_id: session.id,
           lead_id: leadId
         });

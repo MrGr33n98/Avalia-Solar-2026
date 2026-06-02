@@ -150,14 +150,12 @@ class User < ApplicationRecord
 
   # PostHog: unique identifier for this user across analytics events and error reports
   def posthog_distinct_id
-    id.to_s
+    "user_#{id}"
   end
 
   # PostHog: person properties set on identify calls
   def posthog_properties
     {
-      email: email,
-      name: name,
       role: role,
       city: city,
       state: state,

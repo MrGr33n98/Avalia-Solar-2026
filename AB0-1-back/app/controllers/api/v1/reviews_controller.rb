@@ -68,16 +68,16 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       end
 
       # ... Track event e Notificações ...
-      PostHog.capture(
-        distinct_id: current_user.posthog_distinct_id,
-        event: 'review_submitted',
-        properties: {
+      Analytics::PostHogService.capture(
+        'review_submitted',
+        {
           review_id: @review.id,
           company_id: @review.company_id,
           category_id: @review.category_id,
           rating: @review.rating.to_f,
           project_type: @review.project_type
-        }.compact
+        }.compact,
+        distinct_id: current_user.posthog_distinct_id
       )
       render json: serialize_review(@review.reload), status: :created
     else

@@ -1,6 +1,49 @@
 # frozen_string_literal: true
 
 namespace :analytics do
+  desc 'Sanitize historical analytics payloads (DRY_RUN=true by default)'
+  task sanitize_historical_pii: :environment do
+    dry_run = ENV.fetch('DRY_RUN', 'true') != 'false'
+    puts "[Analytics] Historical PII sanitization (dry_run=#{dry_run})"
+
+    tables = {
+      'analytics_events' => 'metadata',
+      'platform_events' => 'payload',
+      'event_ingest_errors' => 'payload'
+    }
+
+    tables.each do |table, column|
+      next unless ActiveRecord::Base.connection.table_exists?(table)
+
+      rows = ActiveRecord::Base.connection.select_all("SELECT id, #{column} FROM #{table}")
+      changed = 0
+      malformed = 0
+      rows.each do |row|
+        raw = row[column]
+        begin
+          payload = raw.is_a?(String) ? JSON.parse(raw) : raw
+        rescue JSON::ParserError
+          malformed += 1
+          next
+        end
+        next unless payload.is_a?(Hash)
+
+        sanitized = Analytics::LgpdAnonymizer.new(payload).anonymize
+        next if sanitized == payload.deep_stringify_keys
+
+        changed += 1
+        next if dry_run
+
+        sql = "UPDATE #{table} SET #{column} = #{ActiveRecord::Base.connection.quote(sanitized.to_json)} WHERE id = #{ActiveRecord::Base.connection.quote(row['id'])}"
+        ActiveRecord::Base.connection.execute(sql)
+      end
+      puts "  - #{table}.#{column}: #{changed} row(s) #{dry_run ? 'would change' : 'updated'}"
+      puts "    skipped malformed JSON rows: #{malformed}" if malformed.positive?
+    end
+
+    puts dry_run ? '[Analytics] Preview complete. Run with DRY_RUN=false after review.' : '[Analytics] Sanitization complete.'
+  end
+
   desc "Cleanup old analytics events (executes cleanup_analytics_events SQL function)"
   task cleanup: :environment do
     puts "[Analytics] Starting cleanup..."

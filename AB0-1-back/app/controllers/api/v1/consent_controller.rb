@@ -21,14 +21,14 @@ module Api
         )
         
         distinct_id = current_user&.posthog_distinct_id || "anon_#{session_id}"
-        PostHog.capture(
-          distinct_id: distinct_id,
-          event: 'consent_given',
-          properties: {
+        Analytics::PostHogService.capture(
+          'consent_given',
+          {
             consent_type: params[:consent_type],
             consent_method: params[:consent_method] || 'banner',
             policy_version: params[:policy_version] || 'v1.0'
-          }.compact
+          }.compact,
+          distinct_id: distinct_id
         )
 
         render json: {
@@ -73,12 +73,12 @@ module Api
           )
         end
         
-        PostHog.capture(
-          distinct_id: current_user&.posthog_distinct_id || "anon_#{session_id}",
-          event: 'consent_revoked',
-          properties: {
+        Analytics::PostHogService.capture(
+          'consent_revoked',
+          {
             revoke_reason: params[:revoke_reason]
-          }.compact
+          }.compact,
+          distinct_id: current_user&.posthog_distinct_id || "anon_#{session_id}"
         )
 
         render json: {

@@ -12,9 +12,7 @@ module Api
           return unless current_user
 
           # Simple logging for now. In a real enterprise app, this would go to a dedicated AuditLog table.
-          Rails.logger.info "[ADMIN API] UserID=#{current_user.id} Controller=#{controller_name} Action=#{action_name} IP=#{request.remote_ip} Params=#{params.except(
-            :controller, :action, :format
-          ).to_unsafe_h}"
+          Rails.logger.info "[ADMIN API] UserID=#{current_user.id} Controller=#{controller_name} Action=#{action_name}"
         end
       end
     end

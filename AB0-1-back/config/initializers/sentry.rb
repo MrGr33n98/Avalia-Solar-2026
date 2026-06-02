@@ -50,9 +50,7 @@ Sentry.init do |config|
     # Add user context if available
     if defined?(Current) && Current.user
       event.user = {
-        id: Current.user.id,
-        email: Current.user.email,
-        username: Current.user.name
+        id: "user_#{Current.user.id}"
       }
     end
     

@@ -69,7 +69,7 @@ if !Rails.env.production? && ENV['ENABLE_EMAIL_INTERCEPTOR'] == 'true'
     def self.delivering_email(message)
       safe_domains = ENV.fetch('SAFE_EMAIL_DOMAINS', 'example.com,test.com').split(',')
       unless message.to.any? { |email| safe_domains.any? { |d| email.ends_with?(d) } }
-        Rails.logger.warn "🚫 [EmailInterceptor] Blocked email to: #{message.to.join(', ')}"
+        Rails.logger.warn "[EmailInterceptor] Blocked email outside safe domains"
         message.perform_deliveries = false
       end
     end

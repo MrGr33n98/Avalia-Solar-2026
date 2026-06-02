@@ -2,8 +2,16 @@ import fs from 'fs';
 import path from 'path';
 
 const ROOTS_TO_SCAN = ['app', 'components', 'hooks'];
-const DEPRECATED_PATTERNS = ["@/lib/dataLayer", '@/lib/dataLayer'];
-const ALLOWED_FILES = new Set<string>();
+const DEPRECATED_PATTERNS = [
+  "@/lib/dataLayer",
+  '@/lib/dataLayer',
+  '@/lib/posthog',
+  '../lib/posthog',
+  "from 'posthog-js'",
+  'from "posthog-js"',
+  'posthog.capture(',
+];
+const ALLOWED_FILES = new Set<string>(['components/PostHogProvider.tsx']);
 
 function collectSourceFiles(root: string): string[] {
   const absoluteRoot = path.join(process.cwd(), root);
@@ -32,16 +40,20 @@ function collectSourceFiles(root: string): string[] {
   return files;
 }
 
+function relativeSourcePath(file: string): string {
+  return path.relative(process.cwd(), file).replace(/\\/g, '/');
+}
+
 describe('analytics deprecated imports', () => {
   it('does not allow app/components code to import deprecated analytics libraries', () => {
     const offendingFiles = ROOTS_TO_SCAN
       .flatMap((root) => collectSourceFiles(root))
-      .filter((file) => !ALLOWED_FILES.has(path.relative(process.cwd(), file)))
+      .filter((file) => !ALLOWED_FILES.has(relativeSourcePath(file)))
       .filter((file) => {
         const content = fs.readFileSync(file, 'utf8');
         return DEPRECATED_PATTERNS.some((pattern) => content.includes(pattern));
       })
-      .map((file) => path.relative(process.cwd(), file));
+      .map(relativeSourcePath);
 
     expect(offendingFiles).toEqual([]);
   });

@@ -68,11 +68,11 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     set_jwt_cookie(access_token,  expires: access_exp)
     set_refresh_cookie(refresh_token, expires: refresh_exp)
 
-    PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
-    PostHog.capture(
-      distinct_id: user.posthog_distinct_id,
-      event: 'social_login_completed',
-      properties: { provider: provider_name.downcase, role: user.role }
+    Analytics::PostHogService.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
+    Analytics::PostHogService.capture(
+      'social_login_completed',
+      { provider: provider_name.downcase, role: user.role },
+      distinct_id: user.posthog_distinct_id
     )
     WelcomeEmailJob.perform_later(user.id) if user.previously_new_record?
   rescue StandardError => e

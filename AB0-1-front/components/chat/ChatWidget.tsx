@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
-import { posthog } from '@/lib/posthog';
+import { track } from '@/lib/analytics/lazy';
 
 // Feature flags para controle do comportamento dos cards e CTAs
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
@@ -112,7 +112,7 @@ export default function ChatWidget() {
   const handleStartQualification = async (vertical: ChatLeadVertical) => {
     setQualificationVertical(vertical);
     setShowLeadForm(true);
-    posthog.capture('mobivolt_guided_qualification_started', { vertical });
+    track('mobivolt_guided_qualification_started', { vertical });
     await startSession(vertical, window.location.href);
   };
 
@@ -120,7 +120,7 @@ export default function ChatWidget() {
     const vertical = getActiveVertical();
     setQualificationVertical(vertical);
     setShowLeadForm(true);
-    posthog.capture('mobivolt_guided_qualification_opened', {
+    track('mobivolt_guided_qualification_opened', {
       vertical,
       session_id: session?.id
     });
@@ -132,7 +132,7 @@ export default function ChatWidget() {
     if (lastMsg && lastMsg.role === 'assistant' && lastMsg.metadata?.type === 'company_recommendations') {
       const companies = lastMsg.metadata.companies || [];
       if (companies.length > 0) {
-        posthog.capture('mobivolt_company_card_viewed', {
+        track('mobivolt_company_card_viewed', {
           session_id: lastMsg.id,
           companies_count: companies.length,
           company_ids: companies.map((c: any) => c.id)
@@ -146,12 +146,12 @@ export default function ChatWidget() {
     setClickedCompanyId(companyId);
     
     if (type === 'profile') {
-      posthog.capture('mobivolt_company_profile_clicked', {
+      track('mobivolt_company_profile_clicked', {
         session_id: messages[0]?.id,
         company_id: companyId
       });
     } else if (type === 'whatsapp') {
-      posthog.capture('mobivolt_whatsapp_clicked', {
+      track('mobivolt_whatsapp_clicked', {
         session_id: messages[0]?.id,
         company_id: companyId
       });
@@ -164,12 +164,12 @@ export default function ChatWidget() {
     openLeadQualification();
     
     try {
-      posthog.capture('mobivolt_quote_request_clicked', {
+      track('mobivolt_quote_request_clicked', {
         session_id: messages[0]?.id,
         company_id: companyId
       });
 
-      posthog.capture('mobivolt_lead_optin_started', {
+      track('mobivolt_lead_optin_started', {
         session_id: messages[0]?.id,
         company_id: companyId
       });
@@ -187,7 +187,7 @@ export default function ChatWidget() {
     });
     
     try {
-      posthog.capture('mobivolt_compare_clicked', {
+      track('mobivolt_compare_clicked', {
         session_id: messages[0]?.id,
         company_id: companyId,
         is_comparing: !comparedCompanyIds.includes(companyId)
@@ -224,7 +224,7 @@ export default function ChatWidget() {
     if (success) {
       setShowLeadForm(false);
       setSubmittedLead(submission);
-      posthog.capture('mobivolt_lead_optin_completed', {
+      track('mobivolt_lead_optin_completed', {
         session_id: messages[0]?.id,
         quote_requested_company_id: selectedCompanyForQuote,
         vertical: submission.vertical,

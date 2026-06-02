@@ -4,7 +4,7 @@ module Api
       before_action :set_company
 
       def create
-        Rails.logger.info("[Financing] Proposal create START company_id=#{params[:company_id]} params=#{proposal_params.inspect}")
+        Rails.logger.info("[Financing] Proposal create START company_id=#{params[:company_id]}")
 
         attrs = proposal_params
         option_id = attrs[:option_id].presence&.to_i
@@ -66,17 +66,17 @@ module Api
 
         Rails.logger.info("[Financing] Proposal SUCCESS company=#{@company.id} lead=#{lead.id} option=#{option_id}")
 
-        PostHog.capture(
-          distinct_id: current_user&.posthog_distinct_id || "anon_financing_#{lead.id}",
-          event: 'financing_proposal_submitted',
-          properties: {
+        Analytics::PostHogService.capture(
+          'financing_proposal_submitted',
+          {
             lead_id: lead.id,
             company_id: @company.id,
             option_id: option_id,
             financed_amount: amount,
             months: months,
             use_type: use_type
-          }.compact
+          }.compact,
+          distinct_id: current_user&.posthog_distinct_id || "anon_financing_#{lead.id}"
         )
 
         render json: { proposal_id: lead.id, status: lead.wizard_status }, status: :created

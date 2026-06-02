@@ -92,16 +92,16 @@ class AnalyticsTrackingJob
         owner = company.company_members.find_by(role: 'owner')&.user
         distinct_id = owner&.posthog_distinct_id || "company_#{company.id}"
 
-        PostHog.capture({
-          distinct_id: distinct_id,
-          event: event_name,
-          properties: {
+        Analytics::PostHogService.capture(
+          event_name,
+          {
             company_id: company.id,
             company_name: company.name,
             plan_tier: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free',
             metric_type: metric
-          }
-        })
+          },
+          distinct_id: distinct_id
+        )
       end
     end
   rescue ActiveRecord::RecordNotFound
@@ -168,11 +168,7 @@ class AnalyticsTrackingJob
   def forward_to_posthog(event_name, properties, metadata)
     distinct_id = properties['user_id'] || properties['session_id'] || metadata[:session_id] || 'anonymous'
 
-    PostHog.capture({
-      distinct_id: distinct_id,
-      event: event_name,
-      properties: properties.merge(metadata)
-    })
+    Analytics::PostHogService.capture(event_name, properties.merge(metadata), distinct_id: distinct_id)
   rescue StandardError => e
     Rails.logger.warn(
       "[AnalyticsTrackingJob] Failed to forward to PostHog: #{e.message}"

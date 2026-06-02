@@ -32,7 +32,7 @@ module Analytics
       @company_id = company_id
       @user = user || (user_id ? User.find_by(id: user_id) : nil)
       @event_type = event_type.to_s
-      @metadata = metadata.is_a?(Hash) ? metadata.stringify_keys : {}
+      @metadata = sanitize_metadata(metadata)
       @occurred_at = occurred_at.presence || Time.current
       @event_id = event_id || "evt_#{Time.current.to_i}_#{SecureRandom.hex(6)}"
     end
@@ -82,7 +82,10 @@ module Analytics
 
     def validate_contract!
       registry = Analytics::EventRegistry.fetch(@event_type)
-      return { ok: true } if registry.nil? # Se não definido, aceita qualquer coisa (Graceful)
+      if registry.nil?
+        return { ok: false, missing_keys: ['UNKNOWN_EVENT'] } if ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'
+        return { ok: true }
+      end
       
       raw_keys = registry['required_keys']
       required_keys = case raw_keys
@@ -118,6 +121,11 @@ module Analytics
         )
       SQL
       conn.execute(sql)
+    end
+
+    def sanitize_metadata(metadata)
+      raw = metadata.is_a?(Hash) ? metadata : {}
+      Analytics::LgpdAnonymizer.new(raw).anonymize
     end
 
     def ensure_unique_event!

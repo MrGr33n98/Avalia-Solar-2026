@@ -6,10 +6,11 @@ module Api
       # POST /api/v1/identity/stitch
       # Stitch anonymous session to identified user
       def create
-        user_id = params[:user_id]
+        analytics_user_id = params[:user_id].to_s
+        user_id = analytics_user_id.delete_prefix('user_')
         anonymous_id = params[:anonymous_id]
         
-        if user_id.blank? || anonymous_id.blank?
+        if user_id.blank? || anonymous_id.blank? || !user_id.match?(/\A\d+\z/)
           return render json: { 
             error: 'user_id and anonymous_id required' 
           }, status: :bad_request
@@ -20,7 +21,7 @@ module Api
         
         render json: { 
           status: 'stitching_scheduled',
-          user_id: user_id,
+          user_id: "user_#{user_id}",
           anonymous_id: anonymous_id
         }
       end

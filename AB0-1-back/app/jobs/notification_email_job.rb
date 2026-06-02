@@ -17,6 +17,6 @@ class NotificationEmailJob < ApplicationJob
       notification.message || notification.title
     ).deliver_later
 
-    Rails.logger.info "✅ Notification email sent: #{notification.id} to #{user.email}"
+    Rails.logger.info "Notification email sent: #{notification.id} to user #{user.id}"
   end
 end

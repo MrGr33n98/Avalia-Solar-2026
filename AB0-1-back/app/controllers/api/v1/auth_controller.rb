@@ -47,7 +47,7 @@ module Api
 
           # Verificação de e-mail confirmado (Obrigatória conforme solicitado)
           if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
-            Rails.logger.warn("[Auth] Login blocked for unconfirmed user: #{email}")
+            Rails.logger.warn("[Auth] Login blocked for unconfirmed user")
             return render_error_response(
               message: 'Por favor, confirme seu e-mail antes de fazer login.',
               status: :forbidden,
@@ -66,18 +66,18 @@ module Api
             )
           )
 
-          PostHog.identify(
+          Analytics::PostHogService.identify(
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
           )
-          PostHog.capture(
-            distinct_id: user.posthog_distinct_id,
-            event: 'user_logged_in',
-            properties: {
+          Analytics::PostHogService.capture(
+            'user_logged_in',
+            {
               login_method: 'email',
               role: user.role,
               companies_count: user.active_member_companies.count
-            }
+            },
+            distinct_id: user.posthog_distinct_id
           )
 
           payload = payload_for(user)
@@ -110,7 +110,7 @@ module Api
       end
 
       def register
-        Rails.logger.info "[Audit] Initing user registration. Email: #{params[:email] || params.dig(:user, :email)}"
+        Rails.logger.info "[Audit] Initing user registration"
         attrs = user_params
 
         # Injeta localização da borda (Cloudflare) se não fornecida
@@ -122,7 +122,7 @@ module Api
 
         terms_accepted = params[:terms_accepted] || (params[:user] && params[:user][:terms_accepted])
         unless ActiveModel::Type::Boolean.new.cast(terms_accepted)
-          Rails.logger.warn "[Audit] Registration failed: terms not accepted for #{attrs[:email]}"
+          Rails.logger.warn "[Audit] Registration failed: terms not accepted"
           return render_error_response(
             message: 'Você deve aceitar os Termos e a Política de Privacidade',
             status: :unprocessable_entity,
@@ -141,19 +141,19 @@ module Api
                         ))
 
         if params[:user] && params[:user][:avatar].present?
-          Rails.logger.info "[Audit] Photo Flow: User avatar detected in registration request for #{user.email}"
+          Rails.logger.info '[Audit] Photo Flow: User avatar detected in registration request'
         end
 
         user.skip_confirmation_notification!
         if user.save
-          Rails.logger.info "[Audit] User created successfully: ID #{user.id}, Email: #{user.email}"
+          Rails.logger.info "[Audit] User created successfully: ID #{user.id}"
 
           if user.avatar.attached?
             Rails.logger.info "[Audit] Photo Flow: User avatar attached successfully for ID #{user.id}"
           end
 
           user.send_confirmation_instructions
-          Rails.logger.info "[Audit] Confirmation email sent to #{user.email}"
+          Rails.logger.info "[Audit] Confirmation email sent for user ID #{user.id}"
 
           Analytics::TrackEventService.call(
             event_type: 'registration_completed',
@@ -165,18 +165,18 @@ module Api
             )
           )
 
-          PostHog.identify(
+          Analytics::PostHogService.identify(
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
           )
-          PostHog.capture(
-            distinct_id: user.posthog_distinct_id,
-            event: 'user_registered',
-            properties: {
+          Analytics::PostHogService.capture(
+            'user_registered',
+            {
               role: user.role,
               city: attrs[:city],
               state: attrs[:state]
-            }
+            },
+            distinct_id: user.posthog_distinct_id
           )
 
           return render json: payload_for(user), status: :created
@@ -205,7 +205,7 @@ module Api
           company_id = current_user&.company_id
 
           revoke_current_token
-          Rails.logger.info("[Auth] User logged out: user_id=#{user_id} ip=#{request.remote_ip}")
+          Rails.logger.info("[Auth] User logged out: user_id=#{user_id}")
 
           Analytics::TrackEventService.call(
             event_type: 'logout_performed',
@@ -230,7 +230,7 @@ module Api
         # Revoke all tokens for current user (all devices)
         if current_user
           revoke_all_user_tokens
-          Rails.logger.info("[Auth] User logged out from all devices: user_id=#{current_user.id} ip=#{request.remote_ip}")
+          Rails.logger.info("[Auth] User logged out from all devices: user_id=#{current_user.id}")
         end
 
         revoke_refresh_token
@@ -316,9 +316,9 @@ module Api
         user = User.find_by(email: email)
         if user
           user.send_reset_password_instructions
-          Rails.logger.info("[Auth] Reset password instructions triggered for #{email}")
+          Rails.logger.info("[Auth] Reset password instructions triggered")
         else
-          Rails.logger.info("[Auth] Skip forgot_password for #{email}: User not found")
+          Rails.logger.info("[Auth] Skip forgot_password: User not found")
         end
         render json: { message: 'Se o e-mail existir, você receberá instruções para redefinir a senha.' }, status: :ok
       end
@@ -333,7 +333,7 @@ module Api
         if token.blank?
           query_token = request.query_parameters['reset_password_token'] || request.query_parameters['token']
           if query_token.present?
-            Rails.logger.warn "[Security] Password reset token rejected from query string (IP: #{request.remote_ip})"
+            Rails.logger.warn "[Security] Password reset token rejected from query string"
             return render_error_response(
               message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
               status: :unprocessable_entity,
@@ -358,7 +358,7 @@ module Api
                                             })
 
         if user.errors.empty?
-          Rails.logger.info("[Auth] Password reset successfully: #{user.email} (IP: #{request.remote_ip})")
+          Rails.logger.info("[Auth] Password reset successfully: user_id=#{user.id}")
 
           # Logar usuário automaticamente após reset
           tokens = issue_tokens_for(user)
@@ -394,12 +394,12 @@ module Api
         if user.respond_to?(:confirmed?) && !user.confirmed?
           begin
             user.send_confirmation_instructions
-            Rails.logger.info("[Auth] Confirmation instructions resent to #{email}")
+            Rails.logger.info("[Auth] Confirmation instructions resent")
           rescue StandardError => e
-            Rails.logger.error("[Auth] resend_confirmation failure for #{email}: #{e.class}: #{e.message}")
+            Rails.logger.error("[Auth] resend_confirmation failure: #{e.class}: #{e.message}")
           end
         else
-          Rails.logger.info("[Auth] Skip resend_confirmation for #{email}: User not found, already confirmed or not supported")
+          Rails.logger.info("[Auth] Skip resend_confirmation: User not found, already confirmed or not supported")
         end
 
         # Anti-enumeration: do not reveal whether the email exists.
@@ -413,7 +413,7 @@ module Api
         if token.blank?
           query_token = request.query_parameters['confirmation_token'] || request.query_parameters['token']
           if query_token.present?
-            Rails.logger.warn "[Security] Confirmation token rejected from query string (IP: #{request.remote_ip})"
+            Rails.logger.warn "[Security] Confirmation token rejected from query string"
             return render_error_response(
               message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
               status: :unprocessable_entity,
@@ -424,7 +424,7 @@ module Api
         end
 
         if token.blank?
-          Rails.logger.warn("[Auth] Confirmation blocked: token missing (IP: #{request.remote_ip})")
+          Rails.logger.warn("[Auth] Confirmation blocked: token missing")
           return render_error_response(
             message: 'Token inválido ou ausente',
             status: :unprocessable_entity,
@@ -432,7 +432,7 @@ module Api
           )
         end
 
-        Rails.logger.info "[Audit] Processing email confirmation for token: #{token[0..5]}... (IP: #{request.remote_ip})"
+        Rails.logger.info "[Audit] Processing email confirmation"
 
         user = User.confirm_by_token(token)
         if user.errors.empty?
@@ -444,23 +444,23 @@ module Api
             metadata: { ip: request.remote_ip }
           )
 
-          PostHog.identify(
+          Analytics::PostHogService.identify(
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
           )
-          PostHog.capture(
-            distinct_id: user.posthog_distinct_id,
-            event: 'email_confirmed',
-            properties: { role: user.role }
+          Analytics::PostHogService.capture(
+            'email_confirmed',
+            { role: user.role },
+            distinct_id: user.posthog_distinct_id
           )
 
           # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)
           if user.pending? && (user.regular_user? || user.review_user?)
             user.active!
-            Rails.logger.info("[Audit] User status updated to active after confirmation: #{user.email}")
+            Rails.logger.info("[Audit] User status updated to active after confirmation: user_id=#{user.id}")
           end
 
-          Rails.logger.info("[Audit] Email confirmed successfully: #{user.email} (IP: #{request.remote_ip})")
+          Rails.logger.info("[Audit] Email confirmed successfully: user_id=#{user.id}")
 
           # Logar usuário automaticamente após confirmação
           tokens = issue_tokens_for(user)

@@ -4,7 +4,7 @@ module Analytics
     def self.capture(event_name, properties = {}, distinct_id: nil)
       return unless enabled?
 
-      distinct_id ||= properties[:distinct_id] || 'anonymous'
+      distinct_id = opaque_distinct_id(distinct_id || properties[:distinct_id] || 'anonymous')
       
       # Sanitize properties (remove PII)
       sanitized_props = sanitize_properties(properties)
@@ -22,6 +22,17 @@ module Analytics
       rescue StandardError => e
         Rails.logger.error("[PostHogService] Error capturing event #{event_name}: #{e.message}")
       end
+    end
+
+    def self.identify(distinct_id:, properties: {})
+      return unless enabled?
+
+      posthog.identify(
+        distinct_id: opaque_distinct_id(distinct_id),
+        properties: sanitize_properties(properties)
+      )
+    rescue StandardError => e
+      Rails.logger.error("[PostHogService] Error identifying user: #{e.message}")
     end
 
     def self.track_lead(lead)
@@ -42,7 +53,7 @@ module Analytics
         }
       }
 
-      capture('wizard_success', properties, distinct_id: lead.email)
+      capture('wizard_success', properties, distinct_id: "lead_#{lead.id}")
     end
 
     def self.track_company_view(company, user)
@@ -71,8 +82,15 @@ module Analytics
     end
 
     def self.sanitize_properties(props)
-      pii_keys = %i[email phone name cnpj cpf password token secret]
-      props.except(*pii_keys)
+      Analytics::LgpdAnonymizer.new(props).anonymize.deep_symbolize_keys
+    end
+
+    def self.opaque_distinct_id(distinct_id)
+      raw = distinct_id.to_s
+      return raw if raw.match?(/\A(user|lead|company|anon)[_-]/)
+      return "user_#{raw}" if raw.match?(/\A\d+\z/)
+
+      raw
     end
   end
 end

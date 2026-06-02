@@ -16,7 +16,7 @@ module Api
 
       # GET /api/v1/companies
       def index
-        Rails.logger.info("Starting companies#index with params: #{params.inspect}")
+        Rails.logger.info("Starting companies#index")
 
         # Generate cache key based on filters
         cache_key = generate_cache_key(params)
@@ -154,7 +154,7 @@ module Api
 
       # POST /api/v1/companies
       def create
-        Rails.logger.info "[Audit] Initing company creation. Params: #{company_params.except(:logo).inspect}"
+        Rails.logger.info "[Audit] Initing company creation"
         @company = ::Company.new(company_params)
 
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada
@@ -190,10 +190,9 @@ module Api
               )
 
               if current_user
-                PostHog.capture(
-                  distinct_id: current_user.posthog_distinct_id,
-                  event: 'company_registered',
-                  properties: {
+                Analytics::PostHogService.capture(
+                  'company_registered',
+                  {
                     company_id: @company.id,
                     company_name: @company.name,
                     city: @company.city,
@@ -201,7 +200,8 @@ module Api
                     status: @company.status,
                     plan_tier: @company.respond_to?(:inferred_plan_tier) ? @company.inferred_plan_tier : 'free',
                     company_segment: @company.respond_to?(:project_types) ? @company.project_types&.join(',') : nil
-                  }
+                  },
+                  distinct_id: current_user.posthog_distinct_id
                 )
               end
 
@@ -285,14 +285,14 @@ module Api
         if @company.update(company_params)
           # Track profile completion
           if !was_ready && @company.ready_for_activation? && current_user
-            PostHog.capture(
-              distinct_id: current_user.posthog_distinct_id,
-              event: 'company_profile_completed',
-              properties: {
+            Analytics::PostHogService.capture(
+              'company_profile_completed',
+              {
                 company_id: @company.id,
                 company_name: @company.name,
                 plan_tier: @company.respond_to?(:inferred_plan_tier) ? @company.inferred_plan_tier : 'free'
-              }
+              },
+              distinct_id: current_user.posthog_distinct_id
             )
           end
 

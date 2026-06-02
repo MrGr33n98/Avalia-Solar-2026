@@ -7,9 +7,36 @@ import { useReportWebVitals } from 'next/web-vitals';
 import { useEffect, useRef, Suspense } from 'react';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
+import { sanitizeAnalyticsProperties } from '@/lib/analytics/sanitize';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+declare global {
+  interface Window {
+    __analyticsPosthog?: {
+      alias: (newId: string) => void;
+      capture: (eventName: string, properties?: Record<string, unknown>) => void;
+      identify: (userId: string, traits?: Record<string, unknown>) => void;
+      isLoaded: () => boolean;
+      reset: () => void;
+    };
+  }
+}
+
+function exposeAnalyticsBridge() {
+  window.__analyticsPosthog = {
+    alias: (newId) => posthog.alias(newId),
+    capture: (eventName, properties = {}) => {
+      posthog.capture(eventName, sanitizeAnalyticsProperties(properties) as Record<string, unknown>);
+    },
+    identify: (userId, traits = {}) => {
+      posthog.identify(userId, sanitizeAnalyticsProperties(traits) as Record<string, unknown>);
+    },
+    isLoaded: () => posthog.__loaded,
+    reset: () => posthog.reset(),
+  };
+}
 
 function WebVitals() {
   useReportWebVitals((metric) => {
@@ -67,10 +94,7 @@ function PostHogPageView() {
       return;
     }
 
-    const url =
-      window.location.origin +
-      pathname +
-      (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+    const url = window.location.origin + pathname;
 
     posthog.capture('$pageview', { 
       $current_url: url,
@@ -97,6 +121,8 @@ function PostHogPageView() {
  */
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    exposeAnalyticsBridge();
+
     if (!POSTHOG_KEY) {
       if (process.env.NODE_ENV === 'development') {
         console.warn('[PostHog] NEXT_PUBLIC_POSTHOG_KEY não configurado.');
@@ -148,7 +174,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       loaded: (ph) => {
         if (hasConsent) {
           ph.capture('$pageview', {
-            $current_url: window.location.href,
+            $current_url: window.location.origin + window.location.pathname,
             page_type: getPageType(window.location.pathname)
           });
         }
@@ -167,7 +193,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         posthog.opt_in_capturing();
         // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
         posthog.capture('$pageview', { 
-          $current_url: window.location.href,
+          $current_url: window.location.origin + window.location.pathname,
           page_type: getPageType(window.location.pathname)
         });
 

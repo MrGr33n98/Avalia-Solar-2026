@@ -62,8 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         stitchedIdentitySignature.current = stitchSignature;
         void handleUserIdentified({
           id: String(user.id),
-          email: user.email?.trim(),
-          name: user.name?.trim(),
           role: user.role,
           company_id: companyId,
           session_id: sessionId,
@@ -77,16 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       identify(String(user.id), {
-        email: user.email?.trim(),
-        name: user.name?.trim(),
         role: user.role,
         company_id: companyId,
       });
 
       Sentry.setUser({
         id: String(user.id),
-        email: user.email?.trim(),
-        username: user.name?.trim(),
         role: user.role,
       });
     } else {
@@ -196,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (loginError) {
       logError(loginError instanceof Error ? loginError : new Error(String(loginError)), {
         action: 'login_failed',
-        metadata: { email },
+        metadata: { method: 'email' },
       });
       setError(getApiErrorMessage(loginError, 'Falha ao entrar. Verifique suas credenciais.'));
       throw loginError;
