@@ -34,6 +34,7 @@ module Chat
             cidade: entities[:city],
             estado: entities[:state],
             termo_chave: entities[:keyword],
+            categoria: entities[:category_seo_url],
             source: @session.page_url
           },
           empresas_encontradas: serialized_companies
@@ -51,6 +52,7 @@ module Chat
             cidade: entities&.dig(:city),
             estado: entities&.dig(:state),
             termo_chave: entities&.dig(:keyword),
+            categoria: entities&.dig(:category_seo_url),
             source: @session.page_url
           },
           empresas_encontradas: []

@@ -47,6 +47,8 @@ module Api
               id: session.id,
               visitor_id: session.visitor_id,
               status: session.status,
+              vertical: session.vertical,
+              message_count: session.message_count,
               started_at: session.started_at
             },
             messages: [

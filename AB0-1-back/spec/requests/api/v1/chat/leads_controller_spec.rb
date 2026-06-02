@@ -22,6 +22,10 @@ RSpec.describe "Api::V1::Chat::LeadsController", type: :request do
       expect(response).to have_http_status(:created)
       lead = ChatLead.last
       expect(lead.name).to eq('João Solar')
+      expect(response.parsed_body).to include(
+        'success' => true,
+        'lead_id' => lead.id
+      )
     end
 
     it "updates existing ChatLead instead of duplicating" do

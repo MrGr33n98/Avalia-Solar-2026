@@ -26,7 +26,7 @@ const normalizeCompanyRecommendation = (company: any) => {
     rating_avg: company?.rating_avg ?? company?.nota_media,
     rating_count: company?.rating_count ?? company?.total_avaliacoes ?? 0,
     services: Array.isArray(company?.services) ? company.services : (Array.isArray(company?.servicos) ? company.servicos : []),
-    review_snippet: company?.review_snippet,
+    review_snippet: company?.review_snippet || company?.reviews_recentes?.[0]?.comentario,
     profile_url: company?.profile_url || company?.link_perfil,
     slug: company?.slug,
     whatsapp: company?.whatsapp,
@@ -66,7 +66,7 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
     return (
       <div className="mt-3.5 p-4 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 text-center space-y-3">
         <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-          Não encontramos instaladores solares ativos na sua região no momento. Quer que façamos uma busca personalizada grátis?
+          Não encontramos empresas cadastradas para esse perfil na sua região no momento. Quer que façamos uma busca personalizada grátis?
         </p>
         <button
           type="button"
@@ -194,7 +194,7 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
                 onClick={() => trackableCompanyId !== null && onCompanyClick(trackableCompanyId, 'profile')}
                 className="flex items-center justify-center text-[10px] font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 py-1.5 rounded-lg transition-colors cursor-pointer text-center"
               >
-                Ver Perfil
+                Ler reviews
               </a>
               {trackableCompanyId !== null && (
                 <button

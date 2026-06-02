@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
-import { usePathname } from 'next/navigation';
 import { posthog } from '@/lib/posthog';
 
 // Feature flags para controle do comportamento dos cards e CTAs
@@ -10,17 +9,23 @@ const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
 
 import ChatCompanyRecommendations from './ChatCompanyRecommendations';
 import ChatComparisonModal from './ChatComparisonModal';
+import ChatLeadQualificationWizard, {
+  ChatLeadQualificationSubmission,
+  ChatLeadVertical
+} from './ChatLeadQualificationWizard';
 import MarkdownRenderer from './MarkdownRenderer';
 
 export default function ChatWidget() {
   const {
     isOpen,
     setIsOpen,
+    session,
     messages,
     isLoading,
     showLeadForm,
     setShowLeadForm,
     hasLeadCaptured,
+    setHasLeadCaptured,
     startSession,
     sendMessage,
     sendFeedback,
@@ -59,15 +64,8 @@ export default function ChatWidget() {
     };
   }, [isOpen, messages.length, resetInactivityTimer]);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    city: '',
-    state: '',
-    monthly_bill: '',
-    property_type: 'Casa',
-    consent_given: false
-  });
+  const [qualificationVertical, setQualificationVertical] = useState<ChatLeadVertical | null>(null);
+  const [submittedLead, setSubmittedLead] = useState<ChatLeadQualificationSubmission | null>(null);
 
   // Estados locais para telemetria de cliques comerciais e comparação
   const [clickedCompanyId, setClickedCompanyId] = useState<number | null>(null);
@@ -76,7 +74,6 @@ export default function ChatWidget() {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
-  const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const allCompanies = messages
@@ -105,6 +102,28 @@ export default function ChatWidget() {
   const handleQuickReply = (text: string) => {
     if (isLoading) return;
     sendMessage(text);
+  };
+
+  const getActiveVertical = (): ChatLeadVertical => {
+    if (qualificationVertical) return qualificationVertical;
+    return session?.vertical === 'electric_mobility' ? 'electric_mobility' : 'solar';
+  };
+
+  const handleStartQualification = async (vertical: ChatLeadVertical) => {
+    setQualificationVertical(vertical);
+    setShowLeadForm(true);
+    posthog.capture('mobivolt_guided_qualification_started', { vertical });
+    await startSession(vertical, window.location.href);
+  };
+
+  const openLeadQualification = () => {
+    const vertical = getActiveVertical();
+    setQualificationVertical(vertical);
+    setShowLeadForm(true);
+    posthog.capture('mobivolt_guided_qualification_opened', {
+      vertical,
+      session_id: session?.id
+    });
   };
 
   // Dispara mobivolt_company_card_viewed ao carregar as recomendações
@@ -142,7 +161,7 @@ export default function ChatWidget() {
   // Ao clicar no botão "Quero orçamento" de algum card
   const handleRequestQuote = (companyId: number) => {
     setSelectedCompanyForQuote(companyId);
-    setShowLeadForm(true);
+    openLeadQualification();
     
     try {
       posthog.capture('mobivolt_quote_request_clicked', {
@@ -178,9 +197,8 @@ export default function ChatWidget() {
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.consent_given) return;
+  const handleQualificationSubmit = async (submission: ChatLeadQualificationSubmission) => {
+    const { recommendationQuery, ...leadData } = submission;
 
     // Compila os metadados de RAG, cliques e LGPD
     const allRecommendedCompanyIds = messages
@@ -193,20 +211,28 @@ export default function ChatWidget() {
       quote_requested_company_id: selectedCompanyForQuote,
       comparison_company_ids: comparedCompanyIds,
       lgpd_consent_version: 'v1',
-      lgpd_consent_text: 'Aceito compartilhar meus dados conforme a LGPD para me conectar com as melhores ofertas.'
+      lgpd_consent_text: 'Aceito compartilhar meus dados conforme a LGPD para me conectar com as melhores ofertas.',
+      ...submission.metadata
     };
 
     const success = await submitLead({
-      ...formData,
+      ...leadData,
+      consent_given: true,
       metadata: enrichedMetadata
     });
 
     if (success) {
       setShowLeadForm(false);
+      setSubmittedLead(submission);
       posthog.capture('mobivolt_lead_optin_completed', {
         session_id: messages[0]?.id,
-        quote_requested_company_id: selectedCompanyForQuote
+        quote_requested_company_id: selectedCompanyForQuote,
+        vertical: submission.vertical,
+        intent: submission.intent,
+        city: submission.city,
+        state: submission.state
       });
+      await sendMessage(recommendationQuery);
     }
   };
 
@@ -306,7 +332,7 @@ export default function ChatWidget() {
                 
                 <div className="grid grid-cols-1 gap-3 w-full mt-2">
                   <button
-                    onClick={() => startSession('solar', window.location.href)}
+                    onClick={() => handleStartQualification('solar')}
                     className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
                   >
                     <div className="flex items-center space-x-3">
@@ -322,7 +348,7 @@ export default function ChatWidget() {
                   </button>
 
                   <button
-                    onClick={() => startSession('electric_mobility', window.location.href)}
+                    onClick={() => handleStartQualification('electric_mobility')}
                     className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
                   >
                     <div className="flex items-center space-x-3">
@@ -384,7 +410,7 @@ export default function ChatWidget() {
                         onCompare={handleCompare}
                         onRequestPersonalizedSearch={() => {
                           setSelectedCompanyForQuote(null);
-                          setShowLeadForm(true);
+                          openLeadQualification();
                         }}
                       />
                     )}
@@ -469,120 +495,14 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {/* Lead Form inside Messages */}
+            {/* Guided lead qualification inside messages */}
             {showLeadForm && !hasLeadCaptured && (
-              <div className="bg-brand-blue/5 dark:bg-[#0F172A] border border-brand-blue/20 dark:border-zinc-700 rounded-2xl p-4 shadow-md space-y-3 animate-in fade-in zoom-in-95">
-                <div className="text-center space-y-1">
-                  <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Consultoria Personalizada Grátis</h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Preencha seus dados para receber propostas e orçamentos recomendados.</p>
-                </div>
-                <form onSubmit={handleFormSubmit} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Nome completo</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: João da Silva"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2 space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-medium ml-1">Cidade</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ex: São Paulo"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-medium ml-1">UF</label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={2}
-                        placeholder="Ex: SP"
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                        className="w-full text-xs px-3 py-2 text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-500 font-medium ml-1">WhatsApp</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="(11) 99999-9999"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Conta de luz (média mensal)</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="R$ 450,00"
-                      value={formData.monthly_bill}
-                      onChange={(e) => setFormData({ ...formData, monthly_bill: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-500 font-medium ml-1">Tipo de imóvel</label>
-                    <select
-                      value={formData.property_type}
-                      onChange={(e) => setFormData({ ...formData, property_type: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    >
-                      <option value="Casa">Casa</option>
-                      <option value="Empresa">Empresa</option>
-                      <option value="Rural">Rural</option>
-                      <option value="Condominio">Condomínio</option>
-                    </select>
-                  </div>
-
-                  <label className="flex items-start space-x-2 pt-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      required
-                      checked={formData.consent_given}
-                      onChange={(e) => setFormData({ ...formData, consent_given: e.target.checked })}
-                      className="mt-0.5 rounded text-brand-blue focus:ring-brand-blue border-zinc-300 dark:border-zinc-700"
-                    />
-                    <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
-                      Aceito compartilhar meus dados para receber contato e orçamentos das empresas parceiras do Avalia Solar, conforme a LGPD. <a href="#" className="text-brand-blue hover:underline">Saiba mais</a>
-                    </span>
-                  </label>
-
-                  <div className="pt-2 space-y-2">
-                    <button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-brand-yellow to-amber-500 hover:from-amber-500 hover:to-amber-600 text-zinc-900 font-bold py-2 rounded-lg text-sm shadow-md transition-colors"
-                    >
-                      Continuar &rarr;
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowLeadForm(false)}
-                      className="w-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium py-2 rounded-lg text-sm transition-colors"
-                    >
-                      Pular por enquanto
-                    </button>
-                  </div>
-                </form>
-              </div>
+              <ChatLeadQualificationWizard
+                vertical={getActiveVertical()}
+                isSubmitting={isLoading}
+                onCancel={() => setShowLeadForm(false)}
+                onSubmit={handleQualificationSubmit}
+              />
             )}
 
             {/* Success State (Conversion) */}
@@ -605,14 +525,16 @@ export default function ChatWidget() {
                     <span className="text-zinc-400 mt-0.5">📍</span>
                     <div>
                       <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Cidade</span>
-                      <span className="font-medium text-zinc-700 dark:text-zinc-300">{formData.city} - {formData.state}</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">{submittedLead?.city} - {submittedLead?.state}</span>
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <span className="text-zinc-400 mt-0.5">☀️</span>
+                    <span className="text-zinc-400 mt-0.5">{submittedLead?.vertical === 'electric_mobility' ? '⚡' : '☀️'}</span>
                     <div>
                       <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Interesse</span>
-                      <span className="font-medium text-zinc-700 dark:text-zinc-300">Analisar proposta solar</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                        {submittedLead?.vertical === 'electric_mobility' ? 'Mobilidade elétrica' : 'Energia solar'}
+                      </span>
                     </div>
                   </div>
                   {comparedCompanyIds.length > 0 && (
@@ -634,6 +556,16 @@ export default function ChatWidget() {
                 </div>
 
                 <div className="space-y-2 pt-2">
+                  {allCompanies.length > 0 && (
+                    <a
+                      href={`/companies?city=${encodeURIComponent(submittedLead?.city || '')}&state=${encodeURIComponent(submittedLead?.state || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition-colors"
+                    >
+                      Ler reviews das empresas recomendadas
+                    </a>
+                  )}
                   <a
                     href="https://wa.me/5511999999999?text=Olá,%20acabei%20de%20enviar%20meus%20dados%20pelo%20MobiVolt%20AI%20e%20gostaria%20de%20falar%20com%20um%20especialista!"
                     target="_blank"

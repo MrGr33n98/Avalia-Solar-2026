@@ -46,9 +46,13 @@ module Chat
           source: 'mobivolt_ai',
           product_vertical: @chat_lead.vertical,
           project_type: @chat_lead.project_type,
+          project_profile: @chat_lead.property_type.presence || @chat_lead.company_size,
+          quote_type: @chat_lead.solution_type,
+          estimated_budget: @chat_lead.budget_range,
           decision_timeline: @chat_lead.decision_timeline,
           bill_value: @chat_lead.monthly_bill,
           message: @chat_lead.summary,
+          wizard_answers: @metadata['qualification_answers'] || {},
           
           # Atributos de Chat RAG
           chat_lead_id: @chat_lead.id,

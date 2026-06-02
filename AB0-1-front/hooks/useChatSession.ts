@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApiSafe } from '../lib/api-client';
-import { getAttribution } from '../lib/analytics/utm';
+import { getCurrentUTMs } from '../lib/analytics/utm';
 import { posthog } from '../lib/posthog';
 
 export interface ChatMessage {
@@ -59,10 +59,10 @@ export function useChatSession() {
   const startSession = useCallback(async (vertical?: string, pageUrl?: string) => {
     setIsLoading(true);
     try {
-      const attribution = getAttribution() || {};
+      const attribution = getCurrentUTMs();
       const payload = {
         vertical,
-        page_url: pageUrl || typeof window !== 'undefined' ? window.location.href : '',
+        page_url: pageUrl || (typeof window !== 'undefined' ? window.location.href : ''),
         referrer: typeof document !== 'undefined' ? document.referrer : '',
         utm_source: attribution.utm_source || '',
         utm_medium: attribution.utm_medium || '',
@@ -80,9 +80,10 @@ export function useChatSession() {
       });
 
       if (response && response.session) {
-        setSession(response.session);
+        const nextSession = { ...response.session, vertical: response.session.vertical || vertical };
+        setSession(nextSession);
         setMessages(response.messages || []);
-        localStorage.setItem('as_chat_session', JSON.stringify(response.session));
+        localStorage.setItem('as_chat_session', JSON.stringify(nextSession));
         posthog.capture('chat_session_started', {
           session_id: response.session.id,
           vertical,
@@ -179,7 +180,7 @@ export function useChatSession() {
       await fetchApiSafe(`chat/messages/${messageId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score })
+        body: JSON.stringify({ feedback: score })
       });
       // Update local state to reflect feedback
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback: score } : m));
@@ -191,7 +192,7 @@ export function useChatSession() {
 
   const submitLead = useCallback(async (leadData: {
     name: string;
-    email: string;
+    email?: string;
     phone: string;
     city?: string;
     state?: string;
@@ -202,7 +203,7 @@ export function useChatSession() {
 
     setIsLoading(true);
     try {
-      const attribution = getAttribution() || {};
+      const attribution = getCurrentUTMs();
       const payload = {
         chat_session_id: session.id,
         ...leadData,
@@ -212,18 +213,19 @@ export function useChatSession() {
         utm_campaign: attribution.utm_campaign || '',
       };
 
-      const response = await fetchApiSafe<{ success: boolean; lead_id: number }>('chat/leads', {
+      const response = await fetchApiSafe<{ success?: boolean; lead_id?: number; id?: number }>('chat/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (response && response.success) {
+      const leadId = response?.lead_id || response?.id;
+      if (response && (response.success || leadId)) {
         setHasLeadCaptured(true);
         setShowLeadForm(false);
         posthog.capture('chat_lead_submitted', {
           session_id: session.id,
-          lead_id: response.lead_id
+          lead_id: leadId
         });
         
         // Add a friendly thank you system message from AI
@@ -262,6 +264,7 @@ export function useChatSession() {
     showLeadForm,
     setShowLeadForm,
     hasLeadCaptured,
+    setHasLeadCaptured,
     startSession,
     sendMessage,
     sendFeedback,

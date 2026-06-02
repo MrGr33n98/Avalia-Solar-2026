@@ -22,7 +22,11 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
         'recommended_company_ids' => [company.id],
         'quote_requested_company_id' => company.id,
         'lgpd_consent_version' => 'v1',
-        'lgpd_consent_text' => 'Aceito compartilhar meus dados.'
+        'lgpd_consent_text' => 'Aceito compartilhar meus dados.',
+        'qualification_answers' => {
+          'need' => 'new_installation',
+          'profile' => 'residential'
+        }
       }
     )
   end
@@ -68,6 +72,10 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
           expect(lead.chat_lead_id).to eq(chat_lead_valid.id)
           expect(lead.chat_session_id).to eq(chat_session.id)
           expect(lead.quote_requested_company_id).to eq(company.id)
+          expect(lead.wizard_answers).to include(
+            'need' => 'new_installation',
+            'profile' => 'residential'
+          )
         }.to change(Lead, :count).by(1)
       end
 

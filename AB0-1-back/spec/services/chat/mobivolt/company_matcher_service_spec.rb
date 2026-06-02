@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe Chat::Mobivolt::CompanyMatcherService, type: :service do
   let!(:category) { create(:category) }
+  let!(:mobility_category) { create(:category, seo_url: 'carregadores-residenciais') }
 
   # Criar instalador ativo padrão
   let!(:active_installer) do
@@ -33,6 +34,12 @@ RSpec.describe Chat::Mobivolt::CompanyMatcherService, type: :service do
     comp
   end
 
+  let!(:mobility_installer) do
+    comp = create(:company, status: 'active', segment: 'installer', state: 'SP', city: 'São Paulo')
+    comp.categories << mobility_category
+    comp
+  end
+
   describe '.match' do
     it 'retorna apenas empresas active e installers' do
       results = described_class.match({})
@@ -51,6 +58,12 @@ RSpec.describe Chat::Mobivolt::CompanyMatcherService, type: :service do
     it 'prioriza empresas patrocinadas (sponsored) primeiro' do
       results = described_class.match({})
       expect(results.first).to eq(sponsored_installer) # Cuiabá sponsored
+    end
+
+    it 'filtra por categoria quando o parser identifica uma necessidade específica' do
+      results = described_class.match({ state: 'SP', category_seo_url: 'carregadores-residenciais' })
+      expect(results).to include(mobility_installer)
+      expect(results).not_to include(active_installer)
     end
 
     it 'limita a no máximo 5 resultados' do

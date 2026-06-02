@@ -39,12 +39,12 @@ describe('ChatCompanyRecommendations', () => {
     // Com o código atual, se metadata.companies é string, Array.isArray(rawCompanies) é falso.
     // Assim hasCompanies = false, o que renderiza o estado vazio, sem quebrar! (Graças à nossa checagem).
     render(<ChatCompanyRecommendations {...defaultProps} metadata={{ companies: "not-an-array" }} />);
-    expect(screen.getByText(/Não encontramos instaladores solares ativos na sua região/i)).toBeInTheDocument();
+    expect(screen.getByText(/Não encontramos empresas cadastradas para esse perfil na sua região/i)).toBeInTheDocument();
   });
 
   it('renderiza estado de "Nenhuma empresa encontrada" quando array está vazio', () => {
     render(<ChatCompanyRecommendations {...defaultProps} metadata={{ companies: [] }} />);
-    expect(screen.getByText(/Não encontramos instaladores solares ativos na sua região/i)).toBeInTheDocument();
+    expect(screen.getByText(/Não encontramos empresas cadastradas para esse perfil na sua região/i)).toBeInTheDocument();
   });
 
   it('renderiza cards de empresas corretamente quando os dados estão válidos', () => {

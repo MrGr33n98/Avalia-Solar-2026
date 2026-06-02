@@ -19,5 +19,20 @@ RSpec.describe Chat::Mobivolt::IntentParserService, type: :service do
       result = described_class.parse('quem trabalha com carregador?')
       expect(result[:keyword]).to eq('carregador')
     end
+
+    it 'extrai categoria de mobilidade para busca de wallbox residencial' do
+      result = described_class.parse('recomende empresas de wallbox residencial em São Paulo SP')
+      expect(result[:category_seo_url]).to eq('carregadores-residenciais')
+    end
+
+    it 'extrai categoria solar para busca residencial' do
+      result = described_class.parse('recomende empresas de energia solar com perfil residencial em Campinas SP')
+      expect(result[:category_seo_url]).to eq('energia-solar-residencial')
+    end
+
+    it 'prioriza categoria de financiamento quando a busca também informa perfil residencial' do
+      result = described_class.parse('recomende empresas de energia solar para buscar financiamento com perfil residencial em Campinas SP')
+      expect(result[:category_seo_url]).to eq('financiamento-energia-solar')
+    end
   end
 end

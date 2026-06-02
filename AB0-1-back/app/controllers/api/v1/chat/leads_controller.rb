@@ -98,7 +98,9 @@ module Api
           )
 
           render json: {
+            success: true,
             id: lead.id,
+            lead_id: lead.id,
             lead_score: lead.lead_score,
             lead_temperature: lead.lead_temperature,
             recommended_next_action: lead.recommended_next_action,

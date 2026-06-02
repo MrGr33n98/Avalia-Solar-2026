@@ -7,6 +7,18 @@ module Chat
         recomenda indica melhor quais quem empresa instalador
         onde encontrar contratar opções parceiros recomendacao indicacao
       ].freeze
+      CATEGORY_PATTERNS = {
+        'integracao-solar-ev' => /(?:solar.+(?:recarga|carregador)|(?:recarga|carregador).+solar)/,
+        'carregadores-residenciais' => /(?:wallbox|carregador.+residencial|residencia.+carregador)/,
+        'carregadores-comerciais' => /(?:condominio|frota|empresa.+carregador|carregador.+comercial)/,
+        'estacoes-publicas' => /(?:eletroposto|estacao.+recarga|recarga.+publica)/,
+        'financiamento-energia-solar' => /(?:financiamento|financiar|parcelas?).+solar|solar.+(?:financiamento|financiar|parcelas?)/,
+        'energia-solar-residencial' => /(?:solar.+residencial|residencial.+solar)/,
+        'energia-solar-comercial-industrial' => /(?:solar.+(?:comercial|industrial)|(?:comercial|industrial).+solar)/,
+        'energia-solar-rural' => /(?:solar.+(?:rural|agronegocio)|(?:rural|agronegocio).+solar)/,
+        'mobilidade-eletrica' => /(?:mobilidade.+eletrica|veiculo.+eletrico)/,
+        'energia-solar' => /(?:energia.+solar|solar)/
+      }.freeze
 
       def self.parse(user_text)
         new(user_text).parse
@@ -22,12 +34,14 @@ module Chat
         state = detect_state
         city = detect_city(state)
         keyword = detect_keyword
+        category_seo_url = detect_category
 
         {
           recommendation_intent: intent || state.present? || city.present? || keyword.present?,
           city: city,
           state: state,
-          keyword: keyword
+          keyword: keyword,
+          category_seo_url: category_seo_url
         }
       end
 
@@ -90,6 +104,14 @@ module Chat
             return term.capitalize if brands.include?(term)
             return term
           end
+        end
+
+        nil
+      end
+
+      def detect_category
+        CATEGORY_PATTERNS.each do |category_seo_url, pattern|
+          return category_seo_url if @clean_text.match?(pattern)
         end
 
         nil

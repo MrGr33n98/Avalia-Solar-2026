@@ -21,8 +21,10 @@ module Chat
           relation = relation.by_state(@entities[:state])
         end
 
-        # Filtragem por termo de texto/busca
-        if @entities[:keyword].present?
+        if @entities[:category_seo_url].present?
+          category = Category.find_by(seo_url: @entities[:category_seo_url])
+          relation = relation.joins(:categories).where(categories: { id: category.id }) if category.present?
+        elsif @entities[:keyword].present?
           relation = relation.search_by_text(@entities[:keyword])
         end
 
