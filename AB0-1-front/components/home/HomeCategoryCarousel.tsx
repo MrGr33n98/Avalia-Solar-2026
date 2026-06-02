@@ -18,7 +18,7 @@ import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { Category } from '@/lib/api';
 
-const AUTOPLAY_DELAY_MS = 5000;
+const AUTOPLAY_DELAY_MS = 2500;
 
 interface HomeCategoryCarouselProps {
   categories: Category[];

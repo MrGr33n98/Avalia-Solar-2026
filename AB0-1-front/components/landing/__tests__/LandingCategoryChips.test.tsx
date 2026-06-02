@@ -73,15 +73,15 @@ describe('LandingCategoryChips', () => {
       scrollBy: { configurable: true, value: scrollBy },
     });
 
-    act(() => jest.advanceTimersByTime(5000));
+    act(() => jest.advanceTimersByTime(2000));
     expect(scrollBy).toHaveBeenCalledTimes(1);
 
     fireEvent.mouseEnter(region);
-    act(() => jest.advanceTimersByTime(5000));
+    act(() => jest.advanceTimersByTime(2000));
     expect(scrollBy).toHaveBeenCalledTimes(1);
 
     fireEvent.mouseLeave(region);
-    act(() => jest.advanceTimersByTime(5000));
+    act(() => jest.advanceTimersByTime(2000));
     expect(scrollBy).toHaveBeenCalledTimes(2);
   });
 });

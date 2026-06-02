@@ -92,7 +92,7 @@ describe('HomeCategoryCarousel', () => {
     render(<HomeCategoryCarousel categories={categories} />);
 
     expect(Autoplay).toHaveBeenCalledWith({
-      delay: 5000,
+      delay: 2500,
       playOnInit: false,
       stopOnFocusIn: true,
       stopOnInteraction: false,

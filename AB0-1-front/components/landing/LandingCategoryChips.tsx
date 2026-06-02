@@ -20,7 +20,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 
-const AUTOPLAY_DELAY_MS = 5000;
+const AUTOPLAY_DELAY_MS = 2000;
 const AUTOPLAY_SCROLL_DISTANCE = 320;
 const SCROLL_END_TOLERANCE_PX = 4;
 
