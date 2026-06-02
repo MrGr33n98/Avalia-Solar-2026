@@ -246,9 +246,13 @@ Rails.application.routes.draw do
 
       namespace :admin do
         resources :reviews, only: %i[index show] do
+          collection do
+            get :pending
+          end
           member do
             patch :approve
             patch :reject
+            patch :flag
           end
         end
       end
