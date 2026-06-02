@@ -45,6 +45,35 @@ class User < ApplicationRecord
   validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
 
+  # Consent attribute getters/setters
+  def public_name_consent?
+    public_name_consent.present? && public_name_consent
+  end
+
+  def display_full_name_consent?
+    display_full_name_consent.present? && display_full_name_consent
+  end
+
+  def review_name_consent?
+    review_name_consent.present? && review_name_consent
+  end
+
+  def lgpd_name_consent?
+    lgpd_name_consent.present? && lgpd_name_consent
+  end
+
+  # Display name logic
+  def displayable_full_name?
+    display_full_name_consent? && lgpd_name_consent?
+  end
+
+  # Validations for consent fields
+  validates :public_name_consent, inclusion: { in: [true, false] }
+  validates :display_full_name_consent, inclusion: { in: [true, false] }
+  validates :review_name_consent, inclusion: { in: [true, false] }
+  validates :lgpd_name_consent, inclusion: { in: [true, false] }
+  validates :show_full_name, inclusion: { in: [true, false] }, allow_nil: true
+
   def approved_for_dashboard?
     return true if review_user?
 
