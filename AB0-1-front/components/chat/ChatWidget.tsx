@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { usePathname } from 'next/navigation';
 import { posthog } from '@/lib/posthog';
