@@ -498,3 +498,34 @@ async function CompaniesSectionWrapper({
     </SectionShell>
   );
 }
+
+async function SponsorCarouselWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeDataCached>;
+}) {
+  try {
+    const { featuredCategories } = await dataPromise;
+    if (!featuredCategories || featuredCategories.length === 0) return null;
+
+    // Adapt categories to sponsor format
+    const sponsors = featuredCategories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      logo_url: cat.home_carousel_banner_url || cat.banner_url || cat.icon_url || '',
+      website_url: `/categories/${cat.seo_url}`
+    })).filter(s => !!s.logo_url);
+
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <SponsorCarousel 
+          sponsors={sponsors} 
+          title="Nossas Categorias em Destaque" 
+          autoPlay 
+        />
+      </div>
+    );
+  } catch (error) {
+    return null;
+  }
+}
