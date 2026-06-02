@@ -10,6 +10,13 @@ declare global {
   }
 }
 
+const getGaCookieDomain = (): string => {
+  const hostname = window.location.hostname;
+  return hostname === 'avaliasolar.com.br' || hostname.endsWith('.avaliasolar.com.br')
+    ? 'avaliasolar.com.br'
+    : 'auto';
+};
+
 /**
  * Initialize gtag
  */
@@ -29,7 +36,7 @@ export function initializeGTag(measurementId: string): void {
   // Isso garante que o GA4 seja inicializado mesmo sem GTM container
   window.gtag('config', measurementId, {
     send_page_view: false, // Manual page view tracking
-    cookie_domain: 'auto',
+    cookie_domain: getGaCookieDomain(),
     custom_map: {
       custom_parameter_1: 'company_id'
     }
@@ -97,7 +104,7 @@ export function gtagSetUserId(userId: string | null): void {
   try {
     window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
       user_id: userId,
-      cookie_domain: 'auto'
+      cookie_domain: getGaCookieDomain()
     });
   } catch (e) {
     console.error('[GA4] Failed to set user ID:', e);
