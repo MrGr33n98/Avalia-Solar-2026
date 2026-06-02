@@ -157,7 +157,6 @@ class User < ApplicationRecord
   def posthog_properties
     {
       role: role,
-      city: city,
       state: state,
       date_joined: created_at&.iso8601
     }

@@ -4,7 +4,8 @@ module Analytics
     def self.capture(event_name, properties = {}, distinct_id: nil)
       return unless enabled?
 
-      distinct_id = opaque_distinct_id(distinct_id || properties[:distinct_id] || 'anonymous')
+      properties = properties.is_a?(Hash) ? properties : {}
+      distinct_id = opaque_distinct_id(distinct_id || properties[:distinct_id] || properties['distinct_id'] || 'anonymous')
       
       # Sanitize properties (remove PII)
       sanitized_props = sanitize_properties(properties)
@@ -26,6 +27,7 @@ module Analytics
 
     def self.identify(distinct_id:, properties: {})
       return unless enabled?
+      return if distinct_id.blank?
 
       posthog.identify(
         distinct_id: opaque_distinct_id(distinct_id),
@@ -42,8 +44,6 @@ module Analytics
         lead_id: lead.id,
         company_id: lead.company_id,
         item_id: lead.company_id, # VAR-014
-        company_name: lead.company&.name,
-        item_name: lead.company&.name, # VAR-015
         category: lead.product_vertical,
         item_category: lead.product_vertical, # VAR-016
         status: lead.status,
@@ -61,7 +61,6 @@ module Analytics
 
       properties = {
         company_id: company.id,
-        company_name: company.name,
         user_role: user.role
       }
 
@@ -74,6 +73,8 @@ module Analytics
     # @param properties [Hash] Propriedades adicionais do evento
     def self.track_server_event(event_name, identity_id, properties = {})
       return unless event_name && identity_id
+
+      properties = properties.is_a?(Hash) ? properties.dup : {}
 
       # Garante que o distinct_id segue o padrão (user_id ou lead_id)
       d_id = if identity_id.is_a?(Integer) || identity_id.to_s.match?(/\A\d+\z/)
@@ -93,7 +94,7 @@ module Analytics
     def self.posthog
       @posthog ||= PostHog::Client.new(
         api_key: ENV['POSTHOG_API_KEY'] || ENV['NEXT_PUBLIC_POSTHOG_KEY'],
-        api_host: ENV['POSTHOG_HOST'] || 'https://us.i.posthog.com'
+        host: ENV['POSTHOG_HOST'] || 'https://us.i.posthog.com'
       )
     end
 
@@ -107,6 +108,7 @@ module Analytics
 
     def self.opaque_distinct_id(distinct_id)
       raw = distinct_id.to_s
+      return 'anonymous' if raw.blank? || raw.include?('@')
       return raw if raw.match?(/\A(user|lead|company|anon)[_-]/)
       return "user_#{raw}" if raw.match?(/\A\d+\z/)
 

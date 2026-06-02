@@ -65,5 +65,21 @@ RSpec.describe Analytics::TrackEventService do
         expect(result.error).to include('UNKNOWN_EVENT')
       end
     end
+
+    context 'when production strict mode receives an unknown event' do
+      it 'discards only the analytics event without failing the business flow' do
+        allow(Analytics::EventRegistry).to receive(:fetch).with(event_type).and_return(nil)
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('G4_ANALYTICS_STRICT_MODE').and_return('true')
+        allow(ENV).to receive(:[]).with('G4_ANALYTICS_ENABLED').and_return('true')
+        allow(Rails.env).to receive(:production?).and_return(true)
+
+        result = described_class.call(company_id: company.id, event_type: event_type, metadata: metadata)
+
+        expect(result.ok).to be true
+        expect(result.event).to be_nil
+        expect(result.error).to eq('contract_violation_discarded')
+      end
+    end
   end
 end

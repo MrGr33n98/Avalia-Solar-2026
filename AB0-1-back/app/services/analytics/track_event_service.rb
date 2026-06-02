@@ -51,8 +51,12 @@ module Analytics
       unless validation_result[:ok]
         log_ingest_error(validation_result[:missing_keys])
         
-        # Hard mode: Se G4_ANALYTICS_STRICT_MODE=true, bloqueia o evento
-        if ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'
+        if strict_mode? && !fatal_strict_mode?
+          return Result.new(ok: true, event: nil, error: 'contract_violation_discarded')
+        end
+
+        # Staging/test hard mode: expose invalid contracts without affecting production flows.
+        if strict_mode?
           return Result.new(ok: false, error: "contract_violation: missing_keys=#{validation_result[:missing_keys].join(',')}")
         end
       end
@@ -80,10 +84,20 @@ module Analytics
 
     private
 
+    def strict_mode?
+      ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'
+    end
+
+    def fatal_strict_mode?
+      return false if Rails.env.production?
+
+      Rails.env.test? || Rails.env.staging?
+    end
+
     def validate_contract!
       registry = Analytics::EventRegistry.fetch(@event_type)
       if registry.nil?
-        return { ok: false, missing_keys: ['UNKNOWN_EVENT'] } if ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'
+        return { ok: false, missing_keys: ['UNKNOWN_EVENT'] } if strict_mode?
         return { ok: true }
       end
       

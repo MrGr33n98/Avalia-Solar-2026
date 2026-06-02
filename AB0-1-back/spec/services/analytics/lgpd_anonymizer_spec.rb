@@ -7,6 +7,7 @@ RSpec.describe Analytics::LgpdAnonymizer do
         user_id: 123,
         email: 'felipe@avaliasolar.com',
         phone: '+5511999999999',
+        city: 'São Paulo',
         ip: '192.168.1.1',
         search_term: 'integradores são paulo',
         page_url: 'https://www.avaliasolar.com.br/companies/test?email=felipe@example.com',
@@ -33,6 +34,7 @@ RSpec.describe Analytics::LgpdAnonymizer do
       expect(subject).not_to have_key('email')
       expect(subject).not_to have_key('phone')
       expect(subject).not_to have_key('ip')
+      expect(subject).not_to have_key('city')
     end
 
     it 'keeps non-PII fields intact' do
@@ -48,6 +50,11 @@ RSpec.describe Analytics::LgpdAnonymizer do
 
     it 'strips query strings from urls' do
       expect(subject['page_url']).to eq('https://www.avaliasolar.com.br/companies/test')
+    end
+
+    it 'accepts nil and non-hash payloads safely' do
+      expect(described_class.new(nil).anonymize).to eq({})
+      expect(described_class.new('free text').anonymize).to eq({})
     end
   end
 end

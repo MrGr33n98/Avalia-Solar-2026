@@ -1,7 +1,7 @@
 module Analytics
   class LgpdAnonymizer
     BLOCKED_KEYS = %w[
-      address address_full author_name cellphone client_name cnpj company_name contact_email
+      address address_full author_name cellphone city client_name cnpj company_name contact_email
       contact_name content cpf description email email_address emailaddress faq_question
       first_name full_address full_name ip ip_address item_name last_name message name
       page_name page_title password phone phone_number phonenumber previous_term product_name
@@ -10,7 +10,7 @@ module Analytics
     URL_KEYS = %w[$current_url page_url referrer].freeze
 
     def initialize(payload)
-      @payload = payload.deep_stringify_keys
+      @payload = payload.is_a?(Hash) ? payload.deep_stringify_keys : {}
     end
 
     def anonymize

@@ -321,8 +321,10 @@ jobs:
                 echo "!! backend nao ficou saudavel (state=$BACKEND_STATE, health=$BACKEND_STATUS)"
                 echo "?? docker compose ps backend:"
                 docker compose ps backend || true
+                echo "?? docker inspect backend health:"
+                docker inspect "$BACKEND_CID" --format='{{json .State.Health}}' || true
                 echo "?? ultimos logs do backend:"
-                docker compose logs --tail=200 backend || true
+                docker compose logs --tail=500 backend || true
                 exit 1
               fi
 
@@ -333,7 +335,8 @@ jobs:
             if [ "$BACKEND_STATUS" != "healthy" ]; then
               echo "!! Timeout aguardando backend healthy"
               docker compose ps backend || true
-              docker compose logs --tail=200 backend || true
+              docker inspect "$BACKEND_CID" --format='{{json .State.Health}}' || true
+              docker compose logs --tail=500 backend || true
               exit 1
             fi
 
