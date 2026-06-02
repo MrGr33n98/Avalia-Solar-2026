@@ -18,5 +18,17 @@ Fases 1, 2 e 3 de Discovery/Contexto concluídas com absoluto sucesso. O novo Sh
 ### Key Decisions
 - Mapeado no PROJECT.md, 01-CONTEXT.md, 02-CONTEXT.md e 03-CONTEXT.md.
 
+## Quick Tasks Completed
+
+| Task | Status | Completion Date | Commit |
+| :--- | :--- | :--- | :--- |
+| Implementação de Data Contract (schema.ts) | [x] | 2026-06-02 | `c04affe` |
+| Atribuição Marketing MTA (First/Last Touch) | [x] | 2026-06-02 | `c04affe` |
+| Integração Sentry + PostHog Correlation | [x] | 2026-06-02 | `c04affe` |
+| Analytics Debugger Overlay Component | [x] | 2026-06-02 | `c04affe` |
+| Server-Side Tracking for Leads/Auth | [x] | 2026-06-02 | `78dfd1e` |
+| Performance Metrics (Web Vitals) | [x] | 2026-06-02 | `c04affe` |
+| Refatoração de PII (E-mail/Nome) no Backend | [x] | 2026-06-02 | `78dfd1e` |
+
 ---
-*Last updated: 2026-05-30*
+*Last updated: 2026-06-02*

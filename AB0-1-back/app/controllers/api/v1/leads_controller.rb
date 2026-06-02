@@ -219,24 +219,24 @@ class Api::V1::LeadsController < Api::V1::BaseController
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
       
-      distinct_id = current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}"
+      distinct_id = current_user&.id || "anon_lead_#{@lead.id}"
       
       # 1. OTP Verified
-      Analytics::PostHogService.capture(
+      Analytics::PostHogService.track_server_event(
         'otp_verified',
-        { lead_id: @lead.id, auth_method: 'email' },
-        distinct_id: distinct_id
+        distinct_id,
+        { lead_id: @lead.id, auth_method: 'email' }
       )
       
       # 2. Lead Created (Successfully persisted and verified)
-      Analytics::PostHogService.capture(
+      Analytics::PostHogService.track_server_event(
         'lead_created',
+        distinct_id,
         { 
           lead_id: @lead.id, 
           company_id: @lead.company_id,
           category_id: @lead.respond_to?(:product_vertical) ? @lead.product_vertical : nil
-        }.compact,
-        distinct_id: distinct_id
+        }.compact
       )
 
       Analytics::TrackEventService.call(
@@ -251,10 +251,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
       
       # 3. Lead Dispatched (One event per recipient as per V2)
       companies.each do |comp|
-        Analytics::PostHogService.capture(
+        Analytics::PostHogService.track_server_event(
           'lead_dispatched',
-          { lead_id: @lead.id, recipient_id: comp.id },
-          distinct_id: distinct_id
+          distinct_id,
+          { lead_id: @lead.id, recipient_id: comp.id }
         )
       end
 
@@ -579,3 +579,4 @@ class Api::V1::LeadsController < Api::V1::BaseController
     {}
   end
 end
+nd

@@ -448,10 +448,10 @@ module Api
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
           )
-          Analytics::PostHogService.capture(
+          Analytics::PostHogService.track_server_event(
             'email_confirmed',
-            { role: user.role },
-            distinct_id: user.posthog_distinct_id
+            user.id,
+            { role: user.role }
           )
 
           # Ativar usuário automaticamente após confirmação (se não for empresa ou se já estiver aprovado)
