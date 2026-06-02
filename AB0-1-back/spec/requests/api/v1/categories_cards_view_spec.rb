@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Categories cards view', type: :request do
-  def attach_png(record, name: 'banner.png')
-    record.banner.attach(
+  def attach_png(record, name: 'banner.png', attachment: :banner)
+    record.public_send(attachment).attach(
       io: StringIO.new(FactoryBot::BANNER_1X1_PNG),
       filename: name,
       content_type: 'image/png'
@@ -43,6 +43,16 @@ RSpec.describe 'Categories cards view', type: :request do
         # Note: badges are now associated with companies, not categories
         # So this test just verifies the basic fields work
         expect(popular['tags']).to include('Destaque')
+      end
+
+      it 'returns the home carousel banner URL when configured' do
+        attach_png(cat_popular, name: 'home-carousel.png', attachment: :home_carousel_banner)
+
+        get '/api/v1/categories', params: { view: 'cards' }
+
+        body = JSON.parse(response.body)
+        popular = body.find { |c| c['id'] == cat_popular.id }
+        expect(popular['home_carousel_banner_url']).to include('home-carousel.png')
       end
     end
 

@@ -6,7 +6,7 @@ class CategorySerializer < ActiveModel::Serializer
              :parent_id, :kind, :status, :featured,
              :average_rating, :reviews_count, :articles_count,
              :companies_count, :products_count,
-             :created_at, :updated_at, :banner_url, :icon_url,
+             :created_at, :updated_at, :banner_url, :icon_url, :home_carousel_banner_url,
              :parent, :subcategories
   # :banner_sponsored, :banners  # Temporarily commented out
 

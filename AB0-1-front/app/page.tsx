@@ -39,6 +39,7 @@ import {
   type HomeHeroVariant,
   resolveHomeHeroVariant,
 } from '@/lib/experiments/homeHeroExperiment';
+import { isHomeCategoryCarouselEnabled } from '@/lib/feature-flags/homeCategoryCarousel';
 
 const HomePageTracking = dynamic(() => import('@/components/home/HomePageTracking'), {
   ssr: false,
@@ -59,10 +60,6 @@ const BannerByLocationLazy = dynamic(() => import('@/components/BannerByLocation
 const TrustRow = dynamic(() => import('@/components/ui/TrustRow').then((m) => m.TrustRow), {
   ssr: false,
   loading: () => <div className="h-20 animate-pulse bg-gray-50 rounded-xl" />,
-});
-const FloatingWhatsApp = dynamic(() => import('@/components/FloatingWhatsApp'), {
-  ssr: false,
-  loading: () => null,
 });
 const HomeIdentityModalTrigger = dynamic(() => import('@/components/home/HomeIdentityModalTrigger'), {
   ssr: false,
@@ -284,7 +281,6 @@ export default async function Home() {
       </section>
 
       <HomeIdentityModalTrigger />
-      {/* <FloatingWhatsApp /> */}
     </main>
   );
 }
@@ -380,8 +376,7 @@ async function CategoriesSectionWrapper({
   const usingFallbackCategories =
     safeCategories.length > 0 &&
     safeCategories.every((category) => Number(category?.id) >= FALLBACK_CATEGORY_MIN_ID);
-
-  const homeCategoryCarouselEnabled = process.env.NEXT_PUBLIC_HOME_CATEGORY_CAROUSEL_ENABLED === 'true';
+  const homeCategoryCarouselEnabled = isHomeCategoryCarouselEnabled();
 
   return (
     <SectionShell zebra>
@@ -497,35 +492,4 @@ async function CompaniesSectionWrapper({
       </div>
     </SectionShell>
   );
-}
-
-async function SponsorCarouselWrapper({
-  dataPromise,
-}: {
-  dataPromise: ReturnType<typeof getHomeDataCached>;
-}) {
-  try {
-    const { featuredCategories } = await dataPromise;
-    if (!featuredCategories || featuredCategories.length === 0) return null;
-
-    // Adapt categories to sponsor format
-    const sponsors = featuredCategories.map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      logo_url: cat.home_carousel_banner_url || cat.banner_url || cat.icon_url || '',
-      website_url: `/categories/${cat.seo_url}`
-    })).filter(s => !!s.logo_url);
-
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <SponsorCarousel 
-          sponsors={sponsors} 
-          title="Nossas Categorias em Destaque" 
-          autoPlay 
-        />
-      </div>
-    );
-  } catch (error) {
-    return null;
-  }
 }

@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
 import type { Category } from '@/lib/api';
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: any; href: string }) => (
+  default: ({ children, href }: { children: ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   ),
 }));
@@ -26,6 +27,10 @@ const buildCategory = (overrides: Partial<Category>): Category =>
   } as Category);
 
 describe('LandingCategoryChips', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('renders fallback chips when list is empty', () => {
     render(<LandingCategoryChips categories={[]} includeAllChip={false} limit={4} />);
 
@@ -46,5 +51,37 @@ describe('LandingCategoryChips', () => {
 
     expect(screen.getByText('Inversores')).toBeInTheDocument();
     expect(screen.queryByText('Categorias exibidas em modo de contingencia.')).not.toBeInTheDocument();
+  });
+
+  it('advances automatically and pauses while the user is interacting with the carousel', () => {
+    jest.useFakeTimers();
+    const categories = [
+      buildCategory({ id: 42, name: 'Inversores', seo_url: 'inversores' }),
+      buildCategory({ id: 43, name: 'Baterias', seo_url: 'baterias' }),
+    ];
+
+    render(<LandingCategoryChips categories={categories} includeAllChip={false} />);
+
+    const region = screen.getByRole('region', { name: 'Categorias em destaque' });
+    const track = screen.getByRole('list', { name: 'Categorias em destaque' });
+    const scrollBy = jest.fn();
+
+    Object.defineProperties(track, {
+      scrollWidth: { configurable: true, value: 960 },
+      clientWidth: { configurable: true, value: 320 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+      scrollBy: { configurable: true, value: scrollBy },
+    });
+
+    act(() => jest.advanceTimersByTime(5000));
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+
+    fireEvent.mouseEnter(region);
+    act(() => jest.advanceTimersByTime(5000));
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+
+    fireEvent.mouseLeave(region);
+    act(() => jest.advanceTimersByTime(5000));
+    expect(scrollBy).toHaveBeenCalledTimes(2);
   });
 });

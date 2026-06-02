@@ -15,7 +15,10 @@ import {
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { Category } from '@/lib/api';
+
+const AUTOPLAY_DELAY_MS = 5000;
 
 interface HomeCategoryCarouselProps {
   categories: Category[];
@@ -25,19 +28,46 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({
+      delay: AUTOPLAY_DELAY_MS,
+      playOnInit: false,
+      stopOnFocusIn: true,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    })
   );
 
   React.useEffect(() => {
     if (!api) return;
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
-    api.on('select', () => {
+
+    const updateSelectedSlide = () => {
+      setCount(api.scrollSnapList().length);
       setCurrent(api.selectedScrollSnap() + 1);
-    });
+    };
+
+    updateSelectedSlide();
+    api.on('select', updateSelectedSlide);
+    api.on('reInit', updateSelectedSlide);
+
+    return () => {
+      api.off('select', updateSelectedSlide);
+      api.off('reInit', updateSelectedSlide);
+    };
   }, [api]);
+
+  React.useEffect(() => {
+    if (!api) return;
+
+    if (prefersReducedMotion) {
+      plugin.current.stop();
+      return;
+    }
+
+    plugin.current.play();
+  }, [api, prefersReducedMotion]);
 
   // Ordenação estável
   const sortedCategories = React.useMemo(() => {
@@ -59,13 +89,12 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
       <Carousel
         setApi={setApi}
         plugins={[plugin.current]}
-        onMouseEnter={plugin.current.stop}
-        onMouseLeave={plugin.current.reset}
         opts={{
           align: 'start',
           loop: true,
         }}
         className="w-full"
+        aria-label="Soluções por categoria"
       >
         <CarouselContent className="-ml-4">
           {sortedCategories.map((category) => (
@@ -92,6 +121,7 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
           {Array.from({ length: count }).map((_, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => api?.scrollTo(i)}
               className={`h-1.5 transition-all duration-300 rounded-full ${
                 current === i + 1 
@@ -99,6 +129,7 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
                   : 'w-2 bg-slate-200 hover:bg-slate-300'
               }`}
               aria-label={`Ir para slide ${i + 1}`}
+              aria-current={current === i + 1 ? 'true' : undefined}
             />
           ))}
         </div>

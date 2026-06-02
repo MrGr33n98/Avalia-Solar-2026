@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { type FocusEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -16,8 +16,13 @@ import {
 import { Button } from '@/components/ui/button';
 import type { Category } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+
+const AUTOPLAY_DELAY_MS = 5000;
+const AUTOPLAY_SCROLL_DISTANCE = 320;
+const SCROLL_END_TOLERANCE_PX = 4;
 
 type LandingCategoryChipsProps = {
   categories: Category[];
@@ -86,6 +91,8 @@ export default function LandingCategoryChips({
   limit = 10,
 }: LandingCategoryChipsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const fallbackCategories = useMemo(() => getFallbackCategories(limit), [limit]);
   const usingFallbackCategories = !Array.isArray(categories) || categories.length === 0;
 
@@ -94,17 +101,56 @@ export default function LandingCategoryChips({
     return safe.slice(0, Math.max(0, limit));
   }, [categories, fallbackCategories, limit]);
 
-  const scrollBy = (delta: number) => {
+  const scrollBy = useCallback((delta: number) => {
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollBy({ left: delta, behavior: 'smooth' });
-  };
+  }, []);
+
+  const advanceCarousel = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+
+    const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - SCROLL_END_TOLERANCE_PX;
+    if (isAtEnd) {
+      el.scrollTo({ left: 0, behavior: 'smooth' });
+      return;
+    }
+
+    scrollBy(AUTOPLAY_SCROLL_DISTANCE);
+  }, [scrollBy]);
+
+  const handleBlur = useCallback((event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setIsPaused(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion || isPaused || items.length <= 1) return;
+
+    const intervalId = window.setInterval(advanceCarousel, AUTOPLAY_DELAY_MS);
+    return () => window.clearInterval(intervalId);
+  }, [advanceCarousel, isPaused, items.length, prefersReducedMotion]);
 
   return (
     <section className={cn('px-4 md:px-6', className)}>
       <div className="container mx-auto">
-        <div className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+        <div
+          className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Categorias em destaque"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onFocusCapture={() => setIsPaused(true)}
+          onBlurCapture={handleBlur}
+          onPointerDown={() => setIsPaused(true)}
+          onPointerUp={() => setIsPaused(false)}
+          onPointerCancel={() => setIsPaused(false)}
+        >
           <div
+            id="landing-category-chips-track"
             ref={scrollerRef}
             className="flex items-center gap-2.5 overflow-x-auto px-3 py-3 no-scrollbar min-h-[72px]"
             role="list"
@@ -194,9 +240,10 @@ export default function LandingCategoryChips({
                 type="button"
                 size="icon"
                 variant="ghost"
-                onClick={() => scrollBy(320)}
+                onClick={advanceCarousel}
                 className="pointer-events-auto h-11 w-11 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 smooth-transition"
                 aria-label="Ver mais categorias"
+                aria-controls="landing-category-chips-track"
               >
               <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </Button>

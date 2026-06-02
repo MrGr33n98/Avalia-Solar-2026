@@ -472,7 +472,11 @@ module Api
                       end
 
         # Otimização: removemos includes de companies/products pois usamos counter columns
-        @categories = @categories.includes(banner_attachment: :blob, icon_attachment: :blob)
+        @categories = @categories.includes(
+          banner_attachment: :blob,
+          icon_attachment: :blob,
+          home_carousel_banner_attachment: :blob
+        )
         articles_count_map = ::Article.published.group(:category_id).count
 
         # Paginação (se parâmetros fornecidos)
@@ -516,6 +520,7 @@ module Api
             featured: category.featured,
             banner_url: category.banner_url,
             icon_url: category.icon_url,
+            home_carousel_banner_url: category.home_carousel_banner_url,
             articles_count: articles_count_map[category.id].to_i,
             # Usando colunas cacheadas para performance O(1)
             companies_count: (category.respond_to?(:companies_count) ? category.companies_count : 0).to_i,

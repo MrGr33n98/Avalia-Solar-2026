@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Building2 } from 'lucide-react';
@@ -11,6 +12,8 @@ import type { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
+
+const CATEGORY_IMAGE_PLACEHOLDER = '/images/avalia-solar-place-holder.PNG';
 
 type LandingCategoryCardProps = {
   category: Category;
@@ -25,22 +28,23 @@ function resolveCategoryImage(category: Category): string {
 }
 
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {
+  const [imageError, setImageError] = useState(false);
   const href = buildCategoryPath(category?.seo_url, category?.id);
   const companiesCount = category?.companies_count ?? category?.companies?.length ?? 0;
   const reviewsCount = Number(category?.reviews_count ?? 0);
   const avgRating = parseFloat((category?.average_rating ?? 0).toString());
-  const ratingLabel = avgRating > 0 ? avgRating.toFixed(1) : null;
 
   return (
     <Card className={cn('overflow-hidden clay-card border border-slate-200/90 dark:border-slate-700/70 shadow-sm hover:shadow-md smooth-transition h-full max-h-[360px] group/card', className)}>
       <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-clay-lg">
         <div className="relative aspect-video bg-clay-bg overflow-hidden">
           <Image
-            src={resolveCategoryImage(category)}
+            src={imageError ? CATEGORY_IMAGE_PLACEHOLDER : resolveCategoryImage(category)}
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover object-center smooth-transition group-hover/card:scale-105"
+            onError={() => setImageError(true)}
           />
           {/* Overlay gradient for better text legibility if needed */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity" />
