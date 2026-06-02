@@ -53,12 +53,16 @@ module Analytics
     end
 
     def hash_identity(id)
+      return nil if id.blank?
+      
       # Rotacionamento de salt por mês para limitar o rastreio contínuo (LGPD Minimization)
-      # Ao mesmo tempo que permite cohort analysis no mesmo mês.
       # Usamos secret_key_base que tem fallback para env var em produção.
-      base_secret = Rails.application.secret_key_base || 
-                     (Rails.application.credentials.secret_key_base rescue nil) || 
-                     'fallback_for_anonymization'
+      base_secret = begin
+        Rails.application.secret_key_base.presence || 
+        Rails.application.credentials.secret_key_base.presence
+      rescue StandardError
+        nil
+      end || 'fallback_for_anonymization'
       
       salt = "#{base_secret}_#{Time.current.strftime('%Y_%m')}"
       Digest::SHA256.hexdigest("#{id}-#{salt}")

@@ -182,7 +182,7 @@ class HealthController < ActionController::API
     seconds = Time.current - start_time
     {
       seconds: seconds.to_i,
-      human: distance_of_time_in_words(seconds)
+      human: "#{seconds.to_i} seconds"
     }
   rescue StandardError
     'N/A'

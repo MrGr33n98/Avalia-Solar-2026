@@ -39,8 +39,8 @@ Sentry.init do |config|
     'Rack::Timeout::RequestTimeoutException'
   ]
   
-  # Set release version from Git SHA or environment
-  config.release = ENV['GIT_SHA'] || `git rev-parse --short HEAD`.strip.presence rescue 'unknown'
+  # Set release version from environment
+  config.release = ENV['GIT_SHA'] || ENV['APP_VERSION'] || 'unknown'
   
   # Only send errors in staging and production (and development if DSN is present for testing)
   config.enabled_environments = %w[staging production development]
