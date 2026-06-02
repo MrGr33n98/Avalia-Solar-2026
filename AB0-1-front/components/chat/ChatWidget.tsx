@@ -74,6 +74,7 @@ export default function ChatWidget() {
   const [selectedCompanyForQuote, setSelectedCompanyForQuote] = useState<number | null>(null);
   const [comparedCompanyIds, setComparedCompanyIds] = useState<number[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
   const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -252,7 +253,42 @@ export default function ChatWidget() {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50 dark:bg-zinc-950">
-            {messages.length === 0 && !isLoading && (
+            {messages.length === 0 && !isLoading && !hasAcceptedTerms && (
+              <div className="flex flex-col items-center justify-center h-full space-y-5 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-1 border-2 border-brand-blue/20">
+                   <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                   </svg>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base">Termos e Privacidade</h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    Para iniciar sua consultoria com o MobiVolt AI, ao clicar em <span className="font-bold text-zinc-900 dark:text-zinc-100">"Aceitar"</span>, você confirma que leu e concorda com nossos termos e condições de uso de dados.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col w-full space-y-2 pt-2">
+                  <button
+                    onClick={() => setHasAcceptedTerms(true)}
+                    className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95"
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="w-full bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-medium py-2 rounded-xl text-xs transition-all"
+                  >
+                    Recusar
+                  </button>
+                </div>
+                
+                <a href="/termos" target="_blank" className="text-[10px] text-brand-blue hover:underline">
+                  Ver documento completo
+                </a>
+              </div>
+            )}
+
+            {messages.length === 0 && !isLoading && hasAcceptedTerms && (
               <div className="flex flex-col items-center justify-center h-full space-y-4 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    <img
