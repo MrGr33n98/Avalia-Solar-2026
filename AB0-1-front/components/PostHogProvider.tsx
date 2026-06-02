@@ -5,6 +5,7 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useReportWebVitals } from 'next/web-vitals';
 import { useEffect, useRef, Suspense } from 'react';
+import * as Sentry from '@sentry/nextjs';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
 import { sanitizeAnalyticsProperties } from '@/lib/analytics/sanitize';
@@ -178,6 +179,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             page_type: getPageType(window.location.pathname)
           });
         }
+
+        // Task 2.2: Integração Sentry + PostHog
+        const distinctId = ph.get_distinct_id();
+        const sessionId = ph.get_session_id();
+        if (distinctId) Sentry.setTag("posthog_distinct_id", distinctId);
+        if (sessionId) Sentry.setTag("posthog_session_id", sessionId);
 
         if (process.env.NODE_ENV === 'development') {
           console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());

@@ -6,7 +6,8 @@ import { hasAnalyticsConsent } from './consent';
 
 const STORAGE_KEY = 'avaliasolar_attribution_v2';
 const COOKIE_KEY = 'avaliasolar_attribution_v2';
-const TTL_DAYS = 30;
+const FIRST_TOUCH_TTL_DAYS = 365;
+const LAST_TOUCH_TTL_DAYS = 30;
 const ALLOWED_KEYS: (keyof UTMParameters)[] = [
   'utm_source',
   'utm_medium',
@@ -126,7 +127,7 @@ function persist(payload: StoredPayload): void {
   } catch {}
 
   try {
-    setCookie(COOKIE_KEY, serialized, TTL_DAYS);
+    setCookie(COOKIE_KEY, serialized, FIRST_TOUCH_TTL_DAYS);
   } catch {}
 }
 
@@ -188,10 +189,10 @@ export function updateAttribution(pathname?: string, searchParams?: URLSearchPar
   const attribution: Attribution = {
     first_touch,
     last_touch,
-    ttl_days: TTL_DAYS,
+    ttl_days: FIRST_TOUCH_TTL_DAYS,
   };
 
-  const expires_at = now + TTL_DAYS * 24 * 60 * 60 * 1000;
+  const expires_at = now + FIRST_TOUCH_TTL_DAYS * 24 * 60 * 60 * 1000;
   persist({ attribution, expires_at });
 
   return attribution;
@@ -215,10 +216,18 @@ export function getAttribution(): Attribution | null {
  */
 export function getCurrentUTMs(): UTMParameters {
   const attribution = getAttribution();
-  if (attribution?.last_touch?.values && Object.keys(attribution.last_touch.values).length > 0) {
+  if (!attribution) return {};
+
+  // Plan requirement: last_touch expires in 30 days
+  const lastTouchTs = new Date(attribution.last_touch.ts).getTime();
+  const thirtyDaysInMs = LAST_TOUCH_TTL_DAYS * 24 * 60 * 60 * 1000;
+  const isLastTouchValid = (Date.now() - lastTouchTs) <= thirtyDaysInMs;
+
+  if (isLastTouchValid && attribution.last_touch?.values && Object.keys(attribution.last_touch.values).length > 0) {
     return attribution.last_touch.values;
   }
-  if (attribution?.first_touch?.values) return attribution.first_touch.values;
+  
+  if (attribution.first_touch?.values) return attribution.first_touch.values;
   return {};
 }
 
