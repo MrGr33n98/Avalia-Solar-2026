@@ -32,6 +32,9 @@ export interface ChatLeadQualificationSubmission {
   property_type?: string;
   company_size?: string;
   summary?: string;
+  wants_reviews?: boolean;
+  wants_comparison?: boolean;
+  review_interest?: string;
   recommended_next_action: string;
   metadata: {
     qualification_answers: Answers;
@@ -42,6 +45,15 @@ export interface ChatLeadQualificationSubmission {
   };
   recommendationQuery: string;
 }
+
+const REVIEW_INTERESTS: Option[] = [
+  { value: 'see_best_rated', label: 'Melhores avaliadas', description: 'Empresas com notas altas' },
+  { value: 'high_review_volume', label: 'Mais reviews', description: 'Empresas com mais histórico' },
+  { value: 'see_recent_reviews', label: 'Reviews recentes', description: 'Avaliações mais atuais' },
+  { value: 'compare_reviews', label: 'Comparar notas por critério', description: 'Prazo, atendimento, etc' },
+  { value: 'read_negative_reviews', label: 'Ver pontos negativos', description: 'Entender desafios' },
+  { value: 'none', label: 'Ir direto para orçamento', description: 'Pular avaliações' },
+];
 
 interface ChatLeadQualificationWizardProps {
   vertical: ChatLeadVertical;
@@ -188,10 +200,12 @@ export default function ChatLeadQualificationWizard({
     const need = getOption(needOptions, answers.need);
     const profile = getOption(profileOptions, answers.profile);
     const timeline = getOption(TIMELINES, answers.timeline);
+    
     const labels: Answers = {
       need: optionLabel(needOptions, answers.need),
       profile: optionLabel(profileOptions, answers.profile),
       timeline: optionLabel(TIMELINES, answers.timeline),
+      review_interest: optionLabel(REVIEW_INTERESTS, answers.review_interest),
       [vertical === 'solar' ? 'monthly_bill' : 'vehicle_count']:
         vertical === 'solar'
           ? optionLabel(MONTHLY_BILLS, answers.monthly_bill)
@@ -206,6 +220,7 @@ export default function ChatLeadQualificationWizard({
       needLabel ? `para ${needLabel}` : '',
       profileLabel ? `com perfil ${profileLabel}` : '',
       `em ${contact.city.trim()} ${contact.state.trim().toUpperCase()}.`,
+      answers.review_interest && answers.review_interest !== 'none' ? `Tenho interesse em ver: ${labels.review_interest}.` : '',
       'Mostre empresas cadastradas e seus reviews.',
     ].filter(Boolean).join(' ');
 
@@ -226,12 +241,15 @@ export default function ChatLeadQualificationWizard({
       property_type: answers.profile,
       company_size: vertical === 'electric_mobility' ? answers.profile : undefined,
       summary: contact.summary.trim() || undefined,
+      wants_reviews: answers.review_interest !== 'none',
+      wants_comparison: answers.review_interest === 'compare_reviews' || answers.need === 'compare_proposal',
+      review_interest: answers.review_interest !== 'none' ? answers.review_interest : undefined,
       recommended_next_action: 'Mostrar empresas cadastradas na região e orientar leitura dos reviews.',
       metadata: {
         qualification_answers: { ...answers, summary: contact.summary.trim() },
         qualification_labels: labels,
         qualification_source: 'guided_chat_wizard',
-        qualification_version: 'v1',
+        qualification_version: 'v2',
         category_seo_url: categorySlug,
       },
       recommendationQuery,
@@ -318,21 +336,6 @@ export default function ChatLeadQualificationWizard({
       <div className="flex items-center justify-between pt-1">
         <button type="button" onClick={stepIndex === 0 ? onCancel : goBack} className="text-[11px] font-medium text-zinc-500 hover:text-brand-blue transition-colors">
           {stepIndex === 0 ? 'Continuar pelo chat' : 'Voltar'}
-        </button>
-        {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
-      </div>
-    </div>
-  );
-}
- ? onCancel : goBack} className="text-[11px] font-medium text-zinc-500 hover:text-brand-blue transition-colors">
-          {stepIndex === 0 ? 'Continuar pelo chat' : 'Voltar'}
-        </button>
-        {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
-      </div>
-    </div>
-  );
-}
-t' : 'Voltar'}
         </button>
         {!isContactStep && <span className="text-[10px] text-zinc-400">Respostas rápidas, menos de 1 minuto</span>}
       </div>
