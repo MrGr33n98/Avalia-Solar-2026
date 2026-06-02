@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 # Remove o arquivo server.pid para evitar falhas de inicialização do Rails
 rm -f tmp/pids/server.pid

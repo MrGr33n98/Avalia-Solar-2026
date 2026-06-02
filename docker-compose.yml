@@ -37,6 +37,9 @@ services:
       retries: 10
 
   backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     container_name: ab0-backend
     restart: unless-stopped
@@ -73,13 +76,16 @@ services:
     volumes:
       - storage_data:/app/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3001/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 15
       start_period: 180s
 
   worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
     container_name: ab0-worker
     restart: unless-stopped

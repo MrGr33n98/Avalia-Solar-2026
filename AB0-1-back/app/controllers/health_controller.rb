@@ -7,6 +7,8 @@
 # - Disk space
 # - Memory usage
 class HealthController < ActionController::API
+  include ActionView::Helpers::DateHelper
+
   # Health checks should be public and not require CSRF or auth tokens
   # No skip_before_action needed as ActionController::API is minimal
 
