@@ -24,10 +24,41 @@ export default function ChatWidget() {
     startSession,
     sendMessage,
     sendFeedback,
-    submitLead
+    submitLead,
+    clearSession
   } = useChatSession();
 
   const [input, setInput] = useState('');
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Inactivity timeout (30 minutes)
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+
+  const resetInactivityTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    
+    if (messages.length > 0) {
+      idleTimerRef.current = setTimeout(() => {
+        console.log('[Chat] Closing session due to inactivity');
+        clearSession();
+        setIsOpen(false);
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [messages.length, clearSession, setIsOpen]);
+
+  // Reset timer on messages change or when the widget is open/active
+  useEffect(() => {
+    if (isOpen) {
+      resetInactivityTimer();
+    }
+    
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [isOpen, messages.length, resetInactivityTimer]);
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
