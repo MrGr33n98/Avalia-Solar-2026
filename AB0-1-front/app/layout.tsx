@@ -84,6 +84,7 @@ export const viewport: Viewport = {
 
 import { ThemeProvider } from '@/components/theme-provider';
 import NutshellAnalytics from '@/components/NutshellAnalytics';
+import { AnalyticsDebugger } from '@/components/analytics/AnalyticsDebugger';
 
 export default function RootLayout({
   children,
@@ -154,11 +155,14 @@ export default function RootLayout({
           </UtmProvider>
         </ThemeProvider>
 
-        {/* Debug component for development */}
-        {process.env.NODE_ENV === 'development' && (
-          <Suspense fallback={null}>
-            <ComparisonDebugger />
-          </Suspense>
+        {/* Debug components for development */}
+        {process.env.NODE_ENV !== 'production' && (
+          <>
+            <Suspense fallback={null}>
+              <ComparisonDebugger />
+            </Suspense>
+            <AnalyticsDebugger />
+          </>
         )}
 
         {/* Web Vitals Tracking - Non-blocking, after consent */}

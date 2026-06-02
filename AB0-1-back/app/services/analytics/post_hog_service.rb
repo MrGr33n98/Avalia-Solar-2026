@@ -68,6 +68,26 @@ module Analytics
       capture('company_profile_view', properties, distinct_id: user.id.to_s)
     end
 
+    # Dispara um evento crítico do lado do servidor (evita AdBlockers)
+    # @param event_name [String] Nome do evento (deve seguir o schema)
+    # @param identity_id [String, Integer] ID do usuário ou lead
+    # @param properties [Hash] Propriedades adicionais do evento
+    def self.track_server_event(event_name, identity_id, properties = {})
+      return unless event_name && identity_id
+
+      # Garante que o distinct_id segue o padrão (user_id ou lead_id)
+      d_id = if identity_id.is_a?(Integer) || identity_id.to_s.match?(/\A\d+\z/)
+               "user_#{identity_id}"
+             else
+               identity_id.to_s
+             end
+
+      properties[:$os] = 'Linux (Server)'
+      properties[:is_server_side] = true
+
+      capture(event_name, properties, distinct_id: d_id)
+    end
+
     private
 
     def self.posthog

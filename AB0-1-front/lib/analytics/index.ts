@@ -45,6 +45,30 @@ const GLOBAL_EVENTS = new Set(['page_view', 'search']);
 let backendLastSentAt = 0;
 let backendBlockedUntil = 0;
 
+export type AnalyticsObserver = (eventName: string, properties: any) => void;
+const observers: AnalyticsObserver[] = [];
+
+/**
+ * Subscribe to all analytics events (useful for debuggers)
+ */
+export function subscribeToAnalytics(observer: AnalyticsObserver) {
+  observers.push(observer);
+  return () => {
+    const index = observers.indexOf(observer);
+    if (index > -1) observers.splice(index, 1);
+  };
+}
+
+function notifyObservers(eventName: string, properties: any) {
+  observers.forEach(obs => {
+    try {
+      obs(eventName, properties);
+    } catch (e) {
+      console.error('[Analytics] Observer failed:', e);
+    }
+  });
+}
+
 function getPostHogBridge() {
   if (typeof window === 'undefined') return null;
   return window.__analyticsPosthog ?? null;
@@ -254,6 +278,9 @@ export function track<K extends AnalyticsEventName>(
 
   // 3. Sync with Backend
   sendToBackend(eventName, eventId, context, matrixProps);
+
+  // Notify Observers (Debug Overlay)
+  notifyObservers(eventName, matrixProps);
 }
 
 /**
@@ -425,6 +452,9 @@ export function page(
       console.error('[Analytics] PostHog page view failed:', e);
     }
   }
+
+  // Notify Observers
+  notifyObservers('page_view', sanitized);
 }
 
 /**
@@ -460,6 +490,9 @@ export function identify(
   if (Object.keys(sanitizedTraits).length > 0) {
     setUserProperties(sanitizedTraits);
   }
+
+  // Notify Observers
+  notifyObservers('identify', { user_id: currentUserId, ...sanitizedTraits });
 }
 
 /**
