@@ -294,8 +294,10 @@ jobs:
             echo "?? Aguardando db/redis ficarem healthy..."
             sleep 5
 
-            echo "?? Reiniciando backend e worker..."
-            docker compose up -d backend worker
+            echo "?? Reiniciando backend..."
+            # Suba o backend isoladamente. O worker depende de service_healthy e faria
+            # o Compose abortar antes de conseguirmos imprimir os logs de boot.
+            docker compose up -d backend
 
             BACKEND_CID=$(docker compose ps -q backend)
             if [ -z "$BACKEND_CID" ]; then
@@ -334,6 +336,9 @@ jobs:
               docker compose logs --tail=200 backend || true
               exit 1
             fi
+
+            echo "?? Reiniciando worker..."
+            docker compose up -d worker
 
             echo "?? Reiniciando frontend..."
             docker compose up -d frontend
