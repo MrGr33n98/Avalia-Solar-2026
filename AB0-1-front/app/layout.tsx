@@ -4,12 +4,12 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
-import dynamic from 'next/dynamic';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
 import Navbar from '@/components/Navbar';
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
+import Providers from '@/components/Providers';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
@@ -145,12 +145,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <UtmProvider>
-            <ClientBody>
+            <Providers>
               <PwaOfflineController />
               <Navbar />
               {children}
               <ConditionalFooter />
-            </ClientBody>
+            </Providers>
           </UtmProvider>
         </ThemeProvider>
 

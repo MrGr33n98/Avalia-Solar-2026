@@ -64,31 +64,6 @@ const nextConfig = {
       '@radix-ui/react-accordion',
       'cmdk',
     ],
-    // ✅ PHASE 6: Code splitting configuration for dashboard tabs
-    splitChunks: {
-      chunks: 'all',
-      cacheGroups: {
-        // Vendor code in separate bundle
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          priority: 10,
-        },
-        // React and query libraries together
-        react: {
-          test: /[\\/]node_modules[\\/](react|react-dom|@tanstack)[\\/]/,
-          name: 'react-vendors',
-          priority: 20,
-        },
-        // Dashboard components in separate chunk
-        dashboard: {
-          test: /[\\/]app[\\/]dashboard[\\/]/,
-          name: 'dashboard',
-          priority: 15,
-          minSize: 50000,
-        }
-      }
-    }
   },
 
   // TASK-023: Enable TypeScript and ESLint checks

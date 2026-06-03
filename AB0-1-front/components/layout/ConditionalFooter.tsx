@@ -9,17 +9,15 @@ import Footer from '@/components/Footer';
  */
 export default function ConditionalFooter() {
   const pathname = usePathname();
-  
-  // Define routes where footer should be hidden
+
   const hideFooterRoutes = [
     '/dashboard',
+    '/company-dashboard',
+    '/admin',
     '/painel',
     '/control',
-    '/admin'
   ];
 
-  const shouldHide = hideFooterRoutes.some(route => pathname?.startsWith(hideFooterRoutes.find(r => pathname?.startsWith(r)) || 'UNDEFINED_ROUTE'));
-  // More robust check
   const isInternal = pathname && hideFooterRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
 
   if (isInternal) return null;

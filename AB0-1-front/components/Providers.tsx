@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
@@ -28,7 +27,7 @@ import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
-export default function ClientBody({
+export default function Providers({
   children,
 }: {
   children: React.ReactNode;
