@@ -69,12 +69,12 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
           averageRating: avg,
           ratingDistribution: distributionArr,
           recentReviews: resp.recent_reviews || [],
-          monthlyTrend: 12.5, // Mocked for design
+          monthlyTrend: resp.monthly_trend || 0,
           verifiedCount: (resp.recent_reviews || []).filter((r: any) => r.verified).length,
-          responseRate: 98, // Mocked
-          categoryAverage: 4.2, // Mocked
-          industryRank: 12, // Mocked
-          totalCompetitors: 450, // Mocked
+          responseRate: resp.response_rate || 0,
+          categoryAverage: resp.category_average || 0,
+          industryRank: resp.industry_rank || 0,
+          totalCompetitors: resp.total_competitors || 0,
         });
       } catch (error) {
         console.error("Failed to load review analytics:", error);
@@ -103,37 +103,37 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       title: "Reviews Totais",
       value: s.totalReviews.toString(),
       icon: MessageSquare,
-      change: `+${s.monthlyTrend}%`,
-      changeType: "positive" as const,
+      change: s.monthlyTrend ? `+${s.monthlyTrend}%` : 'N/D',
+      changeType: s.monthlyTrend > 0 ? "positive" : "neutral",
       color: "blue",
-      trend: [20, 35, 30, 45, 50, 42, 60]
+      trend: []
     },
     {
       title: "Rating Médio",
-      value: s.averageRating.toFixed(1),
+      value: s.averageRating > 0 ? s.averageRating.toFixed(1) : '0',
       icon: Star,
-      change: "+0.2",
-      changeType: "positive" as const,
+      change: "N/D",
+      changeType: "neutral",
       color: "yellow",
-      trend: [60, 62, 65, 63, 68, 70, 72]
+      trend: []
     },
     {
       title: "Taxa de Resposta",
-      value: `${s.responseRate}%`,
+      value: s.responseRate ? `${s.responseRate}%` : 'N/D',
       icon: Zap,
-      change: "+2%",
-      changeType: "positive" as const,
+      change: "N/D",
+      changeType: "neutral",
       color: "emerald",
-      trend: [80, 85, 90, 88, 95, 96, 98]
+      trend: []
     },
     {
       title: "Ranking Setorial",
-      value: `#${s.industryRank}`,
+      value: s.industryRank ? `#${s.industryRank}` : 'N/D',
       icon: Award,
-      change: "Top 3%",
-      changeType: "positive" as const,
+      change: "N/D",
+      changeType: "neutral",
       color: "purple",
-      trend: [10, 15, 12, 18, 25, 30, 45]
+      trend: []
     }
   ];
 

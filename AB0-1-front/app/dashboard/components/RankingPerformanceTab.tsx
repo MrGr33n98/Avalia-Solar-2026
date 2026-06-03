@@ -88,13 +88,10 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
     return data.magic_quadrant_points;
   }, [data]);
 
-  const mockHistoricalData = [
-    { week: 'W1', position: 5, leads: 4, visibility: 1200 },
-    { week: 'W2', position: 4, leads: 5, visibility: 1500 },
-    { week: 'W3', position: 4, leads: 6, visibility: 1800 },
-    { week: 'W4', position: 2, leads: 12, visibility: 3500 },
-    { week: 'Now', position: data?.rank_position || 1, leads: stats?.leadsReceived || 0, visibility: stats?.profileViews || 0 },
-  ];
+  const historicalData = useMemo(() => {
+    if (!data?.historical_data?.length) return [];
+    return data.historical_data;
+  }, [data]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -223,64 +220,75 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           </CardHeader>
           <CardContent className="p-8 pb-12">
             <div className="h-[400px] w-full mt-6">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockHistoricalData} margin={{ top: 20, right: 30, bottom: 20, left: -20 }}>
-                  <defs>
-                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="week" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fontWeight: 600, fill: 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-sans)'}} 
-                    dy={15} 
-                  />
-                  <YAxis 
-                    yAxisId="left" 
-                    reversed={true} 
-                    domain={[1, 'dataMax + 1']} 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fontWeight: 800, fill: 'rgba(16,185,129,0.4)', fontFamily: 'var(--font-mono)'}} 
-                  />
-                  <YAxis 
-                    yAxisId="right" 
-                    orientation="right" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fontWeight: 800, fill: 'rgba(59,130,246,0.4)', fontFamily: 'var(--font-mono)'}} 
-                  />
-                  <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
-                  <Area 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="leads" 
-                    stroke="#3b82f6" 
-                    strokeWidth={4} 
-                    fillOpacity={1} 
-                    fill="url(#colorLeads)"
-                    name="Oportunidades" 
-                  />
-                  <Area 
-                    yAxisId="left" 
-                    type="monotone" 
-                    dataKey="position" 
-                    stroke="#10b981" 
-                    strokeWidth={4} 
-                    fillOpacity={1}
-                    fill="url(#colorPos)"
-                    name="Posição" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {historicalData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={historicalData} margin={{ top: 20, right: 30, bottom: 20, left: -20 }}>
+                    <defs>
+                      <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis 
+                      dataKey="week" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 10, fontWeight: 600, fill: 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-sans)'}} 
+                      dy={15} 
+                    />
+                    <YAxis 
+                      yAxisId="left" 
+                      reversed={true} 
+                      domain={[1, 'dataMax + 1']} 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 10, fontWeight: 800, fill: 'rgba(16,185,129,0.4)', fontFamily: 'var(--font-mono)'}} 
+                    />
+                    <YAxis 
+                      yAxisId="right" 
+                      orientation="right" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 10, fontWeight: 800, fill: 'rgba(59,130,246,0.4)', fontFamily: 'var(--font-mono)'}} 
+                    />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                    <Area 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="leads" 
+                      stroke="#3b82f6" 
+                      strokeWidth={4} 
+                      fillOpacity={1} 
+                      fill="url(#colorLeads)"
+                      name="Oportunidades" 
+                    />
+                    <Area 
+                      yAxisId="left" 
+                      type="monotone" 
+                      dataKey="position" 
+                      stroke="#10b981" 
+                      strokeWidth={4} 
+                      fillOpacity={1}
+                      fill="url(#colorPos)"
+                      name="Posição" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center py-12">
+                   <div className="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
+                    <BarChart3 className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.2em] max-w-[180px]">
+                    Dados históricos insuficientes.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
