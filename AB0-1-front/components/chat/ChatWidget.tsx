@@ -14,6 +14,11 @@ import ChatLeadQualificationWizard, {
   ChatLeadVertical
 } from './ChatLeadQualificationWizard';
 import MarkdownRenderer from './MarkdownRenderer';
+import MobiVoltInviteBubble, { InviteAction } from './MobiVoltInviteBubble';
+import MobiVoltDiscoveryMenu, { DiscoveryAction } from './MobiVoltDiscoveryMenu';
+import MobiVoltSolarWizard from './MobiVoltSolarWizard';
+import MobiVoltEvWizard from './MobiVoltEvWizard';
+import MobiVoltReengagementPrompt from './MobiVoltReengagementPrompt';
 
 type ChatInviteAction = {
   label: string;
@@ -53,7 +58,7 @@ export default function ChatWidget() {
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
     }
-    
+
     if (messages.length > 0) {
       idleTimerRef.current = setTimeout(() => {
         console.log('[Chat] Closing session due to inactivity');
@@ -68,7 +73,7 @@ export default function ChatWidget() {
     if (isOpen) {
       resetInactivityTimer();
     }
-    
+
     return () => {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
@@ -85,6 +90,13 @@ export default function ChatWidget() {
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
   const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
+
+  // Estados para Fase 4A - Discovery Guiado
+  const [activeWizard, setActiveWizard] = useState<'solar' | 'ev' | null>(null);
+  const [wizardAnswers, setWizardAnswers] = useState<Record<string, string>>({});
+  const [showDiscoveryMenu, setShowDiscoveryMenu] = useState(false);
+  const [reengagementVariant, setReengagementVariant] = useState<'idle_30s' | 'idle_60s' | 'after_companies' | null>(null);
+  const [showReengagementPrompt, setShowReengagementPrompt] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -116,6 +128,72 @@ export default function ChatWidget() {
       window.sessionStorage.setItem(CHAT_INVITE_DISMISSED_KEY, 'true');
     }
   }, []);
+
+  // Handlers para Fase 4A - Discovery Guiado
+  const handleDiscoveryActionSelect = useCallback((action: DiscoveryAction) => {
+    track('mobivolt_discovery_action_selected', {
+      action_id: action.id,
+      action_label: action.label,
+      action_kind: action.kind,
+      vertical: action.vertical
+    });
+
+    if (action.kind === 'solar') {
+      setActiveWizard('solar');
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'ev') {
+      setActiveWizard('ev');
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'reviews') {
+      sendMessage('Quero ver avaliações de empresas bem avaliadas.');
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'compare') {
+      sendMessage('Quero comparar empresas para escolher com mais segurança.');
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'quote') {
+      setQualificationVertical('solar');
+      setShowLeadForm(true);
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'explain') {
+      sendMessage('Quero explicar brevemente o que preciso.');
+      setShowDiscoveryMenu(false);
+    } else if (action.kind === 'human') {
+      sendMessage('Gostaria de falar com um atendente humano.');
+      setShowDiscoveryMenu(false);
+    }
+  }, [sendMessage]);
+
+  const handleSolarWizardComplete = useCallback((answers: Record<string, string>) => {
+    setWizardAnswers(answers);
+    setActiveWizard(null);
+    track('mobivolt_solar_wizard_completed', { answers_count: Object.keys(answers).length });
+
+    // Mensagem de confirmação temporária (Fase 4B buscará empresas reais)
+    sendMessage('Completei as informações para energia solar. Posso buscar empresas compatíveis?');
+  }, [sendMessage]);
+
+  const handleEvWizardComplete = useCallback((answers: Record<string, string>) => {
+    setWizardAnswers(answers);
+    setActiveWizard(null);
+    track('mobivolt_ev_wizard_completed', { answers_count: Object.keys(answers).length });
+
+    // Mensagem de confirmação temporária (Fase 4B buscará empresas reais)
+    sendMessage('Completei as informações para mobilidade elétrica. Posso buscar empresas compatíveis?');
+  }, [sendMessage]);
+
+  const handleResetSession = useCallback(() => {
+    setWizardAnswers({});
+    setActiveWizard(null);
+    setShowDiscoveryMenu(false);
+    setShowReengagementPrompt(false);
+    setReengagementVariant(null);
+    clearSession();
+    setIsOpen(false);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(CHAT_INVITE_DISMISSED_KEY);
+    }
+    track('mobivolt_session_reset_confirmed', {});
+  }, [clearSession, setIsOpen]);
 
   // Start session on first open
   const handleToggle = () => {
@@ -213,7 +291,7 @@ export default function ChatWidget() {
   // Ao clicar no card para ver o perfil
   const handleCompanyClick = (companyId: number, type: 'profile' | 'whatsapp') => {
     setClickedCompanyId(companyId);
-    
+
     if (type === 'profile') {
       track('mobivolt_company_profile_clicked', {
         session_id: messages[0]?.id,
@@ -231,7 +309,7 @@ export default function ChatWidget() {
   const handleRequestQuote = (companyId: number) => {
     setSelectedCompanyForQuote(companyId);
     openLeadQualification();
-    
+
     try {
       track('mobivolt_quote_request_clicked', {
         session_id: messages[0]?.id,
@@ -250,11 +328,11 @@ export default function ChatWidget() {
   // Ao clicar no botão "Comparar"
   const handleCompare = (companyId: number) => {
     setComparedCompanyIds(prev => {
-      return prev.includes(companyId) 
+      return prev.includes(companyId)
         ? prev.filter(id => id !== companyId)
         : [...prev, companyId];
     });
-    
+
     try {
       track('mobivolt_compare_clicked', {
         session_id: messages[0]?.id,
@@ -273,7 +351,7 @@ export default function ChatWidget() {
     const allRecommendedCompanyIds = messages
       .flatMap(m => m.metadata?.companies?.map((c: any) => c.id) || [])
       .filter((id): id is number => typeof id === 'number');
-    
+
     const enrichedMetadata = {
       recommended_company_ids: allRecommendedCompanyIds,
       clicked_company_id: clickedCompanyId,
@@ -388,7 +466,7 @@ export default function ChatWidget() {
                     Para iniciar sua consultoria com o MobiVolt AI, ao clicar em <span className="font-bold text-zinc-900 dark:text-zinc-100">"Aceitar"</span>, você confirma que leu e concorda com nossos termos e condições de uso de dados.
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col w-full space-y-2 pt-2">
                   <button
                     onClick={handleAcceptTerms}
@@ -403,14 +481,14 @@ export default function ChatWidget() {
                     Recusar
                   </button>
                 </div>
-                
+
                 <a href="/termos" target="_blank" className="text-[10px] text-brand-blue hover:underline">
                   Ver documento completo
                 </a>
               </div>
             )}
 
-            {messages.length === 0 && !isLoading && hasAcceptedTerms && (
+            {messages.length === 0 && !isLoading && hasAcceptedTerms && !showDiscoveryMenu && !activeWizard && (
               <div className="flex flex-col items-center justify-center min-h-full space-y-4 py-8 px-5 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    <img
@@ -426,7 +504,7 @@ export default function ChatWidget() {
                   </p>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-blue pt-2">O que você procura?</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-2">
                   {discoveryActions.map((action) => (
                     <button
@@ -445,6 +523,56 @@ export default function ChatWidget() {
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pt-2">
                   Consultoria especializada 100% gratuita.
                 </p>
+              </div>
+            )}
+
+            {/* Menu Discovery - Fase 4A */}
+            {messages.length === 0 && !isLoading && hasAcceptedTerms && showDiscoveryMenu && (
+              <div className="p-4">
+                <MobiVoltDiscoveryMenu onActionSelect={handleDiscoveryActionSelect} />
+              </div>
+            )}
+
+            {/* Wizard Solar - Fase 4A */}
+            {activeWizard === 'solar' && (
+              <div className="p-4">
+                <MobiVoltSolarWizard
+                  onComplete={handleSolarWizardComplete}
+                  onBack={() => {
+                    setActiveWizard(null);
+                    setShowDiscoveryMenu(true);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Wizard EV - Fase 4A */}
+            {activeWizard === 'ev' && (
+              <div className="p-4">
+                <MobiVoltEvWizard
+                  onComplete={handleEvWizardComplete}
+                  onBack={() => {
+                    setActiveWizard(null);
+                    setShowDiscoveryMenu(true);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Prompt de Reengajamento - Fase 4A */}
+            {showReengagementPrompt && (
+              <div className="border-t border-zinc-200 dark:border-zinc-800">
+                <MobiVoltReengagementPrompt
+                  isVisible={showReengagementPrompt}
+                  variant={reengagementVariant || 'idle_30s'}
+                  onContinue={() => setShowReengagementPrompt(false)}
+                  onMinimize={() => setIsOpen(false)}
+                  onClose={() => {
+                    setIsOpen(false);
+                    setShowReengagementPrompt(false);
+                  }}
+                  onReset={handleResetSession}
+                />
               </div>
             )}
 
@@ -655,7 +783,7 @@ export default function ChatWidget() {
                     </svg>
                     <span>Falar no WhatsApp</span>
                   </a>
-                  
+
                   <button
                     type="button"
                     onClick={() => {
@@ -666,7 +794,7 @@ export default function ChatWidget() {
                   >
                     Receber mais opções
                   </button>
-                  
+
                   <button
                     type="button"
                     className="w-full text-brand-blue hover:underline font-medium py-1.5 text-xs transition-colors"
