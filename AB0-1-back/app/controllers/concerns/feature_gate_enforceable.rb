@@ -40,5 +40,16 @@ module FeatureGateEnforceable
       "[FeatureGate] blocked user_id=#{current_user&.id} company_id=#{company.id} " \
       "feature=#{feature_name} reason=#{reason} path=#{request.path}"
     )
+
+    Analytics::TrackEventService.call(
+      company_id: company.id,
+      user: current_user,
+      event_type: 'feature_gate_blocked',
+      metadata: {
+        feature: feature_name,
+        reason: reason,
+        path: request.path
+      }
+    ) if defined?(Analytics::TrackEventService)
   end
 end

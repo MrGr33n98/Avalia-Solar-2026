@@ -9,10 +9,10 @@ class FeatureGateService
   }.freeze
 
   def self.can_access?(company, feature)
-    return true if company.nil? # Fallback seguro
+    return FEATURE_ACCESS[:free].include?(feature.to_s) if company.nil?
 
     plan_tier = plan_tier_for(company)
-    FEATURE_ACCESS[plan_tier.to_sym]&.include?(feature) || false
+    FEATURE_ACCESS[plan_tier.to_sym]&.include?(feature.to_s) || false
   end
 
   def self.accessible_features(company)

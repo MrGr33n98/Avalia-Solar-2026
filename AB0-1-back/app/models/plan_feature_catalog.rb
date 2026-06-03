@@ -2,6 +2,16 @@ module PlanFeatureCatalog
   PLAN_TIERS = %w[free essential pro enterprise].freeze
 
   FEATURE_DEFINITIONS = {
+    'premium_profile' => {
+      label: 'Perfil Premium',
+      description: 'Habilita recursos premium no perfil da empresa.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'public_profile',
+      aliases: %w[premium_profile_enabled]
+    },
     'product_description' => {
       label: 'Descrição do Produto/Serviço',
       description: 'Exibe o bloco de texto detalhado sobre a oferta da empresa no perfil público.',
@@ -288,10 +298,12 @@ module PlanFeatureCatalog
 
   TIER_DEFAULT_OVERRIDES = {
     'free' => {
-      'setup_included' => true # Free plans usually don't have setup
+      'setup_included' => true, # Free plans usually don't have setup
+      'premium_profile' => false
     },
     'essential' => {
       'setup_fee' => 0,
+      'premium_profile' => false,
       'onboarding_session' => false,
       'ideal_customer_block' => true,
       'promo_banner' => false,
@@ -316,6 +328,7 @@ module PlanFeatureCatalog
     },
     'pro' => {
       'setup_fee' => 499,
+      'premium_profile' => true,
       'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,
@@ -340,6 +353,7 @@ module PlanFeatureCatalog
     },
     'enterprise' => {
       'setup_fee' => 1499,
+      'premium_profile' => true,
       'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,
