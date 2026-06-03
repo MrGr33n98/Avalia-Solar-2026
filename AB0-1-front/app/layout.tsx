@@ -1,7 +1,6 @@
 import './globals.css';
 import '@/lib/env'; // Validate environment variables
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
@@ -15,14 +14,6 @@ import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
 import { SITE } from '@/lib/site';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-  preload: true,
-  adjustFontFallback: true,
-});
 
 export const metadata: Metadata = {
   title: 'Avalia Solar - Marketplace de Energia Solar',
@@ -94,7 +85,11 @@ export default function RootLayout({
   const nutshellEnabled = analyticsEnabled && process.env.NEXT_PUBLIC_ENABLE_NUTSHELL === 'true';
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      style={{ '--font-sans': 'system-ui, sans-serif' } as React.CSSProperties}
+    >
       <head>
         <link rel="preconnect" href="https://api.avaliasolar.com.br" />
         <link rel="dns-prefetch" href="https://api.avaliasolar.com.br" />
@@ -128,7 +123,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-sans">
+      <body suppressHydrationWarning className="font-sans antialiased">
           {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
 
