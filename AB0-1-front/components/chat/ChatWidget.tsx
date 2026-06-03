@@ -15,6 +15,16 @@ import ChatLeadQualificationWizard, {
 } from './ChatLeadQualificationWizard';
 import MarkdownRenderer from './MarkdownRenderer';
 
+type ChatInviteAction = {
+  label: string;
+  kind: 'message' | 'qualification';
+  message?: string;
+  vertical?: ChatLeadVertical;
+};
+
+const CHAT_INVITE_DISMISSED_KEY = 'mobivolt_chat_invite_dismissed';
+const CHAT_INVITE_DELAY_MS = 3000;
+
 export default function ChatWidget() {
   const {
     isOpen,
@@ -73,6 +83,8 @@ export default function ChatWidget() {
   const [comparedCompanyIds, setComparedCompanyIds] = useState<number[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [showInviteBubble, setShowInviteBubble] = useState(false);
+  const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -87,8 +99,29 @@ export default function ChatWidget() {
     }
   }, [messages, isLoading, showLeadForm]);
 
+  useEffect(() => {
+    if (isOpen || typeof window === 'undefined') return;
+    if (window.sessionStorage.getItem(CHAT_INVITE_DISMISSED_KEY) === 'true') return;
+
+    const timer = window.setTimeout(() => {
+      setShowInviteBubble(true);
+    }, CHAT_INVITE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
+
+  const dismissInviteBubble = useCallback(() => {
+    setShowInviteBubble(false);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(CHAT_INVITE_DISMISSED_KEY, 'true');
+    }
+  }, []);
+
   // Start session on first open
   const handleToggle = () => {
+    if (!isOpen) {
+      setShowInviteBubble(false);
+    }
     setIsOpen(!isOpen);
   };
 
@@ -114,6 +147,42 @@ export default function ChatWidget() {
     setShowLeadForm(true);
     track('mobivolt_guided_qualification_started', { vertical });
     await startSession(vertical, window.location.href);
+  };
+
+  const executeInviteAction = (action: ChatInviteAction) => {
+    if (action.kind === 'qualification') {
+      void handleStartQualification(action.vertical || getActiveVertical());
+      return;
+    }
+
+    if (action.message) {
+      sendMessage(action.message);
+    }
+  };
+
+  const handleInviteAction = (action: ChatInviteAction) => {
+    dismissInviteBubble();
+    setIsOpen(true);
+    track('mobivolt_invite_action_clicked', {
+      action_label: action.label,
+      action_kind: action.kind
+    });
+
+    if (!hasAcceptedTerms) {
+      setPendingInviteAction(action);
+      return;
+    }
+
+    executeInviteAction(action);
+  };
+
+  const handleAcceptTerms = () => {
+    setHasAcceptedTerms(true);
+    if (pendingInviteAction) {
+      const action = pendingInviteAction;
+      setPendingInviteAction(null);
+      window.setTimeout(() => executeInviteAction(action), 0);
+    }
   };
 
   const openLeadQualification = () => {
@@ -243,11 +312,38 @@ export default function ChatWidget() {
     'Mobilidade elétrica'
   ];
 
+  const inviteActions: ChatInviteAction[] = [
+    {
+      label: 'Ver avaliações',
+      kind: 'message',
+      message: 'Quero ver avaliações de empresas bem avaliadas.'
+    },
+    {
+      label: 'Comparar empresas',
+      kind: 'message',
+      message: 'Quero comparar empresas para escolher com mais segurança.'
+    },
+    {
+      label: 'Pedir orçamento',
+      kind: 'qualification',
+      vertical: 'solar'
+    }
+  ];
+
+  const discoveryActions: ChatInviteAction[] = [
+    { label: '☀️ Energia Solar', kind: 'qualification', vertical: 'solar' },
+    { label: '🔌 Mobilidade Elétrica', kind: 'qualification', vertical: 'electric_mobility' },
+    { label: '⭐ Ver avaliações', kind: 'message', message: 'Quero ver avaliações de empresas bem avaliadas.' },
+    { label: '📊 Comparar empresas', kind: 'message', message: 'Quero comparar empresas para escolher com mais segurança.' },
+    { label: '💰 Quero orçamento', kind: 'qualification', vertical: 'solar' },
+    { label: '✍️ Explicar o que preciso', kind: 'message', message: 'Quero explicar brevemente o que preciso.' }
+  ];
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans flex flex-col items-end">
+    <div className="fixed bottom-[max(1rem,var(--safe-area-inset-bottom))] left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end pointer-events-none">
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-[380px] max-w-[calc(100vw-2rem)] h-[580px] max-h-[calc(100vh-8rem)] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5">
+        <div className="pointer-events-auto w-full sm:w-[460px] lg:w-[500px] h-[90vh] sm:h-[680px] max-h-[calc(100vh-2rem)] sm:max-h-[720px] bg-white dark:bg-zinc-900 rounded-[24px] sm:rounded-[28px] shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
@@ -295,7 +391,7 @@ export default function ChatWidget() {
                 
                 <div className="flex flex-col w-full space-y-2 pt-2">
                   <button
-                    onClick={() => setHasAcceptedTerms(true)}
+                    onClick={handleAcceptTerms}
                     className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95"
                   >
                     Aceitar
@@ -315,7 +411,7 @@ export default function ChatWidget() {
             )}
 
             {messages.length === 0 && !isLoading && hasAcceptedTerms && (
-              <div className="flex flex-col items-center justify-center h-full space-y-4 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex flex-col items-center justify-center min-h-full space-y-4 py-8 px-5 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    <img
                     src="/images/mobivolt-ai-avaliasolar.png"
@@ -324,44 +420,26 @@ export default function ChatWidget() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-base">Oi, como posso te ajudar?</h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Escolha uma área para iniciarmos sua consultoria gratuita:
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-lg">MobiVolt AI</h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    Compare empresas, veja avaliações e peça orçamento com segurança.
                   </p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-blue pt-2">O que você procura?</p>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-3 w-full mt-2">
-                  <button
-                    onClick={() => handleStartQualification('solar')}
-                    className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">☀️</span>
-                      <div className="text-left">
-                        <span className="block text-sm">Energia Solar</span>
-                        <span className="block text-[10px] font-medium text-zinc-500">Economia e Sustentabilidade</span>
-                      </div>
-                    </div>
-                    <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-
-                  <button
-                    onClick={() => handleStartQualification('electric_mobility')}
-                    className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">🚗</span>
-                      <div className="text-left">
-                        <span className="block text-sm">Mobilidade Elétrica</span>
-                        <span className="block text-[10px] font-medium text-zinc-500">Carregadores e Frotas</span>
-                      </div>
-                    </div>
-                    <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-2">
+                  {discoveryActions.map((action) => (
+                    <button
+                      key={action.label}
+                      onClick={() => executeInviteAction(action)}
+                      className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
+                    >
+                      <span className="block text-sm">{action.label}</span>
+                      <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
                 </div>
 
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pt-2">
@@ -647,17 +725,51 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {!isOpen && showInviteBubble && (
+        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-[22px] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                Posso te ajudar a comparar empresas, ver avaliações e pedir orçamento.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissInviteBubble}
+              className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Fechar convite do chat"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-3 grid gap-2">
+            {inviteActions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={() => handleInviteAction(action)}
+                className="rounded-full border border-blue-100 bg-blue-50/70 px-3 py-2 text-left text-xs font-bold text-brand-blue transition-colors hover:border-brand-blue/30 hover:bg-blue-100"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Floating Launcher Button */}
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden"
+          className="pointer-events-auto h-[72px] w-[72px] rounded-full shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute top-0 right-0 flex h-4 w-4 z-10">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-brand-blue border-2 border-white dark:border-zinc-900 text-[9px] font-bold items-center justify-center text-white">1</span>
+          <span className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-brand-blue px-1.5 py-0.5 text-[10px] font-black text-white border-2 border-white dark:border-zinc-900">
+            IA
           </span>
 
           {/* Avatar Image as launcher icon */}
