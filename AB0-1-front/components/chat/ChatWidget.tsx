@@ -726,12 +726,12 @@ export default function ChatWidget() {
       )}
 
       {!isOpen && showInviteBubble && (
-        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-[22px] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
+        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-[22px] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Posso te ajudar a comparar empresas, ver avaliações e pedir orçamento.
+                Posso ajudar você a configurar seu perfil, ver métricas e melhorar sua reputação.
               </p>
             </div>
             <button
@@ -745,13 +745,13 @@ export default function ChatWidget() {
               </svg>
             </button>
           </div>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-4 grid gap-2">
             {inviteActions.map((action) => (
               <button
                 key={action.label}
                 type="button"
                 onClick={() => handleInviteAction(action)}
-                className="rounded-full border border-blue-100 bg-blue-50/70 px-3 py-2 text-left text-xs font-bold text-brand-blue transition-colors hover:border-brand-blue/30 hover:bg-blue-100"
+                className="rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2 text-left text-xs font-bold text-brand-blue transition-all hover:border-brand-blue/30 hover:bg-blue-100 active:scale-95"
               >
                 {action.label}
               </button>
@@ -764,11 +764,11 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-[72px] w-[72px] rounded-full shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
+          className="pointer-events-auto h-[84px] w-[84px] rounded-full shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-brand-blue px-1.5 py-0.5 text-[10px] font-black text-white border-2 border-white dark:border-zinc-900">
+          <span className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-brand-blue px-2 py-0.5 text-[10px] font-black text-white border-2 border-white dark:border-zinc-900">
             IA
           </span>
 

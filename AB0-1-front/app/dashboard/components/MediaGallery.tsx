@@ -192,7 +192,7 @@ export default function MediaGallery({ companyId, showControls = true, showHeade
             <div className="flex items-center gap-2 mb-2">
               <Camera className="h-6 w-6 text-brand-blue" />
               <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
-                Visual Assets Vault
+                Biblioteca de Mídia
               </h2>
             </div>
             <p className="text-sm text-muted-foreground font-medium max-w-lg leading-relaxed">

@@ -208,7 +208,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
           <div className="flex items-center gap-2 mb-2">
             <Command className="h-6 w-6 text-brand-blue" />
             <h2 className="text-3xl font-black tracking-tight uppercase text-foreground dark:text-white">
-              Reputation Command Center
+              Central de Reputação
             </h2>
           </div>
           <p className="text-sm text-muted-foreground/60 font-medium">
@@ -320,7 +320,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                                <div className="absolute top-0 left-0 w-1 h-full bg-brand-blue/30" />
                                <div className="flex items-center gap-2 mb-2">
                                  <Reply className="h-3.5 w-3.5 text-brand-blue" />
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Official Reply</span>
+                                 <span className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Resposta Oficial</span>
                                </div>
                                <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed italic">
                                  &quot;{review.reply}&quot;

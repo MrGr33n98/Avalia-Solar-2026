@@ -4,7 +4,7 @@ module Api
       before_action :authenticate_api_user
       before_action :require_company_user
       before_action :ensure_company
-      before_action -> { authorize_feature!('banners') }
+      before_action -> { authorize_feature!('promo_banner') }
 
       def index
         banners = current_company.banners.order(created_at: :desc)

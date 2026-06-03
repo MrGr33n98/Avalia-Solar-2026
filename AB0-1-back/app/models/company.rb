@@ -702,6 +702,10 @@ class Company < ApplicationRecord
     nil
   end
 
+  def feature_enabled?(*keys)
+    feature_enabled_from_plan?(*keys)
+  end
+
   def feature_access
     @feature_access ||= CompanyFeatureAccessResolver.call(company: self)
   rescue StandardError => e

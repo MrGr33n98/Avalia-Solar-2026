@@ -230,7 +230,7 @@ export default function EnterpriseSidebar({
         {!isCollapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-bold tracking-tight text-slate-900">AvaliaSolar</p>
-            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Enterprise Panel</p>
+            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Painel Enterprise</p>
           </div>
         )}
       </div>

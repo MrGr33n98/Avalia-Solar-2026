@@ -5,9 +5,8 @@ import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
 import dynamic from 'next/dynamic';
-import ClientBody from '@/components/ClientBody';
+import ConditionalFooter from '@/components/layout/ConditionalFooter';
 import Navbar from '@/components/Navbar';
-const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
@@ -150,7 +149,7 @@ export default function RootLayout({
               <PwaOfflineController />
               <Navbar />
               {children}
-              <Footer />
+              <ConditionalFooter />
             </ClientBody>
           </UtmProvider>
         </ThemeProvider>

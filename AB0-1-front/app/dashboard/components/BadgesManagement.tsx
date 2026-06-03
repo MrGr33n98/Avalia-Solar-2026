@@ -86,10 +86,10 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-primary mb-1">
             <Award className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Authority Assets</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Selos de Autoridade</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
-            Distinction <span className="text-primary">Vault</span>
+            Cofre de <span className="text-primary">Selos</span>
           </h2>
           <p className="text-sm text-slate-500 dark:text-white/40 max-w-md font-medium leading-relaxed">
             Gerencie seus ativos de autoridade técnica e selos de distinção oficial do Avalia Solar.

@@ -188,7 +188,11 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
         setBanners(data?.banners || []);
       } catch (e: any) {
         console.error('Error fetching company banners:', e);
-        setError(e.message || 'Erro ao carregar banners. Por favor, tente novamente mais tarde.');
+        if (e?.status === 403) {
+          setError('Acesso restrito ao seu plano atual.');
+        } else {
+          setError(e.message || 'Falha ao sincronizar pipeline de banners.');
+        }
       } finally {
         setLoading(false);
       }
@@ -200,89 +204,107 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
   if (!allowed) {
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">Banners & Patrocínios</h2>
-          <p className="text-white/40">Disponível somente para planos com a funcionalidade de banners.</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-brand-blue mb-1">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em]">Visibility Protocol</span>
+            </div>
+            <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
+              Campanhas <span className="text-brand-blue">Patrocinadas</span>
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-white/40 max-w-md font-medium leading-relaxed">
+              Disponível somente para planos com a funcionalidade de banners.
+            </p>
+          </div>
         </div>
 
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex items-center gap-2 text-white/40">
-              <Lock className="h-5 w-5" />
-              <span>Feature bloqueada pelo plano</span>
-            </div>
-            <p className="text-white/40 mb-4">
-              Você pode fazer upgrade do plano ou contratar banners como add-on.
-            </p>
-            <CheckoutDialog
-              trigger={
-                <Button>
-                  <Plus className="h-[18px] w-[18px] mr-2" />
-                  Contratar Banner
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-32 bg-slate-50 dark:bg-white/[0.02] rounded-[3rem] border border-dashed border-slate-200 dark:border-white/5">
+          <div className="h-24 w-24 rounded-[2rem] bg-rose-500/5 flex items-center justify-center mb-8">
+             <Lock className="h-10 w-10 text-rose-500/20" />
+          </div>
+          <h3 className="text-xl font-black uppercase tracking-widest text-slate-900 dark:text-white mb-2">Recurso Bloqueado</h3>
+          <p className="text-sm text-slate-500 dark:text-white/30 font-medium max-w-xs text-center mb-8">
+            Você pode fazer upgrade do seu plano Enterprise ou contratar banners como um add-on estratégico.
+          </p>
+          <CheckoutDialog
+            trigger={
+              <Button className="h-14 px-10 rounded-2xl bg-brand-blue text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-brand-blue/20">
+                 Contratar Add-on de Banners
+              </Button>
+            }
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Banners & Patrocínios</h2>
-          <p className="text-white/40">Gerencie seus banners publicados na plataforma</p>
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-brand-blue mb-1">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Visibility Protocol</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
+            Campanhas <span className="text-brand-blue">Patrocinadas</span>
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-white/40 max-w-md font-medium leading-relaxed">
+            Gerencie seus banners de destaque, ofertas sazonais e anúncios contextuais dentro da rede Avalia Solar.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-4">
+
           <CheckoutDialog
             trigger={
-              <Button variant="outline">
-                <Plus className="h-[18px] w-[18px] mr-2" />
-                Contratar (Add-on)
+              <Button variant="outline" className="h-12 px-8 rounded-2xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 font-black uppercase tracking-widest text-[10px] shadow-sm">
+                Contratar Add-on
               </Button>
             }
           />
-          <Button>
-            <Plus className="h-[18px] w-[18px] mr-2" />
+          <Button className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95">
+            <Plus className="h-4 w-4 mr-2" />
             Novo Banner
           </Button>
         </div>
       </div>
 
       {loading ? (
-        <Card>
-          <CardContent className="p-4 text-white/40">Carregando banners...</CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-64 rounded-3xl bg-slate-100 dark:bg-white/5 animate-pulse" />
+          ))}
+        </div>
       ) : error ? (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="p-4">
-            <div className="flex flex-col items-center justify-center text-center">
-              <p className="text-destructive font-medium mb-2">Erro ao carregar dados</p>
-              <p className="text-sm text-white/40 mb-4">{error}</p>
-              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                Tentar novamente
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-32 bg-rose-50/50 dark:bg-rose-500/5 rounded-[3rem] border border-rose-100 dark:border-rose-500/10">
+          <div className="h-20 w-20 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-6">
+            <Lock className="h-10 w-10 text-rose-500" />
+          </div>
+          <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">{error}</h3>
+          <p className="text-sm text-slate-500 dark:text-white/40 mt-2 max-w-xs text-center font-medium">
+            Verifique as configurações do seu plano ou entre em contato com o suporte.
+          </p>
+          <Button variant="outline" className="mt-8 h-12 rounded-xl px-8 font-black uppercase tracking-widest text-[10px]" onClick={() => window.location.reload()}>
+            Tentar Sincronizar
+          </Button>
+        </div>
       ) : banners.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Sparkles className="h-12 w-12 text-white/40 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum banner cadastrado</h3>
-            <p className="text-white/40 text-center mb-4">
-              Crie seu primeiro banner para aumentar sua visibilidade.
-            </p>
-            <Button>
-              <Plus className="h-[18px] w-[18px] mr-2" />
-              Criar Primeiro Banner
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-32 bg-slate-50 dark:bg-white/[0.02] rounded-[3rem] border border-dashed border-slate-200 dark:border-white/5">
+          <div className="h-24 w-24 rounded-[2rem] bg-brand-blue/5 flex items-center justify-center mb-8">
+             <Sparkles className="h-10 w-10 text-brand-blue/20" />
+          </div>
+          <h3 className="text-xl font-black uppercase tracking-widest text-slate-900 dark:text-white mb-2">Nenhum item cadastrado</h3>
+          <p className="text-sm text-slate-500 dark:text-white/30 font-medium max-w-xs text-center mb-8">
+            Adicione um banner para destacar campanhas, ofertas ou diferenciais no seu perfil.
+          </p>
+          <Button className="h-14 px-10 rounded-2xl bg-brand-blue text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-brand-blue/20">
+             Criar Primeiro Banner
+          </Button>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {banners.map((banner) => (
             <Card key={banner.id}>
               <CardContent className="p-4">

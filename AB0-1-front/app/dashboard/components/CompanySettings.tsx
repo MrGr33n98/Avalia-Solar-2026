@@ -37,10 +37,10 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-primary mb-1">
             <Settings2 className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Operational Intelligence</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Inteligência Operacional</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Settings <span className="text-primary">Center</span>
+            Central de <span className="text-primary">Configuração</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Configure as diretivas de conversão, rastreamento analítico e protocolos de experiência do usuário.
@@ -188,10 +188,10 @@ export default function CompanySettings({ companyId }: CompanySettingsProps) {
           <Card className="clay-precision bg-[#001D33] border border-white/5 rounded-[3rem] p-10 space-y-6">
              <div className="flex items-center gap-3 text-amber-500">
                 <ShieldAlert className="h-5 w-5" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Safety Protocol</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Protocolo de Segurança</span>
              </div>
              <p className="text-[11px] text-white/30 font-medium leading-relaxed">
-                As alterações na matriz de conversão são propagadas instantaneamente para todos os <span className="text-white font-bold">Authority Nodes</span> ativos na rede. Certifique-se de validar as URLs de destino antes de sincronizar.
+                As alterações na matriz de conversão são propagadas instantaneamente para todos os <span className="text-white font-bold">Pontos de Autoridade</span> ativos na rede. Certifique-se de validar as URLs de destino antes de sincronizar.
              </p>
              <div className="p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[10px] text-blue-400">
                 <div className="flex items-center gap-2 mb-1">

@@ -128,10 +128,10 @@ export default function AnalyticsSettings({ companyId }: Props) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-brand-blue mb-1">
             <Database className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Market Authority Data</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Inteligência de Mercado</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">
-            Public <span className="text-brand-blue">Claims Protocol</span>
+            Protocolo de <span className="text-brand-blue">Reivindicações</span>
           </h2>
           <p className="text-sm text-white/40 max-w-lg font-medium leading-relaxed">
             Gerencie o pipeline de evidências técnicas e metadados públicos que sustentam sua autoridade de mercado.

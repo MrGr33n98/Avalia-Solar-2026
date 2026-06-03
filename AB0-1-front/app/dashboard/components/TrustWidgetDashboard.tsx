@@ -80,10 +80,10 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-brand-green mb-1">
             <Globe className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Trust Network Distribution</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Distribuição de Confiança</span>
           </div>
           <h2 className="text-3xl font-bold tracking-tight uppercase text-slate-900 dark:text-white leading-none">
-            Authority <span className="text-brand-blue">Node</span>
+            Widget de <span className="text-brand-blue">Confiança</span>
           </h2>
           <p className="text-sm text-slate-500 dark:text-white/40 max-w-lg font-medium leading-relaxed">
             Distribua sua prova social e reputação certificada em tempo real para qualquer endpoint externo através de nosso protocolo de widget assíncrono.
@@ -261,7 +261,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                  <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                     <Smartphone className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                  </div>
-                 <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Live Monitor</span>
+                 <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Monitor em Tempo Real</span>
               </div>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
