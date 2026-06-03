@@ -160,7 +160,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
           title="Velocidade no Ranking"
-          value={data?.ranking_score ? Number(data.ranking_score).toFixed(1) : '92.4'}
+          value={data?.ranking_score !== undefined && data?.ranking_score !== null ? Number(data.ranking_score).toFixed(1) : '--'}
           icon={Activity}
           change="+4.2%"
           changeType="positive"
@@ -169,7 +169,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         />
         <MetricCard 
           title="Eficiência de Conversão"
-          value={stats?.leadsReceived || '0'}
+          value={stats?.leadsReceived !== undefined ? stats.leadsReceived.toString() : '0'}
           icon={Target}
           change="+12.5%"
           changeType="positive"
@@ -178,7 +178,9 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         />
         <MetricCard 
           title={data?.quadrant_meta?.criterion_title || 'Completude de Visão'}
-          value={Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 88).toFixed(1)}
+          value={quadrantData.find((q: any) => q.is_current_company) 
+            ? Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 0).toFixed(1)
+            : '--'}
           icon={ZapIcon}
           change="Ótimo"
           changeType="neutral"
@@ -187,7 +189,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         />
         <MetricCard 
           title="Visibilidade de Mercado"
-          value={stats?.profileViews || '1.2k'}
+          value={stats?.profileViews !== undefined ? stats.profileViews.toLocaleString() : '--'}
           icon={Globe}
           change="+22.1%"
           changeType="positive"

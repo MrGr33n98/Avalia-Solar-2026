@@ -275,9 +275,11 @@ export default function OverviewTab({ companyId, company, featureAccess, themeMo
 
   const stats = statsQuery.data;
   const isPremium = isFeatureEnabled(featureAccess, 'leads_marketplace');
-          </div>
-        </motion.div>
+  void isPremium;
 
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* NPS / Ranking (Figma: 432x280) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
