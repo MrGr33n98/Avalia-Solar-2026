@@ -340,10 +340,10 @@ export default function ChatWidget() {
   ];
 
   return (
-    <div className="fixed bottom-[max(1rem,var(--safe-area-inset-bottom))] left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-[max(1rem,var(--safe-area-inset-bottom))] right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end pointer-events-none">
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto w-full sm:w-[420px] h-[90vh] sm:h-[650px] max-h-[calc(100vh-2rem)] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-[24px] sm:rounded-[28px] shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5">
+        <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[480px] sm:h-[650px] max-h-[80vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-[24px] sm:rounded-[28px] shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
