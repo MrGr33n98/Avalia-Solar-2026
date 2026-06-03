@@ -207,6 +207,7 @@ Rails.application.routes.draw do
           resources :messages, only: [:create]
         end
         resources :leads, only: [:create]
+        post 'company_recommendations', to: 'company_recommendations#create'
         post 'messages/:id/feedback', to: 'messages#feedback', as: :message_feedback
       end
 

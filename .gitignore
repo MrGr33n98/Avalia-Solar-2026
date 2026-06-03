@@ -1,102 +1,28 @@
-# ############################
-# Avalia Solar 2026 - .gitignore
-# ############################
-
-# Core Monorepo
-node_modules/
-.pnp/
-.pnp.js
-coverage/
-.next/
-out/
-build/
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
+build/
+
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Logs and temp files
 *.log
-.turbo/
+*.tmp
+*.swp
 
-# TypeScript
-*.tsbuildinfo
-
-# Environment / Secrets
+# Environment
 .env
 .env.local
-.env.*.local
-.env.*        # ignora env variantes
-!.env.example # mas mantém o exemplo versionado
+.env.*
 
-*.key
-*.pem
-
-# IDE / OS
-.idea/
+# Editors
 .vscode/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-*.tmp
-*.cache
-
-# AI tools / Local tooling
-.aios*
-.antigravity/
-.claude/
-.gemini/
-.qwen/
-.codex/
-.cursor/
-.opencode*
-.spec-workflow/
-.interface-design/
-.playwright/
-.bolt/
-
-# Audit & Documentation (generated)
-docs/README_AUDITORIA.md
-docs/QA_STRIPE_AUDIT_SUMMARY.md
-docs/STRIPE_SUBSCRIPTIONS_AUDIT.md
-docs/BROKEN_CODE_VS_FIXES.md
-docs/SECURITY_TESTING_CHECKLIST.md
-docs/PR_TEMPLATE_AND_GUIDE.md
-docs/AUDIT_STRIPE_SUBSCRIPTIONS.md
-
-# Test artifacts
-test-artifacts/
-playwright-report/
-test-results/
-test-sentinel/
-.playwright-cli/
-logs/
-*.webm
-screenshot.png
-error_*.png
-
-# Backups & Archive
-archive/
-backup_limpeza_*/
-outputs/
-tmp/
-
-# ############################
-# Frontend (AB0-1-front)
-# ############################
-/AB0-1-front/node_modules/
-/AB0-1-front/.env*
-/AB0-1-front/.next/
-/AB0-1-front/out/
-/AB0-1-front/dist/
-/AB0-1-front/cypress/videos/
-/AB0-1-front/cypress/screenshots/
-
-# ############################
-# Backend (AB0-1-back)
-# ############################
-/AB0-1-back/log/
-/AB0-1-back/tmp/
-/AB0-1-back/storage/
-/AB0-1-back/vendor/
-/AB0-1-back/.bundle/
-/AB0-1-back/config/master.key
-/AB0-1-back/.env*
-/AB0-1-back/db/*.sqlite3
-/AB0-1-back/db/*.sqlite3-journal
+.idea/
+```
