@@ -23,7 +23,8 @@ import {
   ArrowRight,
   Filter,
   DollarSign,
-  Tag
+  Tag,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
