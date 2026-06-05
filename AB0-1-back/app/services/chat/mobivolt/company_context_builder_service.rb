@@ -8,21 +8,27 @@ module Chat
       end
 
       def initialize(session, user_text)
-        @session = session
+        @session   = session
         @user_text = user_text.to_s
       end
 
       def build
-        # 1. Extração de intenções e entidades
+        # 1. Extract intents/entities from the user's message text
         entities = Chat::Mobivolt::IntentParserService.parse(@user_text)
 
-        # Se não há intenção de recomendação clara, retorna payload vazio
-        return empty_payload(entities) unless entities[:recommendation_intent]
+        # 2. Fallback: enrich with city/state from the ChatLead already saved for
+        #    this session (populated by the wizard). This ensures that even when the
+        #    user's message doesn't mention the city explicitly (e.g. "Buscar empresas"),
+        #    the matcher still knows where to look.
+        entities = enrich_entities_from_lead(entities)
 
-        # 2. Match de instaladores qualificados
+        # If still no recommendation intent and no location at all, return empty.
+        return empty_payload(entities) unless entities[:recommendation_intent] || entities[:city].present? || entities[:state].present?
+
+        # 3. Match qualified companies using the enriched entities
         matched_companies = Chat::Mobivolt::CompanyMatcherService.match(entities)
 
-        # 3. Serialização segura e acoplamento de depoimentos de clientes
+        # 4. Serialize and attach recent reviews
         serialized_companies = matched_companies.map do |company|
           serialized = Chat::Mobivolt::SafeCompanySerializer.serialize(company)
           serialized[:reviews_recentes] = Chat::Mobivolt::ReviewSummaryBuilderService.build_for(company)
@@ -31,11 +37,11 @@ module Chat
 
         {
           busca_realizada: {
-            cidade: entities[:city],
-            estado: entities[:state],
+            cidade:      entities[:city],
+            estado:      entities[:state],
             termo_chave: entities[:keyword],
-            categoria: entities[:category_seo_url],
-            source: @session.page_url
+            categoria:   entities[:category_seo_url],
+            source:      @session.page_url
           },
           empresas_encontradas: serialized_companies
         }
@@ -46,14 +52,35 @@ module Chat
 
       private
 
+      # Enrich entities with city/state from the ChatLead attached to this session.
+      # Only fills in fields that weren't already detected from the message text.
+      def enrich_entities_from_lead(entities)
+        lead = @session.chat_lead
+        return entities if lead.nil?
+
+        enriched = entities.dup
+        enriched[:city]  ||= lead.city.presence
+        enriched[:state] ||= lead.state.presence
+
+        # If we now have location data, treat it as a recommendation intent
+        if enriched[:city].present? || enriched[:state].present?
+          enriched[:recommendation_intent] = true
+        end
+
+        enriched
+      rescue StandardError => e
+        Rails.logger.warn("[Chat::Mobivolt::CompanyContextBuilder] Could not enrich from lead: #{e.message}")
+        entities
+      end
+
       def empty_payload(entities = nil)
         {
           busca_realizada: {
-            cidade: entities&.dig(:city),
-            estado: entities&.dig(:state),
+            cidade:      entities&.dig(:city),
+            estado:      entities&.dig(:state),
             termo_chave: entities&.dig(:keyword),
-            categoria: entities&.dig(:category_seo_url),
-            source: @session.page_url
+            categoria:   entities&.dig(:category_seo_url),
+            source:      @session.page_url
           },
           empresas_encontradas: []
         }

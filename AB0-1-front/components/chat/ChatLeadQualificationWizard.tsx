@@ -154,6 +154,7 @@ export default function ChatLeadQualificationWizard({
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [contact, setContact] = useState({ name: '', email: '', phone: '', cep: '', city: '', state: '', summary: '', consent_given: false });
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const needOptions = vertical === 'solar' ? SOLAR_NEEDS : MOBILITY_NEEDS;
   const profileOptions = vertical === 'solar' ? SOLAR_PROFILES : MOBILITY_PROFILES;
@@ -226,8 +227,23 @@ export default function ChatLeadQualificationWizard({
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!contact.consent_given || !contact.name.trim() || !contact.email.trim() || !contact.phone.trim() || !contact.city.trim() || contact.state.trim().length !== 2) return;
-    if (answers.need === 'other' && !contact.summary.trim()) return;
+    setErrorMsg(null);
+    if (!contact.consent_given) {
+      setErrorMsg('Você precisa aceitar os termos da LGPD para continuar.');
+      return;
+    }
+    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
+      setErrorMsg('Por favor, preencha nome, e-mail e WhatsApp.');
+      return;
+    }
+    if (!contact.city.trim() || contact.state.trim().length !== 2) {
+      setErrorMsg('Por favor, volte e informe um CEP válido com Cidade/UF.');
+      return;
+    }
+    if (answers.need === 'other' && !contact.summary.trim()) {
+      setErrorMsg('Por favor, conte brevemente o que você procura no campo de texto.');
+      return;
+    }
 
     const need = getOption(needOptions, answers.need);
     const profile = getOption(profileOptions, answers.profile);
@@ -370,13 +386,14 @@ export default function ChatLeadQualificationWizard({
               placeholder="00000-000" 
               className="w-full text-xs text-center px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" 
             />
-            {contact.city && contact.state && (
-              <p className="text-[11px] text-center text-brand-blue mt-2 font-medium">
-                {contact.city} - {contact.state}
-              </p>
-            )}
           </div>
-          <button type="submit" disabled={!contact.city && contact.cep.length < 9} className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2.5 rounded-lg text-xs transition-colors disabled:opacity-50">Continuar</button>
+          {contact.cep.length === 9 && (
+            <div className="grid grid-cols-3 gap-2">
+              <input required value={contact.city} onChange={(event) => updateContact('city', event.target.value)} placeholder="Cidade" className="col-span-2 w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+              <input required maxLength={2} value={contact.state} onChange={(event) => updateContact('state', event.target.value.toUpperCase())} placeholder="UF" className="w-full text-xs text-center px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+            </div>
+          )}
+          <button type="submit" disabled={contact.cep.length < 9} className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2.5 rounded-lg text-xs transition-colors disabled:opacity-50">Continuar</button>
         </form>
       )}
 
@@ -394,6 +411,11 @@ export default function ChatLeadQualificationWizard({
             <input type="checkbox" required checked={contact.consent_given} onChange={(event) => updateContact('consent_given', event.target.checked)} className="mt-0.5 rounded text-brand-blue focus:ring-brand-blue border-zinc-300 dark:border-zinc-700" />
             <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">Aceito compartilhar meus dados para receber contato e recomendações de empresas parceiras, conforme a LGPD.</span>
           </label>
+          {errorMsg && (
+            <div className="text-red-500 dark:text-red-400 text-[10px] font-semibold bg-red-500/10 border border-red-500/20 rounded-lg p-2 leading-tight">
+              {errorMsg}
+            </div>
+          )}
           <button disabled={isSubmitting} type="submit" className="w-full bg-gradient-to-r from-brand-yellow to-amber-500 hover:from-amber-500 hover:to-amber-600 disabled:opacity-60 text-zinc-900 font-bold py-2.5 rounded-lg text-xs shadow-md transition-colors">
             {isSubmitting ? 'Enviando...' : 'Encontrar empresas e reviews'}
           </button>
