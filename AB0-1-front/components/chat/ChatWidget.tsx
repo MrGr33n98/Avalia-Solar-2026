@@ -440,15 +440,38 @@ export default function ChatWidget() {
                 <span className="text-xs text-white/80">Online • Assistente Avalia Solar</span>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full"
-              aria-label="Minimizar chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 12H6" />
-              </svg>
-            </button>
+            <div className="flex items-center space-x-1">
+              {messages.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Deseja iniciar uma nova conversa e limpar o histórico atual?')) {
+                      setWizardAnswers({});
+                      setActiveWizard(null);
+                      setShowDiscoveryMenu(false);
+                      setShowReengagementPrompt(false);
+                      setReengagementVariant(null);
+                      clearSession();
+                    }
+                  }}
+                  className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full"
+                  aria-label="Nova conversa"
+                  title="Nova conversa"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full"
+                aria-label="Minimizar chat"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 12H6" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Messages Area */}
@@ -647,7 +670,7 @@ export default function ChatWidget() {
             ))}
 
             {/* Typing Indicator & Skeleton Cards Loader */}
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                   <img

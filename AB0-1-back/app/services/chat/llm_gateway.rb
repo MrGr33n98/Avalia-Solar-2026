@@ -33,11 +33,11 @@ module Chat
       - A plataforma é gratuita para consumidores.
     PROMPT
 
-    def self.call(messages:, context: nil, model: nil)
-      new.call(messages: messages, context: context, model: model)
+    def self.call(messages:, context: nil, model: nil, &block)
+      new.call(messages: messages, context: context, model: model, &block)
     end
 
-    def call(messages:, context: nil, model: nil, is_fallback: false)
+    def call(messages:, context: nil, model: nil, is_fallback: false, &block)
       api_key = ENV.fetch('AI_API_KEY', nil)
       unless api_key.present?
         Rails.logger.warn('[Chat::LlmGateway] AI_API_KEY not configured')
@@ -75,6 +75,60 @@ module Chat
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
+      if block_given?
+        payload[:stream] = true
+        full_content = ""
+        buffer = ""
+
+        response = HTTParty.post(
+          "#{base_url.gsub(/\/+$/, '')}/chat/completions",
+          headers: headers,
+          body: payload.to_json,
+          timeout: DEFAULT_TIMEOUT,
+          stream_body: true
+        ) do |fragment|
+          buffer << fragment
+          while (index = buffer.index("\n\n"))
+            chunk = buffer.slice!(0..index + 1)
+            next if chunk.strip.empty?
+
+            chunk.split("\n").each do |line|
+              if line.start_with?("data: ")
+                data_str = line.sub("data: ", "").strip
+                next if data_str == "[DONE]"
+
+                begin
+                  json = JSON.parse(data_str)
+                  delta = json.dig('choices', 0, 'delta', 'content')
+                  if delta
+                    full_content << delta
+                    yield(delta, false, nil)
+                  end
+                rescue JSON::ParserError
+                  # Ignore malformed JSON in stream chunks
+                end
+              end
+            end
+          end
+        end
+
+        latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
+
+        if response.success?
+          return {
+            content: full_content,
+            model: model_name,
+            token_count: 0, # Tokens generally not returned in stream without extra config
+            latency_ms: latency_ms,
+            success: true
+          }
+        else
+          handle_error_response(response, latency_ms)
+          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
+        end
+      end
+
+      # Non-streaming fallback path
       response = HTTParty.post(
         "#{base_url.gsub(/\/+$/, '')}/chat/completions",
         headers: headers,
@@ -92,7 +146,7 @@ module Chat
 
         if content.blank?
           Rails.logger.error("[Chat::LlmGateway] Empty response content from API")
-          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms)
+          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
         end
 
         {
@@ -104,23 +158,23 @@ module Chat
         }
       else
         handle_error_response(response, latency_ms)
-        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms)
+        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, &block)
     rescue StandardError => e
       Rails.logger.error("[Chat::LlmGateway] Error: #{e.class} - #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, &block)
     end
 
     private
 
-    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil)
+    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil, &block)
       fallback_model = ENV.fetch('AI_FALLBACK_MODEL', nil)
       if !is_fallback && fallback_model.present?
         Rails.logger.warn("[Chat::LlmGateway] Call failed. Retrying with fallback model: #{fallback_model}")
-        return call(messages: messages, context: context, model: fallback_model, is_fallback: true)
+        return call(messages: messages, context: context, model: fallback_model, is_fallback: true, &block)
       end
       fallback_response(latency_ms: latency_ms)
     end

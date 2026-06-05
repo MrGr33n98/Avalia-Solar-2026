@@ -4,6 +4,8 @@ module Api
   module V1
     module Chat
       class MessagesController < BaseController
+        include ActionController::Live
+
         before_action :find_session
         before_action :check_rate_limit, only: [:create]
 
@@ -29,26 +31,32 @@ module Api
             )
           end
 
-          # Process through orchestrator
-          result = ::Chat::OrchestratorService.process(
-            session: @session,
-            user_message: content
-          )
+          response.headers['Content-Type'] = 'text/event-stream'
+          response.headers['Last-Modified'] = Time.now.httpdate
+          # Disable Rack::ETag to prevent buffering
+          response.headers['ETag'] = nil
+          response.headers['Cache-Control'] = 'no-cache'
 
-          render json: result, status: :created
-        rescue StandardError => e
-          Rails.logger.error("[Chat::Messages] Error: #{e.class} - #{e.message}")
-          Sentry.capture_exception(e) if defined?(Sentry)
+          sse = ActionController::Live::SSE.new(response.stream, event: 'message')
 
-          render json: {
-            message: {
-              id: nil,
-              role: 'assistant',
-              content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
-              intent_detected: nil,
-              created_at: Time.current
-            }
-          }, status: :ok # Return 200 even on error so frontend doesn't break
+          begin
+            # Process through orchestrator with streaming
+            ::Chat::OrchestratorService.process(
+              session: @session,
+              user_message: content
+            ) do |chunk, is_final, metadata|
+              payload = { chunk: chunk }
+              payload[:is_final] = true if is_final
+              payload[:metadata] = metadata if metadata.present?
+              sse.write(payload)
+            end
+          rescue StandardError => e
+            Rails.logger.error("[Chat::Messages] Error: #{e.class} - #{e.message}")
+            Sentry.capture_exception(e) if defined?(Sentry)
+            sse.write({ chunk: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.', is_final: true, error: true })
+          ensure
+            sse.close
+          end
         end
 
         # POST /api/v1/chat/messages/:id/feedback

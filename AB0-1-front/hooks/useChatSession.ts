@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApiSafe } from '../lib/api-client';
+import { buildApiUrl } from '../lib/api-config';
 import { getCurrentUTMs } from '../lib/analytics/utm';
 import { track } from '../lib/analytics/lazy';
 
@@ -30,16 +31,19 @@ export function useChatSession() {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [hasLeadCaptured, setHasLeadCaptured] = useState(false);
 
-  // Load session from localStorage on mount
+  // Load session from sessionStorage on mount
   useEffect(() => {
-    const savedSession = localStorage.getItem('as_chat_session');
+    const savedSession = sessionStorage.getItem('as_chat_session') || localStorage.getItem('as_chat_session');
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
         setSession(parsed);
+        sessionStorage.setItem('as_chat_session', savedSession);
+        localStorage.removeItem('as_chat_session'); // Migrate existing to sessionStorage
         // Load messages for this session
         fetchSessionMessages(parsed.id);
       } catch (e) {
+        sessionStorage.removeItem('as_chat_session');
         localStorage.removeItem('as_chat_session');
       }
     }
@@ -83,7 +87,7 @@ export function useChatSession() {
         const nextSession = { ...response.session, vertical: response.session.vertical || vertical };
         setSession(nextSession);
         setMessages(response.messages || []);
-        localStorage.setItem('as_chat_session', JSON.stringify(nextSession));
+        sessionStorage.setItem('as_chat_session', JSON.stringify(nextSession));
         track('chat_session_started', {
           session_id: response.session.id,
           vertical,
@@ -107,7 +111,7 @@ export function useChatSession() {
     if (!currentSession) {
       await startSession();
       // Re-read from state after async startSession
-      const saved = localStorage.getItem('as_chat_session');
+      const saved = sessionStorage.getItem('as_chat_session');
       if (saved) {
         currentSession = JSON.parse(saved);
       } else {
@@ -136,39 +140,103 @@ export function useChatSession() {
     });
 
     try {
-      const res = await fetchApiSafe<{ message: ChatMessage; response: ChatMessage; should_trigger_lead?: boolean }>(
-        `chat/sessions/${currentSession.id}/messages`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content })
-        }
-      );
+      const url = buildApiUrl(`chat/sessions/${currentSession.id}/messages`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
 
-      if (res && res.response) {
-        // Replace list with updated messages to ensure IDs are correct
-        setMessages(prev => {
-          // Remove temp message and append official message + official response
-          const filtered = prev.filter(m => m.id !== tempUserMsg.id);
-          return [...filtered, res.message, res.response];
-        });
+      if (!response.ok || !response.body) {
+        throw new Error(`[Chat] Request failed: ${response.status}`);
+      }
 
-        // Trigger lead form if LLM detected purchase intent or requested details
-        if (res.should_trigger_lead && !hasLeadCaptured) {
-          setShowLeadForm(true);
-          track('chat_lead_form_triggered', { session_id: currentSession.id });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      
+      let done = false;
+      let buffer = '';
+      
+      // Initialize an empty official message to be updated as chunks arrive
+      let officialMsg: ChatMessage | null = null;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          
+          let eolIndex;
+          while ((eolIndex = buffer.indexOf('\n\n')) >= 0) {
+            const chunk = buffer.slice(0, eolIndex).trim();
+            buffer = buffer.slice(eolIndex + 2);
+            
+            if (chunk.startsWith('data: ')) {
+              const dataStr = chunk.replace('data: ', '').trim();
+              if (dataStr === '[DONE]') continue;
+              
+              try {
+                const data = JSON.parse(dataStr);
+                
+                if (data.error) {
+                  throw new Error(data.chunk);
+                }
+                
+                if (data.is_final && data.metadata) {
+                  // Final metadata event
+                  setMessages(prev => {
+                    const filtered = prev.filter(m => m.id !== tempUserMsg.id && m.id !== (officialMsg?.id || -1));
+                    return [...filtered, data.metadata.message, data.metadata.response];
+                  });
+
+                  if (data.metadata.should_trigger_lead && !hasLeadCaptured) {
+                    setShowLeadForm(true);
+                    track('chat_lead_form_triggered', { session_id: currentSession!.id });
+                  }
+                } else if (data.chunk) {
+                  // Incremental chunk
+                  setMessages(prev => {
+                    const filtered = prev.filter(m => m.id !== tempUserMsg.id);
+                    
+                    if (!officialMsg) {
+                      officialMsg = {
+                        id: Date.now() + 1,
+                        role: 'assistant',
+                        content: data.chunk,
+                        created_at: new Date().toISOString()
+                      };
+                      return [...filtered, tempUserMsg, officialMsg];
+                    } else {
+                      officialMsg.content += data.chunk;
+                      // Find and update the existing message in the list
+                      const msgIndex = filtered.findIndex(m => m.id === officialMsg!.id);
+                      if (msgIndex >= 0) {
+                        filtered[msgIndex] = { ...officialMsg };
+                        return [...filtered];
+                      } else {
+                        return [...filtered, tempUserMsg, officialMsg];
+                      }
+                    }
+                  });
+                }
+              } catch (e) {
+                // Ignore malformed JSON chunk
+              }
+            }
+          }
         }
       }
     } catch (error) {
       console.error('[Chat] Failed to send message:', error);
       // Append fallback AI error response
       const errorMsg: ChatMessage = {
-        id: Date.now() + 1,
+        id: Date.now() + 2,
         role: 'assistant',
         content: 'Desculpe, estou com alguma instabilidade para processar sua mensagem agora. Por favor, tente novamente em instantes ou fale conosco diretamente pelo WhatsApp!',
         created_at: new Date().toISOString()
       };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => [...prev.filter(m => m.id !== tempUserMsg.id), errorMsg]);
       track('chat_message_failed', { session_id: currentSession.id });
     } finally {
       setIsLoading(false);
@@ -248,6 +316,7 @@ export function useChatSession() {
   }, [session]);
 
   const clearSession = useCallback(() => {
+    sessionStorage.removeItem('as_chat_session');
     localStorage.removeItem('as_chat_session');
     setSession(null);
     setMessages([]);

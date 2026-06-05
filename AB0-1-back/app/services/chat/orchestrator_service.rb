@@ -4,15 +4,15 @@ module Chat
   class OrchestratorService
     MAX_HISTORY_MESSAGES = 20
 
-    def self.process(session:, user_message:)
-      new(session: session).process(user_message)
+    def self.process(session:, user_message:, &block)
+      new(session: session).process(user_message, &block)
     end
 
     def initialize(session:)
       @session = session
     end
 
-    def process(user_message)
+    def process(user_message, &block)
       # 1. Sanitize input
       safe_message = Chat::SafetyService.sanitize(user_message)
       return blocked_response if safe_message.nil?
@@ -116,7 +116,7 @@ module Chat
 
       else
         # Fluxo Clássico (LlmGateway)
-        llm_response = Chat::LlmGateway.call(messages: history, context: context)
+        llm_response = Chat::LlmGateway.call(messages: history, context: context, &block)
         llm_content = llm_response[:content]
         llm_model = llm_response[:model]
         llm_token_count = llm_response[:token_count]
@@ -205,7 +205,7 @@ module Chat
       # 10. Return response
       # should_trigger was already determined at step 6
 
-      {
+      final_metadata = {
         message: {
           id: user_msg.id,
           role: 'user',
@@ -226,6 +226,12 @@ module Chat
           message_count: @session.message_count
         }
       }
+
+      if block_given?
+        yield("", true, final_metadata)
+      else
+        final_metadata
+      end
     end
 
     private

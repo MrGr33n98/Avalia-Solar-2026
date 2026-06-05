@@ -130,6 +130,7 @@ Rails.application.routes.draw do
 
       resources :banner_offers, only: [:index]
       resources :banner_events, only: [:create]
+      post 'payments_webhooks', to: 'payments_webhooks#create', defaults: { provider: 'stripe' }
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
 
       resources :categories do

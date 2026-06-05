@@ -10,6 +10,7 @@ type Option = {
   description?: string;
   intent?: string;
   categorySlug?: string;
+  image?: string;
 };
 
 type Answers = Record<string, string>;
@@ -67,6 +68,7 @@ type ChoiceStep = {
   title: string;
   subtitle: string;
   options: Option[];
+  layout?: 'list' | 'visual_grid';
 };
 
 const SOLAR_NEEDS: Option[] = [
@@ -124,6 +126,21 @@ const TIMELINES: Option[] = [
   { value: 'researching', label: 'Só estou pesquisando' },
 ];
 
+const SOLAR_TIMELINES: Option[] = [
+  { value: 'this_week', label: 'Essa semana' },
+  { value: 'this_month', label: 'Esse mês' },
+  { value: 'this_year', label: 'Esse ano' },
+  { value: 'future', label: 'No futuro' },
+];
+
+const ROOF_TYPES: Option[] = [
+  { value: 'ceramico', label: 'Cerâmico', image: '/images/ceramico.PNG' },
+  { value: 'metalico', label: 'Metálico', image: '/images/metalico.PNG' },
+  { value: 'fibrocimento', label: 'Fibrocimento', image: '/images/fibrocimento.PNG' },
+  { value: 'laje', label: 'Laje', image: '/images/late.PNG' },
+  { value: 'solo', label: 'Solo', image: '/images/solo.PNG' },
+];
+
 const getOption = (options: Option[], value?: string) => options.find((option) => option.value === value);
 
 const optionLabel = (options: Option[], value?: string) => getOption(options, value)?.label || value || '';
@@ -136,7 +153,7 @@ export default function ChatLeadQualificationWizard({
 }: ChatLeadQualificationWizardProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
-  const [contact, setContact] = useState({ name: '', phone: '', city: '', state: '', summary: '', consent_given: false });
+  const [contact, setContact] = useState({ name: '', email: '', phone: '', cep: '', city: '', state: '', summary: '', consent_given: false });
 
   const needOptions = vertical === 'solar' ? SOLAR_NEEDS : MOBILITY_NEEDS;
   const profileOptions = vertical === 'solar' ? SOLAR_PROFILES : MOBILITY_PROFILES;
@@ -146,7 +163,7 @@ export default function ChatLeadQualificationWizard({
       ? { id: 'monthly_bill', title: 'Qual é sua conta de luz mensal?', subtitle: 'Uma faixa aproximada já ajuda a recomendar o perfil ideal.', options: MONTHLY_BILLS }
       : { id: 'vehicle_count', title: 'Quantos veículos precisam de recarga?', subtitle: 'Pode ser uma estimativa inicial.', options: VEHICLE_COUNTS };
 
-    return [
+    const baseSteps: ChoiceStep[] = [
       {
         id: 'need',
         title: vertical === 'solar' ? 'O que você busca em energia solar?' : 'Qual solução de mobilidade elétrica você busca?',
@@ -159,20 +176,35 @@ export default function ChatLeadQualificationWizard({
         subtitle: 'Isso ajuda a encontrar empresas com experiência no seu cenário.',
         options: profileOptions,
       },
-      specificStep,
-      {
-        id: 'timeline',
-        title: 'Quando você pretende avançar?',
-        subtitle: 'Vamos ajustar a recomendação ao seu momento de compra.',
-        options: TIMELINES,
-      },
-      {
-        id: 'review_interest',
-        title: 'Que tipo de avaliação você quer ver?',
-        subtitle: 'Isso ajuda a filtrar as empresas antes do orçamento.',
-        options: REVIEW_INTERESTS,
-      },
     ];
+
+    if (vertical === 'solar') {
+      baseSteps.push({
+        id: 'roof_type',
+        title: 'Tipo de telhado:',
+        subtitle: 'Selecione o tipo de superfície para instalação',
+        options: ROOF_TYPES,
+        layout: 'visual_grid',
+      });
+    }
+
+    baseSteps.push(specificStep);
+
+    baseSteps.push({
+      id: 'timeline',
+      title: vertical === 'solar' ? 'Em quanto tempo pretende começar a zerar a sua conta de luz?' : 'Quando você pretende avançar?',
+      subtitle: 'Vamos ajustar a recomendação ao seu momento de compra.',
+      options: vertical === 'solar' ? SOLAR_TIMELINES : TIMELINES,
+    });
+
+    baseSteps.push({
+      id: 'review_interest',
+      title: 'Que tipo de avaliação você quer ver?',
+      subtitle: 'Isso ajuda a filtrar as empresas antes do orçamento.',
+      options: REVIEW_INTERESTS,
+    });
+
+    return baseSteps;
   }, [needOptions, profileOptions, vertical]);
 
   const totalSteps = choiceSteps.length + 2;
@@ -194,7 +226,7 @@ export default function ChatLeadQualificationWizard({
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!contact.consent_given || !contact.name.trim() || !contact.phone.trim() || !contact.city.trim() || contact.state.trim().length !== 2) return;
+    if (!contact.consent_given || !contact.name.trim() || !contact.email.trim() || !contact.phone.trim() || !contact.city.trim() || contact.state.trim().length !== 2) return;
     if (answers.need === 'other' && !contact.summary.trim()) return;
 
     const need = getOption(needOptions, answers.need);
@@ -226,6 +258,7 @@ export default function ChatLeadQualificationWizard({
 
     await onSubmit({
       name: contact.name.trim(),
+      email: contact.email.trim(),
       phone: contact.phone.trim(),
       city: contact.city.trim(),
       state: contact.state.trim().toUpperCase(),
@@ -274,20 +307,27 @@ export default function ChatLeadQualificationWizard({
             <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">{activeChoiceStep.title}</h4>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{activeChoiceStep.subtitle}</p>
           </div>
-          <div className="grid grid-cols-1 gap-2">
+          <div className={activeChoiceStep.layout === 'visual_grid' ? "grid grid-cols-3 gap-2" : "grid grid-cols-1 gap-2"}>
             {activeChoiceStep.options.map((option) => (
               <button
                 key={`${activeChoiceStep.id}-${option.value || 'unknown'}`}
                 type="button"
                 onClick={() => selectOption(activeChoiceStep, option)}
-                className={`rounded-xl border px-3 py-2.5 text-left transition-all hover:border-brand-blue hover:bg-white dark:hover:bg-zinc-900 ${
+                className={`rounded-xl border transition-all hover:border-brand-blue hover:bg-white dark:hover:bg-zinc-900 ${activeChoiceStep.layout === 'visual_grid' ? 'p-2 flex flex-col items-center justify-start space-y-2' : 'px-3 py-2.5 text-left'} ${
                   answers[activeChoiceStep.id] === option.value
-                    ? 'border-brand-blue bg-white dark:bg-zinc-900'
+                    ? 'border-brand-blue bg-white dark:bg-zinc-900 ring-1 ring-brand-blue/30'
                     : 'border-zinc-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/50'
                 }`}
               >
-                <span className="block text-xs font-bold text-zinc-800 dark:text-zinc-100">{option.label}</span>
-                {option.description && <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{option.description}</span>}
+                {activeChoiceStep.layout === 'visual_grid' && option.image && (
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm flex-shrink-0 bg-white flex items-center justify-center">
+                    <img src={option.image} alt={option.label} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className={activeChoiceStep.layout === 'visual_grid' ? 'text-center w-full' : ''}>
+                  <span className={`block text-xs font-bold text-zinc-800 dark:text-zinc-100 leading-tight`}>{option.label}</span>
+                  {option.description && <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">{option.description}</span>}
+                </div>
               </button>
             ))}
           </div>
@@ -299,18 +339,44 @@ export default function ChatLeadQualificationWizard({
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            if (contact.city.trim() && contact.state.trim().length === 2) setStepIndex((current) => current + 1);
+            if (contact.cep.trim().length === 9 || (contact.city.trim() && contact.state.trim().length === 2)) setStepIndex((current) => current + 1);
           }}
         >
           <div className="space-y-1">
             <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Onde você precisa da solução?</h4>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Vamos priorizar empresas cadastradas que atendem sua cidade e estado.</p>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Insira o CEP para encontrarmos empresas na sua região.</p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <input required value={contact.city} onChange={(event) => updateContact('city', event.target.value)} placeholder="Cidade" className="col-span-2 w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
-            <input required maxLength={2} value={contact.state} onChange={(event) => updateContact('state', event.target.value.toUpperCase())} placeholder="UF" className="w-full text-xs text-center px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+          <div>
+            <input 
+              required 
+              value={contact.cep} 
+              onChange={(event) => {
+                let value = event.target.value.replace(/\D/g, '');
+                if (value.length > 5) value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+                value = value.substring(0, 9);
+                updateContact('cep', value);
+                
+                if (value.length === 9) {
+                  fetch(`https://viacep.com.br/ws/${value.replace('-', '')}/json/`)
+                    .then(res => res.json())
+                    .then(data => {
+                      if (!data.erro) {
+                        updateContact('city', data.localidade);
+                        updateContact('state', data.uf);
+                      }
+                    }).catch(() => {});
+                }
+              }} 
+              placeholder="00000-000" 
+              className="w-full text-xs text-center px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" 
+            />
+            {contact.city && contact.state && (
+              <p className="text-[11px] text-center text-brand-blue mt-2 font-medium">
+                {contact.city} - {contact.state}
+              </p>
+            )}
           </div>
-          <button type="submit" className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2.5 rounded-lg text-xs transition-colors">Continuar</button>
+          <button type="submit" disabled={!contact.city && contact.cep.length < 9} className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2.5 rounded-lg text-xs transition-colors disabled:opacity-50">Continuar</button>
         </form>
       )}
 
@@ -321,6 +387,7 @@ export default function ChatLeadQualificationWizard({
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Usaremos seus dados para conectar você às opções mais aderentes.</p>
           </div>
           <input required value={contact.name} onChange={(event) => updateContact('name', event.target.value)} placeholder="Nome completo" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+          <input required type="email" value={contact.email} onChange={(event) => updateContact('email', event.target.value)} placeholder="E-mail" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <input required type="tel" value={contact.phone} onChange={(event) => updateContact('phone', event.target.value)} placeholder="WhatsApp com DDD" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <textarea required={answers.need === 'other'} value={contact.summary} onChange={(event) => updateContact('summary', event.target.value)} placeholder={answers.need === 'other' ? 'Conte brevemente o que você procura.' : 'Quer complementar? Escreva brevemente o que procura.'} rows={3} className="w-full resize-none text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <label className="flex items-start space-x-2 cursor-pointer">
