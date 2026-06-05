@@ -77,8 +77,8 @@ module Chat
 
       if block_given?
         payload[:stream] = true
-        full_content = ""
-        buffer = ""
+        full_content = +""
+        buffer = +""
 
         response = HTTParty.post(
           "#{base_url.gsub(/\/+$/, '')}/chat/completions",
