@@ -52,11 +52,41 @@ module Chat
       # Base Scores
       score += SCORING_RULES[:vertical_selected] if p.vertical.present? && p.vertical != 'unknown'
       score += SCORING_RULES[:location_provided] if p.city.present? || p.state.present?
-      score += SCORING_RULES[:wants_reviews] if p.wants_reviews
-      score += SCORING_RULES[:wants_comparison] if p.wants_comparison
-      score += SCORING_RULES[:selected_company] if p.selected_company_ids.present? && p.selected_company_ids.any?
-      score += SCORING_RULES[:wants_quote] if p.wants_quote
-      score += SCORING_RULES[:contact_with_consent] if p.lgpd_consent && (p.name.present? || p.phone.present?)
+
+      wants_reviews = if p.respond_to?(:wants_reviews)
+                        p.wants_reviews
+                      elsif p.respond_to?(:metadata) && p.metadata.is_a?(Hash)
+                        p.metadata['wants_reviews'] || p.metadata[:wants_reviews]
+                      end
+      score += SCORING_RULES[:wants_reviews] if wants_reviews
+
+      wants_comparison = if p.respond_to?(:wants_comparison)
+                           p.wants_comparison
+                         elsif p.respond_to?(:metadata) && p.metadata.is_a?(Hash)
+                           p.metadata['wants_comparison'] || p.metadata[:wants_comparison]
+                         end
+      score += SCORING_RULES[:wants_comparison] if wants_comparison
+
+      selected_ids = if p.respond_to?(:selected_company_ids)
+                       p.selected_company_ids
+                     elsif p.respond_to?(:metadata) && p.metadata.is_a?(Hash)
+                       p.metadata['comparison_company_ids'] || p.metadata[:comparison_company_ids] || p.metadata['recommended_company_ids'] || p.metadata[:recommended_company_ids]
+                     end
+      score += SCORING_RULES[:selected_company] if selected_ids.present? && Array(selected_ids).any?
+
+      wants_quote = if p.respond_to?(:wants_quote)
+                      p.wants_quote
+                    elsif p.respond_to?(:metadata) && p.metadata.is_a?(Hash)
+                      p.metadata['quote_requested_company_id'].present? || p.metadata[:quote_requested_company_id].present?
+                    end
+      score += SCORING_RULES[:wants_quote] if wants_quote
+
+      lgpd_consent = if p.respond_to?(:lgpd_consent)
+                       p.lgpd_consent
+                     elsif p.respond_to?(:consent_given)
+                       p.consent_given
+                     end
+      score += SCORING_RULES[:contact_with_consent] if lgpd_consent && (p.name.present? || p.phone.present?)
 
       # Vertical Specific
       if p.vertical == 'solar'
@@ -81,7 +111,20 @@ module Chat
 
     def self.calculate_solar_score(p)
       s = 0
-      case p.monthly_bill_range
+      bill_range = if p.respond_to?(:monthly_bill_range)
+                     p.monthly_bill_range
+                   elsif p.respond_to?(:monthly_bill)
+                     case p.monthly_bill.to_s
+                     when '300' then 'up_to_300'
+                     when '600' then '300_600'
+                     when '1200' then '600_1000'
+                     when '3000' then '1000_3000'
+                     when '5000' then 'above_3000'
+                     else p.monthly_bill.to_s
+                     end
+                   end
+
+      case bill_range
       when 'up_to_300' then s += SCORING_RULES[:solar_bill_low]
       when '300_600'   then s += SCORING_RULES[:solar_bill_mid]
       when '600_1000'  then s += SCORING_RULES[:solar_bill_high]
@@ -89,29 +132,101 @@ module Chat
       when 'above_3000' then s += SCORING_RULES[:solar_bill_commercial]
       end
 
-      s += SCORING_RULES[:solar_financing] if p.needs_financing
-      s += SCORING_RULES[:solar_has_proposal] if p.buying_stage == 'has_proposal'
-      s += SCORING_RULES[:solar_urgent] if p.buying_stage == 'urgent'
-      s += SCORING_RULES[:solar_maintenance] if p.product_or_service == 'solar_maintenance'
-      s += SCORING_RULES[:solar_b2b_project] if %w[commercial_solar rural_solar condominium_solar].include?(p.category)
+      needs_financing = if p.respond_to?(:needs_financing)
+                          p.needs_financing
+                        else
+                          p.respond_to?(:intent) && p.intent == 'solar_financing'
+                        end
+      s += SCORING_RULES[:solar_financing] if needs_financing
+
+      buying_stage = if p.respond_to?(:buying_stage)
+                       p.buying_stage
+                     else
+                       if p.respond_to?(:urgency) && p.urgency.present?
+                         'urgent'
+                       elsif p.respond_to?(:decision_timeline)
+                         case p.decision_timeline
+                         when 'immediate', 'this_week', 'this_month' then 'urgent'
+                         else 'researching'
+                         end
+                       end
+                     end
+      s += SCORING_RULES[:solar_has_proposal] if buying_stage == 'has_proposal'
+      s += SCORING_RULES[:solar_urgent] if buying_stage == 'urgent'
+
+      prod_or_serv = if p.respond_to?(:product_or_service)
+                       p.product_or_service
+                     else
+                       p.respond_to?(:intent) ? p.intent : nil
+                     end
+      s += SCORING_RULES[:solar_maintenance] if prod_or_serv == 'solar_maintenance'
+
+      category = if p.respond_to?(:category)
+                   p.category
+                 elsif p.respond_to?(:property_type)
+                   p.property_type
+                 end
+      s += SCORING_RULES[:solar_b2b_project] if %w[commercial_solar rural_solar condominium_solar commercial rural condominium].include?(category)
       s
     end
 
     def self.calculate_ev_score(p)
       s = 0
-      case p.ev_ownership
+      ev_ownership = if p.respond_to?(:ev_ownership)
+                       p.ev_ownership
+                     else
+                       if p.respond_to?(:property_type) && %w[company condominium public_site].include?(p.property_type)
+                         'business_condo'
+                       elsif p.respond_to?(:vehicle_count) && p.vehicle_count.to_i > 1
+                         'fleet'
+                       else
+                         'owns_ev'
+                       end
+                     end
+
+      case ev_ownership
       when 'owns_ev'           then s += SCORING_RULES[:ev_owner]
       when 'owns_plugin_hybrid' then s += SCORING_RULES[:ev_hybrid_owner]
       when 'buying_soon'       then s += SCORING_RULES[:ev_buying_soon]
       when 'business_condo', 'fleet' then s += SCORING_RULES[:ev_b2b_project]
       end
 
-      s += SCORING_RULES[:ev_public_station] if p.category == 'public_charging_station'
-      s += SCORING_RULES[:ev_tech_assessment] if p.needs_technical_assessment
-      s += SCORING_RULES[:ev_urgent] if p.buying_stage == 'urgent'
-      s += SCORING_RULES[:ev_ready_30d] if p.buying_stage == 'ready_to_buy'
-      s += SCORING_RULES[:ev_has_point] if p.has_electrical_point == true
-      s += SCORING_RULES[:ev_no_point] if p.has_electrical_point == false
+      category = if p.respond_to?(:category)
+                   p.category
+                 elsif p.respond_to?(:property_type)
+                   p.property_type
+                 end
+      s += SCORING_RULES[:ev_public_station] if category == 'public_charging_station'
+
+      needs_tech = if p.respond_to?(:needs_technical_assessment)
+                     p.needs_technical_assessment
+                   else
+                     false
+                   end
+      s += SCORING_RULES[:ev_tech_assessment] if needs_tech
+
+      buying_stage = if p.respond_to?(:buying_stage)
+                       p.buying_stage
+                     else
+                       if p.respond_to?(:urgency) && p.urgency.present?
+                         'urgent'
+                       elsif p.respond_to?(:decision_timeline)
+                         case p.decision_timeline
+                         when 'immediate', 'this_week', 'this_month' then 'urgent'
+                         else 'researching'
+                         end
+                       end
+                     end
+      s += SCORING_RULES[:ev_urgent] if buying_stage == 'urgent'
+      s += SCORING_RULES[:ev_ready_30d] if buying_stage == 'ready_to_buy'
+
+      has_pt = if p.respond_to?(:has_electrical_point)
+                 p.has_electrical_point
+               else
+                 nil
+               end
+      s += SCORING_RULES[:ev_has_point] if has_pt == true
+      s += SCORING_RULES[:ev_no_point] if has_pt == false
       s
     end
   end
