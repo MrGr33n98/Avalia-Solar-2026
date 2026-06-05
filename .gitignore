@@ -26,3 +26,14 @@ node_modules/
 .vscode/
 .idea/
 ```
+# Arquivos de Testes, Logs e Cache
+.claude/
+.opencode/
+.spec-workflow/
+archive/
+docs/archive/
+docs/qa/bloco-2/archive/
+tests/adhoc/
+videos/
+AB0-1-front/.cache/
+AB0-1-front/.next/
