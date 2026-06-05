@@ -172,56 +172,60 @@ export function useChatSession() {
             const chunk = buffer.slice(0, eolIndex).trim();
             buffer = buffer.slice(eolIndex + 2);
             
-            if (chunk.startsWith('data: ')) {
-              const dataStr = chunk.replace('data: ', '').trim();
-              if (dataStr === '[DONE]') continue;
-              
-              try {
-                const data = JSON.parse(dataStr);
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith('data: ')) {
+                const dataStr = trimmedLine.replace('data: ', '').trim();
+                if (dataStr === '[DONE]') continue;
                 
-                if (data.error) {
-                  throw new Error(data.chunk);
-                }
-                
-                if (data.is_final && data.metadata) {
-                  // Final metadata event
-                  setMessages(prev => {
-                    const filtered = prev.filter(m => m.id !== tempUserMsg.id && m.id !== (officialMsg?.id || -1));
-                    return [...filtered, data.metadata.message, data.metadata.response];
-                  });
-
-                  if (data.metadata.should_trigger_lead && !hasLeadCaptured) {
-                    setShowLeadForm(true);
-                    track('chat_lead_form_triggered', { session_id: currentSession!.id });
+                try {
+                  const data = JSON.parse(dataStr);
+                  
+                  if (data.error) {
+                    throw new Error(data.chunk);
                   }
-                } else if (data.chunk) {
-                  // Incremental chunk
-                  setMessages(prev => {
-                    const filtered = prev.filter(m => m.id !== tempUserMsg.id);
-                    
-                    if (!officialMsg) {
-                      officialMsg = {
-                        id: Date.now() + 1,
-                        role: 'assistant',
-                        content: data.chunk,
-                        created_at: new Date().toISOString()
-                      };
-                      return [...filtered, tempUserMsg, officialMsg];
-                    } else {
-                      officialMsg.content += data.chunk;
-                      // Find and update the existing message in the list
-                      const msgIndex = filtered.findIndex(m => m.id === officialMsg!.id);
-                      if (msgIndex >= 0) {
-                        filtered[msgIndex] = { ...officialMsg };
-                        return [...filtered];
-                      } else {
-                        return [...filtered, tempUserMsg, officialMsg];
-                      }
+                  
+                  if (data.is_final && data.metadata) {
+                    // Final metadata event
+                    setMessages(prev => {
+                      const filtered = prev.filter(m => m.id !== tempUserMsg.id && m.id !== (officialMsg?.id || -1));
+                      return [...filtered, data.metadata.message, data.metadata.response];
+                    });
+
+                    if (data.metadata.should_trigger_lead && !hasLeadCaptured) {
+                      setShowLeadForm(true);
+                      track('chat_lead_form_triggered', { session_id: currentSession!.id });
                     }
-                  });
+                  } else if (data.chunk) {
+                    // Incremental chunk
+                    setMessages(prev => {
+                      const filtered = prev.filter(m => m.id !== tempUserMsg.id);
+                      
+                      if (!officialMsg) {
+                        officialMsg = {
+                          id: Date.now() + 1,
+                          role: 'assistant',
+                          content: data.chunk,
+                          created_at: new Date().toISOString()
+                        };
+                        return [...filtered, tempUserMsg, officialMsg];
+                      } else {
+                        officialMsg.content += data.chunk;
+                        // Find and update the existing message in the list
+                        const msgIndex = filtered.findIndex(m => m.id === officialMsg!.id);
+                        if (msgIndex >= 0) {
+                          filtered[msgIndex] = { ...officialMsg };
+                          return [...filtered];
+                        } else {
+                          return [...filtered, tempUserMsg, officialMsg];
+                        }
+                      }
+                    });
+                  }
+                } catch (e) {
+                  // Ignore malformed JSON chunk
                 }
-              } catch (e) {
-                // Ignore malformed JSON chunk
               }
             }
           }
