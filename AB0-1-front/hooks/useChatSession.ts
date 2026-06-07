@@ -23,7 +23,7 @@ export interface ChatSession {
   message_count: number;
 }
 
-export function useChatSession() {
+export function useChatSession(sessionKey = 'as_chat_session') {
   const [isOpen, setIsOpen] = useState(false);
   const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -33,21 +33,21 @@ export function useChatSession() {
 
   // Load session from sessionStorage on mount
   useEffect(() => {
-    const savedSession = sessionStorage.getItem('as_chat_session') || localStorage.getItem('as_chat_session');
+    const savedSession = sessionStorage.getItem(sessionKey) || localStorage.getItem(sessionKey);
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
         setSession(parsed);
-        sessionStorage.setItem('as_chat_session', savedSession);
-        localStorage.removeItem('as_chat_session'); // Migrate existing to sessionStorage
+        sessionStorage.setItem(sessionKey, savedSession);
+        localStorage.removeItem(sessionKey); // Migrate existing to sessionStorage
         // Load messages for this session
         fetchSessionMessages(parsed.id);
       } catch (e) {
-        sessionStorage.removeItem('as_chat_session');
-        localStorage.removeItem('as_chat_session');
+        sessionStorage.removeItem(sessionKey);
+        localStorage.removeItem(sessionKey);
       }
     }
-  }, []);
+  }, [sessionKey]);
 
   const fetchSessionMessages = async (sessionId: number) => {
     try {
@@ -87,7 +87,7 @@ export function useChatSession() {
         const nextSession = { ...response.session, vertical: response.session.vertical || vertical };
         setSession(nextSession);
         setMessages(response.messages || []);
-        sessionStorage.setItem('as_chat_session', JSON.stringify(nextSession));
+        sessionStorage.setItem(sessionKey, JSON.stringify(nextSession));
         track('chat_session_started', {
           session_id: response.session.id,
           vertical,
@@ -111,7 +111,7 @@ export function useChatSession() {
     if (!currentSession) {
       await startSession();
       // Re-read from state after async startSession
-      const saved = sessionStorage.getItem('as_chat_session');
+      const saved = sessionStorage.getItem(sessionKey);
       if (saved) {
         currentSession = JSON.parse(saved);
       } else {
@@ -245,7 +245,7 @@ export function useChatSession() {
     } finally {
       setIsLoading(false);
     }
-  }, [session, startSession, hasLeadCaptured]);
+  }, [session, startSession, hasLeadCaptured, sessionKey]);
 
   const sendFeedback = useCallback(async (messageId: number, score: number) => {
     try {
@@ -320,13 +320,13 @@ export function useChatSession() {
   }, [session]);
 
   const clearSession = useCallback(() => {
-    sessionStorage.removeItem('as_chat_session');
-    localStorage.removeItem('as_chat_session');
+    sessionStorage.removeItem(sessionKey);
+    localStorage.removeItem(sessionKey);
     setSession(null);
     setMessages([]);
     setShowLeadForm(false);
     setHasLeadCaptured(false);
-  }, []);
+  }, [sessionKey]);
 
   return {
     isOpen,

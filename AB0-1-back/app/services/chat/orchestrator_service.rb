@@ -33,6 +33,70 @@ module Chat
       # 4. Get context from retrieval service (MVP: simple DB lookup)
       context = Chat::RetrievalService.context_for(@session)
 
+      # 4.5. Se for o assistente Success do Dashboard, desvia do fluxo de leads
+      if @session.vertical == 'success'
+        system_prompt = Chat::LlmGateway::SUCCESS_SYSTEM_PROMPT
+        
+        llm_response = Chat::LlmGateway.call(
+          messages: history,
+          context: context,
+          system_prompt: system_prompt,
+          &block
+        )
+        
+        assistant_msg = @session.chat_messages.create!(
+          role: 'assistant',
+          content: llm_response[:content],
+          model: llm_response[:model],
+          token_count: llm_response[:token_count],
+          latency_ms: llm_response[:latency_ms],
+          safety_status: 'clean',
+          intent_detected: 'success_onboarding',
+          metadata: {}
+        )
+        
+        @session.increment_message_count!
+        
+        Chat::PosthogTrackingService.track(
+          event: 'chat_success_response_generated',
+          properties: {
+            session_id: @session.id,
+            message_id: assistant_msg.id,
+            model: llm_response[:model],
+            success: llm_response[:success]
+          }
+        ) rescue nil
+        
+        final_metadata = {
+          message: {
+            id: user_msg.id,
+            role: 'user',
+            content: user_msg.content,
+            created_at: user_msg.created_at
+          },
+          response: {
+            id: assistant_msg.id,
+            role: 'assistant',
+            content: assistant_msg.content,
+            intent_detected: 'success_onboarding',
+            metadata: {},
+            created_at: assistant_msg.created_at
+          },
+          should_trigger_lead: false,
+          session: {
+            id: @session.id,
+            message_count: @session.message_count
+          }
+        }
+        
+        if block_given?
+          yield("", true, final_metadata)
+        else
+          return final_metadata
+        end
+        return
+      end
+
       # 5. Intent Router
       old_intent = detect_intent(safe_message, "") # Mocking llm response
       intent_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_ENABLED', 'false'))

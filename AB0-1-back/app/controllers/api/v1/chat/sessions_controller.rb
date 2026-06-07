@@ -19,6 +19,8 @@ module Api
           # Add initial greeting message based on vertical
           initial_content = if session.vertical == 'electric_mobility'
                              "Olá! Sou o MobiVolt AI, seu assistente para mobilidade elétrica. Como posso te ajudar com carregadores ou frotas hoje?"
+                           elsif session.vertical == 'success'
+                             "Olá! Sou o MobiVolt Success. Estou aqui para te ajudar no onboarding e no setup do seu perfil comercial. Como posso ajudar com seu cadastro ou configurações hoje?"
                            else
                              "Olá! Sou o MobiVolt AI, seu assistente para energia solar. Como posso te ajudar a economizar na conta de luz hoje?"
                            end

@@ -78,6 +78,8 @@ module Chat
         "O usuário está interessado em ENERGIA SOLAR. Foque em painéis solares, inversores, instalação, financiamento, manutenção e economia na conta de luz."
       when 'electric_mobility'
         "O usuário está interessado em MOBILIDADE ELÉTRICA. Foque em carregadores, wallbox, eletropostos, frota elétrica e soluções para condomínios."
+      when 'success'
+        "O usuário atual é uma empresa parceira (cliente) acessando o Dashboard. Ele está na fase de onboarding/configuração. Ajude-o a entender o painel e incentivar o preenchimento de dados como cobertura geográfica e contatos."
       end
     end
 

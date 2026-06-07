@@ -33,11 +33,28 @@ module Chat
       - A plataforma é gratuita para consumidores.
     PROMPT
 
-    def self.call(messages:, context: nil, model: nil, &block)
-      new.call(messages: messages, context: context, model: model, &block)
+    SUCCESS_SYSTEM_PROMPT = <<~PROMPT
+      Você é o MobiVolt Success, o assistente virtual de onboarding e sucesso do cliente do Avalia Solar.
+      Seu objetivo é ajudar as empresas parceiras (nossos clientes) a configurarem seus perfis, cadastrarem serviços/produtos, configurarem suas zonas de cobertura e entenderem como funciona o dashboard da plataforma.
+
+      REGRAS OBRIGATÓRIAS:
+      - Responda sempre em português brasileiro.
+      - Use um tom extremamente amigável, prestativo, corporativo e focado no sucesso do cliente (Customer Success).
+      - Ajude o usuário a navegar pelas seções do dashboard:
+        - "Visão Geral" (Overview): para acompanhar visualizações, leads e conversão.
+        - "Métricas" (Performance): relatórios detalhados em tempo real.
+        - "Avaliações" (Reviews): responder e gerenciar avaliações recebidas.
+        - "Oportunidades" (Leads): ver leads capturados.
+        - "Configurações" (Settings): atualizar dados do perfil, zonas de cobertura (estados e cidades atendidas) e CTAs de conversão (WhatsApp).
+      - Incentive o usuário a iniciar o Tour Guiado do Dashboard caso ele queira um passo a passo interativo nas telas. Explique que o Tour vai mostrar fisicamente cada elemento do painel.
+      - Respostas devem ser curtas e diretas (máximo de 4 a 6 linhas).
+    PROMPT
+
+    def self.call(messages:, context: nil, model: nil, system_prompt: nil, &block)
+      new.call(messages: messages, context: context, model: model, system_prompt: system_prompt, &block)
     end
 
-    def call(messages:, context: nil, model: nil, is_fallback: false, &block)
+    def call(messages:, context: nil, model: nil, is_fallback: false, system_prompt: nil, &block)
       api_key = ENV.fetch('AI_API_KEY', nil)
       unless api_key.present?
         Rails.logger.warn('[Chat::LlmGateway] AI_API_KEY not configured')
@@ -48,7 +65,9 @@ module Chat
       base_url = ENV.fetch('AI_BASE_URL', provider == 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1')
       
       model_name = model || (is_fallback ? ENV.fetch('AI_FALLBACK_MODEL', DEFAULT_MODEL) : ENV.fetch('AI_MODEL', DEFAULT_MODEL))
-      system_content = context.present? ? "#{SYSTEM_PROMPT}\n\nCONTEXTO ATUAL:\n#{context}" : SYSTEM_PROMPT
+      
+      sys_prompt = system_prompt || SYSTEM_PROMPT
+      system_content = context.present? ? "#{sys_prompt}\n\nCONTEXTO ATUAL:\n#{context}" : sys_prompt
 
       payload = {
         model: model_name,
@@ -124,7 +143,7 @@ module Chat
           }
         else
           handle_error_response(response, latency_ms)
-          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
+          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
         end
       end
 
@@ -146,7 +165,7 @@ module Chat
 
         if content.blank?
           Rails.logger.error("[Chat::LlmGateway] Empty response content from API")
-          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
+          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
         end
 
         {
@@ -158,23 +177,23 @@ module Chat
         }
       else
         handle_error_response(response, latency_ms)
-        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, &block)
+        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback, &block)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &block)
     rescue StandardError => e
       Rails.logger.error("[Chat::LlmGateway] Error: #{e.class} - #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback, &block)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &block)
     end
 
     private
 
-    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil, &block)
+    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil, system_prompt: nil, &block)
       fallback_model = ENV.fetch('AI_FALLBACK_MODEL', nil)
       if !is_fallback && fallback_model.present?
         Rails.logger.warn("[Chat::LlmGateway] Call failed. Retrying with fallback model: #{fallback_model}")
-        return call(messages: messages, context: context, model: fallback_model, is_fallback: true, &block)
+        return call(messages: messages, context: context, model: fallback_model, is_fallback: true, system_prompt: system_prompt, &block)
       end
       fallback_response(latency_ms: latency_ms)
     end

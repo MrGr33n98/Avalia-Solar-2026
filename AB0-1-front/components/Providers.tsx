@@ -15,6 +15,7 @@ const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloat
 const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), { ssr: false });
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/chat/ChatWidget'), { ssr: false });
+const MobiVoltSuccessWidget = dynamic(() => import('@/components/chat/MobiVoltSuccessWidget'), { ssr: false });
 const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
   ssr: false,
   loading: () => null,
@@ -153,7 +154,9 @@ export default function Providers({
               <SignupGateModalHost />
               <Toaster />
               <CookieConsent />
-              {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && <ChatWidget />}
+              {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && (
+                pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />
+              )}
             </CompanyProvider>
           </AuthProvider>
         </Context7Provider>
