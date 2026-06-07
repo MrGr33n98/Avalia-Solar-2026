@@ -144,7 +144,8 @@ export function useChatSession(sessionKey = 'as_chat_session') {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content }),
+        credentials: 'include'
       });
 
       if (!response.ok || !response.body) {

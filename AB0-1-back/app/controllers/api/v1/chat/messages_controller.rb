@@ -7,6 +7,7 @@ module Api
         include ActionController::Live
 
         before_action :find_session
+        before_action :authorize_session!, only: [:create]
         before_action :check_rate_limit, only: [:create]
 
         # POST /api/v1/chat/sessions/:session_id/messages
@@ -78,6 +79,20 @@ module Api
         end
 
         private
+
+        def authorize_session!
+          if @session.user_id.present?
+            if current_user.nil? || @session.user_id != current_user.id
+              return render_error_response(
+                message: 'Você não tem permissão para acessar esta sessão de chat.',
+                status: :forbidden,
+                code: 'FORBIDDEN_SESSION'
+              )
+            end
+          elsif current_user.present?
+            @session.update!(user_id: current_user.id)
+          end
+        end
 
         def find_session
           @session = ChatSession.find(params[:session_id])

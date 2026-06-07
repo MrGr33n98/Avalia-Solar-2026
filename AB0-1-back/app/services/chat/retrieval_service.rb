@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'uri'
+require 'cgi'
+
 module Chat
   class RetrievalService
     # MVP: Simple DB-based context retrieval
@@ -38,13 +41,29 @@ module Chat
         end
       end
 
-      # 2. Fallback para comportamento MVP de URL se a busca dinâmica falhar ou estiver desativada
-      if !dynamic_success && session.page_url&.include?('/companies/')
-        slug = session.page_url.split('/companies/').last&.split('?')&.first
-        company = Company.find_by(slug: slug) if slug.present?
-        if company
-          parts << company_context(company)
+      # 2. Contexto da Empresa Parceira (MobiVolt Success ou Usuário Logado)
+      company = nil
+      if session.user.present? && session.user.company.present?
+        company = session.user.company
+      elsif session.vertical == 'success'
+        if session.page_url.present?
+          begin
+            uri = URI.parse(session.page_url)
+            params = CGI.parse(uri.query) if uri.query.present?
+            company_id = params&.dig('company_id')&.first
+            company = Company.find_by(id: company_id) if company_id.present?
+          rescue StandardError => e
+            Rails.logger.error("[Chat::RetrievalService] Error parsing page_url: #{e.message}")
+          end
         end
+      end
+
+      if company.present?
+        parts << company_success_context(company)
+      elsif !dynamic_success && session.page_url&.include?('/companies/')
+        slug = session.page_url.split('/companies/').last&.split('?')&.first
+        comp = Company.find_by(slug: slug) if slug.present?
+        parts << company_context(comp) if comp.present?
       end
 
       # Add vertical context
@@ -69,6 +88,40 @@ module Chat
         - Nota média: #{company.rating_avg || 'Sem avaliações'}
         - Total de avaliações: #{company.rating_count || 0}
         - Descrição: #{company.description.to_s.truncate(200)}
+      CTX
+    end
+
+    def self.company_success_context(company)
+      categories = company.categories.map(&:name).join(', ')
+      coverage_states = company.coverage_states.presence || 'Não informado (Atende apenas a cidade sede)'
+      coverage_cities = company.coverage_cities.presence || 'Não informado (Atende apenas a cidade sede)'
+      niche_tags = Array(company.niche_tags).join(', ')
+      project_types = Array(company.project_types).join(', ')
+      services = Array(company.services_offered).join(', ')
+      products = company.products.active.limit(10).map(&:name).join(', ') rescue ''
+      faqs = company.company_faqs.limit(5).map { |f| "P: #{f.question} | R: #{f.answer}" }.join("\n") rescue ''
+
+      <<~CTX
+        PERFIL COMPLETO DA SUA EMPRESA (LOGADA):
+        - Nome Fantasia: #{company.name}
+        - Razão Social / CNPJ: #{company.cnpj || 'Não informado'}
+        - Status na Plataforma: #{company.status}
+        - Website: #{company.website || 'Não informado'}
+        - Contatos cadastrados:
+          * Telefone Comercial: #{company.phone || 'Não informado'}
+          * WhatsApp: #{company.whatsapp || 'Não informado'} (URL: #{company.whatsapp_url || 'Não configurada'})
+          * E-mail Público: #{company.email_public || 'Não informado'}
+        - Plano Atual: #{company.plan&.name || 'Nenhum / Free'} (Tier: #{company.inferred_plan_tier}, Status do Plano: #{company.plan_status})
+        - Localização da Sede: #{company.city || 'Não informado'} - #{company.state || 'Não informado'}
+        - Categorias / Especialidades em que está inscrito: #{categories.presence || 'Nenhuma cadastrada'}
+        - Zonas de Cobertura Geográfica:
+          * Estados de Atendimento: #{coverage_states}
+          * Cidades de Atendimento: #{coverage_cities}
+        - Especialidades (Tags de Nicho): #{niche_tags.presence || 'Não configuradas'}
+        - Tipos de Projetos que Atende: #{project_types.presence || 'Não configurados'}
+        - Serviços Prestados: #{services.presence || 'Não configurados'}
+        - Produtos Cadastrados no Catálogo: #{products.presence || 'Nenhum produto cadastrado'}
+        #{"- Perguntas Frequentes (FAQs) Cadastradas:\n" + faqs if faqs.present?}
       CTX
     end
 
