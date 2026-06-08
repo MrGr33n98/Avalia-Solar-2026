@@ -166,7 +166,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       if (!copy) return children;
 
       return (
-        <FeatureGuard entry={entry} title={copy.title} description={copy.description}>
+        <FeatureGuard entry={entry} title={copy.title} description={copy.description} featureId={tabId}>
           {children}
         </FeatureGuard>
       );

@@ -77,7 +77,7 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
   },
   {
     id: 'interaction-group',
-    label: 'Dados de Interação',
+    label: 'Dados de Intenção',
     icon: Database,
     context: ['operational'],
     group: 'engagement',
