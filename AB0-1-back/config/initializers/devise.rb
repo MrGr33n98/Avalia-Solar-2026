@@ -271,6 +271,9 @@ Devise.setup do |config|
   # ==> OmniAuth
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
+  OmniAuth.config.allowed_request_methods = [:post, :get]
+  OmniAuth.config.silence_get_warning = true
+
   config.omniauth :google_oauth2,
                   ENV.fetch('GOOGLE_CLIENT_ID', nil),
                   ENV.fetch('GOOGLE_CLIENT_SECRET', nil),
