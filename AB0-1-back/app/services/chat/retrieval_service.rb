@@ -111,7 +111,7 @@ module Chat
           * Telefone Comercial: #{company.phone || 'Não informado'}
           * WhatsApp: #{company.whatsapp || 'Não informado'} (URL: #{company.whatsapp_url || 'Não configurada'})
           * E-mail Público: #{company.email_public || 'Não informado'}
-        - Plano Atual: #{company.plan&.name || 'Nenhum / Free'} (Tier: #{company.inferred_plan_tier}, Status do Plano: #{company.plan_status})
+        - Plano Atual: #{company.plan&.name || 'Nenhum / Free'} (Tier: #{company.inferred_plan_tier}, Status do Plano: #{company.respond_to?(:plan_status) ? company.plan_status : 'n/a'})
         - Localização da Sede: #{company.city || 'Não informado'} - #{company.state || 'Não informado'}
         - Categorias / Especialidades em que está inscrito: #{categories.presence || 'Nenhuma cadastrada'}
         - Zonas de Cobertura Geográfica:
