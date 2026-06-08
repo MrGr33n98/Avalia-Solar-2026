@@ -81,17 +81,20 @@ module Api
         private
 
         def authorize_session!
-          if @session.user_id.present?
-            if current_user.nil? || @session.user_id != current_user.id
+          if @session.user_id.present? && current_user.present?
+            # Only block if a different authenticated user tries to use this session
+            if @session.user_id != current_user.id
               return render_error_response(
                 message: 'Você não tem permissão para acessar esta sessão de chat.',
                 status: :forbidden,
                 code: 'FORBIDDEN_SESSION'
               )
             end
-          elsif current_user.present?
+          elsif current_user.present? && @session.user_id.nil?
+            # Associate the session with the authenticated user
             @session.update!(user_id: current_user.id)
           end
+          # If current_user is nil, allow the request (public chat widget)
         end
 
         def find_session

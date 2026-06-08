@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_01_204920) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_02_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -2202,6 +2202,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_204920) do
     t.text "buyer_tip"
     t.jsonb "project_context", default: {}, null: false
     t.jsonb "granular_scores_snapshot", default: {}, null: false
+    t.string "capture_flow_source"
     t.index ["category_id"], name: "index_reviews_on_category_id"
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "rating"], name: "index_reviews_on_company_id_and_rating", order: { rating: :desc }
@@ -2354,6 +2355,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_01_204920) do
     t.string "city"
     t.string "state"
     t.string "phone"
+    t.boolean "public_name_consent", default: false, null: false
+    t.boolean "display_full_name_consent", default: false, null: false
+    t.boolean "review_name_consent", default: false, null: false
+    t.boolean "lgpd_name_consent", default: false, null: false
+    t.boolean "show_full_name", default: false, null: false
     t.index ["approved_by_admin"], name: "index_users_on_approved_by_admin"
     t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
