@@ -14,6 +14,7 @@ Fases 1, 2 e 3 de Discovery/Contexto concluídas com absoluto sucesso. O novo Sh
 ### Roadmap Evolution
 - Mapeado no ROADMAP.md de 1 a 10 fases.
 - Feature Flag local `process.env.NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE === 'true'` ativa para desenvolvimento e testes isolados.
+- Phase 2 added: Implementar correções de segurança e integrações apontadas na auditoria (Feature Gating, Stripe e Analytics)
 
 ### Key Decisions
 - Mapeado no PROJECT.md, 01-CONTEXT.md, 02-CONTEXT.md e 03-CONTEXT.md.

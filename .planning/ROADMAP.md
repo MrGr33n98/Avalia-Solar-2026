@@ -36,6 +36,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd-plan-phase 1 to break down)
 
+### Phase 2: Implementar correções de segurança e integrações apontadas na auditoria (Feature Gating, Stripe e Analytics)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 2 to break down)
+
 ---
 
 ## Detalhamento das Fases

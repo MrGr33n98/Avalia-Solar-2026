@@ -235,10 +235,11 @@ export function trackUserReturned(daysSinceLastVisit?: number): void {
 /**
  * Track when a user starts a plan upgrade flow
  */
-export function trackCheckoutStarted(planId: string | number, currentPlanId?: string | number): void {
+export function trackCheckoutStarted(planId: string | number, currentPlanId?: string | number, companyId?: string | number): void {
   track('checkout_started', {
     target_plan_id: String(planId),
     current_plan_id: currentPlanId ? String(currentPlanId) : undefined,
+    company_id: companyId ? String(companyId) : undefined,
   });
 }
 

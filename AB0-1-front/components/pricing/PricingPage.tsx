@@ -225,7 +225,7 @@ export default function PricingPage() {
             cancelUrl
           );
           
-          trackCheckoutStarted(plan.id);
+          trackCheckoutStarted(plan.id, undefined, user.company_id);
           window.location.href = checkout_url;
         } else {
           // Se for nulo/sandbox, desvia de forma totalmente segura para o painel com aviso
@@ -252,7 +252,7 @@ export default function PricingPage() {
             cancelUrl
           );
           
-          trackCheckoutStarted(plan.id);
+          trackCheckoutStarted(plan.id, undefined, user.company_id);
           window.location.href = checkout_url;
         }
         return;

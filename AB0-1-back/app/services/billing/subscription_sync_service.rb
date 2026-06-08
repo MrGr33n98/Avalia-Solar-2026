@@ -50,6 +50,8 @@ module Billing
       end
 
       if company.nil?
+        Rails.logger.warn("Company not found for Stripe customer: #{@stripe_sub.customer} (Sub ID: #{@stripe_sub.id})")
+
         Billing::SlackNotifier.notify_unknown_company(
           stripe_sub_id: @stripe_sub.id,
           stripe_customer_id: @stripe_sub.customer,

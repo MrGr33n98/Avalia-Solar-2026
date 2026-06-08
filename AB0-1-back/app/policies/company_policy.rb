@@ -9,6 +9,10 @@ class CompanyPolicy < ApplicationPolicy
     company_user? && (owns_record? || active_membership.present?)
   end
 
+  def feature_access?
+    true
+  end
+
   def update?
     return true if admin?
     return false unless company_user?

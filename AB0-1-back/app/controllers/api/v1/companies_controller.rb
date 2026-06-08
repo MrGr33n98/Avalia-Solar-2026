@@ -9,7 +9,7 @@ module Api
                              feature_access social_proof]
       before_action :authenticate_api_user,
                     only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
-                             analytics_traffic feature_access mine]
+                             analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!,
                     only: %i[analytics_historical analytics_reviews analytics_competitors analytics_traffic]
@@ -106,7 +106,7 @@ module Api
 
       # GET /api/v1/companies/:id/feature_access
       def feature_access
-        authorize @company, :show?
+        authorize @company, :feature_access?
 
         render json: feature_access_payload(@company), status: :ok
       rescue Pundit::NotAuthorizedError
