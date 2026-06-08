@@ -372,7 +372,10 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
               </div>
             </div>
 
-            <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            <section 
+              className="flex md:grid md:grid-cols-5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 if (!Icon) return null;
@@ -380,12 +383,12 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
                   <Link
                     key={action.label}
                     href={action.href}
-                    className="flex flex-col items-center gap-2 rounded-xl bg-white p-3 text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
+                    className="flex flex-row md:flex-col items-center gap-2.5 md:gap-2 rounded-xl bg-white p-2.5 md:p-3 text-left md:text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group shrink-0 snap-start"
                   >
-                    <div className={cn('flex h-10 w-10 items-center justify-center rounded-full transition-colors', action.styles)}>
-                      <Icon className="h-5 w-5" />
+                    <div className={cn('flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full transition-colors', action.styles)}>
+                      <Icon className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900">{action.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 whitespace-nowrap">{action.label}</span>
                   </Link>
                 );
               })}
