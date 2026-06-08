@@ -115,22 +115,42 @@ export default function CategoryPageClient({
       );
     }
 
+    // Mapeamento robusto para lidar com singular/plural e variações do banco/API
+    const mappedTypes: Record<string, string[]> = {
+      Residencial: ['residencial', 'residenciais'],
+      Comercial: ['comercial', 'comerciais'],
+      Industrial: ['industrial', 'industriais'],
+      Agronegócio: ['rural', 'rurais', 'rural/agro', 'agronegócio', 'agronegócios'],
+    };
+
+    const matchProjectType = (c: Company, type: string) => {
+      const searchTerms = mappedTypes[type] || [type.toLowerCase()];
+      return (
+        c.project_types?.some((pt) => searchTerms.includes(pt.toLowerCase())) ||
+        c.services_offered?.some((so) => searchTerms.includes(so.toLowerCase())) ||
+        searchTerms.some((term) => c.description?.toLowerCase().includes(term))
+      );
+    };
+
     // Filtros rápidos
     if (activeQuickFilters.has('verified')) {
       result = result.filter((c) => c.verified);
     }
     if (activeQuickFilters.has('rated')) {
-      result = result.filter((c) => (c.rating_avg || 0) >= 4.5);
+      result = result.filter((c) => (Number(c.rating_avg) || 0) >= 4.5);
     }
     if (activeQuickFilters.has('industrial')) {
+      const industrialTerms = ['industrial', 'industriais'];
       result = result.filter(
         (c) =>
-          c.project_types?.includes('Industrial') ||
-          c.services_offered?.includes('Industrial')
+          c.project_types?.some((pt) => industrialTerms.includes(pt.toLowerCase())) ||
+          c.services_offered?.some((so) => industrialTerms.includes(so.toLowerCase()))
       );
     }
     if (activeQuickFilters.has('my_state') && sidebarFilters.state) {
-      result = result.filter((c) => c.state === sidebarFilters.state);
+      result = result.filter(
+        (c) => c.state?.trim().toUpperCase() === sidebarFilters.state.trim().toUpperCase()
+      );
     }
 
     // Filtros sidebar
@@ -138,17 +158,15 @@ export default function CategoryPageClient({
       result = result.filter((c) => c.verified);
     }
     if (sidebarFilters.minRating > 0) {
-      result = result.filter((c) => (c.rating_avg || 0) >= sidebarFilters.minRating);
+      result = result.filter((c) => (Number(c.rating_avg) || 0) >= sidebarFilters.minRating);
     }
     if (sidebarFilters.state) {
-      result = result.filter((c) => c.state === sidebarFilters.state);
+      result = result.filter(
+        (c) => c.state?.trim().toUpperCase() === sidebarFilters.state.trim().toUpperCase()
+      );
     }
     if (sidebarFilters.projectType) {
-      result = result.filter((c) =>
-        c.project_types?.includes(sidebarFilters.projectType!) ||
-        c.services_offered?.includes(sidebarFilters.projectType!) ||
-        c.description?.toLowerCase().includes(sidebarFilters.projectType!.toLowerCase())
-      );
+      result = result.filter((c) => matchProjectType(c, sidebarFilters.projectType!));
     }
 
     // Ordenação
@@ -157,10 +175,10 @@ export default function CategoryPageClient({
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'rating_desc':
-        result.sort((a, b) => (b.rating_avg || 0) - (a.rating_avg || 0));
+        result.sort((a, b) => (Number(b.rating_avg) || 0) - (Number(a.rating_avg) || 0));
         break;
       case 'reviews_desc':
-        result.sort((a, b) => (b.rating_count || 0) - (a.rating_count || 0));
+        result.sort((a, b) => (Number(b.rating_count) || 0) - (Number(a.rating_count) || 0));
         break;
     }
 
