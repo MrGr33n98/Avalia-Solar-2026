@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Company, Review, Product } from "@/lib/api";
 import { isFeatureEnabled } from "@/lib/feature-access";
 
-import CompanyHighlightsGrid from "./CompanyHighlightsGrid";
 import ReviewsPreview from "./ReviewsPreview";
 import ProjectsPreview from "./ProjectsPreview";
 import RelatedCompaniesCarousel from "./RelatedCompaniesCarousel";
@@ -48,8 +47,7 @@ export default function OverviewTab({
   return (
     <div className="space-y-6 focus-visible:outline-none">
       
-      {/* 1. Diferenciais Rápidos (Highlights Grid) */}
-      <CompanyHighlightsGrid company={company} companyStats={companyStats} />
+      {/* 1. Diferenciais Rápidos (Highlights Grid) - Removido a pedido do usuário */}
 
       {/* 2. Sobre a Empresa */}
       <Card className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
