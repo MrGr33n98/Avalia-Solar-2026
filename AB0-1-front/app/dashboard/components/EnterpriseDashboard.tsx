@@ -44,6 +44,7 @@ const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'),
 const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), { loading: () => <DashboardTabSkeleton /> });
 const BadgesManagement = dynamic(() => import('./BadgesManagement'), { loading: () => <DashboardTabSkeleton /> });
 const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), { loading: () => <DashboardTabSkeleton /> });
+const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), { loading: () => <DashboardTabSkeleton /> });
 
 function DashboardTabSkeleton() {
   return (
@@ -376,17 +377,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'integrations',
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Integrações</h2>
-                      <p className="text-sm text-white/40">Conecte ferramentas e serviços ao seu painel.</p>
-                    </div>
-                    <Card>
-                      <CardContent className="p-4 text-sm text-white/40">
-                        Em breve.
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <WebhooksManagement />
                 )}
               </TabsContent>
 

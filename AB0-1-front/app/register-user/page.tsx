@@ -139,9 +139,8 @@ export default function RegisterUserPage() {
                 <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required aria-required="true" className="mt-1" />
               </div>
               <div>
-                <Label htmlFor="email">E-mail corporativo *</Label>
+                <Label htmlFor="email">E-mail *</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required aria-required="true" className="mt-1" />
-                <p className="text-xs text-gray-500 mt-1">Utilize seu e-mail profissional</p>
               </div>
               <div>
                 <Label htmlFor="password">Senha *</Label>
