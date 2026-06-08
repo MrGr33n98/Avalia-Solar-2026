@@ -279,7 +279,6 @@ export default function CompanyDetailClient({
       { id: "financing", label: "Financiamento", icon: Banknote },
       { id: "gallery", label: "Galeria", icon: ImageIcon },
       { id: "faq", label: "FAQ", icon: HelpCircle },
-      { id: "stats", label: "Estatísticas", icon: BarChart3 },
     ].filter(tab => {
       if (tab.id === "financing") return showFinancing;
       if (tab.id === "gallery") return showGallery;
@@ -504,28 +503,7 @@ export default function CompanyDetailClient({
                     <FaqSection companyId={companyId} />
                   </TabsContent>
 
-                  <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
-                    <Card className="rounded-2xl border-none bg-white shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">Indicadores para sua escolha</CardTitle>
-                        <CardDescription>
-                          Informações rápidas para comparar empresas antes de solicitar um orçamento.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                          {Object.entries(companyStats).map(([key, value]) => (
-                            <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:shadow-md">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                {consumerStatsLabels[key] || key}
-                              </p>
-                              <p className="mt-1 text-2xl font-black text-slate-950">{String(value)}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+
                 </motion.div>
               </AnimatePresence>
             </div>

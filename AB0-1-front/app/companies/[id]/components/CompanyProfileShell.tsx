@@ -207,69 +207,6 @@ export default function CompanyProfileShell({
                 </Card>
               </TabsContent>
 
-              {/* ABA 5: ESTATÍSTICAS (Placeholder elegante + Teaser de Upgrade de Planos) */}
-              <TabsContent value="stats" className="mt-0 focus-visible:outline-none">
-                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm overflow-hidden relative">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <div>
-                        <h3 className="text-lg font-black tracking-tight text-slate-950">Analytics & Performance do Perfil</h3>
-                        <p className="text-xs text-slate-500">Métricas exclusivas de engajamento do portal.</p>
-                      </div>
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100">
-                        Painel Pro
-                      </span>
-                    </div>
-
-                    {/* Preview Borrado se for plano Free/Essential */}
-                    {!hasPaidPlan ? (
-                      <div className="relative">
-                        {/* Grade Borrada */}
-                        <div className="grid grid-cols-2 gap-4 filter blur-[6px] select-none pointer-events-none">
-                          {[
-                            { label: "Visualizações do perfil", value: "1.420" },
-                            { label: "Cliques em orçamento", value: "348" },
-                            { label: "Origem de tráfego", value: "Google Organic" },
-                            { label: "Score de intenção", value: "Alto (92)" },
-                          ].map((metric, idx) => (
-                            <div key={idx} className="rounded-xl bg-slate-50 p-4 border border-slate-100">
-                              <p className="text-[10px] font-black text-slate-400 uppercase">{metric.label}</p>
-                              <p className="text-2xl font-black text-slate-950 mt-1">{metric.value}</p>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {/* Overlay Card de Upsell */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/40 backdrop-blur-[2px] rounded-xl border border-slate-100 shadow-sm">
-                          <Lock className="h-8 w-8 text-blue-600 mb-3" />
-                          <h4 className="font-black text-slate-950">Métricas de Analytics Avançadas Bloqueadas</h4>
-                          <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
-                            Faça o upgrade para o plano **PRO** ou **Enterprise** para acompanhar visualizações, origens de leads, CRM e score de intenção de compra de clientes.
-                          </p>
-                          <Button size="sm" className="rounded-xl bg-blue-700 hover:bg-blue-800 text-xs font-bold text-white shadow-md">
-                            Conhecer Planos Premium
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Se for Pro, exibe a tabela legada */
-                      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        {[
-                          { label: "Cliques no telefone", value: "23" },
-                          { label: "Cliques no site", value: "84" },
-                          { label: "Cliques no WhatsApp", value: "112" },
-                          { label: "Taxa de conversão", value: "8.4%" },
-                        ].map((metric, idx) => (
-                          <div key={idx} className="rounded-xl bg-slate-50 p-4 border border-slate-100">
-                            <p className="text-[10px] font-black text-slate-400 uppercase">{metric.label}</p>
-                            <p className="text-2xl font-black text-slate-950 mt-1">{metric.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </TabsContent>
 
               {/* ABA 6: CONTATO (Placeholder com detalhes de e-mail, telefone e FAQs expansíveis) */}
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">

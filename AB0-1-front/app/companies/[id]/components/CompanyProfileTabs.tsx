@@ -41,7 +41,6 @@ export default function CompanyProfileTabs({
       { id: "products", label: "Produtos e Serviços", icon: Package },
       { id: "reviews", label: "Avaliações", icon: MessageCircle },
       { id: "projects", label: "Projetos", icon: ImageIcon },
-      { id: "stats", label: "Estatísticas", icon: BarChart3 },
       { id: "contact", label: "Contato", icon: HelpCircle },
     ];
     return list;
