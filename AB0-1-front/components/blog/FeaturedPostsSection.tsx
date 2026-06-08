@@ -77,47 +77,50 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
+                {/* Overlay escuro em degradê para melhor contraste */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/60 to-slate-900/20" />
                 
-                <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full">
-                  {mainPost.category && (
-                    <Badge className="mb-3 bg-primary hover:bg-primary/90 text-white border-none">
-                      {mainPost.category.name}
-                    </Badge>
-                  )}
-                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3 leading-tight group-hover:text-primary-foreground/90 transition-colors">
-                    {mainPost.title}
-                  </h3>
-                  <p className="text-slate-200 line-clamp-2 mb-4 max-w-2xl text-sm sm:text-base">
-                    {mainPost.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-300 font-medium">
-                    {mainAuthorName && (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6 ring-1 ring-white/30 shrink-0">
-                          <AvatarImage 
-                            src={mainAuthorAvatar ? getFullImageUrl(mainAuthorAvatar) : '/images/felipe-ceo-avalia-solar.png'} 
-                            alt={mainAuthorName} 
-                            className="object-cover object-top scale-110" 
-                          />
-                          <AvatarFallback className="bg-white/10 text-[10px] text-white">
-                            <User className="w-3 h-3" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{mainAuthorName}</span>
-                      </div>
+                <div className="absolute bottom-0 left-0 p-5 sm:p-8 w-full">
+                  <div className="max-w-3xl">
+                    {mainPost.category && (
+                      <Badge className="mb-3 bg-primary hover:bg-primary/90 text-white border-none shadow-sm">
+                        {mainPost.category.name}
+                      </Badge>
                     )}
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(new Date(mainPost.published_at || mainPost.created_at || new Date()), "d MMM, yyyy", { locale: ptBR })}
-                    </div>
-                    {mainReadingTime ? (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {mainReadingTime} min
+                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white mb-3 leading-tight group-hover:text-primary-foreground/90 transition-colors [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)] break-words">
+                      {mainPost.title}
+                    </h3>
+                    <p className="text-slate-100 line-clamp-2 mb-4 max-w-2xl text-sm sm:text-base [text-shadow:_0_1px_2px_rgb(0_0_0_/_60%)]">
+                      {mainPost.excerpt}
+                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-200 font-medium">
+                      {mainAuthorName && (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6 ring-1 ring-white/30 shrink-0 shadow-sm">
+                            <AvatarImage 
+                              src={mainAuthorAvatar ? getFullImageUrl(mainAuthorAvatar) : '/images/felipe-ceo-avalia-solar.png'} 
+                              alt={mainAuthorName} 
+                              className="object-cover object-top scale-110" 
+                            />
+                            <AvatarFallback className="bg-white/10 text-[10px] text-white">
+                              <User className="w-3 h-3" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="[text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">{mainAuthorName}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">
+                        <Calendar className="w-3.5 h-3.5 opacity-80" />
+                        {format(new Date(mainPost.published_at || mainPost.created_at || new Date()), "d MMM, yyyy", { locale: ptBR })}
                       </div>
-                    ) : null}
+                      {mainReadingTime ? (
+                        <div className="flex items-center gap-1 [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">
+                          <Clock className="w-3.5 h-3.5 opacity-80" />
+                          {mainReadingTime} min
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
