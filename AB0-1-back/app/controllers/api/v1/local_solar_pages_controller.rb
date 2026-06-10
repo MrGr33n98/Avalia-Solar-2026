@@ -23,6 +23,7 @@ module Api
           seo: seo_payload(state, city, base_scope.exists?),
           stats: stats_payload(base_scope),
           categories: categories_payload(base_scope),
+          project_types: project_types_payload(base_scope),
           featured_companies: featured_companies_payload(filtered_scope),
           companies: paginated.map { |company| company_card_payload(company) },
           nearby_locations: nearby_locations_payload(state, city),
@@ -76,6 +77,13 @@ module Api
         category_ids = parsed_category_ids
         filtered = filtered.joins(:categories).where(categories: { id: category_ids }).distinct if category_ids.any?
 
+        project_types = parsed_project_types
+        if project_types.any?
+          conditions = project_types.map { 'project_types @> ?::jsonb' }.join(' OR ')
+          values = project_types.map { |type| [type].to_json }
+          filtered = filtered.where(conditions, *values)
+        end
+
         filtered
       end
 
@@ -111,6 +119,16 @@ module Api
                                     .map(&:to_i)
                                     .select(&:positive?)
                                     .uniq
+      end
+
+      def parsed_project_types
+        requested = Array(params[:project_types]).flat_map { |value| value.to_s.split(',') }
+                                                .map(&:strip)
+                                                .reject(&:blank?)
+
+        requested.filter_map do |value|
+          ::Company::PROJECT_TYPES.find { |project_type| same_project_type?(project_type, value) }
+        end.uniq
       end
 
       def location_payload(state, city)
@@ -174,6 +192,24 @@ module Api
         end
       end
 
+      def project_types_payload(scope)
+        counts = Hash.new(0)
+
+        scope.distinct.pluck(:project_types).each do |values|
+          Array(values).each do |value|
+            canonical = ::Company::PROJECT_TYPES.find { |project_type| same_project_type?(project_type, value) }
+            counts[canonical] += 1 if canonical.present?
+          end
+        end
+
+        ::Company::PROJECT_TYPES.map do |project_type|
+          {
+            name: project_type,
+            companies_count: counts[project_type]
+          }
+        end
+      end
+
       def featured_companies_payload(scope)
         scope.where('featured = ? OR sponsored = ? OR verified = ?', true, true, true)
              .reorder(local_priority_order_sql)
@@ -229,12 +265,21 @@ module Api
           banner_url: company.banner_url,
           primary_category: categories.first&.name,
           category_ids: categories.take(5).map(&:id),
+          project_types: company.project_types || [],
           feature_access: company.respond_to?(:feature_access) ? company.feature_access : {}
         }
       end
 
       def same_city?(left, right)
         ::Locations::CoverageNormalizer.city_slug(left) == ::Locations::CoverageNormalizer.city_slug(right)
+      end
+
+      def same_project_type?(left, right)
+        normalize_project_type(left) == normalize_project_type(right)
+      end
+
+      def normalize_project_type(value)
+        I18n.transliterate(value.to_s).downcase.gsub(/[^a-z0-9]+/, ' ').squish
       end
 
       def state_name(state)

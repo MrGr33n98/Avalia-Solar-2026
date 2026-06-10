@@ -5,6 +5,7 @@ import { Building2, ArrowRight, Zap, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
+import { projectTypeVisualFor } from "@/lib/company-project-visuals";
 
 interface ProjectsPreviewProps {
   company: Company;
@@ -42,26 +43,13 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
         </div>
 
         {projectTypes.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {projectTypes.slice(0, 3).map((type, index) => {
-              const typeLower = type.toLowerCase();
-              let iconSrc = null;
-              let bgGradient = "from-blue-500/20 to-indigo-500/20";
-              let description = "Instalação de painéis de alta tecnologia.";
-
-              if (typeLower.includes("residenc")) {
-                iconSrc = "/images/icone-avalia-solar-residencial.png";
-                bgGradient = "from-orange-500/10 to-amber-500/10";
-                description = "Economia imediata para lares com sustentabilidade.";
-              } else if (typeLower.includes("comerci")) {
-                iconSrc = "/images/comercial-icone-avalia-solar.png";
-                bgGradient = "from-blue-500/10 to-cyan-500/10";
-                description = "Redução drástica de custos fixos operacionais.";
-              } else if (typeLower.includes("rura")) {
-                iconSrc = "/images/rural-icone-avalia-solar.png";
-                bgGradient = "from-emerald-500/10 to-teal-500/10";
-                description = "Independência energética para agronegócios.";
-              }
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {projectTypes.slice(0, 5).map((type, index) => {
+              const {
+                iconSrc,
+                bgGradient = "from-blue-500/20 to-indigo-500/20",
+                description = "Instalação de painéis de alta tecnologia.",
+              } = projectTypeVisualFor(type);
 
               return (
                 <div

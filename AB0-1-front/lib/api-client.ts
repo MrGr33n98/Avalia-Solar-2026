@@ -35,6 +35,11 @@ export interface LocalSolarCategory {
   companies_count: number;
 }
 
+export interface LocalSolarProjectType {
+  name: string;
+  companies_count: number;
+}
+
 export interface LocalSolarLocation {
   scope: 'state' | 'city';
   state: string;
@@ -59,6 +64,7 @@ export interface LocalSolarPageResponse {
     generated_at: string;
   };
   categories: LocalSolarCategory[];
+  project_types?: LocalSolarProjectType[];
   featured_companies: Company[];
   companies: Company[];
   nearby_locations: Array<{
@@ -70,6 +76,7 @@ export interface LocalSolarPageResponse {
   filters: {
     q?: string;
     category_ids?: number[];
+    project_types?: string[];
     featured?: string;
     verified?: string;
     min_rating?: string;
@@ -733,6 +740,7 @@ export const localSolarPagesApi = {
     params?: {
       q?: string;
       category_ids?: number[] | string[] | string;
+      project_types?: string[] | string;
       featured?: boolean | string;
       verified?: boolean | string;
       min_rating?: number | string;

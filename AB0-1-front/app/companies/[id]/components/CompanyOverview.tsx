@@ -4,6 +4,7 @@ import { Company, Review } from '@/lib/api';
 import { CheckCircle2, Award, Zap, ShieldCheck, MessageSquare } from 'lucide-react';
 import SponsoredBanner from './SponsoredBanner';
 import { RatingStars } from '@/components/RatingStars';
+import { projectTypeVisualFor } from '@/lib/company-project-visuals';
 import { getFullImageUrl } from '@/utils/image';
 
 interface CompanyOverviewProps {
@@ -92,11 +93,7 @@ export default function CompanyOverview({
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {company.project_types.map((type) => {
-              const typeLower = type.toLowerCase();
-              let iconSrc = null;
-              if (typeLower.includes('residenc')) iconSrc = '/images/icone-avalia-solar-residencial.png';
-              else if (typeLower.includes('comerci')) iconSrc = '/images/comercial-icone-avalia-solar.png';
-              else if (typeLower.includes('rura')) iconSrc = '/images/rural-icone-avalia-solar.png';
+              const { iconSrc } = projectTypeVisualFor(type);
 
               return (
                 <div 
