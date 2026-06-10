@@ -5,6 +5,7 @@ import {
   CONTACT,
   FOOTER_COMPANY_LINKS,
   FOOTER_LEGAL_LINKS,
+  FOOTER_LOCAL_SOLAR_LINKS,
   FOOTER_TRUST_LINKS,
   SOCIAL_PROFILES,
 } from '@/lib/site';
@@ -13,7 +14,7 @@ export default function Footer() {
   return (
     <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand & Contact Info */}
           <div className="flex flex-col items-start space-y-4">
             <Link href="/" className="font-bold text-2xl mb-2 hover:text-cyan-400 transition-colors">
@@ -87,6 +88,20 @@ export default function Footer() {
               {FOOTER_LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Local Solar Links */}
+          <div className="md:col-span-2 lg:col-span-1">
+            <h3 className="font-bold text-lg mb-4">Energia Solar por cidade</h3>
+            <ul className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2">
+              {FOOTER_LOCAL_SOLAR_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-sm">
                     {link.label}
                   </Link>
                 </li>

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { buildApiUrl } from '@/lib/api-config';
+import { BRAZIL_CAPITAL_SOLAR_PAGES } from '@/lib/locations/local-page-slugs';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
 
@@ -95,5 +96,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate companies sitemap:', error);
   }
 
-  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyCategoryRoutes, ...companyRoutes];
+  // Local SEO pages: include only capitals with at least one active matching company.
+  let localSolarRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const checks = await Promise.all(
+      BRAZIL_CAPITAL_SOLAR_PAGES.map(async (page) => {
+        const params = new URLSearchParams({
+          status: 'active',
+          serves_state: page.state,
+          serves_city: page.city,
+          page: '1',
+          per_page: '1',
+          fields: 'card',
+        });
+        const res = await fetch(buildApiUrl(`companies?${params.toString()}`), { next: { revalidate: 3600 } });
+        if (!res.ok) return null;
+
+        const json = await res.json();
+        const total = Number(json?.meta?.pagination?.total ?? json?.data?.length ?? 0);
+        if (!Number.isFinite(total) || total <= 0) return null;
+
+        return {
+          url: `${baseUrl}${page.href}`,
+          lastModified: STATIC_SITEMAP_LAST_MODIFIED,
+          changeFrequency: 'weekly' as const,
+          priority: 0.72,
+        };
+      })
+    );
+
+    localSolarRoutes = checks.filter(Boolean) as MetadataRoute.Sitemap;
+  } catch (error) {
+    console.error('Failed to generate local solar sitemap:', error);
+  }
+
+  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyCategoryRoutes, ...companyRoutes, ...localSolarRoutes];
 }

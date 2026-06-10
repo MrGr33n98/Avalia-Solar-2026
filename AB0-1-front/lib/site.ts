@@ -1,3 +1,5 @@
+import { BRAZIL_CAPITAL_SOLAR_PAGES } from '@/lib/locations/local-page-slugs';
+
 export const SITE = {
   name: 'Avalia Solar',
   url: 'https://www.avaliasolar.com.br',
@@ -74,6 +76,18 @@ export const FOOTER_LEGAL_LINKS = [
   { href: '/cookies', label: 'Cookies' },
   { href: '/dmca', label: 'DMCA' },
 ] as const;
+
+export const FOOTER_LOCAL_SOLAR_LINKS = BRAZIL_CAPITAL_SOLAR_PAGES.map((page) => ({
+  href: page.href,
+  label: `${page.city}/${page.state}`,
+  state: page.state,
+  city: page.city,
+})) as readonly {
+  href: string;
+  label: string;
+  state: string;
+  city: string;
+}[];
 
 export const STATIC_SITEMAP_LAST_MODIFIED = '2026-04-14T00:00:00.000Z';
 

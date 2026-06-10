@@ -470,6 +470,35 @@ module Api
             @companies = @companies.where(city: cities) if cities.any?
           end
 
+          if params[:serves_state].present?
+            states = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
+                                                .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
+                                                .compact
+                                                .uniq
+            if states.any?
+              state_scope = states.reduce(::Company.none) do |scope, state|
+                scope.or(::Company.serving_state(state))
+              end
+              @companies = @companies.where(id: state_scope.select(:id))
+            end
+          end
+
+          if params[:serves_city].present?
+            cities = Array(params[:serves_city]).flat_map { |v| v.to_s.split(',') }
+                                                .map(&:strip)
+                                                .reject(&:blank?)
+                                                .uniq
+            city_state = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
+                                                .filter_map { |state| ::Locations::CoverageNormalizer.normalize_state(state) }
+                                                .first
+            if cities.any?
+              city_scope = cities.reduce(::Company.none) do |scope, served_city|
+                scope.or(::Company.serving_city(served_city, city_state))
+              end
+              @companies = @companies.where(id: city_scope.select(:id))
+            end
+          end
+
           @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
 
           if params[:category_id].present?
@@ -525,6 +554,8 @@ module Api
           verified: params[:verified],
           state: params[:state],
           city: params[:city],
+          serves_state: params[:serves_state],
+          serves_city: params[:serves_city],
           category_id: params[:category_id],
           category_ids: params[:category_ids],
           min_rating: params[:min_rating],
@@ -655,6 +686,9 @@ module Api
           project_types: company.project_types || [],
           services_offered: company.services_offered || [],
           services: company.services_offered || [],
+          coverage_states: company.coverage_state_list,
+          coverage_cities: company.coverage_city_list,
+          local_solar_path: ::Locations::CoverageNormalizer.local_solar_path(company.state, company.city),
           seo_metadata: {
             json_ld: {
               "@context": "https://schema.org",
@@ -710,12 +744,13 @@ module Api
           :cnpj, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications,
           :cta_whatsapp_enabled, :cta_whatsapp_url,
-          :logo,
+          :logo, :coverage_states, :coverage_cities,
           { whatsapp_button_style_json: %i[
               variant bg_color text_color border_color
               hover_bg_color icon_color rounded_px
             ],
-            project_types: [], services_offered: [] }
+            project_types: [], services_offered: [],
+            coverage_state_codes: [], coverage_city_names: [] }
         ]
 
         permitted += %i[featured status verified plan_id plan_status social_proof_enabled] if current_user&.admin?

@@ -25,19 +25,15 @@ module Chat
       end
 
       def match
-        city  = normalize(@entities[:city])
-        state = normalize_state(@entities[:state])
+        state = Locations::CoverageNormalizer.normalize_state(@entities[:state])
+        city = Locations::CoverageNormalizer.normalize_city(@entities[:city], state: state) || @entities[:city].to_s.strip
 
         # Broad SQL scope: active installers (or all for non-solar) in the state
         relation = Company.active.installers
 
         # Apply broad SQL pre-filter by state to reduce Ruby-level work
         if state.present?
-          relation = relation.where(
-            "UPPER(companies.state) = :s OR UPPER(companies.coverage_states) LIKE :like",
-            s:    state.upcase,
-            like: "%#{state.upcase}%"
-          )
+          relation = relation.serving_state(state)
         end
 
         if @entities[:category_seo_url].present?
@@ -73,51 +69,13 @@ module Chat
 
       # ─── Location helpers ───────────────────────────────────────────────────
 
-      def normalize(value)
-        return '' if value.blank?
-
-        value.to_s
-             .unicode_normalize(:nfd)
-             .gsub(/\p{Mn}/, '')
-             .downcase
-             .strip
-      rescue Encoding::CompatibilityError
-        value.to_s.downcase.strip
-      end
-
-      def normalize_state(value)
-        value.to_s.strip.upcase
-      end
-
-      def parse_coverage_list(raw)
-        return [] if raw.blank?
-
-        text = raw.to_s.strip
-        items =
-          if text.start_with?('[')
-            begin; JSON.parse(text); rescue JSON::ParserError; []; end
-          else
-            text.split(/[;,\n\r]+/)
-          end
-
-        items.map { |v| normalize(v) }.reject(&:blank?)
-      end
-
-      def parse_state_list(raw)
-        return [] if raw.blank?
-
-        raw.to_s.split(/[;,\n\r]+/).map { |v| v.strip.upcase }.reject(&:blank?)
-      end
-
       def supports_location?(company, city, state)
         if city.present?
-          return true if normalize(company.city) == city
-          return true if parse_coverage_list(company.coverage_cities).include?(city)
+          return true if company.serves_city?(city, state)
         end
 
         if state.present?
-          return true if company.state.to_s.strip.upcase == state
-          return true if parse_state_list(company.coverage_states).include?(state)
+          return true if company.serves_state?(state)
         end
 
         false
@@ -127,17 +85,17 @@ module Chat
         score = 0
 
         if city.present?
-          if normalize(company.city) == city
+          if Locations::CoverageNormalizer.city_slug(company.city) == Locations::CoverageNormalizer.city_slug(city)
             score += 40
-          elsif parse_coverage_list(company.coverage_cities).include?(city)
+          elsif company.coverage_city_list.any? { |coverage_city| Locations::CoverageNormalizer.city_slug(coverage_city) == Locations::CoverageNormalizer.city_slug(city) }
             score += 35
           end
         end
 
         if state.present?
-          if company.state.to_s.strip.upcase == state
+          if Locations::CoverageNormalizer.normalize_state(company.state) == state
             score += 20
-          elsif parse_state_list(company.coverage_states).include?(state)
+          elsif company.coverage_state_list.include?(state)
             score += 15
           end
         end

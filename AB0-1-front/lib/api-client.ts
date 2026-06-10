@@ -350,6 +350,8 @@ export const companiesApiSafe = {
       q?: string;
       state?: string[] | string;
       city?: string[] | string;
+      serves_state?: string[] | string;
+      serves_city?: string[] | string;
       min_rating?: number;
       verified?: boolean;
       page?: number;
@@ -387,6 +389,8 @@ export const companiesApiSafe = {
       q?: string;
       state?: string[] | string;
       city?: string[] | string;
+      serves_state?: string[] | string;
+      serves_city?: string[] | string;
       min_rating?: number;
       verified?: boolean;
       page?: number;
@@ -436,6 +440,8 @@ export const companiesApiSafe = {
       q?: string;
       state?: string[] | string;
       city?: string[] | string;
+      serves_state?: string[] | string;
+      serves_city?: string[] | string;
       min_rating?: number;
       verified?: boolean;
       fields?: 'card';

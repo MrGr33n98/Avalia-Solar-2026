@@ -169,8 +169,9 @@ export interface Company {
   top_badge?: string | { title?: string; subtitle?: string; label?: string; description?: string } | null;
   isTopRated?: boolean;
   partner_brands?: string;
-  coverage_states?: string;
-  coverage_cities?: string;
+  coverage_states?: string | string[];
+  coverage_cities?: string | string[];
+  local_solar_path?: string | null;
   latitude?: number;
   longitude?: number;
   minimum_ticket?: number;

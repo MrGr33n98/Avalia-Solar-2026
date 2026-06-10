@@ -52,60 +52,30 @@ module Chat
 
     private
 
-    # ─── Normalisation helpers ────────────────────────────────────────────────
-
-    # Strips accents, downcases, and squeezes whitespace.
-    def normalize_text(value)
-      return '' if value.nil?
-
-      value.to_s
-           .unicode_normalize(:nfd)
-           .gsub(/\p{Mn}/, '')        # remove combining diacritical marks
-           .downcase
-           .strip
-           .gsub(/\s+/, ' ')
-    rescue Encoding::CompatibilityError
-      value.to_s.downcase.strip
-    end
-
-    # Parses a free-text list that may use commas, semicolons or line breaks.
-    # Returns an array of normalised strings.
-    def parse_coverage_list(raw)
-      return [] if raw.blank?
-
-      normalized = raw.to_s.strip
-      items =
-        if normalized.start_with?('[')
-          begin; JSON.parse(normalized); rescue JSON::ParserError; []; end
-        else
-          normalized.split(/[;,\n\r]+/)
-        end
-
-      items.map { |v| normalize_text(v) }.reject(&:blank?)
-    end
-
     # ─── Individual location-match predicates ─────────────────────────────────
 
     def city_matches?(company, city)
-      normalize_text(company.city) == city
+      Locations::CoverageNormalizer.city_slug(company.city) == Locations::CoverageNormalizer.city_slug(city)
     end
 
     def state_matches?(company, state)
-      normalize_text(company.state) == state
+      Locations::CoverageNormalizer.normalize_state(company.state) == state
     end
 
     def coverage_city_matches?(company, city)
-      parse_coverage_list(company.coverage_cities).include?(city)
+      company.coverage_city_list.any? do |coverage_city|
+        Locations::CoverageNormalizer.city_slug(coverage_city) == Locations::CoverageNormalizer.city_slug(city)
+      end
     end
 
     def coverage_state_matches?(company, state)
-      parse_coverage_list(company.coverage_states).include?(state)
+      company.coverage_state_list.include?(state)
     end
 
     # True when any location criterion matches.
     def company_supports_location?(company, city, state)
-      return true if city.present? && (city_matches?(company, city) || coverage_city_matches?(company, city))
-      return true if state.present? && (state_matches?(company, state) || coverage_state_matches?(company, state))
+      return true if city.present? && company.serves_city?(city, state)
+      return true if state.present? && company.serves_state?(state)
 
       false
     end
@@ -136,11 +106,14 @@ module Chat
     # ─── Lead location extraction ─────────────────────────────────────────────
 
     def lead_city
-      @lead_city ||= normalize_text(answers['city'] || answers['location_city'] || answers[:city] || answers[:location_city])
+      raw_city = answers['city'] || answers['location_city'] || answers[:city] || answers[:location_city]
+      @lead_city ||= Locations::CoverageNormalizer.normalize_city(raw_city, state: lead_state) || raw_city.to_s.strip
     end
 
     def lead_state
-      @lead_state ||= normalize_text(answers['state'] || answers['location_state'] || answers[:state] || answers[:location_state])
+      @lead_state ||= Locations::CoverageNormalizer.normalize_state(
+        answers['state'] || answers['location_state'] || answers[:state] || answers[:location_state]
+      )
     end
 
     # ─── Main fetch ───────────────────────────────────────────────────────────
@@ -190,12 +163,7 @@ module Chat
     # Broad SQL pre-filter: company has seat in state OR coverage_states mentions it.
     # Uses ILIKE for case-insensitive match on the coverage text.
     def apply_state_prefilter(scope, state)
-      upcase_state = state.upcase
-      scope.where(
-        "UPPER(companies.state) = :s OR UPPER(companies.coverage_states) LIKE :like",
-        s:    upcase_state,
-        like: "%#{upcase_state}%"
-      )
+      scope.serving_state(state)
     end
 
     # Prioritize installers for solar; pad with others if not enough.

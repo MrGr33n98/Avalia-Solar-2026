@@ -102,6 +102,7 @@ class Company < ApplicationRecord
   # Callbacks
   # =========================
   attr_accessor :category_ids_for_metrics_update
+  attr_writer :coverage_state_codes, :coverage_city_names
 
   before_save :capture_category_ids_for_metrics, prepend: true
   after_save :update_associated_categories_metrics
@@ -179,6 +180,40 @@ class Company < ApplicationRecord
   scope :by_state, ->(state) { where(state: state) if state.present? }
   scope :by_city, ->(city) { where(city: city) if city.present? }
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
+  scope :serving_state, ->(state) {
+    state_code = Locations::CoverageNormalizer.normalize_state(state)
+    if state_code.present?
+      state_pattern = "(^|[,;|[:space:]])#{state_code}([,;|[:space:]]|$)"
+      where(
+        "UPPER(companies.state) = :state OR UPPER(COALESCE(companies.coverage_states, '')) ~ :state_pattern",
+        state: state_code,
+        state_pattern: state_pattern
+      )
+    else
+      all
+    end
+  }
+  scope :serving_city, ->(city, state = nil) {
+    state_code = Locations::CoverageNormalizer.normalize_state(state)
+    canonical_city = Locations::CoverageNormalizer.normalize_city(city, state: state_code)
+    if canonical_city.present?
+      city_like = "%#{ActiveRecord::Base.sanitize_sql_like(canonical_city)}%"
+      clauses = [
+        "LOWER(companies.city) = LOWER(:city)",
+        "LOWER(COALESCE(companies.coverage_cities, '')) LIKE LOWER(:city_like)"
+      ]
+      bind_values = { city: canonical_city, city_like: city_like }
+
+      if state_code.present?
+        clauses << "UPPER(COALESCE(companies.coverage_states, '')) ~ :state_pattern"
+        bind_values[:state_pattern] = "(^|[,;|[:space:]])#{state_code}([,;|[:space:]]|$)"
+      end
+
+      where(clauses.join(' OR '), bind_values)
+    else
+      all
+    end
+  }
 
   # Full Text Search Scope
   scope :search_by_text, ->(query) {
@@ -256,6 +291,38 @@ class Company < ApplicationRecord
 
   def to_param
     slug.presence || super
+  end
+
+  def coverage_state_codes
+    @coverage_state_codes.presence || coverage_state_list
+  end
+
+  def coverage_city_names
+    @coverage_city_names.presence || coverage_city_list
+  end
+
+  def coverage_state_list
+    Locations::CoverageNormalizer.normalize_states(coverage_states)
+  end
+
+  def coverage_city_list
+    Locations::CoverageNormalizer.normalize_cities(coverage_cities)
+  end
+
+  def serves_state?(target_state)
+    Locations::CoverageNormalizer.serves_state?(self, target_state)
+  end
+
+  def serves_city?(target_city, target_state = nil)
+    Locations::CoverageNormalizer.serves_city?(self, target_city, state: target_state)
+  end
+
+  def state_slug
+    Locations::CoverageNormalizer.state_slug(state)
+  end
+
+  def locality_slug
+    Locations::CoverageNormalizer.city_slug(city)
   end
 
   def self.find_by_slug_or_id(id_or_slug)
@@ -344,6 +411,24 @@ class Company < ApplicationRecord
   def normalize_cnpj_value(value)
     digits = value.to_s.gsub(/\D/, '')
     digits.presence
+  end
+
+  def normalize_coverage_fields
+    if instance_variable_defined?(:@coverage_state_codes)
+      selected_states = Locations::CoverageNormalizer.normalize_states(@coverage_state_codes)
+      legacy_states = Locations::CoverageNormalizer.unrecognized_states(coverage_states)
+      self.coverage_states = (selected_states + legacy_states).uniq.join(', ')
+    elsif coverage_states.present?
+      self.coverage_states = Locations::CoverageNormalizer.canonical_state_text(coverage_states)
+    end
+
+    if instance_variable_defined?(:@coverage_city_names)
+      selected_cities = Locations::CoverageNormalizer.normalize_cities(@coverage_city_names)
+      legacy_cities = Locations::CoverageNormalizer.unrecognized_cities(coverage_cities)
+      self.coverage_cities = (selected_cities + legacy_cities).uniq.join(', ')
+    elsif coverage_cities.present?
+      self.coverage_cities = Locations::CoverageNormalizer.canonical_city_text(coverage_cities)
+    end
   end
 
   def normalize_multiselects
@@ -437,17 +522,33 @@ class Company < ApplicationRecord
   end
 
   # Constantes (mantidas no modelo)
-  PROJECT_TYPES = %w[Residenciais Comerciais Rurais].freeze
+  PROJECT_TYPES = [
+    'Residenciais',
+    'Comerciais',
+    'Rurais',
+    'Industriais',
+    'Condomínios',
+    'Usinas de Solo',
+    'Sistemas Off-grid',
+    'Carregadores para Veículos Elétricos'
+  ].freeze
   SERVICES_OFFERED = [
     'Estudo Econômico',
     'Projeto',
     'Instalação',
     'Homologação',
     'Monitoramento',
-    'Manutenção e Assistência Técnica'
+    'Manutenção e Assistência Técnica',
+    'Limpeza de Módulos',
+    'O&M',
+    'Consultoria',
+    'Laudo Técnico',
+    'Financiamento',
+    'Pós-venda'
   ].freeze
 
   before_validation :normalize_company_fields
+  before_validation :normalize_coverage_fields
   before_validation :normalize_multiselects
   before_validation :ensure_slug
   validate :validate_project_types, :validate_services_offered, :validate_niche_tags

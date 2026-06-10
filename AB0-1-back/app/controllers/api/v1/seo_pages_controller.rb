@@ -9,6 +9,7 @@ module Api
           slug: @seo_page.slug,
           city_name: @seo_page.city_name,
           state_abbr: @seo_page.state_abbr,
+          local_solar_path: @seo_page.local_solar_path,
           metadata_cache: @seo_page.metadata_cache,
           category: {
             id: @seo_page.category.id,

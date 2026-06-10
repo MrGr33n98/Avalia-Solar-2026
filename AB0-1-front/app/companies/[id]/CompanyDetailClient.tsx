@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from 'next/dynamic';
@@ -15,6 +16,7 @@ import {
   HelpCircle,
   AlertCircle,
   Scale,
+  MapPin,
 } from "lucide-react";
 import { useComparison } from "@/hooks/useComparison";
 
@@ -79,6 +81,7 @@ import { track } from "@/lib/analytics/lazy";
 import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
 import { isFeatureEnabled } from "@/lib/feature-access";
 import CompanyProfileShell from "./components/CompanyProfileShell";
+import { getCapitalLocalSolarPage } from "@/lib/locations/local-page-slugs";
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -161,6 +164,10 @@ export default function CompanyDetailClient({
   const coverLogRef = useRef<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const localSolarPage = useMemo(
+    () => getCapitalLocalSolarPage(currentCompany.state, currentCompany.city),
+    [currentCompany.state, currentCompany.city]
+  );
 
   const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
     const items: BreadcrumbItemData[] = [
@@ -402,6 +409,15 @@ export default function CompanyDetailClient({
         <header className="border-b border-slate-200 bg-[#f3f4f6]">
           <div className="mx-auto max-w-[1280px] px-4 py-3 md:px-6 md:py-5">
             <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
+            {localSolarPage ? (
+              <Link
+                href={localSolarPage.href}
+                className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
+              >
+                <MapPin className="h-4 w-4" />
+                Ver outras empresas de energia solar em {localSolarPage.city}/{localSolarPage.state}
+              </Link>
+            ) : null}
 
             <CompanyHero
               company={currentCompany}

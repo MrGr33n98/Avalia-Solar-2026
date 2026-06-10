@@ -4,6 +4,10 @@ brazil_states = Locations::BrLocations.states.map do |state|
   [state['name'], state['acronym']]
 end.freeze
 
+brazil_capitals = Locations::CoverageNormalizer::BRAZIL_CAPITALS.map do |capital|
+  ["#{capital[:city]} / #{capital[:state]}", capital[:city]]
+end.freeze
+
 ActiveAdmin.register Company do
   # Scopes
   scope :all
@@ -56,7 +60,7 @@ ActiveAdmin.register Company do
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
       :active_admin, :seo_title, :meta_description,
-              { project_types: [], services_offered: [], niche_tags: [], category_ids: [], badge_ids: [], media_assets: [],        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
+              { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [],        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
         company_members_attributes: %i[id user_id role _destroy],
@@ -286,9 +290,29 @@ ActiveAdmin.register Company do
 
     columns do
       column do
-        f.inputs 'Coverage' do
-          f.input :coverage_states, input_html: { rows: 2 }
-          f.input :coverage_cities, input_html: { rows: 2 }
+        f.inputs 'Área de Abrangência' do
+          legacy_states = Locations::CoverageNormalizer.unrecognized_states(f.object.coverage_states)
+          legacy_cities = Locations::CoverageNormalizer.unrecognized_cities(f.object.coverage_cities)
+          if legacy_states.any? || legacy_cities.any?
+            f.template.concat(
+              f.template.content_tag(
+                :p,
+                "Entradas legadas preservadas: #{(legacy_states + legacy_cities).join(', ')}",
+                class: 'inline-hints'
+              )
+            )
+          end
+          f.input :coverage_state_codes,
+                  as: :check_boxes,
+                  collection: brazil_states.map { |name, code| ["#{name} (#{code})", code] },
+                  label: 'Estados atendidos',
+                  hint: 'Salva UFs canônicas em coverage_states, sem alterar o estado principal.'
+          f.input :coverage_city_names,
+                  as: :select,
+                  collection: brazil_capitals,
+                  input_html: { multiple: true, class: 'select2-input' },
+                  label: 'Capitais e cidades atendidas',
+                  hint: 'Salva cidades canônicas em coverage_cities. Valores legados desconhecidos são preservados.'
         end
       end
       column do

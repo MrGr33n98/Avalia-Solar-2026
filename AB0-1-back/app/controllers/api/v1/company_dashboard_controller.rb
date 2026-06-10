@@ -1100,7 +1100,8 @@ module Api
           :minimum_ticket, :maximum_ticket, :financing_options,
           :response_time_sla, :languages,
           :installation_warranty_years, :engineering_insurance, :delivered_projects_score,
-          project_types: [], services_offered: [], equipment_brands: [], post_sales_capacity: []
+          project_types: [], services_offered: [], equipment_brands: [], post_sales_capacity: [],
+          coverage_states: [], coverage_cities: [], coverage_state_codes: [], coverage_city_names: []
         )
       end
 

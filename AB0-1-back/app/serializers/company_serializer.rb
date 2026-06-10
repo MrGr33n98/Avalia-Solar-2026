@@ -4,6 +4,7 @@ class CompanySerializer < ActiveModel::Serializer
   attributes :id, :name, :description, :website,
              :slug,
              :state, :city, :address, :phone, :whatsapp,
+             :coverage_states, :coverage_cities, :local_solar_path,
              :email_public, :featured, :verified,
              :media_upload_allowed,
              :rating_avg, :rating_count,
@@ -171,6 +172,18 @@ class CompanySerializer < ActiveModel::Serializer
 
   def active_admin
     object.respond_to?(:active_admin) ? !!object.active_admin : false
+  end
+
+  def coverage_states
+    object.respond_to?(:coverage_state_list) ? object.coverage_state_list : []
+  end
+
+  def coverage_cities
+    object.respond_to?(:coverage_city_list) ? object.coverage_city_list : []
+  end
+
+  def local_solar_path
+    Locations::CoverageNormalizer.local_solar_path(object.state, object.city)
   end
 
   def social_proof_enabled

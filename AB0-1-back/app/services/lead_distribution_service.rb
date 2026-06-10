@@ -103,44 +103,13 @@ class LeadDistributionService
 
   def matches_location?(company, require_state:, require_city:)
     state = lead.state.to_s.strip.upcase
-    city = lead.city.to_s.strip.downcase
+    city = lead.city.to_s.strip
 
-    return false if require_state && state.present? && !state_match?(company, state)
+    return false if require_state && state.present? && !company.serves_state?(state)
 
-    return false if require_city && city.present? && !city_match?(company, city)
+    return false if require_city && city.present? && !company.serves_city?(city, state)
 
     true
-  end
-
-  def state_match?(company, state)
-    return true if company.state.to_s.strip.upcase == state
-
-    parse_list(company.coverage_states, upcase: true).include?(state)
-  end
-
-  def city_match?(company, city)
-    return true if company.city.to_s.strip.downcase == city
-
-    parse_list(company.coverage_cities, downcase: true).include?(city)
-  end
-
-  def parse_list(raw, upcase: false, downcase: false)
-    return [] if raw.blank?
-
-    normalized = raw.to_s.strip
-    items =
-      if normalized.start_with?('[')
-        JSON.parse(normalized)
-      else
-        normalized.split(/[;,|]/)
-      end
-
-    items = Array(items).map { |value| value.to_s.strip }.reject(&:blank?)
-    items = items.map(&:upcase) if upcase
-    items = items.map(&:downcase) if downcase
-    items
-  rescue JSON::ParserError
-    normalized.split(/[;,|]/).map { |value| value.to_s.strip }.reject(&:blank?)
   end
 
   def sort_key(company)

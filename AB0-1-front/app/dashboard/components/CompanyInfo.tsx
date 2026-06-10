@@ -45,6 +45,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
+import {
+  BRAZIL_CAPITAL_OPTIONS,
+  BRAZIL_STATES_OPTIONS,
+  COMPANY_PROJECT_TYPES,
+  COMPANY_SERVICES_OFFERED,
+} from '@/lib/company-options';
 import { cn } from '@/lib/utils';
 import { useCompany } from '../hooks';
 
@@ -85,6 +91,8 @@ interface CompanyData {
   banner_url?: string;
   project_types?: string[] | string;
   services_offered?: string[] | string;
+  coverage_states?: string[] | string;
+  coverage_cities?: string[] | string;
   installation_warranty_years?: number;
   equipment_brands?: string[] | string;
   engineering_insurance?: boolean;
@@ -319,6 +327,44 @@ function UploadAction({
   );
 }
 
+function ChecklistGrid({
+  options,
+  values,
+  onToggle,
+  columns = 'sm:grid-cols-2',
+}: {
+  options: readonly { value: string; label: string }[];
+  values: string[];
+  onToggle: (value: string) => void;
+  columns?: string;
+}) {
+  const selected = new Set(values);
+
+  return (
+    <div className={cn('grid grid-cols-1 gap-2', columns)}>
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={cn(
+            'flex min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition',
+            selected.has(option.value)
+              ? 'border-blue-200 bg-blue-50 text-blue-800'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
+          )}
+        >
+          <input
+            type="checkbox"
+            className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+            checked={selected.has(option.value)}
+            onChange={() => onToggle(option.value)}
+          />
+          <span className="truncate">{option.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -364,6 +410,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
   const handleListChange = (field: keyof CompanyData, value: string) => {
     handleInputChange(field, parseList(value));
+  };
+
+  const handleListToggle = (field: keyof CompanyData, value: string) => {
+    const currentValues = listFromValue(formData?.[field] as string[] | string | undefined);
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((item) => item !== value)
+      : [...currentValues, value];
+
+    handleInputChange(field, nextValues);
   };
 
   const handleStartEditing = () => {
@@ -527,6 +582,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const bannerInputId = `banner-upload-${companyId}`;
   const projectTypes = listFromValue(currentData.project_types);
   const servicesOffered = listFromValue(currentData.services_offered);
+  const coverageStates = listFromValue(currentData.coverage_states);
+  const coverageCities = listFromValue(currentData.coverage_cities);
   const certifications = listFromValue(currentData.certifications);
   const awards = listFromValue(currentData.awards);
   const equipmentBrands = listFromValue(currentData.equipment_brands);
@@ -928,23 +985,19 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           {isEditing ? (
             <div className="min-w-0 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="company-project-types">Segmentos de mercado</Label>
-                <Textarea
-                  id="company-project-types"
-                  value={listFromValue(formData?.project_types).join(', ')}
-                  onChange={(event) => handleListChange('project_types', event.target.value)}
-                  placeholder="Residencial, Comercial, Rural"
-                  rows={3}
+                <Label>Segmentos de mercado</Label>
+                <ChecklistGrid
+                  options={COMPANY_PROJECT_TYPES.map((item) => ({ value: item, label: item }))}
+                  values={listFromValue(formData?.project_types)}
+                  onToggle={(value) => handleListToggle('project_types', value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company-services">Catálogo de serviços</Label>
-                <Textarea
-                  id="company-services"
-                  value={listFromValue(formData?.services_offered).join(', ')}
-                  onChange={(event) => handleListChange('services_offered', event.target.value)}
-                  placeholder="Instalação, manutenção, projeto, homologação"
-                  rows={4}
+                <Label>Catálogo de serviços</Label>
+                <ChecklistGrid
+                  options={COMPANY_SERVICES_OFFERED.map((item) => ({ value: item, label: item }))}
+                  values={listFromValue(formData?.services_offered)}
+                  onToggle={(value) => handleListToggle('services_offered', value)}
                 />
               </div>
             </div>
@@ -973,6 +1026,78 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                     action={
                       <Button type="button" size="sm" variant="outline" onClick={handleContextEdit} className="rounded-lg text-brand-blue">
                         Gerenciar serviços
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Área de abrangência"
+          description="Cidades e estados onde a empresa informa atendimento."
+          icon={MapPin}
+          actions={
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar abrangência
+            </Button>
+          }
+        >
+          {isEditing ? (
+            <div className="min-w-0 space-y-5">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
+                Cidade principal: <strong>{primaryLocation}</strong>. Estes campos não mudam a sede da empresa; eles definem onde ela atende.
+              </div>
+              <div className="space-y-2">
+                <Label>Estados atendidos</Label>
+                <ChecklistGrid
+                  options={BRAZIL_STATES_OPTIONS.map((option) => ({
+                    value: option.state,
+                    label: `${option.label} (${option.state})`,
+                  }))}
+                  values={listFromValue(formData?.coverage_states)}
+                  onToggle={(value) => handleListToggle('coverage_states', value)}
+                  columns="sm:grid-cols-2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Capitais atendidas</Label>
+                <ChecklistGrid
+                  options={BRAZIL_CAPITAL_OPTIONS}
+                  values={listFromValue(formData?.coverage_cities)}
+                  onToggle={(value) => handleListToggle('coverage_cities', value)}
+                  columns="sm:grid-cols-2"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-5">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Sede principal</p>
+                <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-800">
+                  {primaryLocation}
+                </div>
+              </div>
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Estados atendidos</p>
+                <ListBadges items={coverageStates} empty="Nenhum estado adicional informado." />
+              </div>
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Capitais atendidas</p>
+                {coverageCities.length > 0 ? (
+                  <ListBadges items={coverageCities} empty="Nenhuma capital informada." />
+                ) : (
+                  <EmptyState
+                    icon={MapPin}
+                    title="Abrangência não configurada"
+                    description="Informe capitais ou estados atendidos para melhorar SEO local e recomendações do MobiVolt."
+                    tone="slate"
+                    action={
+                      <Button type="button" size="sm" variant="outline" onClick={handleContextEdit} className="rounded-lg text-brand-blue">
+                        Editar abrangência
                       </Button>
                     }
                   />
