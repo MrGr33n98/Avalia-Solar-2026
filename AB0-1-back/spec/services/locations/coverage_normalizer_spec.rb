@@ -39,5 +39,17 @@ RSpec.describe Locations::CoverageNormalizer do
       expect(described_class.serves_city?(company, 'Florianopolis', state: 'SC')).to be(true)
       expect(described_class.serves_city?(company, 'Curitiba', state: 'PR')).to be(false)
     end
+
+    it 'does not treat state-only coverage as city coverage' do
+      company = Company.new(
+        state: 'SP',
+        city: 'São Paulo',
+        coverage_states: 'PR',
+        coverage_cities: nil
+      )
+
+      expect(described_class.serves_city?(company, 'Curitiba', state: 'PR')).to be(false)
+      expect(described_class.serves_state?(company, 'PR')).to be(true)
+    end
   end
 end

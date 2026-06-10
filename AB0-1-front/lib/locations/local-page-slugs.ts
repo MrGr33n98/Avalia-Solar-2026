@@ -50,6 +50,10 @@ export function buildLocalSolarUrl(state: string, city: string): string {
   return `/companies/energia-solar/${state.toLowerCase()}/${slugifyLocation(city)}`;
 }
 
+export function buildStateSolarUrl(state: string): string {
+  return `/companies/energia-solar/${state.toLowerCase()}`;
+}
+
 export function buildLocalSeoPageSlug(state: string, city: string): string {
   return `energia-solar-${state.toLowerCase()}-${slugifyLocation(city)}`;
 }
@@ -60,6 +64,11 @@ export const BRAZIL_CAPITAL_SOLAR_PAGES: LocalSolarPage[] = CAPITALS.map(([state
   citySlug: slugifyLocation(city),
   href: buildLocalSolarUrl(state, city),
   seoSlug: buildLocalSeoPageSlug(state, city),
+}));
+
+export const BRAZIL_STATE_SOLAR_PAGES = CAPITALS.map(([state]) => ({
+  state,
+  href: buildStateSolarUrl(state),
 }));
 
 export function resolveCapitalLocalSolarPage(state: string, citySlug: string): LocalSolarPage | null {

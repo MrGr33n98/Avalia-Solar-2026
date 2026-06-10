@@ -39,4 +39,31 @@ RSpec.describe Company, type: :model do
       expect(sql).to include('coverage_states')
     end
   end
+
+  describe '.serving_city_strict' do
+    it 'requires explicit city coverage when company is outside the requested city' do
+      state_only = create(
+        :company,
+        status: 'active',
+        state: 'SP',
+        city: 'São Paulo',
+        coverage_states: 'PR',
+        coverage_cities: nil
+      )
+      city_covered = create(
+        :company,
+        status: 'active',
+        state: 'SP',
+        city: 'São Paulo',
+        coverage_states: 'PR',
+        coverage_cities: 'Curitiba'
+      )
+      local = create(:company, status: 'active', state: 'PR', city: 'Curitiba')
+
+      result_ids = described_class.serving_city_strict('Curitiba', 'PR').pluck(:id)
+
+      expect(result_ids).to include(city_covered.id, local.id)
+      expect(result_ids).not_to include(state_only.id)
+    end
+  end
 end

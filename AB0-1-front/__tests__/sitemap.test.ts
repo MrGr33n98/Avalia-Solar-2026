@@ -3,6 +3,13 @@ import { STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
 
 describe('sitemap', () => {
   beforeEach(() => {
+    if (!global.fetch) {
+      Object.defineProperty(global, 'fetch', {
+        value: jest.fn(),
+        writable: true,
+      });
+    }
+
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ data: [] }),

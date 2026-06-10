@@ -193,27 +193,45 @@ class Company < ApplicationRecord
       all
     end
   }
-  scope :serving_city, ->(city, state = nil) {
+  scope :serving_city_strict, ->(city, state = nil) {
     state_code = Locations::CoverageNormalizer.normalize_state(state)
     canonical_city = Locations::CoverageNormalizer.normalize_city(city, state: state_code)
     if canonical_city.present?
       city_like = "%#{ActiveRecord::Base.sanitize_sql_like(canonical_city)}%"
-      clauses = [
-        "LOWER(companies.city) = LOWER(:city)",
-        "LOWER(COALESCE(companies.coverage_cities, '')) LIKE LOWER(:city_like)"
-      ]
-      bind_values = { city: canonical_city, city_like: city_like }
-
       if state_code.present?
-        clauses << "UPPER(COALESCE(companies.coverage_states, '')) ~ :state_pattern"
-        bind_values[:state_pattern] = "(^|[,;|[:space:]])#{state_code}([,;|[:space:]]|$)"
+        state_pattern = "(^|[,;|[:space:]])#{state_code}([,;|[:space:]]|$)"
+        where(
+          <<~SQL.squish,
+            (
+              UPPER(companies.state) = :state
+              AND LOWER(companies.city) = LOWER(:city)
+            )
+            OR
+            (
+              LOWER(COALESCE(companies.coverage_cities, '')) LIKE LOWER(:city_like)
+              AND (
+                UPPER(companies.state) = :state
+                OR UPPER(COALESCE(companies.coverage_states, '')) ~ :state_pattern
+              )
+            )
+          SQL
+          state: state_code,
+          city: canonical_city,
+          city_like: city_like,
+          state_pattern: state_pattern
+        )
+      else
+        where(
+          "LOWER(companies.city) = LOWER(:city) OR LOWER(COALESCE(companies.coverage_cities, '')) LIKE LOWER(:city_like)",
+          city: canonical_city,
+          city_like: city_like
+        )
       end
-
-      where(clauses.join(' OR '), bind_values)
     else
       all
     end
   }
+  scope :serving_city, ->(city, state = nil) { serving_city_strict(city, state) }
 
   # Full Text Search Scope
   scope :search_by_text, ->(query) {

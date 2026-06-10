@@ -146,7 +146,7 @@ module Locations
         return true if coverage_cities.any? { |coverage_city| city_slug(coverage_city) == city_slug(canonical_city) } &&
                        (state_code.blank? || serves_state?(company, state_code))
 
-        state_code.present? && normalize_states(company.coverage_states).include?(state_code)
+        false
       end
 
       def tokens(value)

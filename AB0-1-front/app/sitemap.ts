@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { buildApiUrl } from '@/lib/api-config';
-import { BRAZIL_CAPITAL_SOLAR_PAGES } from '@/lib/locations/local-page-slugs';
+import { BRAZIL_CAPITAL_SOLAR_PAGES, BRAZIL_STATE_SOLAR_PAGES } from '@/lib/locations/local-page-slugs';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
 
@@ -96,31 +96,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate companies sitemap:', error);
   }
 
-  // Local SEO pages: include only capitals with at least one active matching company.
+  // Local SEO pages: include only state/city pages with strict eligible companies.
   let localSolarRoutes: MetadataRoute.Sitemap = [];
   try {
+    const localPages = [
+      ...BRAZIL_STATE_SOLAR_PAGES.map((page) => ({
+        href: page.href,
+        endpoint: `local_solar_pages/${page.state.toLowerCase()}`,
+        priority: 0.7,
+      })),
+      ...BRAZIL_CAPITAL_SOLAR_PAGES.map((page) => ({
+        href: page.href,
+        endpoint: `local_solar_pages/${page.state.toLowerCase()}/${page.citySlug}`,
+        priority: 0.72,
+      })),
+    ];
+
     const checks = await Promise.all(
-      BRAZIL_CAPITAL_SOLAR_PAGES.map(async (page) => {
-        const params = new URLSearchParams({
-          status: 'active',
-          serves_state: page.state,
-          serves_city: page.city,
-          page: '1',
-          per_page: '1',
-          fields: 'card',
-        });
-        const res = await fetch(buildApiUrl(`companies?${params.toString()}`), { next: { revalidate: 3600 } });
+      localPages.map(async (page) => {
+        const res = await fetch(buildApiUrl(`${page.endpoint}?page=1&per_page=1`), { next: { revalidate: 3600 } });
         if (!res.ok) return null;
 
         const json = await res.json();
-        const total = Number(json?.meta?.pagination?.total ?? json?.data?.length ?? 0);
-        if (!Number.isFinite(total) || total <= 0) return null;
+        if (json?.seo?.indexable !== true) return null;
 
         return {
           url: `${baseUrl}${page.href}`,
           lastModified: STATIC_SITEMAP_LAST_MODIFIED,
           changeFrequency: 'weekly' as const,
-          priority: 0.72,
+          priority: page.priority,
         };
       })
     );

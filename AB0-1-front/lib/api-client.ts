@@ -28,6 +28,65 @@ export type {
   SocialProofReview,
 };
 
+export interface LocalSolarCategory {
+  id: number;
+  name: string;
+  seo_url?: string | null;
+  companies_count: number;
+}
+
+export interface LocalSolarLocation {
+  scope: 'state' | 'city';
+  state: string;
+  state_name: string;
+  city?: string | null;
+  city_slug?: string | null;
+  canonical_path: string;
+}
+
+export interface LocalSolarPageResponse {
+  location: LocalSolarLocation;
+  seo: {
+    title: string;
+    description: string;
+    indexable: boolean;
+  };
+  stats: {
+    total_companies: number;
+    verified_companies: number;
+    featured_companies: number;
+    sponsored_companies: number;
+    generated_at: string;
+  };
+  categories: LocalSolarCategory[];
+  featured_companies: Company[];
+  companies: Company[];
+  nearby_locations: Array<{
+    state: string;
+    city: string;
+    href: string;
+    companies_count: number;
+  }>;
+  filters: {
+    q?: string;
+    category_ids?: number[];
+    featured?: string;
+    verified?: string;
+    min_rating?: string;
+    sort?: string;
+  };
+  pagination: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+    first_page: boolean;
+    last_page: boolean;
+    prev_page?: number | null;
+    next_page?: number | null;
+  };
+}
+
 const SAFE_API_CACHE = new Map<string, { expiresAt: number; data: unknown }>();
 const SAFE_API_IN_FLIGHT = new Map<string, Promise<unknown>>();
 const SAFE_API_DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -39,7 +98,7 @@ const SAFE_API_BLOCKED_UNTIL = new Map<string, number>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const isPublicCacheableEndpoint = (endpoint: string) =>
-  /^(categories|companies|products|states|banners)/i.test(endpoint.replace(/^\/+/, ''));
+  /^(categories|companies|local_solar_pages|products|states|banners)/i.test(endpoint.replace(/^\/+/, ''));
 
 // Utility functions to manage rate limiting
 export const clearRateLimitBlock = (endpoint?: string) => {
@@ -663,6 +722,34 @@ export const reviewsApiSafe = {
     } catch (error) {
       console.error(`Error fetching reviews for company ${companyId}:`, error);
       return [];
+    }
+  },
+};
+
+export const localSolarPagesApi = {
+  get: async (
+    state: string,
+    city?: string | null,
+    params?: {
+      q?: string;
+      category_ids?: number[] | string[] | string;
+      featured?: boolean | string;
+      verified?: boolean | string;
+      min_rating?: number | string;
+      sort?: string;
+      page?: number | string;
+      per_page?: number | string;
+    }
+  ): Promise<LocalSolarPageResponse | null> => {
+    try {
+      const endpoint = city
+        ? `local_solar_pages/${encodeURIComponent(state)}/${encodeURIComponent(city)}`
+        : `local_solar_pages/${encodeURIComponent(state)}`;
+
+      return await fetchApiSafe<LocalSolarPageResponse>(`${endpoint}${buildQueryParams(params || {})}`);
+    } catch (error) {
+      console.error('[localSolarPagesApi.get] Error:', error);
+      return null;
     }
   },
 };

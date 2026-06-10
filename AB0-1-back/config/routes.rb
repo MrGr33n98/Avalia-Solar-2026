@@ -43,6 +43,8 @@ Rails.application.routes.draw do
       get 'posthog_webhook/health', to: 'posthog_webhooks#health'
 
       get 'states', to: 'companies#states'
+      get 'local_solar_pages/:state/:city', to: 'local_solar_pages#show'
+      get 'local_solar_pages/:state', to: 'local_solar_pages#show'
 
       resources :articles do
         collection do
