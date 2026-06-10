@@ -35,6 +35,31 @@ const EVENT_QUEUE_LIMIT = 100;
 const BACKEND_MIN_INTERVAL_MS = 400;
 const BACKEND_DEFAULT_RETRY_AFTER_MS = 15_000;
 const DEFAULT_APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || 'avalia-solar-web';
+const BACKEND_THROTTLE_EXEMPT_EVENTS = new Set([
+  'profile_view',
+  'Company Profile Viewed',
+  'company_profile_viewed',
+  'cta_click',
+  'CTA Clicked',
+  'cta_clicked',
+  'company_cta_clicked',
+  'company_cta_whatsapp',
+  'company_cta_email',
+  'company_cta_phone',
+  'company_cta_website',
+  'company_cta_quote',
+  'whatsapp_click',
+  'WhatsApp CTA Clicked',
+  'email_click',
+  'Email CTA Clicked',
+  'phone_click',
+  'Phone CTA Clicked',
+  'website_click',
+  'Website CTA Clicked',
+  'lead_created',
+  'Lead Form Submitted',
+  'Quote Request CTA Clicked',
+]);
 const eventQueue: Array<{
   name: string;
   properties: Record<string, any>;
@@ -277,7 +302,7 @@ export function track<K extends AnalyticsEventName>(
   }
 
   // 3. Sync with Backend
-  sendToBackend(eventName, eventId, context, matrixProps);
+  sendToBackend(eventName, eventId, context, matrixProps, options);
 
   // Notify Observers (Debug Overlay)
   notifyObservers(eventName, matrixProps);
@@ -313,13 +338,16 @@ function sendToBackend(
   eventName: string,
   eventId: string,
   context: AnalyticsContext,
-  properties: Record<string, any>
+  properties: Record<string, any>,
+  options: EventOptions = {}
 ): void {
   if (typeof window === 'undefined') return;
+  if (options.sendTo?.backend === false) return;
   const safeProperties = sanitizeAnalyticsProperties(properties) as Record<string, any>;
   const now = Date.now();
+  const bypassThrottle = options.critical === true || BACKEND_THROTTLE_EXEMPT_EVENTS.has(eventName);
   if (now < backendBlockedUntil) return;
-  if (now - backendLastSentAt < BACKEND_MIN_INTERVAL_MS) return;
+  if (!bypassThrottle && now - backendLastSentAt < BACKEND_MIN_INTERVAL_MS) return;
   const backendEndpoint = '/api/v1/analytics/track';
 
   const companyId = safeProperties.company_id ?? context.company_id ?? null;
@@ -367,7 +395,7 @@ function sendToBackend(
   if (!serializedBody || serializedBody === '{}') return;
 
   try {
-    backendLastSentAt = now;
+    if (!bypassThrottle) backendLastSentAt = now;
     void sendJsonApiMutationWithOfflineQueue(backendEndpoint, {
       method: 'POST',
       body,
@@ -470,13 +498,13 @@ export function identify(
   currentUserId = opaqueUserId(userId);
   
   // Sanitize traits (no PII)
-  const sanitizedTraits = sanitizeAnalyticsProperties(traits) as UserTraits;
+  const sanitizedTraits = sanitizeAnalyticsProperties(traits as Record<string, unknown>) as UserTraits;
   
   // PostHog
   const posthogBridge = getPostHogBridge();
   if (posthogBridge?.isLoaded()) {
     try {
-      posthogBridge.identify(currentUserId, sanitizedTraits);
+      posthogBridge.identify(currentUserId, sanitizedTraits as Record<string, unknown>);
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Identify:', currentUserId, sanitizedTraits);
@@ -502,7 +530,7 @@ export function setUserProperties(traits: UserTraits): void {
   if (!hasAnalyticsConsent()) return;
   if (!initialized) return;
   
-  const sanitized = sanitizeAnalyticsProperties(traits) as UserTraits;
+  const sanitized = sanitizeAnalyticsProperties(traits as Record<string, unknown>) as UserTraits;
   
   // PostHog
   const posthogBridge = getPostHogBridge();

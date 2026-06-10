@@ -7,8 +7,19 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
   LEGACY_EVENT_ALIASES = {
     'view' => 'profile_view',
     'Company Profile Viewed' => 'profile_view',
+    'company_profile_viewed' => 'profile_view',
     'click' => 'cta_click',
     'CTA Clicked' => 'cta_click',
+    'cta_clicked' => 'cta_click',
+    'company_cta_clicked' => 'cta_click',
+    'company_cta_whatsapp' => 'cta_click',
+    'company_cta_email' => 'cta_click',
+    'company_cta_phone' => 'cta_click',
+    'company_cta_website' => 'cta_click',
+    'company_cta_quote' => 'cta_click',
+    'email_click' => 'cta_click',
+    'phone_click' => 'cta_click',
+    'website_click' => 'cta_click',
     'WhatsApp CTA Clicked' => 'whatsapp_click',
     'lead' => 'lead_created',
     'Lead Form Submitted' => 'lead_created',
@@ -16,6 +27,22 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     'badge_click' => 'badge_cta_click',
     'badges_cta_click' => 'badge_cta_click',
     'badges_cta_view' => 'badge_cta_view'
+  }.freeze
+  CTA_TYPE_EVENT_ALIASES = {
+    'company_cta_whatsapp' => 'whatsapp',
+    'company_cta_email' => 'email',
+    'company_cta_phone' => 'phone',
+    'company_cta_website' => 'website',
+    'company_cta_quote' => 'quote',
+    'whatsapp_click' => 'whatsapp',
+    'WhatsApp CTA Clicked' => 'whatsapp',
+    'email_click' => 'email',
+    'Email CTA Clicked' => 'email',
+    'phone_click' => 'phone',
+    'Phone CTA Clicked' => 'phone',
+    'website_click' => 'website',
+    'Website CTA Clicked' => 'website',
+    'Quote Request CTA Clicked' => 'quote'
   }.freeze
   CORE_CONVERSION_EVENT_MAP = {
     'profile_view' => :profile_views,
@@ -38,12 +65,12 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       return head :no_content
     end
 
-    event_type = Array(params[:event_name] || params[:event_type]).first
+    raw_type = Array(params[:event_name] || params[:event_type]).first
     company_id = Array(params[:company_id]).first
     metadata = normalize_hash_param(params[:properties]) || normalize_hash_param(params[:metadata]) || {}
     
-    return render json: { error: 'event_type is required' }, status: :bad_request if event_type.blank?
-    event_type = map_event_type(event_type)
+    return render json: { error: 'event_type is required' }, status: :bad_request if raw_type.blank?
+    event_type = map_event_type(raw_type)
 
     # Validate micro-interaction events
     if event_type == 'micro_interaction'
@@ -65,6 +92,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     anonymous_id = cookies[:anonymous_id] || generate_anonymous_id
     metadata['session_id'] ||= session_id
     metadata['anonymous_id'] ||= anonymous_id
+    metadata['cta_type'] ||= cta_type_from_event(raw_type)
 
     result = Analytics::TrackEventService.call(
       company_id: company_id,
@@ -128,6 +156,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     end
 
     event_type = map_event_type(raw_type)
+    metadata['cta_type'] ||= cta_type_from_event(raw_type)
     log_legacy_alias_usage(raw_type: raw_type, canonical_event_type: event_type, company_id: company_id) if raw_type.to_s != event_type.to_s
     
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
@@ -294,6 +323,10 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     else
       raw_string
     end
+  end
+
+  def cta_type_from_event(raw)
+    CTA_TYPE_EVENT_ALIASES[raw.to_s]
   end
 
   def normalize_hash_param(value)

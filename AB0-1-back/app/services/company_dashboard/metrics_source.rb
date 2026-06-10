@@ -14,14 +14,57 @@ module CompanyDashboard
       returning_views
     ].freeze
 
+    PROFILE_VIEW_EVENTS = %w[
+      profile_view
+      Company\ Profile\ Viewed
+      company_profile_viewed
+    ].freeze
+    CTA_CLICK_EVENTS = %w[
+      cta_click
+      CTA\ Clicked
+      cta_clicked
+      company_cta_clicked
+      company_cta_quote
+    ].freeze
+    WHATSAPP_CLICK_EVENTS = %w[
+      whatsapp_click
+      WhatsApp\ CTA\ Clicked
+      company_cta_whatsapp
+    ].freeze
+    EMAIL_CLICK_EVENTS = %w[
+      Email\ CTA\ Clicked
+      email_click
+      company_cta_email
+    ].freeze
+    PHONE_CLICK_EVENTS = %w[
+      Phone\ CTA\ Clicked
+      phone_click
+      company_cta_phone
+    ].freeze
+    WEBSITE_CLICK_EVENTS = %w[
+      Website\ CTA\ Clicked
+      website_click
+      company_cta_website
+    ].freeze
+    LEAD_EVENTS = %w[
+      lead_created
+      Lead\ Form\ Submitted
+      Quote\ Request\ CTA\ Clicked
+    ].freeze
     EVENT_TYPE_TO_METRIC = {
-      'profile_view' => :profile_views,
-      'cta_click' => :cta_clicks,
-      'whatsapp_click' => :whatsapp_clicks,
-      'Email CTA Clicked' => :email_clicks,
-      'Phone CTA Clicked' => :phone_clicks,
-      'Website CTA Clicked' => :website_clicks,
-      'lead_created' => :leads
+      **PROFILE_VIEW_EVENTS.index_with { :profile_views },
+      **CTA_CLICK_EVENTS.index_with { :cta_clicks },
+      **WHATSAPP_CLICK_EVENTS.index_with { :whatsapp_clicks },
+      **EMAIL_CLICK_EVENTS.index_with { :email_clicks },
+      **PHONE_CLICK_EVENTS.index_with { :phone_clicks },
+      **WEBSITE_CLICK_EVENTS.index_with { :website_clicks },
+      **LEAD_EVENTS.index_with { :leads }
+    }.freeze
+    CTA_TYPE_TO_METRIC = {
+      'whatsapp' => :whatsapp_clicks,
+      'email' => :email_clicks,
+      'phone' => :phone_clicks,
+      'website' => :website_clicks
     }.freeze
 
     def initialize(company_id:)
@@ -165,6 +208,7 @@ module CompanyDashboard
         totals[metric] += count.to_i
       end
 
+      add_cta_type_totals!(totals, from_time: from_time, to_time: to_time)
       totals
     rescue StandardError => e
       Rails.logger.warn("[CompanyDashboard::MetricsSource] analytics_event_totals failed: #{e.class} #{e.message}")
@@ -190,6 +234,7 @@ module CompanyDashboard
         rows[day][metric] += count.to_i
       end
 
+      add_cta_type_timeseries!(rows, from_time: from_time, to_time: to_time)
       rows.values.sort_by { |row| row[:date] }
     rescue StandardError => e
       Rails.logger.warn("[CompanyDashboard::MetricsSource] analytics_event_timeseries failed: #{e.class} #{e.message}")
@@ -201,6 +246,55 @@ module CompanyDashboard
       return nil if last_aggregated_at.blank?
 
       [from_day.beginning_of_day, last_aggregated_at].max
+    end
+
+    def add_cta_type_totals!(totals, from_time:, to_time:)
+      cta_type_counts(from_time: from_time, to_time: to_time).each do |cta_type, count|
+        metric = CTA_TYPE_TO_METRIC[cta_type.to_s]
+        next unless metric
+
+        totals[metric] += count.to_i
+      end
+    end
+
+    def add_cta_type_timeseries!(rows, from_time:, to_time:)
+      cta_type_timeseries_counts(from_time: from_time, to_time: to_time).each do |(day_value, cta_type), count|
+        metric = CTA_TYPE_TO_METRIC[cta_type.to_s]
+        next unless metric
+
+        day = day_value.to_date
+        rows[day][metric] += count.to_i
+      end
+    end
+
+    def cta_type_counts(from_time:, to_time:)
+      expression = metadata_cta_type_expression
+      return {} if expression.blank?
+
+      analytics_event_scope(from_time: from_time, to_time: to_time)
+        .where(event_type: CTA_CLICK_EVENTS)
+        .group(Arel.sql(expression))
+        .count
+        .reject { |cta_type, _count| cta_type.blank? }
+    end
+
+    def cta_type_timeseries_counts(from_time:, to_time:)
+      expression = metadata_cta_type_expression
+      return {} if expression.blank?
+
+      analytics_event_scope(from_time: from_time, to_time: to_time)
+        .where(event_type: CTA_CLICK_EVENTS)
+        .group(Arel.sql('DATE(tracked_at)'), Arel.sql(expression))
+        .count
+        .reject { |(_day, cta_type), _count| cta_type.blank? }
+    end
+
+    def metadata_cta_type_expression
+      adapter = ActiveRecord::Base.connection.adapter_name.downcase
+      return "metadata->>'cta_type'" if adapter.include?('postgres')
+      return "json_extract(metadata, '$.cta_type')" if adapter.include?('sqlite')
+
+      nil
     end
 
     def merge_totals(primary, delta)

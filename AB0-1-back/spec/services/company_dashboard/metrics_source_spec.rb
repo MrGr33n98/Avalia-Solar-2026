@@ -59,6 +59,34 @@ RSpec.describe CompanyDashboard::MetricsSource do
     end
   end
 
+  describe '#realtime_totals' do
+    it 'counts frontend taxonomy events that have not been aggregated yet' do
+      tracked_at = Time.current
+
+      create(:analytics_event, company: company, event_type: 'company_profile_viewed', tracked_at: tracked_at)
+      create(
+        :analytics_event,
+        company: company,
+        event_type: 'company_cta_clicked',
+        tracked_at: tracked_at,
+        metadata: { 'cta_type' => 'whatsapp' }
+      )
+
+      totals, data_source = source.realtime_totals(
+        from_day: Date.current,
+        to_day: Date.current,
+        last_aggregated_at: nil
+      )
+
+      aggregate_failures do
+        expect(data_source).to eq('analytics_events_fallback')
+        expect(totals[:profile_views]).to eq(1)
+        expect(totals[:cta_clicks]).to eq(1)
+        expect(totals[:whatsapp_clicks]).to eq(1)
+      end
+    end
+  end
+
   describe '#available?' do
     it 'returns false when company_id is missing' do
       expect(described_class.new(company_id: nil).available?).to eq(false)

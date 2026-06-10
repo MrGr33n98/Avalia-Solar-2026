@@ -15,6 +15,7 @@ export interface EventOptions {
     mixpanel?: boolean;
     posthog?: boolean;
     ga4?: boolean;
+    backend?: boolean;
   };
   eventId?: string;
 }

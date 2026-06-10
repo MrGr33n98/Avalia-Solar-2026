@@ -33,7 +33,7 @@ interface TrackingMetadata {
 /**
  * Extract UTM parameters from current URL
  */
-function getUTMParams(): Omit<TrackingMetadata, 'device_type' | 'timestamp' | 'page_url' | 'referrer'> {
+function getUTMParams(): Omit<TrackingMetadata, 'device_type' | 'timestamp' | 'page_url' | 'full_url' | 'referrer'> {
   if (typeof window === 'undefined') {
     return {
       utm_source: null,
@@ -128,6 +128,8 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
         company_name: props.companyName,
         cta_location: props.ctaLocation,
         ...metadata,
+      }, {
+        sendTo: { backend: false },
       });
     }
 
@@ -161,6 +163,8 @@ export async function trackCompanyProfileView(
       company_name: companyName,
       category_id: categoryId,
       ...metadata,
+    }, {
+      sendTo: { backend: false },
     });
 
   } catch (error) {

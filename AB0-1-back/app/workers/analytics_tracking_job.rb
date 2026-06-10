@@ -18,25 +18,26 @@ class AnalyticsTrackingJob
 
     # Update company_daily_stats based on event type
     case event_name
-    when 'Company Profile Viewed'
+    when 'Company Profile Viewed', 'profile_view', 'company_profile_viewed'
       increment_stat(company_id, day, :profile_views)
       
-    when 'CTA Clicked'
+    when 'CTA Clicked', 'cta_click', 'cta_clicked', 'company_cta_clicked', 'company_cta_quote'
       increment_stat(company_id, day, :cta_clicks)
+      increment_cta_type_stat(company_id, day, properties['cta_type'])
       
-    when 'WhatsApp CTA Clicked'
+    when 'WhatsApp CTA Clicked', 'whatsapp_click', 'company_cta_whatsapp'
       increment_stat(company_id, day, :cta_clicks)
       increment_stat(company_id, day, :whatsapp_clicks)
       
-    when 'Email CTA Clicked'
+    when 'Email CTA Clicked', 'email_click', 'company_cta_email'
       increment_stat(company_id, day, :cta_clicks)
       increment_stat(company_id, day, :email_clicks)
       
-    when 'Phone CTA Clicked'
+    when 'Phone CTA Clicked', 'phone_click', 'company_cta_phone'
       increment_stat(company_id, day, :cta_clicks)
       increment_stat(company_id, day, :phone_clicks)
       
-    when 'Website CTA Clicked'
+    when 'Website CTA Clicked', 'website_click', 'company_cta_website'
       increment_stat(company_id, day, :cta_clicks)
       increment_stat(company_id, day, :website_clicks)
       
@@ -116,6 +117,19 @@ class AnalyticsTrackingJob
         "[AnalyticsTrackingJob] Failed to increment stat after retry: " \
         "company_id=#{company_id} day=#{day} metric=#{metric}"
       )
+    end
+  end
+
+  def increment_cta_type_stat(company_id, day, cta_type)
+    case cta_type.to_s
+    when 'whatsapp'
+      increment_stat(company_id, day, :whatsapp_clicks)
+    when 'email'
+      increment_stat(company_id, day, :email_clicks)
+    when 'phone'
+      increment_stat(company_id, day, :phone_clicks)
+    when 'website'
+      increment_stat(company_id, day, :website_clicks)
     end
   end
 

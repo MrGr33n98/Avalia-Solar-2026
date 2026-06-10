@@ -9,6 +9,14 @@ module Analytics
     SAFETY_LAG = 30.seconds
     PIPELINE = 'main_aggregation'
     LOCK_ID = Zlib.crc32(PIPELINE)
+    PROFILE_VIEW_EVENTS = ['profile_view', 'Company Profile Viewed', 'company_profile_viewed'].freeze
+    CTA_CLICK_EVENTS = ['cta_click', 'CTA Clicked', 'cta_clicked', 'company_cta_clicked', 'company_cta_quote'].freeze
+    WHATSAPP_CLICK_EVENTS = ['whatsapp_click', 'WhatsApp CTA Clicked', 'company_cta_whatsapp'].freeze
+    EMAIL_CLICK_EVENTS = ['Email CTA Clicked', 'email_click', 'company_cta_email'].freeze
+    PHONE_CLICK_EVENTS = ['Phone CTA Clicked', 'phone_click', 'company_cta_phone'].freeze
+    WEBSITE_CLICK_EVENTS = ['Website CTA Clicked', 'website_click', 'company_cta_website'].freeze
+    LEAD_EVENTS = ['lead_created', 'Lead Form Submitted', 'Quote Request CTA Clicked'].freeze
+    REVIEW_EVENTS = ['review_created'].freeze
 
     def perform
       # Simplified for dev/test SQLite compatibility
@@ -61,18 +69,20 @@ module Analytics
     end
 
     def sql_company(from, to, is_pg)
-      # Adapter safe version of the aggregation
-      filter_views = is_pg ? "COUNT(*) FILTER (WHERE event_type = 'profile_view')" : "SUM(CASE WHEN event_type = 'profile_view' THEN 1 ELSE 0 END)"
-      filter_ctas = is_pg ? "COUNT(*) FILTER (WHERE event_type = 'cta_click')" : "SUM(CASE WHEN event_type = 'cta_click' THEN 1 ELSE 0 END)"
-      filter_whatsapp = is_pg ? "COUNT(*) FILTER (WHERE event_type = 'whatsapp_click')" : "SUM(CASE WHEN event_type = 'whatsapp_click' THEN 1 ELSE 0 END)"
-      filter_leads = is_pg ? "COUNT(*) FILTER (WHERE event_type = 'lead_created')" : "SUM(CASE WHEN event_type = 'lead_created' THEN 1 ELSE 0 END)"
-      filter_reviews = is_pg ? "COUNT(*) FILTER (WHERE event_type = 'review_created')" : "SUM(CASE WHEN event_type = 'review_created' THEN 1 ELSE 0 END)"
+      filter_views = count_filter(event_type_in(PROFILE_VIEW_EVENTS), is_pg)
+      filter_ctas = count_filter(event_type_in(CTA_CLICK_EVENTS), is_pg)
+      filter_whatsapp = count_filter("#{event_type_in(WHATSAPP_CLICK_EVENTS)} OR #{cta_type_condition('whatsapp', is_pg)}", is_pg)
+      filter_email = count_filter("#{event_type_in(EMAIL_CLICK_EVENTS)} OR #{cta_type_condition('email', is_pg)}", is_pg)
+      filter_phone = count_filter("#{event_type_in(PHONE_CLICK_EVENTS)} OR #{cta_type_condition('phone', is_pg)}", is_pg)
+      filter_website = count_filter("#{event_type_in(WEBSITE_CLICK_EVENTS)} OR #{cta_type_condition('website', is_pg)}", is_pg)
+      filter_leads = count_filter(event_type_in(LEAD_EVENTS), is_pg)
+      filter_reviews = count_filter(event_type_in(REVIEW_EVENTS), is_pg)
 
       if is_pg
         <<~SQL
-          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, leads, reviews, updated_at, created_at)
+          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads, reviews, updated_at, created_at)
           SELECT 
-            company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
+            company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
           GROUP BY 1, 2
@@ -80,6 +90,9 @@ module Analytics
             profile_views = company_daily_stats.profile_views + EXCLUDED.profile_views,
             cta_clicks = company_daily_stats.cta_clicks + EXCLUDED.cta_clicks,
             whatsapp_clicks = company_daily_stats.whatsapp_clicks + EXCLUDED.whatsapp_clicks,
+            email_clicks = company_daily_stats.email_clicks + EXCLUDED.email_clicks,
+            phone_clicks = company_daily_stats.phone_clicks + EXCLUDED.phone_clicks,
+            website_clicks = company_daily_stats.website_clicks + EXCLUDED.website_clicks,
             leads = company_daily_stats.leads + EXCLUDED.leads,
             reviews = company_daily_stats.reviews + EXCLUDED.reviews,
             updated_at = NOW()
@@ -88,13 +101,31 @@ module Analytics
       else
         # SQLite version (simplified - doesn't handle conflict perfectly in this snippet but works for test)
         <<~SQL
-          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, leads, reviews, updated_at, created_at)
+          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads, reviews, updated_at, created_at)
           SELECT 
-            company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
           GROUP BY 1, 2
         SQL
+      end
+    end
+
+    def event_type_in(values)
+      quoted_values = values.map { |value| ActiveRecord::Base.connection.quote(value) }.join(', ')
+      "event_type IN (#{quoted_values})"
+    end
+
+    def cta_type_condition(cta_type, is_pg)
+      expression = is_pg ? "payload->>'cta_type'" : "json_extract(payload, '$.cta_type')"
+      "(#{event_type_in(CTA_CLICK_EVENTS)} AND #{expression} = #{ActiveRecord::Base.connection.quote(cta_type)})"
+    end
+
+    def count_filter(condition, is_pg)
+      if is_pg
+        "COUNT(*) FILTER (WHERE #{condition})"
+      else
+        "SUM(CASE WHEN #{condition} THEN 1 ELSE 0 END)"
       end
     end
 

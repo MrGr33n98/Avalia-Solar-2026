@@ -155,6 +155,8 @@ export default function WhatsappButton({
       category_id: categoryId,
       banner_id: bannerId,
       page_path: path
+    }, {
+      sendTo: { backend: false }
     });
 
     // Add UTMs to destination URL

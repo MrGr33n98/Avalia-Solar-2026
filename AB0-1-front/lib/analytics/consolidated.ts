@@ -183,6 +183,8 @@ export function trackContactClick(
     company_id: String(company.id),
     company_name: company.name,
     contact_type: method,
+  }, {
+    sendTo: { backend: false },
   });
 }
 

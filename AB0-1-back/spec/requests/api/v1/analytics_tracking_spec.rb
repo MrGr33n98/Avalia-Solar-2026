@@ -53,5 +53,39 @@ RSpec.describe 'Analytics tracking endpoint', type: :request do
         a_string_matching(/analytics_legacy_alias/)
       )
     end
+
+    it 'canonicalizes frontend company profile and CTA taxonomy for dashboard metrics' do
+      post '/api/v1/analytics/track', params: {
+        company_id: company.id,
+        event_id: 'evt_company_profile_new_taxonomy',
+        event_type: 'company_profile_viewed',
+        tracked_at: tracked_at.iso8601,
+        metadata: {
+          session_id: 'sess_profile_new_taxonomy'
+        }
+      }
+
+      post '/api/v1/analytics/track', params: {
+        company_id: company.id,
+        event_id: 'evt_company_cta_new_taxonomy',
+        event_type: 'company_cta_whatsapp',
+        tracked_at: tracked_at.iso8601,
+        metadata: {
+          session_id: 'sess_cta_new_taxonomy'
+        }
+      }
+
+      events = AnalyticsEvent.where(event_id: [
+        'evt_company_profile_new_taxonomy',
+        'evt_company_cta_new_taxonomy'
+      ]).index_by(&:event_id)
+
+      aggregate_failures do
+        expect(response).to have_http_status(:ok)
+        expect(events['evt_company_profile_new_taxonomy'].event_type).to eq('profile_view')
+        expect(events['evt_company_cta_new_taxonomy'].event_type).to eq('cta_click')
+        expect(events['evt_company_cta_new_taxonomy'].metadata['cta_type']).to eq('whatsapp')
+      end
+    end
   end
 end
