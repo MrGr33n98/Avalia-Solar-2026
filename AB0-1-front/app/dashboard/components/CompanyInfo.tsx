@@ -1,67 +1,70 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
 import Image from 'next/image';
-import { 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Globe, 
-  Calendar,
-  Users,
-  DollarSign,
-  Award,
-  Clock,
-  Save,
-  X,
-  Upload,
+import {
+  Activity,
   AlertCircle,
+  Award,
+  BadgeCheck,
+  Building2,
+  Calendar,
   CheckCircle2,
-  Pencil,
-  ImageIcon,
-  Hash,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Shield,
-  FileText,
-  Maximize2,
+  Clock,
+  DollarSign,
   ExternalLink,
-  Target,
-  Activity
+  Facebook,
+  FileText,
+  Globe,
+  ImageIcon,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  Save,
+  Shield,
+  Trash2,
+  Upload,
+  Users,
+  Wrench,
+  X,
+  type LucideIcon,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
-import { toast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCompany } from '../hooks';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useCompany } from '../hooks';
 
 interface CompanyInfoProps {
   companyId: string;
 }
 
 interface CompanyData {
-  name: string;
-  description: string;
-  website: string;
-  phone: string;
+  id?: string;
+  name?: string;
+  description?: string;
+  website?: string;
+  phone?: string;
   phone_alt?: string;
-  whatsapp: string;
-  email_public: string;
-  address: string;
-  state: string;
-  city: string;
-  cnpj: string;
+  whatsapp?: string;
+  email_public?: string;
+  address?: string;
+  state?: string;
+  city?: string;
+  cnpj?: string;
   instagram?: string;
   facebook?: string;
   linkedin?: string;
@@ -80,13 +83,240 @@ interface CompanyData {
   languages?: string;
   logo_url?: string;
   banner_url?: string;
-  project_types?: string[];
-  services_offered?: string[];
+  project_types?: string[] | string;
+  services_offered?: string[] | string;
   installation_warranty_years?: number;
-  equipment_brands?: string[];
+  equipment_brands?: string[] | string;
   engineering_insurance?: boolean;
-  post_sales_capacity?: string[];
+  post_sales_capacity?: string[] | string;
   delivered_projects_score?: number;
+  status?: 'active' | 'pending' | 'inactive';
+  verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+const NOT_INFORMED = 'Não informado';
+const TO_DEFINE = 'A definir';
+const NOT_CONFIGURED = 'Não configurado';
+
+function isBlank(value: unknown) {
+  if (value === null || value === undefined) return true;
+  if (Array.isArray(value)) return value.filter(Boolean).length === 0;
+  if (typeof value === 'string') return value.trim().length === 0;
+  return false;
+}
+
+function displayText(value: unknown, fallback = NOT_INFORMED) {
+  if (isBlank(value)) return fallback;
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+  return String(value);
+}
+
+function listFromValue(value?: string[] | string) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/[,;\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function parseList(value: string) {
+  return value
+    .split(/[,;\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return NOT_INFORMED;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return NOT_INFORMED;
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function formatCurrency(value?: number) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return NOT_CONFIGURED;
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatTicketRange(company: CompanyData) {
+  const minimum = formatCurrency(company.minimum_ticket);
+  const maximum = formatCurrency(company.maximum_ticket);
+
+  if (minimum === NOT_CONFIGURED && maximum === NOT_CONFIGURED) return NOT_CONFIGURED;
+  if (minimum !== NOT_CONFIGURED && maximum !== NOT_CONFIGURED) return `${minimum} a ${maximum}`;
+  return minimum !== NOT_CONFIGURED ? `A partir de ${minimum}` : `Até ${maximum}`;
+}
+
+function publicationLabel(status?: string) {
+  if (status === 'pending') return 'Aguardando aprovação';
+  if (status === 'inactive') return 'Inativo';
+  return 'Publicado';
+}
+
+function publicationClass(status?: string) {
+  if (status === 'pending') return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (status === 'inactive') return 'border-slate-200 bg-slate-50 text-slate-600';
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+}
+
+function handleNumberValue(value: string) {
+  if (value.trim() === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+function SectionCard({
+  title,
+  description,
+  icon: Icon,
+  actions,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  icon: LucideIcon;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={cn('min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm', className)}>
+      <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-blue">
+            <Icon className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <CardTitle className="break-words text-base font-bold text-slate-950">{title}</CardTitle>
+            {description && <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>}
+          </div>
+        </div>
+        {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+      </CardHeader>
+      <CardContent className="p-4 sm:p-5">{children}</CardContent>
+    </Card>
+  );
+}
+
+function InfoItem({
+  label,
+  value,
+  fallback = NOT_INFORMED,
+  icon: Icon,
+}: {
+  label: string;
+  value?: ReactNode;
+  fallback?: string;
+  icon?: LucideIcon;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+      <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {Icon && <Icon className="h-3.5 w-3.5 text-brand-blue" />}
+        {label}
+      </div>
+      <div className="min-w-0 break-words text-sm font-semibold text-slate-950">{isBlank(value) ? fallback : value}</div>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  tone = 'blue',
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  tone?: 'blue' | 'green' | 'amber' | 'slate';
+  action?: ReactNode;
+}) {
+  const toneClasses = {
+    blue: 'border-blue-100 bg-blue-50 text-brand-blue',
+    green: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    amber: 'border-amber-100 bg-amber-50 text-amber-700',
+    slate: 'border-slate-200 bg-slate-50 text-slate-600',
+  };
+
+  return (
+    <div className={cn('flex min-w-0 flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between', toneClasses[tone])}>
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/70">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="break-words text-sm font-bold">{title}</p>
+          {description && <p className="mt-1 break-words text-xs opacity-80">{description}</p>}
+        </div>
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+    </div>
+  );
+}
+
+function ListBadges({
+  items,
+  empty,
+}: {
+  items: string[];
+  empty: string;
+}) {
+  if (items.length === 0) {
+    return <p className="text-sm text-slate-500">{empty}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((item) => (
+        <Badge key={item} variant="secondary" className="break-words rounded-lg bg-blue-50 px-3 py-1 text-brand-blue">
+          {item}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function UploadAction({
+  inputId,
+  children,
+  onChange,
+}: {
+  inputId: string;
+  children: ReactNode;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <label
+      htmlFor={inputId}
+      className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-brand-blue transition hover:bg-blue-50 sm:w-auto"
+    >
+      <Upload className="h-4 w-4" />
+      {children}
+      <input id={inputId} type="file" className="hidden" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml" onChange={onChange} />
+    </label>
+  );
 }
 
 export default function CompanyInfo({ companyId }: CompanyInfoProps) {
@@ -101,19 +331,24 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
   const fetchCompanyData = useCallback(async () => {
     try {
+      setLoadError(null);
       const response = await fetch(buildApiUrl(`companies/${companyId}`), {
         headers: getApiRequestHeaders(),
       });
-      if (!response.ok) throw new Error(`Fetch error: ${response.status}`);
+
+      if (!response.ok) throw new Error(`Erro de carregamento: ${response.status}`);
+
       const data = await response.json();
+
       if (!data?.company) {
         setLoadError('Dados da empresa não localizados.');
-      } else {
-        setCompany(data.company);
-        setFormData(data.company);
+        return;
       }
-    } catch (error) {
-      setLoadError('Falha crítica na conexão com o servidor.');
+
+      setCompany(data.company);
+      setFormData(data.company);
+    } catch {
+      setLoadError('Não foi possível carregar as informações da empresa.');
     } finally {
       setLoading(false);
     }
@@ -123,550 +358,809 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     fetchCompanyData();
   }, [fetchCompanyData]);
 
-  const handleInputChange = (field: keyof CompanyData, value: any) => {
-    setFormData((prev) => ({ ...(prev || {}), [field]: value } as CompanyData));
+  const handleInputChange = (field: keyof CompanyData, value: CompanyData[keyof CompanyData]) => {
+    setFormData((previous) => ({ ...(previous || {}), [field]: value }));
+  };
+
+  const handleListChange = (field: keyof CompanyData, value: string) => {
+    handleInputChange(field, parseList(value));
+  };
+
+  const handleStartEditing = () => {
+    setFormData(company);
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setFormData(company);
+    setIsEditing(false);
+  };
+
+  const handleContextEdit = () => {
+    if (!isEditing) {
+      setFormData(company);
+      setIsEditing(true);
+    }
   };
 
   const handleSave = async () => {
+    if (!formData) return;
+
     setSaving(true);
     try {
-      const result = await updateCompany(formData ? { ...formData } : {});
+      const result = await updateCompany({ ...formData });
+
       if (result.success) {
         setPendingApproval(true);
         setIsEditing(false);
-        setTimeout(() => setPendingApproval(false), 8000);
-        fetchCompanyData();
+        toast({
+          title: 'Alterações enviadas para aprovação',
+          description: 'Felipe poderá revisar e liberar no Active Admin antes da publicação.',
+        });
+        window.setTimeout(() => setPendingApproval(false), 8000);
+        await fetchCompanyData();
+        return;
       }
-    } catch (error) {
-      toast({ title: "Erro ao salvar", variant: "destructive" });
+
+      toast({
+        title: 'Não foi possível salvar',
+        description: result.error || 'Revise os campos e tente novamente.',
+        variant: 'destructive',
+      });
+    } catch {
+      toast({
+        title: 'Erro ao salvar',
+        description: 'A solicitação não foi concluída. Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleLogoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append('file', file);
+
+    const payload = new FormData();
+    payload.append('file', file);
+
     try {
-      const res = await fetch(buildApiUrl('company_dashboard/update_logo'), {
+      const response = await fetch(buildApiUrl('company_dashboard/update_logo'), {
         method: 'POST',
         headers: { ...getApiRequestHeaders() },
         credentials: 'include',
-        body: fd
+        body: payload,
       });
-      if (!res.ok) throw new Error('Upload failed');
+
+      if (!response.ok) throw new Error('Falha no upload');
+
       setPendingApproval(true);
-      fetchCompanyData();
-      toast({ title: "Logo em processamento", description: "O novo ativo está sendo validado." });
-    } catch (err) {
-      toast({ title: "Falha no Upload", variant: "destructive" });
+      toast({
+        title: 'Logo enviada para aprovação',
+        description: 'A nova marca será validada antes de aparecer no perfil público.',
+      });
+      await fetchCompanyData();
+    } catch {
+      toast({
+        title: 'Falha no upload da logo',
+        description: 'Verifique o arquivo e tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      event.target.value = '';
     }
   };
 
-  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleBannerUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append('file', file);
+
+    const payload = new FormData();
+    payload.append('file', file);
+
     try {
-      const res = await fetch(buildApiUrl('company_dashboard/update_banner'), {
+      const response = await fetch(buildApiUrl('company_dashboard/update_banner'), {
         method: 'POST',
         headers: { ...getApiRequestHeaders() },
         credentials: 'include',
-        body: fd
+        body: payload,
       });
-      if (!res.ok) throw new Error('Upload failed');
+
+      if (!response.ok) throw new Error('Falha no upload');
+
       setPendingApproval(true);
-      fetchCompanyData();
-      toast({ title: "Banner em processamento", description: "O ativo visual está sendo validado." });
-    } catch (err) {
-      toast({ title: "Falha no Upload", variant: "destructive" });
+      toast({
+        title: 'Imagem enviada para aprovação',
+        description: 'O banner será validado antes de aparecer no perfil público.',
+      });
+      await fetchCompanyData();
+    } catch {
+      toast({
+        title: 'Falha no upload da imagem',
+        description: 'Verifique o arquivo e tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      event.target.value = '';
     }
+  };
+
+  const handleLogoRemovalNotice = () => {
+    toast({
+      title: 'Remoção de logo',
+      description: 'Não há endpoint ativo para remoção direta. Envie uma nova logo ou solicite a remoção pelo suporte.',
+    });
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
-        <div className="h-16 w-16 border-4 border-brand-blue border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(37,99,235,0.2)]" />
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Iniciando Protocolo de Dados Tech</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-blue border-t-transparent" />
+        <p className="text-sm font-medium text-slate-500">Carregando informações da empresa...</p>
       </div>
     );
   }
 
-  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-4 block">
-      {children}
-    </h3>
-  );
+  if (loadError) {
+    return (
+      <div className="mx-auto w-full max-w-[1200px]">
+        <Alert className="rounded-2xl border-red-200 bg-red-50 text-red-700">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="font-medium">{loadError}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
-  const TechInputLabel = ({ children, htmlFor }: { children: React.ReactNode, htmlFor?: string }) => (
-    <Label htmlFor={htmlFor} className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1.5 block">
-      {children}
-    </Label>
-  );
+  const currentData = formData || company;
+
+  if (!currentData) {
+    return (
+      <div className="mx-auto w-full max-w-[1200px]">
+        <EmptyState icon={Building2} title="Empresa não localizada" description="Não encontramos dados disponíveis para este perfil." tone="slate" />
+      </div>
+    );
+  }
+
+  const logoInputId = `logo-upload-${companyId}`;
+  const bannerInputId = `banner-upload-${companyId}`;
+  const projectTypes = listFromValue(currentData.project_types);
+  const servicesOffered = listFromValue(currentData.services_offered);
+  const certifications = listFromValue(currentData.certifications);
+  const awards = listFromValue(currentData.awards);
+  const equipmentBrands = listFromValue(currentData.equipment_brands);
+  const postSalesCapacity = listFromValue(currentData.post_sales_capacity);
+  const primaryLocation = [currentData.city, currentData.state].filter(Boolean).join(', ') || TO_DEFINE;
 
   return (
-    <div className="space-y-12 max-w-[1200px] mx-auto pb-24">
-      {/* Dynamic Notifications */}
+    <div className="mx-auto w-full max-w-[1200px] min-w-0 space-y-5 pb-24">
       <AnimatePresence>
         {pendingApproval && (
           <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
           >
-            <Alert className="clay-precision bg-brand-green/5 border-emerald-500/10 text-brand-green rounded-xl p-5 flex items-center gap-4">
-              <Shield className="h-5 w-5 fill-emerald-500/20" />
-              <AlertDescription className="font-black uppercase tracking-widest text-[10px]">
-                Protocolo de aprovação iniciado. Os dados serão validados pelo comitê técnico.
+            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
+              <Shield className="h-4 w-4" />
+              <AlertDescription className="font-medium">
+                Alterações enviadas para aprovação. Felipe poderá revisar e liberar no Active Admin antes da publicação.
               </AlertDescription>
             </Alert>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header Intelligence */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-6 w-6 text-brand-blue" />
-            <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground dark:text-white">
-              Institutional Vault
-            </h2>
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 py-1 text-brand-blue">
+              Central Institucional
+            </Badge>
+            <Badge variant="outline" className={cn('rounded-full px-3 py-1', publicationClass(currentData.status))}>
+              <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+              {publicationLabel(currentData.status)}
+            </Badge>
           </div>
-          <p className="text-sm text-muted-foreground font-medium max-w-lg">
-            Gestão avançada de metadados, ativos de marca e compliance corporativo para o ecossistema Avalia Solar.
+          <h2 className="break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Informações gerais</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Gerencie os dados da empresa, ativos de marca e informações públicas usadas no ecossistema Avalia Solar.
+            As alterações enviadas por empresas seguem para aprovação no Active Admin.
           </p>
         </div>
-        <div className="flex gap-4">
-          {!isEditing ? (
-            <Button 
-              onClick={() => setIsEditing(true)} 
-              className="clay-precision bg-brand-blue hover:bg-blue-700 text-white h-12 rounded-xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Upgrade Info
-            </Button>
+
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          {isEditing ? (
+            <>
+              <Button variant="outline" onClick={handleCancelEditing} disabled={saving} className="w-full rounded-lg sm:w-auto">
+                <X className="mr-2 h-4 w-4" />
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="w-full rounded-lg bg-brand-blue text-white hover:bg-blue-700 sm:w-auto">
+                <Save className="mr-2 h-4 w-4" />
+                {saving ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
+            </>
           ) : (
-            <div className="flex gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => setIsEditing(false)} 
-                disabled={saving}
-                className="h-12 rounded-xl px-6 text-xs font-black uppercase tracking-widest text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5"
-              >
-                Abortar
-              </Button>
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className="clay-precision bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-xl px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Gravando...' : 'Comitar Alterações'}
-              </Button>
-            </div>
+            <Button onClick={handleStartEditing} className="w-full rounded-lg bg-brand-blue text-white hover:bg-blue-700 sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar informações
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Visual Identity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Banner Control */}
-        <Card className="lg:col-span-2 clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden group">
-          <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Corporate Hero Asset
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8">
-            <div className="relative aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 dark:bg-black/40 border-[0.5px] border-slate-200 dark:border-white/10 shadow-2xl group/banner">
-              {formData?.banner_url ? (
-                <Image src={formData.banner_url} alt="Brand Banner" fill className="w-full h-full object-cover transition-transform duration-1000 group-hover/banner:scale-105" />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 opacity-20">
-                  <Maximize2 className="h-12 w-12" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Static Placeholder</p>
-                </div>
-              )}
-              
-              {isEditing && (
-                <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-md opacity-0 group-hover/banner:opacity-100 transition-all duration-300 flex items-center justify-center">
-                   <label htmlFor="banner-upload" className="cursor-pointer">
-                     <div className="h-11 rounded-xl px-6 font-black text-[10px] uppercase tracking-[0.2em] bg-white text-blue-900 border-none shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
-                       <Upload className="h-4 w-4" /> Upload New Engine
-                     </div>
-                     <input type="file" id="banner-upload" className="hidden" accept="image/*" onChange={handleBannerUpload} />
-                   </label>
-                </div>
-              )}
-            </div>
-            <div className="mt-4 flex justify-between items-center px-1 text-[9px] font-black font-mono text-muted-foreground/30 uppercase tracking-widest">
-              <span>Resolution: 1920x820px (Max Optimal)</span>
-              <span className="text-brand-blue/50">Status: Online</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Logo Control */}
-        <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none overflow-hidden flex flex-col">
-          <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Core Identity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 p-8 flex flex-col items-center justify-center gap-8">
-            <div className="relative">
-              <div className="h-32 w-32 rounded-xl bg-white dark:bg-[#002B4D] clay-precision p-1 shadow-2xl ring-1 ring-slate-100 dark:ring-white/5">
-                <Avatar className="h-full w-full rounded-xl overflow-hidden bg-slate-50 dark:bg-transparent">
-                  <AvatarImage src={formData?.logo_url} className="object-contain p-6" />
-                  <AvatarFallback className="text-3xl font-black text-brand-blue bg-brand-blue/5 uppercase">
-                    {formData?.name?.substring(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              {isEditing && (
-                <label htmlFor="logo-upload" className="absolute -bottom-2 -right-2 cursor-pointer">
-                  <div className="h-10 w-10 rounded-xl bg-brand-blue text-white shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
-                    <Upload className="h-4 w-4" />
-                  </div>
-                  <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                </label>
-              )}
-            </div>
-            <div className="text-center space-y-1">
-              <h4 className="text-lg font-black tracking-tight uppercase text-foreground dark:text-white">
-                {formData?.name || 'Unidentified'}
-              </h4>
-              <Badge className="bg-brand-blue/5 text-brand-blue border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
-                Official Identifier
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Metadata Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Core Profile */}
-        <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-          <CardHeader className="p-6">
-            <SectionLabel>Core Technicals</SectionLabel>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <TechInputLabel>Legal Entity Name</TechInputLabel>
-                {isEditing ? (
-                  <Input value={formData?.name || ''} onChange={(e) => handleInputChange('name', e.target.value)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-bold" />
-                ) : (
-                  <p className="text-sm font-black text-foreground dark:text-white uppercase tracking-tight">{company?.name}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <TechInputLabel>Register (CNPJ)</TechInputLabel>
-                {isEditing ? (
-                  <Input value={formData?.cnpj || ''} onChange={(e) => handleInputChange('cnpj', e.target.value)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-mono" />
-                ) : (
-                  <div className="h-12 flex items-center gap-3 px-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
-                    <Hash className="h-4 w-4 text-brand-blue/40" />
-                    <span className="text-sm font-bold font-mono tracking-wider">{company?.cnpj ||'NOT_DEFINED'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <TechInputLabel>Corporate DNA (Description)</TechInputLabel>
-              {isEditing ? (
-                <Textarea 
-                  value={formData?.description || ''} 
-                  onChange={(e) => handleInputChange('description', e.target.value)} 
-                  className="min-h-[160px] rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 font-medium leading-relaxed" 
+      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <SectionCard
+          title="Ativo Corporativo da Marca"
+          description={`Atualizado em: ${formatDateTime(currentData.updated_at)}`}
+          icon={ImageIcon}
+          actions={<UploadAction inputId={bannerInputId} onChange={handleBannerUpload}>Alterar imagem</UploadAction>}
+        >
+          <div className="min-w-0 space-y-4">
+            <div className="relative min-h-[180px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+              {currentData.banner_url ? (
+                <Image
+                  src={currentData.banner_url}
+                  alt={`Banner da empresa ${displayText(currentData.name)}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 760px"
                 />
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
-                  <p className="text-sm font-medium text-muted-foreground/80 dark:text-slate-300 leading-relaxed">
-                    {company?.description}
-                  </p>
+                <div className="flex h-full min-h-[180px] flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
+                  <ImageIcon className="h-8 w-8 text-brand-blue" />
+                  <div>
+                    <p className="font-bold text-slate-700">Banner da empresa não configurado</p>
+                    <p className="mt-1 text-sm">Envie uma imagem institucional para destacar o perfil.</p>
+                  </div>
                 </div>
               )}
             </div>
-
-            <div className="grid grid-cols-3 gap-4">
-               {[
-                 { icon: Calendar, label: "Founding", value: company?.founded_year || '-' },
-                 { icon: Users, label: "Capacity", value: company?.employees_count ? `${company.employees_count}` : '-' },
-                 { icon: Shield, label: "Compliance", value: "Verified" }
-               ].map((item, i) => (
-                 <div key={i} className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 text-center group hover:border-brand-blue/20 transition-all">
-                    <item.icon className="h-4 w-4 text-brand-blue/40 mx-auto mb-2 group-hover:text-brand-blue transition-colors" />
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">{item.label}</p>
-                    <p className="text-xs font-black text-foreground dark:text-white uppercase">{item.value}</p>
-                 </div>
-               ))}
+            <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+              <span>Requisitos recomendados: 1280x720px em JPG, PNG, WEBP ou SVG.</span>
+              <span className="font-semibold text-brand-blue">Banner da Empresa</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
 
-        {/* Global Connectivity */}
-        <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-          <CardHeader className="p-6">
-            <SectionLabel>Global Connectivity</SectionLabel>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {[
-                { icon: Phone, label: "Primary Terminal", value: company?.phone, field: 'phone' },
-                { icon: Mail, label: "Digital Inbox", value: company?.email_public, field: 'email_public' },
-                { icon: Globe, label: "Web Portal", value: company?.website, field: 'website' },
-                { icon: MapPin, label: "Operations Hub", value: company?.city, field: 'city' }
-              ].map((conn, i) => (
-                <div key={i} className="space-y-2">
-                  <TechInputLabel>{conn.label}</TechInputLabel>
-                  <div className="h-12 flex items-center justify-between px-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <conn.icon className="h-4 w-4 text-brand-blue/40" />
-                      <span className="text-sm font-bold text-foreground/70 dark:text-white/70 truncate">{conn.value || 'N/A'}</span>
-                    </div>
-                    {conn.value && <ExternalLink className="h-3 w-3 text-muted-foreground/20" />}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-            <div className="space-y-4">
-              <TechInputLabel>Social Sync Endpoints</TechInputLabel>
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { icon: Instagram, label: "INSTA", color: "rose", value: company?.instagram },
-                  { icon: Facebook, label: "FBK", color: "blue", value: company?.facebook },
-                  { icon: Linkedin, label: "LKD", color: "sky", value: company?.linkedin }
-                ].map((social, i) => (
-                  <div key={i} className={cn(
-                    "p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col items-center gap-2 group transition-all",
-                    social.value ? "opacity-100 border-brand-blue/10" : "opacity-30 grayscale"
-                  )}>
-                    <social.icon className="h-5 w-5 text-muted-foreground/40 group-hover:scale-110 transition-transform" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">{social.label}</span>
-                  </div>
-                ))}
+        <SectionCard title="Identidade da Marca" description="Logo, nome público e identificador oficial." icon={BadgeCheck}>
+          <div className="flex min-w-0 flex-col gap-5">
+            <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <Avatar className="h-24 w-24 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                {currentData.logo_url && <AvatarImage src={currentData.logo_url} alt={`Logo da ${displayText(currentData.name)}`} className="object-contain p-3" />}
+                <AvatarFallback className="rounded-2xl bg-blue-50 text-lg font-bold text-brand-blue">
+                  {displayText(currentData.name, 'AS').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h3 className="break-words text-lg font-bold text-slate-950">{displayText(currentData.name)}</h3>
+                <Badge variant="secondary" className="mt-2 rounded-lg bg-blue-50 text-brand-blue">
+                  Identificador oficial
+                </Badge>
+                <p className="mt-3 break-words text-sm text-slate-500">{displayText(currentData.cnpj, 'Identificador oficial não informado')}</p>
               </div>
             </div>
 
-            <div className="p-6 rounded-xl bg-brand-blue/[0.03] border border-brand-blue/10 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-brand-blue/10 flex items-center justify-center">
-                  <Globe className="h-6 w-6 text-brand-blue" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Public Profile SLA</p>
-                  <p className="text-xs font-bold text-muted-foreground">Otimizado para indexação global</p>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                 {[1,2,3].map(i => <div key={i} className="h-1 w-4 rounded-full bg-brand-blue/20" />)}
-              </div>
+            <div className="grid grid-cols-1 gap-3">
+              <InfoItem label="Arquivo atual" value={currentData.logo_url ? 'Logo cadastrada' : NOT_CONFIGURED} icon={FileText} />
+              <InfoItem label="Última atualização" value={formatDateTime(currentData.updated_at)} icon={Calendar} />
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <UploadAction inputId={logoInputId} onChange={handleLogoUpload}>Alterar logo</UploadAction>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleLogoRemovalNotice}
+                className="w-full rounded-lg border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remover logo
+              </Button>
+            </div>
+          </div>
+        </SectionCard>
       </div>
 
-      {/* Operational Logistics */}
-      <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-        <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Operational & Logistics Intelligence
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="md:col-span-2 space-y-6">
-              <div className="space-y-4">
-                <TechInputLabel>Regional Headquarters</TechInputLabel>
-                <div className="p-6 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 group hover:border-brand-blue/20 transition-all">
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
-                       <MapPin className="h-6 w-6 text-brand-blue" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-black text-foreground dark:text-white uppercase leading-tight mb-2">
-                        {company?.address || 'Terminal Address Not Set'}
-                      </p>
-                      <div className="flex items-center gap-4">
-                         <Badge className="bg-slate-200/50 dark:bg-white/5 text-muted-foreground border-none font-black text-[9px] uppercase">{company?.city}</Badge>
-                         <Badge className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] uppercase">{company?.state}</Badge>
+      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+        <SectionCard
+          title="Informações Técnicas Essenciais"
+          description="Dados jurídicos, descrição institucional e conformidade."
+          icon={Building2}
+          actions={
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          }
+        >
+          {isEditing ? (
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="company-name">Nome jurídico</Label>
+                <Input id="company-name" value={formData?.name || ''} onChange={(event) => handleInputChange('name', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-cnpj">CNPJ</Label>
+                <Input id="company-cnpj" value={formData?.cnpj || ''} onChange={(event) => handleInputChange('cnpj', event.target.value)} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="company-description">Descrição corporativa</Label>
+                <Textarea
+                  id="company-description"
+                  value={formData?.description || ''}
+                  onChange={(event) => handleInputChange('description', event.target.value)}
+                  rows={5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-founded">Fundação</Label>
+                <Input
+                  id="company-founded"
+                  type="number"
+                  value={formData?.founded_year ?? ''}
+                  onChange={(event) => handleInputChange('founded_year', handleNumberValue(event.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-employees">Capacidade produtiva</Label>
+                <Input
+                  id="company-employees"
+                  type="number"
+                  value={formData?.employees_count ?? ''}
+                  onChange={(event) => handleInputChange('employees_count', handleNumberValue(event.target.value))}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoItem label="Nome jurídico" value={currentData.name} />
+                <InfoItem label="CNPJ" value={currentData.cnpj} />
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Descrição corporativa</p>
+                <p className="break-words text-sm leading-6 text-slate-700">{displayText(currentData.description)}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <InfoItem label="Fundação" value={currentData.founded_year} icon={Calendar} />
+                <InfoItem label="Capacidade produtiva" value={currentData.employees_count} icon={Users} />
+                <InfoItem label="Conformidade" value={currentData.verified ? 'Verificada' : 'Aguardando verificação'} icon={CheckCircle2} />
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Conectividade Global"
+          description="Canais de contato e presença digital."
+          icon={Globe}
+          actions={
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          }
+        >
+          {isEditing ? (
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="company-phone">Telefone</Label>
+                <Input id="company-phone" value={formData?.phone || ''} onChange={(event) => handleInputChange('phone', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-whatsapp">WhatsApp</Label>
+                <Input id="company-whatsapp" value={formData?.whatsapp || ''} onChange={(event) => handleInputChange('whatsapp', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-email">E-mail</Label>
+                <Input id="company-email" value={formData?.email_public || ''} onChange={(event) => handleInputChange('email_public', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-website">Site institucional</Label>
+                <Input id="company-website" value={formData?.website || ''} onChange={(event) => handleInputChange('website', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-instagram">Instagram</Label>
+                <Input id="company-instagram" value={formData?.instagram || ''} onChange={(event) => handleInputChange('instagram', event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-facebook">Facebook</Label>
+                <Input id="company-facebook" value={formData?.facebook || ''} onChange={(event) => handleInputChange('facebook', event.target.value)} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="company-linkedin">LinkedIn</Label>
+                <Input id="company-linkedin" value={formData?.linkedin || ''} onChange={(event) => handleInputChange('linkedin', event.target.value)} />
+              </div>
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoItem label="Telefone" value={currentData.phone} icon={Phone} />
+                <InfoItem label="E-mail" value={currentData.email_public} icon={Mail} />
+                <InfoItem
+                  label="Site institucional"
+                  value={
+                    currentData.website ? (
+                      <a href={currentData.website} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 text-brand-blue hover:underline">
+                        <span className="break-all">{currentData.website}</span>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      </a>
+                    ) : (
+                      NOT_INFORMED
+                    )
+                  }
+                  icon={Globe}
+                />
+                <InfoItem label="Localização" value={primaryLocation} icon={MapPin} />
+              </div>
+
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Redes sociais</p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <InfoItem label="Instagram" value={currentData.instagram} icon={Instagram} fallback={NOT_CONFIGURED} />
+                  <InfoItem label="Facebook" value={currentData.facebook} icon={Facebook} fallback={NOT_CONFIGURED} />
+                  <InfoItem label="LinkedIn" value={currentData.linkedin} icon={Linkedin} fallback={NOT_CONFIGURED} />
+                </div>
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      </div>
+
+      <SectionCard
+        title="Inteligência Operacional e Logística"
+        description="Endereço, frequência de operação, ticket e SLA de resposta."
+        icon={Activity}
+        actions={
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <MapPin className="mr-2 h-4 w-4" />
+              Atualizar endereço
+            </Button>
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Clock className="mr-2 h-4 w-4" />
+              Configurar SLA
+            </Button>
+          </div>
+        }
+      >
+        {isEditing ? (
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-address">Endereço</Label>
+              <Input id="company-address" value={formData?.address || ''} onChange={(event) => handleInputChange('address', event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-city">Cidade</Label>
+              <Input id="company-city" value={formData?.city || ''} onChange={(event) => handleInputChange('city', event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-state">Estado</Label>
+              <Input id="company-state" value={formData?.state || ''} onChange={(event) => handleInputChange('state', event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-hours">Frequência de operação</Label>
+              <Input id="company-hours" value={formData?.working_hours || ''} onChange={(event) => handleInputChange('working_hours', event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-sla">SLA de resposta</Label>
+              <Input id="company-sla" value={formData?.response_time_sla || ''} onChange={(event) => handleInputChange('response_time_sla', event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-min-ticket">Ticket mínimo</Label>
+              <Input
+                id="company-min-ticket"
+                type="number"
+                value={formData?.minimum_ticket ?? ''}
+                onChange={(event) => handleInputChange('minimum_ticket', handleNumberValue(event.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-max-ticket">Ticket máximo</Label>
+              <Input
+                id="company-max-ticket"
+                type="number"
+                value={formData?.maximum_ticket ?? ''}
+                onChange={(event) => handleInputChange('maximum_ticket', handleNumberValue(event.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-payment">Métodos de pagamento</Label>
+              <Input id="company-payment" value={formData?.payment_methods || ''} onChange={(event) => handleInputChange('payment_methods', event.target.value)} />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-financing">Opções de financiamento</Label>
+              <Input id="company-financing" value={formData?.financing_options || ''} onChange={(event) => handleInputChange('financing_options', event.target.value)} />
+            </div>
+          </div>
+        ) : (
+          <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(240px,0.9fr)_minmax(220px,0.7fr)]">
+            {currentData.address ? (
+              <InfoItem label="Sede regional" value={`${currentData.address} ${primaryLocation !== TO_DEFINE ? `- ${primaryLocation}` : ''}`} icon={MapPin} />
+            ) : (
+              <EmptyState
+                icon={MapPin}
+                title="Endereço não informado"
+                description={primaryLocation}
+                tone="blue"
+                action={
+                  <Button type="button" size="sm" onClick={handleContextEdit} className="rounded-lg bg-brand-blue text-white hover:bg-blue-700">
+                    Atualizar endereço
+                  </Button>
+                }
+              />
+            )}
+
+            <div className="grid min-w-0 grid-cols-1 gap-3">
+              <InfoItem label="Frequência de operação" value={currentData.working_hours} fallback={TO_DEFINE} icon={Clock} />
+              <InfoItem label="Abrangência econômica" value={formatTicketRange(currentData)} icon={DollarSign} />
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <Clock className="h-3.5 w-3.5 text-brand-blue" />
+                SLA de resposta
+              </div>
+              <p className="mb-4 break-words text-sm font-semibold text-slate-950">{displayText(currentData.response_time_sla)}</p>
+              <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue">
+                Configurar SLA
+              </Button>
+            </div>
+          </div>
+        )}
+      </SectionCard>
+
+      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+        <SectionCard
+          title="Capacidade de Atuação"
+          description="Segmentos, serviços e escopo comercial."
+          icon={Wrench}
+          actions={
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Gerenciar serviços
+            </Button>
+          }
+        >
+          {isEditing ? (
+            <div className="min-w-0 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-project-types">Segmentos de mercado</Label>
+                <Textarea
+                  id="company-project-types"
+                  value={listFromValue(formData?.project_types).join(', ')}
+                  onChange={(event) => handleListChange('project_types', event.target.value)}
+                  placeholder="Residencial, Comercial, Rural"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-services">Catálogo de serviços</Label>
+                <Textarea
+                  id="company-services"
+                  value={listFromValue(formData?.services_offered).join(', ')}
+                  onChange={(event) => handleListChange('services_offered', event.target.value)}
+                  placeholder="Instalação, manutenção, projeto, homologação"
+                  rows={4}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-5">
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Segmentos de mercado</p>
+                <ListBadges items={projectTypes} empty="Nenhum segmento cadastrado." />
+              </div>
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Catálogo de serviços</p>
+                {servicesOffered.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {servicesOffered.map((service) => (
+                      <div key={service} className="rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700">
+                        {service}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <EmptyState
+                    icon={Wrench}
+                    title="Nenhum serviço cadastrado"
+                    description="Adicione serviços para deixar o perfil mais completo."
+                    tone="slate"
+                    action={
+                      <Button type="button" size="sm" variant="outline" onClick={handleContextEdit} className="rounded-lg text-brand-blue">
+                        Gerenciar serviços
+                      </Button>
+                    }
+                  />
+                )}
               </div>
             </div>
+          )}
+        </SectionCard>
 
-            <div className="space-y-4 text-center md:text-left">
-              <TechInputLabel>Working Frequency</TechInputLabel>
-              <div className="flex items-center gap-4 mb-4">
-                <Clock className="h-5 w-5 text-brand-blue/40" />
-                <span className="text-sm font-black text-foreground/80 dark:text-white/80 uppercase tracking-tight">{company?.working_hours || 'TBD'}</span>
-              </div>
-              <TechInputLabel>Economic Bracket</TechInputLabel>
-              <div className="flex items-center gap-4">
-                <DollarSign className="h-5 w-5 text-emerald-600/40" />
-                <span className="text-sm font-black text-emerald-600 uppercase tracking-tight font-mono">
-                  {company?.minimum_ticket ? `BRL ${company.minimum_ticket.toLocaleString()} - ${company.maximum_ticket?.toLocaleString()}` : 'OPEN_TICKET'}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-               <div>
-                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">Response SLA</p>
-                 <p className="text-2xl font-black text-brand-blue font-mono tracking-tighter">{company?.response_time_sla || 'N/A'}</p>
-               </div>
-               <div className="h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                 <motion.div 
-                   className="h-full bg-brand-blue shadow-[0_0_8px_rgba(37,99,235,0.4)]"
-                   initial={{ width: 0 }}
-                   animate={{ width: '85%' }}
-                 />
-               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Capabilities & Strategy */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-           <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-             <SectionLabel>Portfolio Capability</SectionLabel>
-           </CardHeader>
-           <CardContent className="p-8 space-y-8">
-              <div className="space-y-4">
-                <TechInputLabel>Market Segments</TechInputLabel>
-                <div className="flex flex-wrap gap-2">
-                  {(company?.project_types || []).map((t, i) => (
-                    <Badge key={i} className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] uppercase tracking-widest px-4 h-8 rounded-xl shadow-sm">
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-4">
-                <TechInputLabel>Service Catalog</TechInputLabel>
-                <div className="flex flex-wrap gap-2">
-                  {(company?.services_offered || []).map((s, i) => (
-                    <Badge key={i} variant="outline" className="border-slate-200 dark:border-white/10 text-muted-foreground font-black text-[9px] uppercase tracking-widest px-4 h-8 rounded-xl">
-                      {s}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-           </CardContent>
-         </Card>
-
-         <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-           <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-             <SectionLabel>Market Distinction</SectionLabel>
-           </CardHeader>
-           <CardContent className="p-8 space-y-8">
+        <SectionCard
+          title="Certificações e Reconhecimento"
+          description="Certificações técnicas, prêmios e validações comerciais."
+          icon={Award}
+          actions={
+            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          }
+        >
+          {isEditing ? (
+            <div className="min-w-0 space-y-4">
               <div className="space-y-2">
-                <TechInputLabel>Technical Certifications</TechInputLabel>
-                <div className="p-6 rounded-xl bg-brand-green/[0.03] border border-emerald-500/10 flex items-start gap-4">
-                   <Shield className="h-6 w-6 text-brand-green shrink-0" />
-                   <p className="text-xs font-bold text-emerald-900/60 dark:text-brand-green/80 leading-relaxed">
-                     {company?.certifications || 'No active certifications logged.'}
-                   </p>
-                </div>
+                <Label htmlFor="company-certifications">Certificações técnicas</Label>
+                <Textarea
+                  id="company-certifications"
+                  value={formData?.certifications || ''}
+                  onChange={(event) => handleInputChange('certifications', event.target.value)}
+                  placeholder="Ex.: ISO 9001, certificações de fabricantes, treinamentos técnicos"
+                  rows={4}
+                />
               </div>
               <div className="space-y-2">
-                <TechInputLabel>Awards & Validations</TechInputLabel>
-                <div className="p-6 rounded-xl bg-brand-yellow/[0.03] border border-brand-yellow/10 flex items-start gap-4">
-                   <Award className="h-6 w-6 text-brand-yellow shrink-0" />
-                   <p className="text-xs font-bold text-yellow-900/60 dark:text-brand-yellow/80 leading-relaxed">
-                     {company?.awards || 'Awaiting formal market validation.'}
-                   </p>
-                </div>
+                <Label htmlFor="company-awards">Prêmios e validações</Label>
+                <Textarea
+                  id="company-awards"
+                  value={formData?.awards || ''}
+                  onChange={(event) => handleInputChange('awards', event.target.value)}
+                  placeholder="Ex.: prêmio regional, reconhecimento de fabricante"
+                  rows={4}
+                />
               </div>
-           </CardContent>
-         </Card>
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-4">
+              {certifications.length > 0 ? (
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Certificações técnicas</p>
+                  <ListBadges items={certifications} empty="Nenhuma certificação registrada." />
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Shield}
+                  title="Nenhuma certificação registrada"
+                  description="Adicione certificações para aumentar a confiança no perfil."
+                  tone="green"
+                  action={
+                    <Button type="button" size="sm" variant="outline" onClick={handleContextEdit} className="rounded-lg bg-white text-emerald-700 hover:bg-emerald-50">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Adicionar certificação
+                    </Button>
+                  }
+                />
+              )}
+
+              {awards.length > 0 ? (
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Prêmios e validações</p>
+                  <ListBadges items={awards} empty="Nenhum prêmio cadastrado." />
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Award}
+                  title="Nenhum prêmio cadastrado"
+                  description="Registre prêmios, selos e reconhecimentos comerciais."
+                  tone="amber"
+                  action={
+                    <Button type="button" size="sm" variant="outline" onClick={handleContextEdit} className="rounded-lg bg-white text-amber-700 hover:bg-amber-50">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Adicionar prêmio
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          )}
+        </SectionCard>
       </div>
 
-      {/* Conversion Fundamentals */}
-      <Card className="clay-precision bg-card dark:bg-[#0F172A] border-none">
-        <CardHeader className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Conversion Fundamentals (Proof of Value)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <TechInputLabel>Installation Warranty (Years)</TechInputLabel>
-              {isEditing ? (
-                <Input type="number" min="0" value={formData?.installation_warranty_years || ''} onChange={(e) => handleInputChange('installation_warranty_years', parseInt(e.target.value) || 0)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
-              ) : (
-                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.installation_warranty_years ? `${company.installation_warranty_years} Years` : 'Not Set'}</p>
-              )}
+      <SectionCard
+        title="Fundamentos de Conversão / Prova de Valor"
+        description="Dados que ajudam clientes a avaliar confiança, entrega e pós-venda."
+        icon={Shield}
+        actions={
+          <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </Button>
+        }
+      >
+        {isEditing ? (
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="company-warranty">Garantia de instalação (anos)</Label>
+              <Input
+                id="company-warranty"
+                type="number"
+                value={formData?.installation_warranty_years ?? ''}
+                onChange={(event) => handleInputChange('installation_warranty_years', handleNumberValue(event.target.value))}
+              />
             </div>
-            
-            <div className="space-y-4">
-              <TechInputLabel>Delivered Projects Score</TechInputLabel>
-              {isEditing ? (
-                <Input type="number" min="0" value={formData?.delivered_projects_score || ''} onChange={(e) => handleInputChange('delivered_projects_score', parseInt(e.target.value) || 0)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
-              ) : (
-                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.delivered_projects_score || 0}</p>
-              )}
+            <div className="space-y-2">
+              <Label htmlFor="company-delivered">Projetos entregues</Label>
+              <Input
+                id="company-delivered"
+                type="number"
+                value={formData?.delivered_projects_score ?? ''}
+                onChange={(event) => handleInputChange('delivered_projects_score', handleNumberValue(event.target.value))}
+              />
             </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-equipment">Marcas de equipamentos</Label>
+              <Textarea
+                id="company-equipment"
+                value={listFromValue(formData?.equipment_brands).join(', ')}
+                onChange={(event) => handleListChange('equipment_brands', event.target.value)}
+                placeholder="Ex.: WEG, Fronius, Canadian Solar"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-post-sales">Capacidade de pós-venda e O&M</Label>
+              <Textarea
+                id="company-post-sales"
+                value={listFromValue(formData?.post_sales_capacity).join(', ')}
+                onChange={(event) => handleListChange('post_sales_capacity', event.target.value)}
+                placeholder="Ex.: monitoramento, manutenção preventiva, suporte remoto"
+                rows={3}
+              />
+            </div>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700 sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={Boolean(formData?.engineering_insurance)}
+                onChange={(event) => handleInputChange('engineering_insurance', event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Seguro de risco de engenharia ativo
+            </label>
+          </div>
+        ) : (
+          <div className="min-w-0 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <InfoItem label="Garantia de instalação" value={currentData.installation_warranty_years ? `${currentData.installation_warranty_years} ano(s)` : NOT_INFORMED} icon={Shield} />
+              <InfoItem label="Seguro de risco de engenharia" value={currentData.engineering_insurance ? 'Sim' : 'Não'} icon={BadgeCheck} />
+              <InfoItem label="Projetos entregues" value={currentData.delivered_projects_score ?? 0} icon={Activity} />
+              <InfoItem label="Marcas de equipamentos" value={equipmentBrands.length ? equipmentBrands.join(', ') : NOT_INFORMED} icon={FileText} />
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Capacidade de pós-venda e O&M</p>
+              <ListBadges items={postSalesCapacity} empty="Não informado" />
+            </div>
+            <Alert className="rounded-xl border-blue-100 bg-blue-50 text-brand-blue">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Mantenha estas informações atualizadas para aumentar sua conversão e a confiança no ecossistema Avalia Solar.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+      </SectionCard>
 
-            <div className="space-y-4">
-              <TechInputLabel>Engineering Risk Insurance</TechInputLabel>
-              {isEditing ? (
-                <div className="flex items-center gap-2 h-12">
-                  <input type="checkbox" checked={!!formData?.engineering_insurance} onChange={(e) => handleInputChange('engineering_insurance', e.target.checked)} className="h-5 w-5 rounded border-slate-300 text-brand-blue focus:ring-brand-blue" />
-                  <span className="text-sm font-bold text-muted-foreground">Enabled</span>
-                </div>
-              ) : (
-                <p className="text-sm font-black text-foreground dark:text-white uppercase">{company?.engineering_insurance ? 'Yes' : 'No'}</p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <TechInputLabel>Equipment Brands (Tier 1)</TechInputLabel>
-              {isEditing ? (
-                <Input placeholder="WEG, Fronius, Growatt (comma separated)" value={formData?.equipment_brands?.join(', ') || ''} onChange={(e) => handleInputChange('equipment_brands', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {(company?.equipment_brands || []).length > 0 ? company?.equipment_brands?.map((brand, i) => (
-                    <Badge key={i} variant="outline" className="text-[9px] uppercase tracking-widest border-slate-200 dark:border-white/10 text-muted-foreground">{brand}</Badge>
-                  )) : <p className="text-sm font-black text-muted-foreground uppercase">Not Set</p>}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4 md:col-span-2">
-              <TechInputLabel>Post-Sales & O&M Capacity</TechInputLabel>
-              {isEditing ? (
-                <Input placeholder="Cleaning, Monitoring, Maintenance (comma separated)" value={formData?.post_sales_capacity?.join(', ') || ''} onChange={(e) => handleInputChange('post_sales_capacity', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} className="h-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10" />
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {(company?.post_sales_capacity || []).length > 0 ? company?.post_sales_capacity?.map((cap, i) => (
-                    <Badge key={i} variant="outline" className="text-[9px] uppercase tracking-widest bg-brand-blue/10 border-none text-brand-blue px-4 h-8 rounded-xl">{cap}</Badge>
-                  )) : <p className="text-sm font-black text-muted-foreground uppercase">Not Set</p>}
-                </div>
-              )}
+      {isEditing && (
+        <div className="sticky bottom-4 z-10 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">As alterações serão enviadas para aprovação antes de serem publicadas.</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={handleCancelEditing} disabled={saving} className="rounded-lg">
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="rounded-lg bg-brand-blue text-white hover:bg-blue-700">
+                <Save className="mr-2 h-4 w-4" />
+                {saving ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }
