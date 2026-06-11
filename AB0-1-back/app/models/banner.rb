@@ -90,6 +90,7 @@ class Banner < ApplicationRecord
 
   # === Callbacks ===
   before_validation :ensure_dimensions
+  before_validation :normalize_locations
   before_save :sync_legacy_category_id
   after_save :invalidate_cache
   after_destroy :invalidate_cache
@@ -129,7 +130,7 @@ class Banner < ApplicationRecord
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[category_id company_id created_at id image_url title updated_at link active sponsored width height
-       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at]
+       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
   end
 
   def self.ransackable_associations(_auth_object = nil)
@@ -206,6 +207,26 @@ class Banner < ApplicationRecord
     return if width.present? && height.present?
 
     self.width, self.height = default_dimensions_for_position(position)
+  end
+
+  def target_states=(val)
+    val = val.split(',').map(&:strip) if val.is_a?(String)
+    super(val)
+  end
+
+  def target_cities=(val)
+    val = val.split(',').map(&:strip) if val.is_a?(String)
+    super(val)
+  end
+
+  def normalize_locations
+    if self.class.column_names.include?('target_states') && target_states.is_a?(Array)
+      self.target_states = target_states.reject(&:blank?).map { |s| s.to_s.strip.upcase }.uniq
+    end
+    
+    if self.class.column_names.include?('target_cities') && target_cities.is_a?(Array)
+      self.target_cities = target_cities.reject(&:blank?).map { |c| c.to_s.strip }.uniq
+    end
   end
 
   def default_dimensions_for_position(pos)

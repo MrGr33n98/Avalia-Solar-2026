@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_02_130000) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_02_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -337,6 +337,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_02_130000) do
     t.text "rejected_reason"
     t.integer "width"
     t.integer "height"
+    t.string "target_states", default: [], array: true
+    t.string "target_cities", default: [], array: true
     t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "((active = true) AND ((moderation_status)::text = 'approved'::text))"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"

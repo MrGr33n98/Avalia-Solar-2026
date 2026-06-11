@@ -22,6 +22,8 @@ interface UseBannersQueryOptions {
   category_id?: number | string;
   company_id?: number | string;
   slot_key?: string;
+  state?: string;
+  city?: string;
   enabled?: boolean;
   initialData?: Banner[];
 }
@@ -39,12 +41,14 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     category_id, 
     company_id, 
     slot_key, 
+    state,
+    city,
     enabled = true,
     initialData 
   } = options;
 
   return useQuery<Banner[]>({
-    queryKey: ['banners', { position, limit, category_id, company_id, slot_key }],
+    queryKey: ['banners', { position, limit, category_id, company_id, slot_key, state, city }],
     queryFn: async () => {
       const params = new URLSearchParams();
       
@@ -53,6 +57,8 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (category_id) params.append('category_id', String(category_id));
       if (company_id) params.append('company_id', String(company_id));
       if (slot_key) params.append('slot_key', slot_key);
+      if (state) params.append('state', state);
+      if (city) params.append('city', city);
 
       const response = await api.request<Banner[]>({
         url: `/banners?${params.toString()}`,

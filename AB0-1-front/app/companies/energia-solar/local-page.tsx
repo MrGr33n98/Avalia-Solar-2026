@@ -25,6 +25,7 @@ import {
 } from '@/lib/api-client';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
 import { SITE, absoluteUrl } from '@/lib/site';
+import { CategoryCarousel } from './CategoryCarousel';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -196,50 +197,7 @@ function LocationLabel({ data }: { data: LocalSolarPageResponse }) {
   return <>{data.location.state_name}</>;
 }
 
-function ProjectTypeLinks({ data, searchParams }: { data: LocalSolarPageResponse; searchParams?: SearchParams }) {
-  const selected = selectedProjectTypes(data);
-  const projectTypes = data.project_types || [];
-
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-slate-950">Navegue por categoria</h2>
-        <Link href={data.location.canonical_path} className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
-          Ver todas
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-      <div
-        aria-label="Categorias locais por segmento"
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]"
-      >
-        {projectTypes.map((projectType) => {
-          const active = selected.includes(projectType.name);
-          const { iconSrc } = projectTypeVisualFor(projectType.name);
-          return (
-            <Link
-              key={projectType.name}
-              href={`${data.location.canonical_path}${buildQuery(searchParams, { project_types: active ? null : projectType.name, page: null })}`}
-              className={`min-h-[132px] w-[132px] shrink-0 snap-start rounded-lg border bg-white p-3 text-center shadow-sm transition hover:border-blue-200 hover:shadow-md sm:w-[146px] ${
-                active ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
-              }`}
-            >
-              <div className="relative mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                {iconSrc ? (
-                  <Image src={iconSrc} alt={projectType.name} fill sizes="56px" className="object-contain p-1" unoptimized />
-                ) : (
-                  <Building2 className="h-6 w-6" />
-                )}
-              </div>
-              <p className="line-clamp-2 min-h-8 text-xs font-bold leading-4 text-slate-900">{projectType.name}</p>
-              <p className="mt-1 text-[11px] text-slate-500">{companyCountLabel(projectType.companies_count)}</p>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+// The ProjectTypeLinks component was extracted to CategoryCarousel.tsx
 
 function FilterSidebar({ data, searchParams }: { data: LocalSolarPageResponse; searchParams?: SearchParams }) {
   const selected = selectedProjectTypes(data);
@@ -396,6 +354,8 @@ function FilterSidebar({ data, searchParams }: { data: LocalSolarPageResponse; s
       <BannerByLocation
         location="companies_right_rail"
         limit={1}
+        state={input.state}
+        city={input.city || undefined}
         className="rounded-lg"
       />
     </aside>
@@ -552,12 +512,14 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
       </section>
 
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        {(data.project_types || []).length > 0 && <ProjectTypeLinks data={data} searchParams={input.searchParams} />}
+        {(data.project_types || []).length > 0 && <CategoryCarousel data={data} searchParams={input.searchParams} />}
 
         <BannerByLocation
           location="companies_top"
           limit={5}
           categoryId={selectedCategoryIds(data)[0]}
+          state={input.state}
+          city={input.city || undefined}
           className="rounded-lg"
         />
 

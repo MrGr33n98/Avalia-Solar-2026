@@ -6,6 +6,8 @@ class Api::V1::BannersController < Api::V1::BaseController
   #   - slot_key: string (optional) - Specific slot targeting (e.g., 'company_overview_inline')
   #   - company_id: integer (optional) - Prefer banners targeted to a company but include global ones
   #   - limit: integer (optional) - Limit number of results
+  #   - state: string (optional) - Filter banners targeted to a specific state or empty
+  #   - city: string (optional) - Filter banners targeted to a specific city or empty
   #
   # Fase 1: Implementa cache hierárquico Redis com TTL de 5 minutos
   # Performance: 90-95% redução de queries ao banco
@@ -58,6 +60,17 @@ class Api::V1::BannersController < Api::V1::BaseController
       end
     end
 
+    # Filtro por estado e cidade (usando array operations do PostgreSQL)
+    if params[:state].present? && ::Banner.column_names.include?('target_states')
+      state = params[:state].to_s.strip.upcase
+      @banners = @banners.where("target_states = '{}' OR target_states IS NULL OR ? = ANY(target_states)", state)
+    end
+
+    if params[:city].present? && ::Banner.column_names.include?('target_cities')
+      city = params[:city].to_s.strip
+      @banners = @banners.where("target_cities = '{}' OR target_cities IS NULL OR ? = ANY(target_cities)", city)
+    end
+
     # Ordenação por prioridade (Fase 1: implementa uso do campo priority)
     # Menor priority = maior importância
     # Sponsored banners têm preferência
@@ -85,7 +98,7 @@ class Api::V1::BannersController < Api::V1::BaseController
   # Gera chave de cache determinística baseada nos parâmetros
   # Formato: banners/v1/{hash_dos_params}
   def generate_cache_key
-    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit)
+    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city)
                         .to_h
                         .sort
                         .to_h

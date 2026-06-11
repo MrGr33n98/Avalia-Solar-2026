@@ -43,7 +43,7 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
         </div>
 
         {projectTypes.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {projectTypes.slice(0, 5).map((type, index) => {
               const {
                 iconSrc,
@@ -54,34 +54,35 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/30 overflow-hidden hover:shadow-md hover:border-slate-200 transition-all duration-300 group flex flex-col justify-between"
+                  className="rounded-xl border border-slate-100 bg-slate-50/30 overflow-hidden hover:shadow-md hover:border-slate-200 transition-all duration-300 group flex flex-col justify-between"
                 >
-                  <div className={`h-24 w-full bg-gradient-to-br ${bgGradient} relative flex items-center justify-center p-4`}>
-                    <div className="bg-white p-3 rounded-2xl shadow-md group-hover:scale-115 transition-transform flex items-center justify-center relative w-14 h-14 border border-slate-100">
+                  <div className={`h-14 w-full bg-gradient-to-br ${bgGradient} relative flex items-center justify-center p-2`}>
+                    <div className="bg-white p-1.5 rounded-xl shadow-md group-hover:scale-110 transition-transform flex items-center justify-center relative w-10 h-10 border border-slate-100">
                       {iconSrc ? (
                         <Image
                           src={iconSrc}
                           alt={type}
                           fill
-                          className="object-contain p-2"
+                          className="object-contain p-1"
+                          unoptimized
                         />
                       ) : (
-                        <Zap className="h-6 w-6 text-blue-600 fill-current" />
+                        <Zap className="h-5 w-5 text-blue-600 fill-current" />
                       )}
                     </div>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div className="p-3 flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-700 transition-colors uppercase">
+                      <h4 className="text-[11px] font-black text-slate-800 tracking-tight group-hover:text-blue-700 transition-colors uppercase line-clamp-1">
                         {type}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      <p className="text-[10px] text-slate-500 mt-1 leading-snug line-clamp-2">
                         {description}
                       </p>
                     </div>
-                    <div className="mt-4 flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                      <Award className="h-3.5 w-3.5 text-blue-500" />
-                      Padrão de Qualidade
+                    <div className="mt-3 flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-wide">
+                      <Award className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">Qualidade</span>
                     </div>
                   </div>
                 </div>

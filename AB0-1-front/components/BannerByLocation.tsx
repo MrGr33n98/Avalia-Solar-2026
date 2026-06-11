@@ -27,6 +27,8 @@ interface BannerByLocationProps {
   slotKey?: string;
   categoryId?: number | string;
   companyId?: number | string;
+  state?: string;
+  city?: string;
   initialBanners?: Banner[];
 }
 
@@ -42,6 +44,8 @@ export function BannerByLocation({
   slotKey,
   categoryId,
   companyId,
+  state,
+  city,
   initialBanners
 }: BannerByLocationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +56,8 @@ export function BannerByLocation({
     slot_key: slotKey,
     category_id: categoryId,
     company_id: companyId,
+    state,
+    city,
     initialData: initialBanners
   });
 
