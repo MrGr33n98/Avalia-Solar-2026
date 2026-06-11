@@ -169,14 +169,11 @@ ActiveAdmin.register Company do
 
       if Company.column_names.include?('effect')
         f.inputs 'Visual Effects Preview' do
-          f.template.concat(
-            f.template.content_tag(
-              :div,
-              '',
-              class: 'company-card admin-preview',
-              data: { controller: 'effect', 'effect-active-value': f.object.effect }
-            )
-          )
+          li do
+            div class: 'company-card admin-preview', data: { controller: 'effect', 'effect-active-value': f.object.effect } do
+              ''
+            end
+          end
         end
       end
     end

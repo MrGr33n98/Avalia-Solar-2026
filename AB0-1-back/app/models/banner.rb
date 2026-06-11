@@ -210,22 +210,24 @@ class Banner < ApplicationRecord
   end
 
   def target_states=(val)
-    val = val.split(',').map(&:strip) if val.is_a?(String)
-    super(val)
+    val = val.dup if val.is_a?(String) && val.frozen?
+    val = val.split(',') if val.is_a?(String)
+    super(Array(val).map(&:to_s).map(&:strip).reject(&:blank?))
   end
 
   def target_cities=(val)
-    val = val.split(',').map(&:strip) if val.is_a?(String)
-    super(val)
+    val = val.dup if val.is_a?(String) && val.frozen?
+    val = val.split(',') if val.is_a?(String)
+    super(Array(val).map(&:to_s).map(&:strip).reject(&:blank?))
   end
 
   def normalize_locations
-    if self.class.column_names.include?('target_states') && target_states.is_a?(Array)
-      self.target_states = target_states.reject(&:blank?).map { |s| s.to_s.strip.upcase }.uniq
+    if self.class.column_names.include?('target_states')
+      self.target_states = Array(target_states).map { |s| s.to_s.strip.upcase }.reject(&:blank?).uniq
     end
     
-    if self.class.column_names.include?('target_cities') && target_cities.is_a?(Array)
-      self.target_cities = target_cities.reject(&:blank?).map { |c| c.to_s.strip }.uniq
+    if self.class.column_names.include?('target_cities')
+      self.target_cities = Array(target_cities).map { |c| c.to_s.strip }.reject(&:blank?).uniq
     end
   end
 

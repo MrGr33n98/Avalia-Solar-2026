@@ -102,11 +102,11 @@ ActiveAdmin.register Banner do
                                label: 'Exibir nestas categorias',
                                hint: 'Deixe vazio para exibição global (se a posição permitir).'
           f.input :target_states, as: :string, 
-                                  input_html: { value: f.object.target_states&.join(', ') },
+                                  input_html: { value: Array(f.object.target_states).join(', ') },
                                   label: 'Estados Alvo (Sigla)',
                                   hint: 'Separe múltiplos estados por vírgula. Ex: SP, RJ. Deixe vazio para todos.'
           f.input :target_cities, as: :string, 
-                                  input_html: { value: f.object.target_cities&.join(', ') },
+                                  input_html: { value: Array(f.object.target_cities).join(', ') },
                                   label: 'Cidades Alvo',
                                   hint: 'Separe múltiplas cidades por vírgula. Ex: São Paulo, Campinas. Deixe vazio para todas.'
           f.input :sponsored, label: 'Banner Patrocinado?'
@@ -196,10 +196,10 @@ ActiveAdmin.register Banner do
         banner.categories.pluck(:name).join(', ')
       end
       row :target_states do |banner|
-        banner.target_states&.join(', ')
+        Array(banner.target_states).join(', ')
       end
       row :target_cities do |banner|
-        banner.target_cities&.join(', ')
+        Array(banner.target_cities).join(', ')
       end
       row :banner_type
       row :dimensions do |banner|
