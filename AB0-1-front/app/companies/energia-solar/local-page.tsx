@@ -544,13 +544,6 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                     {data.pagination.total} resultado(s) para os filtros atuais.
                   </p>
                 </div>
-                <Link
-                  href={`${data.location.canonical_path}${buildQuery(input.searchParams, { page: null })}`}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-700"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Atualizar filtros
-                </Link>
               </div>
 
               {data.companies.length > 0 ? (

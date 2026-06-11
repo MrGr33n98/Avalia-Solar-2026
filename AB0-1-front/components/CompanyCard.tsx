@@ -351,36 +351,37 @@ export default function CompanyCard({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
       )}
 
-      {/* ── Sponsored Badge ────────────────────────────────────── */}
-      {company.sponsored && (
-        <div className="absolute top-2 right-2 z-30">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[10px] font-semibold py-0 h-5 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-help shadow-sm">
-                  PATROCINADO <Info className="ml-0.5 w-3 h-3" />
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
-                <p>Destaque Patrocinado – empresa que investe na qualidade e visibilidade no AvaliaSolar.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
+      {/* ── Badges Group (Top Left) ────────────────────────────── */}
+      <div className="absolute top-2 left-2 z-30 flex items-center gap-2 flex-wrap pr-12 pointer-events-none">
+        {company.sponsored && (
+          <div className="pointer-events-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-help shadow-sm tracking-wide">
+                    PATROCINADO <Info className="ml-0.5 w-3 h-3 text-slate-400" />
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
+                  <p>Destaque Patrocinado – empresa que investe na qualidade e visibilidade no AvaliaSolar.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
 
-      {/* ── Rank Badge ─────────────────────────────────────────── */}
-      {rank && rank <= 3 && (
-        <div className={cn(
-          "absolute top-2 left-2 z-30 flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight shadow-sm border",
-          rank === 1 ? "bg-amber-50 text-amber-700 border-amber-200/80" :
-          rank === 2 ? "bg-slate-50 text-slate-600 border-slate-200/80" :
-          "bg-orange-50 text-orange-600 border-orange-200/80"
-        )}>
-          <Trophy className="w-3 h-3 fill-current" />
-          Top {rank}
-        </div>
-      )}
+        {rank && rank <= 3 && (
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight shadow-sm border pointer-events-auto",
+            rank === 1 ? "bg-amber-50 text-amber-700 border-amber-200/80" :
+            rank === 2 ? "bg-slate-50 text-slate-600 border-slate-200/80" :
+            "bg-orange-50 text-orange-600 border-orange-200/80"
+          )}>
+            <Trophy className="w-3 h-3 fill-current" />
+            Top {rank}
+          </div>
+        )}
+      </div>
 
       {/* ── Banner + Overlay ───────────────────────────────────── */}
       <div className={cn("relative", compact ? "px-3 pt-2.5" : "px-3.5 pt-3")}>
@@ -478,22 +479,22 @@ export default function CompanyCard({
           {/* Company name */}
           <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
             <h3 className={cn(
-              'font-bold tracking-tight text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight',
-              compact ? 'text-[13px]' : 'text-base'
+              'font-bold tracking-tight text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight hover:text-blue-700 transition-colors',
+              compact ? 'text-sm' : 'text-lg'
             )}>
               {name}
             </h3>
           </Link>
 
           {/* Verified + Location row */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
             {company.verified && (
-              <PremiumBadge className="h-6" />
+              <PremiumBadge className="h-5" />
             )}
             {(city || state) && (
-              <div className="flex items-center gap-0.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-600 flex-shrink-0" />
-                <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
+              <div className="flex items-center gap-1 text-[12px] text-slate-500 dark:text-slate-400 truncate">
+                <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+                <span className="truncate font-medium">{city}{city && state ? ', ' : ''}{state}</span>
               </div>
             )}
           </div>
@@ -539,8 +540,8 @@ export default function CompanyCard({
         <div
           ref={ctaRef}
           className={cn(
-            "mt-auto pt-2.5 print:hidden",
-            compact ? "flex items-center gap-1.5" : "grid grid-cols-1 gap-1.5"
+            "mt-auto pt-3 print:hidden",
+            compact ? "flex items-center gap-2" : "flex flex-col gap-2"
           )}
         >
           {canRequestQuote && (
@@ -611,7 +612,7 @@ export default function CompanyCard({
 
         {/* ── Capterra-style Compare Checkbox ──────────────── */}
         <div
-          className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 print:hidden"
+          className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 print:hidden"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
