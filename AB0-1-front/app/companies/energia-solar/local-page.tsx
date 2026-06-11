@@ -197,16 +197,14 @@ function LocationLabel({ data }: { data: LocalSolarPageResponse }) {
   return <>{data.location.state_name}</>;
 }
 
-// The ProjectTypeLinks component was extracted to CategoryCarousel.tsx
-
-function FilterSidebar({ data, searchParams }: { data: LocalSolarPageResponse; searchParams?: SearchParams }) {
+function FilterSidebar({ data, searchParams, input }: { data: LocalSolarPageResponse; searchParams?: SearchParams; input: LocalSolarPageInput }) {
   const selected = selectedProjectTypes(data);
   const projectTypes = data.project_types || [];
   const minRating = String(data.filters.min_rating || '');
   const sort = data.filters.sort || 'recommended';
 
   return (
-    <aside className="space-y-4">
+    <aside className="space-y-6">
       <form action={data.location.canonical_path} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Filter className="h-4 w-4 text-blue-700" />
@@ -433,202 +431,202 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
         />
       ))}
 
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
-          <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="hover:text-blue-700">Início</Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link href="/companies" className="hover:text-blue-700">Empresas</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="font-medium text-slate-900"><LocationLabel data={data} /></span>
-          </nav>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+          <Link href="/" className="hover:text-blue-700">Início</Link>
+          <ChevronRight className="h-4 w-4" />
+          <Link href="/companies" className="hover:text-blue-700">Empresas</Link>
+          <ChevronRight className="h-4 w-4" />
+          <span className="font-medium text-slate-900"><LocationLabel data={data} /></span>
+        </nav>
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_560px] lg:items-center">
-            <div>
-              <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                Encontre empresas de energia solar em {locality}
-              </h1>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-                Compare integradores, avaliações, categorias, serviços oferecidos e solicite orçamento com empresas que atendem sua região.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          <div className="w-full lg:w-[280px] xl:w-[320px] shrink-0">
+            <FilterSidebar data={data} searchParams={input.searchParams} input={input} />
+          </div>
+
+          <div className="flex-1 min-w-0 space-y-8">
+            <div className="grid gap-8 xl:grid-cols-[1fr_400px] xl:items-center">
+              <div>
+                <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                  Encontre empresas de energia solar em {locality}
+                </h1>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+                  Compare integradores, avaliações, categorias, serviços oferecidos e solicite orçamento com empresas que atendem sua região.
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="#todas"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Solicitar orçamento
+                  </Link>
+                  <Link
+                    href="#todas"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-700"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Comparar empresas
+                  </Link>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-sky-50 to-blue-100 shadow-sm">
+                <div className="grid gap-5 p-5 sm:grid-cols-[1fr_220px]">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-blue-700" />
+                      <p className="text-xl font-bold text-slate-950">{locationTitle}/{data.location.state}</p>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-700">
+                      {data.stats.total_companies} empresas encontradas<br />
+                      {data.stats.verified_companies} verificadas · {data.stats.featured_companies} em destaque
+                    </p>
+                    <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
+                        <Star className="mx-auto h-5 w-5 text-amber-500" />
+                        <p className="mt-1 text-xs font-semibold text-slate-700">Ranking</p>
+                      </div>
+                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
+                        <Building2 className="mx-auto h-5 w-5 text-blue-600" />
+                        <p className="mt-1 text-xs font-semibold text-slate-700">Local</p>
+                      </div>
+                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
+                        <ShieldCheck className="mx-auto h-5 w-5 text-emerald-600" />
+                        <p className="mt-1 text-xs font-semibold text-slate-700">Verificadas</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden min-h-44 items-center justify-center gap-3 rounded-xl bg-white/40 p-4 sm:flex">
+                    {topProjectTypes.map((projectType) => {
+                      const { iconSrc } = projectTypeVisualFor(projectType.name);
+                      return iconSrc ? (
+                        <div key={projectType.name} className="relative h-16 w-16 rounded-xl bg-white shadow-sm">
+                          <Image src={iconSrc} alt={projectType.name} fill sizes="64px" className="object-contain p-2" unoptimized />
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {(data.project_types || []).length > 0 && <CategoryCarousel data={data} searchParams={input.searchParams} />}
+
+            <BannerByLocation
+              location="companies_top"
+              limit={5}
+              categoryId={selectedCategoryIds(data)[0]}
+              state={input.state}
+              city={input.city || undefined}
+              className="rounded-lg"
+            />
+
+            {data.featured_companies.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-bold text-slate-950">Empresas em destaque</h2>
+                  <Link href="#todas" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+                    Ver todas
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+                <CompanyGrid companies={data.featured_companies} />
+              </section>
+            )}
+
+            <section id="todas" className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-950">Todas as empresas</h2>
+                  <p className="text-sm text-slate-600">
+                    {data.pagination.total} resultado(s) para os filtros atuais.
+                  </p>
+                </div>
                 <Link
-                  href="#todas"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
+                  href={`${data.location.canonical_path}${buildQuery(input.searchParams, { page: null })}`}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-700"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
-                  Solicitar orçamento
+                  Atualizar filtros
                 </Link>
+              </div>
+
+              {data.companies.length > 0 ? (
+                <>
+                  <CompanyGrid companies={data.companies} />
+                  <Pagination data={data} searchParams={input.searchParams} />
+                </>
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+                  <p className="text-lg font-semibold text-slate-950">Nenhuma empresa encontrada com estes filtros.</p>
+                  <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Ajuste categorias, nota mínima ou busca por nome para ver outras opções em {locality}.
+                  </p>
+                  <Link
+                    href={data.location.canonical_path}
+                    className="mt-5 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+                  >
+                    Limpar filtros
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-lg bg-gradient-to-r from-emerald-700 to-cyan-700 p-6 text-white">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Compare empresas e receba orçamentos grátis</h2>
+                  <p className="mt-2 max-w-2xl text-sm text-emerald-50">
+                    É rápido, gratuito e ajuda você a economizar tempo ao encontrar empresas que atendem {locality}.
+                  </p>
+                </div>
                 <Link
                   href="#todas"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-700"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
                 >
-                  <Building2 className="h-4 w-4" />
-                  Comparar empresas
+                  Solicitar orçamento grátis
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-            </div>
+            </section>
 
-            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-sky-50 to-blue-100 shadow-sm">
-              <div className="grid gap-5 p-5 sm:grid-cols-[1fr_220px]">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-700" />
-                    <p className="text-xl font-bold text-slate-950">{locationTitle}/{data.location.state}</p>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">
-                    {data.stats.total_companies} empresas encontradas<br />
-                    {data.stats.verified_companies} verificadas · {data.stats.featured_companies} em destaque
-                  </p>
-                  <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                    <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                      <Star className="mx-auto h-5 w-5 text-amber-500" />
-                      <p className="mt-1 text-xs font-semibold text-slate-700">Ranking</p>
-                    </div>
-                    <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                      <Building2 className="mx-auto h-5 w-5 text-blue-600" />
-                      <p className="mt-1 text-xs font-semibold text-slate-700">Local</p>
-                    </div>
-                    <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                      <ShieldCheck className="mx-auto h-5 w-5 text-emerald-600" />
-                      <p className="mt-1 text-xs font-semibold text-slate-700">Verificadas</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="hidden min-h-44 items-center justify-center gap-3 rounded-xl bg-white/40 p-4 sm:flex">
-                  {topProjectTypes.map((projectType) => {
-                    const { iconSrc } = projectTypeVisualFor(projectType.name);
-                    return iconSrc ? (
-                      <div key={projectType.name} className="relative h-16 w-16 rounded-xl bg-white shadow-sm">
-                        <Image src={iconSrc} alt={projectType.name} fill sizes="64px" className="object-contain p-2" unoptimized />
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        {(data.project_types || []).length > 0 && <CategoryCarousel data={data} searchParams={input.searchParams} />}
-
-        <BannerByLocation
-          location="companies_top"
-          limit={5}
-          categoryId={selectedCategoryIds(data)[0]}
-          state={input.state}
-          city={input.city || undefined}
-          className="rounded-lg"
-        />
-
-        {data.featured_companies.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-950">Empresas em destaque</h2>
-              <Link href="#todas" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
-                Ver todas
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <CompanyGrid companies={data.featured_companies} />
-          </section>
-        )}
-
-        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          <section id="todas" className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <section className="grid gap-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1.2fr_1fr]">
               <div>
-                <h2 className="text-xl font-bold text-slate-950">Todas as empresas</h2>
-                <p className="text-sm text-slate-600">
-                  {data.pagination.total} resultado(s) para os filtros atuais.
+                <h2 className="text-lg font-bold text-slate-950">Energia solar em {locality}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {locationTitle} conta com empresas especializadas em energia solar residencial, comercial,
+                  industrial, condomínios, sistemas off-grid e mobilidade elétrica. No Avalia Solar, você compara
+                  integradores, verifica serviços oferecidos e solicita contato com empresas que atendem sua região.
                 </p>
               </div>
-              <Link
-                href={`${data.location.canonical_path}${buildQuery(input.searchParams, { page: null })}`}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-700"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Atualizar filtros
-              </Link>
-            </div>
+              {data.categories.length > 0 && (
+                <div>
+                  <h2 className="text-sm font-bold text-slate-950">Categorias mais buscadas</h2>
+                  <div className="mt-3 grid gap-2 text-sm">
+                    {data.categories.slice(0, 5).map((category) => (
+                      <Link
+                        key={category.id}
+                        href={`${data.location.canonical_path}${buildQuery(input.searchParams, { category_ids: category.id, page: null })}`}
+                        className="font-medium text-blue-700 hover:text-blue-800"
+                      >
+                        {category.name} em {locality}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
 
-            {data.companies.length > 0 ? (
-              <>
-                <CompanyGrid companies={data.companies} />
-                <Pagination data={data} searchParams={input.searchParams} />
-              </>
-            ) : (
-              <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-                <p className="text-lg font-semibold text-slate-950">Nenhuma empresa encontrada com estes filtros.</p>
-                <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Ajuste categorias, nota mínima ou busca por nome para ver outras opções em {locality}.
-                </p>
-                <Link
-                  href={data.location.canonical_path}
-                  className="mt-5 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
-                >
-                  Limpar filtros
-                </Link>
-              </div>
-            )}
-          </section>
-
-          <FilterSidebar data={data} searchParams={input.searchParams} />
+            <BannerByLocation
+              location="companies_footer"
+              limit={3}
+              categoryId={selectedCategoryIds(data)[0]}
+              className="rounded-lg"
+            />
+          </div>
         </div>
-
-        <section className="rounded-lg bg-gradient-to-r from-emerald-700 to-cyan-700 p-6 text-white">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Compare empresas e receba orçamentos grátis</h2>
-              <p className="mt-2 max-w-2xl text-sm text-emerald-50">
-                É rápido, gratuito e ajuda você a economizar tempo ao encontrar empresas que atendem {locality}.
-              </p>
-            </div>
-            <Link
-              href="#todas"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
-            >
-              Solicitar orçamento grátis
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
-
-        <section className="grid gap-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1.2fr_1fr]">
-          <div>
-            <h2 className="text-lg font-bold text-slate-950">Energia solar em {locality}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {locationTitle} conta com empresas especializadas em energia solar residencial, comercial,
-              industrial, condomínios, sistemas off-grid e mobilidade elétrica. No Avalia Solar, você compara
-              integradores, verifica serviços oferecidos e solicita contato com empresas que atendem sua região.
-            </p>
-          </div>
-          {data.categories.length > 0 && (
-            <div>
-              <h2 className="text-sm font-bold text-slate-950">Categorias mais buscadas</h2>
-              <div className="mt-3 grid gap-2 text-sm">
-                {data.categories.slice(0, 5).map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`${data.location.canonical_path}${buildQuery(input.searchParams, { category_ids: category.id, page: null })}`}
-                    className="font-medium text-blue-700 hover:text-blue-800"
-                  >
-                    {category.name} em {locality}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        <BannerByLocation
-          location="companies_footer"
-          limit={3}
-          categoryId={selectedCategoryIds(data)[0]}
-          className="rounded-lg"
-        />
       </div>
     </main>
   );
