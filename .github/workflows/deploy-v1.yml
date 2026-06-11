@@ -289,7 +289,7 @@ jobs:
             df -h
 
             echo "?? Garantindo dependencias (db/redis) ativas..."
-            docker compose up -d db redis
+            docker compose up -d --remove-orphans db redis
             
             echo "?? Aguardando db/redis ficarem healthy..."
             sleep 5
@@ -297,7 +297,7 @@ jobs:
             echo "?? Reiniciando backend..."
             # Suba o backend isoladamente. O worker depende de service_healthy e faria
             # o Compose abortar antes de conseguirmos imprimir os logs de boot.
-            docker compose up -d backend
+            docker compose up -d --remove-orphans backend
 
             BACKEND_CID=$(docker compose ps -q backend)
             if [ -z "$BACKEND_CID" ]; then
@@ -341,10 +341,10 @@ jobs:
             fi
 
             echo "?? Reiniciando worker..."
-            docker compose up -d worker
+            docker compose up -d --remove-orphans worker
 
             echo "?? Reiniciando frontend..."
-            docker compose up -d frontend
+            docker compose up -d --remove-orphans frontend
 
             echo "?? Migracoes de banco..."
             docker compose exec -T backend bundle exec rails db:migrate
