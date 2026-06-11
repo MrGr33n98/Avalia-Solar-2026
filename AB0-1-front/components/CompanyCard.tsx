@@ -449,15 +449,16 @@ export default function CompanyCard({
             >
               {logoUrl && !logoError ? (
                 <div className="relative w-full h-full p-[3px]">
-                  <Image
-                    src={logoUrl}
-                    alt=""
-                    fill
-                    sizes="80px"
-                    onError={() => setLogoError(true)}
-                    className="object-contain object-center rounded-lg"
-                    data-testid="company-logo"
-                  />
+                    <Image
+                      src={logoUrl}
+                      alt=""
+                      fill
+                      sizes="80px"
+                      onError={() => setLogoError(true)}
+                      className="object-contain object-center rounded-lg"
+                      data-testid="company-logo"
+                      unoptimized
+                    />
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800" data-testid="logo-placeholder">

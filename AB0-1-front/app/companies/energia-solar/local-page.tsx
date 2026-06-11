@@ -226,7 +226,7 @@ function ProjectTypeLinks({ data, searchParams }: { data: LocalSolarPageResponse
             >
               <div className="relative mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                 {iconSrc ? (
-                  <Image src={iconSrc} alt={projectType.name} fill sizes="56px" className="object-contain p-1" />
+                  <Image src={iconSrc} alt={projectType.name} fill sizes="56px" className="object-contain p-1" unoptimized />
                 ) : (
                   <Building2 className="h-6 w-6" />
                 )}
@@ -540,7 +540,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                     const { iconSrc } = projectTypeVisualFor(projectType.name);
                     return iconSrc ? (
                       <div key={projectType.name} className="relative h-16 w-16 rounded-xl bg-white shadow-sm">
-                        <Image src={iconSrc} alt={projectType.name} fill sizes="64px" className="object-contain p-2" />
+                        <Image src={iconSrc} alt={projectType.name} fill sizes="64px" className="object-contain p-2" unoptimized />
                       </div>
                     ) : null;
                   })}
