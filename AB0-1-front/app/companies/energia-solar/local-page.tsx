@@ -409,8 +409,42 @@ function CompanyGrid({ companies }: { companies: Company[] }) {
 }
 
 export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
-  const data = await getLocalData(input);
-  if (!data) notFound();
+  let data = await getLocalData(input);
+
+  if (!data) {
+    // A API falhou com os filtros atuais. Antes de retornar 404,
+    // verificamos se a localização em si existe (sem filtros).
+    const hasFilters = input.searchParams && Object.keys(input.searchParams).some(
+      (key) => FILTER_KEYS.includes(key as any)
+    );
+
+    if (hasFilters) {
+      // Tenta carregar a página base (sem filtros) para confirmar que a cidade/estado existe
+      const baseData = await localSolarPagesApi.get(input.state, input.city, { page: '1', per_page: '12' });
+      if (baseData) {
+        // A localização existe, mas os filtros causaram o erro.
+        // Usar os dados base com companies vazio para não mostrar 404 falso.
+        data = {
+          ...baseData,
+          companies: [],
+          featured_companies: [],
+          pagination: {
+            ...baseData.pagination,
+            total: 0,
+            total_pages: 0,
+            page: 1,
+          },
+          filters: {
+            ...baseData.filters,
+            ...(input.searchParams?.category_ids ? { category_ids: allParams(input.searchParams.category_ids).flatMap(v => v.split(',')).map(Number).filter(Boolean) } : {}),
+          },
+        };
+      }
+    }
+
+    // Se ainda não temos dados, a localização realmente não existe
+    if (!data) notFound();
+  }
 
   const jsonLd = jsonLdFor(data);
   const locality = data.location.scope === 'city'
