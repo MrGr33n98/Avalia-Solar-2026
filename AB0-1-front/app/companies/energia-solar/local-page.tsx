@@ -446,14 +446,18 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
     if (!data) notFound();
   }
 
-  const jsonLd = jsonLdFor(data);
-  const locality = data.location.scope === 'city'
-    ? `${data.location.city}/${data.location.state}`
-    : data.location.state_name;
-  const topProjectTypes = (data.project_types || []).filter((item) => item.companies_count > 0).slice(0, 3);
-  const locationTitle = data.location.scope === 'city'
-    ? data.location.city
-    : data.location.state_name;
+  // TypeScript: após o guard acima, data é garantidamente não-null
+  // (notFound() lança uma exceção e nunca retorna)
+  const safeData = data as LocalSolarPageResponse;
+
+  const jsonLd = jsonLdFor(safeData);
+  const locality = safeData.location.scope === 'city'
+    ? `${safeData.location.city}/${safeData.location.state}`
+    : safeData.location.state_name;
+  const topProjectTypes = (safeData.project_types || []).filter((item) => item.companies_count > 0).slice(0, 3);
+  const locationTitle = safeData.location.scope === 'city'
+    ? safeData.location.city
+    : safeData.location.state_name;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -471,12 +475,12 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
           <ChevronRight className="h-4 w-4" />
           <Link href="/companies" className="hover:text-blue-700">Empresas</Link>
           <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-slate-900"><LocationLabel data={data} /></span>
+          <span className="font-medium text-slate-900"><LocationLabel data={safeData} /></span>
         </nav>
 
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           <div className="w-full lg:w-[280px] xl:w-[320px] shrink-0">
-            <FilterSidebar data={data} searchParams={input.searchParams} input={input} />
+            <FilterSidebar data={safeData} searchParams={input.searchParams} input={input} />
           </div>
 
           <div className="flex-1 min-w-0 space-y-8">
@@ -511,11 +515,11 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                   <div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-blue-700" />
-                      <p className="text-xl font-bold text-slate-950">{locationTitle}/{data.location.state}</p>
+                      <p className="text-xl font-bold text-slate-950">{locationTitle}/{safeData.location.state}</p>
                     </div>
                     <p className="mt-3 text-sm leading-6 text-slate-700">
-                      {data.stats.total_companies} empresas encontradas<br />
-                      {data.stats.verified_companies} verificadas · {data.stats.featured_companies} em destaque
+                      {safeData.stats.total_companies} empresas encontradas<br />
+                      {safeData.stats.verified_companies} verificadas · {safeData.stats.featured_companies} em destaque
                     </p>
                     <div className="mt-5 grid grid-cols-3 gap-3 text-center">
                       <div className="rounded-lg bg-white/85 p-3 shadow-sm">
@@ -546,18 +550,18 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
               </div>
             </div>
 
-            {(data.project_types || []).length > 0 && <CategoryCarousel data={data} searchParams={input.searchParams} />}
+            {(safeData.project_types || []).length > 0 && <CategoryCarousel data={safeData} searchParams={input.searchParams} />}
 
             <BannerByLocation
               location="companies_top"
               limit={5}
-              categoryId={selectedCategoryIds(data)[0]}
+              categoryId={selectedCategoryIds(safeData)[0]}
               state={input.state}
               city={input.city || undefined}
               className="rounded-lg"
             />
 
-            {data.featured_companies.length > 0 && (
+            {safeData.featured_companies.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-lg font-bold text-slate-950">Empresas em destaque</h2>
@@ -566,7 +570,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <CompanyGrid companies={data.featured_companies} />
+                <CompanyGrid companies={safeData.featured_companies} />
               </section>
             )}
 
@@ -575,15 +579,15 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                 <div>
                   <h2 className="text-xl font-bold text-slate-950">Todas as empresas</h2>
                   <p className="text-sm text-slate-600">
-                    {data.pagination.total} resultado(s) para os filtros atuais.
+                    {safeData.pagination.total} resultado(s) para os filtros atuais.
                   </p>
                 </div>
               </div>
 
-              {data.companies.length > 0 ? (
+              {safeData.companies.length > 0 ? (
                 <>
-                  <CompanyGrid companies={data.companies} />
-                  <Pagination data={data} searchParams={input.searchParams} />
+                  <CompanyGrid companies={safeData.companies} />
+                  <Pagination data={safeData} searchParams={input.searchParams} />
                 </>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
@@ -592,7 +596,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                     Ajuste categorias, nota mínima ou busca por nome para ver outras opções em {locality}.
                   </p>
                   <Link
-                    href={data.location.canonical_path}
+                    href={safeData.location.canonical_path}
                     className="mt-5 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                   >
                     Limpar filtros
@@ -628,14 +632,14 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                   integradores, verifica serviços oferecidos e solicita contato com empresas que atendem sua região.
                 </p>
               </div>
-              {data.categories.length > 0 && (
+              {safeData.categories.length > 0 && (
                 <div>
                   <h2 className="text-sm font-bold text-slate-950">Categorias mais buscadas</h2>
                   <div className="mt-3 grid gap-2 text-sm">
-                    {data.categories.slice(0, 5).map((category) => (
+                    {safeData.categories.slice(0, 5).map((category) => (
                       <Link
                         key={category.id}
-                        href={`${data.location.canonical_path}${buildQuery(input.searchParams, { category_ids: category.id, page: null })}`}
+                        href={`${safeData.location.canonical_path}${buildQuery(input.searchParams, { category_ids: category.id, page: null })}`}
                         className="font-medium text-blue-700 hover:text-blue-800"
                       >
                         {category.name} em {locality}
@@ -649,7 +653,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
             <BannerByLocation
               location="companies_footer"
               limit={3}
-              categoryId={selectedCategoryIds(data)[0]}
+              categoryId={selectedCategoryIds(safeData)[0]}
               className="rounded-lg"
             />
           </div>

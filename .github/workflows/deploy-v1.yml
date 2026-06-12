@@ -235,7 +235,9 @@ jobs:
               DESC=$3
               if [ -f "$SRC" ] && [ -d /etc/nginx/conf.d ]; then
                 EXISTING_LINES=0
-                [ -f "$DST" ] && EXISTING_LINES=$(wc -l < "$DST")
+                if [ -f "$DST" ]; then
+                  EXISTING_LINES=$(wc -l < "$DST")
+                fi
                 if [ "$EXISTING_LINES" -gt 30 ]; then
                   echo "?? Vhost $DESC ja possui SSL. Pulando."
                 else

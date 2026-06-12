@@ -390,6 +390,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
                       fill
                       sizes="(max-width: 768px) 130px, 200px"
                       className="object-contain drop-shadow-sm"
+                      unoptimized
                     />
                   </div>
                   <div className="flex flex-col items-center gap-2.5 md:gap-3">
