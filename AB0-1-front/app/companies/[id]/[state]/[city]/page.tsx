@@ -12,7 +12,7 @@ import {
 export const revalidate = 300;
 
 type LocalPageParams = {
-  vertical: string;
+  id: string;
   state: string;
   city: string;
 };
@@ -24,7 +24,7 @@ type PageProps = {
 
 export function generateStaticParams(): LocalPageParams[] {
   return BRAZIL_CAPITAL_SOLAR_PAGES.map((page: LocalSolarPage) => ({
-    vertical: 'energia-solar',
+    id: 'energia-solar',
     state: page.state.toLowerCase(),
     city: page.citySlug,
   }));
@@ -32,7 +32,7 @@ export function generateStaticParams(): LocalPageParams[] {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return generateLocalSolarMetadata({
-    vertical: params.vertical,
+    vertical: params.id,
     state: params.state,
     city: params.city,
   });
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function LocalSolarCompaniesPage({ params, searchParams }: PageProps) {
   return LocalSolarDirectoryPage({
-    vertical: params.vertical,
+    vertical: params.id,
     state: params.state,
     city: params.city,
     searchParams,

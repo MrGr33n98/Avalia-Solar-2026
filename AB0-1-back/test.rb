@@ -1,6 +1,3 @@
-begin
-  b = Banner.new(target_states: 'SP, RJ')
-  File.write('test_out.txt', "Success: #{b.target_states.class.name}")
-rescue Exception => e
-  File.write('test_out.txt', "Error: #{e.class} - #{e.message}\n#{e.backtrace.first(10).join("\n")}")
-end
+env = Rack::MockRequest.env_for('/api/v1/local_solar_pages/mt/cuiaba', params: { 'category_ids' => ['73'] })
+status, headers, body = Rails.application.call(env)
+File.write('test_out.txt', "Status: #{status}\nBody: #{body.join}")

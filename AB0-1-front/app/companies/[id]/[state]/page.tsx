@@ -9,7 +9,7 @@ import {
 export const revalidate = 300;
 
 type StatePageParams = {
-  vertical: string;
+  id: string;
   state: string;
 };
 
@@ -20,21 +20,21 @@ type PageProps = {
 
 export function generateStaticParams(): StatePageParams[] {
   return BRAZIL_STATE_SOLAR_PAGES.map((page) => ({
-    vertical: 'energia-solar',
+    id: 'energia-solar',
     state: page.state.toLowerCase(),
   }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return generateLocalSolarMetadata({
-    vertical: params.vertical,
+    vertical: params.id,
     state: params.state,
   });
 }
 
 export default async function StateSolarCompaniesPage({ params, searchParams }: PageProps) {
   return LocalSolarDirectoryPage({
-    vertical: params.vertical,
+    vertical: params.id,
     state: params.state,
     searchParams,
   });
