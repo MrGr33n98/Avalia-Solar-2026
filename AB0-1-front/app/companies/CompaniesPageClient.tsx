@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import { Search, Grid, List, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
@@ -269,11 +270,11 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     : 'Empresas de Energia Solar';
 
   const quickActions = [
-    { label: 'Instalar', href: '/companies', icon: Building, styles: 'bg-brand-blue/10 text-brand-blue' },
-    { label: 'Produtos', href: '/products', icon: Package, styles: 'bg-brand-green/10 text-brand-green-dark' },
-    { label: 'Categorias', href: '/categories', icon: Folder, styles: 'bg-brand-blue/10 text-brand-blue' },
-    { label: 'Avaliar', href: '/reviews/my', icon: Star, styles: 'bg-brand-cyan/10 text-brand-cyan-dark' },
-    { label: 'Destaques', href: '/companies?featured=true', icon: Zap, styles: 'bg-slate-100 text-slate-700' },
+    { label: 'Instalar', href: '/companies', imageSrc: '/icones/icone_instalar_avalia_solar_40x40.png', activeDot: 0 },
+    { label: 'Produtos', href: '/products', imageSrc: '/icones/icone_produtos_avalia_solar_40x40.png', activeDot: 1 },
+    { label: 'Categorias', href: '/categories', imageSrc: '/icones/icone_categorias_avalia_solar.png', activeDot: 1 },
+    { label: 'Avaliar', href: '/reviews/my', imageSrc: '/icones/icone_avaliacoes_avalia_solar.png', activeDot: 0 },
+    { label: 'Destaques', href: '/companies?featured=true', imageSrc: '/icones/icone_destaques_avalia_solar.png', activeDot: 2 },
   ];
 
   if (error) {
@@ -373,25 +374,34 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
             </div>
 
             <section 
-              className="flex md:grid md:grid-cols-5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+              className="flex md:grid md:grid-cols-5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 md:gap-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                if (!Icon) return null;
-                return (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="flex flex-row md:flex-col items-center gap-2.5 md:gap-2 rounded-xl bg-white p-2.5 md:p-3 text-left md:text-center border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group shrink-0 snap-start"
-                  >
-                    <div className={cn('flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full transition-colors', action.styles)}>
-                      <Icon className="h-4 w-4 md:h-5 md:w-5" />
+              {quickActions.map((action) => (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="flex flex-col items-center justify-between rounded-3xl bg-white p-4 md:p-6 w-[130px] md:w-auto shrink-0 snap-start border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 group"
+                >
+                  <div className="relative w-full aspect-square mb-3 md:mb-5 transition-transform duration-300 group-hover:scale-110">
+                    <Image 
+                      src={action.imageSrc} 
+                      alt={action.label}
+                      fill
+                      sizes="(max-width: 768px) 130px, 200px"
+                      className="object-contain drop-shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col items-center gap-2.5 md:gap-3">
+                    <span className="text-[13px] md:text-[15px] font-bold text-[#475569] group-hover:text-slate-900">{action.label}</span>
+                    <div className="flex gap-1.5">
+                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 0 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
+                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 1 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
+                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 2 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 whitespace-nowrap">{action.label}</span>
-                  </Link>
-                );
-              })}
+                  </div>
+                </Link>
+              ))}
             </section>
 
             <div className="space-y-4">
