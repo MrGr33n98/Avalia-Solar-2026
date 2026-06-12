@@ -30,10 +30,26 @@ import { CategoryCarousel } from './CategoryCarousel';
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type LocalSolarPageInput = {
+  vertical: string;
   state: string;
   city?: string | null;
   searchParams?: SearchParams;
 };
+
+function verticalNameFor(slug: string): string {
+  switch (slug) {
+    case 'energia-solar':
+      return 'energia solar';
+    case 'frotas-eletricas':
+      return 'frotas elétricas';
+    case 'mobilidade-eletrica':
+      return 'mobilidade elétrica';
+    case 'hubs-eletromobilidade':
+      return 'hubs de eletromobilidade e recarga';
+    default:
+      return slug.replace(/-/g, ' ');
+  }
+}
 
 const FILTER_KEYS = ['q', 'category_ids', 'project_types', 'featured', 'verified', 'min_rating', 'sort', 'page'] as const;
 
@@ -102,11 +118,18 @@ function companyCountLabel(count: number) {
 }
 
 async function getLocalData(input: LocalSolarPageInput) {
-  return localSolarPagesApi.get(input.state, input.city, buildApiFilters(input.searchParams));
+  return localSolarPagesApi.get(input.state, input.city, {
+    ...buildApiFilters(input.searchParams),
+    vertical: input.vertical,
+  });
 }
 
 export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Promise<Metadata> {
-  const data = await localSolarPagesApi.get(input.state, input.city, { page: 1, per_page: 1 });
+  const data = await localSolarPagesApi.get(input.state, input.city, {
+    page: 1,
+    per_page: 1,
+    vertical: input.vertical,
+  });
 
   if (!data) {
     return {
@@ -136,11 +159,12 @@ export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Pr
   };
 }
 
-function jsonLdFor(data: LocalSolarPageResponse) {
+function jsonLdFor(data: LocalSolarPageResponse, vertical: string) {
   const pageUrl = absoluteUrl(data.location.canonical_path);
   const locality = data.location.scope === 'city'
     ? `${data.location.city}/${data.location.state}`
     : data.location.state_name;
+  const verticalFriendly = verticalNameFor(vertical).replace(/^\w/, (c) => c.toUpperCase());
 
   return [
     {
@@ -161,7 +185,7 @@ function jsonLdFor(data: LocalSolarPageResponse) {
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Início', item: SITE.url },
         { '@type': 'ListItem', position: 2, name: 'Empresas', item: absoluteUrl('/companies') },
-        { '@type': 'ListItem', position: 3, name: 'Energia Solar', item: absoluteUrl('/companies') },
+        { '@type': 'ListItem', position: 3, name: verticalFriendly, item: absoluteUrl(`/companies/${vertical}`) },
         { '@type': 'ListItem', position: 4, name: locality, item: pageUrl },
       ],
     },
@@ -420,7 +444,11 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
 
     if (hasFilters) {
       // Tenta carregar a página base (sem filtros) para confirmar que a cidade/estado existe
-      const baseData = await localSolarPagesApi.get(input.state, input.city, { page: '1', per_page: '12' });
+      const baseData = await localSolarPagesApi.get(input.state, input.city, {
+        page: '1',
+        per_page: '12',
+        vertical: input.vertical,
+      });
       if (baseData) {
         // A localização existe, mas os filtros causaram o erro.
         // Usar os dados base com companies vazio para não mostrar 404 falso.
@@ -450,7 +478,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
   // (notFound() lança uma exceção e nunca retorna)
   const safeData = data as LocalSolarPageResponse;
 
-  const jsonLd = jsonLdFor(safeData);
+  const jsonLd = jsonLdFor(safeData, input.vertical);
   const locality = safeData.location.scope === 'city'
     ? `${safeData.location.city}/${safeData.location.state}`
     : safeData.location.state_name;
@@ -487,10 +515,10 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
             <div className="grid gap-8 xl:grid-cols-[1fr_400px] xl:items-center">
               <div>
                 <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                  Encontre empresas de energia solar em {locality}
+                  Encontre empresas de {verticalNameFor(input.vertical)} em {locality}
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-                  Compare integradores, avaliações, categorias, serviços oferecidos e solicite orçamento com empresas que atendem sua região.
+                  Compare fornecedores, avaliações, categorias, serviços oferecidos e solicite orçamento com empresas que atendem sua região.
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link
@@ -625,11 +653,13 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
 
             <section className="grid gap-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1.2fr_1fr]">
               <div>
-                <h2 className="text-lg font-bold text-slate-950">Energia solar em {locality}</h2>
+                <h2 className="text-lg font-bold text-slate-950">
+                  {verticalNameFor(input.vertical).replace(/^\w/, (c) => c.toUpperCase())} em {locality}
+                </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {locationTitle} conta com empresas especializadas em energia solar residencial, comercial,
+                  {locationTitle} conta com empresas especializadas em {verticalNameFor(input.vertical)} residencial, comercial,
                   industrial, condomínios, sistemas off-grid e mobilidade elétrica. No Avalia Solar, você compara
-                  integradores, verifica serviços oferecidos e solicita contato com empresas que atendem sua região.
+                  fornecedores, verifica serviços oferecidos e solicita contato com empresas que atendem sua região.
                 </p>
               </div>
               {safeData.categories.length > 0 && (

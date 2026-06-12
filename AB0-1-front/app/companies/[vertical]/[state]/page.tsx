@@ -9,6 +9,7 @@ import {
 export const revalidate = 300;
 
 type StatePageParams = {
+  vertical: string;
   state: string;
 };
 
@@ -19,18 +20,21 @@ type PageProps = {
 
 export function generateStaticParams(): StatePageParams[] {
   return BRAZIL_STATE_SOLAR_PAGES.map((page) => ({
+    vertical: 'energia-solar',
     state: page.state.toLowerCase(),
   }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return generateLocalSolarMetadata({
+    vertical: params.vertical,
     state: params.state,
   });
 }
 
 export default async function StateSolarCompaniesPage({ params, searchParams }: PageProps) {
   return LocalSolarDirectoryPage({
+    vertical: params.vertical,
     state: params.state,
     searchParams,
   });

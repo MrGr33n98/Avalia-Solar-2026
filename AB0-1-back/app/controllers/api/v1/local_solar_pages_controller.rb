@@ -49,6 +49,14 @@ module Api
           :company_financing_profile
         )
 
+        if params[:vertical].present?
+          vertical_cat = ::Category.main_categories.active.find_by(seo_url: params[:vertical])
+          if vertical_cat.present?
+            vertical_ids = [vertical_cat.id] + vertical_cat.children.active.pluck(:id)
+            scope = scope.joins(:categories).where(categories: { id: vertical_ids }).distinct
+          end
+        end
+
         if city.present?
           scope.serving_city_strict(city, state)
         else
@@ -132,6 +140,7 @@ module Api
       end
 
       def location_payload(state, city)
+        vertical_slug = params[:vertical].presence || 'energia-solar'
         if city.present?
           {
             scope: 'city',
@@ -139,7 +148,7 @@ module Api
             state_name: state_name(state),
             city: city,
             city_slug: ::Locations::CoverageNormalizer.city_slug(city),
-            canonical_path: ::Locations::CoverageNormalizer.local_solar_path(state, city)
+            canonical_path: "/companies/#{vertical_slug}/#{state.downcase}/#{::Locations::CoverageNormalizer.city_slug(city)}"
           }
         else
           {
@@ -148,15 +157,20 @@ module Api
             state_name: state_name(state),
             city: nil,
             city_slug: nil,
-            canonical_path: "/companies/energia-solar/#{state.downcase}"
+            canonical_path: "/companies/#{vertical_slug}/#{state.downcase}"
           }
         end
       end
 
       def seo_payload(state, city, indexable)
         locality = city.present? ? "#{city}/#{state}" : state_name(state)
-        title = "Empresas de energia solar em #{locality} | Avalia Solar"
-        description = "Compare empresas de energia solar que atendem #{locality}. Veja reputação, serviços, localização e canais oficiais no Avalia Solar."
+        vertical_name = 'energia solar'
+        if params[:vertical].present?
+          vertical_cat = ::Category.main_categories.active.find_by(seo_url: params[:vertical])
+          vertical_name = vertical_cat.name.downcase if vertical_cat.present?
+        end
+        title = "Empresas de #{vertical_name} em #{locality} | Avalia Solar"
+        description = "Compare empresas de #{vertical_name} que atendem #{locality}. Veja reputação, serviços, localização e canais oficiais no Avalia Solar."
 
         {
           title: title,
@@ -218,6 +232,7 @@ module Api
       end
 
       def nearby_locations_payload(state, city)
+        vertical_slug = params[:vertical].presence || 'energia-solar'
         counts = ::Company.active
                           .where(state: state)
                           .where.not(city: [nil, ''])
@@ -231,7 +246,7 @@ module Api
           {
             state: state,
             city: name,
-            href: ::Locations::CoverageNormalizer.local_solar_path(state, name),
+            href: "/companies/#{vertical_slug}/#{state.downcase}/#{::Locations::CoverageNormalizer.city_slug(name)}",
             companies_count: count
           }
         end

@@ -738,6 +738,7 @@ export const localSolarPagesApi = {
     state: string,
     city?: string | null,
     params?: {
+      vertical?: string;
       q?: string;
       category_ids?: number[] | string[] | string;
       project_types?: string[] | string;
