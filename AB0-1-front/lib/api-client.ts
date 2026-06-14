@@ -756,9 +756,12 @@ export const localSolarPagesApi = {
         : `local_solar_pages/${encodeURIComponent(state)}`;
 
       return await fetchApiSafe<LocalSolarPageResponse>(`${endpoint}${buildQueryParams(params || {})}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[localSolarPagesApi.get] Error:', error);
-      return null;
+      if (error?.status === 404) {
+        return null;
+      }
+      throw error;
     }
   },
 };

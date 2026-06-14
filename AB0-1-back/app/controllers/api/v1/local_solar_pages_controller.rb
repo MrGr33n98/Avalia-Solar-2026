@@ -80,7 +80,7 @@ module Api
           filtered = filtered.where(verified: ActiveModel::Type::Boolean.new.cast(params[:verified]))
         end
 
-        filtered = filtered.where('rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
+        filtered = filtered.where('companies.rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
 
         category_ids = parsed_category_ids
         filtered = filtered.joins(:categories).where(categories: { id: category_ids }).distinct if category_ids.any?
@@ -112,13 +112,13 @@ module Api
 
       def local_priority_order_sql
         Arel.sql(<<~SQL.squish)
-          CASE WHEN sponsored THEN 1 ELSE 0 END DESC,
-          CASE WHEN featured THEN 1 ELSE 0 END DESC,
-          CASE WHEN verified THEN 1 ELSE 0 END DESC,
-          COALESCE(priority_score, 0) DESC,
-          COALESCE(rating_avg, 0) DESC,
-          COALESCE(rating_count, 0) DESC,
-          name ASC
+          CASE WHEN companies.sponsored THEN 1 ELSE 0 END DESC,
+          CASE WHEN companies.featured THEN 1 ELSE 0 END DESC,
+          CASE WHEN companies.verified THEN 1 ELSE 0 END DESC,
+          COALESCE(companies.priority_score, 0) DESC,
+          COALESCE(companies.rating_avg, 0) DESC,
+          COALESCE(companies.rating_count, 0) DESC,
+          companies.name ASC
         SQL
       end
 
@@ -225,7 +225,7 @@ module Api
       end
 
       def featured_companies_payload(scope)
-        scope.where('featured = ? OR sponsored = ? OR verified = ?', true, true, true)
+        scope.where('companies.featured = ? OR companies.sponsored = ? OR companies.verified = ?', true, true, true)
              .reorder(local_priority_order_sql)
              .limit(6)
              .map { |company| company_card_payload(company) }
