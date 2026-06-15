@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { CategoryFilter } from './CategoryFilter';
 import { LocationFilter } from './LocationFilter';
+import SearchRadiusFilter from '@/components/search/SearchRadiusFilter';
 import { RatingFilter } from './RatingFilter';
 import { QualityFilters } from './QualityFilters';
 import { SortFilter } from './SortFilter';
@@ -131,6 +132,15 @@ export const FilterSidebar: React.FC = () => {
             onCitiesChange={(city) => updateFilters({ city })}
           />
           
+          <div className="px-3 mt-3 mb-1">
+            <SearchRadiusFilter 
+              radiusKm={filters.radius_km}
+              onRadiusChange={(radius) => updateFilters({ radius_km: radius })}
+              onCoordsChange={(coords) => updateFilters({ lat: coords?.lat || null, lng: coords?.lng || null })}
+              cityName={filters.city.length === 1 ? filters.city[0] : undefined}
+            />
+          </div>
+
           <div className="h-px bg-slate-100 my-1 mx-3" />
 
           <CategoryFilter 

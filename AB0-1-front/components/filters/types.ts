@@ -23,6 +23,9 @@ export interface CompanyFilters {
   whatsapp_enabled: boolean;
   sort: string;
   page: number;
+  lat: number | null;
+  lng: number | null;
+  radius_km: number | null;
 }
 
 export const DEFAULT_FILTERS: CompanyFilters = {
@@ -37,4 +40,7 @@ export const DEFAULT_FILTERS: CompanyFilters = {
   whatsapp_enabled: false,
   sort: 'recommended',
   page: 1,
+  lat: null,
+  lng: null,
+  radius_km: null,
 };

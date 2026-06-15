@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
-import { Search, Grid, List, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Grid, List, Map as MapIcon, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
+import SearchMapPanel from '@/components/search/SearchMapPanel';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,7 +56,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [totalCount, setTotalCount] = useState(0);
   const PAGE_SIZE = 12;
 
@@ -80,6 +81,9 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       financing_enabled: filters.financing_enabled || undefined,
       whatsapp_enabled: filters.whatsapp_enabled || undefined,
       sort: filters.sort || undefined,
+      latitude: filters.lat || undefined,
+      longitude: filters.lng || undefined,
+      radius_km: filters.radius_km || undefined,
       fields: 'card' as const,
     }),
     [
@@ -94,6 +98,9 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       filters.financing_enabled,
       filters.whatsapp_enabled,
       filters.sort,
+      filters.lat,
+      filters.lng,
+      filters.radius_km,
     ]
   );
 
@@ -369,6 +376,14 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
                   >
                     <List className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn('h-8 w-8', viewMode === 'map' && 'bg-slate-100 text-slate-900')}
+                    onClick={() => setViewMode('map')}
+                  >
+                    <MapIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -407,16 +422,25 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
                 </div>
               ) : visibleCompanies.length > 0 ? (
                 <>
-                  <div
-                    data-testid="companies-grid"
-                    className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}
-                  >
-                    {visibleCompanies.map((company) => (
-                      <CompanyCard key={company.id} company={company} compact={viewMode === 'list'} />
-                    ))}
-                  </div>
+                  {viewMode === 'map' ? (
+                    <div className="h-[600px] w-full rounded-2xl shadow-sm border border-slate-200">
+                      <SearchMapPanel
+                        companies={visibleCompanies as any}
+                        center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : undefined}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      data-testid="companies-grid"
+                      className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}
+                    >
+                      {visibleCompanies.map((company) => (
+                        <CompanyCard key={company.id} company={company} compact={viewMode === 'list'} />
+                      ))}
+                    </div>
+                  )}
 
-                  {totalPages > 1 && (
+                  {totalPages > 1 && viewMode !== 'map' && (
                     <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
                       <Button
                         variant="outline"

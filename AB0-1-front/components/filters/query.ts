@@ -20,6 +20,9 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
   const whatsappStr = searchParams.get('whatsapp_enabled');
   const sortStr = searchParams.get('sort');
   const pageStr = searchParams.get('page');
+  const latStr = searchParams.get('lat');
+  const lngStr = searchParams.get('lng');
+  const radiusKmStr = searchParams.get('radius_km');
   const pathCategoryIds = options.pathCategoryIds || [];
   const queryCategoryIds = categoryIdsStr ? categoryIdsStr.split(',').map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b) : [];
 
@@ -35,6 +38,9 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
     whatsapp_enabled: whatsappStr === 'true',
     sort: sortStr || DEFAULT_FILTERS.sort,
     page: pageStr ? Number(pageStr) : DEFAULT_FILTERS.page,
+    lat: latStr ? Number(latStr) : null,
+    lng: lngStr ? Number(lngStr) : null,
+    radius_km: radiusKmStr ? Number(radiusKmStr) : null,
   };
 }
 
@@ -74,6 +80,12 @@ export function stringifyQueryParams(filters: CompanyFilters, options: Stringify
     params.set('page', filters.page.toString());
   }
 
+  if (filters.lat !== null && filters.lng !== null && filters.radius_km !== null) {
+    params.set('lat', filters.lat.toString());
+    params.set('lng', filters.lng.toString());
+    params.set('radius_km', filters.radius_km.toString());
+  }
+
   return params.toString();
 }
 
@@ -87,7 +99,8 @@ export function isFilterActive(filters: CompanyFilters): boolean {
     filters.verified ||
     filters.featured ||
     filters.financing_enabled ||
-    filters.whatsapp_enabled
+    filters.whatsapp_enabled ||
+    (filters.lat !== null && filters.lng !== null)
   );
 }
 
@@ -119,6 +132,9 @@ export function areFiltersEqual(a: CompanyFilters, b: CompanyFilters): boolean {
     a.financing_enabled === b.financing_enabled &&
     a.whatsapp_enabled === b.whatsapp_enabled &&
     a.sort === b.sort &&
-    a.page === b.page
+    a.page === b.page &&
+    a.lat === b.lat &&
+    a.lng === b.lng &&
+    a.radius_km === b.radius_km
   );
 }

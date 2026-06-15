@@ -470,6 +470,15 @@ module Api
             @companies = @companies.where(city: cities) if cities.any?
           end
 
+          if params[:latitude].present? && params[:longitude].present? && params[:radius_km].present?
+            @companies = Geo::HaversineCalculator.scope_within_radius(
+              @companies, 
+              lat: params[:latitude].to_f, 
+              lng: params[:longitude].to_f, 
+              radius_km: params[:radius_km].to_f
+            )
+          end
+
           if params[:serves_state].present?
             states = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
                                                 .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
@@ -563,7 +572,10 @@ module Api
           sort: params[:sort],
           limit: params[:limit],
           page: params[:page],
-          mine: params[:mine]
+          mine: params[:mine],
+          latitude: params[:latitude]&.to_f&.round(3),
+          longitude: params[:longitude]&.to_f&.round(3),
+          radius_km: params[:radius_km]
         }.compact
 
         filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
@@ -651,7 +663,10 @@ module Api
             banner_url: company.banner_url,
             primary_category: primary_category&.name,
             category_ids: categories_array.take(5).map(&:id),
-            feature_access: company.respond_to?(:feature_access) ? company.feature_access : {}
+            feature_access: company.respond_to?(:feature_access) ? company.feature_access : {},
+            distance_km: company.has_attribute?(:distance_km) ? company.distance_km : nil,
+            latitude: company.latitude,
+            longitude: company.longitude
           }
         else
           company_detail_payload(company)
