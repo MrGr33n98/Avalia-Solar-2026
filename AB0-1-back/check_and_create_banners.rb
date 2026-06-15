@@ -69,13 +69,13 @@ else
 
       # Cria uma imagem de placeholder
       # Você precisará substituir por uma imagem real
-      placeholder_path = Rails.root.join('public', 'placeholder-banner.jpg')
+      placeholder_path = Rails.root.join('public', 'images', 'logo.png')
 
       if File.exist?(placeholder_path)
         banner.image.attach(
           io: File.open(placeholder_path),
-          filename: 'placeholder-banner.jpg',
-          content_type: 'image/jpeg'
+          filename: 'logo.png',
+          content_type: 'image/png'
         )
 
         if banner.save

@@ -108,6 +108,115 @@ module Types
       ).call
     end
 
+    # ─────────────────────────────────────────────
+    # active_states — Siglas de estados ativos
+    # ─────────────────────────────────────────────
+    field :active_states, [String], null: false do
+      description 'Retorna a lista de siglas de estados ativos'
+    end
+
+    def active_states
+      Locations::BrLocations.states.map { |state| state['acronym'] }
+    end
+
+    # ─────────────────────────────────────────────
+    # active_cities — Cidades ativas por estado
+    # ─────────────────────────────────────────────
+    field :active_cities, [String], null: false do
+      description 'Retorna a lista de cidades ativas para um estado'
+      argument :state, String, required: true
+    end
+
+    def active_cities(state:)
+      state_code = state.to_s.strip.upcase
+      state_code.present? ? Locations::BrLocations.cities_for(state_code) : []
+    end
+
+    # ─────────────────────────────────────────────
+    # active_locations — Pares cidade/estado ativos
+    # ─────────────────────────────────────────────
+    field :active_locations, [Types::LocationPairType], null: false do
+      description 'Retorna todos os pares de cidades e estados ativos no portal'
+    end
+
+    def active_locations
+      Company.distinct.pluck(:state, :city).compact
+             .map { |state, city| { state: state, city: city } }
+             .sort_by { |loc| [loc[:state], loc[:city]] }
+    end
+
+    # ─────────────────────────────────────────────
+    # category_tree — Árvore de categorias
+    # ─────────────────────────────────────────────
+    field :category_tree, [Types::CategoryType], null: false do
+      description 'Retorna a árvore de categorias ativas (raízes e seus filhos)'
+    end
+
+    def category_tree
+      Category.where(status: 'active', parent_id: nil)
+              .includes(:icon_attachment)
+              .order(:name)
+    end
+
+    # ─────────────────────────────────────────────
+    # banners — Banners promocionais filtrados
+    # ─────────────────────────────────────────────
+    field :banners, [Types::BannerType], null: false do
+      description 'Lista banners promocionais ativos com filtros'
+      argument :position, String, required: false
+      argument :category_id, ID, required: false
+      argument :slot_key, String, required: false
+      argument :company_id, ID, required: false
+      argument :limit, Integer, required: false
+      argument :state, String, required: false
+      argument :city, String, required: false
+    end
+
+    def banners(position: nil, category_id: nil, slot_key: nil, company_id: nil, limit: nil, state: nil, city: nil)
+      query = ::Banner.currently_active
+
+      query = query.where(position: position) if position.present?
+
+      if slot_key.present? && ::Banner.column_names.include?('slot_key')
+        query = query.where(slot_key: slot_key)
+      end
+
+      if company_id.present? && ::Banner.column_names.include?('company_id')
+        query = query.where('company_id = ? OR company_id IS NULL', company_id)
+      end
+
+      if category_id.present?
+        if ::Banner.reflect_on_association(:categories) && ActiveRecord::Base.connection.table_exists?(:banners_categories)
+          query = query.left_joins(:categories)
+                       .where('categories.id = ? OR categories.id IS NULL', category_id)
+                       .distinct
+        elsif ::Banner.column_names.include?('category_id')
+          query = query.where(category_id: category_id)
+        end
+      end
+
+      if state.present? && ::Banner.column_names.include?('target_states')
+        state_code = state.to_s.strip.upcase
+        query = query.where("target_states = '{}' OR target_states IS NULL OR ? = ANY(target_states)", state_code)
+      end
+
+      if city.present? && ::Banner.column_names.include?('target_cities')
+        city_name = city.to_s.strip
+        query = query.where("target_cities = '{}' OR target_cities IS NULL OR ? = ANY(target_cities)", city_name)
+      end
+
+      if ::Banner.column_names.include?('priority')
+        query = query.order(priority: :asc, sponsored: :desc, created_at: :desc)
+      elsif ::Banner.column_names.include?('sponsored')
+        query = query.order(sponsored: :desc, created_at: :desc)
+      else
+        query = query.order(created_at: :desc)
+      end
+
+      query = query.limit(limit) if limit.present? && limit.positive?
+      query.includes(:categories, :company, image_attachment: :blob)
+    end
+
     private
 
     def apply_sort(scope, sort)
