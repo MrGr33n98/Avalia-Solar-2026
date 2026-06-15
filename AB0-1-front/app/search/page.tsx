@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import SearchRadiusFilter from '@/components/search/SearchRadiusFilter';
 import dynamic from 'next/dynamic';
 const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), { ssr: false });
+import { SearchExploreView } from '@/components/search/SearchExploreView';
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
@@ -996,29 +997,7 @@ function SearchContent() {
 
       {/* ── Empty state (no query) ───────────────────────────────────── */}
       {!loading && !query && !error && (
-        <div className="container mx-auto px-4 py-16 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center mb-5">
-            <Search className="w-7 h-7 text-blue-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
-            O que você está buscando?
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
-            Encontre empresas de energia solar, produtos, categorias e artigos.
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-            {SEARCH_SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                onClick={() => handleSuggestionSearch(s)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-sm"
-              >
-                <Zap className="w-3 h-3" />
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SearchExploreView onSuggestionClick={handleSuggestionSearch} />
       )}
 
       {/* ── Results ─────────────────────────────────────────────────── */}
