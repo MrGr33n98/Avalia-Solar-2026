@@ -499,6 +499,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
     gap: Spacing.two,
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 2,
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarInitial: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#003E7E',
   },
   headerActions: {
     flexDirection: 'row',
@@ -682,6 +699,28 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   categoryBadge: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#8E8E93',
+  },
+  emptyContainer: {
+    paddingVertical: Spacing.six,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.four,
+  },
+});
+oryBadge: {
     paddingHorizontal: Spacing.two,
     paddingVertical: 2,
     borderRadius: 4,

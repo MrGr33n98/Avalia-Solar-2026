@@ -8,6 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Sheet,
@@ -93,7 +96,7 @@ function ProductCardSkeleton() {
 }
 
 // ─── SearchSidebar (desktop) ──────────────────────────────────────────────────
-const MAP_ENABLED = process.env.NEXT_PUBLIC_SEARCH_MAP_ENABLED === 'true';
+const MAP_ENABLED = true; // Forçado para melhoria da experiência de busca
 
 interface SidebarProps {
   sort: SortValue;
@@ -112,6 +115,7 @@ interface SidebarProps {
   showMap?: boolean;
   onToggleMap?: () => void;
 }
+
 
 function SearchSidebar({
   sort, onSortChange,
@@ -1354,7 +1358,7 @@ function SearchContent() {
           onReset={resetFilters}
           hasActiveFilters={hasActiveFilters}
           radiusKm={radiusKm}
-          onRadiusChange={setRadiusKm}
+          onRadiusChange={handleRadiusChange}
           onCoordsChange={setGeoCoords}
           cityName={searchParams.get('city') || undefined}
         />
@@ -1371,6 +1375,26 @@ export default function Page() {
         <div className="min-h-screen bg-[hsl(var(--background))]">
           <div className="bg-white dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 px-4 py-5">
             <Skeleton className="h-11 w-full rounded-xl mb-3" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex gap-6">
+              <Skeleton className="hidden lg:block w-[264px] h-80 rounded-2xl flex-shrink-0" />
+              <div className="flex-1 space-y-4">
+                <Skeleton className="h-10 w-64 rounded-xl" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {[...Array(6)].map((_, i) => <CompanyCardSkeleton key={i} />)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
+  );
+}
             <Skeleton className="h-4 w-48" />
           </div>
           <div className="container mx-auto px-4 py-6">
