@@ -270,11 +270,11 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     : 'Empresas de Energia Solar';
 
   const quickActions = [
-    { label: 'Instalar', href: '/companies', imageSrc: '/icones/icone_instalar_avalia_solar_40x40.png', activeDot: 0 },
-    { label: 'Produtos', href: '/products', imageSrc: '/icones/icone_produtos_avalia_solar_40x40.png', activeDot: 1 },
-    { label: 'Categorias', href: '/categories', imageSrc: '/icones/icone_categorias_avalia_solar.png', activeDot: 1 },
-    { label: 'Avaliar', href: '/reviews/my', imageSrc: '/icones/icone_avaliacoes_avalia_solar.png', activeDot: 0 },
-    { label: 'Destaques', href: '/companies?featured=true', imageSrc: '/icones/icone_destaques_avalia_solar.png', activeDot: 2 },
+    { label: 'Instalar', href: '/companies', imageSrc: '/icones/icone_instalar_avalia_solar_40x40.png' },
+    { label: 'Produtos', href: '/products', imageSrc: '/icones/icone_produtos_avalia_solar_40x40.png' },
+    { label: 'Categorias', href: '/categories', imageSrc: '/icones/icone_categorias_avalia_solar.png' },
+    { label: 'Avaliar', href: '/reviews/my', imageSrc: '/icones/icone_avaliacoes_avalia_solar.png' },
+    { label: 'Destaques', href: '/companies?featured=true', imageSrc: '/icones/icone_destaques_avalia_solar.png' },
   ];
 
   if (error) {
@@ -381,26 +381,19 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="flex flex-col items-center justify-between rounded-3xl bg-white p-4 md:p-6 w-[130px] md:w-auto shrink-0 snap-start border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 group"
+                  className="flex flex-col items-center justify-center rounded-2xl bg-white p-3.5 md:p-4 w-[110px] md:w-auto shrink-0 snap-start border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_-4px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-0.5 group"
                 >
-                  <div className="relative w-full aspect-square mb-3 md:mb-5 transition-transform duration-300 group-hover:scale-110">
+                  <div className="relative w-8 h-8 md:w-10 md:h-10 mb-2 md:mb-3 transition-transform duration-300 group-hover:scale-105">
                     <Image 
                       src={action.imageSrc} 
                       alt={action.label}
                       fill
-                      sizes="(max-width: 768px) 130px, 200px"
-                      className="object-contain drop-shadow-sm"
+                      sizes="(max-width: 768px) 32px, 40px"
+                      className="object-contain"
                       unoptimized
                     />
                   </div>
-                  <div className="flex flex-col items-center gap-2.5 md:gap-3">
-                    <span className="text-[13px] md:text-[15px] font-bold text-[#475569] group-hover:text-slate-900">{action.label}</span>
-                    <div className="flex gap-1.5">
-                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 0 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
-                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 1 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
-                      <div className={cn("w-1.5 h-1.5 rounded-full transition-colors", action.activeDot === 2 ? "bg-[#3B82F6]" : "bg-slate-200")}></div>
-                    </div>
-                  </div>
+                  <span className="text-[12px] md:text-[13px] font-bold text-slate-600 group-hover:text-blue-600 transition-colors">{action.label}</span>
                 </Link>
               ))}
             </section>
