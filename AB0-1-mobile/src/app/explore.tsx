@@ -25,6 +25,7 @@ import { gql } from '@apollo/client';
 import { useMobileLocation } from '@/hooks/useMobileLocation';
 import { MobileRadiusFilter } from '@/components/search/MobileRadiusFilter';
 import { MobileSearchMap } from '@/components/search/MobileSearchMap';
+import { usePostHog } from 'posthog-react-native';
 
 
 const GET_COMPANIES_SEARCH_GRAPHQL = gql`
@@ -60,6 +61,7 @@ export default function ExploreScreen() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
   const params = useLocalSearchParams<{ q?: string; category_id?: string }>();
+  const posthog = usePostHog();
 
   // Estados de Filtros
   const [search, setSearch] = useState('');
@@ -178,7 +180,15 @@ export default function ExploreScreen() {
   const renderCompanyItem = ({ item }: { item: Company }) => (
     <TouchableOpacity
       style={[styles.companyCard, { backgroundColor: colors.backgroundElement }]}
-      onPress={() => router.push(`/company/${item.id}`)}
+      onPress={() => {
+        posthog?.capture('company_card_tapped', {
+          company_id: item.id,
+          company_name: item.name,
+          distance_km: item.distanceKm,
+          view_mode: 'list'
+        });
+        router.push(`/company/${item.id}`);
+      }}
     >
       <View style={styles.cardHeader}>
         {item.logo_url ? (
@@ -398,7 +408,15 @@ export default function ExploreScreen() {
               companies={companies.length > 0 ? companies : mockExploreCompanies} 
               userLocation={userLocation}
               radiusKm={radiusKm}
-              onSelectCompany={(company) => router.push(`/company/${company.id}`)}
+              onSelectCompany={(company) => {
+                posthog?.capture('company_card_tapped', {
+                  company_id: company.id,
+                  company_name: company.name,
+                  distance_km: company.distanceKm,
+                  view_mode: 'map'
+                });
+                router.push(`/company/${company.id}`);
+              }}
             />
           </View>
         ) : (

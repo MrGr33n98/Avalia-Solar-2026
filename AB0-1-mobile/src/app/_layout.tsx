@@ -9,6 +9,8 @@ import AppTabs from '@/components/app-tabs';
 import { useAuthStore } from '@/store/auth';
 import { apolloClient } from '@/lib/apolloClient';
 
+import { PostHogProvider } from 'posthog-react-native';
+
 // Inicializa o cliente do React Query
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,13 +31,20 @@ export default function TabLayout() {
   }, [initializeAuth]);
 
   return (
-    <ApolloProvider client={apolloClient}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AnimatedSplashOverlay />
-          <AppTabs />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ApolloProvider>
+    <PostHogProvider 
+      apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY} 
+      options={{
+        host: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+      }}
+    >
+      <ApolloProvider client={apolloClient}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AnimatedSplashOverlay />
+            <AppTabs />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </ApolloProvider>
+    </PostHogProvider>
   );
 }
