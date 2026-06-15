@@ -69,38 +69,18 @@ module Api
         city = params[:city].presence
         limit = (params[:limit] || 5).to_i
 
-        adapter = ActiveRecord::Base.connection.adapter_name.downcase
-        if adapter.include?('sqlite')
-          q_lower = q.downcase
-          companies_scope = Company.where(
-            'LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(state) LIKE :q OR LOWER(city) LIKE :q OR LOWER(address) LIKE :q',
-            q: "%#{q_lower}%"
-          ).by_state(state).by_city(city)
-        else
-          companies_scope = Company.where(
-            'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q',
-            q: "%#{q}%"
-          ).by_state(state).by_city(city)
-        end
-
-        if adapter.include?('sqlite')
-          q_lower = q.downcase
-          products_scope = Product.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q', q: "%#{q_lower}%")
-          categories_scope = Category.where('LOWER(name) LIKE :q OR LOWER(short_description) LIKE :q OR LOWER(description) LIKE :q',
-                                            q: "%#{q_lower}%")
-          articles_scope = Article.where('LOWER(title) LIKE :q OR LOWER(content) LIKE :q', q: "%#{q_lower}%")
-        else
-          products_scope = Product.where('name ILIKE :q OR description ILIKE :q', q: "%#{q}%")
-          categories_scope = Category.where('name ILIKE :q OR short_description ILIKE :q OR description ILIKE :q',
-                                            q: "%#{q}%")
-          articles_scope = Article.where('title ILIKE :q OR content ILIKE :q', q: "%#{q}%")
-        end
+        results = ::Search::SuggestionService.new(
+          q: q,
+          state: state,
+          city: city,
+          limit: limit
+        ).call
 
         render json: {
-          companies: companies_scope.limit(limit),
-          products: products_scope.limit(limit),
-          categories: categories_scope.limit(limit),
-          articles: articles_scope.limit(limit)
+          companies: results[:companies],
+          products: results[:products],
+          categories: results[:categories],
+          articles: results[:articles]
         }
       end
 

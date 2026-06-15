@@ -178,6 +178,15 @@ GEM
       dotenv (= 3.1.8)
       railties (>= 6.1)
     dry-initializer (3.2.0)
+    elasticsearch (7.17.11)
+      elasticsearch-api (= 7.17.11)
+      elasticsearch-transport (= 7.17.11)
+    elasticsearch-api (7.17.11)
+      multi_json
+    elasticsearch-transport (7.17.11)
+      base64
+      faraday (>= 1, < 3)
+      multi_json
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
@@ -197,6 +206,7 @@ GEM
     ffi (1.17.2-x64-mingw-ucrt)
     ffi (1.17.2-x86_64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
+    fiber-storage (1.0.1)
     formtastic (5.0.0)
       actionpack (>= 6.0.0)
     formtastic_i18n (0.7.0)
@@ -207,6 +217,13 @@ GEM
       raabro (~> 1.4)
     globalid (1.1.0)
       activesupport (>= 5.0)
+    graphql (2.6.3)
+      base64
+      fiber-storage
+      logger
+    graphql-batch (0.6.1)
+      graphql (>= 1.13, < 3)
+      promise.rb (~> 0.7.2)
     has_scope (0.8.2)
       actionpack (>= 5.2)
       activesupport (>= 5.2)
@@ -294,6 +311,7 @@ GEM
     minitest (5.27.0)
     mixpanel-ruby (2.3.0)
     msgpack (1.7.1)
+    multi_json (1.21.1)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
     net-http (0.9.1)
@@ -366,6 +384,7 @@ GEM
     prism (1.9.0)
     prometheus-client (4.2.5)
       base64
+    promise.rb (0.7.4)
     public_suffix (5.0.1)
     puma (5.6.6)
       nio4r (~> 2.0)
@@ -507,6 +526,9 @@ GEM
       tilt
     scout_apm (5.7.1)
       parser
+    searchkick (5.4.0)
+      activemodel (>= 6.1)
+      hashie
     selenium-webdriver (4.10.0)
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
@@ -643,9 +665,12 @@ DEPENDENCIES
   devise
   devise-two-factor (~> 5.0)
   dotenv-rails (~> 3.1)
+  elasticsearch (~> 7.17)
   factory_bot_rails
   faker (~> 3.5)
   friendly_id (~> 5.5)
+  graphql (~> 2.3)
+  graphql-batch
   httparty (~> 0.22.0)
   image_processing (~> 1.2)
   importmap-rails
@@ -682,6 +707,7 @@ DEPENDENCIES
   rubyzip (>= 2.4, < 3.0)
   sassc
   scout_apm
+  searchkick (~> 5.3)
   selenium-webdriver
   sentry-rails
   sentry-ruby
@@ -759,6 +785,9 @@ CHECKSUMS
   dotenv (3.1.8) sha256=9e1176060ced581f8e6ce4384e91361817763a76e3c625c8bddc18b35bd392c3
   dotenv-rails (3.1.8) sha256=46c9d1226a8b58a83b5f61325aa8cffd25cea1c0fafdfbbbee1e5dfea77980c4
   dry-initializer (3.2.0) sha256=37d59798f912dc0a1efe14a4db4a9306989007b302dcd5f25d0a2a20c166c4e3
+  elasticsearch (7.17.11) sha256=ed080f085d939f21d07f424ebcea95326e4bdb5f770a8f33aac699374f2ffc86
+  elasticsearch-api (7.17.11) sha256=fed8f7b64493c97cf3984a33396a798204b54b8e1b01c5b6c099fa3fd4209107
+  elasticsearch-transport (7.17.11) sha256=d18057d5295e4c39fe80084ede9e00e9c0e0d74580348985f8677b2fb7f70f03
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.0) sha256=6c7e3c90779821f9e3b324c5e96fda9767f72995d6ae435b96678a4f3e2de8bc
   factory_bot (6.5.6) sha256=12beb373214dccc086a7a63763d6718c49769d5606f0501e0a4442676917e077
@@ -769,11 +798,14 @@ CHECKSUMS
   ffi (1.17.2-x64-mingw-ucrt) sha256=15d2da54ee578657a333a6059ed16eaba1cbd794ceecd15944825b65c8381ac0
   ffi (1.17.2-x86_64-darwin) sha256=981f2d4e32ea03712beb26e55e972797c2c5a7b0257955d8667ba58f2da6440e
   ffi (1.17.2-x86_64-linux-gnu) sha256=05d2026fc9dbb7cfd21a5934559f16293815b7ce0314846fee2ac8efbdb823ea
+  fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
   formtastic (5.0.0) sha256=71cc99c8227208f64da8d2b0926d97cef1e5f77e0105047cd57fddeccd3a6416
   formtastic_i18n (0.7.0) sha256=ecef51c9e9030c00f19e69d2483b77f4515c9587d74268b76cf4b6e7988c8e78
   friendly_id (5.6.0) sha256=28e221cd53fbd21586321164c1c6fd0c9ba8dde13969cb2363679f44726bb0c3
   fugit (1.12.0) sha256=033ddf76b3b0149519be6e53ed83954a4df304b8588bafd48284b2a383ff6503
   globalid (1.1.0) sha256=b337e1746f0c8cb0a6c918234b03a1ddeb4966206ce288fbb57779f59b2d154f
+  graphql (2.6.3) sha256=31fe845b509fda27db38d09380f27ffc0de1c7ea2f9f3b12fa42bdde8317239b
+  graphql-batch (0.6.1) sha256=dcd7ca2423d3cd2d02dad5ec8f2499e932b1c3a6280a81c9da0c5930b7f0054d
   has_scope (0.8.2) sha256=48cd53d684aecd55d3ede060b3c1da37bbbcab58e273d99936e271fe6d125a54
   hashie (5.1.0) sha256=c266471896f323c446ea8207f8ffac985d2718df0a0ba98651a3057096ca3870
   htmlentities (4.4.2) sha256=bbafbdf69f2eca9262be4efef7e43e6a1de54c95eb600f26984f71d2fe96c5c3
@@ -814,6 +846,7 @@ CHECKSUMS
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
   mixpanel-ruby (2.3.0) sha256=2aba251a02f62d778533bd9308db0f16ba034f3966c8f68261f9406e21cc4689
   msgpack (1.7.1) sha256=4f337a2cfd8e78850cb515812a2fc17ba114e92a33f82e12e46ae4be4d29c71a
+  multi_json (1.21.1) sha256=e6126a31808e3b4d19f483c775ceac34df190dffa62adfb63a165ee14ba68080
   multi_xml (0.8.1) sha256=addba0290bac34e9088bfe73dc4878530297a82a7bbd66cb44dcd0a4b86edf5a
   net-http (0.9.1) sha256=25ba0b67c63e89df626ed8fac771d0ad24ad151a858af2cc8e6a716ca4336996
   net-imap (0.3.9) sha256=973e6b0e00ba5c929e55d18795d222a4b03343bb04d5726ddf5d94246e256745
@@ -844,6 +877,7 @@ CHECKSUMS
   posthog-ruby (3.5.5) sha256=15a7eae6e6186850d0f7bd92145706ae5e2e4dbe8fd3d6b0a6b531f11f43c97c
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   prometheus-client (4.2.5) sha256=807bebc3e92ccd9f4d814d90be15e85338f3708d227badf80924ef3f6e7d5225
+  promise.rb (0.7.4) sha256=2d2110050c05e6ea8c30a3945aeb96138b6d4303c187c9208a706336a34e0129
   public_suffix (5.0.1) sha256=65603917ff4ecb32f499f42c14951aeed2380054fa7fc51758fc0a8d455fe043
   puma (5.6.6) sha256=8e04ffb55349d846f73ecaa6ffd6487d154b369917c63ce7bda64cc5aa262184
   pundit (2.5.2) sha256=e374152baa24f90b630428293faf4b4c5468fc3cc010165f7d8fcb44ce108bbd
@@ -895,6 +929,7 @@ CHECKSUMS
   sassc (2.4.0) sha256=4c60a2b0a3b36685c83b80d5789401c2f678c1652e3288315a1551d811d9f83e
   sassc-rails (2.1.2) sha256=5f4fdf3881fc9bdc8e856ffbd9850d70a2878866feae8114aa45996179952db5
   scout_apm (5.7.1) sha256=bc43fcb405e2198f5ef27adee7f4cb63f9136d17ca43d13d359f768b759db9d6
+  searchkick (5.4.0) sha256=75d7256d3ec2af2dc11c2ba8160c86d80451f3f86447aae2ace1f79553de0bf3
   selenium-webdriver (4.10.0) sha256=a322af38f9a8966a6c3ab85c365b08c5556cdef72f577905b2b42469faee9d43
   sentry-rails (5.28.0) sha256=a0cbba7ce86312172db9d1b3c39c5302de07e446e7df3f68e4f4b1d240a91fc2
   sentry-ruby (5.28.0) sha256=745c1db3b85c765993dfeb941830aeafff82d85330cd953410c7f37197b0bd99

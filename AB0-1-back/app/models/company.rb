@@ -6,6 +6,31 @@ class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   include Moderation
 
+  # OpenSearch Integration (Searchkick)
+  searchkick word_start: [:name, :city, :state, :description],
+             callbacks: :async
+
+  def search_data
+    {
+      name: name,
+      slug: slug,
+      description: description,
+      short_description: short_description,
+      city: city,
+      state: state,
+      rating_avg: rating_avg.to_f,
+      reviews_count: rating_count.to_i,
+      verified: verified,
+      featured: featured,
+      sponsored: sponsored,
+      category_ids: categories.pluck(:id),
+      category_names: categories.pluck(:name),
+      coverage_states: coverage_state_list,
+      coverage_cities: coverage_city_list,
+      created_at: created_at
+    }
+  end
+
   has_paper_trail # Enable rollback capabilities
 
   ALLOWED_LOGO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze

@@ -34,6 +34,11 @@ Rails.application.routes.draw do
   get '/health/test_error', to: 'health#test_error'
   get '/health/test_scout', to: 'health#test_scout'
 
+  # GraphQL — nova camada paralela ao REST, não substitui /api/v1
+  # Fase 1: consulta PostgreSQL diretamente
+  # Fase 3+: será integrado com OpenSearch via Search::CompanySearchService
+  post '/graphql', to: 'graphql#execute'
+
   mount Yabeda::Prometheus::Exporter, at: '/metrics'
 
   namespace :api do
@@ -162,12 +167,12 @@ Rails.application.routes.draw do
         get 'analytics/top_campaigns', to: 'company_dashboard#analytics_top_campaigns'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
-        
+
         # Trust & Certification endpoints (TaaS)
         get 'trust_health', to: 'company_dashboard#trust_health'
         get 'intent_summary', to: 'company_dashboard#intent_summary'
         get 'certification_progress', to: 'company_dashboard#certification_progress'
-        
+
         get 'assets', to: 'company_dashboard#assets'
 
         get 'stats', to: 'company_dashboard#stats'

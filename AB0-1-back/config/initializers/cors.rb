@@ -104,6 +104,20 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       headers: :any,
       methods: [:get, :options, :head],
       credentials: false
+
+    # GraphQL endpoint — mesmas origens permitidas do /api/v1
+    resource '/graphql',
+      headers: :any,
+      expose: [
+        'Authorization',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
+        'Retry-After'
+      ],
+      methods: [:post, :options],
+      credentials: true,
+      max_age: 3600
   end
 end
 

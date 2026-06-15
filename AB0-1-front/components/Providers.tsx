@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
+import { ApolloProvider } from '@apollo/client';
+import { getApolloClient } from '@/lib/apollo-client';
 
 // Lazy load heavy client-side modals and floating components
 const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
@@ -33,6 +35,7 @@ export default function Providers({
 }: {
   children: React.ReactNode;
 }) {
+  const apolloClient = getApolloClient();
   const pathname = usePathname();
   const analyticsLoadedRef = useRef(false);
 
@@ -141,26 +144,28 @@ export default function Providers({
   }, [pathname]);
 
   return (
-    <PostHogProvider>
-      <QueryProvider>
-        <Context7Provider>
-          <AuthProvider>
-            <CompanyProvider>
-              {children}
-              <QuoteWizardModal />
-              <QuickLeadModal />
-              <DynamicLeadWizardModal />
-              <ComparisonFloatingBar />
-              <SignupGateModalHost />
-              <Toaster />
-              <CookieConsent />
-              {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && (
-                pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />
-              )}
-            </CompanyProvider>
-          </AuthProvider>
-        </Context7Provider>
-      </QueryProvider>
-    </PostHogProvider>
+    <ApolloProvider client={apolloClient}>
+      <PostHogProvider>
+        <QueryProvider>
+          <Context7Provider>
+            <AuthProvider>
+              <CompanyProvider>
+                {children}
+                <QuoteWizardModal />
+                <QuickLeadModal />
+                <DynamicLeadWizardModal />
+                <ComparisonFloatingBar />
+                <SignupGateModalHost />
+                <Toaster />
+                <CookieConsent />
+                {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && (
+                  pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />
+                )}
+              </CompanyProvider>
+            </AuthProvider>
+          </Context7Provider>
+        </QueryProvider>
+      </PostHogProvider>
+    </ApolloProvider>
   );
 }

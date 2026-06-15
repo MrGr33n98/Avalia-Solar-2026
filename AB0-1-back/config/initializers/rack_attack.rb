@@ -135,6 +135,25 @@ class Rack::Attack
     end
   end
 
+  # === GraphQL Endpoint Protection ===
+  # Rate limit para /graphql — previne abuso de queries complexas
+  throttle('graphql/ip', limit: 60, period: 1.minute) do |req|
+    req.ip if req.path == '/graphql' && req.post?
+  end
+
+  # Rate limit por usuário autenticado no GraphQL
+  throttle('graphql/user', limit: 200, period: 1.hour) do |req|
+    if req.path == '/graphql' && req.post? && req.env['HTTP_AUTHORIZATION']
+      begin
+        token = req.env['HTTP_AUTHORIZATION'].split(' ').last
+        decoded = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256')
+        "graphql_user_#{decoded[0]['user_id']}"
+      rescue JWT::DecodeError, JWT::ExpiredSignature
+        nil
+      end
+    end
+  end
+
   ### Blocklist e Safelist ###
 
   # Safelist: Sempre permitir localhost (desenvolvimento)

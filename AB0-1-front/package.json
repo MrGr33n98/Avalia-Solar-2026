@@ -23,6 +23,7 @@
     "perf:simulate-cache-fallback": "node script/simulate-home-cache-fallback.mjs"
   },
   "dependencies": {
+    "@apollo/client": "^4.2.3",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -63,6 +64,7 @@
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.26.1",
+    "graphql": "^16.14.2",
     "html-to-image": "^1.11.13",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.446.0",

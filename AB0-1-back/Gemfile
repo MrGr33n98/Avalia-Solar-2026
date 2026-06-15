@@ -182,3 +182,11 @@ gem 'mercadopago-sdk', '~> 2.3'
 
 # HTTP Client for webhooks and API integrations
 gem 'httparty', '~> 0.22.0'
+
+# GraphQL API (nova camada paralela ao REST — não substitui /api/v1)
+gem 'graphql', '~> 2.3'
+gem 'graphql-batch'  # DataLoader para evitar N+1 queries
+
+# OpenSearch Integration (Fase 3+)
+gem 'searchkick', '~> 5.3'
+gem 'elasticsearch', '~> 7.17'
