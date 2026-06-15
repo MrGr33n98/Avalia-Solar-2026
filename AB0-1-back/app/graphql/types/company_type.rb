@@ -61,17 +61,19 @@ module Types
     # Resolvendo associações
 
     def categories
-      object.categories
+      dataloader.with(::Loaders::AssociationLoader, :categories).load(object)
     end
 
     def badges
-      object.badges.active.map(&:name)
+      badges_list = dataloader.with(::Loaders::AssociationLoader, :badges).load(object)
+      badges_list.select(&:active).map(&:name)
     rescue StandardError
       []
     end
 
     def reviews(limit:)
-      object.reviews.approved.order(created_at: :desc).limit(limit)
+      reviews_list = dataloader.with(::Loaders::AssociationLoader, :reviews).load(object)
+      reviews_list.select { |r| r.status == 'approved' }.sort_by(&:created_at).reverse.first(limit)
     end
 
     def coverage_states

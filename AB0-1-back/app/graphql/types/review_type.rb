@@ -25,9 +25,13 @@ module Types
     field :created_at, GraphQL::Types::ISO8601DateTime, null: false
     field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
 
+    def company
+      dataloader.with(::Loaders::AssociationLoader, :company).load(object)
+    end
+
     # Retorna apenas o primeiro nome do autor por privacidade
     def author_name
-      user = object.user
+      user = dataloader.with(::Loaders::AssociationLoader, :user).load(object)
       return 'Anônimo' if user.nil?
 
       full_name = user.name.to_s.strip

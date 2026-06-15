@@ -8,7 +8,13 @@ class Company < ApplicationRecord
 
   # OpenSearch Integration (Searchkick)
   searchkick word_start: [:name, :city, :state, :description],
-             callbacks: :async
+             callbacks: :async,
+             synonyms: [
+               ['painel', 'modulo', 'placa', 'placa solar', 'painel solar'],
+               ['inversor', 'microinversor', 'conversor'],
+               ['energia solar', 'fotovoltaica', 'energia fotovoltaica', 'geracao distribuida', 'gd'],
+               ['instalacao', 'integracao', 'montagem']
+             ]
 
   def search_data
     {

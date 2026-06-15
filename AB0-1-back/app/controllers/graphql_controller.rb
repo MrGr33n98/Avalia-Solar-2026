@@ -9,6 +9,32 @@ class GraphqlController < ApplicationController
     query = params[:query]
     operation_name = params[:operationName]
 
+    # Suporte a APQ (Automatic Persisted Queries)
+    extensions = prepare_extensions(params[:extensions])
+    if extensions.present? && extensions.dig('persistedQuery', 'version') == 1
+      sha256_hash = extensions.dig('persistedQuery', 'sha256Hash')
+      if sha256_hash.present?
+        if query.blank?
+          # Tentamos buscar do cache
+          query = read_persisted_query(sha256_hash)
+          if query.blank?
+            render json: {
+              errors: [
+                {
+                  message: 'PersistedQueryNotFound',
+                  extensions: { code: 'PERSISTED_QUERY_NOT_FOUND' }
+                }
+              ]
+            }
+            return
+          end
+        else
+          # Query fornecida, vamos persistir
+          write_persisted_query(sha256_hash, query)
+        end
+      end
+    end
+
     context = {
       current_user: current_user_from_token,
       request: request
@@ -72,6 +98,48 @@ class GraphqlController < ApplicationController
       {}
     else
       raise ArgumentError, "Unexpected parameter: #{variables_param}"
+    end
+  end
+
+  def prepare_extensions(extensions_param)
+    case extensions_param
+    when String
+      if extensions_param.present?
+        JSON.parse(extensions_param) || {}
+      else
+        {}
+      end
+    when Hash
+      extensions_param
+    when ActionController::Parameters
+      extensions_param.to_unsafe_hash
+    when nil
+      {}
+    else
+      {}
+    end
+  rescue JSON::ParserError
+    {}
+  end
+
+  def read_persisted_query(hash)
+    return nil if REDIS.is_a?(NullRedis) || !defined?(REDIS)
+
+    begin
+      REDIS.get("apq:#{hash}")
+    rescue => e
+      Rails.logger.error "[APQ] Erro ao ler hash do Redis: #{e.message}"
+      nil
+    end
+  end
+
+  def write_persisted_query(hash, query)
+    return if REDIS.is_a?(NullRedis) || !defined?(REDIS)
+
+    begin
+      REDIS.setex("apq:#{hash}", 24.hours.to_i, query)
+    rescue => e
+      Rails.logger.error "[APQ] Erro ao gravar hash no Redis: #{e.message}"
     end
   end
 

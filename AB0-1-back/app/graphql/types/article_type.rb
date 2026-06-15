@@ -42,8 +42,13 @@ module Types
       [(word_count / words_per_minute.to_f).ceil, 1].max
     end
 
+    def category
+      dataloader.with(::Loaders::AssociationLoader, :category).load(object)
+    end
+
     def author_name
-      object.author&.name || object.author&.email || 'Autor'
+      author = dataloader.with(::Loaders::AssociationLoader, :author).load(object)
+      author&.name || author&.email || 'Autor'
     end
 
     def related_articles

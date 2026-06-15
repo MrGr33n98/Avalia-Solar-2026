@@ -29,14 +29,24 @@ module Search
     end
 
     def call
-      if search_enabled? && opensearch_responsive?
-        search_via_opensearch
-      else
-        search_via_postgresql
+      result = if search_enabled? && opensearch_responsive?
+                 search_via_opensearch
+               else
+                 search_via_postgresql
+               end
+
+      if result && result[:nodes] && result[:nodes].empty? && @q.present?
+        log_zero_results(search_enabled? && opensearch_responsive? ? 'opensearch' : 'postgresql')
       end
+
+      result
     rescue StandardError => e
       Rails.logger.error "[Search] Erro ao buscar no OpenSearch, caindo para PostgreSQL: #{e.message}"
-      search_via_postgresql
+      result = search_via_postgresql
+      if result && result[:nodes] && result[:nodes].empty? && @q.present?
+        log_zero_results('postgresql_fallback')
+      end
+      result
     end
 
     private
@@ -49,6 +59,36 @@ module Search
       Searchkick.client.ping
     rescue StandardError
       false
+    end
+
+    def log_zero_results(search_type)
+      begin
+        SearchZeroResult.create!(
+          query: @q,
+          category_id: @category_id || @category_ids&.first,
+          state: @state || @serves_state,
+          city: @city || @serves_city,
+          search_type: search_type
+        )
+      rescue => e
+        Rails.logger.error "[Search] Erro ao salvar SearchZeroResult: #{e.message}"
+      end
+
+      begin
+        Analytics::PostHogService.capture(
+          'search_zero_results',
+          {
+            query: @q,
+            category_id: @category_id || @category_ids&.first,
+            state: @state || @serves_state,
+            city: @city || @serves_city,
+            search_type: search_type
+          },
+          distinct_id: 'anonymous_search'
+        )
+      rescue => e
+        Rails.logger.error "[Search] Erro ao enviar evento de busca vazia para o PostHog: #{e.message}"
+      end
     end
 
     # Busca utilizando OpenSearch (Searchkick) com Score Composto e Agregações (aggs)
@@ -166,12 +206,12 @@ module Search
         if adapter.include?('sqlite')
           q_lower = @q.downcase
           scope = scope.where(
-            'LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(state) LIKE :q OR LOWER(city) LIKE :q OR LOWER(address) LIKE :q',
+            'LOWER(companies.name) LIKE :q OR LOWER(companies.description) LIKE :q OR LOWER(companies.state) LIKE :q OR LOWER(companies.city) LIKE :q OR LOWER(companies.address) LIKE :q',
             q: "%#{q_lower}%"
           )
         else
           scope = scope.where(
-            'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q',
+            'companies.name ILIKE :q OR companies.description ILIKE :q OR companies.state ILIKE :q OR companies.city ILIKE :q OR companies.address ILIKE :q',
             q: "%#{@q}%"
           )
         end
@@ -239,35 +279,38 @@ module Search
       when 'newest', 'created_at'
         scope.order(created_at: :desc)
       when 'name', 'name_asc'
-        scope.order(name: :asc)
+        scope.order('companies.name ASC')
       when 'name_desc'
-        scope.order(name: :desc)
+        scope.order('companies.name DESC')
       else
         # recommended
         scope.order(
           Arel.sql(
             "CASE WHEN sponsored THEN 1 ELSE 0 END DESC, " \
             "(COALESCE(rating_avg, 0) * 0.6 + COALESCE(rating_count, 0) * 0.0001) DESC, " \
-            "COALESCE(rating_avg, 0) DESC, name ASC"
+            "COALESCE(rating_avg, 0) DESC, companies.name ASC"
           )
         )
       end
     end
 
     def compute_postgresql_facets(scope)
-      categories = scope.joins(:categories)
+      categories = scope.unscope(:order)
+                        .joins(:categories)
                         .group('categories.id', 'categories.name')
                         .limit(15)
                         .count
                         .map { |(id, name), count| { key: "#{id}:#{name}", count: count } }
 
-      cities = scope.group(:city)
+      cities = scope.unscope(:order)
+                    .group(:city)
                     .limit(20)
                     .count
                     .compact
                     .map { |city, count| { key: city, count: count } }
 
-      states = scope.group(:state)
+      states = scope.unscope(:order)
+                    .group(:state)
                     .limit(10)
                     .count
                     .compact

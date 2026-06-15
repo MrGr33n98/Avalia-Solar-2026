@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_02_140000) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_15_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -2223,6 +2223,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_02_140000) do
     t.index ["user_id"], name: "index_reviews_on_user_id"
     t.check_constraint "rating >= 0::numeric AND rating <= 5::numeric", name: "chk_reviews_rating_range"
     t.check_constraint "rating >= 1::numeric AND rating <= 5::numeric", name: "ck_reviews_valid_rating"
+  end
+
+  create_table "search_zero_results", force: :cascade do |t|
+    t.string "query", null: false
+    t.integer "category_id"
+    t.string "state"
+    t.string "city"
+    t.string "search_type", default: "opensearch"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_search_zero_results_on_created_at"
+    t.index ["query"], name: "index_search_zero_results_on_query"
   end
 
   create_table "sector_ratings", force: :cascade do |t|

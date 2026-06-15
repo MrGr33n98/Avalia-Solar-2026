@@ -5,6 +5,8 @@ class AvaliaSolarSchema < GraphQL::Schema
   mutation(Types::MutationType) unless mutation
   query(Types::QueryType) unless query
 
+  use GraphQL::Dataloader
+
   # ─────────────────────────────────────────────
   # Segurança: limites de profundidade e complexidade
   # ─────────────────────────────────────────────
