@@ -374,26 +374,26 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
             </div>
 
             <section 
-              className="flex md:grid md:grid-cols-5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 md:gap-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+              className="flex md:flex-wrap overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {quickActions.map((action) => (
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="flex flex-col items-center justify-center rounded-2xl bg-white p-3.5 md:p-4 w-[110px] md:w-auto shrink-0 snap-start border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_-4px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-0.5 group"
+                  className="flex flex-row items-center justify-center rounded-xl bg-white px-4 py-2 w-auto shrink-0 snap-start border border-slate-200 hover:border-blue-400 shadow-sm transition-all hover:bg-slate-50 group gap-2"
                 >
-                  <div className="relative w-8 h-8 md:w-10 md:h-10 mb-2 md:mb-3 transition-transform duration-300 group-hover:scale-105">
+                  <div className="relative w-5 h-5 transition-transform duration-300 group-hover:scale-105">
                     <Image 
                       src={action.imageSrc} 
                       alt={action.label}
                       fill
-                      sizes="(max-width: 768px) 32px, 40px"
+                      sizes="20px"
                       className="object-contain"
                       unoptimized
                     />
                   </div>
-                  <span className="text-[12px] md:text-[13px] font-bold text-slate-600 group-hover:text-blue-600 transition-colors">{action.label}</span>
+                  <span className="text-[13px] font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">{action.label}</span>
                 </Link>
               ))}
             </section>
