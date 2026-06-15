@@ -6,7 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import { getApolloClient } from '@/lib/apollo-client';
 
 // Lazy load heavy client-side modals and floating components
