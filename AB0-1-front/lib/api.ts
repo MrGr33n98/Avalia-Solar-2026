@@ -5,6 +5,8 @@ import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
 import { ApiError, toApiError } from './api-error';
 import * as Sentry from '@sentry/nextjs';
 import { logError } from './error-handler';
+import { apolloClient } from './apollo-client';
+import { gql } from '@apollo/client';
 
 // =======================
 // API Response Types
@@ -1651,7 +1653,39 @@ export const categoriesApi = {
 
 export const leadsApi = {
   getAll: () => fetchApi('/leads'),
-  mine: () => fetchApi<Lead[]>('/leads/mine'),
+  mine: async (): Promise<Lead[]> => {
+    try {
+      if (apolloClient) {
+        const { data } = await apolloClient.query({
+          query: gql`
+            query GetMyLeads {
+              myLeads(page: 1, perPage: 100) {
+                nodes {
+                  id
+                  status
+                  message
+                  city
+                  state
+                  product_vertical: service_type
+                  created_at: createdAt
+                  company {
+                    id
+                    name
+                    logo_url: logoUrl
+                  }
+                }
+              }
+            }
+          `,
+          fetchPolicy: 'network-only',
+        });
+        return data?.myLeads?.nodes || [];
+      }
+    } catch (err) {
+      console.warn('[leadsApi.mine] GraphQL failed, falling back to REST:', err);
+    }
+    return fetchApi<Lead[]>('/leads/mine');
+  },
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
@@ -1668,7 +1702,52 @@ export const leadsApi = {
 
 export const reviewsApi = {
   getAll: (params: any = {}) => fetchApi('/reviews', { params }),
-  listMine: (params: any = {}) => fetchApi('/reviews/mine', { params }),
+  listMine: async (params: any = {}): Promise<Review[]> => {
+    try {
+      if (apolloClient) {
+        const { data } = await apolloClient.query({
+          query: gql`
+            query GetMyReviews($page: Int, $perPage: Int) {
+              myReviews(page: $page, perPage: $perPage) {
+                nodes {
+                  id
+                  rating
+                  comment
+                  headline
+                  pros
+                  cons
+                  buyer_tip
+                  author_name
+                  reply: company_reply
+                  replied_at: replied_at
+                  status
+                  project_type
+                  installation_status
+                  created_at: createdAt
+                  updated_at: updatedAt
+                  company {
+                    id
+                    name
+                    slug
+                    logo_url: logoUrl
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            page: params.page || 1,
+            perPage: params.per_page || 100,
+          },
+          fetchPolicy: 'network-only',
+        });
+        return data?.myReviews?.nodes || [];
+      }
+    } catch (err) {
+      console.warn('[reviewsApi.listMine] GraphQL failed, falling back to REST:', err);
+    }
+    return fetchApi<Review[]>('/reviews/mine', { params });
+  },
   getById: (id: number) => fetchApi(`/reviews/${id}`),
   create: (review: Partial<Review>) =>
     fetchApi('/reviews', {
@@ -1892,6 +1971,32 @@ export const authApi = {
         return null;
       }
 
+      if (apolloClient) {
+        try {
+          const { data } = await apolloClient.query({
+            query: gql`
+              query GetMe {
+                me {
+                  id
+                  name
+                  email
+                  phone
+                  avatar_url: avatarUrl
+                  role
+                  created_at: createdAt
+                }
+              }
+            `,
+            fetchPolicy: 'network-only',
+          });
+          if (data && data.me) {
+            return data.me;
+          }
+        } catch (err) {
+          console.warn('[authApi.me] GraphQL query failed, falling back to REST:', err);
+        }
+      }
+
       // First try the unified /auth/me endpoint
       const resp = await fetchApi<{ user: User } | null>('/auth/me', {
         silentStatusCodes: [401],
@@ -1915,7 +2020,7 @@ export const authApi = {
       const status = error?.status || error?.context?.status;
       const msg = error?.message || '';
       
-      if (status === 401 || msg.includes('[401]') || msg.toLowerCase().includes('not authenticated')) {
+      if (status === 401 || msg.includes('[401]') || msg.toLowerCase().includes('not authenticated') || msg.includes('Autenticação necessária')) {
         console.warn('[authApi.me] Not authenticated or session expired');
         clearAuthSessionHint();
         return null;

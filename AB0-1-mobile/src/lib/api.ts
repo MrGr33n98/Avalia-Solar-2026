@@ -1,4 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
+import apolloClient from './apolloClient';
+import { gql } from '@apollo/client';
 
 const API_VERSION_PATH = '/api/v1';
 
@@ -225,6 +227,26 @@ export const authApi = {
     });
   },
   getCurrentUser: async (): Promise<User> => {
+    try {
+      const { data } = await apolloClient.query({
+        query: gql`
+          query GetMe {
+            me {
+              id
+              name
+              email
+              role
+            }
+          }
+        `,
+        fetchPolicy: 'network-only',
+      });
+      if (data && data.me) {
+        return data.me;
+      }
+    } catch (err) {
+      console.warn('[getCurrentUser] GraphQL query failed, falling back to REST:', err);
+    }
     return fetchApi<User>('auth/me');
   },
 };
@@ -302,7 +324,35 @@ export const leadsApi = {
   },
   
   getByUser: async (): Promise<any[]> => {
-    return fetchApi('leads');
+    try {
+      const { data } = await apolloClient.query({
+        query: gql`
+          query GetMyLeads {
+            myLeads(page: 1, perPage: 100) {
+              nodes {
+                id
+                status
+                message
+                city
+                state
+                product_vertical: service_type
+                created_at: createdAt
+                company {
+                  id
+                  name
+                  logo_url: logoUrl
+                }
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'network-only',
+      });
+      return data?.myLeads?.nodes || [];
+    } catch (err) {
+      console.warn('[leadsApi.getByUser] GraphQL query failed, falling back to REST:', err);
+    }
+    return fetchApi<any[]>('leads');
   },
 };
 

@@ -141,6 +141,27 @@ class Rack::Attack
     req.ip if req.path == '/graphql' && req.post?
   end
 
+  # Rate limit específico para mutations críticas do GraphQL (leads e reviews) para evitar spam
+  throttle('graphql_mutations/ip', limit: 10, period: 1.minute) do |req|
+    if req.path == '/graphql' && req.post?
+      begin
+        # Ignora se for excessivamente grande para evitar DoS por processamento de body
+        if req.content_length.to_i <= 50_000
+          body = req.body.read
+          req.body.rewind # Crucial retornar o stream do body ao início para o controller do Rails poder ler
+
+          # Verifica se o body contém chamadas de Mutations críticas
+          if body.include?('CreateLead') || body.include?('CreateReview') || body.include?('create_lead') || body.include?('create_review')
+            req.ip
+          end
+        end
+      rescue => e
+        Rails.logger.error("[Rack::Attack] Erro ao analisar request body do GraphQL: #{e.message}")
+        nil
+      end
+    end
+  end
+
   # Rate limit por usuário autenticado no GraphQL
   throttle('graphql/user', limit: 200, period: 1.hour) do |req|
     if req.path == '/graphql' && req.post? && req.env['HTTP_AUTHORIZATION']
