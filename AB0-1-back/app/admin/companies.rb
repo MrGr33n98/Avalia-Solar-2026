@@ -47,7 +47,7 @@ ActiveAdmin.register Company do
 
   permit_params do
     permitted = [
-      :name, :website, :phone, :address,
+      :name, :slug, :website, :phone, :address,
       :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
       :priority_score, :sponsored,
       :cnpj, :email, :whatsapp,
@@ -150,6 +150,7 @@ ActiveAdmin.register Company do
 
     f.inputs 'Basic Information' do
       f.input :name
+      f.input :slug, hint: 'Identificador único na URL (slug). Cuidado ao alterar para não quebrar links externos indexados ou compartilhados.'
       f.input :description
       f.input :moderation_status, as: :select, collection: Company.moderation_statuses.keys
       f.input :rejected_reason, input_html: { rows: 3 }
