@@ -33,7 +33,7 @@ interface CategoryHeroProps {
   name: string;
   description?: string;
   bannerUrl?: string;
-  parentCategory?: { name: string; slug: string };
+  parentCategory?: { name: string; slug?: string; seo_url?: string };
   subcategories?: Subcategory[];
   banners?: BannerData[];
   onLeadClick?: () => void;
@@ -78,7 +78,7 @@ export default function CategoryHero({
             <>
               <ChevronRight className="h-3 w-3 opacity-50" />
               <Link
-                href={`/categories/${parentCategory.slug}`}
+                href={`/categories/${parentCategory.seo_url || parentCategory.slug}`}
                 className="transition-colors hover:text-blue-600"
               >
                 {parentCategory.name}
