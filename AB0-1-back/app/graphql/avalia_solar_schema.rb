@@ -2,8 +2,8 @@
 
 # app/graphql/avalia_solar_schema.rb
 class AvaliaSolarSchema < GraphQL::Schema
-  mutation(Types::MutationType)
-  query(Types::QueryType)
+  mutation(Types::MutationType) unless mutation
+  query(Types::QueryType) unless query
 
   # ─────────────────────────────────────────────
   # Segurança: limites de profundidade e complexidade

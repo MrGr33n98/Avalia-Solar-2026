@@ -21,7 +21,9 @@ module Types
     field :installation_status, String, null: true
     field :featured, Boolean, null: true
     field :verified, Boolean, null: true
+    field :company, Types::CompanyType, null: true
     field :created_at, GraphQL::Types::ISO8601DateTime, null: false
+    field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
 
     # Retorna apenas o primeiro nome do autor por privacidade
     def author_name
