@@ -1229,27 +1229,30 @@ function SearchContent() {
                         )}
                       </div>
 
-                      {/* GEO: Painel de mapa desktop — substitui banner lateral quando ativo */}
+                      {/* GEO: Painel de mapa desktop e Banner lateral */}
                       {MAP_ENABLED && showMap ? (
-                        <div className="hidden lg:block w-[400px] xl:w-[480px] shrink-0 sticky top-24 h-[calc(100vh-120px)]">
-                          <SearchMapPanel
-                            companies={(processedCompanies as any[]).map((c: any) => ({
-                              id: c.id, name: c.name, slug: c.slug,
-                              latitude: c.latitude, longitude: c.longitude,
-                              ratingAvg: c.ratingAvg ?? c.rating_avg,
-                              isSponsored: c.isSponsored ?? c.sponsored,
-                              city: c.city, state: c.state,
-                            }))}
-                            center={geoCoords ?? undefined}
-                            selectedCompanyId={selectedCompanyId}
-                            onCompanySelect={handleMapCompanySelect}
-                            onSearchInArea={handleSearchInArea}
-                            onClose={() => setShowMap(false)}
-                            className="h-full"
-                          />
-                        </div>
+                        <aside className="hidden lg:flex flex-col gap-4 w-[400px] xl:w-[480px] shrink-0 sticky top-24 h-[calc(100vh-120px)]">
+                          <BannerByLocation location="sidebar" />
+                          <div className="flex-1 min-h-[400px] w-full rounded-2xl overflow-hidden shadow-sm">
+                            <SearchMapPanel
+                              companies={(processedCompanies as any[]).map((c: any) => ({
+                                id: c.id, name: c.name, slug: c.slug,
+                                latitude: c.latitude, longitude: c.longitude,
+                                ratingAvg: c.ratingAvg ?? c.rating_avg,
+                                isSponsored: c.isSponsored ?? c.sponsored,
+                                city: c.city, state: c.state,
+                              }))}
+                              center={geoCoords ?? undefined}
+                              selectedCompanyId={selectedCompanyId}
+                              onCompanySelect={handleMapCompanySelect}
+                              onSearchInArea={handleSearchInArea}
+                              onClose={() => setShowMap(false)}
+                              className="h-full w-full"
+                            />
+                          </div>
+                        </aside>
                       ) : (
-                        <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
+                        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-24">
                           <BannerByLocation location="sidebar" />
                         </aside>
                       )}
