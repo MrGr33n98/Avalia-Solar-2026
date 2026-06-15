@@ -4,70 +4,14 @@ Este documento detalha todas as rotas REST da API `/api/v1` que ainda não possu
 
 ---
 
-## 1. Filtros Geográficos e Busca
+## 1. Filtros Geográficos e Busca (MIGRADOS — FASE 10)
 
-### 🌐 Estados Ativos
-*   **Endpoint REST:** `GET /api/v1/states` ou `GET /api/v1/companies/states`
-*   **Finalidade:** Popula o dropdown de estados na interface de busca. Retorna apenas estados que possuem empresas ativas cadastradas.
-*   **GraphQL Sugerido:**
-    ```graphql
-    extend type Query {
-      activeStates: [String!]!
-    }
-    ```
-*   **Resolver Rails:** Reutiliza `Company.active.pluck(:state).uniq.compact.sort`.
-
-### 🏙️ Cidades por Estado
-*   **Endpoint REST:** `GET /api/v1/companies/cities?state=SP`
-*   **Finalidade:** Popula o dropdown de cidades após o usuário selecionar um estado. Retorna apenas cidades daquele estado com empresas ativas.
-*   **GraphQL Sugerido:**
-    ```graphql
-    extend type Query {
-      activeCities(state: String!): [String!]!
-    }
-    ```
-*   **Resolver Rails:** Reutiliza `Company.active.where(state: state.upcase).pluck(:city).uniq.compact.sort`.
-
----
-
-## 2. Conteúdo e Elementos Visuais da Interface
-
-### 🌲 Árvore de Categorias
-*   **Endpoint REST:** `GET /api/v1/categories/tree`
-*   **Finalidade:** Renderizar o menu aninhado de categorias (ex: Categoria Principal -> Subcategorias) na barra de navegação.
-*   **GraphQL Sugerido:**
-    ```graphql
-    type Category {
-      id: ID!
-      name: String!
-      slug: String!
-      children: [Category!]!
-    }
-
-    extend type Query {
-      categoryTree: [Category!]!
-    }
-    ```
-*   **Resolver Rails:** `Category.where(parent_id: nil, status: 'active').includes(:children)`.
-
-### 🖼️ Carrosséis de Banners
-*   **Endpoint REST:** `GET /api/v1/banners` e `GET /api/v1/banner_offers`
-*   **Finalidade:** Obter banners promocionais ativos para exibição na Home ou nas páginas de categorias.
-*   **GraphQL Sugerido:**
-    ```graphql
-    type Banner {
-      id: ID!
-      title: String!
-      imageUrl: String!
-      clickUrl: String
-      position: String
-    }
-
-    extend type Query {
-      banners(position: String, categoryId: ID): [Banner!]!
-    }
-    ```
-*   **Resolver Rails:** Filtragem por posição (ex: `home_top`, `category_sidebar`) e categoria ativa.
+Os campos abaixo foram implementados e estão operando com sucesso:
+- `activeStates` (`GET /api/v1/states`)
+- `activeCities` (`GET /api/v1/companies/cities`)
+- `activeLocations` (Pares cidade/estado)
+- `categoryTree` (`GET /api/v1/categories/tree` - Recursivo)
+- `banners` (`GET /api/v1/banners` - Banners Ativos)
 
 ---
 
