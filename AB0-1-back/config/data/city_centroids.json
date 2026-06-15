@@ -1,0 +1,277 @@
+{
+  "AC": {
+    "Rio Branco": { "lat": -9.9754, "lng": -67.8249 }
+  },
+  "AL": {
+    "Maceió": { "lat": -9.6658, "lng": -35.7350 }
+  },
+  "AM": {
+    "Manaus": { "lat": -3.1190, "lng": -60.0217 }
+  },
+  "AP": {
+    "Macapá": { "lat": 0.0349, "lng": -51.0694 }
+  },
+  "BA": {
+    "Salvador": { "lat": -12.9714, "lng": -38.5014 },
+    "Feira de Santana": { "lat": -12.2664, "lng": -38.9663 },
+    "Vitória da Conquista": { "lat": -14.8660, "lng": -40.8444 },
+    "Camaçari": { "lat": -12.6993, "lng": -38.3239 },
+    "Juazeiro": { "lat": -9.4339, "lng": -40.5011 },
+    "Ilhéus": { "lat": -14.7891, "lng": -39.0428 },
+    "Lauro de Freitas": { "lat": -12.8947, "lng": -38.3254 },
+    "Jequié": { "lat": -13.8544, "lng": -40.0824 },
+    "Barreiras": { "lat": -12.1524, "lng": -44.9945 },
+    "Porto Seguro": { "lat": -16.4469, "lng": -39.0645 }
+  },
+  "CE": {
+    "Fortaleza": { "lat": -3.7319, "lng": -38.5267 },
+    "Caucaia": { "lat": -3.7360, "lng": -38.6539 },
+    "Juazeiro do Norte": { "lat": -7.2131, "lng": -39.3147 },
+    "Maracanaú": { "lat": -3.8773, "lng": -38.6268 },
+    "Sobral": { "lat": -3.6916, "lng": -40.3505 },
+    "Crato": { "lat": -7.2344, "lng": -39.4091 }
+  },
+  "DF": {
+    "Brasília": { "lat": -15.7801, "lng": -47.9292 },
+    "Ceilândia": { "lat": -15.8136, "lng": -48.1129 },
+    "Taguatinga": { "lat": -15.8341, "lng": -48.0546 },
+    "Samambaia": { "lat": -15.8758, "lng": -48.0783 },
+    "Planaltina": { "lat": -15.4523, "lng": -47.6140 }
+  },
+  "ES": {
+    "Vitória": { "lat": -20.3155, "lng": -40.3128 },
+    "Vila Velha": { "lat": -20.3297, "lng": -40.2922 },
+    "Serra": { "lat": -20.1228, "lng": -40.3073 },
+    "Cariacica": { "lat": -20.2635, "lng": -40.4148 },
+    "Cachoeiro de Itapemirim": { "lat": -20.8490, "lng": -41.1129 },
+    "Linhares": { "lat": -19.3947, "lng": -40.0643 }
+  },
+  "GO": {
+    "Goiânia": { "lat": -16.6869, "lng": -49.2648 },
+    "Aparecida de Goiânia": { "lat": -16.8193, "lng": -49.2437 },
+    "Anápolis": { "lat": -16.3282, "lng": -48.9532 },
+    "Rio Verde": { "lat": -17.7987, "lng": -50.9261 },
+    "Luziânia": { "lat": -16.2525, "lng": -47.9491 },
+    "Águas Lindas de Goiás": { "lat": -15.7423, "lng": -48.2800 },
+    "Novo Gama": { "lat": -16.0514, "lng": -48.0311 },
+    "Valparaíso de Goiás": { "lat": -16.0731, "lng": -47.9906 },
+    "Trindade": { "lat": -16.6555, "lng": -49.4897 },
+    "Formosa": { "lat": -15.5384, "lng": -47.3342 }
+  },
+  "MA": {
+    "São Luís": { "lat": -2.5297, "lng": -44.3028 },
+    "Imperatriz": { "lat": -5.5260, "lng": -47.4909 },
+    "São José de Ribamar": { "lat": -2.5595, "lng": -44.0534 },
+    "Timon": { "lat": -5.0942, "lng": -42.8328 },
+    "Caxias": { "lat": -4.8591, "lng": -43.3560 }
+  },
+  "MG": {
+    "Belo Horizonte": { "lat": -19.9191, "lng": -43.9387 },
+    "Uberlândia": { "lat": -18.9113, "lng": -48.2756 },
+    "Contagem": { "lat": -19.9317, "lng": -44.0536 },
+    "Juiz de Fora": { "lat": -21.7609, "lng": -43.3504 },
+    "Betim": { "lat": -19.9676, "lng": -44.1987 },
+    "Montes Claros": { "lat": -16.7285, "lng": -43.8614 },
+    "Ribeirão das Neves": { "lat": -19.7673, "lng": -44.0839 },
+    "Uberaba": { "lat": -19.7483, "lng": -47.9317 },
+    "Governador Valadares": { "lat": -18.8511, "lng": -41.9442 },
+    "Ipatinga": { "lat": -19.4700, "lng": -42.5364 },
+    "Sete Lagoas": { "lat": -19.4686, "lng": -44.2484 },
+    "Divinópolis": { "lat": -20.1381, "lng": -44.8815 },
+    "Santa Luzia": { "lat": -19.7701, "lng": -43.8536 },
+    "Patos de Minas": { "lat": -18.5787, "lng": -46.5178 },
+    "Poços de Caldas": { "lat": -21.7833, "lng": -46.5611 },
+    "Varginha": { "lat": -21.5514, "lng": -45.4303 },
+    "Muriaé": { "lat": -21.1274, "lng": -42.3678 },
+    "Araguari": { "lat": -18.6472, "lng": -48.1865 }
+  },
+  "MS": {
+    "Campo Grande": { "lat": -20.4697, "lng": -54.6201 },
+    "Dourados": { "lat": -22.2232, "lng": -54.8025 },
+    "Três Lagoas": { "lat": -20.7849, "lng": -51.7003 },
+    "Corumbá": { "lat": -19.0083, "lng": -57.6493 }
+  },
+  "MT": {
+    "Cuiabá": { "lat": -15.6014, "lng": -56.0979 },
+    "Várzea Grande": { "lat": -15.6469, "lng": -56.1325 },
+    "Rondonópolis": { "lat": -16.4723, "lng": -54.6367 },
+    "Sinop": { "lat": -11.8625, "lng": -55.5095 },
+    "Tangará da Serra": { "lat": -14.6231, "lng": -57.4951 },
+    "Cáceres": { "lat": -16.0726, "lng": -57.6793 },
+    "Sorriso": { "lat": -12.5439, "lng": -55.7089 },
+    "Lucas do Rio Verde": { "lat": -13.0564, "lng": -55.9088 },
+    "Primavera do Leste": { "lat": -15.5603, "lng": -54.2820 }
+  },
+  "PA": {
+    "Belém": { "lat": -1.4558, "lng": -48.5044 },
+    "Ananindeua": { "lat": -1.3659, "lng": -48.3725 },
+    "Santarém": { "lat": -2.4444, "lng": -54.7083 },
+    "Marabá": { "lat": -5.3686, "lng": -49.1178 },
+    "Parauapebas": { "lat": -6.0701, "lng": -49.9038 },
+    "Castanhal": { "lat": -1.2934, "lng": -47.9246 }
+  },
+  "PB": {
+    "João Pessoa": { "lat": -7.1195, "lng": -34.8450 },
+    "Campina Grande": { "lat": -7.2306, "lng": -35.8811 },
+    "Santa Rita": { "lat": -7.1139, "lng": -34.9780 },
+    "Patos": { "lat": -7.0233, "lng": -37.2817 },
+    "Bayeux": { "lat": -7.1273, "lng": -34.9291 }
+  },
+  "PE": {
+    "Recife": { "lat": -8.0476, "lng": -34.8770 },
+    "Jaboatão dos Guararapes": { "lat": -8.1178, "lng": -35.0147 },
+    "Olinda": { "lat": -7.9997, "lng": -34.8461 },
+    "Caruaru": { "lat": -8.2760, "lng": -35.9761 },
+    "Petrolina": { "lat": -9.3986, "lng": -40.4975 },
+    "Paulista": { "lat": -7.9395, "lng": -34.8768 },
+    "Camarajibe": { "lat": -8.0210, "lng": -34.9815 },
+    "Garanhuns": { "lat": -8.8897, "lng": -36.4956 }
+  },
+  "PI": {
+    "Teresina": { "lat": -5.0893, "lng": -42.8016 },
+    "Parnaíba": { "lat": -2.9059, "lng": -41.7767 },
+    "Picos": { "lat": -7.0774, "lng": -41.4677 }
+  },
+  "PR": {
+    "Curitiba": { "lat": -25.4284, "lng": -49.2733 },
+    "Londrina": { "lat": -23.3045, "lng": -51.1696 },
+    "Maringá": { "lat": -23.4205, "lng": -51.9333 },
+    "Ponta Grossa": { "lat": -25.0945, "lng": -50.1618 },
+    "Cascavel": { "lat": -24.9555, "lng": -53.4552 },
+    "São José dos Pinhais": { "lat": -25.5319, "lng": -49.2073 },
+    "Foz do Iguaçu": { "lat": -25.5162, "lng": -54.5854 },
+    "Colombo": { "lat": -25.2930, "lng": -49.2263 },
+    "Guarapuava": { "lat": -25.3906, "lng": -51.4631 },
+    "Paranaguá": { "lat": -25.5199, "lng": -48.5089 },
+    "Araucária": { "lat": -25.5924, "lng": -49.4005 },
+    "Toledo": { "lat": -24.7241, "lng": -53.7456 },
+    "Apucarana": { "lat": -23.5505, "lng": -51.4611 },
+    "Campo Largo": { "lat": -25.4594, "lng": -49.5282 },
+    "Pinhais": { "lat": -25.4428, "lng": -49.1924 }
+  },
+  "RJ": {
+    "Rio de Janeiro": { "lat": -22.9068, "lng": -43.1729 },
+    "São Gonçalo": { "lat": -22.8268, "lng": -43.0541 },
+    "Duque de Caxias": { "lat": -22.7856, "lng": -43.3116 },
+    "Nova Iguaçu": { "lat": -22.7556, "lng": -43.4510 },
+    "Niterói": { "lat": -22.8830, "lng": -43.1044 },
+    "Belford Roxo": { "lat": -22.7641, "lng": -43.3992 },
+    "São João de Meriti": { "lat": -22.8022, "lng": -43.3725 },
+    "Campos dos Goytacazes": { "lat": -21.7542, "lng": -41.3244 },
+    "Petró­polis": { "lat": -22.5050, "lng": -43.1789 },
+    "Volta Redonda": { "lat": -22.5232, "lng": -44.1039 },
+    "Magé": { "lat": -22.6538, "lng": -43.0363 },
+    "Macaé": { "lat": -22.3705, "lng": -41.7870 },
+    "Itaboraí": { "lat": -22.7471, "lng": -42.8586 },
+    "Mesquita": { "lat": -22.8055, "lng": -43.4301 },
+    "Nova Friburgo": { "lat": -22.2823, "lng": -42.5311 },
+    "Angra dos Reis": { "lat": -23.0066, "lng": -44.3181 },
+    "Resende": { "lat": -22.4678, "lng": -44.4506 }
+  },
+  "RN": {
+    "Natal": { "lat": -5.7945, "lng": -35.2110 },
+    "Mossoró": { "lat": -5.1877, "lng": -37.3442 },
+    "Parnamirim": { "lat": -5.9142, "lng": -35.2637 },
+    "Caicó": { "lat": -6.4584, "lng": -37.0978 }
+  },
+  "RO": {
+    "Porto Velho": { "lat": -8.7612, "lng": -63.9004 },
+    "Ji-Paraná": { "lat": -10.8797, "lng": -61.9492 },
+    "Ariquemes": { "lat": -9.9133, "lng": -63.0370 }
+  },
+  "RR": {
+    "Boa Vista": { "lat": 2.8235, "lng": -60.6758 }
+  },
+  "RS": {
+    "Porto Alegre": { "lat": -30.0346, "lng": -51.2177 },
+    "Caxias do Sul": { "lat": -29.1678, "lng": -51.1794 },
+    "Pelotas": { "lat": -31.7657, "lng": -52.3383 },
+    "Canoas": { "lat": -29.9178, "lng": -51.1844 },
+    "Santa Maria": { "lat": -29.6842, "lng": -53.8069 },
+    "Gravataí": { "lat": -29.9444, "lng": -50.9918 },
+    "Viamão": { "lat": -30.0810, "lng": -51.0233 },
+    "Novo Hamburgo": { "lat": -29.6780, "lng": -51.1320 },
+    "São Leopoldo": { "lat": -29.7599, "lng": -51.1486 },
+    "Rio Grande": { "lat": -32.0350, "lng": -52.0986 },
+    "Alvorada": { "lat": -29.9896, "lng": -51.0810 },
+    "Passo Fundo": { "lat": -28.2620, "lng": -52.4064 },
+    "Sapucaia do Sul": { "lat": -29.8268, "lng": -51.1481 },
+    "Uruguaiana": { "lat": -29.7596, "lng": -57.0882 },
+    "Santa Cruz do Sul": { "lat": -29.7167, "lng": -52.4260 },
+    "Cachoeirinha": { "lat": -29.9497, "lng": -51.0929 },
+    "Bagé": { "lat": -31.3287, "lng": -54.1057 },
+    "Bento Gonçalves": { "lat": -29.1732, "lng": -51.5164 },
+    "Erechim": { "lat": -27.6344, "lng": -52.2740 },
+    "Charqueadas": { "lat": -29.9678, "lng": -51.6218 }
+  },
+  "SC": {
+    "Florianópolis": { "lat": -27.5954, "lng": -48.5480 },
+    "Joinville": { "lat": -26.3044, "lng": -48.8487 },
+    "Blumenau": { "lat": -26.9195, "lng": -49.0658 },
+    "São José": { "lat": -27.5935, "lng": -48.6237 },
+    "Criciúma": { "lat": -28.6778, "lng": -49.3698 },
+    "Chapecó": { "lat": -27.1006, "lng": -52.6156 },
+    "Itajaí": { "lat": -26.9076, "lng": -48.6619 },
+    "Jaraguá do Sul": { "lat": -26.4852, "lng": -49.0692 },
+    "Palhoça": { "lat": -27.6454, "lng": -48.6694 },
+    "Balneário Camboriú": { "lat": -26.9906, "lng": -48.6340 },
+    "Brusque": { "lat": -27.0958, "lng": -48.9157 },
+    "Tubarão": { "lat": -28.4674, "lng": -49.0088 },
+    "São Bento do Sul": { "lat": -26.2492, "lng": -49.3779 },
+    "Caçador": { "lat": -26.7767, "lng": -51.0163 },
+    "Concórdia": { "lat": -27.2347, "lng": -52.0285 },
+    "Lages": { "lat": -27.8157, "lng": -50.3263 }
+  },
+  "SE": {
+    "Aracaju": { "lat": -10.9472, "lng": -37.0731 },
+    "Nossa Senhora do Socorro": { "lat": -10.8599, "lng": -37.1257 },
+    "Lagarto": { "lat": -10.9165, "lng": -37.6528 }
+  },
+  "SP": {
+    "São Paulo": { "lat": -23.5505, "lng": -46.6333 },
+    "Guarulhos": { "lat": -23.4543, "lng": -46.5333 },
+    "Campinas": { "lat": -22.9099, "lng": -47.0626 },
+    "São Bernardo do Campo": { "lat": -23.6914, "lng": -46.5646 },
+    "Santo André": { "lat": -23.6638, "lng": -46.5328 },
+    "Osasco": { "lat": -23.5329, "lng": -46.7919 },
+    "São José dos Campos": { "lat": -23.1794, "lng": -45.8869 },
+    "Ribeirão Preto": { "lat": -21.1699, "lng": -47.8099 },
+    "Sorocaba": { "lat": -23.5015, "lng": -47.4526 },
+    "Mauá": { "lat": -23.6678, "lng": -46.4611 },
+    "Mogi das Cruzes": { "lat": -23.5228, "lng": -46.1875 },
+    "Santos": { "lat": -23.9608, "lng": -46.3333 },
+    "Diadema": { "lat": -23.6858, "lng": -46.6231 },
+    "Piracicaba": { "lat": -22.7253, "lng": -47.6492 },
+    "Jundiaí": { "lat": -23.1857, "lng": -46.8964 },
+    "Bauru": { "lat": -22.3147, "lng": -49.0606 },
+    "Carapicuíba": { "lat": -23.5221, "lng": -46.8347 },
+    "Itaquaquecetuba": { "lat": -23.4861, "lng": -46.3492 },
+    "Franca": { "lat": -20.5389, "lng": -47.4004 },
+    "Marília": { "lat": -22.2150, "lng": -49.9464 },
+    "Limeira": { "lat": -22.5641, "lng": -47.4014 },
+    "Praia Grande": { "lat": -24.0069, "lng": -46.4038 },
+    "Araraquara": { "lat": -21.7945, "lng": -48.1758 },
+    "São Vicente": { "lat": -23.9608, "lng": -46.3967 },
+    "Sumaré": { "lat": -22.8210, "lng": -47.2653 },
+    "Jacareí": { "lat": -23.2997, "lng": -45.9658 },
+    "Taubaté": { "lat": -23.0261, "lng": -45.5553 },
+    "Barueri": { "lat": -23.5119, "lng": -46.8756 },
+    "Embu das Artes": { "lat": -23.6490, "lng": -46.8517 },
+    "São Carlos": { "lat": -22.0087, "lng": -47.8909 },
+    "Indaiatuba": { "lat": -23.0900, "lng": -47.2189 },
+    "Presidente Prudente": { "lat": -22.1256, "lng": -51.3889 },
+    "Cotia": { "lat": -23.6032, "lng": -46.9189 },
+    "Americana": { "lat": -22.7392, "lng": -47.3331 },
+    "Hortolândia": { "lat": -22.8591, "lng": -47.2205 },
+    "Itapecerica da Serra": { "lat": -23.7167, "lng": -46.8503 },
+    "Rio Claro": { "lat": -22.4137, "lng": -47.5619 },
+    "Araçatuba": { "lat": -21.2090, "lng": -50.4322 },
+    "Santa Bárbara d'Oeste": { "lat": -22.7536, "lng": -47.4136 },
+    "Taboão da Serra": { "lat": -23.6009, "lng": -46.7903 }
+  },
+  "TO": {
+    "Palmas": { "lat": -10.1689, "lng": -48.3317 },
+    "Araguaína": { "lat": -7.1919, "lng": -48.2057 },
+    "Gurupi": { "lat": -11.7294, "lng": -49.0679 }
+  }
+}

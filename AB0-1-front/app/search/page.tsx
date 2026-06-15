@@ -19,7 +19,7 @@ import {
 import {
   Search, X, SlidersHorizontal, Building2, Package, Tag, FileText,
   BadgeCheck, Star, TrendingUp, Zap, MessageCircle, ChevronRight,
-  ArrowUpDown, Sparkles, RotateCcw, Diamond,
+  ArrowUpDown, Sparkles, RotateCcw, Diamond, Map as MapIcon,
 } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
@@ -31,6 +31,10 @@ import { trackEvent } from '@/lib/analytics/events';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from '@/components/BannerContainer';
 import { cn } from '@/lib/utils';
+// === GEO ===
+import SearchRadiusFilter from '@/components/search/SearchRadiusFilter';
+import dynamic from 'next/dynamic';
+const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), { ssr: false });
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
@@ -88,6 +92,8 @@ function ProductCardSkeleton() {
 }
 
 // ─── SearchSidebar (desktop) ──────────────────────────────────────────────────
+const MAP_ENABLED = process.env.NEXT_PUBLIC_SEARCH_MAP_ENABLED === 'true';
+
 interface SidebarProps {
   sort: SortValue;
   onSortChange: (v: SortValue) => void;
@@ -97,6 +103,13 @@ interface SidebarProps {
   onWhatsappChange: (v: boolean) => void;
   onReset: () => void;
   hasActiveFilters: boolean;
+  // GEO
+  radiusKm: number | null;
+  onRadiusChange: (radius: number | null) => void;
+  onCoordsChange: (coords: { lat: number; lng: number } | null) => void;
+  cityName?: string;
+  showMap?: boolean;
+  onToggleMap?: () => void;
 }
 
 function SearchSidebar({
@@ -104,6 +117,8 @@ function SearchSidebar({
   verifiedOnly, onVerifiedChange,
   whatsappOnly, onWhatsappChange,
   onReset, hasActiveFilters,
+  radiusKm, onRadiusChange, onCoordsChange, cityName,
+  showMap, onToggleMap,
 }: SidebarProps) {
   return (
     <aside className="w-[264px] flex-shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))] h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-100 hidden lg:block">
@@ -177,6 +192,33 @@ function SearchSidebar({
           </div>
         </div>
 
+        {/* GEO: Filtro de raio */}
+        {MAP_ENABLED && (
+          <>
+            <div className="h-px bg-slate-100 dark:bg-slate-800 mb-5" />
+            <SearchRadiusFilter
+              radiusKm={radiusKm}
+              onRadiusChange={onRadiusChange}
+              onCoordsChange={onCoordsChange}
+              cityName={cityName}
+            />
+            {/* Toggle mapa */}
+            <button
+              id="sidebar-toggle-map-btn"
+              onClick={onToggleMap}
+              className={cn(
+                'mt-3 w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border',
+                showMap
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600'
+              )}
+            >
+              <MapIcon className="w-3.5 h-3.5" />
+              {showMap ? 'Ocultar mapa' : 'Ver no mapa'}
+            </button>
+          </>
+        )}
+
         {/* Status indicator */}
         <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between">
@@ -240,6 +282,7 @@ function MobileFilterSheet({
   verifiedOnly, onVerifiedChange,
   whatsappOnly, onWhatsappChange,
   onReset, hasActiveFilters,
+  radiusKm, onRadiusChange, onCoordsChange, cityName,
 }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
@@ -299,6 +342,19 @@ function MobileFilterSheet({
                   ))}
                 </div>
               </div>
+              {MAP_ENABLED && (
+                <>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800 mb-6" />
+                  <div className="mb-6">
+                    <SearchRadiusFilter
+                      radiusKm={radiusKm}
+                      onRadiusChange={onRadiusChange}
+                      onCoordsChange={onCoordsChange}
+                      cityName={cityName}
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="h-px bg-slate-100 dark:bg-slate-800 mb-6" />
 
@@ -591,6 +647,23 @@ function SearchContent() {
   const [verifiedOnly, setVerifiedOnly] = useState(initialVerified);
   const [whatsappOnly, setWhatsappOnly] = useState(initialWhatsapp);
 
+  // === GEO state ===
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [radiusKm, setRadiusKm] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
+
+  const handleSearchInArea = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    // Para o map bounds: por ora salva como estado e re-busca
+    // Implementação futura: passa map_bounds para a API GraphQL
+    track('map_area_searched', { bounds });
+  }, []);
+
+  const handleMapCompanySelect = useCallback((company: { id: string }) => {
+    setSelectedCompanyId(company.id);
+    track('map_pin_clicked', { company_id: company.id });
+  }, []);
+
   // Helper: push filter changes to URL without losing ?q=
   const pushFilterParams = useCallback((updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -676,7 +749,14 @@ function SearchContent() {
     setLoading(true);
     setError(null);
     try {
-      const res = await searchApi.all(term);
+      const filters: any = {};
+      if (geoCoords?.lat && geoCoords?.lng && radiusKm) {
+        filters.latitude = geoCoords.lat;
+        filters.longitude = geoCoords.lng;
+        filters.radius_km = radiusKm;
+      }
+      
+      const res = await searchApi.all(term, filters);
       const final = {
         companies:  res.companies  ?? [],
         products:   res.products   ?? [],
@@ -711,7 +791,7 @@ function SearchContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [geoCoords, radiusKm]);
 
   useEffect(() => {
     if (query) performSearch(query);
@@ -1014,6 +1094,12 @@ function SearchContent() {
                         onWhatsappChange={handleWhatsappChange}
                         onReset={resetFilters}
                         hasActiveFilters={hasActiveFilters}
+                        radiusKm={radiusKm}
+                        onRadiusChange={setRadiusKm}
+                        onCoordsChange={setGeoCoords}
+                        cityName={searchParams.get('city') || undefined}
+                        showMap={showMap}
+                        onToggleMap={() => { setShowMap(v => !v); track('map_opened', { source: 'sidebar_btn' }); }}
                       />
 
                       {/* Results column */}
@@ -1024,6 +1110,25 @@ function SearchContent() {
                           <SortChips sort={sort} onSortChange={handleSortChange} />
                         </div>
 
+                        {/* GEO: Botão "Ver no mapa" mobile */}
+                        {MAP_ENABLED && (
+                          <div className="lg:hidden flex justify-end mb-3">
+                            <button
+                              id="mobile-show-map-btn"
+                              onClick={() => { setShowMap(!showMap); track('map_opened', { source: 'mobile_btn' }); }}
+                              className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
+                                showMap
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                              )}
+                            >
+                              <MapIcon className="w-3 h-3" />
+                              {showMap ? 'Ocultar mapa' : 'Ver no mapa'}
+                            </button>
+                          </div>
+                        )}
+
                         {/* Active filter chips */}
                         <ActiveFilterChips
                           verifiedOnly={verifiedOnly}
@@ -1031,6 +1136,26 @@ function SearchContent() {
                           onVerifiedChange={handleVerifiedChange}
                           onWhatsappChange={handleWhatsappChange}
                         />
+
+                        {/* GEO: Mapa mobile (fullscreen quando ativo) */}
+                        {MAP_ENABLED && showMap && (
+                          <div className="lg:hidden w-full h-[55vh] mb-4 rounded-2xl overflow-hidden">
+                            <SearchMapPanel
+                              companies={(processedCompanies as any[]).map((c: any) => ({
+                                id: c.id, name: c.name, slug: c.slug,
+                                latitude: c.latitude, longitude: c.longitude,
+                                ratingAvg: c.ratingAvg ?? c.rating_avg,
+                                isSponsored: c.isSponsored ?? c.sponsored,
+                                city: c.city, state: c.state,
+                              }))}
+                              center={geoCoords ?? undefined}
+                              selectedCompanyId={selectedCompanyId}
+                              onCompanySelect={handleMapCompanySelect}
+                              onSearchInArea={handleSearchInArea}
+                              onClose={() => setShowMap(false)}
+                            />
+                          </div>
+                        )}
 
                         {/* Result count bar */}
                         <div className={cn(
@@ -1104,10 +1229,30 @@ function SearchContent() {
                         )}
                       </div>
 
-                      {/* Right Sidebar Banner */}
-                      <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
-                        <BannerByLocation location="sidebar" />
-                      </aside>
+                      {/* GEO: Painel de mapa desktop — substitui banner lateral quando ativo */}
+                      {MAP_ENABLED && showMap ? (
+                        <div className="hidden lg:block w-[400px] xl:w-[480px] shrink-0 sticky top-24 h-[calc(100vh-120px)]">
+                          <SearchMapPanel
+                            companies={(processedCompanies as any[]).map((c: any) => ({
+                              id: c.id, name: c.name, slug: c.slug,
+                              latitude: c.latitude, longitude: c.longitude,
+                              ratingAvg: c.ratingAvg ?? c.rating_avg,
+                              isSponsored: c.isSponsored ?? c.sponsored,
+                              city: c.city, state: c.state,
+                            }))}
+                            center={geoCoords ?? undefined}
+                            selectedCompanyId={selectedCompanyId}
+                            onCompanySelect={handleMapCompanySelect}
+                            onSearchInArea={handleSearchInArea}
+                            onClose={() => setShowMap(false)}
+                            className="h-full"
+                          />
+                        </div>
+                      ) : (
+                        <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
+                          <BannerByLocation location="sidebar" />
+                        </aside>
+                      )}
                     </div>
                   </TabsContent>
                 )}
@@ -1222,6 +1367,10 @@ function SearchContent() {
           onWhatsappChange={handleWhatsappChange}
           onReset={resetFilters}
           hasActiveFilters={hasActiveFilters}
+          radiusKm={radiusKm}
+          onRadiusChange={setRadiusKm}
+          onCoordsChange={setGeoCoords}
+          cityName={searchParams.get('city') || undefined}
         />
       )}
     </div>

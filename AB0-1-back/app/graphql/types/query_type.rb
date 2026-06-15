@@ -97,7 +97,12 @@ module Types
       argument :sort, String, required: false, default_value: 'recommended'
       argument :page, Integer, required: false, default_value: 1
       argument :limit, Integer, required: false, default_value: 20
-      
+      # === GEO ===
+      argument :latitude, Float, required: false, description: 'Latitude da origem para busca por raio'
+      argument :longitude, Float, required: false, description: 'Longitude da origem para busca por raio'
+      argument :radius_km, Integer, required: false, description: 'Raio de busca em km (requer latitude e longitude)'
+      argument :map_bounds, Types::MapBoundsInputType, required: false, description: 'Viewport do mapa para busca por área'
+
       complexity ->(ctx, args, child_complexity) {
         limit = args[:limit] || 20
         child_complexity * limit
@@ -110,7 +115,8 @@ module Types
       verified: nil, featured: nil, sponsored: nil,
       min_rating: nil, serves_city: nil, serves_state: nil,
       segment: nil, sort: 'recommended',
-      page: 1, limit: 20
+      page: 1, limit: 20,
+      latitude: nil, longitude: nil, radius_km: nil, map_bounds: nil
     )
       ::Search::CompanySearchService.new(
         q: q,
@@ -127,7 +133,11 @@ module Types
         segment: segment,
         sort: sort,
         page: page,
-        limit: limit
+        limit: limit,
+        latitude: latitude,
+        longitude: longitude,
+        radius_km: radius_km,
+        map_bounds: map_bounds
       ).call
     end
 

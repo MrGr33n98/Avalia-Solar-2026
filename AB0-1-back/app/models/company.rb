@@ -16,8 +16,10 @@ class Company < ApplicationRecord
                ['instalacao', 'integracao', 'montagem']
              ]
 
+  GEOCODING_STATUSES = %w[pending success failed city_fallback].freeze
+
   def search_data
-    {
+    data = {
       name: name,
       slug: slug,
       description: description,
@@ -33,8 +35,29 @@ class Company < ApplicationRecord
       category_names: categories.pluck(:name),
       coverage_states: coverage_state_list,
       coverage_cities: coverage_city_list,
+      geocoding_status: geocoding_status,
       created_at: created_at
     }
+
+    # Adiciona geo_point para OpenSearch somente quando lat/lng disponíveis
+    if latitude.present? && longitude.present?
+      data[:location] = { lat: latitude.to_f, lon: longitude.to_f }
+    end
+
+    data
+  end
+
+  # Agenda geocodificação assíncrona quando cidade/estado muda e GEO está habilitado
+  after_save :schedule_geocoding_if_needed
+
+  def schedule_geocoding_if_needed
+    return unless ENV['SEARCH_GEO_ENABLED'] == 'true'
+    return unless saved_change_to_city? || saved_change_to_state?
+    return if geocoding_status == 'success' && latitude.present?
+
+    GeocodeCompanyJob.perform_later(id)
+  rescue StandardError => e
+    Rails.logger.error "[Company] Erro ao enfileirar GeocodeCompanyJob para empresa #{id}: #{e.message}"
   end
 
   has_paper_trail # Enable rollback capabilities

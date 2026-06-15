@@ -9,7 +9,9 @@ module Search
       category_id: nil, category_ids: nil,
       min_rating: nil, verified: nil, featured: nil, sponsored: nil,
       serves_city: nil, serves_state: nil, segment: nil,
-      sort: 'recommended', page: 1, limit: 20
+      sort: 'recommended', page: 1, limit: 20,
+      # === GEO ===
+      latitude: nil, longitude: nil, radius_km: nil, map_bounds: nil
     )
       @q = q.to_s.strip
       @state = state.presence
@@ -26,6 +28,11 @@ module Search
       @sort = sort.presence || 'recommended'
       @page = [page.to_i, 1].max
       @limit = [[limit.to_i, 1].max, 100].min
+      # GEO
+      @latitude = latitude.presence&.to_f
+      @longitude = longitude.presence&.to_f
+      @radius_km = radius_km.presence&.to_i
+      @map_bounds = map_bounds # Hash: { north:, south:, east:, west: }
     end
 
     def call
@@ -53,6 +60,15 @@ module Search
 
     def search_enabled?
       ENV['SEARCH_ENABLED'] == 'true'
+    end
+
+    def geo_enabled?
+      ENV['SEARCH_GEO_ENABLED'] == 'true'
+    end
+
+    def has_geo_filter?
+      geo_enabled? && (@latitude.present? && @longitude.present? && @radius_km.present?) ||
+        (@map_bounds.present?)
     end
 
     def opensearch_responsive?
@@ -176,6 +192,22 @@ module Search
       search_query = @q.presence || '*'
       results = Company.search(search_query, **searchkick_options)
 
+      nodes = results.to_a
+
+      # Calcula distance_km para cada empresa quando busca tem origem geo
+      if has_geo_filter? && @latitude.present? && @longitude.present?
+        nodes = nodes.map do |company|
+          next company unless company.latitude.present? && company.longitude.present?
+
+          dist = Geo::HaversineCalculator.distance_km(
+            @latitude, @longitude,
+            company.latitude.to_f, company.longitude.to_f
+          )
+          company.define_singleton_method(:distance_km) { dist&.round(1) } if dist
+          company
+        end
+      end
+
       # Mapeia facetas/agregações
       facets = {
         categories: results.aggs&.dig('category_ids', 'buckets')&.map { |b| { key: b['key'].to_s, count: b['doc_count'] } } || [],
@@ -184,7 +216,7 @@ module Search
       }
 
       {
-        nodes: results.to_a,
+        nodes: nodes,
         page_info: {
           current_page: @page,
           total_pages: results.total_pages,
@@ -193,7 +225,17 @@ module Search
           has_next_page: @page < results.total_pages,
           has_previous_page: @page > 1
         },
-        facets: facets
+        facets: facets,
+        map: build_map_payload(nodes)
+      }
+    end
+
+    # Monta o payload simplificado do mapa (apenas empresas com coordenadas)
+    def build_map_payload(nodes)
+      map_companies = nodes.select { |c| c.latitude.present? && c.longitude.present? }
+      {
+        companies: map_companies,
+        total_count: map_companies.size
       }
     end
 
@@ -243,6 +285,25 @@ module Search
       scope = scope.where(verified: @verified) unless @verified.nil?
       scope = scope.where(featured: @featured) unless @featured.nil?
       scope = scope.where(sponsored: @sponsored) unless @sponsored.nil?
+      # === GEO: Filtro por raio ou bounding box (fallback PostgreSQL sem OpenSearch) ===
+      if has_geo_filter? && ENV['SEARCH_GEO_FALLBACK_POSTGRES'] == 'true'
+        if @radius_km.present? && @latitude.present? && @longitude.present?
+          Rails.logger.info "[Search] GEO fallback PostgreSQL: raio #{@radius_km}km de (#{@latitude}, #{@longitude})"
+          scope = Geo::HaversineCalculator.scope_within_radius(
+            scope, lat: @latitude, lng: @longitude, radius_km: @radius_km
+          )
+        end
+
+        if @map_bounds.present?
+          bounds = @map_bounds
+          scope = scope.where(
+            'latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?',
+            bounds[:south].to_f, bounds[:north].to_f,
+            bounds[:west].to_f, bounds[:east].to_f
+          )
+        end
+      end
+
       scope = scope.where('rating_avg >= ?', @min_rating.to_f) if @min_rating.present?
 
       scope = apply_postgresql_sort(scope)
@@ -254,10 +315,26 @@ module Search
       total_pages = (total_count.to_f / @limit).ceil
       total_pages = 1 if total_pages.zero?
 
-      nodes = scope.offset((@page - 1) * @limit).limit(@limit)
+      nodes = scope.offset((@page - 1) * @limit).limit(@limit).to_a
+
+      # Calcula distance_km via Haversine em Ruby quando busca por raio
+      if has_geo_filter? && @latitude.present? && @longitude.present?
+        nodes = nodes.map do |company|
+          next company unless company.latitude.present? && company.longitude.present?
+
+          # Se o scope_within_radius já injetou via SELECT, read_attribute busca o valor
+          dist = company.try(:distance_km) ||
+                 Geo::HaversineCalculator.distance_km(
+                   @latitude, @longitude,
+                   company.latitude.to_f, company.longitude.to_f
+                 )
+          company.define_singleton_method(:distance_km) { dist&.round(1) } if dist
+          company
+        end
+      end
 
       {
-        nodes: nodes.to_a,
+        nodes: nodes,
         page_info: {
           current_page: @page,
           total_pages: total_pages,
@@ -266,7 +343,8 @@ module Search
           has_next_page: @page < total_pages,
           has_previous_page: @page > 1
         },
-        facets: facets
+        facets: facets,
+        map: build_map_payload(nodes)
       }
     end
 

@@ -33,6 +33,23 @@ ActiveAdmin.register Company do
     link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
   end
 
+
+  # === GEO: Ação de geocodificação manual ===
+  member_action :geocodificar, method: :put do
+    if ENV['SEARCH_GEO_ENABLED'] == 'true'
+      GeocodeCompanyJob.perform_later(resource.id, force: true)
+      resource.update_columns(geocoding_status: 'pending')
+      redirect_to resource_path, notice: '✅ Geocodificação enfileirada! Aguarde alguns instantes e recarregue a página.'
+    else
+      redirect_to resource_path, alert: '⚠️ SEARCH_GEO_ENABLED está desativado. Ative nas variáveis de ambiente.'
+    end
+  end
+
+  action_item :geocodificar, only: :show do
+    link_to '📍 Geocodificar', geocodificar_admin_company_path(resource), method: :put,
+            data: { confirm: 'Enfileirar geocodificação para esta empresa?' }
+  end
+
   member_action :suspend, method: :put do
     resource.update(moderation_status: :suspended)
     redirect_to resource_path, notice: 'Company suspended!'
@@ -209,8 +226,13 @@ ActiveAdmin.register Company do
               include_blank: 'Selecione um estado primeiro',
               collection: [],
               input_html: { 'data-selected': f.object.city, required: true, disabled: true, 'aria-label': 'Cidade' }
-      f.input :latitude
-      f.input :longitude
+      f.input :latitude, hint: 'Coordenada geográfica (preenchida automaticamente via geocoding)'
+      f.input :longitude, hint: 'Coordenada geográfica (preenchida automaticamente via geocoding)'
+      f.input :geocoding_status, as: :select,
+              collection: Company::GEOCODING_STATUSES,
+              hint: 'Status: pending | success | city_fallback | failed'
+      f.input :geocoded_at, as: :string, input_html: { disabled: true },
+              hint: 'Data do último geocoding (automático)'
     end
 
     f.inputs 'Business Details' do

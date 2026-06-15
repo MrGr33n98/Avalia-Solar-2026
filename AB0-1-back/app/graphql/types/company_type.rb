@@ -25,6 +25,13 @@ module Types
     field :city, String, null: true
     field :state, String, null: true
 
+    # Geolocalização (lat/lng disponíveis quando empresa foi geocodificada)
+    field :latitude, Float, null: true
+    field :longitude, Float, null: true
+    # distanceKm: calculado pelo search service quando busca tem origem geográfica (lat/lng/radius)
+    # Retorna nil quando busca não tem componente geográfico
+    field :distance_km, Float, null: true
+
     # Avaliações
     field :rating_avg, Float, null: true
     field :reviews_count, Integer, null: true, method: :rating_count
@@ -110,6 +117,16 @@ module Types
 
     def banner_url
       object.try(:banner_url)
+    end
+    def distance_km
+      # O search service injeta distance_km via define_singleton_method ou como atributo virtual
+      if object.respond_to?(:distance_km)
+        object.distance_km
+      elsif object.respond_to?(:read_attribute)
+        object.read_attribute(:distance_km)
+      end
+    rescue StandardError
+      nil
     end
   end
 end

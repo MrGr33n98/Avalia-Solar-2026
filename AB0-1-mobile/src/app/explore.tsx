@@ -22,9 +22,14 @@ import { companiesApi, categoriesApi, Company } from '@/lib/api';
 import { apolloClient } from '@/lib/apolloClient';
 import { gql } from '@apollo/client';
 
+import { useMobileLocation } from '@/hooks/useMobileLocation';
+import { MobileRadiusFilter } from '@/components/search/MobileRadiusFilter';
+import { MobileSearchMap } from '@/components/search/MobileSearchMap';
+
+
 const GET_COMPANIES_SEARCH_GRAPHQL = gql`
-  query GetCompaniesSearch($q: String, $categoryId: ID, $state: String, $city: String, $verified: Boolean) {
-    companies(q: $q, categoryId: $categoryId, state: $state, city: $city, verified: $verified, limit: 30) {
+  query GetCompaniesSearch($q: String, $categoryId: ID, $state: String, $city: String, $verified: Boolean, $latitude: Float, $longitude: Float, $radiusKm: Int) {
+    companies(q: $q, categoryId: $categoryId, state: $state, city: $city, verified: $verified, latitude: $latitude, longitude: $longitude, radiusKm: $radiusKm, limit: 30) {
       nodes {
         id
         name
@@ -34,6 +39,9 @@ const GET_COMPANIES_SEARCH_GRAPHQL = gql`
         reviewsCount
         city
         state
+        latitude
+        longitude
+        distanceKm
         verified: isVerified
         featured: isFeatured
         description
@@ -60,6 +68,11 @@ export default function ExploreScreen() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // GEO State
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [radiusKm, setRadiusKm] = useState<number | null>(null);
+  const { coords: userLocation, loading: loadingLocation } = useMobileLocation(true);
 
   // Inicializa filtros a partir de parâmetros da rota (ex: vindo da Home)
   useEffect(() => {
@@ -113,6 +126,9 @@ export default function ExploreScreen() {
               state: selectedState || undefined,
               city: selectedCity || undefined,
               verified: onlyVerified || undefined,
+              latitude: userLocation?.lat,
+              longitude: userLocation?.lng,
+              radiusKm: radiusKm || undefined,
             },
             fetchPolicy: 'network-only',
           });
@@ -126,6 +142,9 @@ export default function ExploreScreen() {
             review_count: node.reviewsCount,
             city: node.city,
             state: node.state,
+            latitude: node.latitude,
+            longitude: node.longitude,
+            distanceKm: node.distanceKm,
             verified: node.verified,
             featured: node.featured,
             description: node.description,
@@ -152,6 +171,8 @@ export default function ExploreScreen() {
     setSelectedState('');
     setSelectedCity('');
     setOnlyVerified(false);
+    setRadiusKm(null);
+    setShowFilters(false);
   };
 
   const renderCompanyItem = ({ item }: { item: Company }) => (
@@ -191,6 +212,7 @@ export default function ExploreScreen() {
             <MapPin size={12} color="#8E8E93" />
             <ThemedText style={styles.locationText} numberOfLines={1}>
               {item.city || 'São Paulo'} - {item.state || 'SP'}
+              {item.distanceKm ? ` (${item.distanceKm.toFixed(1)} km)` : ''}
             </ThemedText>
           </View>
         </View>
@@ -230,12 +252,20 @@ export default function ExploreScreen() {
               onChangeText={setSearch}
             />
           </View>
-          <TouchableOpacity
-            style={[styles.filterToggle, { backgroundColor: showFilters ? 'rgba(0, 62, 126, 0.1)' : colors.backgroundElement }]}
-            onPress={() => setShowFilters(!showFilters)}
-          >
-            <SlidersHorizontal size={18} color={showFilters ? colors.brandDarkBlue : '#8E8E93'} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.filterToggle, { backgroundColor: viewMode === 'map' ? 'rgba(0, 62, 126, 0.1)' : colors.backgroundElement, marginRight: 8 }]}
+              onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+            >
+              <MapPin size={18} color={viewMode === 'map' ? colors.brandDarkBlue : '#8E8E93'} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterToggle, { backgroundColor: showFilters ? 'rgba(0, 62, 126, 0.1)' : colors.backgroundElement }]}
+              onPress={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal size={18} color={showFilters ? colors.brandDarkBlue : '#8E8E93'} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Filtros Avançados Expansíveis */}
@@ -300,7 +330,15 @@ export default function ExploreScreen() {
                 <ThemedText style={styles.checkboxLabel}>Apenas empresas certificadas (Verificadas)</ThemedText>
               </TouchableOpacity>
               
-              <TouchableOpacity onPress={clearFilters}>
+              <View style={{ marginTop: 12 }}>
+                <MobileRadiusFilter 
+                  radiusKm={radiusKm} 
+                  onRadiusChange={setRadiusKm} 
+                  loadingLocation={loadingLocation} 
+                />
+              </View>
+
+              <TouchableOpacity onPress={clearFilters} style={{ marginTop: 12 }}>
                 <ThemedText style={styles.clearText}>Limpar Filtros</ThemedText>
               </TouchableOpacity>
             </View>
@@ -348,11 +386,20 @@ export default function ExploreScreen() {
           </ScrollView>
         </View>
 
-        {/* Listagem de Empresas */}
+        {/* View Mode: Map or List */}
         {isLoading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={colors.brandDarkBlue} />
             <ThemedText style={{ marginTop: Spacing.two }}>Buscando instaladores...</ThemedText>
+          </View>
+        ) : viewMode === 'map' ? (
+          <View style={{ flex: 1, marginTop: 12 }}>
+            <MobileSearchMap 
+              companies={companies.length > 0 ? companies : mockExploreCompanies} 
+              userLocation={userLocation}
+              radiusKm={radiusKm}
+              onSelectCompany={(company) => router.push(`/company/${company.id}`)}
+            />
           </View>
         ) : (
           <FlatList
@@ -444,6 +491,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
     gap: Spacing.two,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchBox: {
     flex: 1,

@@ -9,5 +9,7 @@ module Types
     field :nodes, [Types::CompanyType], null: false
     field :page_info, Types::PageInfoType, null: false
     field :facets, Types::SearchFacetsType, null: true
+    # GEO: payload para o painel de mapa (empresas com coordenadas)
+    field :map, Types::MapResultType, null: true
   end
 end
