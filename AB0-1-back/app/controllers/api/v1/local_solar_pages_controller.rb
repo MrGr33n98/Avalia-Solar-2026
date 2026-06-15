@@ -53,7 +53,7 @@ module Api
           vertical_cat = ::Category.main_categories.active.find_by(seo_url: params[:vertical])
           if vertical_cat.present?
             vertical_ids = [vertical_cat.id] + vertical_cat.children.active.pluck(:id)
-            scope = scope.joins(:categories).where(categories: { id: vertical_ids }).distinct
+            scope = scope.where(id: companies_matching_category_ids(vertical_ids))
           end
         end
 
@@ -62,6 +62,18 @@ module Api
         else
           scope.serving_state(state)
         end
+      end
+
+      def company_ids_for(scope)
+        scope.except(:includes, :preload, :eager_load, :order)
+             .reselect('companies.id')
+             .distinct
+      end
+
+      def companies_matching_category_ids(category_ids)
+        ::Company.joins(:categories)
+                 .where(categories: { id: category_ids })
+                 .select(:id)
       end
 
       def apply_filters(scope)
@@ -83,7 +95,7 @@ module Api
         filtered = filtered.where('companies.rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
 
         category_ids = parsed_category_ids
-        filtered = filtered.joins(:categories).where(categories: { id: category_ids }).distinct if category_ids.any?
+        filtered = filtered.where(id: companies_matching_category_ids(category_ids)) if category_ids.any?
 
         project_types = parsed_project_types
         if project_types.any?
@@ -191,7 +203,7 @@ module Api
 
       def categories_payload(scope)
         ::Category.joins(:companies)
-                  .where(companies: { id: scope.select(:id) })
+                  .where(companies: { id: company_ids_for(scope) })
                   .group('categories.id')
                   .select('categories.*, COUNT(DISTINCT companies.id) AS local_companies_count')
                   .order(Arel.sql('local_companies_count DESC, categories.name ASC'))
@@ -209,7 +221,7 @@ module Api
       def project_types_payload(scope)
         counts = Hash.new(0)
 
-        scope.distinct.pluck(:project_types).each do |values|
+        ::Company.where(id: company_ids_for(scope)).pluck(:project_types).each do |values|
           Array(values).each do |value|
             canonical = ::Company::PROJECT_TYPES.find { |project_type| same_project_type?(project_type, value) }
             counts[canonical] += 1 if canonical.present?
@@ -233,11 +245,19 @@ module Api
 
       def nearby_locations_payload(state, city)
         vertical_slug = params[:vertical].presence || 'energia-solar'
-        counts = ::Company.active
+        scope = ::Company.active
                           .where(state: state)
                           .where.not(city: [nil, ''])
-                          .group(:city)
-                          .count
+
+        if params[:vertical].present?
+          vertical_cat = ::Category.main_categories.active.find_by(seo_url: params[:vertical])
+          if vertical_cat.present?
+            vertical_ids = [vertical_cat.id] + vertical_cat.children.active.pluck(:id)
+            scope = scope.where(id: companies_matching_category_ids(vertical_ids))
+          end
+        end
+
+        counts = scope.group(:city).count
 
         counts.reject { |name, _count| city.present? && same_city?(name, city) }
               .sort_by { |name, count| [-count, name.to_s] }

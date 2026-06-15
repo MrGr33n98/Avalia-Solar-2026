@@ -113,23 +113,53 @@ function selectedProjectTypes(data: LocalSolarPageResponse): string[] {
   return Array.isArray(data.filters.project_types) ? data.filters.project_types : [];
 }
 
-function companyCountLabel(count: number) {
-  return count === 1 ? '1 empresa' : `${count} empresas`;
-}
-
 async function getLocalData(input: LocalSolarPageInput) {
-  return localSolarPagesApi.get(input.state, input.city, {
-    ...buildApiFilters(input.searchParams),
-    vertical: input.vertical,
-  });
+  const filters = buildApiFilters(input.searchParams);
+
+  try {
+    return await localSolarPagesApi.get(input.state, input.city, {
+      ...filters,
+      vertical: input.vertical,
+    });
+  } catch (error) {
+    console.error('[LocalSolarDirectoryPage] Failed to fetch vertical local page:', error);
+
+    if (input.vertical === 'energia-solar') {
+      try {
+        return await localSolarPagesApi.get(input.state, input.city, filters);
+      } catch (fallbackError) {
+        console.error('[LocalSolarDirectoryPage] Failed to fetch default local page fallback:', fallbackError);
+      }
+    }
+
+    return null;
+  }
 }
 
 export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Promise<Metadata> {
-  const data = await localSolarPagesApi.get(input.state, input.city, {
+  const metadataFilters = {
     page: 1,
     per_page: 1,
-    vertical: input.vertical,
-  });
+  };
+
+  let data: LocalSolarPageResponse | null = null;
+
+  try {
+    data = await localSolarPagesApi.get(input.state, input.city, {
+      ...metadataFilters,
+      vertical: input.vertical,
+    });
+  } catch (error) {
+    console.error('[generateLocalSolarMetadata] Failed to fetch vertical local metadata:', error);
+
+    if (input.vertical === 'energia-solar') {
+      try {
+        data = await localSolarPagesApi.get(input.state, input.city, metadataFilters);
+      } catch (fallbackError) {
+        console.error('[generateLocalSolarMetadata] Failed to fetch default local metadata fallback:', fallbackError);
+      }
+    }
+  }
 
   if (!data) {
     return {
@@ -221,7 +251,7 @@ function LocationLabel({ data }: { data: LocalSolarPageResponse }) {
   return <>{data.location.state_name}</>;
 }
 
-function FilterSidebar({ data, searchParams, input }: { data: LocalSolarPageResponse; searchParams?: SearchParams; input: LocalSolarPageInput }) {
+function FilterSidebar({ data, input }: { data: LocalSolarPageResponse; input: LocalSolarPageInput }) {
   const selected = selectedProjectTypes(data);
   const projectTypes = data.project_types || [];
   const minRating = String(data.filters.min_rating || '');
@@ -439,7 +469,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
     // A API falhou com os filtros atuais. Antes de retornar 404,
     // verificamos se a localização em si existe (sem filtros).
     const hasFilters = input.searchParams && Object.keys(input.searchParams).some(
-      (key) => FILTER_KEYS.includes(key as any)
+      (key) => FILTER_KEYS.includes(key as (typeof FILTER_KEYS)[number])
     );
 
     if (hasFilters) {
@@ -508,7 +538,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
 
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           <div className="w-full lg:w-[280px] xl:w-[320px] shrink-0">
-            <FilterSidebar data={safeData} searchParams={input.searchParams} input={input} />
+            <FilterSidebar data={safeData} input={input} />
           </div>
 
           <div className="flex-1 min-w-0 space-y-8">

@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Local solar pages', type: :request do
-  let!(:category) { create(:category, name: 'Energia Solar', seo_url: 'energia-solar') }
+  let!(:category) { create(:category, name: 'Energia Solar', seo_url: 'energia-solar', kind: 'main') }
   let!(:state_only_company) do
     create(
       :company,
@@ -60,6 +60,16 @@ RSpec.describe 'Local solar pages', type: :request do
 
       expect(names).to eq(['Empresa Curitiba'])
       expect(body.fetch('filters').fetch('verified')).to eq('true')
+    end
+
+    it 'supports the vertical filter used by SEO local pages' do
+      get '/api/v1/local_solar_pages/pr/curitiba', params: { vertical: 'energia-solar', page: 1, per_page: 1 }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+
+      expect(body.dig('location', 'canonical_path')).to eq('/companies/energia-solar/pr/curitiba')
+      expect(body.fetch('companies').map { |company| company.fetch('name') }).to include('Empresa Curitiba')
     end
   end
 
