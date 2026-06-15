@@ -112,22 +112,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })),
     ];
 
-    const checks = await Promise.all(
-      localPages.map(async (page) => {
-        const res = await fetch(buildApiUrl(`${page.endpoint}?page=1&per_page=1`), { next: { revalidate: 3600 } });
-        if (!res.ok) return null;
+    const checks: any[] = [];
+    for (let i = 0; i < localPages.length; i += 5) {
+      const batch = localPages.slice(i, i + 5);
+      const batchResults = await Promise.all(
+        batch.map(async (page) => {
+          try {
+            const res = await fetch(buildApiUrl(`${page.endpoint}?page=1&per_page=1`), { next: { revalidate: 3600 } });
+            if (!res.ok) return null;
 
-        const json = await res.json();
-        if (json?.seo?.indexable !== true) return null;
+            const json = await res.json();
+            if (json?.seo?.indexable !== true) return null;
 
-        return {
-          url: `${baseUrl}${page.href}`,
-          lastModified: STATIC_SITEMAP_LAST_MODIFIED,
-          changeFrequency: 'weekly' as const,
-          priority: page.priority,
-        };
-      })
-    );
+            return {
+              url: `${baseUrl}${page.href}`,
+              lastModified: STATIC_SITEMAP_LAST_MODIFIED,
+              changeFrequency: 'weekly' as const,
+              priority: page.priority,
+            };
+          } catch (e) {
+            console.error(`Failed to fetch local sitemap page ${page.endpoint}`, e);
+            return null;
+          }
+        })
+      );
+      checks.push(...batchResults);
+    }
 
     localSolarRoutes = checks.filter(Boolean) as MetadataRoute.Sitemap;
   } catch (error) {

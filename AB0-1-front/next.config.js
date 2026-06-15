@@ -37,6 +37,8 @@ const nextConfig = {
     ...(isProduction ? { removeConsole: { exclude: ['error', 'warn'] } } : {}),
   },
 
+  staticPageGenerationTimeout: 180,
+
   experimental: {
     webpackBuildWorker: true,
     optimizeCss: enableOptimizeCss,
