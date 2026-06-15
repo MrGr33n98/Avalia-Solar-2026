@@ -544,10 +544,14 @@ function EmptyState({ query, onSearch }: { query: string; onSearch: (term: strin
         <Search className="w-7 h-7 text-amber-500" />
       </div>
       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
-        Nenhum resultado para <span className="text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span>
+        {query ? (
+          <>Nenhum resultado para <span className="text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span></>
+        ) : (
+          <>Nenhuma empresa ou produto encontrado</>
+        )}
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
-        Tente um termo diferente ou explore sugestões abaixo.
+        Tente um termo diferente, ajuste seus filtros ou explore sugestões abaixo.
       </p>
       <div className="flex flex-wrap gap-2 justify-center max-w-md">
         {SEARCH_SUGGESTIONS.map((s) => (
@@ -782,10 +786,6 @@ function SearchContent() {
 
   // Perform search
   const performSearch = useCallback(async (term: string) => {
-    if (!term.trim()) {
-      setResults({ companies: [], products: [], categories: [], articles: [] });
-      return;
-    }
     const searchStartedAt = Date.now();
     setLoading(true);
     setError(null);
@@ -835,7 +835,7 @@ function SearchContent() {
   }, [geoCoords, radiusKm]);
 
   useEffect(() => {
-    if (query) performSearch(query);
+    performSearch(query);
   }, [query, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1035,16 +1035,11 @@ function SearchContent() {
         </div>
       )}
 
-      {/* ── Empty state (no query) ───────────────────────────────────── */}
-      {!loading && !query && !error && (
-        <SearchExploreView onSuggestionClick={handleSuggestionSearch} />
-      )}
-
       {/* ── Results ─────────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
-        {!loading && query && !error && (
+        {!loading && !error && (
           <motion.div
-            key={query}
+            key={query || 'all'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -1052,7 +1047,11 @@ function SearchContent() {
             className="container mx-auto px-4 py-6 pb-24 lg:pb-6"
           >
             {!hasResults ? (
-              <EmptyState query={query} onSearch={handleSuggestionSearch} />
+              !query && !hasActiveFilters ? (
+                <SearchExploreView onSuggestionClick={handleSuggestionSearch} />
+              ) : (
+                <EmptyState query={query} onSearch={handleSuggestionSearch} />
+              )
             ) : (
               <Tabs value={activeTab} onValueChange={handleTabChange}>
 

@@ -102,18 +102,28 @@ export default function MapProvider({
   const defaultIcon = new L.Icon.Default();
 
   const getCompanyIcon = (company: MapCompany) => {
-    if (company.logo_url) {
-      return L.divIcon({
-        className: 'custom-avatar-marker',
-        html: `<div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 2px solid ${company.isSponsored ? '#3b82f6' : '#ffffff'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2); background: white; display: flex; align-items: center; justify-content: center;">
-                 <img src="${company.logo_url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" />
-               </div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-    }
-    return company.isSponsored ? sponsoredIcon : defaultIcon;
+    const borderColor = company.isSponsored ? '#3b82f6' : '#ffffff';
+    const bgColor = company.isSponsored ? '#eff6ff' : '#f8fafc';
+    const textColor = company.isSponsored ? '#3b82f6' : '#64748b';
+    const initial = company.name ? company.name.charAt(0).toUpperCase() : 'E';
+
+    const innerHtml = company.logo_url
+      ? `<img src="${company.logo_url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+         <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: ${bgColor}; color: ${textColor}; font-weight: bold; font-family: system-ui, sans-serif; font-size: 16px;">${initial}</div>`
+      : `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: ${bgColor}; color: ${textColor}; font-weight: bold; font-family: system-ui, sans-serif; font-size: 16px;">${initial}</div>`;
+
+    return L.divIcon({
+      className: 'custom-avatar-marker hover:-translate-y-1 transition-transform duration-200',
+      html: `<div style="position: relative; width: 36px; height: 36px;">
+               <div style="position: absolute; z-index: 2; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid ${borderColor}; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); background: white; display: flex; align-items: center; justify-content: center;">
+                 ${innerHtml}
+               </div>
+               <div style="position: absolute; z-index: 1; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid ${borderColor}; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));"></div>
+             </div>`,
+      iconSize: [36, 44],
+      iconAnchor: [18, 44],
+      popupAnchor: [0, -44],
+    });
   };
 
   return (
