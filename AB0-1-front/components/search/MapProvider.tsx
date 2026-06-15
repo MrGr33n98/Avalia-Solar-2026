@@ -103,7 +103,7 @@ export default function MapProvider({
 
   const getCompanyIcon = (company: MapCompany) => {
     if (company.logo_url) {
-      return new L.divIcon({
+      return L.divIcon({
         className: 'custom-avatar-marker',
         html: `<div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 2px solid ${company.isSponsored ? '#3b82f6' : '#ffffff'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2); background: white; display: flex; align-items: center; justify-content: center;">
                  <img src="${company.logo_url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" />

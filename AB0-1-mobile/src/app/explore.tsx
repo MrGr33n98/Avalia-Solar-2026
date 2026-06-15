@@ -720,25 +720,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
 });
-oryBadge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#8E8E93',
-  },
-  emptyContainer: {
-    paddingVertical: Spacing.six,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.four,
-  },
-});

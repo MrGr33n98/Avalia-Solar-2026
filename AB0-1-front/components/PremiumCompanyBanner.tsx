@@ -10,7 +10,9 @@ import {
   Zap, 
   ArrowRight, 
   Trophy,
-  Sparkles
+  Sparkles,
+  Diamond,
+  Shield
 } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import Link from 'next/link';

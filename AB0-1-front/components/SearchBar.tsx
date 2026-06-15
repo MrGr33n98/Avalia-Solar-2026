@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import debounce from 'lodash/debounce';
 import { track } from '@/lib/analytics/lazy';
 import { buildArticleLink } from '@/lib/blog/article-links';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface SearchBarProps {
   placeholder?: string;

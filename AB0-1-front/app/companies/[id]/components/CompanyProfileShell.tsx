@@ -84,7 +84,7 @@ export default function CompanyProfileShell({
 }: CompanyProfileShellProps) {
   
   const breadcrumbItems = useMemo(() => {
-    const items = [{ label: "Empresas", href: "/companies" }];
+    const items: Array<{ label: string; href?: string; active?: boolean }> = [{ label: "Empresas", href: "/companies" }];
     if (company.category_info) {
       items.push({ 
         label: company.category_info.name, 

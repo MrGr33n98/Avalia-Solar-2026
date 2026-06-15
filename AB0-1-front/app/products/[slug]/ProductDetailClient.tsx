@@ -27,6 +27,7 @@ import { buildCategoryPath, buildCompanyPath, buildProductPath } from '@/lib/slu
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { cn } from '@/lib/utils';
 import { useProductTracking } from './useProductTracking';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface ProductDetailClientProps {
   product: Product;

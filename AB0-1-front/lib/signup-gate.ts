@@ -8,6 +8,8 @@ export type SignupGateSource =
   | 'quote_wizard'
   | 'quick_lead'
   | 'dynamic_lead_wizard'
+  | 'search_results'
+  | 'comparison_reveal'
   | 'manual';
 
 export const AUTH_ROUTE_PREFIXES = [

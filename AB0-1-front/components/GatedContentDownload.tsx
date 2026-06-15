@@ -60,9 +60,7 @@ export function GatedContentDownload({
 
       if (data.user_id) {
         await handleUserIdentified({
-          id: data.user_id,
-          email: formData.email,
-          name: formData.name
+          id: data.user_id
         });
       }
 

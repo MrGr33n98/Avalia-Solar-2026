@@ -638,6 +638,10 @@ function SearchContent() {
   const initialVerified = searchParams.get('verified') === 'true';
   const initialWhatsapp = searchParams.get('whatsapp') === 'true';
   const initialTab = searchParams.get('tab') || 'companies';
+  const initialRadius = searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : null;
+  const initialLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
+  const initialLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
+  const initialCoords = (initialLat && initialLng) ? { lat: initialLat, lng: initialLng } : null;
 
   const [searchTerm, setSearchTerm] = useState(query);
   const [results, setResults] = useState<Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>>({
@@ -653,9 +657,9 @@ function SearchContent() {
   const [whatsappOnly, setWhatsappOnly] = useState(initialWhatsapp);
 
   // === GEO state ===
-  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [radiusKm, setRadiusKm] = useState<number | null>(null);
-  const [showMap, setShowMap] = useState(false);
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(initialCoords);
+  const [radiusKm, setRadiusKm] = useState<number | null>(initialRadius);
+  const [showMap, setShowMap] = useState(true);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
 
   const handleSearchInArea = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
@@ -693,7 +697,7 @@ function SearchContent() {
   });
   const effectiveTopBanners = topBanners.length > 0 ? topBanners : fallbackBanners;
 
-  const hasActiveFilters = sort !== 'recommended' || verifiedOnly || whatsappOnly;
+  const hasActiveFilters = sort !== 'recommended' || verifiedOnly || whatsappOnly || radiusKm !== null || geoCoords !== null;
 
   // Track page view on mount
   useEffect(() => {
@@ -706,7 +710,16 @@ function SearchContent() {
     setSort('recommended');
     setVerifiedOnly(false);
     setWhatsappOnly(false);
-    pushFilterParams({ sort: undefined, verified: undefined, whatsapp: undefined });
+    setRadiusKm(null);
+    setGeoCoords(null);
+    pushFilterParams({
+      sort: undefined,
+      verified: undefined,
+      whatsapp: undefined,
+      radius: undefined,
+      lat: undefined,
+      lng: undefined,
+    });
   }, [query, pushFilterParams]);
 
   // Typed sort change handler with tracking + URL sync
@@ -741,6 +754,29 @@ function SearchContent() {
       search_term: query,
       filter_key: 'whatsapp_only',
       filter_value: value,
+    });
+  }, [query, pushFilterParams]);
+
+  const handleRadiusChange = useCallback((value: number | null) => {
+    setRadiusKm(value);
+    pushFilterParams({ radius: value ? value.toString() : undefined });
+    track('search_filter_applied', {
+      search_term: query,
+      filter_key: 'radius_km',
+      filter_value: value,
+    });
+  }, [query, pushFilterParams]);
+
+  const handleCoordsChange = useCallback((coords: { lat: number; lng: number } | null) => {
+    setGeoCoords(coords);
+    pushFilterParams({
+      lat: coords ? coords.lat.toString() : undefined,
+      lng: coords ? coords.lng.toString() : undefined,
+    });
+    track('search_filter_applied', {
+      search_term: query,
+      filter_key: 'coords',
+      filter_value: coords ? `${coords.lat},${coords.lng}` : null,
     });
   }, [query, pushFilterParams]);
 
@@ -1078,8 +1114,8 @@ function SearchContent() {
                         onReset={resetFilters}
                         hasActiveFilters={hasActiveFilters}
                         radiusKm={radiusKm}
-                        onRadiusChange={setRadiusKm}
-                        onCoordsChange={setGeoCoords}
+                        onRadiusChange={handleRadiusChange}
+                        onCoordsChange={handleCoordsChange}
                         cityName={searchParams.get('city') || undefined}
                         showMap={showMap}
                         onToggleMap={() => { setShowMap(v => !v); track('map_opened', { source: 'sidebar_btn' }); }}
@@ -1359,7 +1395,7 @@ function SearchContent() {
           hasActiveFilters={hasActiveFilters}
           radiusKm={radiusKm}
           onRadiusChange={handleRadiusChange}
-          onCoordsChange={setGeoCoords}
+          onCoordsChange={handleCoordsChange}
           cityName={searchParams.get('city') || undefined}
         />
       )}
@@ -1375,26 +1411,6 @@ export default function Page() {
         <div className="min-h-screen bg-[hsl(var(--background))]">
           <div className="bg-white dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 px-4 py-5">
             <Skeleton className="h-11 w-full rounded-xl mb-3" />
-            <Skeleton className="h-4 w-48" />
-          </div>
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex gap-6">
-              <Skeleton className="hidden lg:block w-[264px] h-80 rounded-2xl flex-shrink-0" />
-              <div className="flex-1 space-y-4">
-                <Skeleton className="h-10 w-64 rounded-xl" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => <CompanyCardSkeleton key={i} />)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
-  );
-}
             <Skeleton className="h-4 w-48" />
           </div>
           <div className="container mx-auto px-4 py-6">

@@ -211,6 +211,18 @@ export default function OverviewTab({ companyId, company, featureAccess, themeMo
   const { toast } = useToast();
   const [reviewLink, setReviewLink] = useState('');
 
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: 'Copiado!',
+        description: `${type} copiado com sucesso para a área de transferência.`,
+      });
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   useEffect(() => {
     setReviewLink(`${window.location.origin}/companies/${companyId}/review`);
   }, [companyId]);

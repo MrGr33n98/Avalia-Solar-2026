@@ -45,6 +45,9 @@ const MobiVoltCompanyCard: React.FC<CompanyCardProps> = ({
   onViewProfile,
   onWhatsApp,
   onQuote,
+  quote_enabled,
+  comparison_enabled,
+  whatsapp_url,
 }) => {
   const handleCompare = () => {
     if (onCompare) {
@@ -96,7 +99,9 @@ const MobiVoltCompanyCard: React.FC<CompanyCardProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-gray-900 truncate">{name}</h3>
             {verified && (
-              <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" title="Empresa verificada" />
+              <span title="Empresa verificada" className="flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-blue-500" />
+              </span>
             )}
             {premium && (
               <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CreditCard, ChevronRight, HelpCircle, Check, Info, ShieldCheck, X } from 'lucide-react';
+import { ArrowLeft, CreditCard, ChevronRight, HelpCircle, Check, Info, ShieldCheck, X, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBillingSubscription } from '@/hooks/useBillingSubscription';
 import { CurrentPlanCard } from '@/components/billing/CurrentPlanCard';

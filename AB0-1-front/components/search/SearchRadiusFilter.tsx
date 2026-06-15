@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Navigation, ChevronDown } from 'lucide-react';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
 
@@ -57,9 +57,11 @@ export default function SearchRadiusFilter({
   };
 
   // Propaga coords GPS quando obtidas
-  if (coords && locationMode === 'gps') {
-    onCoordsChange(coords);
-  }
+  useEffect(() => {
+    if (coords && locationMode === 'gps') {
+      onCoordsChange(coords);
+    }
+  }, [coords, locationMode, onCoordsChange]);
 
   const activeCoords = locationMode === 'gps' ? coords : (locationMode === 'city' ? cityCenterCoords : null);
   const hasLocation = !!activeCoords;
