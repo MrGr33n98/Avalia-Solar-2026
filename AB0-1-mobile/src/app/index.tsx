@@ -38,6 +38,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { companiesApi, categoriesApi, Company } from '@/lib/api';
 import { apolloClient } from '@/lib/apolloClient';
 import { gql } from '@apollo/client';
+import { useTracking } from '@/hooks/useTracking';
 
 const { width } = Dimensions.get('window');
 
@@ -105,6 +106,7 @@ export default function HomeScreen() {
   const [selectedState, setSelectedState] = useState('MT'); // Default Cuiabá - MT conforme a imagem
   const [selectedCity, setSelectedCity] = useState('Cuiabá');
   const [favorites, setFavorites] = useState<number[]>([]);
+  const { trackCompanyClick } = useTracking();
 
   // Buscar categorias
   const { data: categories = [], isLoading: isLoadingCats } = useQuery({
@@ -308,7 +310,10 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={company.id}
                   style={[styles.gridCard, { backgroundColor: colors.background, borderColor: colors.border }]}
-                  onPress={() => router.push(`/company/${company.id}`)}
+                  onPress={() => {
+                    trackCompanyClick(company.id, company.name, 'home_recommendations');
+                    router.push(`/company/${company.id}`);
+                  }}
                 >
                   {/* Favorito e Logo */}
                   <View style={styles.cardTopRow}>

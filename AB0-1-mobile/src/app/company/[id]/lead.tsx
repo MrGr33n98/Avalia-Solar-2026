@@ -19,6 +19,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { companiesApi, leadsApi, categoriesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useTracking } from '@/hooks/useTracking';
 
 export default function LeadFormScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function LeadFormScreen() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
   const { user } = useAuthStore();
+  const { trackLeadSent } = useTracking();
 
   // Estados dos Campos
   const [name, setName] = useState('');
@@ -88,6 +90,7 @@ export default function LeadFormScreen() {
         state: company?.state || undefined,
       }),
     onSuccess: () => {
+      trackLeadSent(id, 'form');
       setSubmitted(true);
     },
     onError: (err: any) => {

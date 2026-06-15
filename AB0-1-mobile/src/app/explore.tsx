@@ -25,9 +25,7 @@ import { gql } from '@apollo/client';
 import { useMobileLocation } from '@/hooks/useMobileLocation';
 import { MobileRadiusFilter } from '@/components/search/MobileRadiusFilter';
 import { MobileSearchMap } from '@/components/search/MobileSearchMap';
-import { usePostHog } from 'posthog-react-native';
-
-
+import { useTracking } from '@/hooks/useTracking';
 const GET_COMPANIES_SEARCH_GRAPHQL = gql`
   query GetCompaniesSearch($q: String, $categoryId: ID, $state: String, $city: String, $verified: Boolean, $latitude: Float, $longitude: Float, $radiusKm: Int) {
     companies(q: $q, categoryId: $categoryId, state: $state, city: $city, verified: $verified, latitude: $latitude, longitude: $longitude, radiusKm: $radiusKm, limit: 30) {
@@ -61,7 +59,7 @@ export default function ExploreScreen() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
   const params = useLocalSearchParams<{ q?: string; category_id?: string }>();
-  const posthog = usePostHog();
+  const { trackCompanyClick } = useTracking();
 
   // Estados de Filtros
   const [search, setSearch] = useState('');
@@ -181,12 +179,7 @@ export default function ExploreScreen() {
     <TouchableOpacity
       style={[styles.companyCard, { backgroundColor: colors.backgroundElement }]}
       onPress={() => {
-        posthog?.capture('company_card_tapped', {
-          company_id: item.id,
-          company_name: item.name,
-          distance_km: item.distanceKm,
-          view_mode: 'list'
-        });
+        trackCompanyClick(item.id, item.name, 'search_results');
         router.push(`/company/${item.id}`);
       }}
     >
@@ -403,18 +396,15 @@ export default function ExploreScreen() {
             <ThemedText style={{ marginTop: Spacing.two }}>Buscando instaladores...</ThemedText>
           </View>
         ) : viewMode === 'map' ? (
-          <View style={{ flex: 1, marginTop: 12 }}>
+<View style={{ flex: 1, marginTop: 12 }}>
             <MobileSearchMap 
               companies={companies.length > 0 ? companies : mockExploreCompanies} 
               userLocation={userLocation}
               radiusKm={radiusKm}
               onSelectCompany={(company) => {
-                posthog?.capture('company_card_tapped', {
-                  company_id: company.id,
-                  company_name: company.name,
-                  distance_km: company.distanceKm,
-                  view_mode: 'map'
-                });
+                if (company) {
+                  trackCompanyClick(company.id, company.name, 'search_map');
+                }
                 router.push(`/company/${company.id}`);
               }}
             />

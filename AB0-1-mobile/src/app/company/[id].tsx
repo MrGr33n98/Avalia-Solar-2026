@@ -33,6 +33,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useTracking } from '@/hooks/useTracking';
 
 export default function CompanyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +42,7 @@ export default function CompanyDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { trackLeadSent } = useTracking();
 
   // Estado para novo review
   const [newRating, setNewRating] = useState(5);
@@ -211,7 +213,10 @@ export default function CompanyDetailScreen() {
             {company.phone && (
               <TouchableOpacity
                 style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
-                onPress={() => openLink(`tel:${company.phone}`)}
+                onPress={() => {
+                  trackLeadSent(company.id, 'whatsapp');
+                  openLink(`tel:${company.phone}`);
+                }}
               >
                 <Phone size={16} color="#208AEF" />
                 <ThemedText style={styles.contactItemText}>{company.phone}</ThemedText>
