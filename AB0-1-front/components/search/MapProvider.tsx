@@ -162,8 +162,8 @@ export default function MapProvider({
               {company.city && (
                 <p className="text-xs text-slate-500 mt-0.5">{company.city} · {company.state}</p>
               )}
-              {company.ratingAvg != null && (
-                <p className="text-xs text-amber-600 mt-0.5">★ {company.ratingAvg.toFixed(1)}</p>
+              {company.ratingAvg != null && !isNaN(Number(company.ratingAvg)) && (
+                <p className="text-xs text-amber-600 mt-0.5">★ {Number(company.ratingAvg).toFixed(1)}</p>
               )}
               <a
                 href={`/companies/${company.slug}`}
