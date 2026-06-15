@@ -1125,9 +1125,11 @@ function SearchContent() {
                                 latitude: c.latitude, longitude: c.longitude,
                                 ratingAvg: c.ratingAvg ?? c.rating_avg,
                                 isSponsored: c.isSponsored ?? c.sponsored,
+                                logo_url: c.logo_url,
                                 city: c.city, state: c.state,
                               }))}
                               center={geoCoords ?? undefined}
+                              radiusKm={radiusKm ?? undefined}
                               selectedCompanyId={selectedCompanyId}
                               onCompanySelect={handleMapCompanySelect}
                               onSearchInArea={handleSearchInArea}
@@ -1219,9 +1221,11 @@ function SearchContent() {
                                 latitude: c.latitude, longitude: c.longitude,
                                 ratingAvg: c.ratingAvg ?? c.rating_avg,
                                 isSponsored: c.isSponsored ?? c.sponsored,
+                                logo_url: c.logo_url,
                                 city: c.city, state: c.state,
                               }))}
                               center={geoCoords ?? undefined}
+                              radiusKm={radiusKm ?? undefined}
                               selectedCompanyId={selectedCompanyId}
                               onCompanySelect={handleMapCompanySelect}
                               onSearchInArea={handleSearchInArea}

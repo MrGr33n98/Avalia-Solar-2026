@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle } from 'react-leaflet';
 import type { LatLngBounds } from 'leaflet';
 
 export interface MapCompany {
@@ -14,6 +14,7 @@ export interface MapCompany {
   isSponsored?: boolean;
   city?: string;
   state?: string;
+  logo_url?: string;
 }
 
 export interface MapBounds {
@@ -31,6 +32,7 @@ interface MapProviderProps {
   onMarkerClick?: (company: MapCompany) => void;
   selectedCompanyId?: string;
   className?: string;
+  radiusKm?: number;
 }
 
 // Componente interno que captura eventos do mapa
@@ -58,6 +60,7 @@ export default function MapProvider({
   onMarkerClick,
   selectedCompanyId,
   className = 'w-full h-full',
+  radiusKm,
 }: MapProviderProps) {
   const [L, setL] = useState<typeof import('leaflet') | null>(null);
 
@@ -98,6 +101,21 @@ export default function MapProvider({
 
   const defaultIcon = new L.Icon.Default();
 
+  const getCompanyIcon = (company: MapCompany) => {
+    if (company.logo_url) {
+      return new L.divIcon({
+        className: 'custom-avatar-marker',
+        html: `<div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 2px solid ${company.isSponsored ? '#3b82f6' : '#ffffff'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2); background: white; display: flex; align-items: center; justify-content: center;">
+                 <img src="${company.logo_url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" />
+               </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      });
+    }
+    return company.isSponsored ? sponsoredIcon : defaultIcon;
+  };
+
   return (
     <MapContainer
       center={[center.lat, center.lng]}
@@ -110,11 +128,20 @@ export default function MapProvider({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <BoundsWatcher onBoundsChanged={onBoundsChanged} />
+      
+      {center && radiusKm && (
+        <Circle
+          center={[center.lat, center.lng]}
+          radius={radiusKm * 1000}
+          pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.1, weight: 1 }}
+        />
+      )}
+
       {companies.map((company) => (
         <Marker
           key={company.id}
           position={[company.latitude, company.longitude]}
-          icon={company.isSponsored ? sponsoredIcon : defaultIcon}
+          icon={getCompanyIcon(company)}
           eventHandlers={{
             click: () => onMarkerClick?.(company),
           }}

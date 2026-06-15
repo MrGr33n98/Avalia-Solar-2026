@@ -27,6 +27,7 @@ interface SearchMapPanelProps {
   onClose?: () => void;
   isVisible?: boolean;
   className?: string;
+  radiusKm?: number;
 }
 
 export default function SearchMapPanel({
@@ -38,6 +39,7 @@ export default function SearchMapPanel({
   onClose,
   isVisible = true,
   className = '',
+  radiusKm,
 }: SearchMapPanelProps) {
   const [currentBounds, setCurrentBounds] = useState<MapBounds | null>(null);
   const [searchOnMove, setSearchOnMove] = useState(false);
@@ -132,6 +134,7 @@ export default function SearchMapPanel({
             onMarkerClick={handleMarkerClick}
             selectedCompanyId={selectedCompanyId}
             className="w-full h-full"
+            radiusKm={radiusKm}
           />
         )}
 
