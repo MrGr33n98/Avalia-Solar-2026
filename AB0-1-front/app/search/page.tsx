@@ -935,8 +935,13 @@ function SearchContent() {
     <div className="min-h-screen bg-[hsl(var(--background))]">
 
       {/* ── Search Hero Header ──────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 text-white relative overflow-hidden shadow-md z-40">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
+      <div 
+        className="text-white relative overflow-hidden shadow-md z-40 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/banner-landing-page-avalia-solar.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-blue-900/80 dark:bg-slate-900/90 mix-blend-multiply pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
         <div className="container mx-auto px-4 py-12 sm:py-16 relative z-10 flex flex-col items-center text-center">
           
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight text-white drop-shadow-sm">
