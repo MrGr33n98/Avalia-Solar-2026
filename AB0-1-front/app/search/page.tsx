@@ -22,7 +22,7 @@ import {
 import {
   Search, X, SlidersHorizontal, Building2, Package, Tag, FileText,
   BadgeCheck, Star, TrendingUp, Zap, MessageCircle, ChevronRight,
-  ArrowUpDown, Sparkles, RotateCcw, Diamond, Map as MapIcon,
+  ArrowUpDown, Sparkles, RotateCcw, Diamond, Map as MapIcon, MapPin,
 } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
@@ -643,12 +643,14 @@ function SearchContent() {
   const initialVerified = searchParams.get('verified') === 'true';
   const initialWhatsapp = searchParams.get('whatsapp') === 'true';
   const initialTab = searchParams.get('tab') || 'companies';
+  const initialCity = searchParams.get('city') || '';
   const initialRadius = searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : null;
   const initialLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const initialLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
   const initialCoords = (initialLat && initialLng) ? { lat: initialLat, lng: initialLng } : null;
 
   const [searchTerm, setSearchTerm] = useState(query);
+  const [locationTerm, setLocationTerm] = useState(initialCity);
   const [results, setResults] = useState<Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>>({
     companies: [], products: [], categories: [], articles: [],
   });
@@ -798,6 +800,11 @@ function SearchContent() {
         filters.radius_km = radiusKm;
       }
       
+      const cityParam = new URLSearchParams(window.location.search).get('city');
+      if (cityParam) {
+        filters.city = cityParam;
+      }
+      
       const res = await searchApi.all(term, filters);
       const final = {
         companies:  res.companies  ?? [],
@@ -841,12 +848,24 @@ function SearchContent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
+    if (searchTerm.trim() || locationTerm.trim()) {
       track('search_submitted', {
         search_term: searchTerm,
+        location_term: locationTerm,
         source: 'search_bar',
       });
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm.trim()) {
+        params.set('q', searchTerm.trim());
+      } else {
+        params.delete('q');
+      }
+      if (locationTerm.trim()) {
+        params.set('city', locationTerm.trim());
+      } else {
+        params.delete('city');
+      }
+      router.push(`/search?${params.toString()}`);
     }
   };
 
@@ -860,10 +879,27 @@ function SearchContent() {
   };
 
   const clearSearch = () => {
-    track('search_cleared', { previous_term: query });
+    track('search_cleared', { previous_term: query, previous_location: initialCity });
     setSearchTerm('');
+    setLocationTerm('');
     router.push('/search');
     setResults({ companies: [], products: [], categories: [], articles: [] });
+  };
+
+  const handleLocationBlur = async () => {
+    const cepStr = locationTerm.replace(/\D/g, '');
+    if (cepStr.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cepStr}/json/`);
+        const data = await res.json();
+        if (data.localidade && data.uf) {
+          const newLoc = `${data.localidade}, ${data.uf}`;
+          setLocationTerm(newLoc);
+        }
+      } catch (err) {
+        console.warn('ViaCEP lookup failed:', err);
+      }
+    }
   };
 
   // Processed companies (sorted + filtered)
@@ -952,35 +988,64 @@ function SearchContent() {
           </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSubmit} className="w-full max-w-3xl flex gap-3 mb-4 relative">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={22} />
+          <form onSubmit={handleSubmit} className="w-full max-w-4xl flex flex-col md:flex-row gap-0 md:gap-2 mb-4 relative bg-white md:bg-white md:p-2 md:rounded-3xl shadow-2xl rounded-2xl p-0 overflow-hidden md:overflow-visible">
+            {/* Input 1: O que? */}
+            <div className="relative flex-1 group bg-white border-b md:border-b-0 md:border-r border-slate-200 p-2 md:p-0">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={22} />
               <label htmlFor="search-input" className="sr-only">Buscar empresas, produtos ou serviços</label>
               <Input
                 id="search-input"
                 name="q"
                 type="text"
-                placeholder="Ex: Inversores, WEG, ou instaladores em SP..."
+                placeholder="Ex: Inversores, WEG..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-14 pr-12 h-14 sm:h-16 text-base sm:text-lg bg-white text-slate-900 border-0 focus-visible:ring-4 focus-visible:ring-blue-500/30 rounded-2xl shadow-xl transition-all"
+                className="pl-14 pr-12 h-14 text-base sm:text-lg bg-transparent text-slate-900 border-0 focus-visible:ring-0 rounded-none shadow-none"
               />
               {searchTerm && (
                 <button
                   type="button"
-                  onClick={clearSearch}
+                  onClick={() => { setSearchTerm(''); }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
                 >
                   <X size={16} />
                 </button>
               )}
             </div>
-            <Button
-              type="submit"
-              className="h-14 sm:h-16 px-8 sm:px-10 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-base sm:text-lg shadow-xl shrink-0 transition-transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              Procurar
-            </Button>
+
+            {/* Input 2: Onde? */}
+            <div className="relative flex-1 group bg-white p-2 md:p-0">
+              <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={22} />
+              <label htmlFor="location-input" className="sr-only">Onde?</label>
+              <Input
+                id="location-input"
+                name="city"
+                type="text"
+                placeholder="CEP ou Cidade..."
+                value={locationTerm}
+                onChange={(e) => setLocationTerm(e.target.value)}
+                onBlur={handleLocationBlur}
+                className="pl-14 pr-12 h-14 text-base sm:text-lg bg-transparent text-slate-900 border-0 focus-visible:ring-0 rounded-none shadow-none"
+              />
+              {locationTerm && (
+                <button
+                  type="button"
+                  onClick={() => { setLocationTerm(''); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white p-2 md:p-0 md:w-auto w-full">
+              <Button
+                type="submit"
+                className="w-full h-14 md:px-10 rounded-xl md:rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-lg shadow-md shrink-0 transition-transform md:hover:-translate-y-0.5"
+              >
+                Buscar
+              </Button>
+            </div>
           </form>
 
           {/* Result context */}
@@ -1252,6 +1317,8 @@ function SearchContent() {
                                     company={company}
                                     rank={i + 1 <= 3 ? i + 1 : undefined}
                                     index={i}
+                                    onMouseEnter={() => setSelectedCompanyId(company.id.toString())}
+                                    onMouseLeave={() => setSelectedCompanyId(undefined)}
                                   />
                                 </motion.div>
                               ))}
@@ -1272,7 +1339,12 @@ function SearchContent() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: (i + 6) * 0.03, duration: 0.2, ease: 'easeOut' }}
                                   >
-                                    <CompanyCard company={company} index={i + 6} />
+                                    <CompanyCard 
+                                      company={company} 
+                                      index={i + 6} 
+                                      onMouseEnter={() => setSelectedCompanyId(company.id.toString())}
+                                      onMouseLeave={() => setSelectedCompanyId(undefined)}
+                                    />
                                   </motion.div>
                                 ))}
                               </div>
@@ -1283,9 +1355,8 @@ function SearchContent() {
 
                       {/* Right Column (Map 40%) */}
                       {MAP_ENABLED && showMap ? (
-                        <aside className="hidden lg:flex flex-col gap-4 lg:w-[40%] shrink-0 sticky top-4 h-[calc(100vh-2rem)]">
-                          <BannerByLocation location="sidebar" />
-                          <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 relative">
+                        <aside className="hidden lg:flex flex-col gap-4 lg:w-[40%] shrink-0 sticky top-4 h-[calc(100vh-2rem)] pb-4">
+                          <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-2xl border border-blue-500/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-900 relative">
                             <SearchMapPanel
                               companies={(processedCompanies as any[]).map((c: any) => ({
                                 id: c.id, name: c.name, slug: c.slug,
@@ -1303,6 +1374,10 @@ function SearchContent() {
                               onClose={() => setShowMap(false)}
                               className="absolute inset-0 w-full h-full"
                             />
+                          </div>
+                          {/* Banner movido para baixo do mapa com tamanho reduzido se houver espaço */}
+                          <div className="shrink-0 max-h-[150px] overflow-hidden rounded-2xl">
+                            <BannerByLocation location="sidebar" />
                           </div>
                         </aside>
                       ) : (

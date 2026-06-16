@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, ChevronDown } from 'lucide-react';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface SearchRadiusFilterProps {
   radiusKm: number | null;
   onRadiusChange: (radius: number | null) => void;
   onCoordsChange: (coords: { lat: number; lng: number } | null) => void;
   cityName?: string;
-  /** Coordenadas do centro da cidade selecionada (fallback de localização) */
   cityCenterCoords?: { lat: number; lng: number } | null;
   className?: string;
 }
@@ -45,7 +46,7 @@ export default function SearchRadiusFilter({
       onCoordsChange(cityCenterCoords);
     }
     if (!radiusKm) {
-      onRadiusChange(50); // Padrão ao usar cidade
+      onRadiusChange(50);
     }
   };
 
@@ -56,7 +57,6 @@ export default function SearchRadiusFilter({
     onRadiusChange(null);
   };
 
-  // Propaga coords GPS quando obtidas
   useEffect(() => {
     if (coords && locationMode === 'gps') {
       onCoordsChange(coords);
@@ -66,97 +66,106 @@ export default function SearchRadiusFilter({
   const activeCoords = locationMode === 'gps' ? coords : (locationMode === 'city' ? cityCenterCoords : null);
   const hasLocation = !!activeCoords;
 
+  const currentLabel = radiusKm ? `Até ${radiusKm} km` : 'Raio de busca';
+
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Label da seção */}
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-        Raio
-      </p>
-
-      {/* Botões de origem */}
-      <div className="flex gap-2">
+    <Popover>
+      <PopoverTrigger asChild>
         <button
-          id="geo-use-gps-btn"
-          onClick={handleUseGPS}
-          disabled={loading || permissionDenied}
-          title={permissionDenied ? 'Permissão de localização negada' : 'Usar minha localização GPS'}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border
-            ${locationMode === 'gps' && !error
-              ? 'bg-blue-600 text-white border-blue-600'
-              : permissionDenied
-                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600'
-            }`}
-        >
-          {loading ? (
-            <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Navigation className="w-3 h-3" />
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all duration-150',
+            hasLocation || radiusKm
+              ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/40'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600',
+            className
           )}
-          Minha localização
+        >
+          <MapPin className="w-3.5 h-3.5" />
+          {currentLabel}
+          <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-50" />
         </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-4 rounded-2xl shadow-xl border-slate-200 dark:border-slate-800" align="start">
+        <div className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Localização e Raio
+          </p>
 
-        {cityName && (
-          <button
-            id="geo-use-city-btn"
-            onClick={handleUseCity}
-            title={`Usar centro de ${cityName}`}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border
-              ${locationMode === 'city'
-                ? 'bg-emerald-600 text-white border-emerald-600'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:text-emerald-600'
-              }`}
-          >
-            <MapPin className="w-3 h-3" />
-            {cityName}
-          </button>
-        )}
-      </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleUseGPS}
+              disabled={loading || permissionDenied}
+              className={cn(
+                'flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border',
+                locationMode === 'gps' && !error
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : permissionDenied
+                    ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4" />
+                )}
+                Usar meu GPS local
+              </div>
+            </button>
 
-      {/* Mensagem de erro/permissão */}
-      {(error || permissionDenied) && (
-        <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1.5 rounded-lg">
-          {permissionDenied
-            ? 'Permissão negada. Use a cidade como referência.'
-            : error}
-        </p>
-      )}
+            {cityName && (
+              <button
+                onClick={handleUseCity}
+                className={cn(
+                  'flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border',
+                  locationMode === 'city'
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Centro de {cityName}
+                </div>
+              </button>
+            )}
+          </div>
 
-      {/* Status de localização ativa */}
-      {hasLocation && !error && (
-        <div className="flex items-center justify-between px-2.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <span className="text-[11px] text-blue-700 dark:text-blue-300 font-medium flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {locationMode === 'gps' ? 'Localização GPS ativa' : `Centro de ${cityName}`}
-          </span>
-          <button
-            id="geo-clear-location-btn"
-            onClick={handleClearLocation}
-            className="text-[11px] text-blue-500 hover:text-red-500 font-semibold transition-colors"
-          >
-            Limpar
-          </button>
+          {(error || permissionDenied) && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
+              {permissionDenied ? 'Permissão de localização negada no navegador.' : error}
+            </p>
+          )}
+
+          {hasLocation && !error && (
+            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">Distância máxima:</span>
+                <button onClick={handleClearLocation} className="text-xs text-red-500 font-semibold hover:underline">
+                  Limpar local
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {RADIUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => onRadiusChange(opt.value)}
+                    className={cn(
+                      'px-2 py-2 rounded-lg text-xs font-semibold transition-all border',
+                      radiusKm === opt.value
+                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Seletor de raio — só aparece quando tem localização ativa */}
-      {hasLocation && (
-        <div className="relative">
-          <select
-            id="geo-radius-select"
-            value={radiusKm ?? ''}
-            onChange={(e) => onRadiusChange(e.target.value ? Number(e.target.value) : null)}
-            className="w-full appearance-none pl-3 pr-8 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all outline-none"
-          >
-            {RADIUS_OPTIONS.map((opt) => (
-              <option key={opt.label} value={opt.value ?? ''}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-        </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }

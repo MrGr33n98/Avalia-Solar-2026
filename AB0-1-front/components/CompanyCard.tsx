@@ -51,6 +51,8 @@ interface Props {
   category?: string;
   onAnalyticsEvent?: (event: { type: string; companyId: number; meta?: Record<string, any> }) => void;
   index?: number;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const DICTIONARY = {
@@ -321,7 +323,7 @@ export default function CompanyCard({
   };
 
   return (
-    <div className={cn("h-full", className)}>
+    <div className={cn("h-full", className)} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <Card
         ref={cardRef}
         className={cn(
