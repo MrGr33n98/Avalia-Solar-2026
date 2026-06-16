@@ -98,32 +98,9 @@ export interface LocalSolarPageResponse {
 // Cliente de API e Utilitários de Requisição
 // ==========================================
 
-const TOKEN_KEY = 'auth_token';
+import { getStoredToken, setStoredToken, removeStoredToken } from './authStorage';
 
-export const getStoredToken = async (): Promise<string | null> => {
-  try {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
-  } catch (error) {
-    console.error('[API] Erro ao ler token do SecureStore:', error);
-    return null;
-  }
-};
-
-export const setStoredToken = async (token: string): Promise<void> => {
-  try {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-  } catch (error) {
-    console.error('[API] Erro ao salvar token no SecureStore:', error);
-  }
-};
-
-export const removeStoredToken = async (): Promise<void> => {
-  try {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-  } catch (error) {
-    console.error('[API] Erro ao remover token do SecureStore:', error);
-  }
-};
+export { getStoredToken, setStoredToken, removeStoredToken };
 
 // Construtor de Query Parameters
 const buildQueryParams = (params: Record<string, any>) => {
@@ -189,6 +166,13 @@ export async function fetchApi<T>(
     if (!response.ok) {
       const errorMessage = responseData?.error || responseData?.message || `Erro de API (${response.status})`;
       console.error(`[API Error] <- status: ${response.status}, message: ${errorMessage}`, responseData);
+
+      if (response.status === 401) {
+        // lazy evaluation of store state to avoid circular dependency
+        const { useAuthStore } = require('../store/auth');
+        useAuthStore.getState().logout();
+      }
+
       throw {
         status: response.status,
         message: errorMessage,
