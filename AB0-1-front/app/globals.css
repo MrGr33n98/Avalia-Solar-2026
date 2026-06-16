@@ -654,3 +654,9 @@
     animation: none !important;
   }
 }
+
+/* Premium Map Popup Overrides */
+.premium-popup .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: 1rem; border: none; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: transparent; }
+.premium-popup .leaflet-popup-content { margin: 0; width: auto !important; }
+.premium-popup .leaflet-popup-tip { box-shadow: none; }
+
