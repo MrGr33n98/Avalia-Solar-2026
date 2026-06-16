@@ -39,6 +39,7 @@ import SearchRadiusFilter from '@/components/search/SearchRadiusFilter';
 import dynamic from 'next/dynamic';
 const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), { ssr: false });
 import { SearchExploreView } from '@/components/search/SearchExploreView';
+import SolarCalculatorSidebar from '@/components/search/SolarCalculatorSidebar';
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
@@ -224,6 +225,10 @@ function SearchSidebar({
           </>
         )}
 
+        {/* Simulador Solar Express */}
+        <div className="h-px bg-slate-100 dark:bg-slate-800 my-5" />
+        <SolarCalculatorSidebar />
+
         {/* Status indicator */}
         <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between">
@@ -383,6 +388,12 @@ function MobileFilterSheet({
                     onChange={onWhatsappChange}
                   />
                 </div>
+              </div>
+
+              {/* Simulador Solar Express */}
+              <div className="h-px bg-slate-100 dark:bg-slate-800 my-6" />
+              <div className="mb-6">
+                <SolarCalculatorSidebar />
               </div>
             </div>
 
