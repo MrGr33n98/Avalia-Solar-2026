@@ -45,7 +45,7 @@ class Product < ApplicationRecord
 
   # Method to get primary image URL from Active Storage
   def image_url
-    return nil unless images.attached?
+    return self[:image_url] unless images.attached?
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
@@ -55,7 +55,7 @@ class Product < ApplicationRecord
 
   # Returns all attached image URLs
   def image_urls
-    return [image_url].compact if images.blank?
+    return [image_url].compact unless images.attached?
 
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
@@ -94,8 +94,13 @@ class Product < ApplicationRecord
 
     super(options.merge(
       include: {
-        categories: { only: %i[id name] },
-        company: { only: %i[id name slug logo_url city state verified] }
+        categories: { only: %i[id name seo_url] },
+        company: {
+          only: %i[
+            id name slug logo_url city state verified plan_status
+            rating_avg reviews_count rating_count
+          ]
+        }
       },
       methods: %i[image_url image_urls],
       except: %i[created_at updated_at]

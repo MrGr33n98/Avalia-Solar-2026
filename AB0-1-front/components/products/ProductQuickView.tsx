@@ -9,11 +9,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Building2, ShieldCheck, ShoppingCart, Info } from 'lucide-react';
+import { Check, Building2, ShoppingCart, Info } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
-import PremiumBadge from '@/components/PremiumBadge';
 import type { Product } from '@/lib/api';
+import { openQuoteWizard } from '@/lib/quote-wizard';
+import { track } from '@/lib/analytics/lazy';
 
 interface ProductQuickViewProps {
   product: Product;
@@ -23,8 +23,26 @@ interface ProductQuickViewProps {
 
 export function ProductQuickView({ product, open, onOpenChange }: ProductQuickViewProps) {
   const priceValue = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
+  const priceAvailable = Number.isFinite(priceValue) && priceValue > 0;
   const companyName = product.company?.name || 'Fornecedor não informado';
-  const displayImage = product.image_url || '/images/product-placeholder.svg';
+  const displayImage = product.image_url || '';
+  const companyLocation = [product.company?.city, product.company?.state].filter(Boolean).join(', ');
+
+  const handleQuoteRequest = () => {
+    track('product_cta_click', {
+      product_id: product.id,
+      product_name: product.name,
+      company_id: product.company?.id,
+      company_name: product.company?.name,
+      click_type: 'quick_view_budget',
+      price_available: priceAvailable,
+    });
+    openQuoteWizard({
+      preferredCompanyId: product.company?.id,
+      source: 'product_quick_view',
+    });
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,13 +51,19 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
           {/* Image Side */}
           <div className="relative h-[300px] md:h-full bg-slate-50 p-6 flex items-center justify-center">
             <div className="relative w-full h-full">
-                <Image
-                src={displayImage}
-                alt={product.name}
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 400px"
-                />
+                {displayImage ? (
+                  <Image
+                    src={displayImage}
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-sm font-semibold text-slate-400">
+                    Imagem indisponível
+                  </div>
+                )}
             </div>
           </div>
 
@@ -49,7 +73,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                     <Badge variant="outline" className="mb-2 w-fit">
-                        {(product as any).categories?.[0]?.name || product.category?.name || 'Geral'}
+                        {product.categories?.[0]?.name || product.category?.name || 'Geral'}
                     </Badge>
                     <DialogTitle className="text-xl font-bold leading-tight">
                         {product.name}
@@ -62,14 +86,18 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                 {/* Price & Status */}
                 <div>
                     <div className="text-3xl font-bold text-primary">
-                        R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {priceAvailable ? `R$ ${priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Consultar preço'}
                     </div>
                     <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1 text-green-600">
-                            <Check className="w-4 h-4" /> Em estoque
-                        </span>
-                        <span>•</span>
-                        <span className="text-slate-500">SKU: {(product as any).sku || 'N/A'}</span>
+                        {product.stock !== undefined && product.stock !== null && product.stock > 0 && (
+                          <>
+                            <span className="flex items-center gap-1 text-green-600">
+                                <Check className="w-4 h-4" /> Em estoque
+                            </span>
+                            <span>•</span>
+                          </>
+                        )}
+                        <span className="text-slate-500">SKU: {product.sku || 'N/A'}</span>
                     </div>
                 </div>
 
@@ -93,9 +121,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-900">{companyName}</p>
-                            <p className="text-xs text-slate-500 flex items-center gap-1">
-                                <PremiumBadge size="xs" /> Fornecedor Premium
-                            </p>
+                            {companyLocation && <p className="text-xs text-slate-500">{companyLocation}</p>}
                         </div>
                     </div>
                 </div>
@@ -106,7 +132,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                     Continuar navegando
                 </Button>
-                <Button className="w-full gap-2">
+                <Button className="w-full gap-2" onClick={handleQuoteRequest}>
                     <ShoppingCart className="w-4 h-4" />
                     Solicitar Orçamento
                 </Button>

@@ -1,20 +1,18 @@
 import React from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Building2, Star } from 'lucide-react';
+import { Building2, ShieldCheck, Star } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
-import PremiumBadge from '@/components/PremiumBadge';
 
 interface CompanySummary {
   name: string;
-  logo_url?: string; // Optional, might not be in product payload yet
+  logo_url?: string;
   productCount: number;
-  isVerified?: boolean; // Mock for now
-  rating?: number; // Mock for now
-  city?: string; // Mock for now
+  isVerified?: boolean;
+  rating?: number;
+  city?: string;
 }
 
 interface FeaturedCompaniesStripProps {
@@ -38,7 +36,7 @@ export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProp
           Fornecedores em Destaque
         </h2>
         <span className="text-sm text-muted-foreground">
-          {companies.length} parceiros Premium
+          {companies.length} fornecedores com produtos ativos
         </span>
       </div>
 
@@ -74,9 +72,7 @@ export function FeaturedCompaniesStrip({ companies }: FeaturedCompaniesStripProp
                     <span className="font-semibold truncate text-sm" title={company.name}>
                       {company.name}
                     </span>
-                    {company.isVerified && (
-                      <PremiumBadge size="xs" />
-                    )}
+                    {company.isVerified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-blue-500" />}
                   </div>
                   
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">

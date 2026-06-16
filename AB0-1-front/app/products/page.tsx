@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
-import { useProducts } from '@/hooks/useProducts';
+import { ProductSpecFilterValue, useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { FeaturedCompaniesStrip } from '@/components/products/FeaturedCompaniesStrip';
 import { Button } from '@/components/ui/button';
-import { Filter, Star, Building2, HelpCircle, ArrowRight, RefreshCw } from 'lucide-react';
+import { Filter, Building2, ChevronRight, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -36,14 +36,15 @@ function ProductsPageContent() {
   // Filter States — initialised from URL for shareability / back-navigation
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
   const [filters, setFilters] = useState({
-    category: searchParams.get('category') || 'all',
-    company: searchParams.get('company') || 'all',
+    category: searchParams.get('category_id') || searchParams.get('category') || 'all',
+    company: searchParams.get('company_id') || searchParams.get('company') || 'all',
+    brand: searchParams.get('brand_id') || 'all',
     priceRange: [
       Number(searchParams.get('price_min') || 0),
       Number(searchParams.get('price_max') || 50000)
     ] as [number, number],
     sort: searchParams.get('sort') || 'relevance',
-    specs: {} as Record<string, any>
+    specs: {} as Record<string, ProductSpecFilterValue>
   });
 
   // Debounce price range to avoid hammering the URL on every slider tick
@@ -52,15 +53,37 @@ function ProductsPageContent() {
   // Debounce search query for backend calls
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
+  const hasActiveSpecFilters = useMemo(
+    () => Object.values(filters.specs || {}).some((value) => value !== undefined && value !== null && value !== '' && value !== 'all'),
+    [filters.specs]
+  );
+
   // Build backend params — search/category/sort delegated to backend
   const hookParams = useMemo(() => ({
     q: debouncedSearchQuery || undefined,
+    category_id: filters.category !== 'all' ? Number(filters.category) : undefined,
+    company_id: filters.company !== 'all' ? Number(filters.company) : undefined,
+    brand_id: filters.brand !== 'all' ? Number(filters.brand) : undefined,
+    price_min: debouncedPriceRange[0] > 0 ? debouncedPriceRange[0] : undefined,
+    price_max: debouncedPriceRange[1] > 0 && debouncedPriceRange[1] !== 50000 ? debouncedPriceRange[1] : undefined,
     sort: filters.sort !== 'relevance' ? filters.sort : undefined,
     page: currentPage,
     per_page: itemsPerPage,
-  }), [debouncedSearchQuery, filters.sort, currentPage, itemsPerPage]);
+    include_specs: hasActiveSpecFilters || undefined,
+  }), [debouncedSearchQuery, filters.category, filters.company, filters.brand, filters.sort, debouncedPriceRange, currentPage, itemsPerPage, hasActiveSpecFilters]);
 
-  const { products, filtersMeta, loading, error, total, totalPages } = useProducts(hookParams);
+  const {
+    products,
+    filtersMeta,
+    categoriesMeta,
+    companiesMeta,
+    brandsMeta,
+    priceRangeMeta,
+    loading,
+    error,
+    total,
+    totalPages
+  } = useProducts(hookParams);
 
   // Buscar banners dinâmicos por categoria ou posição global
   const { data: topBanners = [] } = useBannersQuery({
@@ -68,6 +91,15 @@ function ProductsPageContent() {
     category_id: filters.category !== 'all' ? filters.category : undefined,
     enabled: true
   });
+  const visibleTopBanners = useMemo(
+    () => topBanners
+      .filter((banner) => Boolean(banner.image_url))
+      .map((banner) => ({
+        ...banner,
+        image_url: banner.image_url ?? null,
+      })),
+    [topBanners]
+  );
 
   // Telemetria: busca/resultados carregados
   useEffect(() => {
@@ -79,65 +111,25 @@ function ProductsPageContent() {
     }
   }, [loading, debouncedSearchQuery, total]);
 
-  // Derived Data for Filters & Featured Companies
-  const { categories, companies, maxPrice, companySummaries } = useMemo(() => {
-    if (!products.length) return { categories: [], companies: [], maxPrice: 50000, companySummaries: [] };
-
-    const cats = new Set<string>();
-    const comps = new Set<string>();
-    const compStats: Record<string, number> = {};
-    const compData: Record<string, { logo_url?: string; verified?: boolean; rating?: number; city?: string; slug?: string }> = {};
-    let maxP = 0;
-
-    products.forEach(p => {
-      // Categories extraction
-      if ((p as any).categories && Array.isArray((p as any).categories)) {
-        (p as any).categories.forEach((c: any) => cats.add(c.name));
-      } else if (p.category?.name) {
-        cats.add(p.category.name);
-      }
-
-      // Company extraction — prefer richer data if available
-      if (p.company?.name) {
-        const name = p.company.name;
-        comps.add(name);
-        compStats[name] = (compStats[name] || 0) + 1;
-        if (!compData[name]) {
-          compData[name] = {
-            logo_url: (p.company as any).logo_url || undefined,
-            verified: (p.company as any).verified ?? false,
-            rating: (p.company as any).rating_avg ?? undefined,
-            city: (p.company as any).city || undefined,
-            slug: p.company.slug || undefined,
-          };
-        } else if (!compData[name].logo_url && (p.company as any).logo_url) {
-          // Backfill logo_url if first product for this company didn't have it
-          compData[name].logo_url = (p.company as any).logo_url;
-        }
-      }
-
-      // Price extraction
-      const price = typeof p.price === 'number' ? p.price : parseFloat(p.price || '0');
-      if (price > maxP) maxP = price;
-    });
-
-    const companySummaries = Array.from(comps).map(name => ({
-        name,
-        slug: compData[name]?.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        logo_url: compData[name]?.logo_url,
-        productCount: compStats[name],
-        isVerified: compData[name]?.verified ?? false,
-        rating: compData[name]?.rating || 4.7,
-        city: compData[name]?.city || 'São Paulo, SP',
-    })).sort((a, b) => b.productCount - a.productCount).slice(0, 10);
-
-    return {
-      categories: Array.from(cats).sort(),
-      companies: Array.from(comps).sort(),
-      maxPrice: Math.ceil(maxP / 100) * 100, // Round up to nearest 100
-      companySummaries
-    };
-  }, [products]);
+  const maxPrice = Math.max(Math.ceil((priceRangeMeta.max || 0) / 100) * 100, 0);
+  const selectedCategoryName =
+    filters.category === 'all'
+      ? 'Todas as categorias'
+      : categoriesMeta.find((category) => String(category.id) === filters.category)?.name || 'Categoria selecionada';
+  const companySummaries = useMemo(() => {
+    return companiesMeta
+      .map((company) => ({
+        name: company.name,
+        slug: company.slug || String(company.id),
+        logo_url: company.logo_url || undefined,
+        productCount: company.products_count,
+        isVerified: company.verified ?? false,
+        rating: company.rating_avg ?? undefined,
+        city: [company.city, company.state].filter(Boolean).join(', ') || undefined,
+      }))
+      .sort((a, b) => b.productCount - a.productCount)
+      .slice(0, 10);
+  }, [companiesMeta]);
 
   // Update max price in filters when data loads
   useEffect(() => {
@@ -151,38 +143,29 @@ function ProductsPageContent() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set('search', searchQuery);
-    if (filters.category !== 'all') params.set('category', filters.category);
-    if (filters.company !== 'all') params.set('company', filters.company);
+    if (filters.category !== 'all') params.set('category_id', filters.category);
+    if (filters.company !== 'all') params.set('company_id', filters.company);
+    if (filters.brand !== 'all') params.set('brand_id', filters.brand);
     if (filters.sort !== 'relevance') params.set('sort', filters.sort);
     if (debouncedPriceRange[0] > 0) params.set('price_min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < maxPrice && debouncedPriceRange[1] !== 50000) params.set('price_max', String(debouncedPriceRange[1]));
     router.replace(`/products${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
-  }, [searchQuery, filters.category, filters.company, filters.sort, debouncedPriceRange, router, maxPrice]);
+  }, [searchQuery, filters.category, filters.company, filters.brand, filters.sort, debouncedPriceRange, router, maxPrice]);
 
   // Local filtering — only price range and spec filters applied client-side
   // (search, category, sort are handled by the backend)
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
-
-      // Company — still client-side (filtered by name, not ID)
-      if (filters.company !== 'all') {
-        if (product.company?.name !== filters.company) return false;
-      }
-
-      // Price range
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
-
       // Dynamic spec filters
       const activeSpecFilters = Object.entries(filters.specs || {}).filter(
         ([, value]) => value !== undefined && value !== null && value !== '' && value !== 'all'
       );
 
       if (activeSpecFilters.length > 0) {
-        const specMap: Record<string, any> = {};
-        if ((product as any).specs && Array.isArray((product as any).specs)) {
-          (product as any).specs.forEach((s: any) => {
-            specMap[s.key] = s.value;
+        const specMap: Record<string, unknown> = {};
+        if (product.specs && Array.isArray(product.specs)) {
+          product.specs.forEach((spec) => {
+            specMap[spec.key] = spec.value;
           });
         }
 
@@ -191,7 +174,7 @@ function ProductsPageContent() {
           if (current === undefined) return false;
 
           if (Array.isArray(selected) && selected.length === 2 && typeof selected[0] === 'number') {
-            const numeric = typeof current === 'number' ? current : parseFloat(current || '0');
+            const numeric = typeof current === 'number' ? current : parseFloat(String(current ?? '0'));
             if (numeric < selected[0] || numeric > selected[1]) return false;
           } else if (typeof selected === 'boolean') {
             if (!!current !== selected) return false;
@@ -206,11 +189,14 @@ function ProductsPageContent() {
 
       return true;
     });
-  }, [products, filters.company, filters.priceRange, filters.specs]);
+  }, [products, filters.specs]);
 
   const paginatedProducts = filteredProducts;
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (
+    key: 'category' | 'company' | 'brand' | 'priceRange' | 'sort' | 'specs',
+    value: string | [number, number] | Record<string, ProductSpecFilterValue> | undefined
+  ) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1); // Reset page on filter change
     
@@ -232,6 +218,7 @@ function ProductsPageContent() {
     setFilters({
       category: 'all',
       company: 'all',
+      brand: 'all',
       priceRange: [0, maxPrice],
       sort: 'relevance',
       specs: {}
@@ -240,38 +227,13 @@ function ProductsPageContent() {
     setCurrentPage(1);
   };
 
-  // Categories Quick Chips config
-  const categoryChips = [
+  const categoryChips = useMemo(() => [
     { label: "Todos", value: "all" },
-    { label: "Inversores", value: "Inversores" },
-    { label: "Módulos Fotovoltaicos", value: "Módulos Fotovoltaicos" },
-    { label: "Baterias", value: "Baterias" },
-    { label: "Carregadores EV", value: "Carregadores EV" },
-    { label: "String Box", value: "String Box" },
-    { label: "Estruturas", value: "Estruturas" },
-    { label: "Monitoramento", value: "Monitoramento" },
-    { label: "Off-grid", value: "Off-grid" }
-  ];
-
-  const displayCompanies = companySummaries.slice(0, 3);
-
-  // Produtos relacionados reais da mesma categoria
-  const relatedRealProducts = useMemo(() => {
-    if (paginatedProducts.length !== 1) return [];
-    const currentProduct = paginatedProducts[0];
-    const currentCategory = currentProduct.category?.name || (currentProduct as any).categories?.[0]?.name;
-    if (!currentCategory) return [];
-
-    return products
-      .filter(p => {
-        const catName = p.category?.name || (p as any).categories?.[0]?.name;
-        return p.id !== currentProduct.id && catName === currentCategory;
-      })
-      .slice(0, 3);
-  }, [products, paginatedProducts]);
-
-  const showCompaniesWidget = displayCompanies.length > 0;
-  const showRelatedProductsWidget = relatedRealProducts.length > 0;
+    ...categoriesMeta.slice(0, 8).map((category) => ({
+      label: category.name,
+      value: String(category.id),
+    })),
+  ], [categoriesMeta]);
 
   if (error) {
     return (
@@ -294,7 +256,7 @@ function ProductsPageContent() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onClearFilters={clearFilters}
-          selectedCategory={filters.category}
+          selectedCategory={selectedCategoryName}
         />
 
         {/* Categories Quick Chips */}
@@ -321,8 +283,8 @@ function ProductsPageContent() {
         </div>
 
         {/* Banner container dinâmico */}
-        {!loading && topBanners && topBanners.length > 0 && (
-          <BannerContainer banners={topBanners} position="products_top" className="mb-6 animate-in fade-in duration-300" />
+        {!loading && visibleTopBanners.length > 0 && (
+          <BannerContainer banners={visibleTopBanners} position="products_top" className="mb-6 animate-in fade-in duration-300" />
         )}
 
         {/* Featured Companies Strip */}
@@ -348,8 +310,9 @@ function ProductsPageContent() {
                     activeSpecFilters={filters.specs}
                     onSpecFilterChange={(key, value) => handleFilterChange('specs', { ...filters.specs, [key]: value })}
                     specFiltersMeta={filtersMeta}
-                    categories={categories}
-                    companies={companies}
+                    categories={categoriesMeta}
+                    companies={companiesMeta}
+                    brands={brandsMeta}
                     maxPrice={maxPrice}
                     onClearFilters={clearFilters}
                   />
@@ -367,8 +330,9 @@ function ProductsPageContent() {
                 activeSpecFilters={filters.specs}
                 onSpecFilterChange={(key, value) => handleFilterChange('specs', { ...filters.specs, [key]: value })}
                 specFiltersMeta={filtersMeta}
-                categories={categories}
-                companies={companies}
+                categories={categoriesMeta}
+                companies={companiesMeta}
+                brands={brandsMeta}
                 maxPrice={maxPrice}
                 onClearFilters={clearFilters}
               />
@@ -391,108 +355,11 @@ function ProductsPageContent() {
               </div>
             ) : paginatedProducts.length > 0 ? (
               <div className="space-y-8">
-                {/* 1 Result Wide View */}
-                {paginatedProducts.length === 1 ? (
-                  <div className="space-y-8">
-                    <ProductCard product={paginatedProducts[0]} layout="horizontal" />
-                    
-                    {/* Supplementary widgets when 1 result is found */}
-                    {(showCompaniesWidget || showRelatedProductsWidget) && (
-                      <div className={`grid grid-cols-1 ${showCompaniesWidget && showRelatedProductsWidget ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6 pt-4`}>
-                        {/* Widget 1: Empresas que trabalham */}
-                        {showCompaniesWidget && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left flex flex-col justify-between">
-                            <div>
-                              <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold text-slate-800 text-sm md:text-base">Empresas que trabalham com este produto</h3>
-                                <Link href="/companies" className="text-xs text-blue-600 hover:underline font-semibold">Ver todas</Link>
-                              </div>
-                              <div className="space-y-3">
-                                {displayCompanies.map((comp, idx) => (
-                                  <div key={idx} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <div className="bg-slate-100 p-1.5 rounded-full text-slate-400">
-                                        <Building2 className="w-3.5 h-3.5" />
-                                      </div>
-                                      <div className="text-xs leading-tight min-w-0 text-left">
-                                        <strong className="text-slate-700 block truncate">{comp.name}</strong>
-                                        <span className="text-slate-400 block mt-0.5 text-[10px]">{comp.city}</span>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                      <div className="flex text-amber-400 gap-0.5">
-                                        <Star className="w-3 h-3 fill-current" />
-                                      </div>
-                                      <span className="text-[11px] font-bold text-slate-700">{(comp.rating || 4.8).toFixed(1)}</span>
-                                      <Link href={`/companies/${comp.slug}`} className="text-[10px] text-blue-600 hover:underline font-bold ml-2">Perfil</Link>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Widget 2: Produtos relacionados */}
-                        {showRelatedProductsWidget && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
-                            <div className="flex justify-between items-center mb-4">
-                              <h3 className="font-bold text-slate-800 text-sm md:text-base">Produtos relacionados</h3>
-                              <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</button>
-                            </div>
-                            <div className="space-y-3">
-                              {relatedRealProducts.map((p, idx) => {
-                                const pPriceValue = typeof p.price === 'number' ? p.price : parseFloat(p.price || '0');
-                                const pFriendlyUrl = `/products/${p.id}-${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-                                return (
-                                  <Link key={idx} href={pFriendlyUrl} className="flex items-center gap-3 border-b border-slate-50 pb-2 last:border-0 last:pb-0 hover:bg-slate-50/50 transition-colors rounded-lg p-1 block">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-lg flex-shrink-0 relative overflow-hidden flex items-center justify-center p-1 border">
-                                      {p.image_url ? (
-                                        <img src={p.image_url} alt={p.name} className="object-contain w-full h-full" />
-                                      ) : (
-                                        <Building2 className="w-5 h-5 text-slate-300" />
-                                      )}
-                                    </div>
-                                    <div className="text-xs leading-tight text-left min-w-0">
-                                      <strong className="text-slate-700 block truncate font-semibold">{p.name}</strong>
-                                      <span className="text-blue-600 font-bold block mt-1">
-                                        R$ {pPriceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                      </span>
-                                    </div>
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Assistance Banner CTA */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-left">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-600 p-3 rounded-full text-white hidden sm:block">
-                          <HelpCircle className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-extrabold text-slate-900 text-base md:text-lg">Precisa de ajuda para escolher o equipamento ideal?</h4>
-                          <p className="text-slate-600 text-sm mt-1">Solicite uma indicação gratuita e receba recomendações personalizadas da Avalia Solar.</p>
-                        </div>
-                      </div>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-6 gap-2 rounded-lg flex-shrink-0 shadow-sm shadow-blue-100">
-                        Solicitar indicação gratuita
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Grid View for multiple results */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {paginatedProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {paginatedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
                 
                 {/* Pagination */}
                 {totalPages > 1 && (

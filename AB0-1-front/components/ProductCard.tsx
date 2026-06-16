@@ -5,12 +5,13 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Building2, Eye, MessageSquare, ShieldCheck, Tag, Star, Heart } from 'lucide-react';
+import { Building2, Eye, MessageSquare, ShieldCheck, Tag, Star } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
 import { resolveBrandContext } from '@/lib/analytics/brand';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface ProductCardProps {
   product: Product;
@@ -32,7 +33,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
             track('product_impression', {
               product_id: product.id,
               product_name: product.name,
-              category: (product as any).categories?.[0]?.name || product.category?.name,
+              category: product.categories?.[0]?.name || product.category?.name,
               company_id: product.company?.id,
               company_name: product.company?.name,
               ...brandContext
@@ -45,15 +46,13 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
     }
   }, [product, visible, brandContext]);
 
-  const priceValue =
-    typeof product.price === 'number'
-      ? product.price
-      : parseFloat(product.price || '0');
+  const priceValue = Number(product.price || 0);
+  const priceAvailable = Number.isFinite(priceValue) && priceValue > 0;
 
   const statusLabel =
     product.status === 'active'
       ? 'Disponível'
-      : product.status === 'inactive'
+      : product.status === 'disabled' || product.status === 'archived'
       ? 'Indisponível'
       : 'Sob Consulta';
 
@@ -64,10 +63,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
       ? 'secondary'
       : 'outline';
 
-  const displayImage =
-    !imageError && product.image_url
-      ? product.image_url
-      : '/images/product-placeholder.svg';
+  const displayImage = !imageError && product.image_url ? product.image_url : '';
 
   const slugify = (text: string) =>
     text
@@ -83,8 +79,13 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   }, [product.id, product.name]);
 
   const companyName = product.company?.name || 'Fornecedor não informado';
+  const companyLocation = [product.company?.city, product.company?.state].filter(Boolean).join(', ');
   const categoryName =
-    (product as any).categories?.[0]?.name || product.category?.name || 'Geral';
+    product.categories?.[0]?.name || product.category?.name || 'Geral';
+  const applicationSpec = useMemo(() => {
+    const spec = product.specs?.find((item) => ['aplicacao', 'aplicação', 'application'].includes(item.key));
+    return spec?.value ? String(spec.value) : null;
+  }, [product.specs]);
 
   // Extract rating & reviews (no mock)
   const ratingAvg = product.company?.rating_avg;
@@ -110,25 +111,34 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   };
 
   const handleBudgetClick = (e: React.MouseEvent) => {
-    // Analytics tracking
-    track('product_click', {
+    e.preventDefault();
+    e.stopPropagation();
+    track('product_cta_click', {
       product_id: product.id,
       product_name: product.name,
       click_type: 'budget',
+      company_id: product.company?.id,
+      company_name: product.company?.name,
+      price_available: priceAvailable,
       ...brandContext
+    });
+    openQuoteWizard({
+      preferredCompanyId: product.company?.id,
+      source: 'products_catalog',
     });
   };
 
   const installments = useMemo(() => {
+    if (!priceAvailable) return null;
     const instVal = priceValue / 12;
     return instVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }, [priceValue]);
+  }, [priceValue, priceAvailable]);
 
   const ldJson = useMemo(() => ({
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: product.name,
-    image: displayImage,
+    image: displayImage || undefined,
     description: product.short_description || product.description || '',
     brand: {
       '@type': 'Brand',
@@ -137,14 +147,14 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
     offers: {
       '@type': 'Offer',
       priceCurrency: 'BRL',
-      price: priceValue,
+      ...(priceAvailable ? { price: priceValue } : {}),
       availability: statusLabel === 'Disponível' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: {
         '@type': 'Organization',
         name: companyName
       }
     },
-  }), [product, displayImage, priceValue, statusLabel, companyName]);
+  }), [product, displayImage, priceValue, priceAvailable, statusLabel, companyName]);
 
   if (layout === 'horizontal') {
     return (
@@ -154,15 +164,21 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
             {/* Left: Image Box */}
             <div className="relative w-full md:w-80 bg-slate-50 flex items-center justify-center p-4 flex-shrink-0 border-r border-slate-100">
               <Link href={friendlyUrl} className="block w-full h-48 md:h-full relative min-h-[14rem]">
-                <Image
-                  src={displayImage}
-                  alt={product.name}
-                  fill
-                  className="object-contain p-2 transition-transform duration-500 hover:scale-105"
-                  onError={() => setImageError(true)}
-                  sizes="(max-width: 640px) 100vw, 320px"
-                  loading="lazy"
-                />
+                {displayImage ? (
+                  <Image
+                    src={displayImage}
+                    alt={product.name}
+                    fill
+                    className="object-contain p-2 transition-transform duration-500 hover:scale-105"
+                    onError={() => setImageError(true)}
+                    sizes="(max-width: 640px) 100vw, 320px"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-400">
+                    Imagem indisponível
+                  </div>
+                )}
               </Link>
               {/* Badge Overlay */}
               <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
@@ -213,8 +229,12 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                 
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span className="font-medium text-slate-400">Categoria: <strong className="text-slate-600 font-semibold">{categoryName}</strong></span>
-                  <span className="text-slate-300">|</span>
-                  <span className="font-medium text-slate-400">Aplicação: <strong className="text-slate-600 font-semibold">Residencial / Comercial</strong></span>
+                  {applicationSpec && (
+                    <>
+                      <span className="text-slate-300">|</span>
+                      <span className="font-medium text-slate-400">Aplicação: <strong className="text-slate-600 font-semibold">{applicationSpec}</strong></span>
+                    </>
+                  )}
                 </div>
 
                 {/* Rating */}
@@ -251,13 +271,23 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                 {/* Price Display */}
                 <div className="space-y-1">
                   <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Preço Sugerido</span>
-                  <div className="text-2xl md:text-3xl font-black text-blue-600">
-                    R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                  <div className="text-xs text-slate-500 leading-normal">
-                    à vista no PIX <br/>
-                    ou <strong className="text-slate-700">12x de R$ {installments}</strong> sem juros
-                  </div>
+                  {priceAvailable ? (
+                    <>
+                      <div className="text-2xl md:text-3xl font-black text-blue-600">
+                        R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </div>
+                      {installments && (
+                        <div className="text-xs text-slate-500 leading-normal">
+                          à vista no PIX <br/>
+                          ou <strong className="text-slate-700">12x de R$ {installments}</strong> sem juros
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-2xl md:text-3xl font-black text-blue-600">
+                      Consultar preço
+                    </div>
+                  )}
                 </div>
 
                 {/* Company details */}
@@ -271,7 +301,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                       {companyName}
                       {product.company?.verified && <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />}
                     </strong>
-                    <span className="text-slate-400 block mt-0.5">São Paulo, SP</span>
+                    {companyLocation && <span className="text-slate-400 block mt-0.5">{companyLocation}</span>}
                   </div>
                 </div>
               </div>
@@ -315,15 +345,21 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
           {/* Image Section */}
           <Link href={friendlyUrl} aria-label={`Ver detalhes de ${product.name}`} className="block relative cursor-pointer">
             <div className="relative w-full aspect-[4/3] bg-slate-50 overflow-hidden group-hover:bg-slate-100/30 transition-colors">
-              <Image
-                src={displayImage}
-                alt={product.name}
-                fill
-                className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-                onError={() => setImageError(true)}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                loading="lazy"
-              />
+              {displayImage ? (
+                <Image
+                  src={displayImage}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                  onError={() => setImageError(true)}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs font-semibold text-slate-400">
+                  Imagem indisponível
+                </div>
+              )}
               
               {/* Badges Overlay */}
               <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -416,13 +452,19 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
               {/* Price block */}
               <div className="flex flex-col" itemProp="offers" itemScope itemType="https://schema.org/Offer">
                 <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Preço Sugerido</span>
-                <div className="flex items-baseline gap-1">
-                    <meta itemProp="priceCurrency" content="BRL" />
-                    <span itemProp="price" className="text-lg font-black text-blue-600">
-                      R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                </div>
-                <span className="text-[10px] text-slate-500 text-left">12x de R$ {installments} sem juros</span>
+                {priceAvailable ? (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                        <meta itemProp="priceCurrency" content="BRL" />
+                        <span itemProp="price" className="text-lg font-black text-blue-600">
+                          R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                    </div>
+                    {installments && <span className="text-[10px] text-slate-500 text-left">12x de R$ {installments} sem juros</span>}
+                  </>
+                ) : (
+                  <span className="text-lg font-black text-blue-600">Consultar preço</span>
+                )}
               </div>
           </CardContent>
 

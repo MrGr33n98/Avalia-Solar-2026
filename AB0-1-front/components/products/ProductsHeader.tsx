@@ -16,7 +16,7 @@ export function ProductsHeader({
   searchQuery, 
   onSearchChange,
   onClearFilters,
-  selectedCategory = "Energia Solar"
+  selectedCategory = "Todas as categorias"
 }: ProductsHeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery)
 
@@ -31,28 +31,14 @@ export function ProductsHeader({
 
   return (
     <div className="space-y-6 mb-8">
-      {/* Commercial Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 via-slate-50 to-blue-50 p-6 md:p-10 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl bg-white p-6 md:p-10 border border-slate-100 shadow-sm">
         <div className="flex-1 space-y-3 max-w-2xl text-left">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
-            Produtos para Energia Solar
+            Produtos do marketplace Avalia Solar
           </h1>
           <p className="text-base text-slate-600 leading-relaxed">
-            Compare equipamentos, inversores, módulos, baterias e soluções para encontrar a melhor opção para seu projeto.
+            Compare equipamentos cadastrados por fornecedores reais e solicite orientação para escolher a melhor solução para seu projeto.
           </p>
-        </div>
-        
-        {/* Right side illustration / visual panel */}
-        <div className="hidden lg:flex items-center justify-center w-64 h-32 relative bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 p-4 shadow-inner">
-          <div className="flex gap-3 items-end">
-            <div className="w-12 h-20 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-lg shadow-md flex items-center justify-center text-white font-bold text-xs">INV</div>
-            <div className="w-20 h-16 bg-slate-800 rounded-md shadow-md flex flex-wrap gap-1 p-1">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="w-[8px] h-[6px] bg-blue-400/80 rounded-[1px]"></div>
-              ))}
-            </div>
-            <div className="w-8 h-12 bg-emerald-500 rounded-md shadow-md flex items-center justify-center text-white font-bold text-[10px]">BAT</div>
-          </div>
         </div>
       </div>
 
@@ -89,7 +75,7 @@ export function ProductsHeader({
                 {totalProducts} {totalProducts === 1 ? 'produto encontrado' : 'produtos encontrados'}
               </span>
               <span className="text-xs text-slate-500 whitespace-nowrap">
-                Categoria: {selectedCategory === "all" ? "Energia Solar" : selectedCategory}
+                {selectedCategory}
               </span>
             </div>
           </div>

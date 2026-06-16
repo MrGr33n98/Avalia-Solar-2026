@@ -1,6 +1,7 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useProducts } from '@/hooks/useProducts';
 import * as apiClient from '@/lib/api-client';
+import type { Product } from '@/lib/api';
 
 // Mock the api-client module
 jest.mock('@/lib/api-client', () => ({
@@ -12,18 +13,21 @@ jest.mock('@/lib/api-client', () => ({
 
 const mockProductsApiSafe = apiClient.productsApiSafe as jest.Mocked<typeof apiClient.productsApiSafe>;
 
-const mockProduct = (overrides = {}) => ({
+const mockProduct = (overrides: Partial<Product> = {}): Product => ({
   id: 1,
   name: 'Painel Solar 400W',
+  description: 'Produto real do catalogo',
   price: 1200,
   sku: 'PS-400W',
   status: 'active',
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
   company: { id: 1, name: 'SolarTech' },
   category: { id: 2, name: 'Painéis Solares' },
   ...overrides,
 });
 
-const mockPaginatedResponse = (products: any[], total = products.length) => ({
+const mockPaginatedResponse = (products: Product[], total = products.length) => ({
   data: products,
   meta: {
     total,
@@ -59,12 +63,34 @@ describe('useProducts (public hook)', () => {
     mockProductsApiSafe.getAllPaginated.mockResolvedValue(mockPaginatedResponse([]));
 
     renderHook(() =>
-      useProducts({ q: 'painel', sort: 'price_asc', page: 2, per_page: 6 })
+      useProducts({
+        q: 'painel',
+        category_id: 10,
+        company_id: 20,
+        brand_id: 30,
+        price_min: 1000,
+        price_max: 5000,
+        include_specs: true,
+        sort: 'price_asc',
+        page: 2,
+        per_page: 6,
+      })
     );
 
     await waitFor(() =>
       expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledWith(
-        expect.objectContaining({ q: 'painel', sort: 'price_asc', page: 2, per_page: 6 })
+        expect.objectContaining({
+          q: 'painel',
+          category_id: 10,
+          company_id: 20,
+          brand_id: 30,
+          price_min: 1000,
+          price_max: 5000,
+          include_specs: true,
+          sort: 'price_asc',
+          page: 2,
+          per_page: 6,
+        })
       )
     );
   });
@@ -141,6 +167,10 @@ describe('useProducts (public hook)', () => {
     mockProductsApiSafe.getAllPaginated.mockResolvedValue(mockPaginatedResponse([]));
     mockProductsApiSafe.getFilters.mockResolvedValue({
       filters: [{ key: 'power', label: 'Potência', type: 'decimal' }],
+      categories: [{ id: 1, name: 'Inversores', seo_url: 'inversores', products_count: 2 }],
+      companies: [{ id: 2, name: 'WEG', city: 'Jaraguá do Sul', state: 'SC', products_count: 3 }],
+      brands: [{ id: 3, name: 'WEG', slug: 'weg', products_count: 4 }],
+      price_range: { min: 100, max: 9000 },
     });
 
     const { rerender } = renderHook(
@@ -160,5 +190,32 @@ describe('useProducts (public hook)', () => {
 
     // getFilters should only have been called once
     expect(mockProductsApiSafe.getFilters).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes catalog filter metadata from the API', async () => {
+    mockProductsApiSafe.getAllPaginated.mockResolvedValue(mockPaginatedResponse([]));
+    mockProductsApiSafe.getFilters.mockResolvedValue({
+      filters: [{ key: 'application', label: 'Aplicação', type: 'enum', options: ['Residencial'] }],
+      categories: [{ id: 1, name: 'Inversores', seo_url: 'inversores', products_count: 2 }],
+      companies: [{ id: 2, name: 'WEG', city: 'Jaraguá do Sul', state: 'SC', products_count: 3 }],
+      brands: [{ id: 3, name: 'WEG', slug: 'weg', products_count: 4 }],
+      price_range: { min: 100, max: 9000 },
+    });
+
+    const { result } = renderHook(() => useProducts());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.filtersMeta).toHaveLength(1);
+    expect(result.current.categoriesMeta).toEqual([
+      expect.objectContaining({ id: 1, name: 'Inversores', products_count: 2 }),
+    ]);
+    expect(result.current.companiesMeta).toEqual([
+      expect.objectContaining({ id: 2, name: 'WEG', city: 'Jaraguá do Sul', state: 'SC' }),
+    ]);
+    expect(result.current.brandsMeta).toEqual([
+      expect.objectContaining({ id: 3, name: 'WEG', slug: 'weg' }),
+    ]);
+    expect(result.current.priceRangeMeta).toEqual({ min: 100, max: 9000 });
   });
 });

@@ -181,7 +181,7 @@ export async function fetchApiSafe<T>(
   const blockedUntil = SAFE_API_BLOCKED_UNTIL.get(throttleKey) || 0;
   if (Date.now() < blockedUntil) {
     console.warn(`[API] Rate limited until ${new Date(blockedUntil).toISOString()}, trying cached data`);
-    
+
     // Try to use cached data if available
     if (shouldUseCache) {
       const cached = SAFE_API_CACHE.get(cacheKey);
@@ -190,7 +190,7 @@ export async function fetchApiSafe<T>(
         return cached.data as T;
       }
     }
-    
+
     // If no cache and it's a public endpoint, wait and retry once
     if (isPublicCacheableEndpoint(normalizedEndpoint)) {
       const waitTime = Math.min(blockedUntil - Date.now(), 3000); // Max 3s wait
@@ -407,12 +407,12 @@ export async function fetchApiSafe<T>(
 // Empresas
 export const companiesApiSafe = {
   getAll: async (
-    params?: { 
-      status?: string; 
-      featured?: boolean; 
-      category_id?: number; 
+    params?: {
+      status?: string;
+      featured?: boolean;
+      category_id?: number;
       category_ids?: number[];
-      limit?: number; 
+      limit?: number;
       include?: string;
       sort?: string;
       q?: string;
@@ -430,7 +430,7 @@ export const companiesApiSafe = {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url); // Usar 'any' temporariamente para inspecionar a resposta
-      
+
       // Verificar se a resposta é um array diretamente ou um objeto com a propriedade 'companies'
       if (Array.isArray(response)) {
         return response;
@@ -469,9 +469,9 @@ export const companiesApiSafe = {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
       console.log('[companiesApiSafe.getAllPaginated] Fetching:', url);
-      
+
       const response = await fetchApiSafe<any>(url);
-      
+
       console.log('[companiesApiSafe.getAllPaginated] Response structure:', {
         isArray: Array.isArray(response),
         hasData: response?.data !== undefined,
@@ -479,7 +479,7 @@ export const companiesApiSafe = {
         dataLength: response?.data?.length || 0,
         hasMeta: response?.meta !== undefined,
       });
-      
+
       if (response && Array.isArray(response.data)) {
         console.log('[companiesApiSafe.getAllPaginated] Returning data array with', response.data.length, 'items');
         return { data: response.data, meta: response.meta };
@@ -488,7 +488,7 @@ export const companiesApiSafe = {
         console.log('[companiesApiSafe.getAllPaginated] Returning direct array with', response.length, 'items');
         return { data: response };
       }
-      
+
       console.warn('[companiesApiSafe.getAllPaginated] Unexpected response format, returning empty array');
       return { data: [] };
     } catch (error) {
@@ -540,10 +540,10 @@ export const companiesApiSafe = {
     try {
       console.log(`[companiesApiSafe.getById] Fetching company: ${id}`);
       const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`);
-      
+
       if (response) {
         console.log('[companiesApiSafe.getById] Raw response:', response);
-        
+
         // Backend retorna: { company: { ... } }
         // Precisamos desembrulhar para pegar apenas o objeto company
         if (response && response.company) {
@@ -555,7 +555,7 @@ export const companiesApiSafe = {
           });
           return response.company;
         }
-        
+
         // Se jÃ¡ vier desembrulhado (compatibilidade)
         if (response && response.id) {
           return response;
@@ -568,7 +568,7 @@ export const companiesApiSafe = {
         if (bySlug?.company) return bySlug.company;
         if (bySlug?.id) return bySlug;
       }
-      
+
       console.warn('[companiesApiSafe.getById] Returning null - could not parse company data from:', response);
       return null;
     } catch (error) {
@@ -790,7 +790,7 @@ export const bannersApiSafe = {
 
 // Produtos
 export const productsApiSafe = {
-  getAll: async (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number; include_specs?: boolean; q?: string; sort?: string; page?: number; per_page?: number }): Promise<Product[]> => {
+  getAll: async (params?: { category_id?: number; company_id?: number; brand_id?: number; price_min?: number; price_max?: number; featured?: boolean; limit?: number; include_specs?: boolean; q?: string; sort?: string; page?: number; per_page?: number }): Promise<Product[]> => {
     try {
       const url = `products${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
@@ -810,6 +810,9 @@ export const productsApiSafe = {
   getAllPaginated: async (params?: {
     category_id?: number;
     company_id?: number;
+    brand_id?: number;
+    price_min?: number;
+    price_max?: number;
     featured?: boolean;
     limit?: number;
     include_specs?: boolean;

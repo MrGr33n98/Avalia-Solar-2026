@@ -3,35 +3,40 @@ class Api::V1::ProductsController < Api::V1::BaseController
 
   def index
     include_specs = ActiveModel::Type::Boolean.new.cast(params[:include_specs])
-    scope = ::Product.includes(:company, :categories)
+    scope = ::Product
+            .includes(:brand, :company, :categories, images_attachments: :blob)
+            .where(status: ::Product.statuses[:active])
 
-    # Filtros existentes
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
+    scope = scope.where(brand_id: params[:brand_id]) if params[:brand_id].present?
+    scope = scope.where(featured: ActiveModel::Type::Boolean.new.cast(params[:featured])) if params.key?(:featured)
+    scope = scope.where('products.price >= ?', params[:price_min].to_d) if params[:price_min].present?
+    scope = scope.where('products.price <= ?', params[:price_max].to_d) if params[:price_max].present?
 
-    # Busca textual — q busca em name e description (ILIKE para case-insensitive)
     if params[:q].present?
       q = "%#{params[:q].gsub('%', '\\%').gsub('_', '\\_')}%"
-      scope = scope.where('products.name ILIKE ? OR products.description ILIKE ?', q, q)
+      scope = scope.left_joins(:brand, :company)
+                   .where(
+                     'products.name ILIKE :q OR products.description ILIKE :q OR brands.name ILIKE :q OR companies.name ILIKE :q',
+                     q: q
+                   )
     end
 
-    # Filtro por category_id via join na tabela de junção
     if params[:category_id].present?
       scope = scope.joins(:categories).where(categories: { id: params[:category_id] }).distinct
     end
 
-    # Ordenação
     scope = case params[:sort]
             when 'price_asc'   then scope.order(price: :asc)
             when 'price_desc'  then scope.order(price: :desc)
             when 'name_asc'    then scope.order(name: :asc)
             when 'rating_desc' then scope.order(created_at: :desc)
-            else scope.order(created_at: :desc)
+            else scope.order(featured: :desc, created_at: :desc)
             end
 
-    # Paginação
-    page     = [params[:page].to_i, 1].max
-    per_page = [[params[:per_page].to_i, 1].max, 100].min
-    per_page = 12 if per_page == 0
+    page = [params[:page].to_i, 1].max
+    requested_per_page = params[:per_page].to_i
+    per_page = requested_per_page.positive? ? [requested_per_page, 100].min : 12
 
     total       = scope.count
     total_pages = (total.to_f / per_page).ceil
@@ -43,6 +48,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
     }
   rescue StandardError => e
     Rails.logger.error("Products error: #{e.message}")
+    track_catalog_error(e, action: 'index')
     render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
   end
 
@@ -91,9 +97,12 @@ class Api::V1::ProductsController < Api::V1::BaseController
 
   # GET /api/v1/products/filters
   def filters
+    active_products = Product.where(status: Product.statuses[:active])
     templates = SpecTemplate.filterable.order(product_type: :asc, seo_weight: :desc)
     payload = templates.map do |tmpl|
-      specs_scope = ProductSpecification.where(spec_template_id: tmpl.id)
+      specs_scope = ProductSpecification
+                    .joins(:product)
+                    .where(spec_template_id: tmpl.id, products: { status: Product.statuses[:active] })
       values =
         case tmpl.value_type
         when 'enum', 'string'
@@ -117,9 +126,19 @@ class Api::V1::ProductsController < Api::V1::BaseController
       }
     end
 
-    render json: { filters: payload }
+    render json: {
+      filters: payload,
+      categories: product_categories_payload(active_products),
+      companies: product_companies_payload(active_products),
+      brands: product_brands_payload(active_products),
+      price_range: {
+        min: active_products.minimum(:price)&.to_f || 0,
+        max: active_products.maximum(:price)&.to_f || 0
+      }
+    }
   rescue StandardError => e
     Rails.logger.error("[Products#filters] #{e.message}")
+    track_catalog_error(e, action: 'filters')
     render json: { error: 'Erro ao carregar filtros' }, status: :internal_server_error
   end
 
@@ -167,6 +186,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
 
     if @product.save
       upsert_specs(@product)
+      track_product_image_uploaded(@product, source: 'create') if product_image_upload_present?
       render json: @product.as_json(include_specs: true), status: :created
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
@@ -174,8 +194,12 @@ class Api::V1::ProductsController < Api::V1::BaseController
   end
 
   def update
+    previous_status = @product.status
     if @product.update(product_params)
       upsert_specs(@product)
+      track_product_update(@product)
+      track_product_status_change(@product, previous_status) if previous_status != @product.status
+      track_product_image_uploaded(@product, source: 'update') if product_image_upload_present?
       render json: @product.as_json(include_specs: true)
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
@@ -200,7 +224,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
       :name, :description, :short_description, :price,
       :company_id, :sku, :stock, :status, :featured, :brand_id,
       :seo_title, :seo_description, :image, :image_url,
-      category_ids: []
+      category_ids: [],
+      images: []
     )
   end
 
@@ -216,6 +241,126 @@ class Api::V1::ProductsController < Api::V1::BaseController
   def specs_payload
     permitted = params.permit(specifications: [:key, :value, :value_number, :value_boolean, { value_json: {} }])
     permitted[:specifications] || []
+  end
+
+  def product_categories_payload(active_products)
+    Category
+      .joins(:products)
+      .merge(active_products)
+      .select('categories.id, categories.name, categories.seo_url, COUNT(products.id) AS products_count')
+      .group('categories.id, categories.name, categories.seo_url')
+      .order('categories.name ASC')
+      .map do |category|
+        {
+          id: category.id,
+          name: category.name,
+          seo_url: category.seo_url,
+          slug: category.seo_url,
+          products_count: category.read_attribute(:products_count).to_i
+        }
+      end
+  end
+
+  def product_companies_payload(active_products)
+    Company
+      .joins(:products)
+      .merge(active_products)
+      .select('companies.id, companies.name, companies.slug, companies.logo_url, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, COUNT(products.id) AS products_count')
+      .group('companies.id, companies.name, companies.slug, companies.logo_url, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count')
+      .order('companies.name ASC')
+      .map do |company|
+        {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          logo_url: company.logo_url,
+          city: company.city,
+          state: company.state,
+          verified: company.verified,
+          rating_avg: company.rating_avg&.to_f,
+          reviews_count: company.reviews_count,
+          products_count: company.read_attribute(:products_count).to_i
+        }
+      end
+  end
+
+  def product_brands_payload(active_products)
+    Brand
+      .joins(:products)
+      .merge(active_products)
+      .select('brands.id, brands.name, brands.slug, COUNT(products.id) AS products_count')
+      .group('brands.id, brands.name, brands.slug')
+      .order('brands.name ASC')
+      .map do |brand|
+        {
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug,
+          products_count: brand.read_attribute(:products_count).to_i
+        }
+      end
+  end
+
+  def product_image_upload_present?
+    product_payload = params[:product]
+    return false unless product_payload.respond_to?(:key?)
+
+    product_payload.key?(:image) || product_payload.key?(:images) ||
+      product_payload.key?('image') || product_payload.key?('images')
+  end
+
+  def track_product_update(product)
+    track_product_event(product, 'product_updated')
+  end
+
+  def track_product_status_change(product, previous_status)
+    track_product_event(
+      product,
+      'product_status_changed',
+      previous_status: previous_status,
+      status: product.status
+    )
+  end
+
+  def track_product_image_uploaded(product, source:)
+    track_product_event(product, 'product_image_uploaded', source: source, image_count: product.images.count)
+  end
+
+  def track_catalog_error(error, action:)
+    Analytics::PostHogService.capture(
+      'product_catalog_api_error',
+      {
+        source: 'api',
+        action: action,
+        error_class: error.class.name
+      },
+      distinct_id: 'products_catalog'
+    )
+  rescue StandardError => tracking_error
+    Rails.logger.warn("[Products#track_catalog_error] #{tracking_error.message}")
+  end
+
+  def track_product_event(product, event_type, extra_metadata = {})
+    Analytics::TrackEventService.call(
+      company_id: product.company_id,
+      event_type: event_type,
+      metadata: {
+        source: 'api',
+        product_id: product.id,
+        product_name: product.name,
+        category_id: product.categories.first&.id,
+        category_name: product.categories.first&.name,
+        brand_id: product.brand_id,
+        brand_name: product.brand&.name,
+        company_id: product.company_id,
+        company_name: product.company&.name,
+        status: product.status,
+        featured: product.featured?,
+        price_available: product.price.to_f.positive?
+      }.merge(extra_metadata)
+    )
+  rescue StandardError => e
+    Rails.logger.warn("[Products#track_product_event] #{event_type}: #{e.message}")
   end
 
   def product_review_aggregate(category_id)

@@ -406,6 +406,7 @@ export interface Product {
   image_url?: string;
   image_urls?: string[];
   sku?: string;
+  stock?: number | null;
   company?: Partial<
     Pick<
       Company,
@@ -413,6 +414,8 @@ export interface Product {
       | 'name'
       | 'slug'
       | 'logo_url'
+      | 'city'
+      | 'state'
       | 'verified'
       | 'plan_status'
       | 'description'
