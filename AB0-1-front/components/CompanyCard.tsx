@@ -65,8 +65,8 @@ const ACTIVE_STORAGE_RE = /\/rails\/active_storage\//i;
 
 // ── Banner ratio: 3:1 wide strip — presence without dominating ──
 const BANNER_RATIO = 3 / 1;
-const AVATAR_SIZE_DEFAULT = 44;
-const AVATAR_SIZE_COMPACT = 36;
+const AVATAR_SIZE_DEFAULT = 64;
+const AVATAR_SIZE_COMPACT = 48;
 
 export default function CompanyCard({
   company: rawCompany,
@@ -328,10 +328,10 @@ export default function CompanyCard({
           'relative flex flex-col bg-white dark:bg-slate-900/95 cursor-pointer group h-full',
           'overflow-hidden',
           'border border-slate-200/80 dark:border-slate-700/60',
-          'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.04)]',
-          'hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)]',
-          'hover:border-slate-300 dark:hover:border-slate-600',
-          'transition-[box-shadow,border-color] duration-200 ease-out',
+          'shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)]',
+          'hover:shadow-[0_12px_32px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.06)]',
+          'hover:border-blue-300 dark:hover:border-blue-700/60',
+          'transition-all duration-300 ease-out transform hover:-translate-y-1',
           'focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-1',
           'data-[selected=true]:ring-2 data-[selected=true]:ring-blue-500/30',
           compact ? 'rounded-xl min-h-[260px]' : 'rounded-2xl',
@@ -429,7 +429,7 @@ export default function CompanyCard({
           <div className="relative">
             {verifiedBadgeUrl && !verifiedBadgeError && (
               <div
-                className="absolute -top-1.5 -left-1.5 z-30 rounded bg-white dark:bg-slate-900 shadow-sm p-0.5"
+                className="absolute -top-1.5 -left-1.5 z-30 rounded-md bg-white dark:bg-slate-900 shadow-md p-0.5"
                 style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
                 title="Selo de conquista"
               >
@@ -438,18 +438,18 @@ export default function CompanyCard({
                   alt="Selo de conquista"
                   fill
                   sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                  className="object-contain rounded-sm"
+                  className="object-contain rounded-md"
                   onError={() => setVerifiedBadgeError(true)}
                   priority
                 />
               </div>
             )}
             <div
-              className="relative rounded-xl overflow-hidden bg-white dark:bg-slate-800 border-2 border-white dark:border-slate-900 shadow-[0_1px_4px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)]"
+              className="relative rounded-[16px] overflow-hidden bg-white dark:bg-slate-800 border-[3px] border-white dark:border-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.1),0_1px_3px_rgba(0,0,0,0.05)] transition-transform duration-300 group-hover:scale-105"
               style={{ width: avatarSize, height: avatarSize }}
             >
               {logoUrl && !logoError ? (
-                <div className="relative w-full h-full p-[3px]">
+                <div className="relative w-full h-full p-1 bg-white">
                     <Image
                       src={logoUrl}
                       alt=""
@@ -473,8 +473,8 @@ export default function CompanyCard({
       </div>
 
       {/* ── Card Content ─────────────────────────────────────── */}
-      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-5 px-3 pb-3' : 'px-3.5 pb-3 pt-5')}>
-        <div className={cn("flex flex-col", compact ? "gap-0.5 mb-1.5" : "gap-1 mb-1.5")}>
+      <CardContent className={cn('flex flex-col flex-1', compact ? 'pt-8 px-4 pb-4' : 'px-5 pb-5 pt-10')}>
+        <div className={cn("flex flex-col", compact ? "gap-1 mb-2" : "gap-1.5 mb-2")}>
 
           {/* Company name */}
           <Link href={companyPath} className="min-w-0" onClick={(e) => { e.stopPropagation(); emit('title_click'); }}>
@@ -487,14 +487,14 @@ export default function CompanyCard({
           </Link>
 
           {/* Verified + Location row */}
-          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+          <div className="flex items-center gap-2 flex-wrap mt-1">
             {company.verified && (
               <PremiumBadge className="h-5" />
             )}
             {(city || state) && (
-              <div className="flex items-center gap-1 text-[12px] text-slate-500 dark:text-slate-400 truncate">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                <span className="truncate font-medium">{city}{city && state ? ', ' : ''}{state}</span>
+              <div className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700">
+                <MapPin className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                <span className="truncate">{city}{city && state ? ', ' : ''}{state}</span>
               </div>
             )}
           </div>

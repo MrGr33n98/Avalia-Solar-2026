@@ -934,61 +934,69 @@ function SearchContent() {
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
 
-      {/* ── Search header ──────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800">
-        <div className="container mx-auto px-4 py-4 sm:py-5">
+      {/* ── Search Hero Header ──────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 text-white relative overflow-hidden shadow-md z-40">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
+        <div className="container mx-auto px-4 py-12 sm:py-16 relative z-10 flex flex-col items-center text-center">
+          
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight text-white drop-shadow-sm">
+            Encontre a energia certa para você
+          </h1>
+          <p className="text-blue-100/90 mb-8 max-w-2xl text-sm sm:text-base md:text-lg font-medium">
+            Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.
+          </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSubmit} className="flex gap-2.5 mb-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" size={16} />
+          <form onSubmit={handleSubmit} className="w-full max-w-3xl flex gap-3 mb-6 relative">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={22} />
               <label htmlFor="search-input" className="sr-only">Buscar empresas, produtos ou serviços</label>
               <Input
                 id="search-input"
                 name="q"
                 type="text"
-                placeholder="Buscar empresas, produtos, serviços..."
+                placeholder="Ex: Inversores, WEG, ou instaladores em SP..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-9 h-11 text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-700 rounded-xl transition-colors"
+                className="pl-14 pr-12 h-14 sm:h-16 text-base sm:text-lg bg-white text-slate-900 border-0 focus-visible:ring-4 focus-visible:ring-blue-500/30 rounded-2xl shadow-xl transition-all"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
                 >
-                  <X size={15} />
+                  <X size={16} />
                 </button>
               )}
             </div>
             <Button
               type="submit"
-              className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm shrink-0"
+              className="h-14 sm:h-16 px-8 sm:px-10 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-base sm:text-lg shadow-xl shrink-0 transition-transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              Buscar
+              Procurar
             </Button>
           </form>
 
           {/* Result context */}
           {query && !loading && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap justify-center bg-white/10 backdrop-blur-md py-2 px-4 rounded-full border border-white/20 shadow-inner">
               {hasResults ? (
                 <>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{totalCount}</span>
+                  <span className="text-sm font-medium text-white">
+                    <span className="font-bold tabular-nums">{totalCount}</span>
                     {' '}resultado{totalCount !== 1 ? 's' : ''} para{' '}
-                    <span className="font-semibold text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span>
+                    <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
                   </span>
                   {counts.companies > 0 && (
-                    <Badge variant="secondary" className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800/40 px-2 py-0 h-5 font-semibold">
+                    <Badge variant="secondary" className="text-[10px] bg-white/20 text-white border-white/30 px-2.5 py-0.5 h-6 font-bold shadow-sm">
                       {counts.companies} empresa{counts.companies !== 1 ? 's' : ''}
                     </Badge>
                   )}
                 </>
               ) : !error ? (
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  Nenhum resultado para <span className="font-semibold text-slate-700 dark:text-slate-300">&ldquo;{query}&rdquo;</span>
+                <span className="text-sm font-medium text-white">
+                  Nenhum resultado para <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
                 </span>
               ) : null}
             </div>
@@ -1101,30 +1109,48 @@ function SearchContent() {
                 {/* ── Companies tab ────────────────────────────────── */}
                 {counts.companies > 0 && (
                   <TabsContent value="companies" className="mt-0">
-                    <div className="flex gap-6">
+                    <div className="flex flex-col lg:flex-row gap-6 w-full mx-auto">
+                      
+                      {/* Left Column (Results 60%) */}
+                      <div className="flex-1 lg:w-[60%] flex flex-col min-w-0 pb-12">
+                        
+                        {/* Horizontal Filter Bar (Desktop) */}
+                        <div className="hidden lg:flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
+                          <div className="flex items-center gap-2">
+                            <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Filtros:</span>
+                          </div>
+                          
+                          <SearchRadiusFilter
+                            radiusKm={radiusKm}
+                            onRadiusChange={handleRadiusChange}
+                            onCoordsChange={handleCoordsChange}
+                            cityName={searchParams.get('city') || undefined}
+                          />
 
-                      {/* Sidebar - desktop only */}
-                      <SearchSidebar
-                        sort={sort}
-                        onSortChange={handleSortChange}
-                        verifiedOnly={verifiedOnly}
-                        onVerifiedChange={handleVerifiedChange}
-                        whatsappOnly={whatsappOnly}
-                        onWhatsappChange={handleWhatsappChange}
-                        onReset={resetFilters}
-                        hasActiveFilters={hasActiveFilters}
-                        radiusKm={radiusKm}
-                        onRadiusChange={handleRadiusChange}
-                        onCoordsChange={handleCoordsChange}
-                        cityName={searchParams.get('city') || undefined}
-                        showMap={showMap}
-                        onToggleMap={() => { setShowMap(v => !v); track('map_opened', { source: 'sidebar_btn' }); }}
-                      />
+                          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
-                      {/* Results column */}
-                      <div className="flex-1 min-w-0">
+                          <SortChips sort={sort} onSortChange={handleSortChange} />
+                          
+                          <div className="ml-auto flex items-center gap-2">
+                            <ActiveFilterChips
+                              verifiedOnly={verifiedOnly}
+                              whatsappOnly={whatsappOnly}
+                              onVerifiedChange={handleVerifiedChange}
+                              onWhatsappChange={handleWhatsappChange}
+                            />
+                            {hasActiveFilters && (
+                              <button
+                                onClick={resetFilters}
+                                className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors ml-2"
+                              >
+                                Limpar
+                              </button>
+                            )}
+                          </div>
+                        </div>
 
-                        {/* Mobile sort chips */}
+                        {/* Mobile sort chips (hidden on desktop) */}
                         <div className="lg:hidden mb-4">
                           <SortChips sort={sort} onSortChange={handleSortChange} />
                         </div>
@@ -1250,11 +1276,11 @@ function SearchContent() {
                         )}
                       </div>
 
-                      {/* GEO: Painel de mapa desktop e Banner lateral */}
+                      {/* Right Column (Map 40%) */}
                       {MAP_ENABLED && showMap ? (
-                        <aside className="hidden lg:flex flex-col gap-4 w-[400px] xl:w-[480px] shrink-0 sticky top-24 h-[calc(100vh-120px)]">
+                        <aside className="hidden lg:flex flex-col gap-4 lg:w-[40%] shrink-0 sticky top-4 h-[calc(100vh-2rem)]">
                           <BannerByLocation location="sidebar" />
-                          <div className="flex-1 min-h-[400px] w-full rounded-2xl overflow-hidden shadow-sm">
+                          <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 relative">
                             <SearchMapPanel
                               companies={(processedCompanies as any[]).map((c: any) => ({
                                 id: c.id, name: c.name, slug: c.slug,
@@ -1270,12 +1296,12 @@ function SearchContent() {
                               onCompanySelect={handleMapCompanySelect}
                               onSearchInArea={handleSearchInArea}
                               onClose={() => setShowMap(false)}
-                              className="h-full w-full"
+                              className="absolute inset-0 w-full h-full"
                             />
                           </div>
                         </aside>
                       ) : (
-                        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-24">
+                        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-4">
                           <BannerByLocation location="sidebar" />
                         </aside>
                       )}
