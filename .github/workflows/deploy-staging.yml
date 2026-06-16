@@ -125,8 +125,8 @@ jobs:
             ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging-${{ github.sha }}
           secrets: |
             "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
-          cache-from: type=gha,scope=backend-staging
-          cache-to: type=gha,scope=backend-staging,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache-staging
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache-staging,mode=max
 
       - name: Build and Push Frontend (staging)
         if: matrix.component == 'frontend'
@@ -150,8 +150,8 @@ jobs:
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-          cache-from: type=gha,scope=frontend-staging
-          cache-to: type=gha,scope=frontend-staging,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache-staging
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache-staging,mode=max
 
   # ─────────────────────────────────────────────
   # Deploy to Staging server
