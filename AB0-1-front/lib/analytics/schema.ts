@@ -37,6 +37,12 @@ export interface EventPayloadMap {
     latency_ms: number;
     [key: string]: any;
   };
+  search_no_results: {
+    search_term: string;
+    search_category?: string;
+    results_count?: number;
+    [key: string]: any;
+  };
 
   // --- Conversão e Leads (Principais) ---
   whatsapp_click: {

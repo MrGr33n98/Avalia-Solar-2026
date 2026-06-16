@@ -820,6 +820,11 @@ function SearchContent() {
       if (total === 0) {
         // Typed event for search_no_results
         trackEvent('search_no_results', { search_term: term, search_category: 'all' });
+        track('search_no_results', {
+          search_term: term,
+          search_category: 'all',
+          results_count: 0
+        });
       } else {
         track('search_results_loaded', {
           search_term: term,
