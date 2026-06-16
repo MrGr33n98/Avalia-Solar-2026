@@ -980,8 +980,8 @@ function SearchContent() {
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
         <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col items-center text-center">
           
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-2 tracking-tight text-white drop-shadow-sm">
-            Encontre a energia certa para você
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 tracking-tight text-white drop-shadow-sm font-sans">
+            Encontre a empresa certa para você.
           </h1>
           <p className="text-blue-100/90 mb-6 max-w-2xl text-sm sm:text-base md:text-lg font-medium">
             Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.

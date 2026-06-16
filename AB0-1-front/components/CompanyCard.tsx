@@ -81,6 +81,8 @@ export default function CompanyCard({
   category,
   onAnalyticsEvent,
   index = 0,
+  onMouseEnter,
+  onMouseLeave,
 }: Props) {
   const router = useRouter();
   const company = rawCompany as ExtendedCompany;
