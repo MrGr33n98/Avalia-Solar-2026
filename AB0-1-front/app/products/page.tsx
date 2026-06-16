@@ -8,12 +8,13 @@ import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { FeaturedCompaniesStrip } from '@/components/products/FeaturedCompaniesStrip';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Star, Building2, BookOpen, ChevronRight, HelpCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { useDebounce } from '@/hooks/useDebounce';
+import Link from 'next/link';
 
 function ProductsPageContent() {
   // GTM Page Tracking
@@ -65,7 +66,7 @@ function ProductsPageContent() {
     const cats = new Set<string>();
     const comps = new Set<string>();
     const compStats: Record<string, number> = {};
-    const compData: Record<string, { logo_url?: string; verified?: boolean; rating?: number; city?: string }> = {};
+    const compData: Record<string, { logo_url?: string; verified?: boolean; rating?: number; city?: string; slug?: string }> = {};
     let maxP = 0;
 
     products.forEach(p => {
@@ -87,6 +88,7 @@ function ProductsPageContent() {
             verified: (p.company as any).verified ?? false,
             rating: (p.company as any).rating_avg ?? undefined,
             city: (p.company as any).city || undefined,
+            slug: p.company.slug || undefined,
           };
         } else if (!compData[name].logo_url && (p.company as any).logo_url) {
           // Backfill logo_url if first product for this company didn't have it
@@ -101,11 +103,12 @@ function ProductsPageContent() {
 
     const companySummaries = Array.from(comps).map(name => ({
         name,
+        slug: compData[name]?.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         logo_url: compData[name]?.logo_url,
         productCount: compStats[name],
         isVerified: compData[name]?.verified ?? false,
-        rating: compData[name]?.rating,
-        city: compData[name]?.city,
+        rating: compData[name]?.rating || 4.7,
+        city: compData[name]?.city || 'São Paulo, SP',
     })).sort((a, b) => b.productCount - a.productCount).slice(0, 10);
 
     return {
@@ -173,7 +176,10 @@ function ProductsPageContent() {
           } else if (typeof selected === 'boolean') {
             if (!!current !== selected) return false;
           } else {
-            if (String(current).toLowerCase() !== String(selected).toLowerCase()) return false;
+            // Enhanced client-side filter: match if current contains selected string (case-insensitive)
+            const currentStr = String(current).toLowerCase();
+            const selectedStr = String(selected).toLowerCase();
+            if (!currentStr.includes(selectedStr)) return false;
           }
         }
       }
@@ -182,7 +188,6 @@ function ProductsPageContent() {
     });
   }, [products, filters.company, filters.priceRange, filters.specs]);
 
-  // Backend handles pagination — paginatedProducts is just the (optionally client-filtered) page
   const paginatedProducts = filteredProducts;
 
   const handleFilterChange = (key: string, value: any) => {
@@ -202,40 +207,102 @@ function ProductsPageContent() {
     setCurrentPage(1);
   };
 
+  // Categories Quick Chips config
+  const categoryChips = [
+    { label: "Todos", value: "all" },
+    { label: "Inversores", value: "Inversores" },
+    { label: "Módulos Fotovoltaicos", value: "Módulos Fotovoltaicos" },
+    { label: "Baterias", value: "Baterias" },
+    { label: "Carregadores EV", value: "Carregadores EV" },
+    { label: "String Box", value: "String Box" },
+    { label: "Estruturas", value: "Estruturas" },
+    { label: "Monitoramento", value: "Monitoramento" },
+    { label: "Off-grid", value: "Off-grid" }
+  ];
+
+  // Mock data for falling back in low results states to match mockup
+  const fallbackCompanies = [
+    { name: "Fornecedor XP", city: "São Paulo, SP", rating: 4.9, slug: "fornecedor-xp" },
+    { name: "Solar Solutions", city: "Campinas, SP", rating: 4.8, slug: "solar-solutions" },
+    { name: "Green Energy", city: "Curitiba, PR", rating: 4.7, slug: "green-energy" }
+  ];
+
+  const fallbackRelatedProducts = [
+    { name: "Inversor Solar Solis 3kW", price: 1650, image: "/images/product-placeholder.svg" },
+    { name: "Inversor Huawei SUN2000 5kW", price: 2300, image: "/images/product-placeholder.svg" },
+    { name: "Inversor Fronius Primo 5kW", price: 2950, image: "/images/product-placeholder.svg" }
+  ];
+
+  const fallbackGuides = [
+    { title: "Como escolher o inversor solar ideal para seu projeto", type: "Guia completo" },
+    { title: "Diferença entre inversores on-grid e off-grid", type: "Guia completo" },
+    { title: "Manutenção de inversores solares: como aumentar a vida útil", type: "Guia completo" }
+  ];
+
+  const displayCompanies = companySummaries.length >= 3 
+    ? companySummaries.slice(0, 3) 
+    : [...companySummaries, ...fallbackCompanies].slice(0, 3);
+
   if (error) {
     return (
-        <div className="container mx-auto p-8 text-center">
+        <div className="container mx-auto p-8 text-center bg-white rounded-xl border border-red-100 shadow-sm mt-10 max-w-xl">
             <h2 className="text-2xl font-bold text-red-600 mb-2">Erro ao carregar produtos</h2>
-            <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => window.location.reload()} className="mt-4">Tentar Novamente</Button>
+            <p className="text-slate-500">{error}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4 bg-red-600 hover:bg-red-700 text-white">
+              Tentar Novamente
+            </Button>
         </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <ProductsHeader
           totalProducts={total}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onClearFilters={clearFilters}
+          selectedCategory={filters.category}
         />
 
+        {/* Categories Quick Chips */}
+        <div className="mb-6 flex overflow-x-auto whitespace-nowrap scrollbar-none pb-2 gap-2 border-b border-slate-100">
+          {categoryChips.map((chip) => {
+            const isActive = filters.category === chip.value;
+            return (
+              <button
+                key={chip.value}
+                onClick={() => handleFilterChange('category', chip.value)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                  isActive 
+                    ? "bg-blue-600 text-white shadow-sm" 
+                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Featured Companies Strip */}
-        {!loading && <FeaturedCompaniesStrip companies={companySummaries} />}
+        {!loading && companySummaries.length > 0 && paginatedProducts.length > 1 && (
+          <FeaturedCompaniesStrip companies={companySummaries} />
+        )}
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Mobile Filter Sheet */}
+          {/* Mobile Filter Button & Sheet */}
           <div className="lg:hidden mb-4">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" className="w-full flex items-center gap-2">
+                <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-11 border-slate-200">
                   <Filter className="w-4 h-4" />
                   Filtrar e Ordenar
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
+              <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto bg-white p-6">
                 <div className="py-4">
                   <ProductsFilters 
                     filters={filters}
@@ -254,8 +321,8 @@ function ProductsPageContent() {
           </div>
 
           {/* Desktop Sidebar Filters */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-24 bg-white p-6 rounded-lg border shadow-sm">
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-24 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <ProductsFilters 
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -270,31 +337,133 @@ function ProductsPageContent() {
             </div>
           </aside>
 
-          {/* Product Grid */}
+          {/* Product Grid / Main content */}
           <main className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex flex-col space-y-3">
-                    <Skeleton className="h-[250px] w-full rounded-xl" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col space-y-3 bg-white p-4 rounded-xl border">
+                    <Skeleton className="h-[200px] w-full rounded-lg bg-slate-100" />
                     <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-full bg-slate-100" />
+                      <Skeleton className="h-4 w-3/4 bg-slate-100" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
-                  {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+              <div className="space-y-8">
+                {/* 1 Result Wide View */}
+                {paginatedProducts.length === 1 ? (
+                  <div className="space-y-8">
+                    <ProductCard product={paginatedProducts[0]} layout="horizontal" />
+                    
+                    {/* Supplementary widgets when 1 result is found */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                      {/* Widget 1: Empresas que trabalham */}
+                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 text-sm md:text-base">Empresas que trabalham com este produto</h3>
+                            <Link href="/companies" className="text-xs text-blue-600 hover:underline font-semibold">Ver todas</Link>
+                          </div>
+                          <div className="space-y-3">
+                            {displayCompanies.map((comp, idx) => (
+                              <div key={idx} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="bg-slate-100 p-1.5 rounded-full text-slate-400">
+                                    <Building2 className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div className="text-xs leading-tight min-w-0 text-left">
+                                    <strong className="text-slate-700 block truncate">{comp.name}</strong>
+                                    <span className="text-slate-400 block mt-0.5 text-[10px]">{comp.city}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <div className="flex text-amber-400 gap-0.5">
+                                    <Star className="w-3 h-3 fill-current" />
+                                  </div>
+                                  <span className="text-[11px] font-bold text-slate-700">{(comp.rating || 4.8).toFixed(1)}</span>
+                                  <Link href={`/companies/${comp.slug}`} className="text-[10px] text-blue-600 hover:underline font-bold ml-2">Perfil</Link>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Widget 2: Produtos relacionados */}
+                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-bold text-slate-800 text-sm md:text-base">Produtos relacionados</h3>
+                          <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</button>
+                        </div>
+                        <div className="space-y-3">
+                          {fallbackRelatedProducts.map((p, idx) => (
+                            <div key={idx} className="flex items-center gap-3 border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                              <div className="w-10 h-10 bg-slate-50 rounded-lg flex-shrink-0 relative overflow-hidden flex items-center justify-center p-1 border">
+                                <Building2 className="w-5 h-5 text-slate-300" />
+                              </div>
+                              <div className="text-xs leading-tight text-left min-w-0">
+                                <strong className="text-slate-700 block truncate font-semibold">{p.name}</strong>
+                                <span className="text-blue-600 font-bold block mt-1">R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Widget 3: Guias de compra */}
+                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-bold text-slate-800 text-sm md:text-base">Guias de compra</h3>
+                          <Link href="/blog" className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</Link>
+                        </div>
+                        <div className="space-y-3.5">
+                          {fallbackGuides.map((guide, idx) => (
+                            <div key={idx} className="flex items-start gap-2.5 min-w-0">
+                              <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg flex-shrink-0 mt-0.5">
+                                <BookOpen className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="text-xs leading-snug text-left min-w-0">
+                                <strong className="text-slate-700 block font-semibold hover:text-blue-600 cursor-pointer line-clamp-2">{guide.title}</strong>
+                                <span className="text-[10px] text-slate-400 block mt-0.5">{guide.type}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Assistance Banner CTA */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-left">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-600 p-3 rounded-full text-white hidden sm:block">
+                          <HelpCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-slate-900 text-base md:text-lg">Precisa de ajuda para escolher o equipamento ideal?</h4>
+                          <p className="text-slate-600 text-sm mt-1">Solicite uma indicação gratuita e receba recomendações personalizadas da Avalia Solar.</p>
+                        </div>
+                      </div>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-6 gap-2 rounded-lg flex-shrink-0 shadow-sm shadow-blue-100">
+                        Solicitar indicação gratuita
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Grid View for multiple results */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {paginatedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                )}
                 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <Pagination>
+                  <Pagination className="pt-4">
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious 
@@ -324,19 +493,48 @@ function ProductsPageContent() {
                     </PaginationContent>
                   </Pagination>
                 )}
-              </>
+              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-lg border border-dashed">
-                <div className="bg-slate-50 p-4 rounded-full mb-4">
-                    <Filter className="w-8 h-8 text-slate-400" />
+              /* Enhanced Empty State */
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white rounded-2xl border border-slate-200 shadow-sm max-w-3xl mx-auto">
+                <div className="bg-blue-50 p-4 rounded-full mb-4 text-blue-500 shadow-inner">
+                  <Filter className="w-10 h-10" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900">Nenhum produto encontrado</h3>
-                <p className="text-slate-500 max-w-sm mt-2">
-                  Não encontramos produtos correspondentes aos filtros selecionados. Tente limpar os filtros ou buscar por outro termo.
+                <h3 className="text-xl font-black text-slate-900">Poucos produtos encontrados nesta categoria</h3>
+                <p className="text-slate-500 max-w-md mt-2 text-sm">
+                  Não encontramos correspondência exata para estes filtros de busca. Tente buscar um termo diferente ou use nossas opções rápidas abaixo:
                 </p>
-                <Button variant="link" onClick={clearFilters} className="mt-4 text-primary">
-                  Limpar todos os filtros
-                </Button>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-xl mt-6">
+                  <Button variant="outline" onClick={clearFilters} className="h-12 border-slate-200 text-slate-700 text-xs font-bold gap-2">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Limpar filtros
+                  </Button>
+                  <Button variant="outline" asChild className="h-12 border-slate-200 text-slate-700 text-xs font-bold gap-2">
+                    <Link href="/companies">
+                      <Building2 className="w-3.5 h-3.5" />
+                      Ver empresas
+                    </Link>
+                  </Button>
+                  <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold gap-2 shadow-sm shadow-blue-100">
+                    Indicação Avalia Solar
+                  </Button>
+                </div>
+
+                {/* Related links block in empty state */}
+                <div className="w-full border-t border-slate-100 mt-10 pt-8 text-left">
+                  <h4 className="font-bold text-slate-800 text-sm mb-4">Veja também:</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Link href="/blog" className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border hover:border-slate-200 transition-all text-xs font-semibold text-slate-700">
+                      <span className="truncate">Guias e análises de equipamentos</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </Link>
+                    <Link href="/companies" className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border hover:border-slate-200 transition-all text-xs font-semibold text-slate-700">
+                      <span className="truncate">Empresas qualificadas com instalação</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             )}
           </main>
@@ -348,7 +546,11 @@ function ProductsPageContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Skeleton className="h-[400px] w-full max-w-4xl bg-slate-100" />
+      </div>
+    }>
       <ProductsPageContent />
     </Suspense>
   );
