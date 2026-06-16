@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_15_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -861,6 +861,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_15_100000) do
     t.boolean "post_sales_support"
     t.datetime "geocoded_at"
     t.string "geocoding_status", default: "pending"
+    t.boolean "p2p_chat_enabled", default: false, null: false
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -1248,6 +1249,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_15_100000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "conversations", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "company_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_conversations_on_company_id"
+    t.index ["user_id"], name: "index_conversations_on_user_id"
+  end
+
   create_table "daily_growth_snapshots", force: :cascade do |t|
     t.date "snapshot_date", null: false
     t.integer "total_page_views", default: 0
@@ -1288,6 +1298,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_15_100000) do
     t.datetime "created_at", null: false
     t.index ["lead_id"], name: "index_demand_notifications_on_lead_id"
     t.index ["status"], name: "index_demand_notifications_on_status"
+  end
+
+  create_table "direct_messages", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.text "body"
+    t.string "sender_type"
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_direct_messages_on_conversation_id"
   end
 
   create_table "downloadables", force: :cascade do |t|
@@ -2475,6 +2495,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_15_100000) do
   add_foreign_key "company_videos", "companies"
   add_foreign_key "company_webhooks", "companies"
   add_foreign_key "consent_logs", "users"
+  add_foreign_key "conversations", "companies"
+  add_foreign_key "conversations", "users"
+  add_foreign_key "direct_messages", "conversations"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "forum_answers", "forum_questions"
   add_foreign_key "forum_answers", "users"

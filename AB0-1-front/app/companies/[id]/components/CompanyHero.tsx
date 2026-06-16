@@ -305,6 +305,23 @@ export default function CompanyHero({
                   </div>
                 )}
 
+                {company.p2p_chat_enabled && (
+                  <Button
+                    size="default"
+                    className="h-11 w-full rounded-xl bg-orange-500 px-6 font-semibold text-white shadow-none hover:bg-orange-600 sm:min-w-[170px] sm:w-auto"
+                    onClick={() => {
+                      track('company_direct_chat_click', {
+                        company_id: company.id,
+                        company_name: company.name
+                      });
+                      router.push(`/chat?company_id=${company.id}`);
+                    }}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Chat Direto
+                  </Button>
+                )}
+
                 {quoteEnabled ? (
                   <Button
                     size="default"

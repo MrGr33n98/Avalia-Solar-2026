@@ -210,6 +210,18 @@ export default function CompanyDetailScreen() {
           <ThemedText type="subtitle" style={styles.sectionTitle}>Canais de Contato</ThemedText>
           
           <View style={styles.contactList}>
+            {company.p2p_chat_enabled && (
+              <TouchableOpacity
+                style={[styles.contactItem, { backgroundColor: '#F97316' }]}
+                onPress={() => router.push(`/p2p_chat?company_id=${company.id}`)}
+              >
+                <MessageSquare size={16} color="#ffffff" />
+                <ThemedText style={[styles.contactItemText, { color: '#ffffff', fontWeight: 'bold' }]}>
+                  Chat Direto (OLX Style)
+                </ThemedText>
+              </TouchableOpacity>
+            )}
+
             {company.phone && (
               <TouchableOpacity
                 style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}

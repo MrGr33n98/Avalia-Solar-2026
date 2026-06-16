@@ -219,6 +219,13 @@ Rails.application.routes.draw do
         post 'messages/:id/feedback', to: 'messages#feedback', as: :message_feedback
       end
 
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # P2P Chat endpoints
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      resources :conversations, only: %i[index create] do
+        resources :direct_messages, only: %i[index create]
+      end
+
       resources :banners, only: [:index]
       resources :banner_globals, only: [:index]
       resources :badges, param: :slug, only: [:show]

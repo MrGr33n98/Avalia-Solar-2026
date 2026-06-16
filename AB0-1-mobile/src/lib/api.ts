@@ -35,6 +35,7 @@ export interface Category {
 
 export interface Company {
   id: number;
+  p2p_chat_enabled?: boolean;
   name: string;
   slug: string;
   description?: string | null;
@@ -389,4 +390,17 @@ export const localSolarPagesApi = {
       throw err;
     }
   },
+};
+
+export const conversationsApi = {
+  getAll: () => fetchApi<any[]>('conversations'),
+  create: (companyId: number) => fetchApi<any>('conversations', {
+    method: 'POST',
+    body: JSON.stringify({ company_id: companyId })
+  }),
+  getMessages: (conversationId: number) => fetchApi<any[]>(`conversations/${conversationId}/direct_messages`),
+  sendMessage: (conversationId: number, body: string) => fetchApi<any>(`conversations/${conversationId}/direct_messages`, {
+    method: 'POST',
+    body: JSON.stringify({ body })
+  })
 };

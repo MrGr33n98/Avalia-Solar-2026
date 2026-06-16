@@ -76,7 +76,7 @@ ActiveAdmin.register Company do
       :email_public, :phone_alt, :facebook, :instagram,
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
-      :active_admin, :seo_title, :meta_description,
+      :active_admin, :p2p_chat_enabled, :seo_title, :meta_description,
               { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [],        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
@@ -177,6 +177,7 @@ ActiveAdmin.register Company do
               f.input :sponsored, label: 'Patrocinado (Topo do ranking)'
               f.input :priority_score, label: 'Score de Prioridade', hint: 'Maior score = topo do ranking'
               f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
+              f.input :p2p_chat_enabled, as: :boolean, label: 'Habilitar Chat com Clientes (estilo OLX)'
       if Company.column_names.include?('effect')
         f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: {
           'data-controller': 'effect',

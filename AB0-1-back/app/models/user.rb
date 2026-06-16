@@ -7,6 +7,7 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: %i[google_oauth2 linkedin facebook]
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :conversations, dependent: :destroy
   has_many :forum_answers, dependent: :destroy
   has_many :forum_questions, dependent: :destroy
   has_many :pending_changes, dependent: :destroy
