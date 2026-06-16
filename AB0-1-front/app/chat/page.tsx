@@ -5,8 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, Send, ArrowLeft } from "lucide-react";
 import { createConsumer } from "@rails/actioncable";
 import { getApiBaseUrl } from "@/lib/api-config";
-import { getStoredToken } from "@/lib/auth/token";
 import { conversationsApi } from "@/lib/api";
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +101,7 @@ export default function ChatPage() {
       channelRef.current.unsubscribe();
     }
     if (!cableRef.current) {
-      const token = await getStoredToken();
+      const token = getCookie("jwt_token");
       // Adjust URL if needed (replace http with ws)
       const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
       cableRef.current = createConsumer(`${wsUrl}?token=${token}`);
