@@ -1,9 +1,10 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
 import { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persistCache } from 'apollo3-cache-persist';
-import { getStoredToken } from './api';
+import { getStoredToken } from './authStorage';
 
 // Constrói a URL do GraphQL baseada nas configurações de ambiente
 const getGraphqlUrl = (): string => {
@@ -36,6 +37,36 @@ const authLink = setContext(async (_, { headers }) => {
     },
   };
 });
+
+export const authErrorHandler = ({ graphQLErrors, networkError }: any) => {
+  let isUnauthorized = false;
+
+  console.log('[Apollo ErrorLink] Intercepted:', { graphQLErrors, networkError });
+
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ extensions }: any) => {
+      console.log('[Apollo ErrorLink] GraphQL error code:', extensions?.code);
+      if (extensions?.code === 'UNAUTHENTICATED') {
+        isUnauthorized = true;
+      }
+    });
+  }
+
+  if (networkError && 'statusCode' in networkError && networkError.statusCode === 401) {
+    console.log('[Apollo ErrorLink] Network 401 detected');
+    isUnauthorized = true;
+  }
+
+  if (isUnauthorized) {
+    console.warn('[Apollo Client] Unauthorized acess detected, logging out...');
+    // lazy evaluation of store state to avoid circular dependency
+    const { useAuthStore } = require('../store/auth');
+    useAuthStore.getState().logout();
+  }
+};
+
+// Interceptor de Erros Globais (trata 401 e GraphQL UNAUTHENTICATED)
+export const errorLink = onError(authErrorHandler);
 
 // Função SHA-256 em Javascript Puro para React Native / Hermes
 function sha256(ascii: string): string {
@@ -144,7 +175,7 @@ persistCache({
 
 // Inicialização do Apollo Client no App Mobile
 export const apolloClient = new ApolloClient({
-  link: authLink.concat(persistedQueriesLink).concat(httpLink),
+  link: from([errorLink, authLink, persistedQueriesLink, httpLink]),
   cache: cache,
 });
 
