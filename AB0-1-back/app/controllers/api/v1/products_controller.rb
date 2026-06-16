@@ -265,8 +265,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
     Company
       .joins(:products)
       .merge(active_products)
-      .select('companies.id, companies.name, companies.slug, companies.logo_url, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, COUNT(products.id) AS products_count')
-      .group('companies.id, companies.name, companies.slug, companies.logo_url, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count')
+      .select('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, COUNT(products.id) AS products_count')
+      .group('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count')
       .order('companies.name ASC')
       .map do |company|
         {

@@ -88,7 +88,8 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   }, [product.specs]);
 
   // Extract rating & reviews (no mock)
-  const ratingAvg = product.company?.rating_avg;
+  const ratingAvgValue = Number(product.company?.rating_avg);
+  const ratingAvg = Number.isFinite(ratingAvgValue) && ratingAvgValue > 0 ? ratingAvgValue : null;
   const reviewsCount = product.company?.reviews_count;
 
   // Extract real specifications (no mock)
