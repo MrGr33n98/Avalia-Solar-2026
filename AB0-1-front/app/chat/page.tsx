@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, Send, ArrowLeft } from "lucide-react";
 import { createConsumer } from "@rails/actioncable";
@@ -38,7 +38,7 @@ interface Message {
   created_at: string;
 }
 
-export default function ChatPage() {
+function ChatContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
@@ -247,5 +247,17 @@ export default function ChatPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Skeleton className="h-[400px] w-full max-w-4xl" />
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }
