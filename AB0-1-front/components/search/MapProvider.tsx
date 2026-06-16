@@ -135,7 +135,7 @@ export default function MapProvider({
 
     // Classes do Tailwind para dar comportamento interativo, sombras elegantes e pulsação em patrocinados
     const activeBorderClass = isSelected
-      ? 'border-[3px] border-amber-500 scale-110 z-30 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
+      ? 'border-[3px] border-purple-600 scale-110 z-30 shadow-[0_0_15px_rgba(147,51,234,0.5)]'
       : (company.isSponsored
         ? 'border-2 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:border-blue-600'
         : 'border-2 border-white dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:border-slate-300 dark:hover:border-slate-600');
@@ -152,7 +152,7 @@ export default function MapProvider({
                  ${innerHtml}
                </div>
                <!-- Triângulo apontador na base do avatar -->
-               <div class="absolute -bottom-0.5 z-0 w-2 h-2 rotate-45 border-r border-b bg-white dark:bg-slate-950 ${isSelected ? 'border-amber-500 bg-amber-500' : (company.isSponsored ? 'border-blue-500' : 'border-white dark:border-slate-800')}"></div>
+               <div class="absolute -bottom-0.5 z-0 w-2 h-2 rotate-45 border-r border-b bg-white dark:bg-slate-950 ${isSelected ? 'border-purple-600 bg-purple-600' : (company.isSponsored ? 'border-blue-500' : 'border-white dark:border-slate-800')}"></div>
              </div>`,
       iconSize: [42, 48],
       iconAnchor: [21, 42],

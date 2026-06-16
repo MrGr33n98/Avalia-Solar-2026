@@ -942,17 +942,17 @@ function SearchContent() {
         <div className="absolute inset-0 bg-blue-900/80 dark:bg-slate-900/90 mix-blend-multiply pointer-events-none"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
-        <div className="container mx-auto px-4 py-12 sm:py-16 relative z-10 flex flex-col items-center text-center">
+        <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col items-center text-center">
           
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight text-white drop-shadow-sm">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-2 tracking-tight text-white drop-shadow-sm">
             Encontre a energia certa para você
           </h1>
-          <p className="text-blue-100/90 mb-8 max-w-2xl text-sm sm:text-base md:text-lg font-medium">
+          <p className="text-blue-100/90 mb-6 max-w-2xl text-sm sm:text-base md:text-lg font-medium">
             Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.
           </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSubmit} className="w-full max-w-3xl flex gap-3 mb-6 relative">
+          <form onSubmit={handleSubmit} className="w-full max-w-3xl flex gap-3 mb-4 relative">
             <div className="relative flex-1 group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={22} />
               <label htmlFor="search-input" className="sr-only">Buscar empresas, produtos ou serviços</label>
