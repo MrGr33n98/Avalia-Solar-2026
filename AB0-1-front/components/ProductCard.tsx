@@ -86,31 +86,22 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   const categoryName =
     (product as any).categories?.[0]?.name || product.category?.name || 'Geral';
 
-  // Extract or Mock rating & reviews
-  const ratingAvg = product.company?.rating_avg || 4.8;
-  const reviewsCount = product.company?.reviews_count || 12;
+  // Extract rating & reviews (no mock)
+  const ratingAvg = product.company?.rating_avg;
+  const reviewsCount = product.company?.reviews_count;
 
-  // Extract specifications or Mock nice features based on category
-  const mockFeatures = useMemo(() => {
-    const isModule = categoryName.toLowerCase().includes('módulo') || categoryName.toLowerCase().includes('painel');
-    const isInverter = categoryName.toLowerCase().includes('inversor');
-    const isBattery = categoryName.toLowerCase().includes('bateria') || categoryName.toLowerCase().includes('armazenamento');
-    const isEV = categoryName.toLowerCase().includes('carregador') || categoryName.toLowerCase().includes('veículo');
-
-    if (isInverter) {
-      return ['Wi-Fi', 'App Mobile', '2 Anos de Garantia'];
-    }
-    if (isModule) {
-      return ['Alta Eficiência', 'Certificado Inmetro', '10 Anos de Garantia'];
-    }
-    if (isBattery) {
-      return ['LiFePO4', 'Monitoramento Smart', 'Garantia Estendida'];
-    }
-    if (isEV) {
-      return ['Recarga Rápida', 'App Mobile', 'Proteção IP65'];
-    }
-    return ['Certificado', 'Produto Premium', 'Garantia'];
-  }, [categoryName]);
+  // Extract real specifications (no mock)
+  const realFeatures = useMemo(() => {
+    if (!product.specs || product.specs.length === 0) return [];
+    return product.specs
+      .slice(0, 3)
+      .map(spec => {
+        const valueStr = typeof spec.value === 'boolean'
+          ? (spec.value ? 'Sim' : 'Não')
+          : String(spec.value);
+        return `${spec.label}: ${valueStr}${spec.unit ? ` ${spec.unit}` : ''}`;
+      });
+  }, [product.specs]);
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -227,25 +218,31 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                 </div>
 
                 {/* Rating */}
-                <div className="flex items-center gap-1.5 mt-2">
-                  <div className="flex text-amber-400">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
+                {ratingAvg !== undefined && ratingAvg !== null ? (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <div className="flex text-amber-400">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={`w-4 h-4 ${i < Math.round(ratingAvg) ? 'fill-current' : ''}`} />
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">{ratingAvg.toFixed(1)}</span>
+                    {reviewsCount !== undefined && reviewsCount !== null && (
+                      <span className="text-xs text-slate-400">({reviewsCount} avaliações)</span>
+                    )}
                   </div>
-                  <span className="text-sm font-bold text-slate-800">{ratingAvg.toFixed(1)}</span>
-                  <span className="text-xs text-slate-400">({reviewsCount} avaliações)</span>
-                </div>
+                ) : null}
               </div>
 
               {/* Technical badges */}
-              <div className="flex flex-wrap gap-2 pt-1">
-                {mockFeatures.map((feat, idx) => (
-                  <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-600 text-xs px-2.5 py-1 font-medium">
-                    {feat}
-                  </Badge>
-                ))}
-              </div>
+              {realFeatures.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {realFeatures.map((feat, idx) => (
+                    <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-600 text-xs px-2.5 py-1 font-medium">
+                      {feat}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right: Price & CTA Box */}
@@ -386,10 +383,12 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                     </span>
                   </div>
                   {/* Rating inline */}
-                  <div className="flex items-center gap-0.5">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span className="font-bold text-slate-700">{ratingAvg.toFixed(1)}</span>
-                  </div>
+                  {ratingAvg !== undefined && ratingAvg !== null ? (
+                    <div className="flex items-center gap-0.5">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span className="font-bold text-slate-700">{ratingAvg.toFixed(1)}</span>
+                    </div>
+                  ) : null}
               </div>
 
               {/* Title */}

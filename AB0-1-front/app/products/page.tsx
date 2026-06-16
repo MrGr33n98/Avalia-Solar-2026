@@ -8,13 +8,16 @@ import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { FeaturedCompaniesStrip } from '@/components/products/FeaturedCompaniesStrip';
 import { Button } from '@/components/ui/button';
-import { Filter, Star, Building2, BookOpen, ChevronRight, HelpCircle, ArrowRight, RefreshCw } from 'lucide-react';
+import { Filter, Star, Building2, HelpCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
+import { useBannersQuery } from '@/hooks/useBannersQuery';
+import { BannerContainer } from '@/components/BannerContainer';
+import { track } from '@/lib/analytics/lazy';
 
 function ProductsPageContent() {
   // GTM Page Tracking
@@ -58,6 +61,23 @@ function ProductsPageContent() {
   }), [debouncedSearchQuery, filters.sort, currentPage, itemsPerPage]);
 
   const { products, filtersMeta, loading, error, total, totalPages } = useProducts(hookParams);
+
+  // Buscar banners dinâmicos por categoria ou posição global
+  const { data: topBanners = [] } = useBannersQuery({
+    position: 'products_top',
+    category_id: filters.category !== 'all' ? filters.category : undefined,
+    enabled: true
+  });
+
+  // Telemetria: busca/resultados carregados
+  useEffect(() => {
+    if (!loading) {
+      track('search_results_loaded', {
+        search_term: debouncedSearchQuery || '',
+        results_count: total,
+      });
+    }
+  }, [loading, debouncedSearchQuery, total]);
 
   // Derived Data for Filters & Featured Companies
   const { categories, companies, maxPrice, companySummaries } = useMemo(() => {
@@ -193,6 +213,19 @@ function ProductsPageContent() {
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1); // Reset page on filter change
+    
+    // Telemetria: filtro aplicado
+    if (key === 'specs') {
+      track('filter_applied', {
+        filter_key: 'specs',
+        filter_value: value
+      });
+    } else {
+      track('filter_applied', {
+        filter_key: key,
+        filter_value: value
+      });
+    }
   };
 
   const clearFilters = () => {
@@ -220,28 +253,25 @@ function ProductsPageContent() {
     { label: "Off-grid", value: "Off-grid" }
   ];
 
-  // Mock data for falling back in low results states to match mockup
-  const fallbackCompanies = [
-    { name: "Fornecedor XP", city: "São Paulo, SP", rating: 4.9, slug: "fornecedor-xp" },
-    { name: "Solar Solutions", city: "Campinas, SP", rating: 4.8, slug: "solar-solutions" },
-    { name: "Green Energy", city: "Curitiba, PR", rating: 4.7, slug: "green-energy" }
-  ];
+  const displayCompanies = companySummaries.slice(0, 3);
 
-  const fallbackRelatedProducts = [
-    { name: "Inversor Solar Solis 3kW", price: 1650, image: "/images/product-placeholder.svg" },
-    { name: "Inversor Huawei SUN2000 5kW", price: 2300, image: "/images/product-placeholder.svg" },
-    { name: "Inversor Fronius Primo 5kW", price: 2950, image: "/images/product-placeholder.svg" }
-  ];
+  // Produtos relacionados reais da mesma categoria
+  const relatedRealProducts = useMemo(() => {
+    if (paginatedProducts.length !== 1) return [];
+    const currentProduct = paginatedProducts[0];
+    const currentCategory = currentProduct.category?.name || (currentProduct as any).categories?.[0]?.name;
+    if (!currentCategory) return [];
 
-  const fallbackGuides = [
-    { title: "Como escolher o inversor solar ideal para seu projeto", type: "Guia completo" },
-    { title: "Diferença entre inversores on-grid e off-grid", type: "Guia completo" },
-    { title: "Manutenção de inversores solares: como aumentar a vida útil", type: "Guia completo" }
-  ];
+    return products
+      .filter(p => {
+        const catName = p.category?.name || (p as any).categories?.[0]?.name;
+        return p.id !== currentProduct.id && catName === currentCategory;
+      })
+      .slice(0, 3);
+  }, [products, paginatedProducts]);
 
-  const displayCompanies = companySummaries.length >= 3 
-    ? companySummaries.slice(0, 3) 
-    : [...companySummaries, ...fallbackCompanies].slice(0, 3);
+  const showCompaniesWidget = displayCompanies.length > 0;
+  const showRelatedProductsWidget = relatedRealProducts.length > 0;
 
   if (error) {
     return (
@@ -274,7 +304,10 @@ function ProductsPageContent() {
             return (
               <button
                 key={chip.value}
-                onClick={() => handleFilterChange('category', chip.value)}
+                onClick={() => {
+                  handleFilterChange('category', chip.value);
+                  track('quick_filter_click', { filter_id: chip.value });
+                }}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
                   isActive 
                     ? "bg-blue-600 text-white shadow-sm" 
@@ -286,6 +319,11 @@ function ProductsPageContent() {
             );
           })}
         </div>
+
+        {/* Banner container dinâmico */}
+        {!loading && topBanners && topBanners.length > 0 && (
+          <BannerContainer banners={topBanners} position="products_top" className="mb-6 animate-in fade-in duration-300" />
+        )}
 
         {/* Featured Companies Strip */}
         {!loading && companySummaries.length > 0 && paginatedProducts.length > 1 && (
@@ -359,81 +397,76 @@ function ProductsPageContent() {
                     <ProductCard product={paginatedProducts[0]} layout="horizontal" />
                     
                     {/* Supplementary widgets when 1 result is found */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                      {/* Widget 1: Empresas que trabalham */}
-                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left flex flex-col justify-between">
-                        <div>
-                          <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-slate-800 text-sm md:text-base">Empresas que trabalham com este produto</h3>
-                            <Link href="/companies" className="text-xs text-blue-600 hover:underline font-semibold">Ver todas</Link>
-                          </div>
-                          <div className="space-y-3">
-                            {displayCompanies.map((comp, idx) => (
-                              <div key={idx} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="bg-slate-100 p-1.5 rounded-full text-slate-400">
-                                    <Building2 className="w-3.5 h-3.5" />
-                                  </div>
-                                  <div className="text-xs leading-tight min-w-0 text-left">
-                                    <strong className="text-slate-700 block truncate">{comp.name}</strong>
-                                    <span className="text-slate-400 block mt-0.5 text-[10px]">{comp.city}</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1.5 flex-shrink-0">
-                                  <div className="flex text-amber-400 gap-0.5">
-                                    <Star className="w-3 h-3 fill-current" />
-                                  </div>
-                                  <span className="text-[11px] font-bold text-slate-700">{(comp.rating || 4.8).toFixed(1)}</span>
-                                  <Link href={`/companies/${comp.slug}`} className="text-[10px] text-blue-600 hover:underline font-bold ml-2">Perfil</Link>
-                                </div>
+                    {(showCompaniesWidget || showRelatedProductsWidget) && (
+                      <div className={`grid grid-cols-1 ${showCompaniesWidget && showRelatedProductsWidget ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6 pt-4`}>
+                        {/* Widget 1: Empresas que trabalham */}
+                        {showCompaniesWidget && (
+                          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left flex flex-col justify-between">
+                            <div>
+                              <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-slate-800 text-sm md:text-base">Empresas que trabalham com este produto</h3>
+                                <Link href="/companies" className="text-xs text-blue-600 hover:underline font-semibold">Ver todas</Link>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Widget 2: Produtos relacionados */}
-                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-bold text-slate-800 text-sm md:text-base">Produtos relacionados</h3>
-                          <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</button>
-                        </div>
-                        <div className="space-y-3">
-                          {fallbackRelatedProducts.map((p, idx) => (
-                            <div key={idx} className="flex items-center gap-3 border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                              <div className="w-10 h-10 bg-slate-50 rounded-lg flex-shrink-0 relative overflow-hidden flex items-center justify-center p-1 border">
-                                <Building2 className="w-5 h-5 text-slate-300" />
-                              </div>
-                              <div className="text-xs leading-tight text-left min-w-0">
-                                <strong className="text-slate-700 block truncate font-semibold">{p.name}</strong>
-                                <span className="text-blue-600 font-bold block mt-1">R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              <div className="space-y-3">
+                                {displayCompanies.map((comp, idx) => (
+                                  <div key={idx} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className="bg-slate-100 p-1.5 rounded-full text-slate-400">
+                                        <Building2 className="w-3.5 h-3.5" />
+                                      </div>
+                                      <div className="text-xs leading-tight min-w-0 text-left">
+                                        <strong className="text-slate-700 block truncate">{comp.name}</strong>
+                                        <span className="text-slate-400 block mt-0.5 text-[10px]">{comp.city}</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                      <div className="flex text-amber-400 gap-0.5">
+                                        <Star className="w-3 h-3 fill-current" />
+                                      </div>
+                                      <span className="text-[11px] font-bold text-slate-700">{(comp.rating || 4.8).toFixed(1)}</span>
+                                      <Link href={`/companies/${comp.slug}`} className="text-[10px] text-blue-600 hover:underline font-bold ml-2">Perfil</Link>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
+                          </div>
+                        )}
 
-                      {/* Widget 3: Guias de compra */}
-                      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-bold text-slate-800 text-sm md:text-base">Guias de compra</h3>
-                          <Link href="/blog" className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</Link>
-                        </div>
-                        <div className="space-y-3.5">
-                          {fallbackGuides.map((guide, idx) => (
-                            <div key={idx} className="flex items-start gap-2.5 min-w-0">
-                              <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg flex-shrink-0 mt-0.5">
-                                <BookOpen className="w-3.5 h-3.5" />
-                              </div>
-                              <div className="text-xs leading-snug text-left min-w-0">
-                                <strong className="text-slate-700 block font-semibold hover:text-blue-600 cursor-pointer line-clamp-2">{guide.title}</strong>
-                                <span className="text-[10px] text-slate-400 block mt-0.5">{guide.type}</span>
-                              </div>
+                        {/* Widget 2: Produtos relacionados */}
+                        {showRelatedProductsWidget && (
+                          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-left">
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="font-bold text-slate-800 text-sm md:text-base">Produtos relacionados</h3>
+                              <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline font-semibold">Ver todos</button>
                             </div>
-                          ))}
-                        </div>
+                            <div className="space-y-3">
+                              {relatedRealProducts.map((p, idx) => {
+                                const pPriceValue = typeof p.price === 'number' ? p.price : parseFloat(p.price || '0');
+                                const pFriendlyUrl = `/products/${p.id}-${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                                return (
+                                  <Link key={idx} href={pFriendlyUrl} className="flex items-center gap-3 border-b border-slate-50 pb-2 last:border-0 last:pb-0 hover:bg-slate-50/50 transition-colors rounded-lg p-1 block">
+                                    <div className="w-10 h-10 bg-slate-50 rounded-lg flex-shrink-0 relative overflow-hidden flex items-center justify-center p-1 border">
+                                      {p.image_url ? (
+                                        <img src={p.image_url} alt={p.name} className="object-contain w-full h-full" />
+                                      ) : (
+                                        <Building2 className="w-5 h-5 text-slate-300" />
+                                      )}
+                                    </div>
+                                    <div className="text-xs leading-tight text-left min-w-0">
+                                      <strong className="text-slate-700 block truncate font-semibold">{p.name}</strong>
+                                      <span className="text-blue-600 font-bold block mt-1">
+                                        R$ {pPriceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      </span>
+                                    </div>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )}
 
                     {/* Assistance Banner CTA */}
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-left">

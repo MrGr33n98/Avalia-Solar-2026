@@ -11,6 +11,7 @@ import {
   ProductReviewsResponse,
   Review,
   SocialProofReview,
+  Banner,
 } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
@@ -26,6 +27,7 @@ export type {
   ProductReviewsResponse,
   Review,
   SocialProofReview,
+  Banner,
 };
 
 export interface LocalSolarCategory {
@@ -765,6 +767,26 @@ export const localSolarPagesApi = {
     }
   },
 };
+
+// Banners API
+export const bannersApiSafe = {
+  getByPosition: async (position: string, categoryId?: number): Promise<Banner[]> => {
+    try {
+      const params: Record<string, any> = { position };
+      if (categoryId) params.category_id = categoryId;
+      const url = `banners${buildQueryParams(params)}`;
+      const response = await fetchApiSafe<any>(url);
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      if (response && Array.isArray(response.banners)) return response.banners;
+      return [];
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+      return [];
+    }
+  }
+};
+
 
 // Produtos
 export const productsApiSafe = {

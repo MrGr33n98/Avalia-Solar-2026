@@ -136,24 +136,6 @@ export function ProductsFilters({
 
       <Separator />
 
-      {/* Categoria Select */}
-      <div className="space-y-2">
-        <Label className="font-semibold text-slate-700">Categoria</Label>
-        <Select value={filters.category} onValueChange={(val) => onFilterChange('category', val)}>
-          <SelectTrigger className="h-10 bg-slate-50/50 border-slate-200">
-            <SelectValue placeholder="Selecionar" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as categorias</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
       {/* Fornecedor */}
       <div className="space-y-2">
         <Label className="font-semibold text-slate-700">Fornecedor / Marca</Label>
