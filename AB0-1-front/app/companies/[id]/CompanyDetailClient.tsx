@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import {
   LayoutDashboard,
@@ -17,71 +17,96 @@ import {
   AlertCircle,
   Scale,
   MapPin,
-} from "lucide-react";
-import { useComparison } from "@/hooks/useComparison";
+} from 'lucide-react';
+import { useComparison } from '@/hooks/useComparison';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { Company, Product, Review } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { productsApiSafe, reviewsApiSafe } from "@/lib/api-client";
-import { resolveWizardCategoryId } from "@/lib/lead-engine";
-import { openQuoteWizard } from "@/lib/quote-wizard";
+import { Company, Product, Review } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { productsApiSafe, reviewsApiSafe } from '@/lib/api-client';
+import { resolveWizardCategoryId } from '@/lib/lead-engine';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 // GTM Tracking
-import { usePageTracking } from "@/hooks/usePageTracking";
+import { usePageTracking } from '@/hooks/usePageTracking';
 
 import analyticsApi, {
   ReviewAnalytics,
   TrafficSource,
   HistoricalData,
   CompanyAnalyticsSettings,
-} from "@/lib/api-analytics";
+} from '@/lib/api-analytics';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import CompanyHero from "./components/CompanyHero";
-import CompanySidebar from "./components/CompanySidebar";
-import CompanyOverview from "./components/CompanyOverview";
-import CompanyComparisonSection from "./components/CompanyComparisonSection";
-import WinnerBadge from "@/components/company/WinnerBadge";
-import Top1StickyCTA from "@/components/company/Top1StickyCTA";
-import ReviewIdentityModalTrigger from "@/components/company/ReviewIdentityModalTrigger";
+import CompanyHero from './components/CompanyHero';
+import CompanySidebar from './components/CompanySidebar';
+import CompanyOverview from './components/CompanyOverview';
+import CompanyComparisonSection from './components/CompanyComparisonSection';
+import WinnerBadge from '@/components/company/WinnerBadge';
+import Top1StickyCTA from '@/components/company/Top1StickyCTA';
+import ReviewIdentityModalTrigger from '@/components/company/ReviewIdentityModalTrigger';
+import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 
 // Dynamic Components for Performance
-const CompanyProducts = dynamic(() => import("./components/CompanyProducts"), {
-  loading: () => <div className="space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-48 w-full" /></div>
+const CompanyProducts = dynamic(() => import('./components/CompanyProducts'), {
+  loading: () => (
+    <div className="space-y-4">
+      <Skeleton className="h-48 w-full" />
+      <Skeleton className="h-48 w-full" />
+    </div>
+  ),
 });
-const CompanyReviews = dynamic(() => import("./components/CompanyReviews"), {
-  loading: () => <div className="space-y-4"><Skeleton className="h-64 w-full" /></div>
+const CompanyReviews = dynamic(() => import('./components/CompanyReviews'), {
+  loading: () => (
+    <div className="space-y-4">
+      <Skeleton className="h-64 w-full" />
+    </div>
+  ),
 });
-const CompanyFinancing = dynamic(() => import("./components/CompanyFinancing"), {
-  loading: () => <div className="space-y-4"><Skeleton className="h-48 w-full" /></div>
+const CompanyFinancing = dynamic(() => import('./components/CompanyFinancing'), {
+  loading: () => (
+    <div className="space-y-4">
+      <Skeleton className="h-48 w-full" />
+    </div>
+  ),
 });
-const MediaGallery = dynamic(() => import("@/app/dashboard/components/MediaGallery"), {
-  loading: () => <div className="grid grid-cols-3 gap-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>
+const MediaGallery = dynamic(() => import('@/app/dashboard/components/MediaGallery'), {
+  loading: () => (
+    <div className="grid grid-cols-3 gap-4">
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-32 w-full" />
+    </div>
+  ),
 });
-const FaqSection = dynamic(() => import("./components/FaqSection"), {
-  loading: () => <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+const FaqSection = dynamic(() => import('./components/FaqSection'), {
+  loading: () => (
+    <div className="space-y-2">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+    </div>
+  ),
 });
-const SocialProof = dynamic(() => import("./components/SocialProof"), {
-  loading: () => <Skeleton className="h-24 w-full" />
+const SocialProof = dynamic(() => import('./components/SocialProof'), {
+  loading: () => <Skeleton className="h-24 w-full" />,
 });
-const StickyCTA = dynamic(() => import("./components/StickyCTA"), { ssr: false });
+const StickyCTA = dynamic(() => import('./components/StickyCTA'), { ssr: false });
 
-import { AppBreadcrumb, BreadcrumbItemData } from "@/components/AppBreadcrumb";
-import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
-import { trackCompanyProfileViewed, trackDashboardViewed } from "@/lib/analytics/consolidated";
-import { track } from "@/lib/analytics/lazy";
-import { useScrollPause } from "@/lib/analytics/hooks/useIntentTracking";
-import { isFeatureEnabled } from "@/lib/feature-access";
-import CompanyProfileShell from "./components/CompanyProfileShell";
-import { getCapitalLocalSolarPage } from "@/lib/locations/local-page-slugs";
+import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
+import { track } from '@/lib/analytics/lazy';
+import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
+import { isFeatureEnabled } from '@/lib/feature-access';
+import CompanyProfileShell from './components/CompanyProfileShell';
+import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -98,7 +123,7 @@ interface ExtendedCompany extends Company {
 }
 
 const toFiniteNumber = (value: unknown, fallback = 0): number => {
-  const parsed = typeof value === "number" ? value : Number.parseFloat(String(value ?? ""));
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
@@ -113,10 +138,10 @@ const toSafeCount = (value: unknown, fallback = 0): number => {
 };
 
 const consumerStatsLabels: Record<string, string> = {
-  rating: "Nota dos clientes",
-  reviewCount: "Avaliações publicadas",
-  productCount: "Soluções cadastradas",
-  yearsInBusiness: "Anos na Avalia Solar",
+  rating: 'Nota dos clientes',
+  reviewCount: 'Avaliações publicadas',
+  productCount: 'Soluções cadastradas',
+  yearsInBusiness: 'Anos na Avalia Solar',
 };
 
 export default function CompanyDetailClient({
@@ -126,24 +151,27 @@ export default function CompanyDetailClient({
 }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const { isInComparison, addToComparison, removeFromComparison } = useComparison();
-  
+
   // GTM Page Tracking
-  const trackingOptions = useMemo(() => ({
-    type: 'company' as const,
-    title: `${company.name} - Empresa de Energia Solar`,
-    additionalData: {
-      company: {
-        id: company.id,
-        name: company.name,
-        slug: company.slug,
-        category: company.category_name,
-        city: company.city,
-        state: company.state,
-        rating: company.rating,
-        verified: company.verified,
+  const trackingOptions = useMemo(
+    () => ({
+      type: 'company' as const,
+      title: `${company.name} - Empresa de Energia Solar`,
+      additionalData: {
+        company: {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          category: company.category_name,
+          city: company.city,
+          state: company.state,
+          rating: company.rating,
+          verified: company.verified,
+        },
       },
-    },
-  }), [company]);
+    }),
+    [company]
+  );
 
   usePageTracking(trackingOptions);
 
@@ -163,20 +191,18 @@ export default function CompanyDetailClient({
   const [logoError, setLogoError] = useState<boolean>(false);
   const coverLogRef = useRef<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const localSolarPage = useMemo(
     () => getCapitalLocalSolarPage(currentCompany.state, currentCompany.city),
     [currentCompany.state, currentCompany.city]
   );
 
   const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
-    const items: BreadcrumbItemData[] = [
-      { label: 'Empresas', href: '/companies' }
-    ];
+    const items: BreadcrumbItemData[] = [{ label: 'Empresas', href: '/companies' }];
     if (company.category_info) {
-      items.push({ 
-        label: company.category_info.name, 
-        href: `/categories/${company.category_info.seo_url}` 
+      items.push({
+        label: company.category_info.name,
+        href: `/categories/${company.category_info.seo_url}`,
       });
     }
     items.push({ label: company.name, active: true });
@@ -186,12 +212,12 @@ export default function CompanyDetailClient({
   const jsonLdItems = useMemo(() => {
     const items = [
       { name: 'Home', item: '/' },
-      { name: 'Empresas', item: '/companies' }
+      { name: 'Empresas', item: '/companies' },
     ];
     if (company.category_info) {
-      items.push({ 
-        name: company.category_info.name, 
-        item: `/categories/${company.category_info.seo_url}` 
+      items.push({
+        name: company.category_info.name,
+        item: `/categories/${company.category_info.seo_url}`,
       });
     }
     items.push({ name: company.name, item: `/companies/${company.slug}` });
@@ -201,7 +227,7 @@ export default function CompanyDetailClient({
   const timeRange = 30;
   const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
   const companyId = Number(currentCompany?.id || company?.id);
-  
+
   // Track profile view on mount
   useEffect(() => {
     if (companyId && currentCompany?.name) {
@@ -213,14 +239,27 @@ export default function CompanyDetailClient({
   const isReviewer = user?.role === 'review';
 
   const canEdit = useMemo(() => {
-    return isAuthenticated && user?.role === "company" && user?.company_id === companyId;
+    return isAuthenticated && user?.role === 'company' && user?.company_id === companyId;
   }, [isAuthenticated, user?.role, user?.company_id, companyId]);
 
   const canViewAnalytics = useMemo(() => {
     const companyIsActive = currentCompany?.status === 'active';
     if (isAdmin || isReviewer) return true;
-    return isAuthenticated && user?.role === 'company' && user?.company_id === companyId && companyIsActive;
-  }, [companyId, currentCompany?.status, isAdmin, isReviewer, isAuthenticated, user?.company_id, user?.role]);
+    return (
+      isAuthenticated &&
+      user?.role === 'company' &&
+      user?.company_id === companyId &&
+      companyIsActive
+    );
+  }, [
+    companyId,
+    currentCompany?.status,
+    isAdmin,
+    isReviewer,
+    isAuthenticated,
+    user?.company_id,
+    user?.role,
+  ]);
 
   const canManageMedia = useMemo(() => {
     if (!isAuthenticated) return false;
@@ -229,10 +268,9 @@ export default function CompanyDetailClient({
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
-  const canRequestQuote =
-    currentCompany.feature_access
-      ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
-      : extendedCompany.active_admin === true;
+  const canRequestQuote = currentCompany.feature_access
+    ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
+    : extendedCompany.active_admin === true;
   const showFaq = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'faq_block')
     : Boolean(currentCompany.faqs?.length);
@@ -250,18 +288,23 @@ export default function CompanyDetailClient({
     : true;
   const showFinancing = Boolean(
     currentCompany?.financing_tab_visible &&
-      (currentCompany.feature_access
-        ? isFeatureEnabled(currentCompany.feature_access, 'financing_simulation')
-        : true)
+    (currentCompany.feature_access
+      ? isFeatureEnabled(currentCompany.feature_access, 'financing_simulation')
+      : true)
   );
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
   const ctaEnabled = canRequestQuote
-    ? (enabledRawInit === undefined || enabledRawInit === null ? true : Boolean(enabledRawInit))
+    ? enabledRawInit === undefined || enabledRawInit === null
+      ? true
+      : Boolean(enabledRawInit)
     : false;
 
   const ctaUrl = canRequestQuote
-    ? (extendedCompany.cta_whatsapp_url || extendedCompany.whatsapp_url || (currentCompany as any)?.whatsapp || null)
+    ? extendedCompany.cta_whatsapp_url ||
+      extendedCompany.whatsapp_url ||
+      (currentCompany as any)?.whatsapp ||
+      null
     : null;
   const wizardCategoryId = resolveWizardCategoryId(currentCompany);
   const scrollPauseMetadata = useMemo(
@@ -280,38 +323,59 @@ export default function CompanyDetailClient({
 
   const tabs = useMemo(() => {
     const baseTabs = [
-      { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
-      { id: "products", label: "Produtos", icon: Package },
-      { id: "reviews", label: "Avaliações", icon: MessageCircle },
-      { id: "financing", label: "Financiamento", icon: Banknote },
-      { id: "gallery", label: "Galeria", icon: ImageIcon },
-      { id: "faq", label: "FAQ", icon: HelpCircle },
-    ].filter(tab => {
-      if (tab.id === "financing") return showFinancing;
-      if (tab.id === "gallery") return showGallery;
-      if (tab.id === "faq") return showFaq;
+      { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
+      { id: 'products', label: 'Produtos', icon: Package },
+      { id: 'reviews', label: 'Avaliações', icon: MessageCircle },
+      { id: 'financing', label: 'Financiamento', icon: Banknote },
+      { id: 'gallery', label: 'Galeria', icon: ImageIcon },
+      { id: 'faq', label: 'FAQ', icon: HelpCircle },
+    ].filter((tab) => {
+      if (tab.id === 'financing') return showFinancing;
+      if (tab.id === 'gallery') return showGallery;
+      if (tab.id === 'faq') return showFaq;
       return true;
     });
-    if (canEdit) baseTabs.push({ id: "edit", label: "Editar", icon: Edit });
+    if (canEdit) baseTabs.push({ id: 'edit', label: 'Editar', icon: Edit });
     return baseTabs;
   }, [canEdit, showFaq, showFinancing, showGallery]);
 
   const companyStats = useMemo(() => {
     const normalizedRatings = reviews.map((rev) => toSafeRating((rev as any)?.rating, 0));
-    const fallbackCompanyRating = toSafeRating((company as any).rating_avg || (company as any).rating, 0);
-    const avgRating = normalizedRatings.length > 0
+    const fallbackCompanyRating = toSafeRating(
+      (company as any).rating_avg || (company as any).rating,
+      0
+    );
+    const avgRating =
+      normalizedRatings.length > 0
         ? normalizedRatings.reduce((acc, value) => acc + value, 0) / normalizedRatings.length
         : fallbackCompanyRating;
-    const rating = reviewAnalytics?.average_rating != null ? toSafeRating(reviewAnalytics.average_rating, avgRating) : avgRating;
-    const reviewCount = reviewAnalytics?.total_reviews != null ? toSafeCount(reviewAnalytics.total_reviews, 0) : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
-    const createdYear = company.created_at ? new Date(company.created_at).getFullYear() : new Date().getFullYear();
+    const rating =
+      reviewAnalytics?.average_rating != null
+        ? toSafeRating(reviewAnalytics.average_rating, avgRating)
+        : avgRating;
+    const reviewCount =
+      reviewAnalytics?.total_reviews != null
+        ? toSafeCount(reviewAnalytics.total_reviews, 0)
+        : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
+    const createdYear = company.created_at
+      ? new Date(company.created_at).getFullYear()
+      : new Date().getFullYear();
     return {
       rating: rating.toFixed(1),
       reviewCount,
       productCount: products.length,
       yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
-  }, [reviews, reviewAnalytics, products, company.created_at, company.rating_avg, company.rating, company.rating_count, company]);
+  }, [
+    reviews,
+    reviewAnalytics,
+    products,
+    company.created_at,
+    company.rating_avg,
+    company.rating,
+    company.rating_count,
+    company,
+  ]);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -319,7 +383,9 @@ export default function CompanyDetailClient({
       try {
         const [pData, rData] = await Promise.all([
           productsApiSafe.getByCompany(companyId),
-          !reviewsLoaded ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 }) : Promise.resolve(initialReviews),
+          !reviewsLoaded
+            ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 })
+            : Promise.resolve(initialReviews),
         ]);
         setProducts(pData || []);
         if (!reviewsLoaded) setReviews(rData || []);
@@ -337,7 +403,7 @@ export default function CompanyDetailClient({
           }
         }
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error('Erro ao carregar dados:', err);
       } finally {
         setProductsLoading(false);
         setReviewsLoading(false);
@@ -352,24 +418,39 @@ export default function CompanyDetailClient({
   }, [activeTab, tabs]);
 
   const bannerUrl = useMemo(() => {
-    if (!currentCompany?.banner_url || currentCompany.banner_url.trim() === "") return null;
-    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
-    return currentCompany.banner_url.startsWith("http") ? currentCompany.banner_url : `${base}${currentCompany.banner_url.startsWith("/") ? "" : "/"}${currentCompany.banner_url}`;
+    if (!currentCompany?.banner_url || currentCompany.banner_url.trim() === '') return null;
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
+      /\/api.*$/,
+      ''
+    );
+    return currentCompany.banner_url.startsWith('http')
+      ? currentCompany.banner_url
+      : `${base}${currentCompany.banner_url.startsWith('/') ? '' : '/'}${currentCompany.banner_url}`;
   }, [currentCompany?.banner_url]);
 
   const logoUrl = useMemo(() => {
-    if (!currentCompany?.logo_url || currentCompany.logo_url.trim() === "") return null;
-    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/api.*$/, "");
-    return currentCompany.logo_url.startsWith("http") ? currentCompany.logo_url : `${base}${currentCompany.logo_url.startsWith("/") ? "" : "/"}${currentCompany.logo_url}`;
+    if (!currentCompany?.logo_url || currentCompany.logo_url.trim() === '') return null;
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
+      /\/api.*$/,
+      ''
+    );
+    return currentCompany.logo_url.startsWith('http')
+      ? currentCompany.logo_url
+      : `${base}${currentCompany.logo_url.startsWith('/') ? '' : '/'}${currentCompany.logo_url}`;
   }, [currentCompany?.logo_url]);
 
   const handleTabChange = (value: string) => {
-    const tab = tabs.find(t => t.id === value);
-    
+    const tab = tabs.find((t) => t.id === value);
+
     // Canonical Dashboard View tracking
     trackDashboardViewed(companyId, value);
-    
-    track('company_tab_change', { company_id: companyId, company_name: company.name, tab_id: value, tab_label: tab?.label || value });
+
+    track('company_tab_change', {
+      company_id: companyId,
+      company_name: company.name,
+      tab_id: value,
+      tab_label: tab?.label || value,
+    });
     setActiveTab(value);
   };
 
@@ -403,7 +484,7 @@ export default function CompanyDetailClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6]">
+    <div className="min-h-screen bg-[#f3f4f6] pb-20 md:pb-0">
       <BreadcrumbJsonLd items={jsonLdItems} />
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <header className="border-b border-slate-200 bg-[#f3f4f6]">
@@ -469,7 +550,10 @@ export default function CompanyDetailClient({
                   transition={{ duration: 0.2 }}
                   className="space-y-6"
                 >
-                  <TabsContent value="overview" className="mt-0 space-y-6 focus-visible:outline-none">
+                  <TabsContent
+                    value="overview"
+                    className="mt-0 space-y-6 focus-visible:outline-none"
+                  >
                     {(currentCompany as any).priority_score >= 100 && (
                       <WinnerBadge
                         companyName={currentCompany.name}
@@ -492,7 +576,10 @@ export default function CompanyDetailClient({
                     <CompanyProducts products={products} loading={productsLoading} />
                   </TabsContent>
 
-                  <TabsContent value="reviews" className="mt-0 space-y-6 focus-visible:outline-none">
+                  <TabsContent
+                    value="reviews"
+                    className="mt-0 space-y-6 focus-visible:outline-none"
+                  >
                     <CompanyReviews
                       reviews={reviews}
                       loading={reviewsLoading}
@@ -518,8 +605,6 @@ export default function CompanyDetailClient({
                   <TabsContent value="faq" className="mt-0 focus-visible:outline-none">
                     <FaqSection companyId={companyId} />
                   </TabsContent>
-
-
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -562,19 +647,20 @@ export default function CompanyDetailClient({
         </main>
       </Tabs>
 
-      <Top1StickyCTA 
-        company={currentCompany} 
-        rank={(currentCompany as any).priority_score >= 100 ? 1 : 0} 
+      <Top1StickyCTA
+        company={currentCompany}
+        rank={(currentCompany as any).priority_score >= 100 ? 1 : 0}
       />
 
       <StickyCTA
         company={currentCompany}
         canRequestQuote={canRequestQuote}
-        ctaEnabled={ctaEnabled} 
-        ctaUrl={ctaUrl} 
+        ctaEnabled={ctaEnabled}
+        ctaUrl={ctaUrl}
       />
 
       <ReviewIdentityModalTrigger activeTab={activeTab} />
+      <MobileBottomNav />
     </div>
   );
 }

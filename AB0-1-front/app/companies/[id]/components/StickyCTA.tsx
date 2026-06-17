@@ -9,7 +9,6 @@ import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
-import { cn } from '@/lib/utils';
 
 interface StickyCTAProps {
   company: Company;
@@ -18,9 +17,14 @@ interface StickyCTAProps {
   ctaUrl: string | null;
 }
 
-export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl }: StickyCTAProps) {
+export default function StickyCTA({
+  company,
+  canRequestQuote,
+  ctaEnabled,
+  ctaUrl,
+}: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const quoteEnabled = canRequestQuote ?? ((company as any).active_admin === true);
+  const quoteEnabled = canRequestQuote ?? company.active_admin === true;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +47,7 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
       company_name: company.name,
       source: 'sticky-cta',
       element_type: 'button',
-      action_type: 'click'
+      action_type: 'click',
     });
     openQuoteWizard({
       preferredCompanyId: company.id,
@@ -60,15 +64,23 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/60 bg-white/95 px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] shadow-[0_-8px_24px_-6px_rgba(15,23,42,0.12)] backdrop-blur-md md:py-3"
+          className="fixed bottom-0 left-0 right-0 z-50 hidden border-t border-slate-200/60 bg-white/95 px-4 pt-4 pb-[max(1rem,var(--safe-area-inset-bottom))] shadow-[0_-8px_24px_-6px_rgba(15,23,42,0.12)] backdrop-blur-md md:block md:py-3"
         >
           <div className="container mx-auto flex items-center justify-between gap-4">
             <div className="hidden md:flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                 {company.logo_url ? (
-                  <Image src={company.logo_url} alt={company.name} width={40} height={40} className="h-full w-full object-contain p-1" />
+                  <Image
+                    src={company.logo_url}
+                    alt={company.name}
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-contain p-1"
+                  />
                 ) : (
-                  <div className="text-slate-400 font-bold text-xs">{company.name.substring(0, 2).toUpperCase()}</div>
+                  <div className="text-slate-400 font-bold text-xs">
+                    {company.name.substring(0, 2).toUpperCase()}
+                  </div>
                 )}
               </div>
               <div>
@@ -92,7 +104,14 @@ export default function StickyCTA({ company, canRequestQuote, ctaEnabled, ctaUrl
                     size="default"
                     enabled
                     href={ctaUrl}
-                    styles={{ variant: 'solid', bg_color: '#25D366', hover_bg_color: '#1ebe5d', text_color: '#ffffff', border_color: '#25D366', icon_color: '#ffffff' }}
+                    styles={{
+                      variant: 'solid',
+                      bg_color: '#25D366',
+                      hover_bg_color: '#1ebe5d',
+                      text_color: '#ffffff',
+                      border_color: '#25D366',
+                      icon_color: '#ffffff',
+                    }}
                     className="w-full h-11 md:h-10 font-bold px-6"
                     label="WhatsApp"
                     companyId={company.id}
