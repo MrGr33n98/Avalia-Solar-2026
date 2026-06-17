@@ -2,7 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Share2, ArrowLeft, Scale, MapPin, Star } from 'lucide-react';
+import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { trackCTAClick, trackCompanyProfileView } from '@/lib/analytics/track-cta';
-import { useComparison } from '@/hooks/useComparison';
 import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
@@ -52,12 +51,12 @@ export default function CompanyHero({
   setLogoError,
   canRequestQuote,
   ctaEnabled,
-  ctaUrl
+  ctaUrl,
 }: CompanyHeroProps) {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
-  const quoteEnabled = canRequestQuote ?? ((company as any).active_admin === true);
+  const quoteEnabled = canRequestQuote ?? company.active_admin === true;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
@@ -80,7 +79,8 @@ export default function CompanyHero({
   });
 
   const heroBadgeUrl = useMemo(() => {
-    const isValidImageUrl = (url: string) => IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
+    const isValidImageUrl = (url: string) =>
+      IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
     const companyBadges = Array.isArray(company.badges) ? company.badges : [];
 
     const badgeImageFromBadges = companyBadges
@@ -100,7 +100,7 @@ export default function CompanyHero({
 
   useEffect(() => {
     setBadgeImageError(false);
-    
+
     // Track company profile view on mount
     trackCompanyProfileView(
       String(company.id),
@@ -114,7 +114,7 @@ export default function CompanyHero({
       company_id: company.id,
       company_name: company.name,
       element_type: 'button',
-      action_type: 'click'
+      action_type: 'click',
     });
     setIsSharing(true);
     try {
@@ -147,7 +147,7 @@ export default function CompanyHero({
               company_id: company.id,
               company_name: company.name,
               element_type: 'button',
-              action_type: 'click'
+              action_type: 'click',
             });
             router.back();
           }}
@@ -161,7 +161,7 @@ export default function CompanyHero({
         <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-200">
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
-              src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
+              src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
               alt={company.name}
               fill
               priority
@@ -173,7 +173,7 @@ export default function CompanyHero({
               useAspectRatio={false}
               width={1600}
               height={900}
-              unoptimized={(!bannerUrl || bannerError)}
+              unoptimized={!bannerUrl || bannerError}
               onError={() => setBannerError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />
@@ -188,12 +188,12 @@ export default function CompanyHero({
         </div>
 
         <div className="relative z-10 -mt-8 px-1 sm:-mt-10 sm:px-5 lg:px-8">
-          <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <section
-              aria-label="Card de perfil da empresa"
-              className="relative inline-flex items-center self-start rounded-md border border-slate-200 bg-white pr-4 py-2 pl-[84px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-5 sm:py-2.5 sm:pl-[104px]"
-            >
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 sm:left-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <section
+                aria-label="Card de perfil da empresa"
+                className="flex min-w-0 items-center gap-3 sm:gap-5"
+              >
                 <div className="relative shrink-0">
                   {heroBadgeUrl && !badgeImageError && (
                     <div
@@ -216,146 +216,147 @@ export default function CompanyHero({
 
                   <div
                     className={cn(
-                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[4px] border-white shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-24 sm:w-24',
+                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-28 sm:w-28',
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
                     <OptimizedImage
-                      src={(!logoUrl || logoError) ? '/images/logo-placeholder.svg' : logoUrl}
+                      src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
                       fill
                       priority
                       objectFit="contain"
-                      className="p-1"
-                      containerClassName="h-full w-full rounded-full bg-white"
+                      className="p-2"
+                      containerClassName="h-full w-full rounded-2xl bg-white"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col justify-center">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1
-                    className="whitespace-nowrap text-[1.5rem] font-semibold leading-none tracking-[-0.05em] text-slate-950 sm:text-[1.75rem]"
-                  >
-                    {company.name}
-                  </h1>
-                  {company.verified && (
-                    <PremiumBadge className="h-7 px-4" />
-                  )}
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-600">
-                  <div className="flex items-center gap-1.5">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                    <span className="text-sm font-bold text-slate-900">{ratingLabel}</span>
+                <div className="flex min-w-0 flex-col justify-center">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="min-w-0 text-[1.5rem] font-semibold leading-tight text-slate-950 sm:text-[1.875rem]">
+                      {company.name}
+                    </h1>
+                    {company.verified && <PremiumBadge className="h-7 px-4" />}
                   </div>
 
-                  {locationLabel && (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {locationLabel}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-slate-600 sm:gap-x-4">
+                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-amber-700">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                      <span className="text-sm font-bold">{ratingLabel}</span>
+                    </div>
+                    <span className="text-sm text-slate-500">
+                      ({companyStats.reviewCount} avaliações)
                     </span>
+
+                    {locationLabel && (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {locationLabel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <div className="w-full lg:w-auto lg:min-w-[560px]">
+                <div className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Compartilhar perfil"
+                    aria-label="Compartilhar perfil"
+                    className="h-11 rounded-xl border border-transparent bg-transparent px-0 text-sm font-semibold text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-900 sm:px-4"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    <Share2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Compartilhar</span>
+                  </Button>
+
+                  <ComparisonToggleButton
+                    company={company}
+                    variant="default"
+                    size="sm"
+                    animated={true}
+                    className="h-11 min-w-0 rounded-xl px-2 text-xs font-semibold shadow-none [&_span]:truncate [&_span]:whitespace-nowrap sm:px-4 sm:text-sm"
+                  />
+
+                  {ctaEnabled && ctaUrl && (
+                    <div className="contents" {...heroWhatsappHoverIntent}>
+                      <WhatsappButton
+                        size="default"
+                        enabled
+                        href={ctaUrl}
+                        className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-3 text-sm font-semibold text-emerald-700 shadow-none hover:bg-emerald-50"
+                        label="WhatsApp"
+                        companyId={company.id}
+                        requireSignup
+                        signupGateSource="contact_reveal"
+                        signupGateTitle="Crie sua conta para falar no WhatsApp"
+                        signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
+                      />
+                    </div>
+                  )}
+
+                  {company.p2p_chat_enabled && (
+                    <Button
+                      size="default"
+                      className="h-11 w-full rounded-xl bg-orange-500 px-3 text-sm font-semibold text-white shadow-none hover:bg-orange-600"
+                      onClick={() => {
+                        track('company_direct_chat_click', {
+                          company_id: company.id,
+                          company_name: company.name,
+                        });
+                        router.push(`/chat?company_id=${company.id}`);
+                      }}
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Chat Direto
+                    </Button>
+                  )}
+
+                  {quoteEnabled ? (
+                    <Button
+                      size="default"
+                      className="h-11 min-w-0 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:px-5"
+                      onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
+                      onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
+                      onClick={async () => {
+                        await trackCTAClick({
+                          ctaType: 'quote',
+                          ctaLocation: 'hero',
+                          companyId: String(company.id),
+                          companyName: company.name,
+                        });
+                        openLeadModal({
+                          preferredCompanyId: company.id,
+                          categoryId: wizardCategoryId,
+                          source: 'company-hero',
+                          type: 'wizard',
+                        });
+                      }}
+                    >
+                      <MessageCircle className="mr-1.5 h-4 w-4 sm:mr-2" />
+                      <span className="sm:hidden">Solicitar</span>
+                      <span className="hidden sm:inline">Solicitar orçamento</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className="h-11 min-w-0 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:px-5"
+                      asChild
+                    >
+                      <Link href={reviewPath}>
+                        <span className="sm:hidden">Avaliar</span>
+                        <span className="hidden sm:inline">Avaliar empresa</span>
+                      </Link>
+                    </Button>
                   )}
                 </div>
-              </div>
-            </section>
-
-            <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px] lg:items-end">
-              <div className="flex w-full flex-wrap gap-1 lg:justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Compartilhar perfil"
-                  aria-label="Compartilhar perfil"
-                  className="h-8 rounded-lg border-none bg-transparent px-2 text-xs font-medium text-slate-600 shadow-none hover:bg-transparent hover:text-slate-900"
-                  onClick={handleShare}
-                  disabled={isSharing}
-                >
-                  <Share2 className="mr-1.5 h-3.5 w-3.5" />
-                  Compartilhar
-                </Button>
-              </div>
-
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-                <ComparisonToggleButton 
-                  company={company}
-                  variant="default"
-                  size="default"
-                  animated={true}
-                  className="sm:min-w-[140px]"
-                />
-
-                {ctaEnabled && ctaUrl && (
-                  <div className="w-full sm:w-auto" {...heroWhatsappHoverIntent}>
-                    <WhatsappButton
-                      size="default"
-                      enabled
-                      href={ctaUrl}
-                      className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-6 font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:min-w-[170px]"
-                      label="WhatsApp"
-                      companyId={company.id}
-                      requireSignup
-                      signupGateSource="contact_reveal"
-                      signupGateTitle="Crie sua conta para falar no WhatsApp"
-                      signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
-                    />
-                  </div>
-                )}
-
-                {company.p2p_chat_enabled && (
-                  <Button
-                    size="default"
-                    className="h-11 w-full rounded-xl bg-orange-500 px-6 font-semibold text-white shadow-none hover:bg-orange-600 sm:min-w-[170px] sm:w-auto"
-                    onClick={() => {
-                      track('company_direct_chat_click', {
-                        company_id: company.id,
-                        company_name: company.name
-                      });
-                      router.push(`/chat?company_id=${company.id}`);
-                    }}
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Chat Direto
-                  </Button>
-                )}
-
-                {quoteEnabled ? (
-                  <Button
-                    size="default"
-                    className="h-11 rounded-xl bg-blue-700 px-6 font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:min-w-[190px]"
-                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
-                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
-                    onClick={async () => {
-                      await trackCTAClick({
-                        ctaType: 'quote',
-                        ctaLocation: 'hero',
-                        companyId: String(company.id),
-                        companyName: company.name,
-                      });
-                      openLeadModal({
-                        preferredCompanyId: company.id,
-                        categoryId: wizardCategoryId,
-                        source: 'company-hero',
-                        type: 'wizard'
-                      });
-                    }}
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Solicitar orçamento
-                  </Button>
-                ) : (
-                  <Button
-                    size="default"
-                    variant="outline"
-                    className="h-11 rounded-xl border-blue-200 bg-white px-6 font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:min-w-[190px]"
-                    asChild
-                  >
-                    <Link href={reviewPath}>Avaliar empresa</Link>
-                  </Button>
-                )}
               </div>
             </div>
           </div>
