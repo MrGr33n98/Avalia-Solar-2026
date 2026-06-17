@@ -25,18 +25,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { trackCategorySelected } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
-import { Company } from '@/lib/api';
+import { Banner, Category, Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
 
+type CategoryBanner = Banner & { company_id?: number };
+type SidebarFilterValue = string | number | boolean | undefined;
+
 interface CategoryPageClientProps {
-  initialCategory: any;
+  initialCategory: Category;
   initialCompanies: Company[];
-  initialBanners: any[];
-  paginationMeta: any;
+  initialBanners: CategoryBanner[];
+  paginationMeta: unknown;
 }
 
 const QUICK_FILTER_CHIPS = [
@@ -50,7 +53,7 @@ export default function CategoryPageClient({
   initialCategory,
   initialCompanies,
   initialBanners,
-  paginationMeta,
+  paginationMeta: _paginationMeta,
 }: CategoryPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,22 +79,25 @@ export default function CategoryPageClient({
   const isLoading = false;
 
   // Helper: sync filter state to URL without full navigation
-  const syncToUrl = useCallback((updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === '' || value === 'false' || value === '0') {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
+  const syncToUrl = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === '' || value === 'false' || value === '0') {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
 
   // Sync search term to URL after debounce
   useEffect(() => {
     syncToUrl({ search: debouncedSearchTerm || undefined });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]);
 
   // Track page view / category selected on mount
@@ -201,7 +207,7 @@ export default function CategoryPageClient({
     syncToUrl({ chips: newFilters.size > 0 ? Array.from(newFilters).join(',') : undefined });
   };
 
-  const handleSidebarFilterChange = (key: string, value: any) => {
+  const handleSidebarFilterChange = (key: string, value: SidebarFilterValue) => {
     setSidebarFilters((prev) => ({ ...prev, [key]: value }));
     const urlKey: Record<string, string> = {
       verified: 'verified',
@@ -210,7 +216,12 @@ export default function CategoryPageClient({
       projectType: 'project_type',
     };
     if (urlKey[key]) {
-      syncToUrl({ [urlKey[key]]: value === undefined || value === false || value === 0 || value === '' ? undefined : String(value) });
+      syncToUrl({
+        [urlKey[key]]:
+          value === undefined || value === false || value === 0 || value === ''
+            ? undefined
+            : String(value),
+      });
     }
   };
 
@@ -224,7 +235,15 @@ export default function CategoryPageClient({
     setActiveQuickFilters(new Set());
     setSidebarFilters({ verified: false, minRating: 0, state: '', projectType: undefined });
     setSortBy('rating_desc');
-    syncToUrl({ search: undefined, chips: undefined, verified: undefined, min_rating: undefined, state: undefined, project_type: undefined, sort: undefined });
+    syncToUrl({
+      search: undefined,
+      chips: undefined,
+      verified: undefined,
+      min_rating: undefined,
+      state: undefined,
+      project_type: undefined,
+      sort: undefined,
+    });
   };
 
   const hasActiveFilters = Boolean(
@@ -251,12 +270,12 @@ export default function CategoryPageClient({
           <ChipsSkeleton />
           <div className="container mx-auto px-6 py-10">
             <div className="flex gap-8">
-               <div className="hidden lg:block w-64 h-screen" />
-               <div className="flex-1 space-y-10">
-                  <TopRankingSkeleton />
-                  <SponsoredSkeleton />
-                  <GridSkeleton />
-               </div>
+              <div className="hidden lg:block w-64 h-screen" />
+              <div className="flex-1 space-y-10">
+                <TopRankingSkeleton />
+                <SponsoredSkeleton />
+                <GridSkeleton />
+              </div>
             </div>
           </div>
         </>
@@ -266,14 +285,12 @@ export default function CategoryPageClient({
           <CategoryHero
             name={categoryName}
             description={
-              initialCategory?.short_description ||
-              initialCategory?.description ||
-              undefined
+              initialCategory?.short_description || initialCategory?.description || undefined
             }
             bannerUrl={initialCategory?.banner_url}
             parentCategory={initialCategory?.parent}
             subcategories={initialCategory?.subcategories}
-            banners={initialBanners.filter(b => b.position === 'categories_top' || !b.position)}
+            banners={initialBanners.filter((b) => b.position === 'categories_top' || !b.position)}
             onLeadClick={() => {
               track('lead_open_internal', {
                 company_id: 0,
@@ -285,19 +302,17 @@ export default function CategoryPageClient({
             onMethodologyClick={() => console.log('Methodology modal')}
           />
 
-          {/* Decision Chips - Full width contextual helper */}
-          <div className="border-b border-slate-100 bg-slate-50/30">
-            <DecisionChips
-              chips={quickFilterChips}
-              onChipToggle={handleQuickFilterToggle}
-              onChipRemove={handleQuickFilterToggle}
-            />
-          </div>
+          <DecisionChips
+            chips={quickFilterChips}
+            onChipToggle={handleQuickFilterToggle}
+            onChipRemove={handleQuickFilterToggle}
+            onClearFilters={handleClearFilters}
+            hasActiveFilters={hasActiveFilters}
+          />
 
           {/* Main Layout Container */}
-          <div className="max-w-[1280px] mx-auto px-6 py-6 md:py-7">
+          <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-7">
             <div className="flex flex-col lg:flex-row gap-6 items-start">
-              
               {/* Sidebar - Fixed width 280px */}
               <CategoryFilterSidebar
                 filters={sidebarFilters}
@@ -308,7 +323,6 @@ export default function CategoryPageClient({
 
               {/* Content Column - Fluid */}
               <main className="flex-1 w-full space-y-7 md:space-y-8">
-                
                 {/* 🏆 Top Ranking Section - Inside the column */}
                 {!hasActiveFilters && filteredCompanies.length > 0 && (
                   <TopRankingSection
@@ -319,12 +333,20 @@ export default function CategoryPageClient({
                 )}
 
                 {/* ✨ Sponsored Section - Inside the column */}
-                <SponsoredSection
-                  companies={initialCompanies
-                    .filter((c) => (c as any).sponsored || initialBanners.some((b: any) => b.company_id === c.id))
-                    .slice(0, 4)}
-                  category={slug}
-                />
+                <div className="hidden md:block">
+                  <SponsoredSection
+                    companies={initialCompanies
+                      .filter((c) => {
+                        const sponsoredCompany = c as Company & { sponsored?: boolean };
+                        return (
+                          sponsoredCompany.sponsored ||
+                          initialBanners.some((b) => b.company_id === c.id)
+                        );
+                      })
+                      .slice(0, 4)}
+                    category={slug}
+                  />
+                </div>
 
                 {/* Toolbar & Grid */}
                 <div className="space-y-6">
@@ -379,10 +401,7 @@ export default function CategoryPageClient({
                   </div>
 
                   {/* Companies Grid */}
-                  <CompaniesGrid
-                    companies={filteredCompanies}
-                    category={slug}
-                  />
+                  <CompaniesGrid companies={filteredCompanies} category={slug} />
                 </div>
               </main>
 

@@ -3,15 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import { ArrowRight, ChevronRight, Sparkles, ExternalLink } from 'lucide-react';
+import { ArrowRight, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
-import Autoplay from 'embla-carousel-autoplay';
 
 interface Subcategory {
   id: number;
@@ -32,8 +25,8 @@ interface BannerData {
 interface CategoryHeroProps {
   name: string;
   description?: string;
-  bannerUrl?: string;
-  parentCategory?: { name: string; slug?: string; seo_url?: string };
+  bannerUrl?: string | null;
+  parentCategory?: { name: string; slug?: string; seo_url?: string } | null;
   subcategories?: Subcategory[];
   banners?: BannerData[];
   onLeadClick?: () => void;
@@ -55,18 +48,19 @@ export default function CategoryHero({
   const heroDescription =
     description?.trim() ||
     `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
+  const validBanners = banners
+    .map((b) => ({
+      ...b,
+      image_url: b.image_url ? getFullImageUrl(b.image_url) : FALLBACK_BANNER_SRC,
+    }))
+    .filter((b) => b.image_url);
+  const visualUrl = validBanners[0]?.image_url || resolvedBannerUrl;
   const bannerImageClass = getBannerImageClass(name);
 
-  // Normaliza banners
-  const validBanners = banners.map(b => ({
-    ...b,
-    image_url: b.image_url ? getFullImageUrl(b.image_url) : FALLBACK_BANNER_SRC
-  })).filter(b => b.image_url);
-
   return (
-    <section className="border-b border-slate-100 bg-white py-4 md:py-5">
-      <div className="mx-auto max-w-[1280px] px-6">
-        <nav className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 md:mb-4 md:text-[11px]">
+    <section className="bg-white pb-3 pt-4 md:pb-5 md:pt-5">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
+        <nav className="mb-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
           <Link href="/" className="transition-colors hover:text-blue-600">
             Home
           </Link>
@@ -86,14 +80,14 @@ export default function CategoryHero({
             </>
           )}
           <ChevronRight className="h-3 w-3 opacity-50" />
-          <span className="text-slate-900">{name}</span>
+          <span className="font-bold text-slate-950">{name}</span>
         </nav>
 
-        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.45)]">
+        <div className="relative overflow-hidden rounded-[20px] border border-slate-200 bg-slate-950 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.45)] md:rounded-[28px]">
           <div className="absolute inset-0">
-            {resolvedBannerUrl ? (
+            {visualUrl ? (
               <OptimizedImage
-                src={resolvedBannerUrl}
+                src={visualUrl}
                 alt={name}
                 fill
                 priority
@@ -107,93 +101,54 @@ export default function CategoryHero({
             )}
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-slate-950/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/82 to-slate-950/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-black/20 to-transparent" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between p-4 sm:p-5 md:p-5 lg:p-6 gap-6 min-h-[184px] sm:min-h-[205px] md:min-h-[214px] lg:min-h-[228px]">
-            {/* Left Column: Category Content */}
-            <div className="flex flex-col justify-between h-full w-full lg:w-[55%] xl:w-[60%]">
+          <div className="relative z-10 flex min-h-[264px] flex-col justify-between gap-7 p-6 sm:min-h-[280px] sm:p-7 md:min-h-[300px] md:p-8 lg:min-h-[324px]">
+            <div className="w-full max-w-[38rem]">
               <div className="max-w-[38rem]">
-                <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-slate-950 sm:px-2.5 sm:text-[9px]">
-                    <Sparkles className="h-2.5 w-2.5" />
+                <div className="mb-5 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-black uppercase tracking-tight text-slate-950">
+                    <Sparkles className="h-3.5 w-3.5" />
                     Guia {new Date().getFullYear()}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-amber-400/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-slate-950 sm:px-2.5 sm:text-[9px]">
+                  <span className="inline-flex items-center rounded-full bg-amber-400 px-3 py-1 text-[11px] font-black uppercase tracking-tight text-slate-950">
                     Categoria estratégica
                   </span>
                 </div>
 
-                <h1 className="max-w-3xl text-[1.1rem] font-black tracking-[-0.05em] text-white drop-shadow-md sm:text-[1.35rem] md:text-[1.7rem] lg:text-[1.95rem]">
+                <h1 className="max-w-3xl text-[1.85rem] font-black leading-tight text-white drop-shadow-md sm:text-[2.25rem] md:text-[3rem]">
                   {name}
                 </h1>
 
-                <p className="mt-2 max-w-[30rem] text-[10px] font-medium leading-relaxed text-slate-200/95 drop-shadow-sm sm:text-[11px] md:text-[12px]">
+                <p className="mt-3 max-w-[31rem] text-base font-medium leading-relaxed text-slate-100 drop-shadow-sm sm:text-lg">
                   {heroDescription}
                 </p>
               </div>
-
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button
-                  onClick={onLeadClick}
-                  size="lg"
-                  className="h-9 rounded-lg bg-emerald-500 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400 sm:h-10 sm:px-5 sm:text-[11px]"
-                >
-                  Solicitar orçamento
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Button>
-              </div>
             </div>
 
-            {/* Right Column: Sponsored Content */}
-            {validBanners.length > 0 && (
-              <div className="w-full lg:w-[45%] xl:w-[40%] flex justify-end">
-                <div className="w-full max-w-[420px] rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-2 sm:p-3 shadow-2xl">
-                  <div className="mb-2 flex items-center justify-between px-1">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/80">
-                      Patrocinado
-                    </span>
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  </div>
-                  
-                  <Carousel
-                    plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
-                    opts={{ loop: true }}
-                    className="w-full"
-                  >
-                    <CarouselContent>
-                      {validBanners.map((banner, idx) => (
-                        <CarouselItem key={banner.id || idx}>
-                          <Link 
-                            href={banner.link_url || banner.link || '#'} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="group block relative w-full aspect-[21/9] sm:aspect-[21/8] overflow-hidden rounded-xl bg-slate-900"
-                          >
-                            <Image
-                              src={banner.image_url!}
-                              alt={banner.title || 'Patrocinador'}
-                              fill
-                              sizes="(max-width: 640px) 100vw, 420px"
-                              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                            <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                              <span className="text-white font-bold text-sm sm:text-base drop-shadow-md line-clamp-1">
-                                {banner.title || 'Visitar parceiro'}
-                              </span>
-                              <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-colors group-hover:bg-blue-500">
-                                <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                              </div>
-                            </div>
-                          </Link>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                  </Carousel>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="inline-flex max-w-[21rem] items-center gap-3 rounded-2xl bg-white/12 px-4 py-3 text-white shadow-sm backdrop-blur-md">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+                  <ShieldCheck className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-black">Empresas verificadas</p>
+                  <p className="text-xs font-medium text-slate-200">
+                    Qualidade e reputação comprovadas
+                  </p>
                 </div>
               </div>
-            )}
+
+              <Button
+                onClick={onLeadClick}
+                size="lg"
+                className="h-14 rounded-2xl bg-emerald-500 px-6 text-base font-black text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400 sm:min-w-[20rem]"
+              >
+                Solicitar orçamento
+                <ArrowRight className="ml-auto h-5 w-5 sm:ml-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
