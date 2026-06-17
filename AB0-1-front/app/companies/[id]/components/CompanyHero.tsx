@@ -157,8 +157,8 @@ export default function CompanyHero({
         </Button>
       </div>
 
-      <div className="rounded-none border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
-        <div className="relative overflow-hidden rounded-none border border-slate-200/70 bg-slate-200">
+      <div className="!rounded-none border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
+        <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-200">
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
               src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -166,8 +166,8 @@ export default function CompanyHero({
               fill
               priority
               quality={90}
-              className="object-cover"
-              containerClassName="h-full w-full"
+              className="object-cover !rounded-none"
+              containerClassName="h-full w-full !rounded-none"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               fallbackSrc="/images/banner-avalia-solar.png"
               useAspectRatio={false}
@@ -188,12 +188,12 @@ export default function CompanyHero({
         </div>
 
         <div className="relative z-10 -mt-8 px-1 sm:-mt-10 sm:px-5 lg:px-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-end lg:justify-between">
             <section
               aria-label="Card de perfil da empresa"
-              className="relative w-fit inline-block rounded-[20px] border border-slate-200 bg-white pr-4 py-3 pl-[92px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-5 sm:py-3 sm:pl-[116px]"
+              className="relative w-max max-w-full rounded-[20px] border border-slate-200 bg-white pr-3 py-2 pl-[84px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-4 sm:py-2.5 sm:pl-[104px]"
             >
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-5">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 sm:left-4">
                 <div className="relative shrink-0">
                   {heroBadgeUrl && !badgeImageError && (
                     <div
