@@ -1,50 +1,45 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { MessageCircle, Share2, Star } from "lucide-react";
-import { toast } from "sonner";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import ComparisonToggleButton from "@/components/ComparisonToggleButton";
-import { Company } from "@/lib/api";
-import { isFeatureEnabled } from "@/lib/feature-access";
-import { openLeadModal, resolveWizardCategoryId } from "@/lib/lead-engine";
-import { trackCTAClick } from "@/lib/analytics/track-cta";
-import { track } from "@/lib/analytics/lazy";
-import { buildCompanySubPath } from "@/lib/slug";
+import { useState } from 'react';
+import { MessageCircle, Share2, Star } from 'lucide-react';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
+import { Company } from '@/lib/api';
+import { isFeatureEnabled } from '@/lib/feature-access';
+import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
+import { trackCTAClick } from '@/lib/analytics/track-cta';
+import { track } from '@/lib/analytics/lazy';
+import { buildCompanySubPath } from '@/lib/slug';
 
 interface CompanyCTAGroupProps {
   company: Company;
   canRequestQuote: boolean;
-  ctaEnabled: boolean;
-  ctaUrl: string | null;
 }
 
-export default function CompanyCTAGroup({
-  company,
-  canRequestQuote,
-  ctaEnabled,
-  ctaUrl,
-}: CompanyCTAGroupProps) {
+export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTAGroupProps) {
   const [isSharing, setIsSharing] = useState(false);
   const wizardCategoryId = resolveWizardCategoryId(company);
-  const reviewPath = buildCompanySubPath(company.slug, company.name, "review", company.id);
+  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
   // Entitlement Check for CTAs
-  const isCustomCtasEnabled = isFeatureEnabled(company.feature_access, "custom_ctas");
-  const isProOrEnterprise = ["pro", "enterprise"].includes((company as any).plan_tier || "");
-  const canShowQuoteButton = canRequestQuote && (isCustomCtasEnabled || isProOrEnterprise || (company as any).active_admin === true);
+  const planTier = (company as Company & { plan_tier?: string }).plan_tier || '';
+  const isCustomCtasEnabled = isFeatureEnabled(company.feature_access, 'custom_ctas');
+  const isProOrEnterprise = ['pro', 'enterprise'].includes(planTier);
+  const canShowQuoteButton =
+    canRequestQuote && (isCustomCtasEnabled || isProOrEnterprise || company.active_admin === true);
 
   const handleShare = async () => {
-    track("company_share_click", {
+    track('company_share_click', {
       company_id: company.id,
       company_name: company.name,
-      element_type: "button",
-      action_type: "click",
+      element_type: 'button',
+      action_type: 'click',
     });
     setIsSharing(true);
     try {
-      if (typeof navigator !== "undefined" && navigator.share) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({
           title: company.name,
           text: company.description,
@@ -52,36 +47,41 @@ export default function CompanyCTAGroup({
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success("Link copiado para a área de transferência!");
+        toast.success('Link copiado para a área de transferência!');
       }
     } catch (error) {
-      console.error("Error sharing:", error);
+      console.error('Error sharing:', error);
     } finally {
       setIsSharing(false);
     }
   };
 
   return (
-    <div id="company-cta-group" className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:w-auto">
+    <div
+      id="company-cta-group"
+      className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3"
+    >
       {/* Compartilhar */}
       <Button
         variant="ghost"
         size="sm"
         disabled={isSharing}
         onClick={handleShare}
-        className="h-10 rounded-xl hover:bg-slate-100 text-xs font-semibold text-slate-600 transition-all flex items-center justify-center gap-1.5"
+        title="Compartilhar"
+        aria-label="Compartilhar perfil"
+        className="flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 sm:gap-1.5"
       >
         <Share2 className="h-4 w-4" />
-        Compartilhar
+        <span className="hidden sm:inline">Compartilhar</span>
       </Button>
 
       {/* Comparar */}
-      <ComparisonToggleButton 
+      <ComparisonToggleButton
         company={company}
         variant="default"
-        size="default"
+        size="sm"
         animated={true}
-        className="h-11 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center shadow-none sm:min-w-[140px]"
+        className="h-11 min-w-0 rounded-xl border-slate-200 px-2 text-xs font-bold text-slate-700 shadow-none transition-all hover:bg-slate-50 [&_span]:truncate [&_span]:whitespace-nowrap sm:px-4 sm:text-sm"
       />
 
       {/* Solicitar Orçamento ou Avaliar */}
@@ -90,33 +90,35 @@ export default function CompanyCTAGroup({
           size="default"
           onClick={async () => {
             await trackCTAClick({
-              ctaType: "quote",
-              ctaLocation: "hero",
+              ctaType: 'quote',
+              ctaLocation: 'hero',
               companyId: String(company.id),
               companyName: company.name,
             });
             openLeadModal({
               preferredCompanyId: company.id,
               categoryId: wizardCategoryId,
-              source: "company-hero",
-              type: "wizard",
+              source: 'company-hero',
+              type: 'wizard',
             });
           }}
-          className="h-11 rounded-xl bg-blue-700 font-bold text-white hover:bg-blue-800 transition-all flex items-center justify-center gap-2 shadow-[0_16px_32px_-16px_rgba(29,78,216,0.55)] hover:shadow-[0_16px_32px_-12px_rgba(29,78,216,0.65)] active:scale-[0.98] sm:min-w-[190px]"
+          className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-blue-700 px-3 text-sm font-bold text-white shadow-[0_16px_32px_-16px_rgba(29,78,216,0.55)] transition-all hover:bg-blue-800 hover:shadow-[0_16px_32px_-12px_rgba(29,78,216,0.65)] active:scale-[0.98] sm:gap-2 sm:px-5"
         >
           <MessageCircle className="h-4 w-4" />
-          Solicitar Orçamento
+          <span className="sm:hidden">Solicitar</span>
+          <span className="hidden sm:inline">Solicitar Orçamento</span>
         </Button>
       ) : (
         <Button
           size="default"
           variant="outline"
-          className="h-11 rounded-xl border-blue-200 bg-white font-bold text-blue-700 hover:bg-blue-50 shadow-none sm:min-w-[190px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl border-blue-200 bg-white px-3 text-sm font-bold text-blue-700 shadow-none transition-all hover:bg-blue-50 active:scale-[0.98] sm:gap-2 sm:px-5"
           asChild
         >
           <Link href={reviewPath}>
             <Star className="h-4 w-4 fill-blue-700 text-blue-700" strokeWidth={0} />
-            Avaliar Empresa
+            <span className="sm:hidden">Avaliar</span>
+            <span className="hidden sm:inline">Avaliar Empresa</span>
           </Link>
         </Button>
       )}

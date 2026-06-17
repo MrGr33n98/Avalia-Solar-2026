@@ -104,7 +104,7 @@ export default function CategoryHero({
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/82 to-slate-950/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-black/20 to-transparent" />
 
-          <div className="relative z-10 flex min-h-[264px] flex-col justify-between gap-7 p-6 sm:min-h-[280px] sm:p-7 md:min-h-[300px] md:p-8 lg:min-h-[324px]">
+          <div className="relative z-10 flex aspect-[16/9] min-h-[230px] flex-col justify-between gap-6 p-5 sm:aspect-[2.4/1] sm:min-h-[260px] sm:p-7 md:aspect-[3/1] md:min-h-[280px] md:p-8 lg:min-h-[300px]">
             <div className="w-full max-w-[38rem]">
               <div className="max-w-[38rem]">
                 <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -121,7 +121,7 @@ export default function CategoryHero({
                   {name}
                 </h1>
 
-                <p className="mt-3 max-w-[31rem] text-base font-medium leading-relaxed text-slate-100 drop-shadow-sm sm:text-lg">
+                <p className="mt-2 max-w-[28rem] text-sm font-medium leading-relaxed text-slate-100 drop-shadow-sm sm:text-base">
                   {heroDescription}
                 </p>
               </div>

@@ -1,42 +1,27 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Globe, 
-  ExternalLink,
-  MessageSquare,
-  HelpCircle,
-  FileText,
-  Lock,
-  ChevronRight,
-  TrendingUp,
-  LineChart
-} from "lucide-react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AppBreadcrumb } from "@/components/AppBreadcrumb";
-import { Company, Product, Review } from "@/lib/api";
-import { isFeatureEnabled } from "@/lib/feature-access";
+import { useMemo } from 'react';
+import { Building2, MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AppBreadcrumb } from '@/components/AppBreadcrumb';
+import { Company, Product, Review } from '@/lib/api';
+import { isFeatureEnabled } from '@/lib/feature-access';
 
-import CompanyPremiumHero from "./CompanyPremiumHero";
-import CompanyIdentityCard from "./CompanyIdentityCard";
-import CompanyCTAGroup from "./CompanyCTAGroup";
-import CompanyProfileTabs from "./CompanyProfileTabs";
+import CompanyPremiumHero from './CompanyPremiumHero';
+import CompanyIdentityCard from './CompanyIdentityCard';
+import CompanyCTAGroup from './CompanyCTAGroup';
+import CompanyProfileTabs from './CompanyProfileTabs';
 
 // Novos componentes da Fase 3
-import OverviewTab from "./OverviewTab";
-import SidebarPremium from "./SidebarPremium";
+import OverviewTab from './OverviewTab';
+import SidebarPremium from './SidebarPremium';
 
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
-import CompanyProducts from "./CompanyProducts";
-import CompanyReviews from "./CompanyReviews";
-import FaqSection from "./FaqSection";
+import CompanyProducts from './CompanyProducts';
+import CompanyReviews from './CompanyReviews';
+import FaqSection from './FaqSection';
 
 interface CompanyProfileShellProps {
   company: Company;
@@ -82,13 +67,14 @@ export default function CompanyProfileShell({
   activeTab,
   onTabChange,
 }: CompanyProfileShellProps) {
-  
   const breadcrumbItems = useMemo(() => {
-    const items: Array<{ label: string; href?: string; active?: boolean }> = [{ label: "Empresas", href: "/companies" }];
+    const items: Array<{ label: string; href?: string; active?: boolean }> = [
+      { label: 'Empresas', href: '/companies' },
+    ];
     if (company.category_info) {
-      items.push({ 
-        label: company.category_info.name, 
-        href: `/categories/${company.category_info.seo_url}` 
+      items.push({
+        label: company.category_info.name,
+        href: `/categories/${company.category_info.seo_url}`,
       });
     }
     items.push({ label: company.name, active: true });
@@ -96,20 +82,15 @@ export default function CompanyProfileShell({
   }, [company]);
 
   // Checagem de entitlements para abas e blocos
-  const showFaq = isFeatureEnabled(company.feature_access, "faq_block");
-  const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
-  const showCompetitorBanners = isFeatureEnabled(company.feature_access, "show_competitor_banners");
-  const showAlternatives = isFeatureEnabled(company.feature_access, "show_alternatives");
-  const hasPaidPlan = ["pro", "enterprise"].includes((company as any).plan_tier || "");
+  const showFaq = isFeatureEnabled(company.feature_access, 'faq_block');
 
   return (
     <div id="company-profile-shell" className="min-h-screen bg-[#f8fafc] text-slate-900 pb-16">
-      
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
         <div className="mx-auto max-w-[1240px] px-4 pt-4 md:px-6">
           <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
-          
+
           <div className="flex flex-col gap-6">
             {/* Hero Banner */}
             <CompanyPremiumHero
@@ -120,22 +101,16 @@ export default function CompanyProfileShell({
             />
 
             {/* Identidade da Empresa e CTAs */}
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between -mt-12 sm:-mt-16 z-20 relative px-4 md:px-6">
+            <div className="relative z-20 -mt-12 px-4 sm:-mt-16 md:px-6">
               <CompanyIdentityCard
                 company={company}
                 companyStats={companyStats}
                 logoUrl={logoUrl}
                 logoError={logoError}
                 setLogoError={setLogoError}
-              />
-              <div className="lg:pt-8 shrink-0">
-                <CompanyCTAGroup
-                  company={company}
-                  canRequestQuote={canRequestQuote}
-                  ctaEnabled={ctaEnabled}
-                  ctaUrl={ctaUrl}
-                />
-              </div>
+              >
+                <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
+              </CompanyIdentityCard>
             </div>
 
             {/* Banners Estratégicos Placeholder */}
@@ -157,10 +132,8 @@ export default function CompanyProfileShell({
       <main className="mx-auto max-w-[1240px] px-4 py-8 md:px-6">
         <Tabs value={activeTab} className="w-full">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-            
             {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}
             <div className="lg:col-span-8 space-y-6">
-              
               {/* ABA 1: VISÃO GERAL */}
               <TabsContent value="overview" className="mt-0 space-y-6 focus-visible:outline-none">
                 <OverviewTab
@@ -194,9 +167,12 @@ export default function CompanyProfileShell({
                 <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
                   <div className="text-center py-10 space-y-4">
                     <Building2 className="h-12 w-12 text-blue-500 mx-auto animate-bounce" />
-                    <h3 className="text-lg font-bold text-slate-900">Portfólio de Projetos Realizados</h3>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Portfólio de Projetos Realizados
+                    </h3>
                     <p className="text-sm text-slate-500 max-w-md mx-auto">
-                      Estamos preparando a vitrine de obras e instalações desta empresa. Em breve você verá fotos de cases e especificações técnicas reais.
+                      Estamos preparando a vitrine de obras e instalações desta empresa. Em breve
+                      você verá fotos de cases e especificações técnicas reais.
                     </p>
                     <div className="flex justify-center gap-2 pt-2">
                       <Skeleton className="h-24 w-32 rounded-xl" />
@@ -207,11 +183,12 @@ export default function CompanyProfileShell({
                 </Card>
               </TabsContent>
 
-
               {/* ABA 6: CONTATO (Placeholder com detalhes de e-mail, telefone e FAQs expansíveis) */}
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
                 <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
-                  <h3 className="text-lg font-black tracking-tight text-slate-950 mb-4">Informações de Contato</h3>
+                  <h3 className="text-lg font-black tracking-tight text-slate-950 mb-4">
+                    Informações de Contato
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       {company.phone && (
@@ -228,7 +205,9 @@ export default function CompanyProfileShell({
                           <Mail className="h-5 w-5 text-slate-400" />
                           <div>
                             <p className="text-xs text-slate-400">E-mail de Contato</p>
-                            <p className="text-sm font-semibold text-slate-800">{company.email_public}</p>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {company.email_public}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -237,7 +216,12 @@ export default function CompanyProfileShell({
                           <Globe className="h-5 w-5 text-slate-400" />
                           <div>
                             <p className="text-xs text-slate-400">Website Oficial</p>
-                            <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-700 hover:underline inline-flex items-center gap-1">
+                            <a
+                              href={company.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-semibold text-blue-700 hover:underline inline-flex items-center gap-1"
+                            >
                               Visitar site
                               <ExternalLink className="h-3 w-3" />
                             </a>
@@ -255,11 +239,8 @@ export default function CompanyProfileShell({
                   </div>
                 </Card>
 
-                {showFaq && (
-                  <FaqSection companyId={Number(company.id)} />
-                )}
+                {showFaq && <FaqSection companyId={Number(company.id)} />}
               </TabsContent>
-
             </div>
 
             {/* Coluna da Direita (4 Colunas) — Sidebar Premium */}
@@ -271,11 +252,9 @@ export default function CompanyProfileShell({
                 ctaUrl={ctaUrl}
               />
             </aside>
-
           </div>
         </Tabs>
       </main>
-
     </div>
   );
 }

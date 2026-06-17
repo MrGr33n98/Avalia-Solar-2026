@@ -187,10 +187,13 @@ export default function CompanyHero({
           </div>
         </div>
 
-        <div className="relative z-10 -mt-8 px-1 sm:-mt-10 sm:px-5 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6">
+        <div className="relative z-10 -mt-8 px-5 sm:-mt-10 sm:px-5 lg:px-8">
+          <section
+            aria-label="Card da empresa com ações"
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6"
+          >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <section
+              <div
                 aria-label="Card de perfil da empresa"
                 className="flex min-w-0 items-center gap-3 sm:gap-5"
               >
@@ -259,9 +262,9 @@ export default function CompanyHero({
                     )}
                   </div>
                 </div>
-              </section>
+              </div>
 
-              <div className="w-full lg:w-auto lg:min-w-[560px]">
+              <div className="w-full border-t border-slate-100 pt-4 lg:w-auto lg:min-w-[560px] lg:border-t-0 lg:pt-0">
                 <div className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3">
                   <Button
                     variant="ghost"
@@ -359,7 +362,7 @@ export default function CompanyHero({
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
