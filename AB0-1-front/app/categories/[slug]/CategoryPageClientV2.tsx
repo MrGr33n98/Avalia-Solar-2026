@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
 import DecisionChips from '@/components/categories/DecisionChips';
+import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
 import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar';
 import CompaniesGrid from '@/components/categories/CompaniesGrid';
 import TopRankingSection from '@/components/categories/TopRankingSection';
@@ -301,6 +302,8 @@ export default function CategoryPageClient({
             }}
             onMethodologyClick={() => console.log('Methodology modal')}
           />
+
+          <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 
           <DecisionChips
             chips={quickFilterChips}

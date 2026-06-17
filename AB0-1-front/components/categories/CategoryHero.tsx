@@ -1,9 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import { ArrowRight, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface Subcategory {
@@ -34,27 +33,19 @@ interface CategoryHeroProps {
 }
 
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
+const CATEGORY_BANNER_SRC = '/images/avalia-solar.banner-place-holder.png';
 
 export default function CategoryHero({
   name,
   description,
   bannerUrl,
   parentCategory,
-  subcategories = [],
-  banners = [],
-  onLeadClick,
 }: CategoryHeroProps) {
-  const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : '';
+  const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
   const heroDescription =
     description?.trim() ||
     `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
-  const validBanners = banners
-    .map((b) => ({
-      ...b,
-      image_url: b.image_url ? getFullImageUrl(b.image_url) : FALLBACK_BANNER_SRC,
-    }))
-    .filter((b) => b.image_url);
-  const visualUrl = validBanners[0]?.image_url || resolvedBannerUrl;
+  const visualUrl = resolvedBannerUrl || FALLBACK_BANNER_SRC;
   const bannerImageClass = getBannerImageClass(name);
 
   return (
@@ -104,7 +95,7 @@ export default function CategoryHero({
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/82 to-slate-950/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-black/20 to-transparent" />
 
-          <div className="relative z-10 flex aspect-[16/9] min-h-[230px] flex-col justify-between gap-6 p-5 sm:aspect-[2.4/1] sm:min-h-[260px] sm:p-7 md:aspect-[3/1] md:min-h-[280px] md:p-8 lg:min-h-[300px]">
+          <div className="relative z-10 flex h-[196px] flex-col justify-between gap-4 p-5 sm:aspect-[2.4/1] sm:h-auto sm:min-h-[260px] sm:gap-6 sm:p-7 md:aspect-[3/1] md:min-h-[280px] md:p-8 lg:min-h-[300px]">
             <div className="w-full max-w-[38rem]">
               <div className="max-w-[38rem]">
                 <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -139,37 +130,9 @@ export default function CategoryHero({
                   </p>
                 </div>
               </div>
-
-              <Button
-                onClick={onLeadClick}
-                size="lg"
-                className="h-14 rounded-2xl bg-emerald-500 px-6 text-base font-black text-white shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-400 sm:min-w-[20rem]"
-              >
-                Solicitar orçamento
-                <ArrowRight className="ml-auto h-5 w-5 sm:ml-4" />
-              </Button>
             </div>
           </div>
         </div>
-
-        {subcategories.length > 0 && (
-          <div className="mt-3 flex flex-col gap-2.5 lg:flex-row lg:items-center">
-            <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
-              Explorar nichos
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {subcategories.map((sub) => (
-                <Link
-                  key={sub.id}
-                  href={`/categories/${sub.seo_url || sub.slug}`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  {sub.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

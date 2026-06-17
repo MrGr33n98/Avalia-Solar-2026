@@ -4,7 +4,7 @@ import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import { Award, Check, ChevronRight, Info, MapPin, Star, Trophy } from 'lucide-react';
+import { Award, ChevronRight, Info, MapPin, Star, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
@@ -77,9 +77,6 @@ function RankingCompanyCard({
   const logoUrl = company.logo_url
     ? getFullImageUrl(company.logo_url)
     : '/images/logo-placeholder.svg';
-  const coverUrl = company.banner_url
-    ? getFullImageUrl(company.banner_url)
-    : '/images/banner-avalia-solar.png';
   const location = [company.city, company.state].filter(Boolean).join(', ');
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
   const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
@@ -91,50 +88,42 @@ function RankingCompanyCard({
       : rank === 2
         ? 'bg-slate-100 text-slate-600'
         : 'bg-orange-100 text-orange-700';
+  const logoBorderTone =
+    rank === 1 ? 'border-blue-500' : rank === 2 ? 'border-teal-600' : 'border-green-600';
+  const cardBorderTone =
+    rank === 1
+      ? 'hover:border-blue-200'
+      : rank === 2
+        ? 'hover:border-teal-200'
+        : 'hover:border-green-200';
 
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm transition-shadow hover:shadow-md sm:p-3">
-      <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[146px_minmax(0,1fr)_70px] sm:gap-4">
-        <Link
-          href={href}
-          className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-900"
-        >
-          <OptimizedImage
-            src={coverUrl}
-            alt={company.name}
-            fill
-            sizes="(max-width: 640px) 96px, 146px"
-            className="object-cover"
-            fallbackSrc="/images/banner-avalia-solar.png"
-          />
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-slate-950/10 to-transparent" />
-          <div className="absolute left-2.5 top-3 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm sm:h-16 sm:w-16">
+    <article
+      className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:shadow-md ${cardBorderTone} sm:p-4`}
+    >
+      <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)_70px] sm:gap-4">
+        <div className="space-y-2">
+          <RankBadge rank={rank} className={rankTone} />
+          <Link
+            href={href}
+            className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl border-2 bg-white shadow-sm ${logoBorderTone}`}
+          >
             <OptimizedImage
               src={logoUrl}
               alt={`Logo ${company.name}`}
               fill
-              sizes="64px"
-              objectFit="cover"
-              className="rounded-full"
-              containerClassName="h-full w-full rounded-full"
+              sizes="(max-width: 640px) 104px, 150px"
+              objectFit="contain"
+              className="p-4"
+              containerClassName="h-full w-full"
               fallbackSrc="/images/logo-placeholder.svg"
             />
-          </div>
-          {company.verified && (
-            <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg">
-              <Check className="h-5 w-5" />
-            </span>
-          )}
-        </Link>
+          </Link>
+        </div>
 
         <div className="min-w-0">
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:hidden">
-            <RankBadge rank={rank} className={rankTone} />
             <RatingBadge rating={ratingLabel} count={reviewCount} />
-          </div>
-
-          <div className="hidden sm:mb-1.5 sm:block">
-            <RankBadge rank={rank} className={rankTone} />
           </div>
 
           <Link href={href} className="block">
@@ -159,7 +148,7 @@ function RankingCompanyCard({
             {company.description || `Empresa especializada em ${category}.`}
           </p>
 
-          <div className="mt-2 grid grid-cols-[1fr_1fr_1fr] gap-1.5 sm:gap-2">
+          <div className="mt-2 grid max-w-[420px] grid-cols-[minmax(104px,1fr)_minmax(96px,1fr)_64px] gap-1.5 sm:gap-2">
             <Button
               size="sm"
               onClick={() => openQuoteWizard({ source: 'category-ranking' })}
@@ -181,7 +170,7 @@ function RankingCompanyCard({
             <ComparisonToggleButton
               company={company}
               size="sm"
-              className="h-9 min-w-0 rounded-lg px-2 text-[11px] font-bold shadow-none [&_span]:hidden sm:[&_span]:inline sm:text-xs"
+              className="h-9 min-w-0 rounded-lg px-2 text-[11px] font-bold shadow-none [&_svg]:mx-auto [&_span]:hidden"
             />
           </div>
         </div>

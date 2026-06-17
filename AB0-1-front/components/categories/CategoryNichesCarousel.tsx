@@ -1,0 +1,142 @@
+'use client';
+
+import {
+  BatteryCharging,
+  BriefcaseBusiness,
+  Car,
+  ChartNoAxesCombined,
+  CreditCard,
+  Factory,
+  HardHat,
+  Home,
+  Leaf,
+  MonitorCog,
+  PanelTop,
+  Wrench,
+  Zap,
+} from 'lucide-react';
+import Link from 'next/link';
+
+interface CategoryNiche {
+  id?: number;
+  name: string;
+  slug?: string;
+  seo_url?: string;
+}
+
+interface CategoryNichesCarouselProps {
+  niches?: CategoryNiche[];
+}
+
+const FALLBACK_NICHES: CategoryNiche[] = [
+  { name: 'Energia Solar Residencial', seo_url: 'energia-solar-residencial' },
+  { name: 'Energia Solar Comercial e Industrial', seo_url: 'energia-solar-comercial-industrial' },
+  { name: 'Energia Solar Rural / Agronegócio', seo_url: 'energia-solar-rural-agronegocio' },
+  { name: 'Baterias e Armazenamento de Energia', seo_url: 'baterias-armazenamento-energia' },
+  { name: 'Carport Solar / Coberturas Solares', seo_url: 'carport-solar-coberturas-solares' },
+  { name: 'Painéis Solares', seo_url: 'paineis-solares' },
+  { name: 'Inversores', seo_url: 'inversores' },
+  { name: 'Monitoramento e O&M', seo_url: 'monitoramento-om' },
+  { name: 'Financiamento de Energia Solar', seo_url: 'financiamento-energia-solar' },
+  { name: 'Instaladores de Energia Solar', seo_url: 'instaladores-energia-solar' },
+];
+
+const SHORT_NAME_BY_LONG_NAME: Record<string, string> = {
+  'Energia Solar Residencial': 'Residencial',
+  'Energia Solar Comercial e Industrial': 'Comercial e Industrial',
+  'Energia Solar Rural / Agronegócio': 'Rural / Agronegócio',
+  'Baterias e Armazenamento de Energia': 'Baterias e Armazenamento',
+  'Carport Solar / Coberturas Solares': 'Carport Solar',
+  'Painéis Solares': 'Painéis Solares',
+  Inversores: 'Inversores',
+  'Monitoramento e O&M': 'Monitoramento',
+  'Financiamento de Energia Solar': 'Financiamento',
+  'Instaladores de Energia Solar': 'Instaladores',
+};
+
+const ICON_BY_LABEL = [
+  { match: ['residencial'], icon: Home },
+  { match: ['comercial', 'industrial'], icon: Factory },
+  { match: ['rural', 'agronegócio', 'agronegocio'], icon: Leaf },
+  { match: ['bateria', 'armazenamento'], icon: BatteryCharging },
+  { match: ['carport', 'cobertura'], icon: Car },
+  { match: ['painel', 'painéis', 'paineis'], icon: PanelTop },
+  { match: ['inversor'], icon: Zap },
+  { match: ['monitoramento', 'o&m'], icon: ChartNoAxesCombined },
+  { match: ['financiamento'], icon: CreditCard },
+  { match: ['instalador'], icon: HardHat },
+  { match: ['serviço', 'servico'], icon: Wrench },
+  { match: ['empresa'], icon: BriefcaseBusiness },
+];
+
+function getShortName(name: string) {
+  return SHORT_NAME_BY_LONG_NAME[name] || name.replace(/^Energia Solar\s*/i, '').trim();
+}
+
+function getNicheIcon(label: string) {
+  const normalized = label.toLowerCase();
+  return (
+    ICON_BY_LABEL.find((entry) => entry.match.some((term) => normalized.includes(term)))?.icon ||
+    MonitorCog
+  );
+}
+
+function getNicheHref(niche: CategoryNiche) {
+  const slug = niche.seo_url || niche.slug;
+  return slug ? `/categories/${slug}` : `/categories?search=${encodeURIComponent(niche.name)}`;
+}
+
+export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCarouselProps) {
+  const displayNiches = (niches.length > 0 ? niches : FALLBACK_NICHES).slice(0, 10);
+
+  return (
+    <section className="bg-white pb-3 pt-4">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">
+            Explorar Nichos
+          </h2>
+          <Link
+            href="/categories"
+            className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 transition-colors hover:text-blue-800"
+          >
+            Ver todos
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
+        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          <div className="flex gap-3">
+            {displayNiches.map((niche) => {
+              const label = getShortName(niche.name);
+              const Icon = getNicheIcon(label);
+
+              return (
+                <Link
+                  key={`${niche.id || niche.seo_url || niche.slug || niche.name}`}
+                  href={getNicheHref(niche)}
+                  className="group flex w-[86px] shrink-0 flex-col items-center text-center sm:w-24"
+                >
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all group-hover:border-blue-200 group-hover:bg-blue-50">
+                    <Icon className="h-8 w-8" strokeWidth={1.8} />
+                  </span>
+                  <span className="mt-2 line-clamp-2 min-h-[32px] text-[11px] font-bold leading-tight text-slate-900 sm:text-xs">
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {displayNiches.length > 5 && (
+          <div className="mt-2 flex justify-center gap-1.5 sm:hidden" aria-hidden="true">
+            <span className="h-1.5 w-5 rounded-full bg-blue-700" />
+            <span className="h-1.5 w-5 rounded-full bg-slate-200" />
+            <span className="h-1.5 w-5 rounded-full bg-slate-200" />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
